@@ -34,13 +34,13 @@ export default function LandingPage() {
                             <div className="flex flex-col sm:flex-row gap-3 md:gap-4 lg:gap-5">
                                 <Link
                                     href="/register"
-                                    className="px-6 md:px-10 lg:px-12 py-2.5 md:py-3.5 lg:py-4 bg-black text-white rounded-full font-medium hover:bg-black/90 transition-all text-sm md:text-base lg:text-lg"
+                                    className="px-6 md:px-8 lg:px-10 py-2.5 md:py-3.5 lg:py-4 bg-black text-white rounded-full font-medium hover:bg-black/90 transition-all text-sm md:text-base lg:text-lg"
                                 >
                                     Get Started
                                 </Link>
                                 <a
                                     href="#learn-more"
-                                    className="px-6 md:px-10 lg:px-12 py-2.5 md:py-3.5 lg:py-4 bg-[#f7eded] text-black rounded-full font-medium hover:bg-[#efe5e5] transition-all text-sm md:text-base lg:text-lg"
+                                    className="px-6 md:px-8 lg:px-10 py-2.5 md:py-3.5 lg:py-4 bg-[#f7eded] text-black rounded-full font-medium hover:bg-[#efe5e5] transition-all text-sm md:text-base lg:text-lg"
                                 >
                                     Learn More
                                 </a>
