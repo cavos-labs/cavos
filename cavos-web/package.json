@@ -1,0 +1,37 @@
+{
+  "name": "cavos-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@auth0/nextjs-auth0": "^4.13.0",
+    "@supabase/ssr": "^0.7.0",
+    "@supabase/supabase-js": "^2.83.0",
+    "axios": "^1.13.2",
+    "framer-motion": "^12.23.24",
+    "geist": "^1.5.1",
+    "jotai": "^2.15.1",
+    "lucide-react": "^0.554.0",
+    "nanoid": "^5.1.6",
+    "next": "16.0.3",
+    "next-font": "^1.2.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.3",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
