@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
 
     const userInfo = userInfoResponse.data;
 
-    // Get Management API token to access user identities
+    // Get Management API token to access user identities with Google tokens
     const managementTokenResponse = await axios.post(
       `https://${domain}/oauth/token`,
       {
@@ -80,9 +80,9 @@ export async function GET(request: NextRequest) {
 
     const managementToken = managementTokenResponse.data.access_token;
 
-    // Get user's Google identity to extract Google access token
+    // Get user's full profile including identities
     const userId = userInfo.sub;
-    const identitiesResponse = await axios.get(
+    const userProfileResponse = await axios.get(
       `https://${domain}/api/v2/users/${encodeURIComponent(userId)}`,
       {
         headers: {
@@ -91,18 +91,23 @@ export async function GET(request: NextRequest) {
       }
     );
 
+    console.log('[AUTH0-GOOGLE-CALLBACK] User profile:', JSON.stringify(userProfileResponse.data, null, 2));
+
     // Find Google identity
-    const googleIdentity = identitiesResponse.data.identities?.find(
+    const googleIdentity = userProfileResponse.data.identities?.find(
       (identity: any) => identity.provider === 'google-oauth2'
     );
 
-    if (!googleIdentity || !googleIdentity.access_token) {
-      throw new Error('Google access token not found in user identities');
-    }
+    let googleAccessToken = access_token;
+    let googleRefreshToken = refresh_token;
 
-    // Use Google's access token for Drive API
-    const googleAccessToken = googleIdentity.access_token;
-    const googleRefreshToken = googleIdentity.refresh_token;
+    if (googleIdentity?.access_token) {
+      googleAccessToken = googleIdentity.access_token;
+      googleRefreshToken = googleIdentity.refresh_token || refresh_token;
+      console.log('[AUTH0-GOOGLE-CALLBACK] Using Google identity token');
+    } else {
+      console.warn('[AUTH0-GOOGLE-CALLBACK] No Google access token in identity, using Auth0 token');
+    }
 
     // Prepare response data
     const responseData = {

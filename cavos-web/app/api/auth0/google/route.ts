@@ -35,8 +35,13 @@ export async function GET(request: NextRequest) {
     url.searchParams.set('client_id', clientId);
     url.searchParams.set('redirect_uri', redirectUri);
     // Add Google Drive scope for file access
-    url.searchParams.set('scope', 'openid profile email offline_access https://www.googleapis.com/auth/drive.file');
+    url.searchParams.set('scope', 'openid profile email offline_access');
     url.searchParams.set('connection', 'google-oauth2');
+    // Pass Google-specific scopes through Auth0
+    url.searchParams.set('connection_scope', 'https://www.googleapis.com/auth/drive.file');
+    // Force Auth0 to request and store the Google access token
+    url.searchParams.set('access_type', 'offline');
+    url.searchParams.set('prompt', 'consent');
 
     return NextResponse.json({ url: url.toString() }, {
       headers: {
