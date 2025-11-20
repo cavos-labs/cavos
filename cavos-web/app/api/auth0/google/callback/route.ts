@@ -64,10 +64,50 @@ export async function GET(request: NextRequest) {
 
     const userInfo = userInfoResponse.data;
 
+    // Get Management API token to access user identities
+    const managementTokenResponse = await axios.post(
+      `https://${domain}/oauth/token`,
+      {
+        grant_type: 'client_credentials',
+        client_id: clientId,
+        client_secret: clientSecret,
+        audience: `https://${domain}/api/v2/`,
+      },
+      {
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+
+    const managementToken = managementTokenResponse.data.access_token;
+
+    // Get user's Google identity to extract Google access token
+    const userId = userInfo.sub;
+    const identitiesResponse = await axios.get(
+      `https://${domain}/api/v2/users/${encodeURIComponent(userId)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${managementToken}`,
+        },
+      }
+    );
+
+    // Find Google identity
+    const googleIdentity = identitiesResponse.data.identities?.find(
+      (identity: any) => identity.provider === 'google-oauth2'
+    );
+
+    if (!googleIdentity || !googleIdentity.access_token) {
+      throw new Error('Google access token not found in user identities');
+    }
+
+    // Use Google's access token for Drive API
+    const googleAccessToken = googleIdentity.access_token;
+    const googleRefreshToken = googleIdentity.refresh_token;
+
     // Prepare response data
     const responseData = {
-      access_token,
-      refresh_token,
+      access_token: googleAccessToken,
+      refresh_token: googleRefreshToken,
       id_token,
       expires_in,
       user: {
