@@ -11,7 +11,7 @@ export default function LandingPage() {
             <Header />
 
             {/* Hero Section */}
-            <section className="h-screen w-full snap-start flex flex-col items-center justify-center relative">
+            <section className="h-screen pt-20 w-full snap-start flex flex-col items-center justify-center relative">
                 {/* ... Hero Content ... */}
                 <div className="flex flex-col items-center justify-center w-full px-4 md:px-8 lg:px-12">
                     <div className="relative flex flex-col items-center text-center w-full max-w-7xl">
@@ -62,7 +62,7 @@ export default function LandingPage() {
             </section>
 
             {/* Code Demo Section + Footer */}
-            <section className="h-screen w-full snap-start flex flex-col pt-20">
+            <section className="min-h-screen w-full snap-start flex flex-col pt-20">
                 <CodeDemoSection className="flex-1" />
                 <Footer />
             </section>
