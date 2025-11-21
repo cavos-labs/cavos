@@ -132,7 +132,7 @@ export default function AppDetailPage() {
             <Card>
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
                     <div className="flex items-start gap-4">
-                        <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-black/5 border border-black/10 flex-shrink-0">
+                        <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-black/5 border border-black/10 shrink-0">
                             {app.logo_url ? (
                                 <Image
                                     src={app.logo_url}

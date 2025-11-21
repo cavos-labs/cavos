@@ -78,43 +78,16 @@ export function NewAppForm() {
             </div>
 
             <Card>
-                            placeholder="My App"
-                            required
-                            disabled={loading}
-                        />
-                    </div>
-
-                    <div>
-                        <label htmlFor="description" className="block text-sm font-medium text-black/80 mb-2">
-                            Description
-                        </label>
-                        <textarea
-                            id="description"
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            placeholder="A brief description of your application"
-                            disabled={loading}
-                            rows={4}
-                            className="w-full px-4 py-3 bg-white border border-black/10 rounded-lg text-sm focus:outline-none focus:border-black/30 transition-colors disabled:opacity-50 resize-none"
-                        />
-                    </div>
-
-                    <div className="flex gap-3 pt-2">
-                        <Button
-                            type="submit"
-                            loading={loading}
-                            className="flex-1"
-                        >
-                            Create Application
-                        </Button>
-                        <Link href="/dashboard/apps" className="flex-1">
-                            <Button variant="outline" className="w-full">
-                                Cancel
-                            </Button>
-                        </Link>
-                    </div>
-                </form >
-            </Card >
-        </div >
+                <AppForm
+                    mode="create"
+                    organizations={organizations}
+                    initialData={{
+                        name: '',
+                        description: '',
+                        organization_id: preselectedOrgId || organizations[0]?.id || ''
+                    }}
+                />
+            </Card>
+        </div>
     )
 }

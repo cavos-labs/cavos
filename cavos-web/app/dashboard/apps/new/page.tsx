@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense } from 'react'
-import NewAppForm from './NewAppForm'
+import { NewAppForm } from './NewAppForm'
 
 export default function NewAppPage() {
     return (

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { AppWindow, Plus, Loader2 } from 'lucide-react'
@@ -89,8 +90,19 @@ export default function AppsPage() {
                         <Link key={app.id} href={`/dashboard/apps/${app.id}`}>
                             <Card className="h-full hover:border-black/30 transition-colors cursor-pointer group">
                                 <div className="flex items-start gap-4">
-                                    <div className="p-3 bg-black/5 rounded-xl group-hover:bg-black/10 transition-colors">
-                                        <AppWindow className="w-6 h-6 text-black/80" />
+                                    <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-black/5 border border-black/10 shrink-0">
+                                        {app.logo_url ? (
+                                            <Image
+                                                src={app.logo_url}
+                                                alt={app.name}
+                                                fill
+                                                className="object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center">
+                                                <AppWindow className="w-6 h-6 text-black/20" />
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h3 className="font-semibold truncate mb-1">{app.name}</h3>
