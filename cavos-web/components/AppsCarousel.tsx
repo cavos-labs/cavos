@@ -7,12 +7,13 @@ export async function AppsCarousel() {
     const { data: apps } = await supabase
         .from('apps')
         .select('id, name, logo_url')
-        .not('logo_url', 'is', null)
         .limit(20)
 
     if (!apps || apps.length === 0) return null
-    const isSingleApp = apps.length === 1
-    const displayApps = isSingleApp ? apps : Array(10).fill(apps).flat()
+
+    // If we have few apps (<= 4), show them centered without scrolling
+    const showStatic = apps.length <= 4
+    const displayApps = showStatic ? apps : Array(10).fill(apps).flat()
 
     return (
         <div className="w-full h-full flex flex-col justify-center overflow-hidden bg-white">
@@ -23,11 +24,11 @@ export async function AppsCarousel() {
             </div>
 
             <div className="relative w-full max-w-[100vw]">
-                <div className={`flex ${isSingleApp ? 'justify-center w-full' : 'animate-scroll w-max hover:[animation-play-state:paused]'}`}>
+                <div className={`flex ${showStatic ? 'justify-center w-full flex-wrap gap-8 md:gap-12' : 'animate-scroll w-max hover:[animation-play-state:paused]'}`}>
                     {displayApps.map((app, index) => (
                         <div
                             key={`${app.id}-${index}`}
-                            className="mx-6 md:mx-10 shrink-0"
+                            className={`${showStatic ? '' : 'mx-6 md:mx-10'} shrink-0`}
                         >
                             <div
                                 className="animate-float"
