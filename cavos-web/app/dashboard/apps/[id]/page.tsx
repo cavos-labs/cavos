@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
-import { AppWindow, Trash2, ArrowLeft, Copy, Check, Search, Loader2, Building2 } from 'lucide-react'
+import { AppForm } from '@/components/AppForm'
+import { AppWindow, Trash2, ArrowLeft, Copy, Check, Search, Loader2, Building2, Pencil } from 'lucide-react'
 
 export default function AppDetailPage() {
     const router = useRouter()
@@ -20,6 +22,7 @@ export default function AppDetailPage() {
     const [loadingWallets, setLoadingWallets] = useState(true)
     const [error, setError] = useState('')
     const [showDeleteModal, setShowDeleteModal] = useState(false)
+    const [showEditModal, setShowEditModal] = useState(false)
     const [deleting, setDeleting] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [networkFilter, setNetworkFilter] = useState<'all' | 'mainnet' | 'sepolia'>('all')
@@ -129,8 +132,19 @@ export default function AppDetailPage() {
             <Card>
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
                     <div className="flex items-start gap-4">
-                        <div className="p-4 bg-black/5 rounded-xl">
-                            <AppWindow className="w-8 h-8 text-black/80" />
+                        <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-black/5 border border-black/10 flex-shrink-0">
+                            {app.logo_url ? (
+                                <Image
+                                    src={app.logo_url}
+                                    alt={app.name}
+                                    fill
+                                    className="object-cover"
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                    <AppWindow className="w-8 h-8 text-black/20" />
+                                </div>
+                            )}
                         </div>
                         <div>
                             <h1 className="text-2xl font-semibold tracking-tight mb-1">
@@ -153,14 +167,24 @@ export default function AppDetailPage() {
                         </div>
                     </div>
 
-                    <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => setShowDeleteModal(true)}
-                        icon={<Trash2 className="w-4 h-4" />}
-                    >
-                        Delete
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowEditModal(true)}
+                            icon={<Pencil className="w-4 h-4" />}
+                        >
+                            Edit
+                        </Button>
+                        <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={() => setShowDeleteModal(true)}
+                            icon={<Trash2 className="w-4 h-4" />}
+                        >
+                            Delete
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-8 pt-6 border-t border-black/10">
@@ -308,6 +332,30 @@ export default function AppDetailPage() {
                     </div>
                 )}
             </Card>
+
+            {/* Edit Modal */}
+            {showEditModal && (
+                <>
+                    <div
+                        className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+                        onClick={() => setShowEditModal(false)}
+                    />
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                            <h3 className="text-xl font-semibold mb-6">Edit Application</h3>
+                            <AppForm
+                                mode="edit"
+                                initialData={app}
+                                onCancel={() => setShowEditModal(false)}
+                                onSuccess={() => {
+                                    setShowEditModal(false)
+                                    fetchApp()
+                                }}
+                            />
+                        </Card>
+                    </div>
+                </>
+            )}
 
             {/* Delete Modal */}
             {showDeleteModal && (
