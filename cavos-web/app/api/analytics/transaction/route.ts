@@ -48,7 +48,7 @@ export async function POST(request: Request) {
         }
 
         // Insert transaction
-        const { data, error } = await supabase
+        const { data, error } = await adminSupabase
             .from('transactions')
             .upsert(
                 {

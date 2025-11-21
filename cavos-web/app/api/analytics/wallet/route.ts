@@ -31,7 +31,7 @@ export async function POST(request: Request) {
         }
 
         // Insert wallet
-        const { data, error } = await supabase
+        const { data, error } = await adminSupabase
             .from('wallets')
             .upsert(
                 {
