@@ -1,40 +1,37 @@
-import { InputHTMLAttributes, forwardRef } from 'react'
+import React from 'react';
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label?: string
-  error?: string
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  icon?: React.ReactNode;
+  error?: boolean;
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, className = '', ...props }, ref) => {
+export const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className = '', icon, error, ...props }, ref) => {
     return (
-      <div className="w-full">
-        {label && (
-          <label className="block text-[#EAE5DC]/70 text-sm mb-2">
-            {label}
-          </label>
+      <div className="relative w-full">
+        {icon && (
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-black/40 pointer-events-none">
+            {icon}
+          </div>
         )}
         <input
           ref={ref}
           className={`
-            w-full px-4 py-3 rounded-lg
-            bg-[#0A0A0A]
-            border border-[#EAE5DC]/20
-            text-white placeholder:text-[#EAE5DC]/40
-            focus:border-[#EAE5DC]/50 focus:ring-1 focus:ring-[#EAE5DC]/30
-            transition-all duration-200
+            w-full bg-white border rounded-lg px-4 py-2 text-sm transition-all
+            focus:outline-none focus:ring-2 focus:ring-black/5
             disabled:opacity-50 disabled:cursor-not-allowed
-            ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/30' : ''}
+            ${icon ? 'pl-10' : ''}
+            ${error
+              ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
+              : 'border-black/10 focus:border-black/30'
+            }
             ${className}
           `}
           {...props}
         />
-        {error && (
-          <p className="mt-1 text-sm text-red-400">{error}</p>
-        )}
       </div>
-    )
+    );
   }
-)
+);
 
-Input.displayName = 'Input'
+Input.displayName = 'Input';
