@@ -11,7 +11,9 @@ export default function AppDetailPage() {
     const appId = params.id as string
 
     const [app, setApp] = useState<any>(null)
+    const [wallets, setWallets] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
+    const [loadingWallets, setLoadingWallets] = useState(true)
     const [error, setError] = useState('')
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [deleting, setDeleting] = useState(false)
@@ -19,6 +21,7 @@ export default function AppDetailPage() {
     useEffect(() => {
         if (appId) {
             fetchApp()
+            fetchWallets()
         }
     }, [appId])
 
@@ -40,6 +43,20 @@ export default function AppDetailPage() {
             setError('Failed to load application')
         } finally {
             setLoading(false)
+        }
+    }
+
+    const fetchWallets = async () => {
+        try {
+            const res = await fetch(`/api/apps/${appId}/wallets`)
+            if (res.ok) {
+                const data = await res.json()
+                setWallets(data.wallets)
+            }
+        } catch (err) {
+            console.error('Failed to fetch wallets', err)
+        } finally {
+            setLoadingWallets(false)
         }
     }
 
@@ -260,6 +277,57 @@ export default function AppDetailPage() {
                             </div>
                         </div>
 
+                        {/* Wallets Section */}
+                        <div className="bg-white border border-black/10 rounded-2xl p-5 md:p-8 mb-4 md:mb-6">
+                            <h2 className="text-xl md:text-2xl font-semibold tracking-[-0.02em] mb-4">
+                                Wallets
+                            </h2>
+                            <p className="text-black/60 mb-6 text-sm md:text-base">
+                                Wallets created by your users through this application.
+                            </p>
+
+                            {loadingWallets ? (
+                                <div className="flex justify-center py-8">
+                                    <div className="w-8 h-8 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                                </div>
+                            ) : wallets.length === 0 ? (
+                                <div className="text-center py-8 bg-black/5 rounded-xl border border-black/5">
+                                    <p className="text-black/60">No wallets created yet.</p>
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-sm">
+                                        <thead>
+                                            <tr className="border-b border-black/10">
+                                                <th className="pb-3 font-medium text-black/60">Address</th>
+                                                <th className="pb-3 font-medium text-black/60">Network</th>
+                                                <th className="pb-3 font-medium text-black/60">Email</th>
+                                                <th className="pb-3 font-medium text-black/60">Created</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-black/5">
+                                            {wallets.map((wallet) => (
+                                                <tr
+                                                    key={wallet.id}
+                                                    className="group hover:bg-black/5 transition-colors cursor-pointer"
+                                                    onClick={() => router.push(`/dashboard/apps/${appId}/wallets/${wallet.id}`)}
+                                                >
+                                                    <td className="py-3 font-mono text-black/80 group-hover:text-black">
+                                                        {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
+                                                    </td>
+                                                    <td className="py-3 text-black/80 capitalize">{wallet.network}</td>
+                                                    <td className="py-3 text-black/80">{wallet.email || '-'}</td>
+                                                    <td className="py-3 text-black/60">
+                                                        {new Date(wallet.created_at).toLocaleDateString()}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+
                         {/* How it Works */}
                         <div className="bg-white border border-black/10 rounded-2xl p-5 md:p-8">
                             <h2 className="text-xl md:text-2xl font-semibold tracking-[-0.02em] mb-4">
@@ -317,38 +385,40 @@ export default function AppDetailPage() {
             </div>
 
             {/* Delete Confirmation Modal */}
-            {showDeleteModal && (
-                <>
-                    <div
-                        className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
-                        onClick={() => !deleting && setShowDeleteModal(false)}
-                    />
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-2xl p-8 max-w-md w-full">
-                            <h3 className="text-2xl font-semibold mb-4">Delete Application</h3>
-                            <p className="text-black/70 mb-6">
-                                Are you sure you want to delete <strong>{app.name}</strong>? This action cannot be undone.
-                            </p>
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={handleDelete}
-                                    disabled={deleting}
-                                    className="flex-1 px-6 py-3 bg-red-600 text-white rounded-full font-medium hover:bg-red-700 transition-all disabled:opacity-50"
-                                >
-                                    {deleting ? 'Deleting...' : 'Delete'}
-                                </button>
-                                <button
-                                    onClick={() => setShowDeleteModal(false)}
-                                    disabled={deleting}
-                                    className="flex-1 px-6 py-3 border border-black/20 text-black rounded-full font-medium hover:border-black/40 transition-all disabled:opacity-50"
-                                >
-                                    Cancel
-                                </button>
+            {
+                showDeleteModal && (
+                    <>
+                        <div
+                            className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+                            onClick={() => !deleting && setShowDeleteModal(false)}
+                        />
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                            <div className="bg-white rounded-2xl p-8 max-w-md w-full">
+                                <h3 className="text-2xl font-semibold mb-4">Delete Application</h3>
+                                <p className="text-black/70 mb-6">
+                                    Are you sure you want to delete <strong>{app.name}</strong>? This action cannot be undone.
+                                </p>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={handleDelete}
+                                        disabled={deleting}
+                                        className="flex-1 px-6 py-3 bg-red-600 text-white rounded-full font-medium hover:bg-red-700 transition-all disabled:opacity-50"
+                                    >
+                                        {deleting ? 'Deleting...' : 'Delete'}
+                                    </button>
+                                    <button
+                                        onClick={() => setShowDeleteModal(false)}
+                                        disabled={deleting}
+                                        className="flex-1 px-6 py-3 border border-black/20 text-black rounded-full font-medium hover:border-black/40 transition-all disabled:opacity-50"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </>
-            )}
-        </main>
+                    </>
+                )
+            }
+        </main >
     )
 }
