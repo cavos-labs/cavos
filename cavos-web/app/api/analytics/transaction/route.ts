@@ -1,9 +1,11 @@
+import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
     try {
         const supabase = await createClient();
+        const adminSupabase = createAdminClient();
         const body = await request.json();
         const { hash, walletAddress, appId, status, network } = body;
 
@@ -14,8 +16,8 @@ export async function POST(request: Request) {
             );
         }
 
-        // Verify app exists
-        const { data: app, error: appError } = await supabase
+        // Verify app exists using admin client
+        const { data: app, error: appError } = await adminSupabase
             .from('apps')
             .select('id')
             .eq('id', appId)
@@ -28,8 +30,8 @@ export async function POST(request: Request) {
             );
         }
 
-        // Find wallet ID
-        const { data: wallet, error: walletError } = await supabase
+        // Find wallet ID using admin client
+        const { data: wallet, error: walletError } = await adminSupabase
             .from('wallets')
             .select('id')
             .eq('address', walletAddress)

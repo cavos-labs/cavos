@@ -1,9 +1,11 @@
+import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
     try {
         const supabase = await createClient();
+        const adminSupabase = createAdminClient();
         const body = await request.json();
         const { address, appId, network, email } = body;
 
@@ -14,8 +16,8 @@ export async function POST(request: Request) {
             );
         }
 
-        // Verify app exists
-        const { data: app, error: appError } = await supabase
+        // Verify app exists using admin client to bypass RLS
+        const { data: app, error: appError } = await adminSupabase
             .from('apps')
             .select('id')
             .eq('id', appId)
