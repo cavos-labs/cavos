@@ -43,12 +43,6 @@ export default function RegisterPage() {
 
             // Show success message
             setSuccess(true)
-
-            // Redirect to dashboard after a short delay
-            setTimeout(() => {
-                router.push('/dashboard')
-                router.refresh()
-            }, 1500)
         } catch (err) {
             setError('An unexpected error occurred')
             setLoading(false)
@@ -73,79 +67,93 @@ export default function RegisterPage() {
 
                     {/* Form Card */}
                     <div className="bg-white border border-black/10 rounded-2xl p-6 md:p-8 shadow-sm">
-                        {success && (
-                            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                                <p className="text-green-600 text-sm">
-                                    Account created successfully! Redirecting...
+                        {success ? (
+                            <div className="text-center py-8">
+                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-xl font-semibold text-black mb-2">Check your email</h3>
+                                <p className="text-black/60 mb-6">
+                                    We've sent a confirmation link to <span className="font-medium text-black">{email}</span>. Please verify your email to continue.
                                 </p>
+                                <Link
+                                    href="/login"
+                                    className="inline-block w-full px-8 py-3.5 bg-black text-white rounded-full font-medium hover:bg-black/90 transition-all"
+                                >
+                                    Go to Login
+                                </Link>
                             </div>
+                        ) : (
+                            <>
+                                {error && (
+                                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                                        <p className="text-red-600 text-sm">{error}</p>
+                                    </div>
+                                )}
+
+                                <form onSubmit={handleSubmit} className="space-y-5">
+                                    <div>
+                                        <label htmlFor="fullName" className="block text-sm font-medium text-black/80 mb-2">
+                                            Full Name
+                                        </label>
+                                        <input
+                                            id="fullName"
+                                            type="text"
+                                            value={fullName}
+                                            onChange={(e) => setFullName(e.target.value)}
+                                            placeholder="John Doe"
+                                            disabled={loading}
+                                            className="w-full px-4 py-3 bg-white border border-black/20 rounded-lg text-black placeholder:text-black/40 focus:outline-none focus:border-black/50 transition-colors disabled:opacity-50"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="email" className="block text-sm font-medium text-black/80 mb-2">
+                                            Email
+                                        </label>
+                                        <input
+                                            id="email"
+                                            type="email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            placeholder="you@example.com"
+                                            required
+                                            disabled={loading}
+                                            className="w-full px-4 py-3 bg-white border border-black/20 rounded-lg text-black placeholder:text-black/40 focus:outline-none focus:border-black/50 transition-colors disabled:opacity-50"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="password" className="block text-sm font-medium text-black/80 mb-2">
+                                            Password
+                                        </label>
+                                        <input
+                                            id="password"
+                                            type="password"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            placeholder="••••••••"
+                                            required
+                                            disabled={loading}
+                                            className="w-full px-4 py-3 bg-white border border-black/20 rounded-lg text-black placeholder:text-black/40 focus:outline-none focus:border-black/50 transition-colors disabled:opacity-50"
+                                        />
+                                        <p className="text-xs text-black/50 mt-1">
+                                            Must be at least 8 characters
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="w-full px-8 py-3.5 bg-black text-white rounded-full font-medium hover:bg-black/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {loading ? 'Creating account...' : 'Create Account'}
+                                    </button>
+                                </form>
+                            </>
                         )}
-
-                        {error && (
-                            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                                <p className="text-red-600 text-sm">{error}</p>
-                            </div>
-                        )}
-
-                        <form onSubmit={handleSubmit} className="space-y-5">
-                            <div>
-                                <label htmlFor="fullName" className="block text-sm font-medium text-black/80 mb-2">
-                                    Full Name
-                                </label>
-                                <input
-                                    id="fullName"
-                                    type="text"
-                                    value={fullName}
-                                    onChange={(e) => setFullName(e.target.value)}
-                                    placeholder="John Doe"
-                                    disabled={loading || success}
-                                    className="w-full px-4 py-3 bg-white border border-black/20 rounded-lg text-black placeholder:text-black/40 focus:outline-none focus:border-black/50 transition-colors disabled:opacity-50"
-                                />
-                            </div>
-
-                            <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-black/80 mb-2">
-                                    Email
-                                </label>
-                                <input
-                                    id="email"
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="you@example.com"
-                                    required
-                                    disabled={loading || success}
-                                    className="w-full px-4 py-3 bg-white border border-black/20 rounded-lg text-black placeholder:text-black/40 focus:outline-none focus:border-black/50 transition-colors disabled:opacity-50"
-                                />
-                            </div>
-
-                            <div>
-                                <label htmlFor="password" className="block text-sm font-medium text-black/80 mb-2">
-                                    Password
-                                </label>
-                                <input
-                                    id="password"
-                                    type="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="••••••••"
-                                    required
-                                    disabled={loading || success}
-                                    className="w-full px-4 py-3 bg-white border border-black/20 rounded-lg text-black placeholder:text-black/40 focus:outline-none focus:border-black/50 transition-colors disabled:opacity-50"
-                                />
-                                <p className="text-xs text-black/50 mt-1">
-                                    Must be at least 8 characters
-                                </p>
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={loading || success}
-                                className="w-full px-8 py-3.5 bg-black text-white rounded-full font-medium hover:bg-black/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {loading ? 'Creating account...' : success ? 'Success!' : 'Create Account'}
-                            </button>
-                        </form>
                     </div>
 
                     {/* Footer */}
