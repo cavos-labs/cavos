@@ -8,10 +8,9 @@ export async function POST(request: Request) {
         const adminSupabase = createAdminClient();
 
         // Get headers
-        const appId = request.headers.get('x-app-id');
         const authHeader = request.headers.get('authorization');
 
-        if (!appId || !authHeader) {
+        if (!authHeader) {
             return NextResponse.json(
                 { error: 'Missing required headers' },
                 {
@@ -59,11 +58,11 @@ export async function POST(request: Request) {
 
         // Parse Body
         const body = await request.json();
-        const { network } = body;
+        const { network, app_id } = body;
 
-        if (!network) {
+        if (!network || !app_id) {
             return NextResponse.json(
-                { error: 'Missing network' },
+                { error: 'Missing network or app_id' },
                 {
                     status: 400,
                     headers: {
@@ -77,7 +76,7 @@ export async function POST(request: Request) {
         const { data: app, error: appError } = await adminSupabase
             .from('apps')
             .select('id')
-            .eq('id', appId)
+            .eq('id', app_id)
             .single();
 
         if (appError || !app) {
@@ -96,7 +95,7 @@ export async function POST(request: Request) {
         const { data, error } = await adminSupabase
             .from('wallets')
             .select('encrypted_pk_blob, address')
-            .eq('app_id', appId)
+            .eq('app_id', app_id)
             .eq('user_social_id', userSocialId)
             .eq('network', network)
             .single();

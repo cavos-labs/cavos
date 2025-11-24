@@ -7,11 +7,10 @@ export async function POST(request: Request) {
         const supabase = await createClient();
         const adminSupabase = createAdminClient();
 
-        // Get headers
-        const appId = request.headers.get('x-app-id');
+        // Get headers  
         const authHeader = request.headers.get('authorization');
 
-        if (!appId || !authHeader) {
+        if (!authHeader) {
             return NextResponse.json(
                 { error: 'Missing required headers' },
                 {
@@ -61,9 +60,9 @@ export async function POST(request: Request) {
 
         // Parse Body
         const body = await request.json();
-        const { address, network, encrypted_pk_blob } = body;
+        const { address, network, encrypted_pk_blob, app_id } = body;
 
-        if (!address || !network || !encrypted_pk_blob) {
+        if (!address || !network || !encrypted_pk_blob || !app_id) {
             return NextResponse.json(
                 { error: 'Missing required body fields' },
                 {
@@ -79,7 +78,7 @@ export async function POST(request: Request) {
         const { data: app, error: appError } = await adminSupabase
             .from('apps')
             .select('id')
-            .eq('id', appId)
+            .eq('id', app_id)
             .single();
 
         if (appError || !app) {
@@ -99,7 +98,7 @@ export async function POST(request: Request) {
             .from('wallets')
             .upsert(
                 {
-                    app_id: appId,
+                    app_id: app_id,
                     user_social_id: userSocialId,
                     network,
                     address,
