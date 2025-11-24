@@ -7,7 +7,7 @@ export async function POST(request: Request) {
 
         // Parse Body
         const body = await request.json();
-        const { address, network, encrypted_pk_blob, app_id, user_social_id } = body;
+        const { address, network, encrypted_pk_blob, app_id, user_social_id, email } = body;
 
         if (!address || !network || !encrypted_pk_blob || !app_id || !user_social_id) {
             return NextResponse.json(
@@ -50,6 +50,7 @@ export async function POST(request: Request) {
                     network,
                     address,
                     encrypted_pk_blob,
+                    email: email || null,
                     updated_at: new Date().toISOString(),
                 },
                 {
