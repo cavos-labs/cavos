@@ -1,68 +1,17 @@
 import { createAdminClient } from '@/lib/supabase/admin';
-import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
     try {
-        const supabase = await createClient();
         const adminSupabase = createAdminClient();
-
-        // Get headers
-        const authHeader = request.headers.get('authorization');
-
-        if (!authHeader) {
-            return NextResponse.json(
-                { error: 'Missing required headers' },
-                {
-                    status: 400,
-                    headers: {
-                        'Access-Control-Allow-Origin': '*',
-                    }
-                }
-            );
-        }
-
-        // Validate Auth Token
-        const token = authHeader.replace('Bearer ', '');
-        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-        if (authError || !user) {
-            return NextResponse.json(
-                { error: 'Unauthorized' },
-                {
-                    status: 401,
-                    headers: {
-                        'Access-Control-Allow-Origin': '*',
-                    }
-                }
-            );
-        }
-
-        // Extract Social ID
-        const identity = user.identities?.find(id => id.provider === 'google' || id.provider === 'apple')
-            || user.identities?.[0];
-
-        if (!identity) {
-            return NextResponse.json(
-                { error: 'No valid identity found' },
-                {
-                    status: 400,
-                    headers: {
-                        'Access-Control-Allow-Origin': '*',
-                    }
-                }
-            );
-        }
-
-        const userSocialId = identity.id;
 
         // Parse Body
         const body = await request.json();
-        const { network, app_id } = body;
+        const { network, app_id, user_social_id } = body;
 
-        if (!network || !app_id) {
+        if (!network || !app_id || !user_social_id) {
             return NextResponse.json(
-                { error: 'Missing network or app_id' },
+                { error: 'Missing required fields' },
                 {
                     status: 400,
                     headers: {
@@ -96,7 +45,7 @@ export async function POST(request: Request) {
             .from('wallets')
             .select('encrypted_pk_blob, address')
             .eq('app_id', app_id)
-            .eq('user_social_id', userSocialId)
+            .eq('user_social_id', user_social_id)
             .eq('network', network)
             .single();
 

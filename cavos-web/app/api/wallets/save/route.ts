@@ -1,68 +1,15 @@
 import { createAdminClient } from '@/lib/supabase/admin';
-import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
     try {
-        const supabase = await createClient();
         const adminSupabase = createAdminClient();
-
-        // Get headers  
-        const authHeader = request.headers.get('authorization');
-
-        if (!authHeader) {
-            return NextResponse.json(
-                { error: 'Missing required headers' },
-                {
-                    status: 400,
-                    headers: {
-                        'Access-Control-Allow-Origin': '*',
-                    }
-                }
-            );
-        }
-
-        // Validate Auth Token
-        const token = authHeader.replace('Bearer ', '');
-        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-        if (authError || !user) {
-            return NextResponse.json(
-                { error: 'Unauthorized' },
-                {
-                    status: 401,
-                    headers: {
-                        'Access-Control-Allow-Origin': '*',
-                    }
-                }
-            );
-        }
-
-        // Extract Social ID from identities
-        // We look for the first identity that is NOT email (unless email is the only one)
-        // Ideally we want 'google' or 'apple'
-        const identity = user.identities?.find(id => id.provider === 'google' || id.provider === 'apple')
-            || user.identities?.[0];
-
-        if (!identity) {
-            return NextResponse.json(
-                { error: 'No valid identity found' },
-                {
-                    status: 400,
-                    headers: {
-                        'Access-Control-Allow-Origin': '*',
-                    }
-                }
-            );
-        }
-
-        const userSocialId = identity.id; // This is the 'sub' from the provider
 
         // Parse Body
         const body = await request.json();
-        const { address, network, encrypted_pk_blob, app_id } = body;
+        const { address, network, encrypted_pk_blob, app_id, user_social_id } = body;
 
-        if (!address || !network || !encrypted_pk_blob || !app_id) {
+        if (!address || !network || !encrypted_pk_blob || !app_id || !user_social_id) {
             return NextResponse.json(
                 { error: 'Missing required body fields' },
                 {
@@ -99,11 +46,10 @@ export async function POST(request: Request) {
             .upsert(
                 {
                     app_id: app_id,
-                    user_social_id: userSocialId,
+                    user_social_id: user_social_id,
                     network,
                     address,
                     encrypted_pk_blob,
-                    email: user.email, // Optional, for reference
                     updated_at: new Date().toISOString(),
                 },
                 {
