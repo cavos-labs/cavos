@@ -65,7 +65,7 @@ export async function DELETE(request: Request) {
 
         // 3. Get Auth0 Management API Token
         // We need this to perform administrative actions like deleting a user
-        const clientId = process.env.AUTH0_CLIENT_ID;
+        const clientId = process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID;
         const clientSecret = process.env.AUTH0_CLIENT_SECRET;
 
         if (!clientId || !clientSecret) {
