@@ -3,13 +3,14 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { LayoutDashboard, Building2, AppWindow, LogOut, FileText } from 'lucide-react'
+import { LayoutDashboard, Building2, AppWindow, LogOut, FileText, CreditCard } from 'lucide-react'
 import Image from 'next/image'
 
 const navigation = [
     { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Organizations', href: '/dashboard/organizations', icon: Building2 },
     { name: 'Applications', href: '/dashboard/apps', icon: AppWindow },
+    { name: 'Billing', href: '/dashboard/billing', icon: CreditCard },
 ]
 
 export function Sidebar() {
