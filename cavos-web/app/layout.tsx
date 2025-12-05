@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { romagothicbold, geist } from "@/lib/fonts";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "Cavos | Invisible crypto infrastructure",
@@ -18,6 +19,7 @@ export default function RootLayout({
         className={`${romagothicbold.variable} ${geist.variable} antialiased`}
       >
         {children}
+        <Analytics />
       </body>
     </html>
   );

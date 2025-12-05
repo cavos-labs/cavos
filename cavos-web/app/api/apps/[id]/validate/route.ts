@@ -1,12 +1,11 @@
-```typescript
 import { createAdminClient } from '@/lib/supabase/admin';
 import { NextResponse } from 'next/server';
 
 export async function GET(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
-    const { id: appId } = params;
+    const { id: appId } = await params;
     const url = new URL(request.url);
     const network = url.searchParams.get('network');
 
@@ -78,32 +77,32 @@ id,
         return NextResponse.json({
             allowed: false,
             reason: 'mau_limit_exceeded',
-            message: `MAU limit reached(${ currentMAU } / ${ limit }).Upgrade at cavos.xyz / pricing`,
+            message: `MAU limit reached(${currentMAU} / ${limit}).Upgrade at cavos.xyz / pricing`,
             current_mau: currentMAU,
             limit: limit,
             plan_tier: planTier,
-            upgrade_url: `${ process.env.NEXT_PUBLIC_URL }/pricing`
+            upgrade_url: `${process.env.NEXT_PUBLIC_URL}/pricing`
         }, { status: 403 });
     }
 
-// Warning thresholds
-let warning = null;
-if (isMainnet) {
-    const percentage = (currentMAU / limit) * 100;
-    if (percentage >= 80) {
-        warning = {
-            warning: true,
-            message: `You're at ${Math.round(percentage)}% of your ${limit} MAU limit`,
-            percentage: percentage
-        };
+    // Warning thresholds
+    let warning = null;
+    if (isMainnet) {
+        const percentage = (currentMAU / limit) * 100;
+        if (percentage >= 80) {
+            warning = {
+                warning: true,
+                message: `You're at ${Math.round(percentage)}% of your ${limit} MAU limit`,
+                percentage: percentage
+            };
+        }
     }
-}
 
-return NextResponse.json({
-    allowed: true,
-    plan_tier: planTier,
-    current_mau: currentMAU,
-    limit,
-    ...(warning && warning)
-});
+    return NextResponse.json({
+        allowed: true,
+        plan_tier: planTier,
+        current_mau: currentMAU,
+        limit,
+        ...(warning && warning)
+    });
 }
