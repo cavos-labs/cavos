@@ -43,7 +43,8 @@ export async function POST(request: Request) {
         const { error: rpcError } = await supabase.rpc('increment_mau', {
             p_user_id: ownerId,
             p_app_id: app_id,
-            p_period_start: periodStart
+            p_period_start: periodStart,
+            p_wallet_address: wallet_address
         });
 
         if (rpcError) {
