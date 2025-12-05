@@ -2,12 +2,28 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import axios from 'axios';
 
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export async function OPTIONS() {
+    return new NextResponse(null, {
+        status: 200,
+        headers: corsHeaders,
+    });
+}
+
 export async function DELETE(request: Request) {
     try {
         // 1. Get and validate the Authorization header
         const authHeader = request.headers.get('Authorization');
         if (!authHeader) {
-            return NextResponse.json({ error: 'Missing Authorization header' }, { status: 401 });
+            return NextResponse.json({ error: 'Missing Authorization header' }, {
+                status: 401,
+                headers: corsHeaders,
+            });
         }
 
         const accessToken = authHeader.replace('Bearer ', '');
@@ -15,7 +31,10 @@ export async function DELETE(request: Request) {
 
         if (!auth0Domain) {
             console.error('Missing NEXT_PUBLIC_AUTH0_DOMAIN env var');
-            return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+            return NextResponse.json({ error: 'Server configuration error' }, {
+                status: 500,
+                headers: corsHeaders,
+            });
         }
 
         // Clean domain (remove protocol)
@@ -31,11 +50,17 @@ export async function DELETE(request: Request) {
             userId = userInfoResponse.data.sub;
         } catch (error) {
             console.error('Failed to validate token with Auth0:', error);
-            return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
+            return NextResponse.json({ error: 'Invalid or expired token' }, {
+                status: 401,
+                headers: corsHeaders,
+            });
         }
 
         if (!userId) {
-            return NextResponse.json({ error: 'Could not retrieve user ID' }, { status: 401 });
+            return NextResponse.json({ error: 'Could not retrieve user ID' }, {
+                status: 401,
+                headers: corsHeaders,
+            });
         }
 
         // 3. Get Auth0 Management API Token
@@ -45,7 +70,10 @@ export async function DELETE(request: Request) {
 
         if (!clientId || !clientSecret) {
             console.error('Missing AUTH0_CLIENT_ID or AUTH0_CLIENT_SECRET');
-            return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+            return NextResponse.json({ error: 'Server configuration error' }, {
+                status: 500,
+                headers: corsHeaders,
+            });
         }
 
         let managementToken: string;
@@ -59,7 +87,10 @@ export async function DELETE(request: Request) {
             managementToken = tokenResponse.data.access_token;
         } catch (error) {
             console.error('Failed to get Auth0 Management API token:', error);
-            return NextResponse.json({ error: 'Failed to authorize management action' }, { status: 500 });
+            return NextResponse.json({ error: 'Failed to authorize management action' }, {
+                status: 500,
+                headers: corsHeaders,
+            });
         }
 
         // 4. Delete User from Auth0
@@ -69,7 +100,10 @@ export async function DELETE(request: Request) {
             });
         } catch (error) {
             console.error('Failed to delete user from Auth0:', error);
-            return NextResponse.json({ error: 'Failed to delete user account' }, { status: 500 });
+            return NextResponse.json({ error: 'Failed to delete user account' }, {
+                status: 500,
+                headers: corsHeaders,
+            });
         }
 
         // 5. Delete Wallet from Supabase
@@ -91,10 +125,15 @@ export async function DELETE(request: Request) {
             // but for now, we prioritize the account deletion.
         }
 
-        return NextResponse.json({ message: 'Account deleted successfully' });
+        return NextResponse.json({ message: 'Account deleted successfully' }, {
+            headers: corsHeaders,
+        });
 
     } catch (error) {
         console.error('Unexpected error in delete account route:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        return NextResponse.json({ error: 'Internal server error' }, {
+            status: 500,
+            headers: corsHeaders,
+        });
     }
 }
