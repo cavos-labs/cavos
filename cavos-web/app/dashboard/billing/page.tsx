@@ -73,7 +73,8 @@ export default function BillingPage() {
                 .eq('user_id', user.id)
                 .order('period_start', { ascending: false })
                 .limit(1)
-                .single()
+                .limit(1)
+                .maybeSingle()
         ]);
 
         setSubscription(subRes.data);

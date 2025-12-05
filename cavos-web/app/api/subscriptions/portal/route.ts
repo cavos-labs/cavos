@@ -27,8 +27,11 @@ export async function POST(request: Request) {
         });
 
         return NextResponse.json({ url: session.url });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error creating portal session:', error);
-        return new NextResponse('Internal Error', { status: 500 });
+        return NextResponse.json(
+            { error: error.message || 'Internal Error' },
+            { status: 500 }
+        );
     }
 }
