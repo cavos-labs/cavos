@@ -26,6 +26,24 @@ export async function DELETE(request: Request) {
             });
         }
 
+        // 2. Parse request body to get app_id and network
+        const body = await request.json();
+        const { app_id, network } = body;
+
+        if (!app_id) {
+            return NextResponse.json({ error: 'Missing app_id in request body' }, {
+                status: 400,
+                headers: corsHeaders,
+            });
+        }
+
+        if (!network) {
+            return NextResponse.json({ error: 'Missing network in request body' }, {
+                status: 400,
+                headers: corsHeaders,
+            });
+        }
+
         const accessToken = authHeader.replace('Bearer ', '');
         const auth0Domain = process.env.NEXT_PUBLIC_AUTH0_DOMAIN;
 
@@ -40,7 +58,7 @@ export async function DELETE(request: Request) {
         // Clean domain (remove protocol)
         const domain = auth0Domain.replace(/^https?:\/\//, '');
 
-        // 2. Verify token and get User ID by calling Auth0 /userinfo
+        // 3. Verify token and get User ID by calling Auth0 /userinfo
         // This ensures the token is valid and belongs to the user
         let userId: string;
         try {
@@ -63,69 +81,26 @@ export async function DELETE(request: Request) {
             });
         }
 
-        // 3. Get Auth0 Management API Token
-        // We need this to perform administrative actions like deleting a user
-        const clientId = process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID;
-        const clientSecret = process.env.AUTH0_CLIENT_SECRET;
-
-        if (!clientId || !clientSecret) {
-            console.error('Missing AUTH0_CLIENT_ID or AUTH0_CLIENT_SECRET');
-            return NextResponse.json({ error: 'Server configuration error' }, {
-                status: 500,
-                headers: corsHeaders,
-            });
-        }
-
-        let managementToken: string;
-        try {
-            const tokenResponse = await axios.post(`https://${domain}/oauth/token`, {
-                client_id: clientId,
-                client_secret: clientSecret,
-                audience: `https://${domain}/api/v2/`,
-                grant_type: 'client_credentials',
-            });
-            managementToken = tokenResponse.data.access_token;
-        } catch (error) {
-            console.error('Failed to get Auth0 Management API token:', error);
-            return NextResponse.json({ error: 'Failed to authorize management action' }, {
-                status: 500,
-                headers: corsHeaders,
-            });
-        }
-
-        // 4. Delete User from Auth0
-        try {
-            await axios.delete(`https://${domain}/api/v2/users/${userId}`, {
-                headers: { Authorization: `Bearer ${managementToken}` },
-            });
-        } catch (error) {
-            console.error('Failed to delete user from Auth0:', error);
-            return NextResponse.json({ error: 'Failed to delete user account' }, {
-                status: 500,
-                headers: corsHeaders,
-            });
-        }
-
-        // 5. Delete Wallet from Supabase
-        // We use the Supabase Admin client to bypass RLS if necessary, or just standard deletion
+        // 4. Delete Wallet from Supabase
+        // Delete only the wallet for this specific app, user, and network
         const supabase = createAdminClient();
 
-        // Assuming the 'wallets' table has a 'user_id' column that matches the Auth0 ID (sub)
-        // Adjust column name if necessary based on schema
         const { error: supabaseError } = await supabase
             .from('wallets')
             .delete()
-            .eq('user_social_id', userId);
+            .eq('app_id', app_id)
+            .eq('user_social_id', userId)
+            .eq('network', network);
 
         if (supabaseError) {
             console.error('Failed to delete wallet from Supabase:', supabaseError);
-            // Note: We already deleted the Auth0 user, so this is a partial failure state.
-            // We still return 200 but log the error, as the primary account is gone.
-            // Ideally, we might want to handle this more gracefully (e.g., retry or manual cleanup),
-            // but for now, we prioritize the account deletion.
+            return NextResponse.json({ error: 'Failed to delete wallet' }, {
+                status: 500,
+                headers: corsHeaders,
+            });
         }
 
-        return NextResponse.json({ message: 'Account deleted successfully' }, {
+        return NextResponse.json({ message: 'Wallet deleted successfully' }, {
             headers: corsHeaders,
         });
 
