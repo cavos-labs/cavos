@@ -123,7 +123,7 @@ export function Header() {
                                     Applications
                                 </Link>
                                 <a
-                                    href="https://cavos.gitbook.io/cavos"
+                                    href="https://docs.cavos.xyz"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     onClick={() => setIsMenuOpen(false)}
@@ -157,7 +157,7 @@ export function Header() {
                                     Register
                                 </Link>
                                 <a
-                                    href="https://cavos.gitbook.io/cavos"
+                                    href="https://docs.cavos.xyz"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     onClick={() => setIsMenuOpen(false)}
