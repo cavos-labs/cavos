@@ -65,7 +65,7 @@ export function Sidebar() {
             {/* Footer Links */}
             <div className="p-4 border-t border-black/5 space-y-1">
                 <a
-                    href="https://cavos.gitbook.io/cavos"
+                    href="https://docs.cavos.xyz"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-black/60 hover:text-black hover:bg-black/5 rounded-lg transition-colors"
