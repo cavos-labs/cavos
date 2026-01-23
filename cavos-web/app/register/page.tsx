@@ -36,6 +36,7 @@ export default function RegisterPage() {
             const data = await res.json()
 
             if (!res.ok) {
+                console.error('Registration failed:', data)
                 setError(data.error || 'Registration failed')
                 setLoading(false)
                 return
