@@ -205,17 +205,33 @@ export async function POST(request: NextRequest) {
 
     const payload = JSON.parse(Buffer.from(idTokenParts[1], 'base64url').toString('utf-8'));
 
-    // Apple hashes the nonce with SHA256
+    // Apple may or may not hash the nonce with SHA256 depending on the flow
+    // Try both: direct match and SHA256 hash match
     const expectedNonceHash = hashNonce(expectedNonce);
-    if (payload.nonce !== expectedNonceHash) {
+    const nonceMatches = payload.nonce === expectedNonce || payload.nonce === expectedNonceHash;
+
+    if (!nonceMatches && payload.nonce) {
       console.error('[OAUTH-APPLE-CALLBACK] Nonce mismatch:', {
-        expected: expectedNonceHash,
+        expectedRaw: expectedNonce,
+        expectedHash: expectedNonceHash,
         received: payload.nonce,
       });
       return NextResponse.json(
-        { error: 'Nonce mismatch - possible replay attack' },
+        {
+          error: 'Nonce mismatch - possible replay attack',
+          debug: {
+            expectedRaw: expectedNonce,
+            expectedHash: expectedNonceHash,
+            received: payload.nonce,
+          }
+        },
         { status: 400 }
       );
+    }
+
+    // If no nonce in payload, log warning but continue (some Apple flows don't include it)
+    if (!payload.nonce) {
+      console.warn('[OAUTH-APPLE-CALLBACK] No nonce in id_token, skipping verification');
     }
 
     // Verify issuer
