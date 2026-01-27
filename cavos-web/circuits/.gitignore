@@ -1,8 +1,0 @@
-# Circuit files (large, stored separately)
-*.wasm
-*.zkey
-*.vkey
-
-# Keep the directory
-!.gitignore
-!README.md
