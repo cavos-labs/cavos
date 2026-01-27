@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Exclude circuit files from output file tracing (they're read at runtime via fs)
+  outputFileTracingExcludes: {
+    '*': ['./circuits/**'],
+  },
+  serverExternalPackages: ['snarkjs', 'poseidon-lite'],
   async headers() {
     return [
       {

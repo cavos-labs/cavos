@@ -216,6 +216,9 @@ export async function verifyProof(
   publicSignals: string[]
 ): Promise<boolean> {
   try {
+    if (!proof) {
+      throw new Error('Proof is undefined');
+    }
     if (!fs.existsSync(VKEY_PATH)) {
       throw new Error(`Verification key not found at ${VKEY_PATH}`);
     }

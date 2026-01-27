@@ -31,6 +31,7 @@ export interface CircuitInputParams {
 }
 
 export interface CircuitInput {
+  [key: string]: string | string[];
   all_inputs_hash: string;
   padded_unsigned_jwt: string[];
   payload_start_index: string;
