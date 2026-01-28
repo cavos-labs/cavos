@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'standalone',
   // Exclude circuit files from output file tracing (they're read at runtime via fs)
   outputFileTracingExcludes: {
     '*': ['./circuits/**'],
