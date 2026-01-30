@@ -204,17 +204,17 @@ export async function GET(request: NextRequest) {
       // User info for display
       user: userInfo
         ? {
-            id: userInfo.sub,
-            email: userInfo.email,
-            name: userInfo.name,
-            picture: userInfo.picture,
-          }
+          id: userInfo.sub,
+          email: userInfo.email,
+          name: userInfo.name,
+          picture: userInfo.picture,
+        }
         : {
-            id: payload.sub,
-            email: payload.email,
-            name: payload.name,
-            picture: payload.picture,
-          },
+          id: payload.sub,
+          email: payload.email,
+          name: payload.name,
+          picture: payload.picture,
+        },
 
       // Token metadata
       expires_in: tokens.expires_in,
@@ -225,7 +225,7 @@ export async function GET(request: NextRequest) {
 
     // Redirect to final URI with auth data
     const redirectUrl = new URL(finalRedirectUri);
-    redirectUrl.searchParams.set('zk_auth_data', encodeURIComponent(JSON.stringify(responseData)));
+    redirectUrl.searchParams.set('auth_data', JSON.stringify(responseData));
 
     console.log('[OAUTH-GOOGLE-CALLBACK] Success for user:', payload.sub);
 

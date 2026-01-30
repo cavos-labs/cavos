@@ -306,7 +306,7 @@ export async function POST(request: NextRequest) {
 
     // Redirect to final URI with auth data
     const redirectUrl = new URL(finalRedirectUri);
-    redirectUrl.searchParams.set('zk_auth_data', encodeURIComponent(JSON.stringify(responseData)));
+    redirectUrl.searchParams.set('auth_data', JSON.stringify(responseData));
 
     console.log('[OAUTH-APPLE-CALLBACK] Success for user:', payload.sub);
 
