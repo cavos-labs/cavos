@@ -74,16 +74,7 @@ export async function GET(request: NextRequest) {
     url.searchParams.set('state', Buffer.from(statePayload).toString('base64url'));
 
     // Return the URL for the client to redirect to
-    return NextResponse.json(
-      { url: url.toString() },
-      {
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        },
-      }
-    );
+    return NextResponse.json({ url: url.toString() });
   } catch (error: any) {
     console.error('[OAUTH-GOOGLE] Error:', error);
     return NextResponse.json(
@@ -100,13 +91,3 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function OPTIONS(request: NextRequest) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
-  });
-}
