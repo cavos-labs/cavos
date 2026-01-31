@@ -122,13 +122,15 @@ export function Header() {
                                 >
                                     Applications
                                 </Link>
-                                <Link
-                                    href="/docs"
+                                <a
+                                    href="https://docs.cavos.xyz"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                     onClick={() => setIsMenuOpen(false)}
                                     className="block text-2xl font-medium text-black hover:opacity-70 transition-opacity"
                                 >
                                     View Docs
-                                </Link>
+                                </a>
 
                                 {/* Logout Button */}
                                 <button
@@ -154,13 +156,15 @@ export function Header() {
                                 >
                                     Register
                                 </Link>
-                                <Link
-                                    href="/docs"
+                                <a
+                                    href="https://docs.cavos.xyz"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
                                     onClick={() => setIsMenuOpen(false)}
                                     className="block text-2xl font-medium text-black hover:opacity-70 transition-opacity"
                                 >
                                     View Docs
-                                </Link>
+                                </a>
                             </>
                         )}
                     </nav>

@@ -1,23 +1,21 @@
-import { HTMLAttributes, ReactNode } from 'react'
+import React from 'react';
 
-interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  children: ReactNode
-  hover?: boolean
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  noPadding?: boolean;
 }
 
-export function Card({ children, hover = false, className = '', ...props }: CardProps) {
-  return (
-    <div
-      className={`
-        bg-[#0A0A08]
-        border border-[#EAE5DC]/10
-        rounded-lg p-6
-        ${hover ? 'hover:border-[#EAE5DC]/20 transition-all duration-300' : ''}
-        ${className}
-      `}
-      {...props}
-    >
-      {children}
-    </div>
-  )
-}
+export const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ className = '', noPadding = false, children, ...props }, ref) => {
+    return (
+      <div
+        ref={ref}
+        className={`bg-white border border-black/10 rounded-xl shadow-sm ${!noPadding ? 'p-6' : ''} ${className}`}
+        {...props}
+      >
+        {children}
+      </div>
+    );
+  }
+);
+
+Card.displayName = 'Card';

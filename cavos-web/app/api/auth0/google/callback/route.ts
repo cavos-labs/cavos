@@ -64,10 +64,55 @@ export async function GET(request: NextRequest) {
 
     const userInfo = userInfoResponse.data;
 
+    // Get Management API token to access user identities with Google tokens
+    const managementTokenResponse = await axios.post(
+      `https://${domain}/oauth/token`,
+      {
+        grant_type: 'client_credentials',
+        client_id: clientId,
+        client_secret: clientSecret,
+        audience: `https://${domain}/api/v2/`,
+      },
+      {
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+
+    const managementToken = managementTokenResponse.data.access_token;
+
+    // Get user's full profile including identities
+    const userId = userInfo.sub;
+    const userProfileResponse = await axios.get(
+      `https://${domain}/api/v2/users/${encodeURIComponent(userId)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${managementToken}`,
+        },
+      }
+    );
+
+    console.log('[AUTH0-GOOGLE-CALLBACK] User profile:', JSON.stringify(userProfileResponse.data, null, 2));
+
+    // Find Google identity
+    const googleIdentity = userProfileResponse.data.identities?.find(
+      (identity: any) => identity.provider === 'google-oauth2'
+    );
+
+    let googleAccessToken = access_token;
+    let googleRefreshToken = refresh_token;
+
+    if (googleIdentity?.access_token) {
+      googleAccessToken = googleIdentity.access_token;
+      googleRefreshToken = googleIdentity.refresh_token || refresh_token;
+      console.log('[AUTH0-GOOGLE-CALLBACK] Using Google identity token');
+    } else {
+      console.warn('[AUTH0-GOOGLE-CALLBACK] No Google access token in identity, using Auth0 token');
+    }
+
     // Prepare response data
     const responseData = {
-      access_token,
-      refresh_token,
+      access_token: googleAccessToken,
+      refresh_token: googleRefreshToken,
       id_token,
       expires_in,
       user: {

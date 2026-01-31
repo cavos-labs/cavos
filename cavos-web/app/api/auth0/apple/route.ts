@@ -38,12 +38,25 @@ export async function GET(request: NextRequest) {
     url.searchParams.set('scope', 'openid profile email offline_access');
     url.searchParams.set('connection', 'apple');
 
-    return NextResponse.json({ url: url.toString() });
+    return NextResponse.json({ url: url.toString() }, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      },
+    });
   } catch (error: any) {
     console.error('[AUTH0-APPLE] Error:', error);
     return NextResponse.json(
       { error: 'Internal server error', details: error.message },
-      { status: 500 }
+      {
+        status: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+      }
     );
   }
 }

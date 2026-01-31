@@ -32,7 +32,11 @@ export async function POST(request: Request) {
     })
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
+      console.error('Supabase signup error:', error)
+      return NextResponse.json({
+        error: error.message,
+        details: error
+      }, { status: 400 })
     }
 
     return NextResponse.json(
@@ -45,6 +49,6 @@ export async function POST(request: Request) {
     )
   } catch (error) {
     console.error('Signup error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error', details: error }, { status: 500 })
   }
 }

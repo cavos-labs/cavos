@@ -96,6 +96,11 @@ export default function LoginPage() {
                                     disabled={loading}
                                     className="w-full px-4 py-3 bg-white border border-black/20 rounded-lg text-black placeholder:text-black/40 focus:outline-none focus:border-black/50 transition-colors disabled:opacity-50"
                                 />
+                                <div className="flex justify-end mt-1">
+                                    <Link href="/forgot-password" className="text-xs text-black/60 hover:text-black transition-colors">
+                                        Forgot password?
+                                    </Link>
+                                </div>
                             </div>
 
                             <button
