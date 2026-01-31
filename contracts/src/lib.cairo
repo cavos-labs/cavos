@@ -1,18 +1,24 @@
-// Cavos Wallet - Session-based Smart Contract Wallet for StarkNet
-// Main library file
+// OAuth Account - On-chain JWT verification for OAuth-based wallets on StarkNet
 
 // Core contracts
-pub mod session_wallet;
-pub mod account_factory;
+pub mod cavos;
+pub mod deployer;
+pub mod jwks_registry;
 
-// Interfaces
-pub mod interfaces {
-    pub mod isession_wallet;
-    pub mod iaccount_factory;
+// RSA verification library
+pub mod rsa {
+    pub mod bignum;
+    pub mod rsa_verify;
 }
 
-// Reusable components
-pub mod components {
-    pub mod session_manager;
-    pub mod policy_enforcer;
+// JWT parsing
+pub mod jwt {
+    pub mod base64;
+    pub mod jwt_parser;
+}
+
+// Utilities
+pub mod utils {
+    pub mod address_seed;
+    pub mod nonce;
 }
