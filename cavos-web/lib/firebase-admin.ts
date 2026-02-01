@@ -1,0 +1,21 @@
+/**
+ * Firebase Admin SDK Initialization
+ *
+ * Initializes the Firebase Admin SDK for server-side operations
+ * like creating users and verifying credentials.
+ */
+
+import admin from 'firebase-admin';
+
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    }),
+  });
+}
+
+export const auth = admin.auth();
+export const firestore = admin.firestore();

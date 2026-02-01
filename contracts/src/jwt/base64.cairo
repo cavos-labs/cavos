@@ -26,16 +26,15 @@ fn decode_char(c: u8) -> Option<u8> {
 
 /// Decode a Base64URL-encoded byte array.
 /// Returns the decoded bytes, or panics on invalid input.
-pub fn base64url_decode(input: Span<u8>) -> Array<u8> {
-    let len = input.len();
+pub fn base64url_decode(input: @ByteArray, start: usize, len: usize) -> Array<u8> {
     let mut output: Array<u8> = array![];
     let mut i: usize = 0;
 
     while i + 3 < len {
-        let a = decode_char(*input[i]).expect('invalid base64 char');
-        let b = decode_char(*input[i + 1]).expect('invalid base64 char');
-        let c = decode_char(*input[i + 2]).expect('invalid base64 char');
-        let d = decode_char(*input[i + 3]).expect('invalid base64 char');
+        let a = decode_char(input.at(start + i).unwrap()).expect('invalid base64 char');
+        let b = decode_char(input.at(start + i + 1).unwrap()).expect('invalid base64 char');
+        let c = decode_char(input.at(start + i + 2).unwrap()).expect('invalid base64 char');
+        let d = decode_char(input.at(start + i + 3).unwrap()).expect('invalid base64 char');
 
         // Combine 4 x 6-bit values into 3 bytes
         let combined: u32 = a.into() * 0x40000_u32
@@ -46,31 +45,87 @@ pub fn base64url_decode(input: Span<u8>) -> Array<u8> {
         output.append(((combined / 0x10000) & 0xff).try_into().unwrap());
 
         // Check for padding
-        if *input[i + 2] != '=' {
+        let char_c = input.at(start + i + 2).unwrap();
+        let char_d = input.at(start + i + 3).unwrap();
+
+        if char_c != '=' {
             output.append(((combined / 0x100) & 0xff).try_into().unwrap());
         }
-        if *input[i + 3] != '=' {
+        if char_d != '=' {
             output.append((combined & 0xff).try_into().unwrap());
         }
 
         i += 4;
-    };
+    }
 
     // Handle remaining bytes (Base64URL may omit padding)
     let remaining = len - i;
     if remaining == 2 {
-        let a = decode_char(*input[i]).expect('invalid base64 char');
-        let b = decode_char(*input[i + 1]).expect('invalid base64 char');
+        let a = decode_char(input.at(start + i).unwrap()).expect('invalid base64 char');
+        let b = decode_char(input.at(start + i + 1).unwrap()).expect('invalid base64 char');
         let combined: u32 = a.into() * 0x40_u32 + b.into();
         output.append(((combined / 0x10) & 0xff).try_into().unwrap());
     } else if remaining == 3 {
-        let a = decode_char(*input[i]).expect('invalid base64 char');
-        let b = decode_char(*input[i + 1]).expect('invalid base64 char');
-        let c = decode_char(*input[i + 2]).expect('invalid base64 char');
+        let a = decode_char(input.at(start + i).unwrap()).expect('invalid base64 char');
+        let b = decode_char(input.at(start + i + 1).unwrap()).expect('invalid base64 char');
+        let c = decode_char(input.at(start + i + 2).unwrap()).expect('invalid base64 char');
         let combined: u32 = a.into() * 0x1000_u32 + b.into() * 0x40_u32 + c.into();
         output.append(((combined / 0x400) & 0xff).try_into().unwrap());
         output.append(((combined / 0x4) & 0xff).try_into().unwrap());
     }
 
     output
+}
+
+/// Decode only a specific window of a Base64URL-encoded byte array.
+/// target_offset: The offset in the DECODED result where the desired window starts.
+/// target_len: The length of the DECODED window to return.
+/// This is a critical optimization for verifying claims in large JWTs without decoding the whole
+/// thing.
+pub fn base64url_decode_window(
+    input: @ByteArray,
+    segment_start: usize,
+    segment_len: usize,
+    target_offset: usize,
+    target_len: usize,
+) -> Array<u8> {
+    let mut output: Array<u8> = array![];
+
+    // Each 4 Base64 chars = 3 decoded bytes
+    let start_chunk = target_offset / 3;
+    let end_chunk = (target_offset + target_len + 2) / 3;
+
+    let mut chunk_idx = start_chunk;
+    while chunk_idx < end_chunk {
+        let i = chunk_idx * 4;
+        if i + 3 < segment_len {
+            let a = decode_char(input.at(segment_start + i).unwrap()).expect('invalid base64 char');
+            let b = decode_char(input.at(segment_start + i + 1).unwrap())
+                .expect('invalid base64 char');
+            let c = decode_char(input.at(segment_start + i + 2).unwrap())
+                .expect('invalid base64 char');
+            let d = decode_char(input.at(segment_start + i + 3).unwrap())
+                .expect('invalid base64 char');
+
+            let combined: u32 = a.into() * 0x40000_u32
+                + b.into() * 0x1000_u32
+                + c.into() * 0x40_u32
+                + d.into();
+
+            output.append(((combined / 0x10000) & 0xff).try_into().unwrap());
+            output.append(((combined / 0x100) & 0xff).try_into().unwrap());
+            output.append((combined & 0xff).try_into().unwrap());
+        }
+        chunk_idx += 1;
+    }
+
+    // Slice the output to get the exact window
+    let internal_offset = target_offset % 3;
+    let mut result: Array<u8> = array![];
+    let mut j: usize = 0;
+    while j < target_len {
+        result.append(*output[internal_offset + j]);
+        j += 1;
+    }
+    result
 }
