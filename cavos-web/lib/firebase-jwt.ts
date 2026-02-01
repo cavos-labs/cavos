@@ -24,7 +24,8 @@ export async function signFirebaseCustomJWT(payload: {
 
   // Import RSA private key (supports both PKCS#1 and PKCS#8 formats)
   const cryptoKey = crypto.createPrivateKey(privateKey);
-  const key = await jose.importJWK(cryptoKey.export({ format: 'jwk' }), 'RS256');
+  const jwk = cryptoKey.export({ format: 'jwk' }) as jose.JWK;
+  const key = await jose.importJWK(jwk, 'RS256');
 
   const jwt = await new jose.SignJWT(payload)
     .setProtectedHeader({
