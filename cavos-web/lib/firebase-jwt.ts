@@ -22,7 +22,9 @@ export async function signFirebaseCustomJWT(payload: {
   const privateKey = process.env.FIREBASE_RSA_PRIVATE_KEY!.replace(/\\n/g, '\n');
   const kid = process.env.FIREBASE_RSA_KID || 'firebase-2026';
 
-  const key = await jose.importPKCS8(privateKey, 'RS256');
+  // Import RSA private key (supports both PKCS#1 and PKCS#8 formats)
+  const cryptoKey = crypto.createPrivateKey(privateKey);
+  const key = await jose.importJWK(cryptoKey.export({ format: 'jwk' }), 'RS256');
 
   const jwt = await new jose.SignJWT(payload)
     .setProtectedHeader({
