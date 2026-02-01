@@ -1,6 +1,7 @@
 /// JWKS Registry Contract
 /// Stores Google/Apple RSA public keys on-chain for JWT verification.
 /// Admin-managed: keys are updated when providers rotate their JWKS.
+/// Validates RSA signatures for Google/Apple OIDC.
 
 use starknet::ContractAddress;
 
@@ -52,12 +53,12 @@ pub trait IJWKSRegistry<TContractState> {
 
 #[starknet::contract]
 pub mod JWKSRegistry {
-    use starknet::{ContractAddress, get_caller_address, get_block_timestamp};
     use starknet::storage::{
-        StoragePointerReadAccess, StoragePointerWriteAccess, Map, StorageMapReadAccess,
-        StorageMapWriteAccess,
+        Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
+        StoragePointerWriteAccess,
     };
-    use super::{JWKSKey, IJWKSRegistry};
+    use starknet::{ContractAddress, get_block_timestamp, get_caller_address};
+    use super::{IJWKSRegistry, JWKSKey};
 
     #[storage]
     struct Storage {
@@ -71,6 +72,12 @@ pub mod JWKSRegistry {
         KeySet: KeySet,
         KeyRemoved: KeyRemoved,
         AdminTransferred: AdminTransferred,
+        DummyEvent: DummyEvent,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct DummyEvent {
+        x: felt252,
     }
 
     #[derive(Drop, starknet::Event)]

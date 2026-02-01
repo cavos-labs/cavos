@@ -1,8 +1,8 @@
+use core::sha256::compute_sha256_byte_array;
 /// RSA-SHA256 (PKCS#1 v1.5) signature verification.
 /// Verifies JWT RS256 signatures from Google/Apple OAuth providers.
 
-use super::bignum::{BigUint2048, biguint_eq, biguint_modexp_65537, biguint_from_bytes};
-use core::sha256::compute_sha256_byte_array;
+use super::bignum::{BigUint2048, biguint_eq, biguint_from_bytes, biguint_modexp_65537};
 
 /// PKCS#1 v1.5 DigestInfo prefix for SHA-256.
 /// DER encoding: 30 31 30 0d 06 09 60 86 48 01 65 03 04 02 01 05 00 04 20
@@ -33,12 +33,53 @@ pub fn verify_rsa_sha256(
     biguint_eq(@decrypted, @expected)
 }
 
-/// Verify RSA signature given pre-computed SHA-256 hash.
-/// Useful when the hash is computed separately (e.g., for JWT header.payload).
-pub fn verify_rsa_sha256_prehashed(
-    hash: @[u32; 8], signature: @BigUint2048, modulus: @BigUint2048,
+
+/// Verify RSA signature using Montgomery Reduction (Optimized).
+/// Requires precomputed Montgomery constants n_prime and R^2.
+pub fn verify_rsa_sha256_mont(
+    message: @ByteArray,
+    signature: @BigUint2048,
+    modulus: @BigUint2048,
+    n_prime: @BigUint2048,
+    r_sq: @BigUint2048,
 ) -> bool {
-    let decrypted = biguint_modexp_65537(signature, modulus);
+    // Step 1: RSA verification (Montgomery)
+    // 1.1 Convert signature to Montgomery form: sig_mont = sig * R^2 * R^-1 = sig * R
+    let sig_mont = super::bignum::biguint_mul_mont(signature, r_sq, modulus, n_prime);
+
+    // 1.2 Exponentiate: val_mont = sig_mont^65537
+    let decrypted_mont = super::bignum::biguint_modexp_65537_mont(@sig_mont, modulus, n_prime);
+
+    // 1.3 Convert back to standard form: val = val_mont * 1 * R^-1
+    let one = super::bignum::biguint_one();
+    let decrypted = super::bignum::biguint_mul_mont(@decrypted_mont, @one, modulus, n_prime);
+
+    // Step 2: SHA-256 hash
+    let hash = compute_sha256_byte_array(message);
+    let expected = pkcs1_v15_encode(@hash);
+
+    // Step 3: Compare
+    biguint_eq(@decrypted, @expected)
+}
+
+/// Verify RSA signature (prehashed) using Montgomery Reduction.
+pub fn verify_rsa_sha256_prehashed_mont(
+    hash: @[u32; 8],
+    signature: @BigUint2048,
+    modulus: @BigUint2048,
+    n_prime: @BigUint2048,
+    r_sq: @BigUint2048,
+) -> bool {
+    // 1.1 Convert signature to Montgomery form
+    let sig_mont = super::bignum::biguint_mul_mont(signature, r_sq, modulus, n_prime);
+
+    // 1.2 Exponentiate
+    let decrypted_mont = super::bignum::biguint_modexp_65537_mont(@sig_mont, modulus, n_prime);
+
+    // 1.3 Convert back
+    let one = super::bignum::biguint_one();
+    let decrypted = super::bignum::biguint_mul_mont(@decrypted_mont, @one, modulus, n_prime);
+
     let expected = pkcs1_v15_encode(hash);
     biguint_eq(@decrypted, @expected)
 }
@@ -62,7 +103,7 @@ fn pkcs1_v15_encode(hash: @[u32; 8]) -> BigUint2048 {
     while i < 202 {
         padded.append(0xff);
         i += 1;
-    };
+    }
 
     // 0x00 separator
     padded.append(0x00);
@@ -99,7 +140,7 @@ fn pkcs1_v15_encode(hash: @[u32; 8]) -> BigUint2048 {
         padded.append(((word / 0x100) & 0xff).try_into().unwrap());
         padded.append((word & 0xff).try_into().unwrap());
         h_idx += 1;
-    };
+    }
 
     assert!(padded.len() == 256, "PKCS#1 padding must be 256 bytes");
 

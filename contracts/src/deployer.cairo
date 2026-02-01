@@ -3,7 +3,7 @@ use starknet::ContractAddress;
 #[starknet::interface]
 pub trait IOAuthAccountDeployer<TContractState> {
     /// Deploy an OAuth account with an initial session registered.
-    /// The relayer verifies the JWT off-chain before calling this.
+    /// Requires full JWT signature for on-chain RSA verification.
     fn deploy_oauth_account_with_session(
         ref self: TContractState,
         class_hash: starknet::ClassHash,
@@ -14,11 +14,12 @@ pub trait IOAuthAccountDeployer<TContractState> {
         nonce: felt252,
         max_block: u64,
         renewal_deadline: u64,
+        signature: Span<felt252>,
     ) -> ContractAddress;
 
     /// Register a new session on an existing account (fallback when grace period expired).
     /// Used when the user's session AND renewal period expire and they re-authenticate.
-    /// The relayer verifies the JWT off-chain before calling this.
+    /// Requires full JWT signature for on-chain RSA verification.
     fn register_session(
         ref self: TContractState,
         account_address: ContractAddress,
@@ -26,6 +27,7 @@ pub trait IOAuthAccountDeployer<TContractState> {
         nonce: felt252,
         max_block: u64,
         renewal_deadline: u64,
+        signature: Span<felt252>,
     );
 
     /// Legacy: Deploy an OAuth account without a session (for backwards compatibility).
@@ -54,6 +56,7 @@ pub mod OAuthAccountDeployer {
             nonce: felt252,
             max_block: u64,
             renewal_deadline: u64,
+            signature: Span<felt252>,
         );
     }
 
@@ -63,8 +66,7 @@ pub mod OAuthAccountDeployer {
     #[abi(embed_v0)]
     impl OAuthAccountDeployerImpl of super::IOAuthAccountDeployer<ContractState> {
         /// Deploy an OAuth account and register the initial session in one transaction.
-        /// This is the preferred method - the relayer verifies JWT off-chain,
-        /// then calls this to deploy + register session atomically.
+        /// Requires full JWT signature for on-chain RSA verification.
         fn deploy_oauth_account_with_session(
             ref self: ContractState,
             class_hash: ClassHash,
@@ -75,6 +77,7 @@ pub mod OAuthAccountDeployer {
             nonce: felt252,
             max_block: u64,
             renewal_deadline: u64,
+            signature: Span<felt252>,
         ) -> ContractAddress {
             // Get deployer address (this contract) to pass to the account
             let deployer_address = get_contract_address();
@@ -89,10 +92,11 @@ pub mod OAuthAccountDeployer {
                 .unwrap_syscall();
 
             // Register the initial session on the newly deployed account
+            // The account will perform full RSA verification on the signature
             let account = IOAuthAccountSessionDispatcher { contract_address };
             account
                 .register_session_from_deployer(
-                    ephemeral_pubkey, nonce, max_block, renewal_deadline,
+                    ephemeral_pubkey, nonce, max_block, renewal_deadline, signature,
                 );
 
             contract_address
@@ -100,6 +104,7 @@ pub mod OAuthAccountDeployer {
 
         /// Register a new session on an existing account (fallback).
         /// Used when user's session AND grace period have expired.
+        /// Requires full JWT signature for on-chain RSA verification.
         fn register_session(
             ref self: ContractState,
             account_address: ContractAddress,
@@ -107,11 +112,12 @@ pub mod OAuthAccountDeployer {
             nonce: felt252,
             max_block: u64,
             renewal_deadline: u64,
+            signature: Span<felt252>,
         ) {
             let account = IOAuthAccountSessionDispatcher { contract_address: account_address };
             account
                 .register_session_from_deployer(
-                    ephemeral_pubkey, nonce, max_block, renewal_deadline,
+                    ephemeral_pubkey, nonce, max_block, renewal_deadline, signature,
                 );
         }
 

@@ -1,4 +1,4 @@
-/// OAuth Account Contract
+/// Cavos OAuth Account Contract
 /// A Starknet account (SRC-6) that authenticates via JWT RSA signatures.
 /// Users log in with Google/Apple, and the contract verifies the JWT's
 /// RSA-256 signature against on-chain JWKS keys.
@@ -14,13 +14,17 @@ pub trait ICavos<TContractState> {
     /// Get the deployer address (can register initial session).
     fn get_deployer(self: @TContractState) -> ContractAddress;
     /// Register a session (deployer-only, used during deployment or as fallback).
+    /// Requires full JWT signature for on-chain RSA verification.
     fn register_session_from_deployer(
         ref self: TContractState,
         ephemeral_pubkey: felt252,
         nonce: felt252,
         max_block: u64,
         renewal_deadline: u64,
+        signature: Span<felt252>,
     );
+    /// Disable the deployer permanently. Can only be called by the account itself.
+    fn disable_deployer(ref self: TContractState);
     /// Renew session using an existing session in grace period.
     /// Self-custodial: no deployer needed if within renewal window.
     fn renew_session(
@@ -82,15 +86,20 @@ pub mod Cavos {
         get_block_timestamp, get_caller_address, get_contract_address, get_tx_info,
     };
     use crate::jwks_registry::{IJWKSRegistryDispatcher, IJWKSRegistryDispatcherTrait};
+    use crate::jwt::base64::base64url_decode_window;
+    use crate::jwt::jwt_parser::{parse_decimal, parse_hex, split_signed_data};
     use crate::rsa::bignum::{BigUint2048, biguint_from_limbs};
-    use crate::rsa::rsa_verify::verify_rsa_sha256;
 
     /// Magic number to identify full OAuth JWT signatures (used during deployment/session
     /// registration).
     const OAUTH_SIG_MAGIC: felt252 = 'OAUTH_JWT_V1';
 
-    /// Magic number to identify lightweight session signatures (used for transactions).
     const SESSION_SIG_MAGIC: felt252 = 'SESSION_V1';
+
+    const EXPECTED_ISS_GOOGLE: felt252 = 0x68747470733a2f2f6163636f756e74732e676f6f676c652e636f6d;
+    const EXPECTED_ISS_APPLE: felt252 = 0x68747470733a2f2f6170706c6569642e6170706c652e636f6d;
+
+    const EXPECTED_AUD: felt252 = 0x0;
 
     /// SRC-5 Interface ID
     const ISRC5_ID: felt252 = 0x3f918d17e5ee77373b56385708f855659a07f75997f365cf87748628532a055;
@@ -244,14 +253,15 @@ pub mod Cavos {
         }
 
         /// Register a session. Can only be called by the deployer.
-        /// This allows the deployer to register the initial session during deployment
-        /// without requiring expensive on-chain RSA verification.
+        /// Now requires full JWT signature for on-chain RSA verification to prevent
+        /// deployer from registering unauthorized sessions.
         fn register_session_from_deployer(
             ref self: ContractState,
             ephemeral_pubkey: felt252,
             nonce: felt252,
             max_block: u64,
             renewal_deadline: u64,
+            signature: Span<felt252>,
         ) {
             // Only the deployer can call this function
             let caller = get_caller_address();
@@ -261,26 +271,23 @@ pub mod Cavos {
             let existing = self.sessions.read(ephemeral_pubkey);
             assert!(existing.nonce == 0, "Session already registered");
 
-            // Validate renewal_deadline > max_block
+            // Validate renewal_deadline >= max_block
             assert!(renewal_deadline >= max_block, "Renewal deadline must be >= max_block");
 
-            // Register the session
-            let current_block = get_block_number();
-            let session_data = SessionData {
-                nonce: nonce,
-                max_block: max_block,
-                renewal_deadline: renewal_deadline,
-                registered_at: current_block,
-            };
-            self.sessions.write(ephemeral_pubkey, session_data);
-
-            // Emit event
+            // Perform full JWT verification using the signature
+            // This ensures the deployer cannot register sessions without valid JWT proof
             self
-                .emit(
-                    SessionRegistered {
-                        ephemeral_pubkey: ephemeral_pubkey, nonce: nonce, max_block: max_block,
-                    },
+                .verify_jwt_and_register_session_internal(
+                    ephemeral_pubkey, nonce, max_block, renewal_deadline, signature,
                 );
+        }
+
+        /// Disable the deployer permanently. Can only be called by the account itself.
+        fn disable_deployer(ref self: ContractState) {
+            // Can only be called via __execute__ (caller is zero)
+            let caller = get_caller_address();
+            assert!(caller.is_zero(), "Only self can disable deployer");
+            self.deployer.write(0.try_into().unwrap());
         }
 
         /// Renew a session using an existing session that is in its grace period.
@@ -457,6 +464,288 @@ pub mod Cavos {
 
     #[generate_trait]
     impl InternalImpl of InternalTrait {
+        /// Verify a claim (sub/nonce/kid) from the Base64-encoded JWT.
+        /// It splits the JWT, decodes the relevant segment (header or payload),
+        /// and verifies the claim bytes at the given offset.
+        fn assert_decoded_claim_match(
+            self: @ContractState,
+            jwt_ba: @ByteArray,
+            segment_start: usize,
+            segment_len: usize,
+            offset: usize,
+            len: usize,
+            expected: felt252,
+        ) {
+            // Decode the Base64 segment window on-chain
+            let decoded: Array<u8> = base64url_decode_window(
+                jwt_ba, segment_start, segment_len, offset, len,
+            );
+            let decoded_span = decoded.span();
+
+            // Extract bytes and convert to felt252
+            let mut extracted = 0_felt252;
+            let mut i: usize = 0;
+            while i < decoded_span.len() && i < 31 { // felt252 max 31 bytes
+                let byte: u8 = *decoded_span[i];
+                extracted = extracted * 256 + byte.into();
+                i += 1;
+            }
+            assert!(extracted == expected, "Claim mismatch after decoding");
+        }
+
+        fn assert_claim_decimal_match(
+            self: @ContractState,
+            jwt_ba: @ByteArray,
+            segment_start: usize,
+            segment_len: usize,
+            offset: usize,
+            len: usize,
+            expected: felt252,
+        ) {
+            // Decode segment window
+            let decoded: Array<u8> = base64url_decode_window(
+                jwt_ba, segment_start, segment_len, offset, len,
+            );
+
+            // Use jwt::jwt_parser::parse_decimal on the relevant segment
+            let val: felt252 = parse_decimal(decoded.span());
+            assert!(val == expected, "Claim mismatch (decimal)");
+        }
+
+        fn assert_claim_hex_match(
+            self: @ContractState,
+            jwt_ba: @ByteArray,
+            segment_start: usize,
+            segment_len: usize,
+            offset: usize,
+            len: usize,
+            expected: felt252,
+        ) {
+            // Decode segment window
+            let decoded: Array<u8> = base64url_decode_window(
+                jwt_ba, segment_start, segment_len, offset, len,
+            );
+
+            // Use jwt::jwt_parser::parse_hex on the relevant segment
+            let val: felt252 = parse_hex(decoded.span());
+            assert!(val == expected, "Claim mismatch (hex)");
+        }
+
+        /// Internal helper that performs JWT verification and session registration.
+        /// Called from both validate_full_oauth_and_register_session and
+        /// register_session_from_deployer.
+        fn verify_jwt_and_register_session_internal(
+            ref self: ContractState,
+            ephemeral_pubkey: felt252,
+            expected_nonce: felt252,
+            max_block: u64,
+            renewal_deadline: u64,
+            signature: Span<felt252>,
+        ) {
+            // Verify magic number
+            assert!(*signature[0] == OAUTH_SIG_MAGIC, "Invalid signature type");
+
+            // Extract ephemeral key data (r, s not verified here - only pubkey matters)
+            let _eph_r = *signature[1];
+            let _eph_s = *signature[2];
+            let eph_pubkey = *signature[3];
+            let sig_max_block: felt252 = *signature[4];
+            let randomness = *signature[5];
+
+            // Extract JWT claims
+            let jwt_sub = *signature[6];
+            let jwt_nonce = *signature[7];
+            let jwt_exp_felt = *signature[8];
+            let jwt_kid = *signature[9];
+            let jwt_iss = *signature[10];
+            let _jwt_aud = *signature[11];
+            let salt = *signature[12];
+
+            // Extract claim offsets for verification
+            let _sub_offset: usize = (*signature[13]).try_into().unwrap();
+            let _sub_len: usize = (*signature[14]).try_into().unwrap();
+            let _nonce_offset: usize = (*signature[15]).try_into().unwrap();
+            let _nonce_len: usize = (*signature[16]).try_into().unwrap();
+            let _kid_offset: usize = (*signature[17]).try_into().unwrap();
+            let _kid_len: usize = (*signature[18]).try_into().unwrap();
+
+            // RSA signature starts at index 19
+            let rsa_sig_start: usize = 19;
+            let rsa_sig_len: usize = (*signature[rsa_sig_start]).try_into().unwrap();
+            assert!(rsa_sig_len == 16, "RSA signature must be 16 limbs");
+
+            let mut rsa_limbs: Array<u128> = array![];
+            let mut li: usize = 0;
+            while li < 16 {
+                let limb: u128 = (*signature[rsa_sig_start + 1 + li]).try_into().unwrap();
+                rsa_limbs.append(limb);
+                li += 1;
+            }
+            let rsa_sig = biguint_from_limbs(rsa_limbs.span());
+
+            // Extract n_prime (16 limbs)
+            let n_prime_start: usize = 36;
+            let n_prime_len: usize = (*signature[n_prime_start]).try_into().unwrap();
+            assert!(n_prime_len == 16, "n_prime must be 16 limbs");
+
+            let mut n_prime_limbs: Array<u128> = array![];
+            let mut ni: usize = 0;
+            while ni < 16 {
+                let limb: u128 = (*signature[n_prime_start + 1 + ni]).try_into().unwrap();
+                n_prime_limbs.append(limb);
+                ni += 1;
+            }
+            let n_prime = biguint_from_limbs(n_prime_limbs.span());
+
+            // Extract R^2 (16 limbs)
+            let r_sq_start: usize = 53;
+            let r_sq_len: usize = (*signature[r_sq_start]).try_into().unwrap();
+            assert!(r_sq_len == 16, "R^2 must be 16 limbs");
+
+            let mut r_sq_limbs: Array<u128> = array![];
+            let mut ri: usize = 0;
+            while ri < 16 {
+                let limb: u128 = (*signature[r_sq_start + 1 + ri]).try_into().unwrap();
+                r_sq_limbs.append(limb);
+                ri += 1;
+            }
+            let r_sq = biguint_from_limbs(r_sq_limbs.span());
+
+            // Extract JWT signed data (header.payload bytes)
+            let jwt_data_start: usize = 70;
+
+            // The value at jwt_data_start is the TOTAL BYTE LENGTH of the JWT data
+            let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
+
+            let mut jwt_bytes = "";
+            let mut current_byte = 0;
+            let mut chunk_idx = 0;
+
+            while current_byte < jwt_bytes_len {
+                let packed_chunk = *signature[jwt_data_start + 1 + chunk_idx];
+                let remaining = jwt_bytes_len - current_byte;
+                let chunk_len = if remaining >= 31 {
+                    31
+                } else {
+                    remaining
+                };
+
+                jwt_bytes.append_word(packed_chunk, chunk_len);
+
+                current_byte += chunk_len;
+                chunk_idx += 1;
+            }
+
+            // 1. Verify ephemeral pubkey matches what was provided
+            assert!(eph_pubkey == ephemeral_pubkey, "Ephemeral pubkey mismatch");
+
+            // 2. Verify nonce = Poseidon(eph_pubkey, max_block, randomness)
+            let computed_nonce = PoseidonTrait::new()
+                .update(eph_pubkey)
+                .update(sig_max_block)
+                .update(randomness)
+                .finalize();
+            assert!(jwt_nonce == computed_nonce, "Nonce mismatch");
+            assert!(jwt_nonce == expected_nonce, "Nonce does not match expected");
+
+            // 3. Verify max_block matches
+            let sig_max_block_u64: u64 = sig_max_block.try_into().expect('max_block overflow');
+            assert!(sig_max_block_u64 == max_block, "Max block mismatch");
+
+            // 4. Verify session not expired (block-based)
+            let current_block: u64 = get_block_number();
+            assert!(current_block < max_block, "Session expired");
+
+            // 5. Verify JWT not expired (timestamp-based)
+            let jwt_exp: u64 = jwt_exp_felt.try_into().expect('jwt_exp overflow');
+            let now = get_block_timestamp();
+            assert!(now < jwt_exp, "JWT expired");
+
+            // 6. Verify address_seed = Poseidon(sub, salt)
+            let computed_seed = PoseidonTrait::new().update(jwt_sub).update(salt).finalize();
+            assert!(computed_seed == self.address_seed.read(), "Address seed mismatch");
+
+            // 7. Verify JWKS key is valid
+            let registry = IJWKSRegistryDispatcher { contract_address: self.jwks_registry.read() };
+            assert!(registry.is_key_valid(jwt_kid), "JWKS key invalid or expired");
+
+            // 8. Verify RSA signature with Montgomery Reduction
+            let jwks_key = registry.get_key(jwt_kid);
+            let modulus = BigUint2048 {
+                limbs: [
+                    jwks_key.n0, jwks_key.n1, jwks_key.n2, jwks_key.n3, jwks_key.n4, jwks_key.n5,
+                    jwks_key.n6, jwks_key.n7, jwks_key.n8, jwks_key.n9, jwks_key.n10, jwks_key.n11,
+                    jwks_key.n12, jwks_key.n13, jwks_key.n14, jwks_key.n15,
+                ],
+            };
+            assert!(
+                crate::rsa::rsa_verify::verify_rsa_sha256_mont(
+                    @jwt_bytes, @rsa_sig, @modulus, @n_prime, @r_sq,
+                ),
+                "RSA verification failed (Montgomery)",
+            );
+
+            // Verify issuer is Google or Apple
+            assert!(
+                jwt_iss == EXPECTED_ISS_GOOGLE || jwt_iss == EXPECTED_ISS_APPLE,
+                "Invalid JWT issuer",
+            );
+
+            // SECURITY: Verify claims in JWT bytes match the provided parameters
+            // Extract offsets and lengths from signature
+            let sub_offset: usize = (*signature[13]).try_into().unwrap();
+            let sub_len: usize = (*signature[14]).try_into().unwrap();
+            let nonce_offset: usize = (*signature[15]).try_into().unwrap();
+            let nonce_len: usize = (*signature[16]).try_into().unwrap();
+            let kid_offset: usize = (*signature[17]).try_into().unwrap();
+            let kid_len: usize = (*signature[18]).try_into().unwrap();
+
+            // Find segment boundaries in jwt_bytes
+            let (header_end, payload_start, payload_end) = split_signed_data(@jwt_bytes);
+            let payload_len = payload_end - payload_start;
+
+            // Verify claims using optimized range-based decoding
+            if jwt_iss == EXPECTED_ISS_GOOGLE {
+                self
+                    .assert_claim_decimal_match(
+                        @jwt_bytes, payload_start, payload_len, sub_offset, sub_len, jwt_sub,
+                    );
+            } else {
+                self
+                    .assert_decoded_claim_match(
+                        @jwt_bytes, payload_start, payload_len, sub_offset, sub_len, jwt_sub,
+                    );
+            }
+            self
+                .assert_claim_hex_match(
+                    @jwt_bytes, payload_start, payload_len, nonce_offset, nonce_len, jwt_nonce,
+                );
+            self
+                .assert_decoded_claim_match(
+                    @jwt_bytes, 0, header_end, kid_offset, kid_len, jwt_kid,
+                );
+
+            // Note: aud verification is skipped when EXPECTED_AUD is 0
+            // This allows flexibility for different client IDs
+
+            // 11. Register the session
+            let session_data = SessionData {
+                nonce: jwt_nonce,
+                max_block: max_block,
+                renewal_deadline: renewal_deadline,
+                registered_at: current_block,
+            };
+            self.sessions.write(ephemeral_pubkey, session_data);
+
+            // Emit event
+            self
+                .emit(
+                    SessionRegistered {
+                        ephemeral_pubkey: ephemeral_pubkey, nonce: jwt_nonce, max_block: max_block,
+                    },
+                );
+        }
+
         /// Validates signature and registers session if using full OAuth signature.
         /// Used by __validate__, __validate_deploy__ (can mutate state).
         fn validate_signature_and_maybe_register(ref self: ContractState) -> felt252 {
@@ -673,9 +962,17 @@ pub mod Cavos {
             let jwt_nonce = *signature[7];
             let jwt_exp_felt = *signature[8];
             let jwt_kid = *signature[9];
-            let _jwt_iss = *signature[10];
+            let jwt_iss = *signature[10];
             let _jwt_aud = *signature[11];
             let salt = *signature[12];
+
+            // Extract claim offsets for verification (NEW)
+            let _sub_offset: usize = (*signature[13]).try_into().unwrap();
+            let _sub_len: usize = (*signature[14]).try_into().unwrap();
+            let _nonce_offset: usize = (*signature[15]).try_into().unwrap();
+            let _nonce_len: usize = (*signature[16]).try_into().unwrap();
+            let _kid_offset: usize = (*signature[17]).try_into().unwrap();
+            let _kid_len: usize = (*signature[18]).try_into().unwrap();
 
             // 1. Verify ephemeral key signed the message hash (instead of tx_hash)
             assert!(
@@ -710,7 +1007,8 @@ pub mod Cavos {
             assert!(registry.is_key_valid(jwt_kid), "JWKS key invalid or expired");
 
             // 7. Extract RSA signature and verify
-            let rsa_sig_start: usize = 13;
+            // RSA signature starts at index 19 (after claim offsets)
+            let rsa_sig_start: usize = 19;
             let rsa_sig_len: usize = (*signature[rsa_sig_start]).try_into().unwrap();
             assert!(rsa_sig_len == 16, "RSA signature must be 16 limbs");
 
@@ -723,6 +1021,34 @@ pub mod Cavos {
             }
             let rsa_sig = biguint_from_limbs(rsa_limbs.span());
 
+            // Extract n_prime (16 limbs)
+            let n_prime_start: usize = 36;
+            let n_prime_len: usize = (*signature[n_prime_start]).try_into().unwrap();
+            assert!(n_prime_len == 16, "n_prime must be 16 limbs");
+
+            let mut n_prime_limbs: Array<u128> = array![];
+            let mut ni: usize = 0;
+            while ni < 16 {
+                let limb: u128 = (*signature[n_prime_start + 1 + ni]).try_into().unwrap();
+                n_prime_limbs.append(limb);
+                ni += 1;
+            }
+            let n_prime = biguint_from_limbs(n_prime_limbs.span());
+
+            // Extract R^2 (16 limbs)
+            let r_sq_start: usize = 53;
+            let r_sq_len: usize = (*signature[r_sq_start]).try_into().unwrap();
+            assert!(r_sq_len == 16, "R^2 must be 16 limbs");
+
+            let mut r_sq_limbs: Array<u128> = array![];
+            let mut ri: usize = 0;
+            while ri < 16 {
+                let limb: u128 = (*signature[r_sq_start + 1 + ri]).try_into().unwrap();
+                r_sq_limbs.append(limb);
+                ri += 1;
+            }
+            let r_sq = biguint_from_limbs(r_sq_limbs.span());
+
             // Get RSA modulus from JWKS registry
             let jwks_key = registry.get_key(jwt_kid);
             let modulus = BigUint2048 {
@@ -734,22 +1060,69 @@ pub mod Cavos {
             };
 
             // Extract JWT signed data (header.payload bytes)
-            let jwt_data_start: usize = rsa_sig_start + 1 + 16;
-            let jwt_data_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
+            let jwt_data_start: usize = 70;
+
+            // The value at jwt_data_start is the TOTAL BYTE LENGTH of the JWT data
+            let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
 
             let mut jwt_bytes = "";
-            let mut ji: usize = 0;
-            while ji < jwt_data_len {
-                let felt_val = *signature[jwt_data_start + 1 + ji];
-                let byte: u8 = felt_val.try_into().unwrap();
-                jwt_bytes.append_byte(byte);
-                ji += 1;
+            let mut current_byte = 0;
+            let mut chunk_idx = 0;
+
+            while current_byte < jwt_bytes_len {
+                let packed_chunk = *signature[jwt_data_start + 1 + chunk_idx];
+                let remaining = jwt_bytes_len - current_byte;
+                let chunk_len = if remaining >= 31 {
+                    31
+                } else {
+                    remaining
+                };
+
+                jwt_bytes.append_word(packed_chunk, chunk_len);
+
+                current_byte += chunk_len;
+                chunk_idx += 1;
             }
 
-            // Verify RSA signature on the JWT signed data
+            // Verify RSA signature with Montgomery Reduction
             assert!(
-                verify_rsa_sha256(@jwt_bytes, @rsa_sig, @modulus),
-                "RSA signature verification failed",
+                crate::rsa::rsa_verify::verify_rsa_sha256_mont(
+                    @jwt_bytes, @rsa_sig, @modulus, @n_prime, @r_sq,
+                ),
+                "RSA verification failed (Montgomery)",
+            );
+
+            // 8. SECURITY: Verify claims in JWT bytes match the provided parameters
+            // Extract offsets and lengths from signature
+            let sub_offset: usize = (*signature[13]).try_into().unwrap();
+            let sub_len: usize = (*signature[14]).try_into().unwrap();
+            let nonce_offset: usize = (*signature[15]).try_into().unwrap();
+            let nonce_len: usize = (*signature[16]).try_into().unwrap();
+            let kid_offset: usize = (*signature[17]).try_into().unwrap();
+            let kid_len: usize = (*signature[18]).try_into().unwrap();
+
+            // Find segment boundaries in jwt_bytes
+            let (header_end, payload_start, payload_end) = split_signed_data(@jwt_bytes);
+            let payload_len = payload_end - payload_start;
+
+            // Verify claims using optimized range-based decoding
+            self
+                .assert_decoded_claim_match(
+                    @jwt_bytes, payload_start, payload_len, sub_offset, sub_len, jwt_sub,
+                );
+            self
+                .assert_claim_hex_match(
+                    @jwt_bytes, payload_start, payload_len, nonce_offset, nonce_len, jwt_nonce,
+                );
+            self
+                .assert_decoded_claim_match(
+                    @jwt_bytes, 0, header_end, kid_offset, kid_len, jwt_kid,
+                );
+
+            // 9. Verify issuer is Google or Apple
+            assert!(
+                jwt_iss == EXPECTED_ISS_GOOGLE || jwt_iss == EXPECTED_ISS_APPLE,
+                "Invalid JWT issuer",
             );
         }
 
@@ -811,27 +1184,33 @@ pub mod Cavos {
         /// Validates a full OAuth JWT signature (OAUTH_JWT_V1).
         /// Performs complete RSA verification and registers the session.
         /// Expensive - only used during deployment or explicit session registration.
+        ///
+        /// New signature format with claim offsets:
+        /// [0]  = OAUTH_JWT_V1 magic
+        /// [1-3] = ephemeral key (r, s, pubkey)
+        /// [4-5] = max_block, randomness
+        /// [6-12] = jwt_sub, jwt_nonce, jwt_exp, jwt_kid, jwt_iss, jwt_aud, salt
+        /// [13-14] = sub_offset, sub_len (NEW)
+        /// [15-16] = nonce_offset, nonce_len (NEW)
+        /// [17-18] = kid_offset, kid_len (NEW)
+        /// [19] = RSA sig length (16)
+        /// [20-35] = RSA signature (16 u128 limbs)
+        /// [36] = n_prime length (16) (NEW)
+        /// [37-52] = n_prime (16 u128 limbs) (NEW)
+        /// [53] = R^2 length (16) (NEW)
+        /// [54-69] = R^2 (16 u128 limbs) (NEW)
+        /// [70] = JWT data length (NEW)
+        /// [71+] = JWT bytes (NEW)
         fn validate_full_oauth_and_register_session(
             ref self: ContractState, tx_hash: felt252, signature: Span<felt252>,
         ) -> felt252 {
-            // Verify magic number (already checked by caller, but being explicit)
+            // Verify magic number
             assert!(*signature[0] == OAUTH_SIG_MAGIC, "Invalid signature type");
 
-            // Extract ephemeral key data
+            // Extract eph_pubkey to verify signature
+            let eph_pubkey = *signature[3];
             let eph_r = *signature[1];
             let eph_s = *signature[2];
-            let eph_pubkey = *signature[3];
-            let max_block: felt252 = *signature[4];
-            let randomness = *signature[5];
-
-            // Extract JWT claims
-            let jwt_sub = *signature[6];
-            let jwt_nonce = *signature[7];
-            let jwt_exp_felt = *signature[8];
-            let jwt_kid = *signature[9];
-            let _jwt_iss = *signature[10];
-            let _jwt_aud = *signature[11];
-            let salt = *signature[12];
 
             // 1. Verify ephemeral key signed the transaction hash
             assert!(
@@ -839,95 +1218,15 @@ pub mod Cavos {
                 "Invalid ephemeral signature",
             );
 
-            // 2. Verify nonce = Poseidon(eph_pubkey, max_block, randomness)
-            // Split eph_pubkey into lo/hi for nonce (simplified: use full felt252)
-            let expected_nonce = PoseidonTrait::new()
-                .update(eph_pubkey)
-                .update(max_block)
-                .update(randomness)
-                .finalize();
-            assert!(jwt_nonce == expected_nonce, "Nonce mismatch");
+            // 2. Perform full JWT verification and register session
+            let max_block_felt = *signature[4];
+            let max_block: u64 = max_block_felt.try_into().expect('max_block overflow');
+            let renewal_deadline: u64 = max_block + 1000;
+            let jwt_nonce = *signature[7];
 
-            // 3. Verify session not expired (block-based)
-            let current_block: u64 = get_block_number();
-            let max_block_u64: u64 = max_block.try_into().expect('max_block overflow');
-            assert!(current_block < max_block_u64, "Session expired");
-
-            // 4. Verify JWT not expired (timestamp-based)
-            let jwt_exp: u64 = jwt_exp_felt.try_into().expect('jwt_exp overflow');
-            let now = get_block_timestamp();
-            assert!(now < jwt_exp, "JWT expired");
-
-            // 5. Verify address_seed = Poseidon(sub, salt)
-            let computed_seed = PoseidonTrait::new().update(jwt_sub).update(salt).finalize();
-            assert!(computed_seed == self.address_seed.read(), "Address seed mismatch");
-
-            // 6. Verify JWKS key is valid
-            let registry = IJWKSRegistryDispatcher { contract_address: self.jwks_registry.read() };
-            assert!(registry.is_key_valid(jwt_kid), "JWKS key invalid or expired");
-
-            // 7. Extract RSA signature and verify
-            let rsa_sig_start: usize = 13;
-            let rsa_sig_len: usize = (*signature[rsa_sig_start]).try_into().unwrap();
-            assert!(rsa_sig_len == 16, "RSA signature must be 16 limbs");
-
-            let mut rsa_limbs: Array<u128> = array![];
-            let mut li: usize = 0;
-            while li < 16 {
-                let limb: u128 = (*signature[rsa_sig_start + 1 + li]).try_into().unwrap();
-                rsa_limbs.append(limb);
-                li += 1;
-            }
-            let rsa_sig = biguint_from_limbs(rsa_limbs.span());
-
-            // Get RSA modulus from JWKS registry
-            let jwks_key = registry.get_key(jwt_kid);
-            let modulus = BigUint2048 {
-                limbs: [
-                    jwks_key.n0, jwks_key.n1, jwks_key.n2, jwks_key.n3, jwks_key.n4, jwks_key.n5,
-                    jwks_key.n6, jwks_key.n7, jwks_key.n8, jwks_key.n9, jwks_key.n10, jwks_key.n11,
-                    jwks_key.n12, jwks_key.n13, jwks_key.n14, jwks_key.n15,
-                ],
-            };
-
-            // Extract JWT signed data (header.payload bytes)
-            let jwt_data_start: usize = rsa_sig_start + 1 + 16;
-            let jwt_data_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
-
-            let mut jwt_bytes = "";
-            let mut ji: usize = 0;
-            while ji < jwt_data_len {
-                let felt_val = *signature[jwt_data_start + 1 + ji];
-                // Each felt252 encodes up to 31 bytes of JWT data
-                // The SDK packs bytes into felt252 values
-                let byte: u8 = felt_val.try_into().unwrap();
-                jwt_bytes.append_byte(byte);
-                ji += 1;
-            }
-
-            // Verify RSA signature on the JWT signed data
-            assert!(
-                verify_rsa_sha256(@jwt_bytes, @rsa_sig, @modulus),
-                "RSA signature verification failed",
-            );
-
-            // 8. Register the session (so future transactions can use SESSION_SIG_MAGIC)
-            // Default grace period: 1000 blocks (~2.7 hours) after max_block
-            let renewal_deadline = max_block_u64 + 1000;
-            let session_data = SessionData {
-                nonce: jwt_nonce,
-                max_block: max_block_u64,
-                renewal_deadline: renewal_deadline,
-                registered_at: current_block,
-            };
-            self.sessions.write(eph_pubkey, session_data);
-
-            // Emit event
             self
-                .emit(
-                    SessionRegistered {
-                        ephemeral_pubkey: eph_pubkey, nonce: jwt_nonce, max_block: max_block_u64,
-                    },
+                .verify_jwt_and_register_session_internal(
+                    eph_pubkey, jwt_nonce, max_block, renewal_deadline, signature,
                 );
 
             VALIDATED
