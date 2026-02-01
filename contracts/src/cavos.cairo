@@ -98,6 +98,7 @@ pub mod Cavos {
 
     const EXPECTED_ISS_GOOGLE: felt252 = 0x68747470733a2f2f6163636f756e74732e676f6f676c652e636f6d;
     const EXPECTED_ISS_APPLE: felt252 = 0x68747470733a2f2f6170706c6569642e6170706c652e636f6d;
+    const EXPECTED_ISS_FIREBASE: felt252 = 0x68747470733a2f2f6361766f732e6170702f6669726562617365; // "https://cavos.app/firebase"
 
     const EXPECTED_AUD: felt252 = 0x0;
 
@@ -685,9 +686,9 @@ pub mod Cavos {
                 "RSA verification failed (Montgomery)",
             );
 
-            // Verify issuer is Google or Apple
+            // Verify issuer is Google, Apple, or Firebase
             assert!(
-                jwt_iss == EXPECTED_ISS_GOOGLE || jwt_iss == EXPECTED_ISS_APPLE,
+                jwt_iss == EXPECTED_ISS_GOOGLE || jwt_iss == EXPECTED_ISS_APPLE || jwt_iss == EXPECTED_ISS_FIREBASE,
                 "Invalid JWT issuer",
             );
 
@@ -705,12 +706,14 @@ pub mod Cavos {
             let payload_len = payload_end - payload_start;
 
             // Verify claims using optimized range-based decoding
+            // Google uses numeric sub, Apple and Firebase use alphanumeric sub
             if jwt_iss == EXPECTED_ISS_GOOGLE {
                 self
                     .assert_claim_decimal_match(
                         @jwt_bytes, payload_start, payload_len, sub_offset, sub_len, jwt_sub,
                     );
             } else {
+                // Apple or Firebase (both use alphanumeric sub)
                 self
                     .assert_decoded_claim_match(
                         @jwt_bytes, payload_start, payload_len, sub_offset, sub_len, jwt_sub,
@@ -1119,9 +1122,9 @@ pub mod Cavos {
                     @jwt_bytes, 0, header_end, kid_offset, kid_len, jwt_kid,
                 );
 
-            // 9. Verify issuer is Google or Apple
+            // 9. Verify issuer is Google, Apple, or Firebase
             assert!(
-                jwt_iss == EXPECTED_ISS_GOOGLE || jwt_iss == EXPECTED_ISS_APPLE,
+                jwt_iss == EXPECTED_ISS_GOOGLE || jwt_iss == EXPECTED_ISS_APPLE || jwt_iss == EXPECTED_ISS_FIREBASE,
                 "Invalid JWT issuer",
             );
         }
