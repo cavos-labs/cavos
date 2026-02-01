@@ -98,8 +98,6 @@ pub mod Cavos {
 
     const EXPECTED_ISS_GOOGLE: felt252 = 0x68747470733a2f2f6163636f756e74732e676f6f676c652e636f6d;
     const EXPECTED_ISS_APPLE: felt252 = 0x68747470733a2f2f6170706c6569642e6170706c652e636f6d;
-    const EXPECTED_ISS_FIREBASE_PREFIX: felt252 =
-        0x68747470733a2f2f736563757265746f6b656e2e676f6f676c652e636f6d2f;
 
     const EXPECTED_AUD: felt252 = 0x0;
 
@@ -687,11 +685,9 @@ pub mod Cavos {
                 "RSA verification failed (Montgomery)",
             );
 
-            // Verify issuer is Google, Apple or Firebase
+            // Verify issuer is Google or Apple
             assert!(
-                jwt_iss == EXPECTED_ISS_GOOGLE
-                    || jwt_iss == EXPECTED_ISS_APPLE
-                    || jwt_iss == EXPECTED_ISS_FIREBASE_PREFIX,
+                jwt_iss == EXPECTED_ISS_GOOGLE || jwt_iss == EXPECTED_ISS_APPLE,
                 "Invalid JWT issuer",
             );
 
@@ -1123,11 +1119,9 @@ pub mod Cavos {
                     @jwt_bytes, 0, header_end, kid_offset, kid_len, jwt_kid,
                 );
 
-            // Verify issuer is Google, Apple or Firebase
+            // 9. Verify issuer is Google or Apple
             assert!(
-                jwt_iss == EXPECTED_ISS_GOOGLE
-                    || jwt_iss == EXPECTED_ISS_APPLE
-                    || jwt_iss == EXPECTED_ISS_FIREBASE_PREFIX,
+                jwt_iss == EXPECTED_ISS_GOOGLE || jwt_iss == EXPECTED_ISS_APPLE,
                 "Invalid JWT issuer",
             );
         }
