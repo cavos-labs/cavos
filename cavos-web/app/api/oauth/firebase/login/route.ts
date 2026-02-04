@@ -1,20 +1,28 @@
 /**
  * Firebase Email/Password Login Route
  *
- * Verifies user credentials and returns a custom RSA-signed JWT
+ * Verifies user credentials, checks email verification, and returns a custom RSA-signed JWT
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/firebase-admin';
 import { signFirebaseCustomJWT } from '@/lib/firebase-jwt';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, nonce } = await request.json();
+    const { email, password, nonce, app_id } = await request.json();
 
     if (!email || !password || !nonce) {
       return NextResponse.json(
         { error: 'Missing email, password, or nonce' },
+        { status: 400 }
+      );
+    }
+
+    if (!app_id) {
+      return NextResponse.json(
+        { error: 'Missing app_id' },
         { status: 400 }
       );
     }
@@ -45,6 +53,50 @@ export async function POST(request: NextRequest) {
 
     // Get user record
     const userRecord = await auth.getUser(localId);
+
+    // Check email verification status for this app
+    const adminSupabase = createAdminClient();
+
+    // First, check if wallet exists and is verified
+    const { data: wallet } = await adminSupabase
+      .from('wallets')
+      .select('email_verified')
+      .eq('user_social_id', userRecord.uid)
+      .eq('app_id', app_id)
+      .single();
+
+    if (wallet && !wallet.email_verified) {
+      return NextResponse.json(
+        {
+          error: 'email_not_verified',
+          message:
+            'Please verify your email before logging in. Check your inbox for the verification link.',
+        },
+        { status: 403 }
+      );
+    }
+
+    // If wallet doesn't exist, check verification tokens
+    if (!wallet) {
+      const { data: verifiedToken } = await adminSupabase
+        .from('email_verification_tokens')
+        .select('verified_at')
+        .eq('firebase_uid', userRecord.uid)
+        .eq('app_id', app_id)
+        .not('verified_at', 'is', null)
+        .single();
+
+      if (!verifiedToken) {
+        return NextResponse.json(
+          {
+            error: 'email_not_verified',
+            message:
+              'Please verify your email before logging in. Check your inbox for the verification link.',
+          },
+          { status: 403 }
+        );
+      }
+    }
 
     // Generate custom JWT with nonce
     const now = Math.floor(Date.now() / 1000);

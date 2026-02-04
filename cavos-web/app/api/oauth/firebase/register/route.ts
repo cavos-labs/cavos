@@ -1,16 +1,18 @@
 /**
  * Firebase Email/Password Registration Route
  *
- * Creates a new Firebase user and returns a custom RSA-signed JWT
+ * Creates a new Firebase user and sends email verification
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/firebase-admin';
-import { signFirebaseCustomJWT } from '@/lib/firebase-jwt';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { sendVerificationEmail } from '@/lib/email/verification';
+import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, nonce } = await request.json();
+    const { email, password, nonce, app_id } = await request.json();
 
     // Validate input
     if (!email || !password || !nonce) {
@@ -20,27 +22,72 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!app_id) {
+      return NextResponse.json(
+        { error: 'Missing app_id' },
+        { status: 400 }
+      );
+    }
+
+    // Verify app_id exists
+    const adminSupabase = createAdminClient();
+    const { data: app, error: appError } = await adminSupabase
+      .from('apps')
+      .select('id')
+      .eq('id', app_id)
+      .single();
+
+    if (appError || !app) {
+      return NextResponse.json(
+        { error: 'Invalid app_id' },
+        { status: 400 }
+      );
+    }
+
     // Create Firebase user
     const userRecord = await auth.createUser({
       email,
       password,
-      emailVerified: false, // Can implement email verification later
+      emailVerified: false,
     });
 
-    // Generate custom JWT with nonce
-    const now = Math.floor(Date.now() / 1000);
-    const jwt = await signFirebaseCustomJWT({
-      sub: userRecord.uid,
-      email: userRecord.email!,
-      nonce,
-      iat: now,
-      exp: now + 3600, // 1 hour expiry
-    });
+    // Generate secure verification token
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    // Store verification token
+    const { error: tokenError } = await adminSupabase
+      .from('email_verification_tokens')
+      .insert({
+        token,
+        email: userRecord.email!,
+        app_id,
+        firebase_uid: userRecord.uid,
+        expires_at: expiresAt.toISOString(),
+      });
+
+    if (tokenError) {
+      console.error('Failed to store verification token:', tokenError);
+      // Delete the Firebase user since we can't verify
+      await auth.deleteUser(userRecord.uid);
+      return NextResponse.json(
+        { error: 'Failed to create verification token' },
+        { status: 500 }
+      );
+    }
+
+    // Send verification email
+    try {
+      await sendVerificationEmail(email, token, app_id);
+    } catch (emailError) {
+      console.error('Failed to send verification email:', emailError);
+      // Don't delete user, they can request resend
+    }
 
     return NextResponse.json({
-      jwt,
-      uid: userRecord.uid,
+      status: 'verification_required',
       email: userRecord.email,
+      message: 'Please check your email to verify your account',
     });
   } catch (error: any) {
     console.error('Firebase registration error:', error);

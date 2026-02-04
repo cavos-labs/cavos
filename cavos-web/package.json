@@ -27,6 +27,7 @@
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "recharts": "^3.4.1",
+    "resend": "^3.0.0",
     "snarkjs": "^0.7.4",
     "starknet": "^6.11.0",
     "stripe": "^20.0.0",
