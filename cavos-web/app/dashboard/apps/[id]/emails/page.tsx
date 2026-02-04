@@ -275,28 +275,50 @@ export default function AppEmailsPage() {
                             <div>
                                 <h3 className="text-sm font-semibold mb-1">Email Template</h3>
                                 <p className="text-xs text-black/60">
-                                    Leave empty to use the default template shown below
+                                    Customize the HTML template below or clear it to use Cavos default
                                 </p>
                             </div>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setShowPreview(!showPreview)}
-                                icon={<Eye className="w-4 h-4" />}
-                            >
-                                {showPreview ? 'Hide' : 'Show'} Preview
-                            </Button>
+                            <div className="flex gap-2">
+                                {formData.email_template_html && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setFormData({ ...formData, email_template_html: '' })}
+                                    >
+                                        Clear & Use Default
+                                    </Button>
+                                )}
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setShowPreview(!showPreview)}
+                                    icon={<Eye className="w-4 h-4" />}
+                                >
+                                    {showPreview ? 'Hide' : 'Show'} Preview
+                                </Button>
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                             {/* Editor */}
                             <div>
-                                <label className="block text-xs font-medium text-black/80 mb-2">
-                                    Custom HTML Template (Optional)
-                                </label>
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="block text-xs font-medium text-black/80">
+                                        HTML Template
+                                    </label>
+                                    {!formData.email_template_html && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, email_template_html: DEFAULT_TEMPLATE })}
+                                            className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                                        >
+                                            Load Default to Edit
+                                        </button>
+                                    )}
+                                </div>
                                 <textarea
                                     className="w-full px-3 py-2 bg-white border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all resize-none h-96 text-xs font-mono"
-                                    placeholder={DEFAULT_TEMPLATE}
+                                    placeholder="Click 'Load Default to Edit' above to start with the default template..."
                                     value={formData.email_template_html}
                                     onChange={(e) => setFormData({ ...formData, email_template_html: e.target.value })}
                                 />
@@ -336,24 +358,14 @@ export default function AppEmailsPage() {
                     {/* Default Template Reference */}
                     {!formData.email_template_html && (
                         <div className="pt-6 border-t border-black/10">
-                            <h3 className="text-sm font-semibold mb-2">Default Template</h3>
+                            <h3 className="text-sm font-semibold mb-2">Default Template Preview</h3>
                             <p className="text-xs text-black/60 mb-3">
-                                This is the template that will be used if you don't provide a custom one. You can copy and customize it.
+                                This is the default template that will be used. Click "Load Default to Edit" above to customize it.
                             </p>
                             <div className="relative">
                                 <pre className="bg-black/5 border border-black/10 rounded-lg p-4 text-xs font-mono overflow-x-auto max-h-64 overflow-y-auto">
                                     {DEFAULT_TEMPLATE}
                                 </pre>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="absolute top-2 right-2"
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(DEFAULT_TEMPLATE)
-                                    }}
-                                >
-                                    Copy
-                                </Button>
                             </div>
                         </div>
                     )}
