@@ -31,10 +31,7 @@ export function AppForm({ initialData, organizations, mode, onSuccess, onCancel 
         name: initialData?.name || '',
         description: initialData?.description || '',
         organization_id: initialData?.organization_id || '',
-        logo_url: initialData?.logo_url || '',
-        email_from_address: (initialData as any)?.email_from_address || '',
-        email_from_name: (initialData as any)?.email_from_name || '',
-        email_template_html: (initialData as any)?.email_template_html || ''
+        logo_url: initialData?.logo_url || ''
     })
 
     const [loading, setLoading] = useState(false)
@@ -191,110 +188,6 @@ export function AppForm({ initialData, organizations, mode, onSuccess, onCancel 
                     />
                 </div>
 
-                {/* Email Customization Section */}
-                <div className="pt-4 border-t border-black/5">
-                    <h3 className="text-sm font-semibold text-black mb-1">Email Verification Settings</h3>
-                    <p className="text-xs text-black/60 mb-4">
-                        Customize the verification emails sent to your users when they register with email/password.
-                    </p>
-
-                    <div className="space-y-4">
-                        <div>
-                            <Input
-                                label="From Email Address"
-                                placeholder="noreply@yourdomain.com"
-                                value={formData.email_from_address}
-                                onChange={(e) => setFormData({ ...formData, email_from_address: e.target.value })}
-                            />
-                            <p className="text-xs text-black/60 mt-1.5">
-                                The email address verification emails will be sent from. Leave empty to use Cavos default (noreply@cavos.xyz).
-                            </p>
-                        </div>
-
-                        <div>
-                            <Input
-                                label="From Name"
-                                placeholder="Your App Name"
-                                value={formData.email_from_name}
-                                onChange={(e) => setFormData({ ...formData, email_from_name: e.target.value })}
-                            />
-                            <p className="text-xs text-black/60 mt-1.5">
-                                The name shown as the sender. Leave empty to use your app name.
-                            </p>
-                        </div>
-
-                        <div>
-                            <div className="flex items-center justify-between mb-1.5">
-                                <label className="block text-sm font-medium text-black/80">
-                                    Custom Email Template (Optional)
-                                </label>
-                                {!formData.email_template_html && (
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setFormData({
-                                            ...formData,
-                                            email_template_html: `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; }
-    .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
-    .header { text-align: center; margin-bottom: 32px; }
-    .logo { width: 64px; height: 64px; border-radius: 12px; }
-    .content { background: #ffffff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 32px; }
-    h1 { font-size: 24px; font-weight: 600; margin: 0 0 16px 0; color: #000000; }
-    p { font-size: 16px; line-height: 24px; color: #737373; margin: 0 0 16px 0; }
-    .button { display: inline-block; background: #000000; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500; margin: 8px 0; }
-    .footer { margin-top: 32px; text-align: center; font-size: 14px; color: #a3a3a3; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      {{#if app_logo}}
-      <img src="{{app_logo}}" alt="{{app_name}}" class="logo" />
-      {{/if}}
-    </div>
-    <div class="content">
-      <h1>Verify your email</h1>
-      <p>Hi there,</p>
-      <p>Thanks for signing up for {{app_name}}! Please verify your email address to get started.</p>
-      <p style="text-align: center;">
-        <a href="{{verification_url}}" class="button">Verify Email Address</a>
-      </p>
-      <p style="font-size: 14px; color: #a3a3a3;">
-        This link expires in 24 hours. If you didn't create an account, you can safely ignore this email.
-      </p>
-    </div>
-    <div class="footer">
-      <p>&copy; ${new Date().getFullYear()} {{app_name}}. All rights reserved.</p>
-    </div>
-  </div>
-</body>
-</html>`
-                                        })}
-                                        className="text-xs"
-                                    >
-                                        Insert Example Template
-                                    </Button>
-                                )}
-                            </div>
-                            <textarea
-                                className="w-full px-3 py-2 bg-white border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all resize-none h-64 text-xs font-mono"
-                                placeholder="Leave empty to use default template..."
-                                value={formData.email_template_html}
-                                onChange={(e) => setFormData({ ...formData, email_template_html: e.target.value })}
-                            />
-                            <p className="text-xs text-black/60 mt-1.5">
-                                HTML template for verification emails. Available placeholders: <code className="bg-black/5 px-1 py-0.5 rounded text-xs">{'{{verification_url}}'}</code>, <code className="bg-black/5 px-1 py-0.5 rounded text-xs">{'{{app_name}}'}</code>, <code className="bg-black/5 px-1 py-0.5 rounded text-xs">{'{{user_email}}'}</code>, <code className="bg-black/5 px-1 py-0.5 rounded text-xs">{'{{app_logo}}'}</code>
-                            </p>
-                        </div>
-                    </div>
-                </div>
 
                 {mode === 'create' && organizations && (
                     <div>
