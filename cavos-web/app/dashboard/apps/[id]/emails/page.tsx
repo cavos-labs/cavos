@@ -1,12 +1,14 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { ArrowLeft, Loader2, Mail, Eye } from 'lucide-react'
+import { ArrowLeft, Loader2, Mail, Eye, Upload, ImageIcon } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 const DEFAULT_TEMPLATE = `<!DOCTYPE html>
 <html lang="en">
@@ -106,10 +108,12 @@ export default function AppEmailsPage() {
     const router = useRouter()
     const params = useParams()
     const appId = params.id as string
+    const fileInputRef = useRef<HTMLInputElement>(null)
 
     const [app, setApp] = useState<any>(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
+    const [uploading, setUploading] = useState(false)
     const [error, setError] = useState('')
     const [success, setSuccess] = useState(false)
     const [showPreview, setShowPreview] = useState(false)
@@ -153,6 +157,38 @@ export default function AppEmailsPage() {
             setError('Failed to load application')
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return
+
+        const file = e.target.files[0]
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`
+        const filePath = `${fileName}`
+
+        setUploading(true)
+        setError('')
+
+        try {
+            const supabase = createClient()
+            const { error: uploadError } = await supabase.storage
+                .from('app-icons')
+                .upload(filePath, file)
+
+            if (uploadError) throw uploadError
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('app-icons')
+                .getPublicUrl(filePath)
+
+            setFormData(prev => ({ ...prev, logo_url: publicUrl }))
+        } catch (err) {
+            console.error('Error uploading image:', err)
+            setError('Failed to upload image')
+        } finally {
+            setUploading(false)
         }
     }
 
@@ -265,15 +301,91 @@ export default function AppEmailsPage() {
                             </div>
 
                             <div>
-                                <Input
-                                    label="App Logo URL"
-                                    placeholder="https://yourdomain.com/logo.png"
-                                    value={formData.logo_url}
-                                    onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
-                                />
-                                <p className="text-xs text-black/60 mt-1.5">
-                                    Used in <code className="bg-black/5 px-1 py-0.5 rounded">{'{{app_logo}}'}</code> placeholder. Recommended: 64x64px
-                                </p>
+                                <label className="block text-sm font-medium text-black/80 mb-2">
+                                    App Logo
+                                </label>
+                                <div className="flex items-center gap-6">
+                                    <div className="relative group">
+                                        <div className={`
+                                            w-24 h-24 rounded-2xl flex items-center justify-center overflow-hidden border border-black/10
+                                            ${!formData.logo_url ? 'bg-black/5' : 'bg-white'}
+                                        `}>
+                                            {formData.logo_url ? (
+                                                <Image
+                                                    src={formData.logo_url}
+                                                    alt="App Logo"
+                                                    width={96}
+                                                    height={96}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <ImageIcon className="w-8 h-8 text-black/20" />
+                                            )}
+
+                                            {/* Overlay */}
+                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-2xl">
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="text-white hover:text-white hover:bg-white/20"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                >
+                                                    <Upload className="w-4 h-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={handleFileSelect}
+                                        />
+                                    </div>
+
+                                    <div className="flex-1 space-y-3">
+                                        <div>
+                                            <p className="text-xs text-black/60 mb-2">
+                                                Recommended size: 64x64px. Max size: 2MB. Supports JPG, PNG and WEBP.
+                                            </p>
+                                            <p className="text-xs text-black/60">
+                                                Used in <code className="bg-black/5 px-1 py-0.5 rounded">{'{{app_logo}}'}</code> placeholder
+                                            </p>
+                                        </div>
+
+                                        <div className="flex gap-2">
+                                            {formData.logo_url && (
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => setFormData({ ...formData, logo_url: '' })}
+                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                                                >
+                                                    Remove Logo
+                                                </Button>
+                                            )}
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => fileInputRef.current?.click()}
+                                                disabled={uploading}
+                                            >
+                                                {uploading ? 'Uploading...' : 'Upload Image'}
+                                            </Button>
+                                        </div>
+
+                                        <Input
+                                            label="Or paste image URL"
+                                            placeholder="https://yourdomain.com/logo.png"
+                                            value={formData.logo_url}
+                                            onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
+                                            className="text-xs"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -413,8 +525,8 @@ export default function AppEmailsPage() {
                         </Button>
                         <Button
                             onClick={handleSave}
-                            loading={saving}
-                            disabled={saving}
+                            loading={saving || uploading}
+                            disabled={saving || uploading}
                             icon={<Mail className="w-4 h-4" />}
                         >
                             Save Settings
