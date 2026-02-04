@@ -224,12 +224,68 @@ export function AppForm({ initialData, organizations, mode, onSuccess, onCancel 
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-black/80 mb-1.5">
-                                Custom Email Template (Optional)
-                            </label>
+                            <div className="flex items-center justify-between mb-1.5">
+                                <label className="block text-sm font-medium text-black/80">
+                                    Custom Email Template (Optional)
+                                </label>
+                                {!formData.email_template_html && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setFormData({
+                                            ...formData,
+                                            email_template_html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+    .header { text-align: center; margin-bottom: 32px; }
+    .logo { width: 64px; height: 64px; border-radius: 12px; }
+    .content { background: #ffffff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 32px; }
+    h1 { font-size: 24px; font-weight: 600; margin: 0 0 16px 0; color: #000000; }
+    p { font-size: 16px; line-height: 24px; color: #737373; margin: 0 0 16px 0; }
+    .button { display: inline-block; background: #000000; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500; margin: 8px 0; }
+    .footer { margin-top: 32px; text-align: center; font-size: 14px; color: #a3a3a3; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      {{#if app_logo}}
+      <img src="{{app_logo}}" alt="{{app_name}}" class="logo" />
+      {{/if}}
+    </div>
+    <div class="content">
+      <h1>Verify your email</h1>
+      <p>Hi there,</p>
+      <p>Thanks for signing up for {{app_name}}! Please verify your email address to get started.</p>
+      <p style="text-align: center;">
+        <a href="{{verification_url}}" class="button">Verify Email Address</a>
+      </p>
+      <p style="font-size: 14px; color: #a3a3a3;">
+        This link expires in 24 hours. If you didn't create an account, you can safely ignore this email.
+      </p>
+    </div>
+    <div class="footer">
+      <p>&copy; ${new Date().getFullYear()} {{app_name}}. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>`
+                                        })}
+                                        className="text-xs"
+                                    >
+                                        Insert Example Template
+                                    </Button>
+                                )}
+                            </div>
                             <textarea
-                                className="w-full px-3 py-2 bg-white border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all resize-none h-32 text-sm font-mono"
-                                placeholder="Leave empty to use default template. Use {{verification_url}}, {{app_name}}, {{user_email}}, {{app_logo}} as placeholders."
+                                className="w-full px-3 py-2 bg-white border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all resize-none h-64 text-xs font-mono"
+                                placeholder="Leave empty to use default template..."
                                 value={formData.email_template_html}
                                 onChange={(e) => setFormData({ ...formData, email_template_html: e.target.value })}
                             />
