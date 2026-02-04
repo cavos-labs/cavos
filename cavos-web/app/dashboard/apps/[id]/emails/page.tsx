@@ -115,7 +115,7 @@ export default function AppEmailsPage() {
     const [showPreview, setShowPreview] = useState(false)
 
     const [formData, setFormData] = useState({
-        email_from_address: '',
+        email_reply_to: '',
         email_from_name: '',
         email_template_html: ''
     })
@@ -141,7 +141,7 @@ export default function AppEmailsPage() {
             const data = await res.json()
             setApp(data.app)
             setFormData({
-                email_from_address: data.app.email_from_address || '',
+                email_reply_to: data.app.email_reply_to || '',
                 email_from_name: data.app.email_from_name || '',
                 email_template_html: data.app.email_template_html || ''
             })
@@ -232,29 +232,38 @@ export default function AppEmailsPage() {
                 <div className="space-y-6">
                     {/* Sender Configuration */}
                     <div>
-                        <h3 className="text-sm font-semibold mb-4">Sender Configuration</h3>
+                        <h3 className="text-sm font-semibold mb-4">Email Configuration</h3>
+
+                        {/* Info banner */}
+                        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <p className="text-xs text-blue-900">
+                                <strong>Note:</strong> All verification emails are sent from <code className="bg-blue-100 px-1 py-0.5 rounded">noreply@cavos.xyz</code> (verified domain). You can customize the sender name and reply-to address below.
+                            </p>
+                        </div>
+
                         <div className="space-y-4">
                             <div>
                                 <Input
-                                    label="From Email Address"
-                                    placeholder="noreply@yourdomain.com"
-                                    value={formData.email_from_address}
-                                    onChange={(e) => setFormData({ ...formData, email_from_address: e.target.value })}
-                                />
-                                <p className="text-xs text-black/60 mt-1.5">
-                                    Leave empty to use Cavos default: <code className="bg-black/5 px-1 py-0.5 rounded">noreply@cavos.xyz</code>
-                                </p>
-                            </div>
-
-                            <div>
-                                <Input
-                                    label="From Name"
+                                    label="Sender Name"
                                     placeholder="Your App Name"
                                     value={formData.email_from_name}
                                     onChange={(e) => setFormData({ ...formData, email_from_name: e.target.value })}
                                 />
                                 <p className="text-xs text-black/60 mt-1.5">
-                                    Leave empty to use your app name: <code className="bg-black/5 px-1 py-0.5 rounded">{app?.name}</code>
+                                    The name users will see as the sender. Leave empty to use: <code className="bg-black/5 px-1 py-0.5 rounded">{app?.name}</code>
+                                </p>
+                            </div>
+
+                            <div>
+                                <Input
+                                    label="Reply-To Email (Optional)"
+                                    placeholder="support@yourdomain.com"
+                                    type="email"
+                                    value={formData.email_reply_to}
+                                    onChange={(e) => setFormData({ ...formData, email_reply_to: e.target.value })}
+                                />
+                                <p className="text-xs text-black/60 mt-1.5">
+                                    If users reply to the verification email, their response will be sent to this address. Leave empty if you don't want to receive replies.
                                 </p>
                             </div>
                         </div>

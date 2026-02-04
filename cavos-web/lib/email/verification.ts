@@ -13,7 +13,7 @@ export async function sendVerificationEmail(
     const adminSupabase = createAdminClient();
     const { data: app } = await adminSupabase
       .from('apps')
-      .select('name, logo_url, email_from_address, email_from_name, email_template_html')
+      .select('name, logo_url, email_reply_to, email_from_name, email_template_html')
       .eq('id', appId)
       .single();
 
@@ -23,9 +23,10 @@ export async function sendVerificationEmail(
       process.env.NEXT_PUBLIC_URL || 'https://cavos.xyz'
     }/api/oauth/firebase/verify-email?token=${token}`;
 
-    // Custom sender configuration
-    const fromAddress = app?.email_from_address || 'noreply@cavos.xyz';
+    // Email configuration - always send from Cavos verified domain
+    const fromAddress = 'noreply@cavos.xyz';
     const fromName = app?.email_from_name || appName;
+    const replyTo = app?.email_reply_to || undefined;
 
     // Use custom template if provided, otherwise use default
     let htmlContent = app?.email_template_html;
@@ -165,6 +166,7 @@ If you didn't create an account with ${appName}, you can safely ignore this emai
     await resend.emails.send({
       from: `${fromName} <${fromAddress}>`,
       to: email,
+      reply_to: replyTo,
       subject: `Verify your email for ${appName}`,
       html: htmlContent,
       text: textContent,

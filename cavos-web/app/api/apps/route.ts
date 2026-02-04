@@ -73,7 +73,7 @@ export async function POST(request: Request) {
       allowed_web_origins,
       logo_url,
       website_url,
-      email_from_address,
+      email_reply_to,
       email_from_name,
       email_template_html,
     } = body
@@ -114,7 +114,7 @@ export async function POST(request: Request) {
         allowed_web_origins: allowed_web_origins || null,
         logo_url: logo_url || null,
         website_url: website_url || null,
-        email_from_address: email_from_address || null,
+        email_reply_to: email_reply_to || null,
         email_from_name: email_from_name || null,
         email_template_html: email_template_html || null,
       })
