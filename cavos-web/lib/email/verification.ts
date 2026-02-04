@@ -9,11 +9,11 @@ export async function sendVerificationEmail(
   appId: string
 ): Promise<void> {
   try {
-    // Fetch app details
+    // Fetch app details including email customization
     const adminSupabase = createAdminClient();
     const { data: app } = await adminSupabase
       .from('apps')
-      .select('name, logo_url')
+      .select('name, logo_url, email_from_address, email_from_name, email_template_html')
       .eq('id', appId)
       .single();
 
@@ -23,7 +23,23 @@ export async function sendVerificationEmail(
       process.env.NEXT_PUBLIC_URL || 'https://cavos.xyz'
     }/api/oauth/firebase/verify-email?token=${token}`;
 
-    const htmlContent = `
+    // Custom sender configuration
+    const fromAddress = app?.email_from_address || 'noreply@cavos.xyz';
+    const fromName = app?.email_from_name || appName;
+
+    // Use custom template if provided, otherwise use default
+    let htmlContent = app?.email_template_html;
+
+    if (htmlContent) {
+      // Replace placeholders in custom template
+      htmlContent = htmlContent
+        .replace(/\{\{verification_url\}\}/g, verificationUrl)
+        .replace(/\{\{app_name\}\}/g, appName)
+        .replace(/\{\{user_email\}\}/g, email)
+        .replace(/\{\{app_logo\}\}/g, appLogo || '');
+    } else {
+      // Use default template
+      htmlContent = `
       <!DOCTYPE html>
       <html lang="en">
         <head>
@@ -130,6 +146,7 @@ export async function sendVerificationEmail(
         </body>
       </html>
     `;
+    }
 
     const textContent = `
 Verify your email for ${appName}
@@ -146,7 +163,7 @@ If you didn't create an account with ${appName}, you can safely ignore this emai
     `.trim();
 
     await resend.emails.send({
-      from: 'Cavos <noreply@cavos.xyz>',
+      from: `${fromName} <${fromAddress}>`,
       to: email,
       subject: `Verify your email for ${appName}`,
       html: htmlContent,

@@ -31,7 +31,10 @@ export function AppForm({ initialData, organizations, mode, onSuccess, onCancel 
         name: initialData?.name || '',
         description: initialData?.description || '',
         organization_id: initialData?.organization_id || '',
-        logo_url: initialData?.logo_url || ''
+        logo_url: initialData?.logo_url || '',
+        email_from_address: (initialData as any)?.email_from_address || '',
+        email_from_name: (initialData as any)?.email_from_name || '',
+        email_template_html: (initialData as any)?.email_template_html || ''
     })
 
     const [loading, setLoading] = useState(false)
@@ -186,6 +189,55 @@ export function AppForm({ initialData, organizations, mode, onSuccess, onCancel 
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     />
+                </div>
+
+                {/* Email Customization Section */}
+                <div className="pt-4 border-t border-black/5">
+                    <h3 className="text-sm font-semibold text-black mb-1">Email Verification Settings</h3>
+                    <p className="text-xs text-black/60 mb-4">
+                        Customize the verification emails sent to your users when they register with email/password.
+                    </p>
+
+                    <div className="space-y-4">
+                        <div>
+                            <Input
+                                label="From Email Address"
+                                placeholder="noreply@yourdomain.com"
+                                value={formData.email_from_address}
+                                onChange={(e) => setFormData({ ...formData, email_from_address: e.target.value })}
+                            />
+                            <p className="text-xs text-black/60 mt-1.5">
+                                The email address verification emails will be sent from. Leave empty to use Cavos default (noreply@cavos.xyz).
+                            </p>
+                        </div>
+
+                        <div>
+                            <Input
+                                label="From Name"
+                                placeholder="Your App Name"
+                                value={formData.email_from_name}
+                                onChange={(e) => setFormData({ ...formData, email_from_name: e.target.value })}
+                            />
+                            <p className="text-xs text-black/60 mt-1.5">
+                                The name shown as the sender. Leave empty to use your app name.
+                            </p>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-black/80 mb-1.5">
+                                Custom Email Template (Optional)
+                            </label>
+                            <textarea
+                                className="w-full px-3 py-2 bg-white border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all resize-none h-32 text-sm font-mono"
+                                placeholder="Leave empty to use default template. Use {{verification_url}}, {{app_name}}, {{user_email}}, {{app_logo}} as placeholders."
+                                value={formData.email_template_html}
+                                onChange={(e) => setFormData({ ...formData, email_template_html: e.target.value })}
+                            />
+                            <p className="text-xs text-black/60 mt-1.5">
+                                HTML template for verification emails. Available placeholders: <code className="bg-black/5 px-1 py-0.5 rounded text-xs">{'{{verification_url}}'}</code>, <code className="bg-black/5 px-1 py-0.5 rounded text-xs">{'{{app_name}}'}</code>, <code className="bg-black/5 px-1 py-0.5 rounded text-xs">{'{{user_email}}'}</code>, <code className="bg-black/5 px-1 py-0.5 rounded text-xs">{'{{app_logo}}'}</code>
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
                 {mode === 'create' && organizations && (
