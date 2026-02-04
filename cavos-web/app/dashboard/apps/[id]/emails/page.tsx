@@ -115,6 +115,8 @@ export default function AppEmailsPage() {
     const [showPreview, setShowPreview] = useState(false)
 
     const [formData, setFormData] = useState({
+        name: '',
+        logo_url: '',
         email_reply_to: '',
         email_from_name: '',
         email_template_html: ''
@@ -141,6 +143,8 @@ export default function AppEmailsPage() {
             const data = await res.json()
             setApp(data.app)
             setFormData({
+                name: data.app.name || '',
+                logo_url: data.app.logo_url || '',
                 email_reply_to: data.app.email_reply_to || '',
                 email_from_name: data.app.email_from_name || '',
                 email_template_html: data.app.email_template_html || DEFAULT_TEMPLATE
@@ -167,7 +171,10 @@ export default function AppEmailsPage() {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    ...formData,
+                    name: formData.name,
+                    logo_url: formData.logo_url,
+                    email_reply_to: formData.email_reply_to,
+                    email_from_name: formData.email_from_name,
                     email_template_html: templateToSave
                 }),
             })
@@ -190,10 +197,10 @@ export default function AppEmailsPage() {
         const template = formData.email_template_html || DEFAULT_TEMPLATE
         return template
             .replace(/\{\{verification_url\}\}/g, 'https://cavos.xyz/verify?token=example')
-            .replace(/\{\{app_name\}\}/g, app?.name || 'Your App')
+            .replace(/\{\{app_name\}\}/g, formData.name || 'Your App')
             .replace(/\{\{user_email\}\}/g, 'user@example.com')
-            .replace(/\{\{app_logo\}\}/g, app?.logo_url || 'https://via.placeholder.com/64')
-    }, [formData.email_template_html, app])
+            .replace(/\{\{app_logo\}\}/g, formData.logo_url || 'https://via.placeholder.com/64')
+    }, [formData.email_template_html, formData.name, formData.logo_url])
 
     if (loading) {
         return (
@@ -238,8 +245,41 @@ export default function AppEmailsPage() {
             {/* Settings Card */}
             <Card>
                 <div className="space-y-6">
-                    {/* Sender Configuration */}
+                    {/* App Info */}
                     <div>
+                        <h3 className="text-sm font-semibold mb-4">App Information</h3>
+                        <p className="text-xs text-black/60 mb-4">
+                            These values are used in the email template placeholders.
+                        </p>
+                        <div className="space-y-4">
+                            <div>
+                                <Input
+                                    label="App Name"
+                                    placeholder="My Awesome App"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                />
+                                <p className="text-xs text-black/60 mt-1.5">
+                                    Used in <code className="bg-black/5 px-1 py-0.5 rounded">{'{{app_name}}'}</code> placeholder
+                                </p>
+                            </div>
+
+                            <div>
+                                <Input
+                                    label="App Logo URL"
+                                    placeholder="https://yourdomain.com/logo.png"
+                                    value={formData.logo_url}
+                                    onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
+                                />
+                                <p className="text-xs text-black/60 mt-1.5">
+                                    Used in <code className="bg-black/5 px-1 py-0.5 rounded">{'{{app_logo}}'}</code> placeholder. Recommended: 64x64px
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Sender Configuration */}
+                    <div className="pt-6 border-t border-black/10">
                         <h3 className="text-sm font-semibold mb-4">Email Configuration</h3>
 
                         {/* Info banner */}
@@ -258,7 +298,7 @@ export default function AppEmailsPage() {
                                     onChange={(e) => setFormData({ ...formData, email_from_name: e.target.value })}
                                 />
                                 <p className="text-xs text-black/60 mt-1.5">
-                                    The name users will see as the sender. Leave empty to use: <code className="bg-black/5 px-1 py-0.5 rounded">{app?.name}</code>
+                                    The name users will see as the sender. Leave empty to use: <code className="bg-black/5 px-1 py-0.5 rounded">{formData.name || 'App Name'}</code>
                                 </p>
                             </div>
 
