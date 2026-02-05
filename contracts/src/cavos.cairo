@@ -1109,10 +1109,19 @@ pub mod Cavos {
             let payload_len = payload_end - payload_start;
 
             // Verify claims using optimized range-based decoding
-            self
-                .assert_decoded_claim_match(
-                    @jwt_bytes, payload_start, payload_len, sub_offset, sub_len, jwt_sub,
-                );
+            // Google uses numeric sub, Apple and Firebase use alphanumeric sub
+            if jwt_iss == EXPECTED_ISS_GOOGLE {
+                self
+                    .assert_claim_decimal_match(
+                        @jwt_bytes, payload_start, payload_len, sub_offset, sub_len, jwt_sub,
+                    );
+            } else {
+                // Apple or Firebase (both use alphanumeric sub)
+                self
+                    .assert_decoded_claim_match(
+                        @jwt_bytes, payload_start, payload_len, sub_offset, sub_len, jwt_sub,
+                    );
+            }
             self
                 .assert_claim_hex_match(
                     @jwt_bytes, payload_start, payload_len, nonce_offset, nonce_len, jwt_nonce,
