@@ -153,7 +153,7 @@ export default function ComparePage() {
                 </div>
 
                 <p className="mt-8 text-center text-[10px] font-bold text-gray-300 uppercase tracking-[0.2em]">
-                    Cavos SDK can be integrated via <a href="https://github.com/adrianvrj/cavos-cli-skill" className="text-black underline decoration-gray-200 hover:decoration-black transition-all">npx skills add cavos-labs/cavos-skills</a>
+                    Cavos SDK can be integrated via <a href="https://github.com/cavos-labs/cavos-skills" className="text-black underline decoration-gray-200 hover:decoration-black transition-all">npx skills add cavos-labs/cavos-skills</a>
                 </p>
 
                 <div className="mt-32 space-y-16">
