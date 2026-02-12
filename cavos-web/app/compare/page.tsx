@@ -157,29 +157,24 @@ export default function ComparePage() {
                 </p>
 
                 <div className="mt-32 space-y-16">
-                    <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-center mb-12">Featured Integrations</h2>
-                    <div className="grid md:grid-cols-2 gap-12">
-                        <div className="p-10 rounded-[3rem] bg-gray-50 border border-gray-100 space-y-6">
-                            <h3 className="text-3xl font-bold italic">Abyss</h3>
-                            <p className="text-gray-600 leading-relaxed italic">
-                                "Cavos allowed us to reduce our game onboarding time from minutes to seconds. Users don't even realize they are using a blockchain until they see their loot on-chain."
-                            </p>
-                            <div className="pt-4 flex items-center gap-4 text-xs font-bold uppercase tracking-widest text-primary">
-                                <span>30s Onboarding</span>
-                                <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                                <span>Pure Sovereignty</span>
+                    <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-center mb-12">Featured Integration</h2>
+                    <div className="max-w-4xl mx-auto p-12 rounded-[3rem] bg-gray-50 border border-gray-100 space-y-8">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div>
+                                <h3 className="text-4xl font-bold italic mb-2">Cofiblocks</h3>
+                                <a href="https://app.cofiblocks.com" className="text-primary font-medium hover:underline tracking-tight">app.cofiblocks.com</a>
+                            </div>
+                            <div className="px-6 py-2 bg-black text-white text-[10px] font-bold uppercase tracking-[0.2em] rounded-full w-fit">
+                                Live on Mainnet
                             </div>
                         </div>
-                        <div className="p-10 rounded-[3rem] bg-gray-50 border border-gray-100 space-y-6">
-                            <h3 className="text-3xl font-bold italic">ByteBeasts</h3>
-                            <p className="text-gray-600 leading-relaxed italic">
-                                "The mobile experience with Cavos is unmatched. Integrating native passkeys for a Tamagotchi-style game on Starknet was a breeze with the React Native SDK."
-                            </p>
-                            <div className="pt-4 flex items-center gap-4 text-xs font-bold uppercase tracking-widest text-primary">
-                                <span>Native Mobile</span>
-                                <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                                <span>Zero Gas Fees</span>
-                            </div>
+                        <p className="text-2xl text-gray-600 leading-tight font-serif italic">
+                            "Cavos enables us to onboard coffee farmers directly to Starknet without the friction of traditional wallets. They get the benefits of decentralization and middleman-free sales, while the blockchain remains invisible."
+                        </p>
+                        <div className="pt-6 border-t border-gray-200 flex flex-wrap gap-8 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">
+                            <span className="flex items-center gap-2"><span className="w-2 h-2 bg-green-500 rounded-full"></span> Middleman-Free</span>
+                            <span className="flex items-center gap-2"><span className="w-2 h-2 bg-green-500 rounded-full"></span> Seamless Onboarding</span>
+                            <span className="flex items-center gap-2"><span className="w-2 h-2 bg-green-500 rounded-full"></span> Real World Impact</span>
                         </div>
                     </div>
                 </div>
