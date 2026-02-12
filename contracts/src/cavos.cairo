@@ -235,7 +235,7 @@ pub mod Cavos {
             let signature = tx_info.signature;
             let sig_type = *signature[0];
 
-            if sig_type == SESSION_SIG_MAGIC {
+            if sig_type == SESSION_SIG_MAGIC || sig_type == OAUTH_SIG_MAGIC {
                 let session_key = *signature[3];
                 self.enforce_spending_limits(session_key, calls.span());
             }
@@ -631,17 +631,18 @@ pub mod Cavos {
             let jwt_iss = *signature[10];
             let _jwt_aud = *signature[11];
             let salt = *signature[12];
+            let wallet_name = *signature[13];
 
             // Extract claim offsets for verification
-            let _sub_offset: usize = (*signature[13]).try_into().unwrap();
-            let _sub_len: usize = (*signature[14]).try_into().unwrap();
-            let _nonce_offset: usize = (*signature[15]).try_into().unwrap();
-            let _nonce_len: usize = (*signature[16]).try_into().unwrap();
-            let _kid_offset: usize = (*signature[17]).try_into().unwrap();
-            let _kid_len: usize = (*signature[18]).try_into().unwrap();
+            let _sub_offset: usize = (*signature[14]).try_into().unwrap();
+            let _sub_len: usize = (*signature[15]).try_into().unwrap();
+            let _nonce_offset: usize = (*signature[16]).try_into().unwrap();
+            let _nonce_len: usize = (*signature[17]).try_into().unwrap();
+            let _kid_offset: usize = (*signature[18]).try_into().unwrap();
+            let _kid_len: usize = (*signature[19]).try_into().unwrap();
 
-            // RSA signature starts at index 19
-            let rsa_sig_start: usize = 19;
+            // RSA signature starts at index 20
+            let rsa_sig_start: usize = 20;
             let rsa_sig_len: usize = (*signature[rsa_sig_start]).try_into().unwrap();
             assert!(rsa_sig_len == 16, "RSA signature must be 16 limbs");
 
@@ -733,8 +734,12 @@ pub mod Cavos {
             let jwt_exp: u64 = jwt_exp_felt.try_into().expect('jwt_exp overflow');
             assert!(now < jwt_exp, "JWT expired");
 
-            // 6. Verify address_seed = Poseidon(sub, salt)
-            let computed_seed = PoseidonTrait::new().update(jwt_sub).update(salt).finalize();
+            // 6. Verify address_seed = Poseidon(sub, salt, wallet_name?)
+            let mut elements: Array<felt252> = array![jwt_sub, salt];
+            if wallet_name != 0 {
+                elements.append(wallet_name);
+            }
+            let computed_seed = core::poseidon::poseidon_hash_span(elements.span());
             assert!(computed_seed == self.address_seed.read(), "Address seed mismatch");
 
             // 7. Verify JWKS key is valid
@@ -1096,6 +1101,7 @@ pub mod Cavos {
             let jwt_iss = *signature[10];
             let _jwt_aud = *signature[11];
             let salt = *signature[12];
+            let wallet_name = *signature[13];
 
             // 1. Verify session key signed the message hash
             assert!(
@@ -1120,8 +1126,12 @@ pub mod Cavos {
             let jwt_exp: u64 = jwt_exp_felt.try_into().expect('jwt_exp overflow');
             assert!(now < jwt_exp, "JWT expired");
 
-            // 5. Verify address_seed = Poseidon(sub, salt)
-            let computed_seed = PoseidonTrait::new().update(jwt_sub).update(salt).finalize();
+            // 5. Verify address_seed = Poseidon(sub, salt, wallet_name?)
+            let mut seed_elements: Array<felt252> = array![jwt_sub, salt];
+            if wallet_name != 0 {
+                seed_elements.append(wallet_name);
+            }
+            let computed_seed = core::poseidon::poseidon_hash_span(seed_elements.span());
             assert!(computed_seed == self.address_seed.read(), "Address seed mismatch");
 
             // 6. Verify JWKS key is valid
@@ -1129,7 +1139,8 @@ pub mod Cavos {
             assert!(registry.is_key_valid(jwt_kid), "JWKS key invalid or expired");
 
             // 7. Extract and verify RSA signature
-            let rsa_sig_start: usize = 19;
+            // wallet_name at [13], claim offsets [14-19], RSA sig starts at [20]
+            let rsa_sig_start: usize = 20;
             let rsa_sig_len: usize = (*signature[rsa_sig_start]).try_into().unwrap();
             assert!(rsa_sig_len == 16, "RSA signature must be 16 limbs");
 
@@ -1142,7 +1153,7 @@ pub mod Cavos {
             }
             let rsa_sig = biguint_from_limbs(rsa_limbs.span());
 
-            let n_prime_start: usize = 36;
+            let n_prime_start: usize = 37;
             let n_prime_len: usize = (*signature[n_prime_start]).try_into().unwrap();
             assert!(n_prime_len == 16, "n_prime must be 16 limbs");
 
@@ -1155,7 +1166,7 @@ pub mod Cavos {
             }
             let n_prime = biguint_from_limbs(n_prime_limbs.span());
 
-            let r_sq_start: usize = 53;
+            let r_sq_start: usize = 54;
             let r_sq_len: usize = (*signature[r_sq_start]).try_into().unwrap();
             assert!(r_sq_len == 16, "R^2 must be 16 limbs");
 
@@ -1177,7 +1188,7 @@ pub mod Cavos {
                 ],
             };
 
-            let jwt_data_start: usize = 70;
+            let jwt_data_start: usize = 71;
             let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
 
             let mut jwt_bytes = "";
@@ -1204,13 +1215,13 @@ pub mod Cavos {
                 "RSA verification failed (Montgomery)",
             );
 
-            // Verify claims
-            let sub_offset: usize = (*signature[13]).try_into().unwrap();
-            let sub_len: usize = (*signature[14]).try_into().unwrap();
-            let nonce_offset: usize = (*signature[15]).try_into().unwrap();
-            let nonce_len: usize = (*signature[16]).try_into().unwrap();
-            let kid_offset: usize = (*signature[17]).try_into().unwrap();
-            let kid_len: usize = (*signature[18]).try_into().unwrap();
+            // Verify claims - indices account for wallet_name at [13]
+            let sub_offset: usize = (*signature[14]).try_into().unwrap();
+            let sub_len: usize = (*signature[15]).try_into().unwrap();
+            let nonce_offset: usize = (*signature[16]).try_into().unwrap();
+            let nonce_len: usize = (*signature[17]).try_into().unwrap();
+            let kid_offset: usize = (*signature[18]).try_into().unwrap();
+            let kid_len: usize = (*signature[19]).try_into().unwrap();
 
             let (header_end, payload_start, payload_end) = split_signed_data(@jwt_bytes);
             let payload_len = payload_end - payload_start;
@@ -1260,7 +1271,8 @@ pub mod Cavos {
             let jwt_nonce = *signature[7];
 
             // Compute policy fields position (after JWT bytes)
-            let jwt_data_start: usize = 70;
+            // wallet_name at [13] shifts jwt_data_start from 70 to 71
+            let jwt_data_start: usize = 71;
             let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
             let jwt_chunks = (jwt_bytes_len + 30) / 31;
             let policy_start: usize = jwt_data_start + 1 + jwt_chunks;
@@ -1431,10 +1443,10 @@ pub mod Cavos {
             let jwt_nonce = *signature[7];
 
             // 3. Compute policy fields position (after JWT bytes)
-            let jwt_data_start: usize = 70;
-            let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
+            let jwt_data_idx: usize = 71; // Shifted due to wallet_name at index 13
+            let jwt_bytes_len: usize = (*signature[jwt_data_idx]).try_into().unwrap();
             let jwt_chunks = (jwt_bytes_len + 30) / 31; // ceil(len/31)
-            let policy_start: usize = jwt_data_start + 1 + jwt_chunks;
+            let policy_start: usize = jwt_data_idx + 1 + jwt_chunks;
 
             // 4. Extract policy fields
             let valid_after: u64 = (*signature[policy_start])
@@ -1493,6 +1505,7 @@ pub mod Cavos {
             let jwt_kid = *signature[9];
             let jwt_iss = *signature[10];
             let salt = *signature[12];
+            let wallet_name = *signature[13];
 
             // Verify nonce = Poseidon(session_key, valid_until, randomness)
             let expected_nonce = PoseidonTrait::new()
@@ -1507,8 +1520,12 @@ pub mod Cavos {
             let now = get_block_timestamp();
             assert!(now < jwt_exp, "JWT expired");
 
-            // Verify address_seed
-            let computed_seed = PoseidonTrait::new().update(jwt_sub).update(salt).finalize();
+            // Verify address_seed = Poseidon(sub, salt, wallet_name?)
+            let mut seed_elements: Array<felt252> = array![jwt_sub, salt];
+            if wallet_name != 0 {
+                seed_elements.append(wallet_name);
+            }
+            let computed_seed = core::poseidon::poseidon_hash_span(seed_elements.span());
             assert!(computed_seed == self.address_seed.read(), "Address seed mismatch");
 
             // Verify JWKS key
@@ -1516,7 +1533,8 @@ pub mod Cavos {
             assert!(registry.is_key_valid(jwt_kid), "JWKS key invalid or expired");
 
             // Extract and verify RSA signature
-            let rsa_sig_start: usize = 19;
+            // wallet_name at [13], claim offsets [14-19], RSA sig starts at [20]
+            let rsa_sig_start: usize = 20;
             let rsa_sig_len: usize = (*signature[rsa_sig_start]).try_into().unwrap();
             assert!(rsa_sig_len == 16, "RSA signature must be 16 limbs");
 
@@ -1529,7 +1547,7 @@ pub mod Cavos {
             }
             let rsa_sig = biguint_from_limbs(rsa_limbs.span());
 
-            let n_prime_start: usize = 36;
+            let n_prime_start: usize = 37;
             assert!(
                 (*signature[n_prime_start]).try_into().unwrap() == 16_usize,
                 "n_prime must be 16 limbs",
@@ -1543,7 +1561,7 @@ pub mod Cavos {
             }
             let n_prime = biguint_from_limbs(n_prime_limbs.span());
 
-            let r_sq_start: usize = 53;
+            let r_sq_start: usize = 54;
             assert!(
                 (*signature[r_sq_start]).try_into().unwrap() == 16_usize, "R^2 must be 16 limbs",
             );
@@ -1565,7 +1583,7 @@ pub mod Cavos {
                 ],
             };
 
-            let jwt_data_start: usize = 70;
+            let jwt_data_start: usize = 71;
             let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
             let mut jwt_bytes = "";
             let mut current_byte = 0;
@@ -1598,11 +1616,11 @@ pub mod Cavos {
                 "Invalid JWT issuer",
             );
 
-            // Verify claims match
-            let sub_offset: usize = (*signature[13]).try_into().unwrap();
-            let sub_len: usize = (*signature[14]).try_into().unwrap();
-            let kid_offset: usize = (*signature[17]).try_into().unwrap();
-            let kid_len: usize = (*signature[18]).try_into().unwrap();
+            // Verify claims match - indices account for wallet_name at [13]
+            let sub_offset: usize = (*signature[14]).try_into().unwrap();
+            let sub_len: usize = (*signature[15]).try_into().unwrap();
+            let kid_offset: usize = (*signature[18]).try_into().unwrap();
+            let kid_len: usize = (*signature[19]).try_into().unwrap();
 
             let (header_end, payload_start, payload_end) = split_signed_data(@jwt_bytes);
             let payload_len = payload_end - payload_start;
