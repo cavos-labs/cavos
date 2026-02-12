@@ -5,7 +5,7 @@ import Link from 'next/link'
 
 export const metadata = {
     title: "Cavos vs The Rest | The Sovereignty Matrix",
-    description: "Technical comparison between Cavos, Privy, Dynamic, and Cartridge. Why verifiable, MPC-free signers are the future of Starknet.",
+    description: "Technical comparison between Cavos, Privy, Dynamic, and Passkey Wallets. Why verifiable, MPC-free signers are the future of Starknet.",
 }
 
 export default function ComparePage() {
@@ -14,70 +14,70 @@ export default function ComparePage() {
             feature: "Core Architecture",
             cavos: "On-chain RSA-2048 Verification",
             privy: "MPC Shards (Off-chain)",
-            cartridge: "Session Key Controllers",
+            passkey: "Session Key Controllers",
             benefit: "Cavos uses Montgomery Reduction in Cairo to verify JWTs directly on the protocol layer."
         },
         {
             feature: "Signing Logic",
             cavos: "Truly Verifiable On-chain",
             privy: "Provider-managed Shards",
-            cartridge: "Browser-based Auth Hooks",
+            passkey: "Browser-based Auth Hooks",
             benefit: "Anyone can verify the authorization proof on Starknet explorer. MPC relies on provider backend."
         },
         {
             feature: "AI Agent Signer",
             cavos: "Native Headless / Master-less support",
             privy: "Requires key injection",
-            cartridge: "Primarily human-centric",
+            passkey: "Primarily human-centric",
             benefit: "Cavos session tokens allow autonomous agents to sign safely without storing private keys."
         },
         {
             feature: "Mobile Experience",
             cavos: "Native React Native SDK (Passkeys)",
             privy: "Browser / WebView dependent",
-            cartridge: "Web app wrapper",
+            passkey: "Web app wrapper",
             benefit: "Cavos provides a seamless mobile onboarding without external browser popups."
         },
         {
             feature: "Gasless / Sponsorship",
             cavos: "Native AVNU Paymaster integration",
             privy: "Custom relayer setup",
-            cartridge: "Integrated paymaster",
+            passkey: "Integrated paymaster",
             benefit: "Transactions are sponsored by default. Users never need to hold ETH to start."
         },
         {
             feature: "Account Recovery",
             cavos: "OAuth Identity (Google/Apple)",
             privy: "Shard-based recovery",
-            cartridge: "Passkey / Social recovery",
+            passkey: "Passkey / Social recovery",
             benefit: "Your identity IS your wallet. No seed phrases, no shards, no vendor lock-in."
         },
         {
             feature: "Implementation",
             cavos: "npx skills add → ~15 min setup",
             privy: "Dashboard + API config",
-            cartridge: "Contract-level integration",
+            passkey: "Contract-level integration",
             benefit: "Get from zero to invisible wallet in 15 minutes with developer-first tooling."
         },
         {
             feature: "Sovereignty Mode",
             cavos: "100% Non-Custodial (No shards stored)",
             privy: "Provider-held key fragments",
-            cartridge: "Self-custodial controller",
+            passkey: "Self-custodial controller",
             benefit: "Cavos stores ZERO fragments of your keys. Only the Account Contract has authority."
         },
         {
             feature: "Production Usage",
             cavos: "10+ dApps • 81+ wallets (growing)",
             privy: "Strong cross-chain adoption",
-            cartridge: "Dominant in Starknet gaming",
+            passkey: "Dominant in Starknet gaming",
             benefit: "Cavos is the chosen infrastructure for high-growth Starknet consumer applications."
         },
         {
             feature: "Performance",
             cavos: "Direct L2 settlement",
             privy: "Bridge / backend latency",
-            cartridge: "Optimized L2 settlement",
+            passkey: "Optimized L2 settlement",
             benefit: "Minimized latency using session tokens authorized directly on-chain."
         }
     ]
@@ -129,7 +129,7 @@ export default function ComparePage() {
                                     <th className="p-8 text-left uppercase text-[10px] tracking-[0.3em] font-bold">Vector</th>
                                     <th className="p-8 text-left font-extrabold text-lg border-x border-white/10 italic text-white">Cavos</th>
                                     <th className="p-8 text-left text-gray-400 font-medium text-sm">Privy / Dynamic</th>
-                                    <th className="p-8 text-left text-gray-400 font-medium text-sm">Cartridge</th>
+                                    <th className="p-8 text-left text-gray-400 font-medium text-sm">Passkey Wallets</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -145,7 +145,7 @@ export default function ComparePage() {
                                             </div>
                                         </td>
                                         <td className="p-8 text-gray-500 text-sm">{row.privy}</td>
-                                        <td className="p-8 text-gray-500 text-sm">{row.cartridge}</td>
+                                        <td className="p-8 text-gray-500 text-sm">{row.passkey}</td>
                                     </tr>
                                 ))}
                             </tbody>
