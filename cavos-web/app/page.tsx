@@ -1,4 +1,3 @@
-import Image from 'next/image'
 import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { AppsCarousel } from '@/components/AppsCarousel'
@@ -13,7 +12,7 @@ export default function LandingPage() {
         "name": "Cavos",
         "operatingSystem": "Web, iOS, Android",
         "applicationCategory": "FinanceApplication",
-        "description": "Embed invisible wallets into your app. Social/Email login, gasless transactions, and 100% self-custodial infrastructure for humans and AI agents on Starknet.",
+        "description": "Cavos embeds Starknet smart accounts directly into your product — with social login, gas abstraction, and programmable security.",
         "offers": {
             "@type": "Offer",
             "price": "0",
@@ -35,82 +34,137 @@ export default function LandingPage() {
             />
             <Header />
 
-            {/* Hero Section */}
-            <section className="relative pt-32 pb-24 px-6 flex flex-col items-center justify-center text-center">
+            {/* HERO SECTION */}
+            <section className="relative pt-32 pb-16 px-6 flex flex-col items-center justify-center text-center">
                 <div className="max-w-5xl mx-auto space-y-10">
-                    <div className="inline-block px-4 py-1.5 bg-gray-50 border border-gray-100 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">
-                        OAuth for Blockchain
-                    </div>
                     <h1 className="text-6xl md:text-8xl font-bold tracking-tighter leading-[0.9] text-black">
-                        Embed Invisible Wallets <br />
-                        <span className="italic text-gray-400">Into Your App</span>
+                        Wallets, built into <br />
+                        <span className="italic text-gray-400">your app.</span>
                     </h1>
                     <p className="text-xl md:text-2xl text-gray-500 max-w-3xl mx-auto leading-relaxed">
-                        No seed phrases. No extensions. No blockchain confusion. <br />
-                        Provide a seamless Web2 login that results in a verifiable, <br />
-                        self-custodial Starknet wallet.
+                        Cavos embeds Starknet smart accounts directly into your product — with social login, gas abstraction, and programmable security. No extensions. No seed phrases. No wallet popups.
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
                         <Link
                             href="/register"
                             className="w-full sm:w-auto px-10 py-5 bg-black text-white rounded-2xl font-bold text-lg hover:bg-gray-900 transition-all shadow-xl shadow-black/5"
                         >
-                            Get Started
+                            Start building
                         </Link>
                         <a
                             href="https://docs.cavos.xyz"
                             target="_blank"
                             className="w-full sm:w-auto px-10 py-5 bg-gray-50 text-black rounded-2xl font-bold text-lg hover:bg-gray-100 transition-all border border-gray-100"
                         >
-                            Read Documentation
+                            Read the docs
                         </a>
                     </div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">
+                        Built on Starknet native account abstraction.
+                    </p>
                 </div>
             </section>
 
-            {/* Audience / Benefit Section */}
-            <section className="py-24 bg-white px-6 border-t border-gray-50">
-                <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-12">
-                    <div className="space-y-4">
-                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-primary">For Builders</h3>
-                        <h4 className="text-2xl font-bold">Add frictionless wallets in minutes</h4>
-                        <p className="text-gray-500 text-sm leading-relaxed">
-                            Integrate with our React or React Native SDKs. Get from zero to a live wallet using only social or email authentication.
-                        </p>
+            {/* TRUST BAR */}
+            <section className="py-12 border-y border-gray-50 bg-white">
+                <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-8">
+                    <div className="flex items-center gap-8 opacity-40 grayscale">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-black whitespace-nowrap">Used by teams on Starknet</span>
+                        <AppsCarousel />
                     </div>
-                    <div className="space-y-4">
-                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-primary">For Teams</h3>
-                        <h4 className="text-2xl font-bold">Turn Web2 users into Web3 users</h4>
-                        <p className="text-gray-500 text-sm leading-relaxed">
-                            Onboard users without explaining gas fees or seed phrases. They use the app, you handle the infrastructure.
-                        </p>
-                    </div>
-                    <div className="space-y-4">
-                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-primary">For Agents</h3>
-                        <h4 className="text-2xl font-bold">The standard for AI Signers</h4>
-                        <p className="text-gray-500 text-sm leading-relaxed">
-                            The only MPC-free signer that allows autonomous agents to sign verifiable transactions on-chain with granular policies.
-                        </p>
+                    <div className="text-right">
+                        <span className="text-xl font-bold tabular-nums text-black">1.2M+</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-2">Transactions executed</span>
                     </div>
                 </div>
             </section>
 
-            {/* How It Works Section */}
-            <section className="py-32 bg-gray-50 border-y border-gray-100 px-6 text-center">
+            {/* THE PROBLEM */}
+            <section className="py-32 px-6 bg-white">
+                <div className="max-w-4xl mx-auto space-y-12">
+                    <h2 className="text-4xl md:text-5xl font-bold tracking-tighter text-black">Wallet UX is still broken.</h2>
+                    <div className="grid md:grid-cols-2 gap-12">
+                        <p className="text-xl text-gray-600 leading-relaxed">
+                            Most blockchain apps rely on external wallets. Users came for your product — not for wallet management.
+                        </p>
+                        <ul className="space-y-4 text-lg font-medium text-gray-400">
+                            <li>• Context switching</li>
+                            <li>• Browser extensions</li>
+                            <li>• Seed phrases</li>
+                            <li>• Visible gas fees</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            {/* THE PRODUCT */}
+            <section className="py-32 bg-gray-50 border-y border-gray-100 px-6">
                 <div className="max-w-6xl mx-auto space-y-20">
-                    <div className="space-y-4">
-                        <h2 className="text-4xl md:text-6xl font-bold tracking-tighter">Simple User Flow</h2>
-                        <p className="text-gray-500 text-lg">Four steps to absolute sovereignty.</p>
+                    <h2 className="text-4xl md:text-6xl font-bold tracking-tighter text-center">Cavos makes wallets invisible.</h2>
+                    <div className="grid md:grid-cols-3 gap-12">
+                        {[
+                            { title: "Embedded Accounts", desc: "Smart accounts are created automatically when users sign in. They never leave your interface." },
+                            { title: "Gas Abstraction", desc: "Sponsor or manage fees programmatically. Users don't need tokens to start." },
+                            { title: "Programmable Security", desc: "Session keys. Custom policies. Built on Starknet account abstraction." }
+                        ].map((feature, i) => (
+                            <div key={ feature.title } className="space-y-4">
+                                <h4 className="text-2xl font-bold text-black">{ feature.title }</h4>
+                                <p className="text-gray-500 leading-relaxed">{ feature.desc }</p>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="text-center">
+                        <Link href="https://docs.cavos.xyz" target="_blank" className="text-black font-bold border-b-2 border-black pb-1 hover:text-gray-600 hover:border-gray-600 transition-all">
+                            Explore architecture →
+                        </Link>
+                    </div>
+                </div>
+            </section>
+
+            {/* HOW IT WORKS */}
+            <section className="py-32 bg-white px-6">
+                <div className="max-w-6xl mx-auto space-y-24">
+                    <div className="text-center space-y-4">
+                        <h2 className="text-4xl md:text-6xl font-bold tracking-tighter">How It Works</h2>
+                        <p className="text-gray-500 text-lg">Minimal infrastructure for maximum control.</p>
                     </div>
                     <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
                         {[
-                            { step: "01", title: "Authentication", desc: "User signs in with Google, Apple, or Email." },
-                            { step: "02", title: "Smart Account", desc: "A self-custodial account is created deterministically." },
-                            { step: "03", title: "Verification", desc: "JWT signatures are verified directly on-chain." },
-                            { step: "04", title: "Execution", desc: "Transactions are executed gasless via Paymaster." }
+                            { step: "1", title: "Authenticate", desc: "Login via OAuth or email." },
+                            { step: "2", title: "Provision Account", desc: "Cavos deploys a Starknet smart account." },
+                            { step: "3", title: "Execute", desc: "Transactions run through your backend or client." },
+                            { step: "4", title: "Scale", desc: "Manage accounts and policies via API." }
                         ].map((item, i) => (
-                            <div key={i} className="text-left space-y-4 p-8 bg-white rounded-[2rem] border border-gray-100 shadow-sm">
-                                <div className="text-3xl font-bold text-gray-200">{item.step}</div>
+                            <div key={i} className="space-y-4 p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100">
+                                <div className="text-2xl font-bold text-gray-300">{item.step}</div>
+                                <h4 className="font-bold text-lg">{item.title}</h4>
+                                <p className="text-sm text-gray-500">{item.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                    <p className="text-center text-xs text-gray-400 italic">All accounts are self-custodial smart contracts.</p>
+                </div>
+            </section>
+
+            {/* CODE BLOCK SECTION */}
+            <section className="py-32 bg-white px-6">
+                <div className="max-w-6xl mx-auto">
+                    <CodeDemoSection />
+                </div>
+            </section>
+
+            {/* WHY CAVOS */}
+            <section className="py-32 bg-gray-50 border-y border-gray-100 px-6">
+                <div className="max-w-6xl mx-auto space-y-20">
+                    <h2 className="text-4xl md:text-6xl font-bold tracking-tighter text-center">Designed for Starknet.</h2>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                        {[
+                            { title: "Native AA", desc: "No workarounds. No patch layers. Built on pure Cairo 2.x." },
+                            { title: "Smart Account Infra", desc: "Not just a wallet connector. A complete account lifecycle engine." },
+                            { title: "Full Control", desc: "You define authentication, gas, and spending policies." },
+                            { title: "Production Ready", desc: "Built for scale, not demos. Powering live applications today." }
+                        ].map((item, i) => (
+                            <div key={i} className="space-y-2">
                                 <h4 className="font-bold text-lg">{item.title}</h4>
                                 <p className="text-sm text-gray-500">{item.desc}</p>
                             </div>
@@ -119,52 +173,97 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Adoption Metrics */}
-            <section className="py-32 px-6 bg-white">
-                <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-12">
+            {/* COMPARISON SUBTLE */}
+            <section className="py-32 bg-white px-6">
+                <div className="max-w-4xl mx-auto space-y-16">
+                    <h2 className="text-4xl font-bold tracking-tighter text-center">Purpose-built infrastructure.</h2>
+                    <div className="overflow-hidden rounded-3xl border border-gray-100 shadow-sm">
+                        <table className="w-full border-collapse bg-white">
+                            <thead>
+                                <tr className="bg-gray-50 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                                    <th className="p-6 text-left">Feature</th>
+                                    <th className="p-6 text-center text-black">Cavos</th>
+                                    <th className="p-6 text-center">Browser Wallets</th>
+                                </tr>
+                            </thead>
+                            <tbody className="text-sm font-medium">
+                                {[
+                                    { f: "Embedded UX", c: "✓", b: "✕" },
+                                    { f: "Programmatic gas", c: "✓", b: "Limited" },
+                                    { f: "Session keys", c: "✓", b: "✕" },
+                                    { f: "Smart accounts", c: "✓", b: "Varies" }
+                                ].map((row, i) => (
+                                    <tr key={i} className="border-t border-gray-50">
+                                        <td className="p-6 text-gray-600">{row.f}</td>
+                                        <td className="p-6 text-center font-bold text-black">{row.c}</td>
+                                        <td className="p-6 text-center text-gray-400">{row.b}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            {/* SECURITY */}
+            <section className="py-32 bg-black text-white px-6">
+                <div className="max-w-4xl mx-auto space-y-12">
+                    <h2 className="text-4xl md:text-5xl font-bold tracking-tighter">Security by architecture.</h2>
+                    <div className="grid md:grid-cols-2 gap-x-20 gap-y-10">
+                        {[
+                            "Smart accounts, not EOAs",
+                            "Programmable key permissions",
+                            "Session key support",
+                            "Backend relay compatibility",
+                            "Starknet-native design",
+                            "On-chain RSA verification"
+                        ].map((item, i) => (
+                            <div key={i} className="flex items-center gap-4 text-lg font-medium text-gray-300">
+                                <span className="w-1.5 h-1.5 bg-white rounded-full"></span>
+                                {item}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* BUILT FOR */}
+            <section className="py-32 bg-gray-50 px-6">
+                <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
                     {[
-                        { label: "Active DApps", value: "10+" },
-                        { label: "Wallets Deployed", value: "81+" },
-                        { label: "Onboarding Time", value: "<30s" },
-                        { label: "MPC Shards", value: "0" }
-                    ].map((stat, i) => (
-                        <div key={i} className="space-y-2">
-                            <div className="text-5xl font-bold tracking-tighter">{stat.value}</div>
-                            <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">{stat.label}</div>
+                        { title: "Developers", desc: "Integrate without rebuilding auth. Clean SDKs for Web and Mobile." },
+                        { title: "Product Teams", desc: "Reduce wallet friction and increase activation immediately." },
+                        { title: "Founders", desc: "Ship faster without owning wallet infrastructure overhead." }
+                    ].map((card, i) => (
+                        <div key={i} className="p-10 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm space-y-4">
+                            <h4 className="text-xl font-bold">{card.title}</h4>
+                            <p className="text-sm text-gray-500 leading-relaxed">{card.desc}</p>
                         </div>
                     ))}
                 </div>
             </section>
 
-            {/* Comparison Link */}
-            <section className="pb-32 px-6 text-center">
-                <div className="max-w-3xl mx-auto p-12 rounded-[3rem] bg-gray-50 border border-gray-100 space-y-6">
-                    <h3 className="text-3xl font-bold">Compare to Privy & Dynamic</h3>
-                    <p className="text-gray-500">Discover why verifiable, MPC-free signers are the only secure choice for the agentic era.</p>
-                    <Link href="/compare" className="inline-block px-8 py-4 bg-black text-white rounded-2xl font-bold hover:bg-gray-900 transition-all">
-                        View Technical Matrix
-                    </Link>
-                </div>
-            </section>
-
-            {/* Integration Carousel */}
-            <section className="py-20 border-t border-gray-50 overflow-hidden bg-white">
-                <div className="text-center mb-12">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-300">Live Integrations</span>
-                </div>
-                <AppsCarousel />
-            </section>
-
-            {/* Technical Section: Integrate in minutes */}
-            <section className="py-32 bg-white px-6">
-                <div className="max-w-6xl mx-auto space-y-16">
-                    <div className="max-w-2xl">
-                        <h2 className="text-5xl font-bold tracking-tight mb-6 text-black">Integrate in minutes</h2>
-                        <p className="text-gray-500 text-xl leading-relaxed">
-                            Add invisible wallets to your React or React Native application using our developer-first toolset.
-                        </p>
+            {/* FINAL CTA */}
+            <section className="py-40 px-6 text-center bg-white border-t border-gray-50">
+                <div className="max-w-3xl mx-auto space-y-10">
+                    <h2 className="text-5xl md:text-7xl font-bold tracking-tighter text-black leading-tight">
+                        Stop sending users <br />to wallet popups.
+                    </h2>
+                    <p className="text-xl text-gray-500">Build with accounts directly inside your product.</p>
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+                        <Link
+                            href="/register"
+                            className="w-full sm:w-auto px-10 py-5 bg-black text-white rounded-2xl font-bold text-lg hover:bg-gray-900 transition-all shadow-xl shadow-black/5"
+                        >
+                            Start building
+                        </Link>
+                        <Link
+                            href="mailto:hello@cavos.xyz"
+                            className="w-full sm:w-auto px-10 py-5 bg-gray-50 text-black rounded-2xl font-bold text-lg hover:bg-gray-100 transition-all border border-gray-100"
+                        >
+                            Contact us
+                        </Link>
                     </div>
-                    <CodeDemoSection />
                 </div>
             </section>
 
