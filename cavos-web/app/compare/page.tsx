@@ -12,7 +12,7 @@ export default function ComparePage() {
         {
             feature: "Core Architecture",
             cavos: "On-chain RSA-2048 Verification",
-            privy: "MPC Shards (Off-chain clusters)",
+            privy: "MPC Shards (Off-chain)",
             cartridge: "Session Key Controllers",
             benefit: "Cavos uses Montgomery Reduction in Cairo to verify JWTs directly on the protocol layer."
         },
@@ -25,57 +25,57 @@ export default function ComparePage() {
         },
         {
             feature: "AI Agent Signer",
-            cavos: "Native Headless support",
-            privy: "Key Injection required",
-            cartridge: "Human-centric UX",
-            benefit: "Cavos session tokens allow autonomous agents to sign safely without storing long-lived private keys."
+            cavos: "Native Headless / Master-less support",
+            privy: "Requires key injection",
+            cartridge: "Primarily human-centric",
+            benefit: "Cavos session tokens allow autonomous agents to sign safely without storing private keys."
         },
         {
             feature: "Mobile Experience",
             cavos: "Native React Native SDK (Passkeys)",
-            privy: "Browser/WebView dependent",
-            cartridge: "Controller Web App Wrapper",
+            privy: "Browser / WebView dependent",
+            cartridge: "Web app wrapper",
             benefit: "Cavos provides a seamless mobile onboarding without external browser popups."
         },
         {
             feature: "Gasless / Sponsorship",
-            cavos: "Integrated (AVNU Paymaster)",
-            privy: "Requires custom relayer setup",
-            cartridge: "Integrated Paymaster",
+            cavos: "Native AVNU Paymaster integration",
+            privy: "Custom relayer setup",
+            cartridge: "Integrated paymaster",
             benefit: "Transactions are sponsored by default. Users never need to hold ETH to start."
         },
         {
             feature: "Account Recovery",
             cavos: "OAuth Identity (Google/Apple)",
-            privy: "Shard Recovery APIs",
-            cartridge: "Passkey / Social Recovery",
+            privy: "Shard-based recovery",
+            cartridge: "Passkey / Social recovery",
             benefit: "Your identity IS your wallet. No seed phrases, no shards, no vendor lock-in."
         },
         {
             feature: "Implementation",
-            cavos: "npx skills add (15 min setup)",
-            privy: "Dashboard & API Config",
+            cavos: "npx skills add → ~15 min setup",
+            privy: "Dashboard + API config",
             cartridge: "Contract-level integration",
-            benefit: "Get from zero to invisible wallet in minutes with developer-first tooling."
+            benefit: "Get from zero to invisible wallet in 15 minutes with developer-first tooling."
         },
         {
             feature: "Sovereignty Mode",
-            cavos: "100% Non-Custodial (No Shards)",
+            cavos: "100% Non-Custodial (No shards stored)",
             privy: "Provider-held key fragments",
-            cartridge: "Self-custodial Controller",
+            cartridge: "Self-custodial controller",
             benefit: "Cavos stores ZERO fragments of your keys. Only the Account Contract has authority."
         },
         {
             feature: "Production Usage",
-            cavos: "10 dApps / 81+ Wallets (Early)",
-            privy: "Global adoption (Social apps)",
-            cartridge: "Dominant in Starknet Gaming",
+            cavos: "10+ dApps • 81+ wallets (growing)",
+            privy: "Strong cross-chain adoption",
+            cartridge: "Dominant in Starknet gaming",
             benefit: "Cavos is the chosen infrastructure for high-growth Starknet consumer applications."
         },
         {
             feature: "Performance",
-            cavos: "Direct L2 Settlement",
-            privy: "Bridge/Backend Latency",
+            cavos: "Direct L2 settlement",
+            privy: "Bridge / backend latency",
             cartridge: "Optimized L2 settlement",
             benefit: "Minimized latency using session tokens authorized directly on-chain."
         }
@@ -109,7 +109,7 @@ export default function ComparePage() {
                     </h1>
                     <p className="text-xl text-gray-500 max-w-3xl mx-auto">
                         Choosing a wallet infrastructure is a decision about trust. 
-                        Cavos delivers the only **verifiable, MPC-free** alternative for Starknet.
+                        While competitors focus on black-box MPC, Cavos delivers the only **verifiable, MPC-free** alternative for Starknet.
                     </p>
                 </header>
 
@@ -155,6 +155,29 @@ export default function ComparePage() {
                 <p className="mt-8 text-center text-[10px] font-bold text-gray-300 uppercase tracking-[0.2em]">
                     Cavos SDK can be integrated via <a href="https://github.com/cavos-labs/cavos-skills" className="text-black underline decoration-gray-200 hover:decoration-black transition-all">npx skills add cavos-labs/cavos-skills</a>
                 </p>
+
+                <div className="mt-32 space-y-16">
+                    <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-center mb-12">Featured Integration</h2>
+                    <div className="max-w-4xl mx-auto p-12 rounded-[3rem] bg-gray-50 border border-gray-100 space-y-8">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div>
+                                <h3 className="text-4xl font-bold italic mb-2">Cofiblocks</h3>
+                                <a href="https://app.cofiblocks.com" className="text-primary font-medium hover:underline tracking-tight">app.cofiblocks.com</a>
+                            </div>
+                            <div className="px-6 py-2 bg-black text-white text-[10px] font-bold uppercase tracking-[0.2em] rounded-full w-fit">
+                                Live on Mainnet
+                            </div>
+                        </div>
+                        <p className="text-2xl text-gray-600 leading-tight font-serif italic">
+                            "Cavos enables us to onboard coffee farmers directly to Starknet without the friction of traditional wallets. They get the benefits of decentralization and middleman-free sales, while the blockchain remains invisible."
+                        </p>
+                        <div className="pt-6 border-t border-gray-200 flex flex-wrap gap-8 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">
+                            <span className="flex items-center gap-2"><span className="w-2 h-2 bg-green-500 rounded-full"></span> Middleman-Free</span>
+                            <span className="flex items-center gap-2"><span className="w-2 h-2 bg-green-500 rounded-full"></span> Seamless Onboarding</span>
+                            <span className="flex items-center gap-2"><span className="w-2 h-2 bg-green-500 rounded-full"></span> Real World Impact</span>
+                        </div>
+                    </div>
+                </div>
 
                 <div className="mt-32 space-y-16">
                     <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-center mb-12">Why Cavos Wins</h2>
