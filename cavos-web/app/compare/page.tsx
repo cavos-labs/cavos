@@ -67,7 +67,7 @@ export default function ComparePage() {
         },
         {
             feature: "Production Usage",
-            cavos: "Early Traction (Abyss, ByteBeasts)",
+            cavos: "10 dApps / 81+ Wallets (Early)",
             privy: "Global adoption (Social apps)",
             cartridge: "Dominant in Starknet Gaming",
             benefit: "Cavos is the chosen infrastructure for high-growth Starknet consumer applications."
