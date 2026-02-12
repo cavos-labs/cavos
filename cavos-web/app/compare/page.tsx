@@ -1,5 +1,6 @@
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import Script from 'next/script'
 
 export const metadata = {
     title: "Cavos vs The Rest | The Sovereignty Matrix",
@@ -9,94 +10,162 @@ export const metadata = {
 export default function ComparePage() {
     const comparison = [
         {
-            feature: "Security Model",
-            cavos: "On-chain RSA Verification (Pure Math)",
-            privy: "MPC Shards (Distributed Black Box)",
-            cartridge: "Controller-based Session Keys",
+            feature: "Core Architecture",
+            cavos: "On-chain RSA-2048 Verification",
+            privy: "MPC Shards (Black Box)",
+            cartridge: "Session Key Controllers",
+            benefit: "Cavos uses Montgomery Reduction in Cairo to verify JWTs directly on the protocol layer."
         },
         {
-            feature: "Trust Factor",
-            cavos: "Verifiable Code in Cairo",
-            privy: "Provider Backend Integrity",
-            cartridge: "Ecosystem Integrity",
+            feature: "Signing Logic",
+            cavos: "Truly Verifiable On-chain",
+            privy: "Off-chain Provider Shards",
+            cartridge: "Browser-based Auth Hooks",
+            benefit: "Anyone can verify the authorization proof on Starknet explorer. MPC is a black box."
         },
         {
             feature: "AI Agent Ready",
-            cavos: "Native Headless / Master-less support",
-            privy: "Insecure Private Key Injection / API",
-            cartridge: "Primarily UX for Humans",
+            cavos: "Native Master-less/Headless support",
+            privy: "Insecure Private Key Injection",
+            cartridge: "Primarily UX-focused for Humans",
+            benefit: "Cavos session tokens allow autonomous agents to sign safely without storing private keys."
         },
         {
-            feature: "Onboarding",
-            cavos: "Google/Apple → Wallet (No Shards)",
-            privy: "Email/Social → Shard Generation",
-            cartridge: "Passkey / Gaming Auth",
+            feature: "Mobile Experience",
+            cavos: "Native React Native SDK (Passkeys)",
+            privy: "Browser/WebView Dependent",
+            cartridge: "Controller Web App Wrapper",
+            benefit: "Cavos provides a seamless mobile onboarding without external browser popups."
+        },
+        {
+            feature: "Gasless / Sponsorship",
+            cavos: "Integrated AVNU Paymaster",
+            privy: "Requires Custom Relayer Setup",
+            cartridge: "Integrated Paymaster Infrastructure",
+            benefit: "Transactions are sponsored by default. Users never need to hold ETH to start."
+        },
+        {
+            feature: "Account Recovery",
+            cavos: "OAuth Identity (Google/Apple)",
+            privy: "Shard Recovery APIs",
+            cartridge: "Passkey / Social Recovery",
+            benefit: "Your identity IS your wallet. No seed phrases, no shards, no vendor lock-in."
+        },
+        {
+            feature: "Implementation",
+            cavos: "npx skills add + <20 lines of code",
+            privy: "Complex API/App Config",
+            cartridge: "Contract-specific Integration",
+            benefit: "Get from zero to invisible wallet in 15 minutes with developer-first tooling."
+        },
+        {
+            feature: "Sovereignty Mode",
+            cavos: "100% Non-Custodial (No Shard storage)",
+            privy: "Provider-held key fragments",
+            cartridge: "Self-custodial Controller",
+            benefit: "Cavos stores ZERO fragments of your keys. Only the Account Contract has authority."
+        },
+        {
+            feature: "Protocol Native",
+            cavos: "Starknet Native (Cairo 2.x)",
+            privy: "Generic Cross-chain (EVM-first)",
+            cartridge: "Starknet Native",
+            benefit: "Built for Starknet's native Account Abstraction from day one."
+        },
+        {
+            feature: "Performance",
+            cavos: "Direct L2 Settlement",
+            privy: "Bridge/Backend Latency",
+            cartridge: "Optimized L2 settlement",
+            benefit: "Minimized latency using session tokens authorized directly on-chain."
         }
     ]
 
+    const jsonLd = {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": comparison.map(row => ({
+            "@type": "Question",
+            "name": `How does Cavos compare to ${row.feature}?`,
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": row.benefit
+            }
+        }))
+    }
+
     return (
         <main className="bg-white min-h-screen text-black font-sans antialiased">
+            <Script
+                id="compare-json-ld"
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
             <Header />
-            <div className="max-w-5xl mx-auto px-6 py-32">
+            <div className="max-w-6xl mx-auto px-6 py-32">
                 <header className="mb-20 text-center">
-                    <h1 className="text-5xl md:text-7xl font-bold tracking-tighter mb-6">
+                    <h1 className="text-5xl md:text-8xl font-bold tracking-tighter mb-6">
                         The Sovereignty Matrix
                     </h1>
-                    <p className="text-xl text-gray-500 max-w-2xl mx-auto">
-                        In the agentic era, trusting a black box is no longer an option. 
-                        Cavos provides the only verifiable, MPC-free infrastructure for Starknet.
+                    <p className="text-xl text-gray-500 max-w-3xl mx-auto">
+                        Choosing a wallet infrastructure is a decision about trust. 
+                        While competitors focus on black-box MPC, Cavos delivers the only **verifiable, MPC-free** alternative for Starknet.
                     </p>
                 </header>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full border-collapse border border-gray-100">
+                <div className="overflow-x-auto shadow-2xl rounded-3xl border border-gray-100">
+                    <table className="w-full border-collapse bg-white">
                         <thead>
-                            <tr className="bg-gray-50">
-                                <th className="p-6 text-left border border-gray-100 uppercase text-xs tracking-widest text-gray-400">Feature</th>
-                                <th className="p-6 text-left border border-gray-100 font-bold text-black">Cavos (Starknet-Native)</th>
-                                <th className="p-6 text-left border border-gray-100 text-gray-500">Privy / Dynamic</th>
-                                <th className="p-6 text-left border border-gray-100 text-gray-500">Cartridge</th>
+                            <tr className="bg-black text-white">
+                                <th className="p-8 text-left uppercase text-[10px] tracking-[0.3em] font-bold">Vector</th>
+                                <th className="p-8 text-left font-extrabold text-lg border-x border-white/10 italic">CAVOS</th>
+                                <th className="p-8 text-left text-gray-400 font-medium text-sm">Privy / Dynamic</th>
+                                <th className="p-8 text-left text-gray-400 font-medium text-sm">Cartridge</th>
                             </tr>
                         </thead>
                         <tbody>
                             {comparison.map((row, i) => (
-                                <tr key={i} className="hover:bg-gray-50/50 transition-colors">
-                                    <td className="p-6 border border-gray-100 font-medium text-gray-900">{row.feature}</td>
-                                    <td className="p-6 border border-gray-100 font-bold text-black bg-blue-50/10">
-                                        <span className="flex items-center gap-2">
-                                            <span className="w-2 h-2 bg-black rounded-full"></span>
-                                            {row.cavos}
-                                        </span>
+                                <tr key={i} className="group border-b border-gray-50 hover:bg-gray-50/80 transition-all">
+                                    <td className="p-8 font-bold text-gray-400 text-xs uppercase tracking-widest">{row.feature}</td>
+                                    <td className="p-8 font-bold text-black bg-blue-50/5 border-x border-gray-100">
+                                        <div className="flex flex-col gap-2">
+                                            <span className="flex items-center gap-2">
+                                                <span className="w-1.5 h-1.5 bg-black rounded-full"></span>
+                                                {row.cavos}
+                                            </span>
+                                            <span className="text-[10px] font-medium text-gray-400 leading-tight hidden group-hover:block transition-all">
+                                                {row.benefit}
+                                            </span>
+                                        </div>
                                     </td>
-                                    <td className="p-6 border border-gray-100 text-gray-500">{row.privy}</td>
-                                    <td className="p-6 border border-gray-100 text-gray-500">{row.cartridge}</td>
+                                    <td className="p-8 text-gray-500 text-sm">{row.privy}</td>
+                                    <td className="p-8 text-gray-500 text-sm">{row.cartridge}</td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
 
-                <section className="mt-32 space-y-20">
-                    <div className="grid md:grid-cols-2 gap-16">
-                        <div>
-                            <h2 className="text-3xl font-bold mb-4">Why MPC-free?</h2>
-                            <p className="text-gray-600 leading-relaxed">
-                                MPC (Multi-Party Computation) solutions fragment your private key and store shards on central servers. 
-                                This creates vendor lock-in and a hidden chain of trust. 
-                                Cavos uses Montgomery Reduction to verify RSA-2048 JWT signatures directly on-chain. 
-                                Your identity is the proof. No shards required.
-                            </p>
-                        </div>
-                        <div>
-                            <h2 className="text-3xl font-bold mb-4">Built for AI Agents</h2>
-                            <p className="text-gray-600 leading-relaxed">
-                                Autonomous agents require a signer that can live in a headless environment without risking 
-                                a long-lived private key. Cavos session tokens allow agents to act on behalf of users 
-                                within strict, on-chain enforced boundaries.
-                            </p>
-                        </div>
+                <div className="mt-32 grid md:grid-cols-3 gap-12 border-t border-gray-100 pt-20">
+                    <div className="p-8 rounded-[2rem] bg-gray-50 border border-gray-100">
+                        <h2 className="text-xl font-bold mb-4">Zero Shard Policy</h2>
+                        <p className="text-sm text-gray-600 leading-relaxed">
+                            Unlike MPC providers, we never store fragments of your key. RSA verification happens directly in Cairo. No off-chain cluster involved.
+                        </p>
                     </div>
-                </section>
+                    <div className="p-8 rounded-[2rem] bg-gray-50 border border-gray-100">
+                        <h2 className="text-xl font-bold mb-4">Master-less Agents</h2>
+                        <p className="text-sm text-gray-600 leading-relaxed">
+                            Authorized sessions allow AI agents to operate autonomously with on-chain guardrails. Perfect for Eliza-based frameworks.
+                        </p>
+                    </div>
+                    <div className="p-8 rounded-[2rem] bg-gray-50 border border-gray-100">
+                        <h2 className="text-xl font-bold mb-4">Gasless Onboarding</h2>
+                        <p className="text-sm text-gray-600 leading-relaxed">
+                            Fully integrated with AVNU Paymaster to ensure your users never hit an "Insufficient Gas" error. Seamless from day zero.
+                        </p>
+                    </div>
+                </div>
             </div>
             <Footer />
         </main>
