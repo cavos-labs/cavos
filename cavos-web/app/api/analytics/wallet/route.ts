@@ -54,6 +54,30 @@ export async function POST(request: Request) {
             );
         }
 
+        // Update MAU counters for the app's organization
+        // Get the org owner for this app
+        const { data: appWithOrg } = await adminSupabase
+            .from('apps')
+            .select('organization:organizations(owner_id)')
+            .eq('id', appId)
+            .single();
+
+        if (appWithOrg?.organization) {
+            const ownerId = (appWithOrg.organization as any).owner_id;
+            const now = new Date();
+            const periodStart = new Date(now.getFullYear(), now.getMonth(), 1)
+                .toISOString()
+                .split('T')[0];
+
+            // Call increment_mau with wallet address for deduplication
+            await adminSupabase.rpc('increment_mau', {
+                p_user_id: ownerId,
+                p_app_id: appId,
+                p_period_start: periodStart,
+                p_wallet_address: address
+            });
+        }
+
         return NextResponse.json({ success: true, data });
     } catch (error) {
         console.error('Wallet analytics error:', error);

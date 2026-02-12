@@ -305,12 +305,39 @@ export async function POST(request: NextRequest) {
     };
 
     // Redirect to final URI with auth data
+    // IMPORTANT: We return an HTML page with JavaScript redirect instead of HTTP 302
+    // because Apple uses form_post which sends POST to this callback.
+    // Using NextResponse.redirect() would preserve the POST method to the client app,
+    // causing Next.js to fail parsing the URL with auth_data.
+    // JavaScript redirect converts POST -> GET automatically.
     const redirectUrl = new URL(finalRedirectUri);
     redirectUrl.searchParams.set('auth_data', JSON.stringify(responseData));
 
     console.log('[OAUTH-APPLE-CALLBACK] Success for user:', payload.sub);
 
-    return NextResponse.redirect(redirectUrl.toString());
+    // Return HTML with auto-redirect (converts POST to GET)
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Redirecting...</title>
+</head>
+<body>
+  <p>Authentication successful. Redirecting...</p>
+  <script>
+    window.location.replace(${JSON.stringify(redirectUrl.toString())});
+  </script>
+</body>
+</html>
+    `.trim();
+
+    return new NextResponse(html, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+      },
+    });
   } catch (error: any) {
     console.error('[OAUTH-APPLE-CALLBACK] Error:', error);
     return NextResponse.json(

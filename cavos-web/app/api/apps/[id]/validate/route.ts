@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin';
+import { computeAppSalt } from '@/lib/crypto/appSalt';
 import { NextResponse } from 'next/server';
 
 export async function GET(
@@ -98,11 +99,16 @@ id,
         }
     }
 
+    // Compute per-app salt for wallet address derivation
+    const baseSalt = process.env.CAVOS_BASE_SALT || '0x0';
+    const appSalt = computeAppSalt(appId, baseSalt);
+
     return NextResponse.json({
         allowed: true,
         plan_tier: planTier,
         current_mau: currentMAU,
         limit,
+        app_salt: appSalt,
         ...(warning && warning)
     });
 }

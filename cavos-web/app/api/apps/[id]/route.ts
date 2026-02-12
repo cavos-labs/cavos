@@ -97,6 +97,9 @@ export async function PATCH(request: Request, context: RouteContext) {
       logo_url,
       website_url,
       is_active,
+      email_reply_to,
+      email_from_name,
+      email_template_html,
     } = body
 
     const updates: Record<string, any> = {}
@@ -124,6 +127,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (logo_url !== undefined) updates.logo_url = logo_url || null
     if (website_url !== undefined) updates.website_url = website_url || null
     if (is_active !== undefined) updates.is_active = Boolean(is_active)
+    if (email_reply_to !== undefined) updates.email_reply_to = email_reply_to || null
+    if (email_from_name !== undefined) updates.email_from_name = email_from_name || null
+    if (email_template_html !== undefined) updates.email_template_html = email_template_html || null
 
     if (Object.keys(updates).length === 0) {
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })

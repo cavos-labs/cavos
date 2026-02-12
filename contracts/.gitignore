@@ -2,3 +2,4 @@ target
 Scarb.*
 snfoundry.toml
 .snfoundry_cache
+scripts
