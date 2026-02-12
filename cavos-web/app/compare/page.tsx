@@ -1,6 +1,7 @@
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import Script from 'next/script'
+import Link from 'next/link'
 
 export const metadata = {
     title: "Cavos vs The Rest | The Sovereignty Matrix",
@@ -104,12 +105,12 @@ export default function ComparePage() {
             <Header />
             <div className="max-w-6xl mx-auto px-6 py-32">
                 <header className="mb-20 text-center">
-                    <h1 className="text-5xl md:text-8xl font-bold tracking-tighter mb-6">
+                    <h1 className="text-5xl md:text-8xl font-bold tracking-tighter mb-6 text-black">
                         The Sovereignty Matrix
                     </h1>
                     <p className="text-xl text-gray-500 max-w-3xl mx-auto">
                         Choosing a wallet infrastructure is a decision about trust. 
-                        While competitors focus on black-box MPC, Cavos delivers the only **verifiable, MPC-free** alternative for Starknet.
+                        Cavos is the only **verifiable, MPC-free** infrastructure built natively for Starknet.
                     </p>
                 </header>
 
@@ -126,7 +127,7 @@ export default function ComparePage() {
                             <thead>
                                 <tr className="bg-black text-white">
                                     <th className="p-8 text-left uppercase text-[10px] tracking-[0.3em] font-bold">Vector</th>
-                                    <th className="p-8 text-left font-extrabold text-lg border-x border-white/10 italic">Cavos</th>
+                                    <th className="p-8 text-left font-extrabold text-lg border-x border-white/10 italic text-white">Cavos</th>
                                     <th className="p-8 text-left text-gray-400 font-medium text-sm">Privy / Dynamic</th>
                                     <th className="p-8 text-left text-gray-400 font-medium text-sm">Cartridge</th>
                                 </tr>
@@ -153,16 +154,16 @@ export default function ComparePage() {
                 </div>
 
                 <p className="mt-8 text-center text-[10px] font-bold text-gray-300 uppercase tracking-[0.2em]">
-                    Cavos SDK can be integrated via <a href="https://github.com/cavos-labs/cavos-skills" className="text-black underline decoration-gray-200 hover:decoration-black transition-all">npx skills add cavos-labs/cavos-skills</a>
+                    Cavos SDK can be integrated via <a href="https://github.com/cavos-labs/cavos-skills" target="_blank" className="text-black underline decoration-gray-200 hover:decoration-black transition-all">npx skills add cavos-labs/cavos-skills</a>
                 </p>
 
                 <div className="mt-32 space-y-16">
-                    <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-center mb-12">Featured Integration</h2>
+                    <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-center mb-12 text-black">Featured Integration</h2>
                     <div className="max-w-4xl mx-auto p-12 rounded-[3rem] bg-gray-50 border border-gray-100 space-y-8">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                             <div>
-                                <h3 className="text-4xl font-bold italic mb-2">Cofiblocks</h3>
-                                <a href="https://app.cofiblocks.com" className="text-primary font-medium hover:underline tracking-tight">app.cofiblocks.com</a>
+                                <h3 className="text-4xl font-bold italic mb-2 text-black">Cofiblocks</h3>
+                                <a href="https://app.cofiblocks.com" target="_blank" className="text-primary font-medium hover:underline tracking-tight text-lg">app.cofiblocks.com</a>
                             </div>
                             <div className="px-6 py-2 bg-black text-white text-[10px] font-bold uppercase tracking-[0.2em] rounded-full w-fit">
                                 Live on Mainnet
@@ -172,16 +173,16 @@ export default function ComparePage() {
                             "Cavos enables us to onboard coffee farmers directly to Starknet without the friction of traditional wallets. They get the benefits of decentralization and middleman-free sales, while the blockchain remains invisible."
                         </p>
                         <div className="pt-6 border-t border-gray-200 flex flex-wrap gap-8 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">
-                            <span className="flex items-center gap-2"><span className="w-2 h-2 bg-green-500 rounded-full"></span> Middleman-Free</span>
-                            <span className="flex items-center gap-2"><span className="w-2 h-2 bg-green-500 rounded-full"></span> Seamless Onboarding</span>
-                            <span className="flex items-center gap-2"><span className="w-2 h-2 bg-green-500 rounded-full"></span> Real World Impact</span>
+                            <span className="flex items-center gap-2 text-black"><span className="w-2 h-2 bg-green-500 rounded-full"></span> Middleman-Free</span>
+                            <span className="flex items-center gap-2 text-black"><span className="w-2 h-2 bg-green-500 rounded-full"></span> Seamless Onboarding</span>
+                            <span className="flex items-center gap-2 text-black"><span className="w-2 h-2 bg-green-500 rounded-full"></span> Real World Impact</span>
                         </div>
                     </div>
                 </div>
 
                 <div className="mt-32 space-y-16">
-                    <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-center mb-12">Why Cavos Wins</h2>
-                    <div className="grid md:grid-cols-2 gap-12">
+                    <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-center mb-12 text-black">Why Cavos Wins</h2>
+                    <div className="grid md:grid-cols-2 gap-12 text-black">
                         <div className="space-y-4">
                             <h3 className="text-2xl font-bold">Verifiable Sovereignty</h3>
                             <p className="text-gray-600">
@@ -213,6 +214,24 @@ export default function ComparePage() {
                                 Just a seamless Web2 login that results in a fully self-custodial Starknet account 
                                 that works across every device.
                             </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-40 text-center space-y-8">
+                    <div className="bg-black text-white p-12 rounded-[3rem] shadow-2xl inline-block max-w-2xl border border-white/5">
+                        <h2 className="text-3xl md:text-4xl font-bold mb-6">Integrate Cavos in 15 minutes</h2>
+                        <p className="text-gray-400 mb-10 text-lg">
+                            Ready to ship the ultimate onboarding experience? 
+                            Use our developer toolset to get started.
+                        </p>
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                            <Link href="https://docs.cavos.xyz" target="_blank" className="w-full sm:w-auto px-10 py-5 bg-white text-black rounded-2xl font-bold text-lg hover:bg-gray-100 transition-all">
+                                View Documentation
+                            </Link>
+                            <Link href="https://github.com/cavos-labs/cavos-skills" target="_blank" className="w-full sm:w-auto px-10 py-5 bg-gray-900 text-white rounded-2xl font-bold text-lg hover:bg-gray-800 transition-all border border-white/10">
+                                Explore Skills
+                            </Link>
                         </div>
                     </div>
                 </div>
