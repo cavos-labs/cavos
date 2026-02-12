@@ -4,15 +4,39 @@ import { Header } from '@/components/Header'
 import { AppsCarousel } from '@/components/AppsCarousel'
 import { CodeDemoSection } from '@/components/CodeDemoSection'
 import { Footer } from '@/components/Footer'
+import Script from 'next/script'
 
 export default function LandingPage() {
+    const jsonLd = {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Cavos",
+        "operatingSystem": "Web, iOS, Android",
+        "applicationCategory": "FinanceApplication",
+        "description": "Verifiable, MPC-free embedded wallets for Starknet. Turn OAuth identities into self-custodial wallets with on-chain RSA verification.",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "author": {
+            "@type": "Organization",
+            "name": "Cavos Labs",
+            "url": "https://cavos.xyz"
+        }
+    }
+
     return (
         <main className="h-screen w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth bg-[#FFFFFF]">
+            <Script
+                id="json-ld"
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
             <Header />
 
             {/* Hero Section */}
             <section className="h-screen pt-20 w-full snap-start flex flex-col items-center justify-center relative">
-                {/* ... Hero Content ... */}
                 <div className="flex flex-col items-center justify-center w-full px-4 md:px-8 lg:px-12">
                     <div className="relative flex flex-col items-center text-center w-full max-w-7xl">
                         {/* ASCII Art Image */}
