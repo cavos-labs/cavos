@@ -161,14 +161,9 @@ export default function ComparePage() {
                     <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-center mb-12 text-black">Featured Integration</h2>
                     <div className="max-w-4xl mx-auto p-12 rounded-[3rem] bg-gray-50 border border-gray-100 space-y-8">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                            <div className="flex items-center gap-6">
-                                <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center text-white text-2xl font-bold italic shadow-lg">
-                                    C
-                                </div>
-                                <div>
-                                    <h3 className="text-4xl font-bold italic mb-2 text-black">Cofiblocks</h3>
-                                    <a href="https://app.cofiblocks.com" target="_blank" className="text-primary font-medium hover:underline tracking-tight text-lg">app.cofiblocks.com</a>
-                                </div>
+                            <div>
+                                <h3 className="text-4xl font-bold italic mb-2 text-black">Cofiblocks</h3>
+                                <a href="https://app.cofiblocks.com" target="_blank" className="text-primary font-medium hover:underline tracking-tight text-lg">app.cofiblocks.com</a>
                             </div>
                             <div className="px-6 py-2 bg-black text-white text-[10px] font-bold uppercase tracking-[0.2em] rounded-full w-fit">
                                 Live on Mainnet
