@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Card } from '@/components/ui/Card'
 
 const CODE_SNIPPET = `const handleApprove = async () => {
   if (!address) return;
@@ -17,8 +16,8 @@ const CODE_SNIPPET = `const handleApprove = async () => {
       entrypoint: 'approve',
       calldata: [
         cavos.getAddress() || "", // spender
-        '1000000000000000000', // amount (1 token with 18 decimals)
-        '0', // amount high part
+        '1000000000000000000', // amount (1 token)
+        '0', 
       ],
     };
 
@@ -41,48 +40,38 @@ const SYNTAX_COLORS = {
 }
 
 const highlightCode = (code: string) => {
-    // Simple regex-based highlighting
     const tokens = code.split(/(\/\/.*|\b(?:const|async|await|try|catch|finally|if|return|true|false)\b|'.*?'|".*?"|\b\d+\b|[(){}[\],.;])/g)
 
     return tokens.map((token, i) => {
         if (!token) return null
-
         let color = SYNTAX_COLORS.default
-
         if (token.startsWith('//')) color = SYNTAX_COLORS.comment
         else if (/^(const|async|await|try|catch|finally|if|return|true|false)$/.test(token)) color = SYNTAX_COLORS.keyword
         else if (/^['"]/.test(token)) color = SYNTAX_COLORS.string
         else if (/^\d+$/.test(token)) color = SYNTAX_COLORS.number
         else if (/\b(handleApprove|setIsExecuting|setError|setTxHash|execute|console|log|error|cavos|getAddress)\b/.test(token)) color = SYNTAX_COLORS.function
-
         return <span key={i} className={color}>{token}</span>
     })
 }
 
-export function CodeDemoSection({ className }: { className?: string }) {
+export function CodeDemoSection() {
     const [displayedCode, setDisplayedCode] = useState('')
     const [isVisible, setIsVisible] = useState(false)
     const sectionRef = useRef<HTMLDivElement>(null)
+
     useEffect(() => {
         const observer = new IntersectionObserver(
             ([entry]) => {
-                if (entry.isIntersecting) {
-                    setIsVisible(true)
-                }
+                if (entry.isIntersecting) setIsVisible(true)
             },
             { threshold: 0.3 }
         )
-
-        if (sectionRef.current) {
-            observer.observe(sectionRef.current)
-        }
-
+        if (sectionRef.current) observer.observe(sectionRef.current)
         return () => observer.disconnect()
     }, [])
 
     useEffect(() => {
         if (!isVisible) return
-
         let currentIndex = 0
         const intervalId = setInterval(() => {
             if (currentIndex <= CODE_SNIPPET.length) {
@@ -91,45 +80,53 @@ export function CodeDemoSection({ className }: { className?: string }) {
             } else {
                 clearInterval(intervalId)
             }
-        }, 20) // Typing speed
-
+        }, 15)
         return () => clearInterval(intervalId)
     }, [isVisible])
 
     return (
-        <section ref={sectionRef} className={`w-full flex flex-col justify-center bg-white ${className || ''}`}>
-            <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12 w-full">
-                <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16">
-                    {/* Left Column: Text */}
-                    <div className="flex-1 text-center lg:text-left">
-                        <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold tracking-tight leading-tight text-black mb-6">
-                            The easiest way to get users into crypto, blockchain stays invisible, but the perks are clear.
-                        </h2>
+        <div ref={sectionRef} className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20 bg-white">
+            {/* Left Column: Contextual Text */}
+            <div className="flex-1 space-y-6">
+                <h3 className="text-4xl font-bold tracking-tight text-black leading-[1.1]">
+                    The easiest way to get users into crypto.
+                </h3>
+                <p className="text-lg text-gray-500 leading-relaxed">
+                    Blockchain stays invisible, but the perks are clear. Sign transactions gasless without ever leaving your UI.
+                </p>
+                <div className="pt-4 flex flex-col gap-3">
+                    <div className="flex items-center gap-3 text-sm font-medium">
+                        <span className="w-5 h-5 rounded-full bg-green-50 text-green-600 flex items-center justify-center text-[10px]">✓</span>
+                        Verifiable RSA On-chain
                     </div>
-
-                    {/* Right Column: Code Snippet */}
-                    <div className="flex-1 w-full max-w-lg">
-                        <div className="rounded-xl overflow-hidden bg-[#1e1e1e] shadow-2xl border border-gray-800 transform scale-95 origin-center">
-                            {/* Window Controls */}
-                            <div className="flex items-center gap-2 px-3 py-2 bg-[#2d2d2d] border-b border-gray-800">
-                                <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
-                                <div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
-                                <div className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
-                            </div>
-
-                            {/* Code Area */}
-                            <div className="p-4">
-                                <pre className="font-mono text-[10px] sm:text-xs leading-relaxed whitespace-pre-wrap">
-                                    <code>
-                                        {highlightCode(displayedCode)}
-                                        <span className="animate-pulse inline-block w-1.5 h-3 bg-blue-500 ml-1 align-middle"></span>
-                                    </code>
-                                </pre>
-                            </div>
-                        </div>
+                    <div className="flex items-center gap-3 text-sm font-medium">
+                        <span className="w-5 h-5 rounded-full bg-green-50 text-green-600 flex items-center justify-center text-[10px]">✓</span>
+                        Gasless Execution
                     </div>
                 </div>
             </div>
-        </section>
+
+            {/* Right Column: Integrated Code Window */}
+            <div className="flex-1 w-full max-w-xl">
+                <div className="rounded-[2rem] overflow-hidden bg-[#0a0a0a] shadow-2xl border border-black/5">
+                    {/* Window Controls */}
+                    <div className="flex items-center gap-2 px-6 py-4 bg-[#111] border-b border-white/5">
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#333]" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#333]" />
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#333]" />
+                    </div>
+
+                    {/* Code Area */}
+                    <div className="p-8">
+                        <pre className="font-mono text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
+                            <code>
+                                {highlightCode(displayedCode)}
+                                <span className="animate-pulse inline-block w-1.5 h-4 bg-primary ml-1 align-middle"></span>
+                            </code>
+                        </pre>
+                    </div>
+                </div>
+            </div>
+        </div>
     )
 }
