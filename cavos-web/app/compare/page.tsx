@@ -156,6 +156,44 @@ export default function ComparePage() {
                     Cavos SDK can be integrated via <a href="https://github.com/adrianvrj/cavos-cli-skill" className="text-black underline decoration-gray-200 hover:decoration-black transition-all">npx skills add cavos-labs/cavos-skills</a>
                 </p>
 
+                <div className="mt-32 space-y-16">
+                    <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-center mb-12">Why Cavos Wins</h2>
+                    <div className="grid md:grid-cols-2 gap-12">
+                        <div className="space-y-4">
+                            <h3 className="text-2xl font-bold">Verifiable Sovereignty</h3>
+                            <p className="text-gray-600">
+                                Traditional embedded wallets rely on MPC "black boxes"—centralized clusters holding fragments of your keys. 
+                                Cavos is the only infrastructure that performs **RSA-2048 verification directly on-chain** in Cairo. 
+                                Your identity is validated by the protocol, not a provider.
+                            </p>
+                        </div>
+                        <div className="space-y-4">
+                            <h3 className="text-2xl font-bold">Zero-Trust AI Signers</h3>
+                            <p className="text-gray-600">
+                                AI agents need signers that can operate autonomously without exposing long-lived private keys. 
+                                Cavos session tokens are authorized for specific contracts and spending limits on-chain, 
+                                making it the standard for the next generation of autonomous Starknet apps.
+                            </p>
+                        </div>
+                        <div className="space-y-4">
+                            <h3 className="text-2xl font-bold">Protocol-Native DX</h3>
+                            <p className="text-gray-600">
+                                While others build cross-chain abstractions that add latency, Cavos is 100% Starknet-native. 
+                                From integrated AVNU paymasters to sub-account naming via named wallets, 
+                                every feature is optimized for the Starknet native AA ecosystem.
+                            </p>
+                        </div>
+                        <div className="space-y-4">
+                            <h3 className="text-2xl font-bold">Invisible UX, Total Control</h3>
+                            <p className="text-gray-600">
+                                Get your users into your app in under 30 seconds. No browser popups, no seed phrases, no extensions. 
+                                Just a seamless Web2 login that results in a fully self-custodial Starknet account 
+                                that works across every device.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <div className="mt-32 grid md:grid-cols-3 gap-12 border-t border-gray-100 pt-20">
                     <div className="p-8 rounded-[2rem] bg-gray-50 border border-gray-100">
                         <h2 className="text-xl font-bold mb-4">Zero Shard Policy</h2>
