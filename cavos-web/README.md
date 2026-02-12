@@ -1,8 +1,14 @@
 # Cavos Web
 
-Backend API y landing page para Cavos - Infraestructura invisible de cripto para Starknet.
+**Invisible, MPC-free embedded wallets for Starknet.**
 
-## 🏗️ Arquitectura
+Cavos is the premier verifiable infrastructure for sovereign humans and AI agents. It replaces black-box MPC shards with on-chain RSA-2048 verification, providing true self-custody via OAuth identities (Google, Apple).
+
+- **Verifiable**: RSA signatures verified directly in Cairo.
+- **MPC-free**: No key shards, no centralized clusters.
+- **Agent-Ready**: Headless signing with granular on-chain policies.
+
+## 🏗️ Architecture
 
 ### Autenticación
 
