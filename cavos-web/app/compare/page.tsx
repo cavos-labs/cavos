@@ -118,23 +118,20 @@ export default function ComparePage() {
                         <thead>
                             <tr className="bg-black text-white">
                                 <th className="p-8 text-left uppercase text-[10px] tracking-[0.3em] font-bold">Vector</th>
-                                <th className="p-8 text-left font-extrabold text-lg border-x border-white/10 italic">CAVOS</th>
+                                <th className="p-8 text-left font-extrabold text-lg border-x border-white/10 italic">Cavos</th>
                                 <th className="p-8 text-left text-gray-400 font-medium text-sm">Privy / Dynamic</th>
                                 <th className="p-8 text-left text-gray-400 font-medium text-sm">Cartridge</th>
                             </tr>
                         </thead>
                         <tbody>
                             {comparison.map((row, i) => (
-                                <tr key={i} className="group border-b border-gray-50 hover:bg-gray-50/80 transition-all">
+                                <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/80 transition-all">
                                     <td className="p-8 font-bold text-gray-400 text-xs uppercase tracking-widest">{row.feature}</td>
                                     <td className="p-8 font-bold text-black bg-blue-50/5 border-x border-gray-100">
                                         <div className="flex flex-col gap-2">
                                             <span className="flex items-center gap-2">
                                                 <span className="w-1.5 h-1.5 bg-black rounded-full"></span>
                                                 {row.cavos}
-                                            </span>
-                                            <span className="text-[10px] font-medium text-gray-400 leading-tight hidden group-hover:block transition-all">
-                                                {row.benefit}
                                             </span>
                                         </div>
                                     </td>
