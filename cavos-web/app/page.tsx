@@ -35,7 +35,7 @@ export default function LandingPage() {
             <Header />
 
             {/* HERO SECTION */}
-            <section className="relative pt-32 pb-16 px-6 flex flex-col items-center justify-center text-center">
+            <section className="relative pt-40 pb-32 px-6 flex flex-col items-center justify-center text-center">
                 <div className="max-w-5xl mx-auto space-y-10">
                     <h1 className="text-6xl md:text-8xl font-bold tracking-tighter leading-[0.9] text-black">
                         Wallets, built into <br />
@@ -65,22 +65,11 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* TRUST BAR */}
-            <section className="py-12 border-y border-gray-50 bg-white">
-                <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-8">
-                    <div className="flex items-center gap-8 opacity-40 grayscale">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-black whitespace-nowrap">Used by teams on Starknet</span>
-                        <AppsCarousel />
-                    </div>
-                    <div className="text-right">
-                        <span className="text-xl font-bold tabular-nums text-black">1.2M+</span>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 ml-2">Transactions executed</span>
-                    </div>
-                </div>
-            </section>
+            {/* APPS CAROUSEL */}
+            <AppsCarousel />
 
             {/* THE PROBLEM */}
-            <section className="py-32 px-6 bg-white">
+            <section className="py-32 px-6 bg-white border-t border-gray-50">
                 <div className="max-w-4xl mx-auto space-y-12">
                     <h2 className="text-4xl md:text-5xl font-bold tracking-tighter text-black">Wallet UX is still broken.</h2>
                     <div className="grid md:grid-cols-2 gap-12">
@@ -153,9 +142,9 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* WHY CAVOS */}
+            {/* WHY CAVOS / METRICS */}
             <section className="py-32 bg-gray-50 border-y border-gray-100 px-6">
-                <div className="max-w-6xl mx-auto space-y-20">
+                <div className="max-w-6xl mx-auto space-y-24">
                     <h2 className="text-4xl md:text-6xl font-bold tracking-tighter text-center">Designed for Starknet.</h2>
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {[
@@ -167,6 +156,20 @@ export default function LandingPage() {
                             <div key={i} className="space-y-2">
                                 <h4 className="font-bold text-lg">{item.title}</h4>
                                 <p className="text-sm text-gray-500">{item.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="grid md:grid-cols-4 gap-12 pt-20 border-t border-gray-200">
+                        {[
+                            { label: "Production Apps", value: "10+" },
+                            { label: "Wallets Deployed", value: "81+" },
+                            { label: "Transactions", value: "1.2M+" },
+                            { label: "MPC Shards", value: "0" }
+                        ].map((stat, i) => (
+                            <div key={i} className="space-y-2">
+                                <div className="text-5xl font-bold tracking-tighter">{stat.value}</div>
+                                <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">{stat.label}</div>
                             </div>
                         ))}
                     </div>
@@ -201,6 +204,11 @@ export default function LandingPage() {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                    <div className="text-center">
+                        <Link href="/compare" className="text-sm font-bold text-primary hover:underline">
+                            View technical sovereignty matrix →
+                        </Link>
                     </div>
                 </div>
             </section>
