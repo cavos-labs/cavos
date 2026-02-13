@@ -82,16 +82,23 @@ export async function POST(request: Request) {
     const limit = PLAN_APP_LIMITS[tier] ?? PLAN_APP_LIMITS.developer
 
     // 7. Count all active apps across all orgs owned by this user
+    // Supabase JS doesn't support subqueries in .in(), so we fetch org IDs first
+    const { data: ownerOrgs, error: orgsError } = await admin
+      .from('organizations')
+      .select('id')
+      .eq('owner_id', org.owner_id)
+
+    if (orgsError) {
+      console.error('Error fetching orgs:', orgsError)
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    }
+
+    const orgIds = (ownerOrgs ?? []).map((o: { id: string }) => o.id)
+
     const { count, error: countError } = await admin
       .from('apps')
       .select('id', { count: 'exact', head: true })
-      .in(
-        'organization_id',
-        admin
-          .from('organizations')
-          .select('id')
-          .eq('owner_id', org.owner_id)
-      )
+      .in('organization_id', orgIds)
 
     if (countError) {
       console.error('Error counting apps:', countError)
