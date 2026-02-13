@@ -1,71 +1,62 @@
-import Image from 'next/image'
 import Link from 'next/link'
-import { Github, Twitter, MessageCircle, Mail, Send } from 'lucide-react'
+import Image from 'next/image'
 
 export function Footer() {
     return (
-        <footer className="w-full py-8 px-4 md:px-8 lg:px-12 bg-white border-t border-gray-100">
-            <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-                {/* Logo */}
-                <div className="flex items-center">
-                    <Image
-                        src="/cavos-black.png"
-                        alt="Cavos"
-                        width={100}
-                        height={40}
-                        className="h-8 w-auto"
-                    />
+        <footer className="bg-white border-t border-gray-100 py-24 px-8 md:px-12">
+            <div className="max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 md:gap-20">
+                <div className="col-span-2 space-y-8">
+                    <Link href="/" className="inline-block hover:opacity-80 transition-opacity">
+                        <Image
+                            src="/cavos-black.png"
+                            alt="Cavos Logo"
+                            width={120}
+                            height={48}
+                            className="h-10 w-auto"
+                        />
+                    </Link>
+                    <p className="text-lg text-gray-400 max-w-sm leading-relaxed font-medium">
+                         Verifiable, MPC-free embedded wallets for the next generation of applications on Starknet.
+                    </p>
+                </div>
+                
+                <div className="space-y-6">
+                    <h5 className="text-[10px] font-bold uppercase tracking-[0.3em] text-black">Product</h5>
+                    <ul className="space-y-4 text-sm font-medium text-gray-500">
+                        <li><Link href="https://docs.cavos.xyz" target="_blank" className="hover:text-black transition-colors">Documentation</Link></li>
+                        <li><Link href="https://github.com/cavos-labs/cavos-skills" target="_blank" className="hover:text-black transition-colors">SDK & Skills</Link></li>
+                        <li><Link href="/compare" className="hover:text-black transition-colors">Sovereignty Matrix</Link></li>
+                    </ul>
                 </div>
 
-                <div className="flex items-center gap-6">
-                    <a
-                        href="https://discord.gg/Vvq2ekEV47"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-gray-500 hover:text-black transition-colors"
-                        aria-label="Discord"
-                    >
-                        <MessageCircle className="w-5 h-5" />
-                    </a>
-                    <a
-                        href="https://x.com/cavosxyz"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-gray-500 hover:text-black transition-colors"
-                        aria-label="X (Twitter)"
-                    >
-                        <Twitter className="w-5 h-5" />
-                    </a>
-                    <a
-                        href="https://github.com/cavos-labs"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-gray-500 hover:text-black transition-colors"
-                        aria-label="GitHub"
-                    >
-                        <Github className="w-5 h-5" />
-                    </a>
-                    <a
-                        href="https://t.me/adrianvrj"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-gray-500 hover:text-black transition-colors"
-                        aria-label="Founder Telegram"
-                    >
-                        <Send className="w-5 h-5" />
-                    </a>
-                    <a
-                        href="mailto:adrianvrj@cavos.xyz"
-                        className="text-gray-500 hover:text-black transition-colors"
-                        aria-label="Support Email"
-                    >
-                        <Mail className="w-5 h-5" />
-                    </a>
+                <div className="space-y-6">
+                    <h5 className="text-[10px] font-bold uppercase tracking-[0.3em] text-black">Company</h5>
+                    <ul className="space-y-4 text-sm font-medium text-gray-500">
+                        <li><Link href="mailto:hello@cavos.xyz" className="hover:text-black transition-colors">Contact</Link></li>
+                        <li><Link href="https://github.com/cavos-labs" target="_blank" className="hover:text-black transition-colors">GitHub</Link></li>
+                        <li><Link href="https://twitter.com/cavos_xyz" target="_blank" className="hover:text-black transition-colors">X / Twitter</Link></li>
+                    </ul>
                 </div>
 
-                <p className="text-sm text-gray-400">
-                    © {new Date().getFullYear()} Cavos Labs. All rights reserved.
-                </p>
+                <div className="space-y-6">
+                    <h5 className="text-[10px] font-bold uppercase tracking-[0.3em] text-black">Legal</h5>
+                    <ul className="space-y-4 text-sm font-medium text-gray-500">
+                        <li><Link href="#" className="hover:text-black transition-colors opacity-30 cursor-not-allowed">Privacy Policy</Link></li>
+                        <li><Link href="#" className="hover:text-black transition-colors opacity-30 cursor-not-allowed">Terms of Service</Link></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div className="max-w-[1400px] mx-auto mt-24 pt-12 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
+                <p className="text-[10px] font-bold text-gray-300 uppercase tracking-[0.2em]">© 2026 Cavos Labs. All rights reserved.</p>
+                <div className="flex items-center gap-8 grayscale opacity-30 hover:opacity-100 transition-opacity">
+                    <Link href="https://twitter.com/cavos_xyz" target="_blank">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-black"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                    </Link>
+                    <Link href="https://github.com/cavos-labs" target="_blank">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-black"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    </Link>
+                </div>
             </div>
         </footer>
     )
