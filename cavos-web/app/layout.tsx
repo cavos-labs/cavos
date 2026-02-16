@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Cavos | OAuth for Blockchain",
     description: "Verifiable, MPC-free embedded wallets for Starknet agents and humans.",
-    creator: "@cavos_xyz",
+    creator: "@cavosxyz",
     images: ["/og-image.png"],
   },
   robots: {
