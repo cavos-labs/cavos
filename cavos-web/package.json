@@ -17,6 +17,7 @@
     "firebase-admin": "^13.6.0",
     "framer-motion": "^12.23.24",
     "geist": "^1.5.1",
+    "get-starknet-core": "^4.0.0",
     "jose": "^5.10.0",
     "jotai": "^2.15.1",
     "lucide-react": "^0.554.0",
@@ -30,7 +31,7 @@
     "resend": "^3.5.0",
     "snarkjs": "^0.7.4",
     "starknet": "^6.11.0",
-    "stripe": "^20.0.0",
+    "starknetkit": "^3.4.3",
     "zod": "^4.1.12"
   },
   "devDependencies": {

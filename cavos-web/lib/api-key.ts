@@ -27,9 +27,3 @@ export function verifyApiKey(provided: string, storedHash: string): boolean {
     return false
   }
 }
-
-export const PLAN_APP_LIMITS: Record<string, number> = {
-  developer: 10,
-  growth: 30,
-  scale: 100,
-}

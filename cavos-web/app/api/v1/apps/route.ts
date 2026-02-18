@@ -1,6 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
-import { hashApiKey, PLAN_APP_LIMITS } from '@/lib/api-key'
+import { hashApiKey } from '@/lib/api-key'
 
 // POST /api/v1/apps
 // Authorization: Bearer cav_xxxxxxxxxxxx
@@ -71,15 +71,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 })
     }
 
-    // 6. Get the owner's subscription tier
-    const { data: subscription } = await admin
-      .from('user_subscriptions')
-      .select('plan_tier')
-      .eq('user_id', org.owner_id)
-      .single()
-
-    const tier = subscription?.plan_tier ?? 'developer'
-    const limit = PLAN_APP_LIMITS[tier] ?? PLAN_APP_LIMITS.developer
+    // 6. App count limit (no tier-based limits with GasTank model)
+    const APP_LIMIT = 100
+    const limit = APP_LIMIT
 
     // 7. Count all active apps across all orgs owned by this user
     // Supabase JS doesn't support subqueries in .in(), so we fetch org IDs first
@@ -108,10 +102,9 @@ export async function POST(request: Request) {
     if ((count ?? 0) >= limit) {
       return NextResponse.json(
         {
-          error: `App limit reached for your plan`,
+          error: `App limit reached (${count}/${limit})`,
           limit,
           current: count,
-          tier,
         },
         { status: 429 }
       )
