@@ -4,7 +4,7 @@
  * Uses starknet.js to sign and submit transactions with the admin wallet.
  */
 
-import { Account, RpcProvider, Contract, CallData } from 'starknet';
+import { Account, RpcProvider, Contract, CallData, Signer, hash, ec, transaction } from 'starknet';
 
 const GOOGLE_JWKS_URL = 'https://www.googleapis.com/oauth2/v3/certs';
 const APPLE_JWKS_URL = 'https://appleid.apple.com/auth/keys';
@@ -222,6 +222,94 @@ async function isKeyValidOnChain(
 /**
  * Sync JWKS keys from providers to on-chain registry
  */
+/**
+ * Submit a V3 invoke transaction via raw RPC.
+ *
+ * starknet.js 6.24.1 doesn't include `l1_data_gas` in resource_bounds
+ * (required by RPC ≥ v0.7) and V1 invokes are rejected by modern endpoints.
+ * We use starknet.js for signing + calldata compilation, then submit the
+ * final JSON-RPC payload ourselves.
+ */
+async function submitV3Invoke(
+  rpcUrl: string,
+  account: Account,
+  calls: { contractAddress: string; entrypoint: string; calldata: string[] }[],
+): Promise<string> {
+  // 1. Get nonce
+  const nonce = await account.getNonce('latest');
+  const nonceHex = '0x' + BigInt(nonce).toString(16);
+
+  // 2. Compile calldata for __execute__
+  const compiledCalldata = transaction.getExecuteCalldata(calls, '1');
+
+  // 3. Resource bounds (generous caps – actual fee is much lower)
+  const resourceBounds = {
+    l1_gas: { max_amount: '0x3000', max_price_per_unit: '0x174876E800' },
+    l2_gas: { max_amount: '0x30000', max_price_per_unit: '0x174876E800' },
+    l1_data_gas: { max_amount: '0x3000', max_price_per_unit: '0x174876E800' },
+  };
+
+  // 4. Chain ID
+  const chainId = await account.getChainId();
+
+  // 5. Sign with signer
+  const signerDetails = {
+    walletAddress: account.address,
+    nonce: BigInt(nonce),
+    maxFee: BigInt(0),
+    version: '0x3' as any,
+    chainId,
+    cairoVersion: '1' as any,
+    resourceBounds,
+    tip: 0,
+    paymasterData: [] as string[],
+    accountDeploymentData: [] as string[],
+    nonceDataAvailabilityMode: 'L1' as any,
+    feeDataAvailabilityMode: 'L1' as any,
+    skipValidate: false,
+  };
+  const signature = await account.signer.signTransaction(calls, signerDetails);
+  const sigArray = Array.isArray(signature)
+    ? signature.map(s => '0x' + BigInt(s).toString(16))
+    : [signature.r, signature.s].map(s => '0x' + BigInt(s).toString(16));
+
+  // 6. Build JSON-RPC payload
+  const body = {
+    jsonrpc: '2.0',
+    id: 1,
+    method: 'starknet_addInvokeTransaction',
+    params: {
+      invoke_transaction: {
+        type: 'INVOKE',
+        sender_address: account.address,
+        calldata: compiledCalldata.map((c: any) => '0x' + BigInt(c).toString(16)),
+        version: '0x3',
+        signature: sigArray,
+        nonce: nonceHex,
+        resource_bounds: resourceBounds,
+        tip: '0x0',
+        paymaster_data: [],
+        account_deployment_data: [],
+        nonce_data_availability_mode: 'L1',
+        fee_data_availability_mode: 'L1',
+      },
+    },
+  };
+
+  const res = await fetch(rpcUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const json: any = await res.json();
+
+  if (json.error) {
+    throw new Error(`RPC error ${json.error.code}: ${json.error.message || JSON.stringify(json.error.data)}`);
+  }
+
+  return json.result.transaction_hash;
+}
+
 export async function syncJWKS(network: 'sepolia' | 'mainnet'): Promise<SyncResult> {
   const config = getNetworkConfig(network);
   const results: SyncResult = { added: [], skipped: [], errors: [] };
@@ -296,21 +384,15 @@ export async function syncJWKS(network: 'sepolia' | 'mainnet'): Promise<SyncResu
         calldata,
       };
 
-      // Submit transaction — fetch nonce with "latest" because some RPC providers
-      // (e.g. BlastAPI) reject starknet_getNonce with block_id "pending".
-      // Provide an explicit maxFee to bypass starknet.js v6.24's buggy V1
-      // fee estimation path, where `estimateInvokeFee` passes `undefined`
-      // to `BigInt()` during the transaction hash calculation.
-      const nonce = await account.getNonce('latest');
-      const maxFee = network === 'sepolia'
-        ? BigInt('10000000000000000')   // 0.01 ETH cap for Sepolia (testnet ETH is free)
-        : BigInt('1000000000000000');    // 0.001 ETH cap for Mainnet
-      const tx = await account.execute([populatedCall], { nonce, maxFee });
-      console.log(`[${network}] Transaction submitted: ${tx.transaction_hash}`);
+      // Submit as V3 transaction via raw RPC.
+      // starknet.js 6.24.1 lacks l1_data_gas in V3 resource_bounds and
+      // modern RPC endpoints (Alchemy v0_10+) reject V1 invokes.
+      const txHash = await submitV3Invoke(config.rpcUrl, account, [populatedCall]);
+      console.log(`[${network}] Transaction submitted: ${txHash}`);
 
       // Wait for confirmation
-      await provider.waitForTransaction(tx.transaction_hash);
-      console.log(`[${network}] Transaction confirmed: ${tx.transaction_hash}`);
+      await provider.waitForTransaction(txHash);
+      console.log(`[${network}] Transaction confirmed: ${txHash}`);
 
       results.added.push(key.kid);
     } catch (error: any) {
