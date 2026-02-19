@@ -4,7 +4,8 @@
  * Uses starknet.js to sign and submit transactions with the admin wallet.
  */
 
-import { Account, RpcProvider, Contract, CallData, Signer, hash, ec, transaction } from 'starknet';
+import { Account, RpcProvider, Contract, CallData, hash, ec, transaction, num } from 'starknet';
+import { poseidonHashMany } from '@scure/starknet';
 
 const GOOGLE_JWKS_URL = 'https://www.googleapis.com/oauth2/v3/certs';
 const APPLE_JWKS_URL = 'https://appleid.apple.com/auth/keys';
@@ -13,7 +14,9 @@ const APPLE_JWKS_URL = 'https://appleid.apple.com/auth/keys';
 const PROVIDER_GOOGLE = '0x676f6f676c65'; // 'google'
 const PROVIDER_APPLE = '0x6170706c65';    // 'apple'
 
-// JWKS Registry ABI (minimal - only functions we need)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  ABI Definition (minimal – only entries used by this service)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 const JWKS_REGISTRY_ABI = [
   {
     type: 'struct',
@@ -52,40 +55,22 @@ const JWKS_REGISTRY_ABI = [
   },
   {
     type: 'function',
-    name: 'remove_key',
-    inputs: [{ name: 'kid', type: 'core::felt252' }],
-    outputs: [],
-    state_mutability: 'external',
-  },
-  {
-    type: 'function',
     name: 'is_key_valid',
     inputs: [{ name: 'kid', type: 'core::felt252' }],
     outputs: [{ type: 'core::bool' }],
     state_mutability: 'view',
   },
-  {
-    type: 'function',
-    name: 'get_key',
-    inputs: [{ name: 'kid', type: 'core::felt252' }],
-    outputs: [{ type: 'JWKSKey' }],
-    state_mutability: 'view',
-  },
 ] as const;
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  Network Configuration
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 interface NetworkConfig {
   rpcUrl: string;
   registryAddress: string;
   adminAddress: string;
   adminPrivateKey: string;
-}
-
-interface FormattedKey {
-  kid: string;
-  kidFelt: string;
-  nLimbs: bigint[];
-  provider: string;
-  validUntil: number;
 }
 
 interface SyncResult {
@@ -114,135 +99,210 @@ function getNetworkConfig(network: 'sepolia' | 'mainnet'): NetworkConfig {
   };
 }
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  JWKS Fetch & Process
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+interface JWK {
+  kid: string;
+  kty: string;
+  alg: string;
+  n: string;
+  e: string;
+  use?: string;
+}
+
+interface FormattedKey {
+  kid: string;
+  kidFelt: string;
+  nLimbs: bigint[];
+  provider: string;
+  validUntil: number;
+}
+
 /**
- * Convert Base64URL string to Uint8Array
+ * Convert a string to felt252 (max 31 bytes).
+ * Truncates to 31 bytes if longer.
  */
-function base64UrlToBytes(base64url: string): Uint8Array {
-  // Replace URL-safe characters with standard Base64
+function kidToFelt(kid: string): string {
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(kid);
+  let hex = '0x';
+  for (let i = 0; i < Math.min(bytes.length, 31); i++) {
+    hex += bytes[i].toString(16).padStart(2, '0');
+  }
+  return hex;
+}
+
+/**
+ * Decode a base64url RSA modulus into 16 × 128-bit limbs (big-endian).
+ */
+function modulusToLimbs(base64url: string): bigint[] {
   const base64 = base64url
     .replace(/-/g, '+')
     .replace(/_/g, '/')
     .padEnd(base64url.length + (4 - (base64url.length % 4)) % 4, '=');
 
-  // Decode Base64
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
-}
+  const bytes = Buffer.from(base64, 'base64');
 
-/**
- * Convert bytes to 16 u128 limbs (little-endian) for 2048-bit RSA modulus
- */
-function bytesToU128Limbs(bytes: Uint8Array): bigint[] {
-  // Pad to 256 bytes (2048 bits)
-  const padded = new Uint8Array(256);
-  padded.set(bytes, 256 - bytes.length);
+  // Pad to 256 bytes (2048-bit RSA)
+  const padded = Buffer.alloc(256);
+  bytes.copy(padded, 256 - bytes.length);
 
   const limbs: bigint[] = [];
-  // Process from end to start (little-endian)
-  for (let i = 15; i >= 0; i--) {
-    let limb = BigInt(0);
-    for (let j = 0; j < 16; j++) {
-      const byteIdx = i * 16 + (15 - j);
-      limb = limb * BigInt(256) + BigInt(padded[byteIdx]);
+  for (let i = 0; i < 16; i++) {
+    const chunk = padded.slice(i * 16, (i + 1) * 16);
+    let value = BigInt(0);
+    for (let j = 0; j < chunk.length; j++) {
+      value = (value << BigInt(8)) | BigInt(chunk[j]);
     }
-    limbs.unshift(limb);
+    limbs.push(value);
   }
   return limbs;
 }
 
 /**
- * Convert kid string to felt252 (max 31 bytes)
- */
-function kidToFelt(kid: string): string {
-  const bytes = new TextEncoder().encode(kid);
-  let felt = BigInt(0);
-  for (let i = 0; i < bytes.length && i < 31; i++) {
-    felt = felt * BigInt(256) + BigInt(bytes[i]);
-  }
-  return '0x' + felt.toString(16);
-}
-
-/**
- * Fetch JWKS from a provider and format for on-chain storage
+ * Fetch & format JWKS keys from a single provider.
  */
 async function fetchProviderKeys(provider: 'google' | 'apple'): Promise<FormattedKey[]> {
   const url = provider === 'google' ? GOOGLE_JWKS_URL : APPLE_JWKS_URL;
   const providerFelt = provider === 'google' ? PROVIDER_GOOGLE : PROVIDER_APPLE;
 
-  const response = await fetch(url, {
-    headers: { 'Accept': 'application/json' },
-  });
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${provider} JWKS`);
+  const data: { keys: JWK[] } = await res.json();
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${provider} JWKS: ${response.statusText}`);
-  }
+  // valid for ~30 days from now
+  const validUntil = Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60;
 
-  const jwks = await response.json();
-
-  return jwks.keys
-    .filter((key: any) => key.kty === 'RSA' && key.alg === 'RS256')
-    .map((key: any) => {
-      // Decode modulus from Base64URL
-      const nBytes = base64UrlToBytes(key.n);
-      const nLimbs = bytesToU128Limbs(nBytes);
-
-      // Set valid_until to 1 year from now
-      const validUntil = Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60;
-
-      return {
-        kid: key.kid,
-        kidFelt: kidToFelt(key.kid),
-        nLimbs,
-        provider: providerFelt,
-        validUntil,
-      };
-    });
+  return data.keys
+    .filter((k) => k.kty === 'RSA' && k.alg === 'RS256')
+    .map((k) => ({
+      kid: k.kid,
+      kidFelt: kidToFelt(k.kid),
+      nLimbs: modulusToLimbs(k.n),
+      provider: providerFelt,
+      validUntil,
+    }));
 }
 
 /**
- * Check if a key exists and is valid on-chain
+ * Check whether a key already exists and is valid on-chain.
  */
-async function isKeyValidOnChain(
-  contract: Contract,
-  kidFelt: string
-): Promise<boolean> {
+async function isKeyValidOnChain(contract: Contract, kidFelt: string): Promise<boolean> {
   try {
     const result = await contract.is_key_valid(kidFelt);
-    return result === true || result === BigInt(1);
-  } catch (error) {
-    // Key doesn't exist or error reading - treat as not valid
+    return Boolean(result);
+  } catch {
     return false;
   }
 }
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  V3 Invoke Transaction (manual — bypasses starknet.js 6.24 limitations)
+//
+//  starknet.js 6.24.1 has two issues:
+//    1. V1 `estimateInvokeFee` hits "Cannot convert undefined to a BigInt"
+//    2. V3 hash computation omits `l1_data_gas` (needed by Starknet ≥ 0.13.2)
+//
+//  We compute the V3 transaction hash ourselves, sign it directly via
+//  ec.starkCurve, and submit via raw JSON-RPC.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const RESOURCE_VALUE_OFFSET = BigInt(64 + 128); // max_amount(64) + max_price(128) = 192 bits
+const MAX_PRICE_BITS = BigInt(128);
+
+function encodeShortString(s: string): bigint {
+  let result = BigInt(0);
+  for (let i = 0; i < s.length; i++) {
+    result = (result << BigInt(8)) | BigInt(s.charCodeAt(i));
+  }
+  return result;
+}
+
+const L1_GAS_NAME = encodeShortString('L1_GAS');
+const L2_GAS_NAME = encodeShortString('L2_GAS');
+const L1_DATA_GAS_NAME = encodeShortString('L1_DATA_GAS');
+
+interface ResourceBound {
+  max_amount: string;
+  max_price_per_unit: string;
+}
+
+function encodeResourceBound(gasName: bigint, bound: ResourceBound): bigint {
+  return (
+    (gasName << RESOURCE_VALUE_OFFSET) +
+    (BigInt(bound.max_amount) << MAX_PRICE_BITS) +
+    BigInt(bound.max_price_per_unit)
+  );
+}
+
+const DA_MODE_L1 = BigInt(0);
+
 /**
- * Sync JWKS keys from providers to on-chain registry
+ * Compute the V3 invoke transaction hash matching Starknet ≥ 0.13.2.
+ * The key difference from starknet.js 6.24 is including L1_DATA_GAS
+ * in the fee-field Poseidon hash.
  */
-/**
- * Submit a V3 invoke transaction via raw RPC.
- *
- * starknet.js 6.24.1 doesn't include `l1_data_gas` in resource_bounds
- * (required by RPC ≥ v0.7) and V1 invokes are rejected by modern endpoints.
- * We use starknet.js for signing + calldata compilation, then submit the
- * final JSON-RPC payload ourselves.
- */
+function computeV3InvokeTxHash(
+  senderAddress: string,
+  compiledCalldata: string[],
+  chainId: string,
+  nonce: string,
+  resourceBounds: { l1_gas: ResourceBound; l2_gas: ResourceBound; l1_data_gas: ResourceBound },
+  tip: bigint = BigInt(0),
+): string {
+  const INVOKE_PREFIX = BigInt('0x696e766f6b65'); // 'invoke'
+  const VERSION = BigInt(3);
+
+  // Fee field hash — includes l1_data_gas (Starknet 0.13.2+)
+  const l1Bound = encodeResourceBound(L1_GAS_NAME, resourceBounds.l1_gas);
+  const l2Bound = encodeResourceBound(L2_GAS_NAME, resourceBounds.l2_gas);
+  const l1DataBound = encodeResourceBound(L1_DATA_GAS_NAME, resourceBounds.l1_data_gas);
+  const feeFieldHash = poseidonHashMany([tip, l1Bound, l2Bound, l1DataBound]);
+
+  // DA mode hash (both L1 = 0)
+  const daModeHash = (DA_MODE_L1 << BigInt(32)) + DA_MODE_L1;
+
+  // Paymaster data hash (empty)
+  const paymasterHash = poseidonHashMany([]);
+
+  // Account deployment data hash (empty)
+  const accountDeploymentHash = poseidonHashMany([]);
+
+  // Calldata hash
+  const calldataHash = poseidonHashMany(compiledCalldata.map(c => BigInt(c)));
+
+  // Final hash
+  return num.toHex(poseidonHashMany([
+    INVOKE_PREFIX,
+    VERSION,
+    BigInt(senderAddress),
+    feeFieldHash,
+    paymasterHash,
+    BigInt(chainId),
+    BigInt(nonce),
+    daModeHash,
+    accountDeploymentHash,
+    calldataHash,
+  ]));
+}
+
 async function submitV3Invoke(
   rpcUrl: string,
-  account: Account,
+  adminAddress: string,
+  adminPrivateKey: string,
+  provider: RpcProvider,
   calls: { contractAddress: string; entrypoint: string; calldata: string[] }[],
 ): Promise<string> {
   // 1. Get nonce
-  const nonce = await account.getNonce('latest');
-  const nonceHex = '0x' + BigInt(nonce).toString(16);
+  const nonceResult = await provider.getNonceForAddress(adminAddress, 'latest');
+  const nonce = '0x' + BigInt(nonceResult).toString(16);
 
   // 2. Compile calldata for __execute__
   const compiledCalldata = transaction.getExecuteCalldata(calls, '1');
 
-  // 3. Resource bounds (generous caps – actual fee is much lower)
+  // 3. Resource bounds (generous caps — actual fee is much lower)
   const resourceBounds = {
     l1_gas: { max_amount: '0x3000', max_price_per_unit: '0x174876E800' },
     l2_gas: { max_amount: '0x30000', max_price_per_unit: '0x174876E800' },
@@ -250,30 +310,25 @@ async function submitV3Invoke(
   };
 
   // 4. Chain ID
-  const chainId = await account.getChainId();
+  const chainId = await provider.getChainId();
 
-  // 5. Sign with signer
-  const signerDetails = {
-    walletAddress: account.address,
-    nonce: BigInt(nonce),
-    maxFee: BigInt(0),
-    version: '0x3' as any,
+  // 5. Compute the correct V3 transaction hash (with l1_data_gas)
+  const txHash = computeV3InvokeTxHash(
+    adminAddress,
+    compiledCalldata as string[],
     chainId,
-    cairoVersion: '1' as any,
+    nonce,
     resourceBounds,
-    tip: 0,
-    paymasterData: [] as string[],
-    accountDeploymentData: [] as string[],
-    nonceDataAvailabilityMode: 'L1' as any,
-    feeDataAvailabilityMode: 'L1' as any,
-    skipValidate: false,
-  };
-  const signature = await account.signer.signTransaction(calls, signerDetails);
-  const sigArray = Array.isArray(signature)
-    ? signature.map(s => '0x' + BigInt(s).toString(16))
-    : [signature.r, signature.s].map(s => '0x' + BigInt(s).toString(16));
+  );
 
-  // 6. Build JSON-RPC payload
+  // 6. Sign the hash directly with the private key
+  const sig = ec.starkCurve.sign(txHash, adminPrivateKey);
+  const sigArray = [
+    '0x' + sig.r.toString(16),
+    '0x' + sig.s.toString(16),
+  ];
+
+  // 7. Build JSON-RPC payload
   const body = {
     jsonrpc: '2.0',
     id: 1,
@@ -281,11 +336,11 @@ async function submitV3Invoke(
     params: {
       invoke_transaction: {
         type: 'INVOKE',
-        sender_address: account.address,
+        sender_address: adminAddress,
         calldata: compiledCalldata.map((c: any) => '0x' + BigInt(c).toString(16)),
         version: '0x3',
         signature: sigArray,
-        nonce: nonceHex,
+        nonce,
         resource_bounds: resourceBounds,
         tip: '0x0',
         paymaster_data: [],
@@ -383,11 +438,7 @@ export async function syncJWKS(network: 'sepolia' | 'mainnet'): Promise<SyncResu
         entrypoint: 'set_key',
         calldata,
       };
-
-      // Submit as V3 transaction via raw RPC.
-      // starknet.js 6.24.1 lacks l1_data_gas in V3 resource_bounds and
-      // modern RPC endpoints (Alchemy v0_10+) reject V1 invokes.
-      const txHash = await submitV3Invoke(config.rpcUrl, account, [populatedCall]);
+      const txHash = await submitV3Invoke(config.rpcUrl, config.adminAddress, config.adminPrivateKey, provider, [populatedCall]);
       console.log(`[${network}] Transaction submitted: ${txHash}`);
 
       // Wait for confirmation
