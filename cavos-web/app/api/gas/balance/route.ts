@@ -82,12 +82,7 @@ export async function GET(request: Request) {
           address: gasTankContract,
           providerOrAccount: provider,
         })
-        console.log(`[balance] Querying on-chain balance for org_felt_id: ${gasBalance.org_felt_id} at contract: ${gasTankContract}`)
         const onChainBalance = await contract.get_balance(gasBalance.org_felt_id)
-        console.log(`[balance] Raw on-chain balance:`, onChainBalance)
-
-        // In starknet.js v9 with Sierra ABI, u256 is often returned as a single BigInt.
-        // If it's a legacy return, it's an object with low/high.
         let balanceBigInt: bigint;
         if (typeof onChainBalance === 'bigint') {
           balanceBigInt = onChainBalance;
@@ -99,7 +94,6 @@ export async function GET(request: Request) {
 
         // Convert from u256 (wei) to STRK (18 decimals)
         const balanceStrk = Number(balanceBigInt) / 1e18
-        console.log(`[balance] Formatted balance (STRK):`, balanceStrk)
 
         // Update cache
         await admin
