@@ -7,8 +7,8 @@ const GAS_TANK_ABI = [
   {
     name: 'get_balance',
     type: 'function',
-    inputs: [{ name: 'org_id', type: 'felt252' }],
-    outputs: [{ type: 'u256' }],
+    inputs: [{ name: 'org_id', type: 'core::felt252' }],
+    outputs: [{ type: 'core::integer::u256' }],
     state_mutability: 'view',
   },
 ] as const
@@ -82,10 +82,24 @@ export async function GET(request: Request) {
           address: gasTankContract,
           providerOrAccount: provider,
         })
-        const onChainBalance = await contract.get_balance(BigInt(gasBalance.org_felt_id))
+        console.log(`[balance] Querying on-chain balance for org_felt_id: ${gasBalance.org_felt_id} at contract: ${gasTankContract}`)
+        const onChainBalance = await contract.get_balance(gasBalance.org_felt_id)
+        console.log(`[balance] Raw on-chain balance:`, onChainBalance)
+
+        // In starknet.js v9 with Sierra ABI, u256 is often returned as a single BigInt.
+        // If it's a legacy return, it's an object with low/high.
+        let balanceBigInt: bigint;
+        if (typeof onChainBalance === 'bigint') {
+          balanceBigInt = onChainBalance;
+        } else if (onChainBalance && typeof onChainBalance === 'object' && 'low' in onChainBalance && 'high' in onChainBalance) {
+          balanceBigInt = (BigInt((onChainBalance as any).low) + (BigInt((onChainBalance as any).high) << 128n));
+        } else {
+          balanceBigInt = BigInt(onChainBalance?.toString() || '0');
+        }
 
         // Convert from u256 (wei) to STRK (18 decimals)
-        const balanceStrk = Number(onChainBalance) / 1e18
+        const balanceStrk = Number(balanceBigInt) / 1e18
+        console.log(`[balance] Formatted balance (STRK):`, balanceStrk)
 
         // Update cache
         await admin
@@ -98,7 +112,7 @@ export async function GET(request: Request) {
 
         gasBalance.balance_strk = balanceStrk
       } catch (err) {
-        console.error('Failed to read on-chain balance, using cached:', err)
+        console.error('Failed to read on-chain balance:', err)
       }
     }
 
