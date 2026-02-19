@@ -82,7 +82,7 @@ export async function GET(request: Request) {
           address: gasTankContract,
           providerOrAccount: provider,
         })
-        const onChainBalance = await contract.get_balance(gasBalance.org_felt_id)
+        const onChainBalance = await contract.get_balance(BigInt(gasBalance.org_felt_id))
 
         // Convert from u256 (wei) to STRK (18 decimals)
         const balanceStrk = Number(onChainBalance) / 1e18
