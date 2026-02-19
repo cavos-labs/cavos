@@ -237,7 +237,9 @@ export async function syncJWKS(network: 'sepolia' | 'mainnet'): Promise<SyncResu
 
   // Setup starknet.js
   const provider = new RpcProvider({ nodeUrl: config.rpcUrl });
-  const account = new Account(provider, config.adminAddress, config.adminPrivateKey);
+  // Pass cairoVersion '1' explicitly to avoid starknet_getClassAt with "pending" block,
+  // which some RPC providers (e.g. BlastAPI) reject.
+  const account = new Account(provider, config.adminAddress, config.adminPrivateKey, '1');
   const contract = new Contract(JWKS_REGISTRY_ABI as any, config.registryAddress, account);
 
   // Fetch keys from all providers
