@@ -298,8 +298,11 @@ export async function syncJWKS(network: 'sepolia' | 'mainnet'): Promise<SyncResu
         is_active: true,
       };
 
-      // Submit transaction
-      const tx = await contract.set_key(key.kidFelt, jwksKey);
+      // Submit transaction — fetch nonce with "latest" because some RPC providers
+      // (e.g. BlastAPI) reject starknet_getNonce with block_id "pending".
+      const nonce = await account.getNonce('latest');
+      const populatedCall = contract.populate('set_key', [key.kidFelt, jwksKey]);
+      const tx = await account.execute([populatedCall], { nonce });
       console.log(`[${network}] Transaction submitted: ${tx.transaction_hash}`);
 
       // Wait for confirmation
