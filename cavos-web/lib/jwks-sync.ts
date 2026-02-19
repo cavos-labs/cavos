@@ -277,33 +277,28 @@ export async function syncJWKS(network: 'sepolia' | 'mainnet'): Promise<SyncResu
 
       console.log(`[${network}] Adding new key: ${key.kid}`);
 
-      // Build JWKSKey struct
-      const jwksKey = {
-        n0: key.nLimbs[0],
-        n1: key.nLimbs[1],
-        n2: key.nLimbs[2],
-        n3: key.nLimbs[3],
-        n4: key.nLimbs[4],
-        n5: key.nLimbs[5],
-        n6: key.nLimbs[6],
-        n7: key.nLimbs[7],
-        n8: key.nLimbs[8],
-        n9: key.nLimbs[9],
-        n10: key.nLimbs[10],
-        n11: key.nLimbs[11],
-        n12: key.nLimbs[12],
-        n13: key.nLimbs[13],
-        n14: key.nLimbs[14],
-        n15: key.nLimbs[15],
-        provider: key.provider,
-        valid_until: key.validUntil,
-        is_active: true,
+      // Build calldata as a flat hex array to bypass starknet.js ABI struct
+      // resolution. contract.populate() fails with "Cannot convert undefined to
+      // a BigInt" because it cannot resolve the unqualified 'JWKSKey' type name
+      // from the minimal ABI — Cairo serializes structs as a flat sequence of
+      // felts, so we can safely build the calldata directly.
+      const calldata = [
+        key.kidFelt,                                          // kid: felt252
+        ...key.nLimbs.map(l => '0x' + l.toString(16)),      // n0–n15: u128 (16 felts)
+        key.provider,                                         // provider: felt252
+        '0x' + BigInt(key.validUntil).toString(16),          // valid_until: u64
+        '0x1',                                               // is_active: bool
+      ];
+
+      const populatedCall = {
+        contractAddress: contract.address,
+        entrypoint: 'set_key',
+        calldata,
       };
 
       // Submit transaction — fetch nonce with "latest" because some RPC providers
       // (e.g. BlastAPI) reject starknet_getNonce with block_id "pending".
       const nonce = await account.getNonce('latest');
-      const populatedCall = contract.populate('set_key', [key.kidFelt, jwksKey]);
       const tx = await account.execute([populatedCall], { nonce });
       console.log(`[${network}] Transaction submitted: ${tx.transaction_hash}`);
 
