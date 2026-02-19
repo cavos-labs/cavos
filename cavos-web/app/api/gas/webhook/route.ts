@@ -15,9 +15,15 @@ export async function GET(request: Request) {
       return NextResponse.json({ is_valid: false, reason: 'Missing API key' }, { status: 401 })
     }
 
-    // Verify webhook secret
+    // Verify webhook secret — support a per-network secret for sepolia so each
+    // paymaster deployment can have its own secret without sharing.
     const webhookSecret = request.headers.get('x-webhook-secret')
-    if (webhookSecret !== process.env.PAYMASTER_WEBHOOK_SECRET) {
+    const validSecrets = [
+      process.env.PAYMASTER_WEBHOOK_SECRET,
+      isSepolia ? process.env.PAYMASTER_WEBHOOK_SECRET_SEPOLIA : undefined,
+    ].filter(Boolean)
+
+    if (!validSecrets.includes(webhookSecret ?? undefined)) {
       return NextResponse.json({ is_valid: false, reason: 'Invalid webhook secret' }, { status: 401 })
     }
 
@@ -43,18 +49,14 @@ export async function GET(request: Request) {
 
     // ── Sepolia: free for all — no deposit required ───────────────────────────
     // All valid API keys are sponsored from the Cavos testnet pool.
-    // Fund the pool periodically from the Sepolia faucet using:
-    //   sncast invoke --contract-address <GAS_TANK_CONTRACT> \
-    //     --function deposit --calldata <SEPOLIA_FREE_POOL_FELT_ID> <amount_low> 0
+    // If SEPOLIA_FREE_POOL_FELT_ID is set, the paymaster deducts from that pool.
+    // If not set, sponsor_metadata is empty and no gas tank deduction happens
+    // (the relayer absorbs the cost, which is fine for testnet).
     if (isSepolia) {
       const poolFeltId = process.env.SEPOLIA_FREE_POOL_FELT_ID
-      if (!poolFeltId) {
-        console.error('SEPOLIA_FREE_POOL_FELT_ID not set')
-        return NextResponse.json({ is_valid: false, reason: 'Testnet pool not configured' }, { status: 500 })
-      }
       return NextResponse.json({
         is_valid: true,
-        sponsor_metadata: [poolFeltId],
+        sponsor_metadata: poolFeltId ? [poolFeltId] : [],
         validity_duration: 30,
       })
     }
