@@ -100,14 +100,14 @@ interface SyncResult {
 function getNetworkConfig(network: 'sepolia' | 'mainnet'): NetworkConfig {
   if (network === 'sepolia') {
     return {
-      rpcUrl: process.env.STARKNET_RPC_SEPOLIA || 'https://starknet-sepolia.public.blastapi.io',
+      rpcUrl: process.env.STARKNET_RPC_SEPOLIA || 'https://free-rpc.nethermind.io/sepolia-juno/v0_7',
       registryAddress: process.env.JWKS_REGISTRY_SEPOLIA!,
       adminAddress: process.env.JWKS_ADMIN_ADDRESS_SEPOLIA!,
       adminPrivateKey: process.env.JWKS_ADMIN_PRIVATE_KEY_SEPOLIA!,
     };
   }
   return {
-    rpcUrl: process.env.STARKNET_RPC_MAINNET || 'https://starknet-mainnet.public.blastapi.io',
+    rpcUrl: process.env.STARKNET_RPC_MAINNET || 'https://free-rpc.nethermind.io/mainnet-juno/v0_7',
     registryAddress: process.env.JWKS_REGISTRY_MAINNET!,
     adminAddress: process.env.JWKS_ADMIN_ADDRESS_MAINNET!,
     adminPrivateKey: process.env.JWKS_ADMIN_PRIVATE_KEY_MAINNET!,
@@ -298,8 +298,14 @@ export async function syncJWKS(network: 'sepolia' | 'mainnet'): Promise<SyncResu
 
       // Submit transaction — fetch nonce with "latest" because some RPC providers
       // (e.g. BlastAPI) reject starknet_getNonce with block_id "pending".
+      // Provide an explicit maxFee to bypass starknet.js v6.24's buggy V1
+      // fee estimation path, where `estimateInvokeFee` passes `undefined`
+      // to `BigInt()` during the transaction hash calculation.
       const nonce = await account.getNonce('latest');
-      const tx = await account.execute([populatedCall], { nonce });
+      const maxFee = network === 'sepolia'
+        ? BigInt('10000000000000000')   // 0.01 ETH cap for Sepolia (testnet ETH is free)
+        : BigInt('1000000000000000');    // 0.001 ETH cap for Mainnet
+      const tx = await account.execute([populatedCall], { nonce, maxFee });
       console.log(`[${network}] Transaction submitted: ${tx.transaction_hash}`);
 
       // Wait for confirmation
