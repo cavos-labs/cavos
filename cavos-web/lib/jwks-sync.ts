@@ -236,9 +236,9 @@ export async function syncJWKS(network: 'sepolia' | 'mainnet'): Promise<SyncResu
   console.log(`[${network}] Admin: ${config.adminAddress}`);
 
   // Setup starknet.js
-  const provider = new RpcProvider({ nodeUrl: config.rpcUrl });
-  // Pass cairoVersion '1' explicitly to avoid starknet_getClassAt with "pending" block,
-  // which some RPC providers (e.g. BlastAPI) reject.
+  // Use "latest" as default block identifier — BlastAPI rejects "pending" on all calls
+  // (starknet_getNonce, starknet_getClassAt, starknet_estimateFee, etc.)
+  const provider = new RpcProvider({ nodeUrl: config.rpcUrl, blockIdentifier: 'latest' });
   const account = new Account(provider, config.adminAddress, config.adminPrivateKey, '1');
   const contract = new Contract(JWKS_REGISTRY_ABI as any, config.registryAddress, account);
 
