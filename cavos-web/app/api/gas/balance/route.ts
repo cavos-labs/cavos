@@ -77,7 +77,11 @@ export async function GET(request: Request) {
     if (gasTankContract && gasBalance) {
       try {
         const provider = new RpcProvider({ nodeUrl: process.env.STARKNET_RPC_URL })
-        const contract = new Contract(GAS_TANK_ABI, gasTankContract, provider)
+        const contract = new Contract({
+          abi: GAS_TANK_ABI,
+          address: gasTankContract,
+          providerOrAccount: provider,
+        })
         const onChainBalance = await contract.get_balance(gasBalance.org_felt_id)
 
         // Convert from u256 (wei) to STRK (18 decimals)

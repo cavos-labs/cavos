@@ -30,7 +30,7 @@
     "recharts": "^3.4.1",
     "resend": "^3.5.0",
     "snarkjs": "^0.7.4",
-    "starknet": "^6.11.0",
+    "starknet": "^9.2.1",
     "starknetkit": "^3.4.3",
     "zod": "^4.1.12"
   },
