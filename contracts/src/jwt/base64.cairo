@@ -96,7 +96,7 @@ pub fn base64url_decode_window(
     let end_chunk = (target_offset + target_len + 2) / 3;
 
     let mut chunk_idx = start_chunk;
-    while chunk_idx < end_chunk {
+    while chunk_idx != end_chunk {
         let i = chunk_idx * 4;
         if i + 3 < segment_len {
             let a = decode_char(input.at(segment_start + i).unwrap()).expect('invalid base64 char');
@@ -119,13 +119,14 @@ pub fn base64url_decode_window(
         chunk_idx += 1;
     }
 
-    // Slice the output to get the exact window
+    // Slice the output to get the exact window (pointer-based, no per-element copy)
     let internal_offset = target_offset % 3;
+    let output_span = output.span();
+    let window = output_span.slice(internal_offset, target_len);
     let mut result: Array<u8> = array![];
-    let mut j: usize = 0;
-    while j < target_len {
-        result.append(*output[internal_offset + j]);
-        j += 1;
+    let mut remaining = window;
+    while let Option::Some(val) = remaining.pop_front() {
+        result.append(*val);
     }
     result
 }

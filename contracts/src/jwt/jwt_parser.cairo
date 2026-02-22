@@ -59,13 +59,11 @@ pub fn split_signed_data(signed_bytes: @ByteArray) -> (usize, usize, usize) {
 /// Parse a decimal string (ASCII bytes) to a felt252.
 pub fn parse_decimal(data: Span<u8>) -> felt252 {
     let mut result: felt252 = 0;
-    let mut i = 0;
-    let len = data.len();
-    while i < len {
-        let byte = *data[i];
-        assert!(byte >= 48 && byte <= 57, "Not a decimal digit");
-        result = result * 10 + (byte - 48).into();
-        i += 1;
+    let mut remaining = data;
+    while let Option::Some(byte) = remaining.pop_front() {
+        let b = *byte;
+        assert!(b >= 48 && b <= 57, "Not a decimal digit");
+        result = result * 10 + (b - 48).into();
     }
     result
 }
@@ -73,16 +71,16 @@ pub fn parse_decimal(data: Span<u8>) -> felt252 {
 /// Parse a hex string (ASCII bytes, optionally starting with 0x) to a felt252.
 pub fn parse_hex(data: Span<u8>) -> felt252 {
     let mut result: felt252 = 0;
-    let mut i = 0;
-    let len = data.len();
 
-    // Skip 0x prefix if present
-    if len >= 2 && *data[0] == 48 && *data[1] == 120 {
-        i = 2;
-    }
+    // Skip 0x prefix if present, using slice for pointer-based skip
+    let mut remaining = if data.len() >= 2 && *data[0] == 48 && *data[1] == 120 {
+        data.slice(2, data.len() - 2)
+    } else {
+        data
+    };
 
-    while i < len {
-        let byte = *data[i];
+    while let Option::Some(byte_ref) = remaining.pop_front() {
+        let byte = *byte_ref;
         let val: u8 = if byte >= 48 && byte <= 57 { // 0-9
             byte - 48
         } else if byte >= 97 && byte <= 102 { // a-f
@@ -93,7 +91,6 @@ pub fn parse_hex(data: Span<u8>) -> felt252 {
             panic!("Not a hex digit")
         };
         result = result * 16 + val.into();
-        i += 1;
     }
     result
 }

@@ -105,6 +105,8 @@ interface FormattedKey {
   kid: string;
   kidFelt: string;
   nLimbs: bigint[];
+  rSqLimbs: bigint[];
+  nPrimeLimbs: bigint[];
   provider: string;
   validUntil: number;
 }
@@ -154,6 +156,53 @@ function modulusToLimbs(base64url: string): bigint[] {
 }
 
 /**
+ * Compute R^2 and n_prime for Montgomery reduction to avoid performing this Math
+ * inside Starknet on every JWT verification transaction.
+ */
+function calculateMontgomeryConstants(n_limbs: bigint[]): { n_prime: bigint[]; r_sq: bigint[] } {
+  let n = 0n;
+  for (let i = 0; i < n_limbs.length; i++) {
+    n += n_limbs[i] * (1n << (BigInt(i) * 128n));
+  }
+
+  const R = 1n << 2048n;
+
+  function modInverse(n: bigint, mod: bigint): bigint {
+    let t = 0n;
+    let newt = 1n;
+    let r = mod;
+    let newr = n;
+
+    while (newr !== 0n) {
+      const quotient = r / newr;
+      [t, newt] = [newt, t - quotient * newt];
+      [r, newr] = [newr, r - quotient * newr];
+    }
+
+    if (r > 1n) throw new Error("n is not invertible");
+    if (t < 0n) t = t + mod;
+    return t;
+  }
+
+  const n_inv = modInverse(n, R);
+  const n_prime_val = (R - n_inv) % R;
+  const r_sq_val = (R * R) % n;
+
+  const toLimbs = (val: bigint): bigint[] => {
+    const limbs: bigint[] = [];
+    for (let i = 0; i < 16; i++) {
+      limbs.push((val >> (BigInt(i) * 128n)) & ((1n << 128n) - 1n));
+    }
+    return limbs;
+  };
+
+  return {
+    n_prime: toLimbs(n_prime_val),
+    r_sq: toLimbs(r_sq_val),
+  };
+}
+
+/**
  * Fetch & format JWKS keys from a single provider.
  */
 async function fetchProviderKeys(provider: 'google' | 'apple'): Promise<FormattedKey[]> {
@@ -169,13 +218,19 @@ async function fetchProviderKeys(provider: 'google' | 'apple'): Promise<Formatte
 
   return data.keys
     .filter((k) => k.kty === 'RSA' && k.alg === 'RS256')
-    .map((k) => ({
-      kid: k.kid,
-      kidFelt: kidToFelt(k.kid),
-      nLimbs: modulusToLimbs(k.n),
-      provider: providerFelt,
-      validUntil,
-    }));
+    .map((k) => {
+      const nLimbs = modulusToLimbs(k.n);
+      const mont = calculateMontgomeryConstants(nLimbs);
+      return {
+        kid: k.kid,
+        kidFelt: kidToFelt(k.kid),
+        nLimbs,
+        rSqLimbs: mont.r_sq,
+        nPrimeLimbs: mont.n_prime,
+        provider: providerFelt,
+        validUntil,
+      };
+    });
 }
 
 /**
@@ -255,10 +310,12 @@ export async function syncJWKS(network: 'sepolia' | 'mainnet'): Promise<SyncResu
 
       // Build calldata as flat array — bypasses ABI struct resolution issues.
       // Cairo serializes structs as a flat sequence of felts:
-      //   kid, n0..n15, provider, valid_until, is_active
+      //   kid, n0..n15, r_sq0..r15, n_prime0..15, provider, valid_until, is_active
       const calldata = [
         key.kidFelt,
         ...key.nLimbs.map((l) => '0x' + l.toString(16)),
+        ...key.rSqLimbs.map((l) => '0x' + l.toString(16)),
+        ...key.nPrimeLimbs.map((l) => '0x' + l.toString(16)),
         key.provider,
         '0x' + BigInt(key.validUntil).toString(16),
         '0x1', // is_active = true

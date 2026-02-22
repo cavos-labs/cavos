@@ -79,7 +79,7 @@ pub mod Cavos {
     use core::ecdsa::check_ecdsa_signature;
     use core::hash::HashStateTrait;
     use core::num::traits::Zero;
-    use core::poseidon::PoseidonTrait;
+    use core::poseidon::{PoseidonTrait, hades_permutation};
     use starknet::account::Call;
     use starknet::storage::{
         Map, StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess,
@@ -249,7 +249,7 @@ pub mod Cavos {
             let calls_span = calls.span();
             let num_calls = calls_span.len();
             let mut i: usize = 0;
-            while i < num_calls {
+            while i != num_calls {
                 let call = calls_span[i];
                 let result = call_contract_syscall(*call.to, *call.selector, *call.calldata)
                     .unwrap_syscall();
@@ -530,7 +530,7 @@ pub mod Cavos {
             let calls_span = outside_execution.calls;
             let num_calls = calls_span.len();
             let mut i: usize = 0;
-            while i < num_calls {
+            while i != num_calls {
                 let call = calls_span[i];
                 let result = call_contract_syscall(*call.to, *call.selector, *call.calldata)
                     .unwrap_syscall();
@@ -667,43 +667,15 @@ pub mod Cavos {
 
             let mut rsa_limbs: Array<u128> = array![];
             let mut li: usize = 0;
-            while li < 16 {
+            while li != 16 {
                 let limb: u128 = (*signature[rsa_sig_start + 1 + li]).try_into().unwrap();
                 rsa_limbs.append(limb);
                 li += 1;
             }
             let rsa_sig = biguint_from_limbs(rsa_limbs.span());
 
-            // Extract n_prime (16 limbs)
-            let n_prime_start: usize = 36;
-            let n_prime_len: usize = (*signature[n_prime_start]).try_into().unwrap();
-            assert!(n_prime_len == 16, "n_prime must be 16 limbs");
-
-            let mut n_prime_limbs: Array<u128> = array![];
-            let mut ni: usize = 0;
-            while ni < 16 {
-                let limb: u128 = (*signature[n_prime_start + 1 + ni]).try_into().unwrap();
-                n_prime_limbs.append(limb);
-                ni += 1;
-            }
-            let n_prime = biguint_from_limbs(n_prime_limbs.span());
-
-            // Extract R^2 (16 limbs)
-            let r_sq_start: usize = 53;
-            let r_sq_len: usize = (*signature[r_sq_start]).try_into().unwrap();
-            assert!(r_sq_len == 16, "R^2 must be 16 limbs");
-
-            let mut r_sq_limbs: Array<u128> = array![];
-            let mut ri: usize = 0;
-            while ri < 16 {
-                let limb: u128 = (*signature[r_sq_start + 1 + ri]).try_into().unwrap();
-                r_sq_limbs.append(limb);
-                ri += 1;
-            }
-            let r_sq = biguint_from_limbs(r_sq_limbs.span());
-
             // Extract JWT signed data (header.payload bytes)
-            let jwt_data_start: usize = 70;
+            let jwt_data_start: usize = 36;
 
             // The value at jwt_data_start is the TOTAL BYTE LENGTH of the JWT data
             let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
@@ -712,7 +684,7 @@ pub mod Cavos {
             let mut current_byte = 0;
             let mut chunk_idx = 0;
 
-            while current_byte < jwt_bytes_len {
+            while current_byte != jwt_bytes_len {
                 let packed_chunk = *signature[jwt_data_start + 1 + chunk_idx];
                 let remaining = jwt_bytes_len - current_byte;
                 let chunk_len = if remaining >= 31 {
@@ -754,11 +726,12 @@ pub mod Cavos {
             assert!(now < jwt_exp, "JWT expired");
 
             // 6. Verify address_seed = Poseidon(sub, salt, wallet_name?)
-            let mut elements: Array<felt252> = array![jwt_sub, salt];
-            if wallet_name != 0 {
-                elements.append(wallet_name);
-            }
-            let computed_seed = core::poseidon::poseidon_hash_span(elements.span());
+            let computed_seed = if wallet_name != 0 {
+                PoseidonTrait::new().update(jwt_sub).update(salt).update(wallet_name).finalize()
+            } else {
+                let (h, _, _) = hades_permutation(jwt_sub, salt, 2);
+                h
+            };
             assert!(computed_seed == self.address_seed.read(), "Address seed mismatch");
 
             // 7. Verify JWKS key is valid
@@ -772,6 +745,22 @@ pub mod Cavos {
                     jwks_key.n0, jwks_key.n1, jwks_key.n2, jwks_key.n3, jwks_key.n4, jwks_key.n5,
                     jwks_key.n6, jwks_key.n7, jwks_key.n8, jwks_key.n9, jwks_key.n10, jwks_key.n11,
                     jwks_key.n12, jwks_key.n13, jwks_key.n14, jwks_key.n15,
+                ],
+            };
+            let n_prime = BigUint2048 {
+                limbs: [
+                    jwks_key.n_prime0, jwks_key.n_prime1, jwks_key.n_prime2, jwks_key.n_prime3,
+                    jwks_key.n_prime4, jwks_key.n_prime5, jwks_key.n_prime6, jwks_key.n_prime7,
+                    jwks_key.n_prime8, jwks_key.n_prime9, jwks_key.n_prime10, jwks_key.n_prime11,
+                    jwks_key.n_prime12, jwks_key.n_prime13, jwks_key.n_prime14, jwks_key.n_prime15,
+                ],
+            };
+            let r_sq = BigUint2048 {
+                limbs: [
+                    jwks_key.r_sq0, jwks_key.r_sq1, jwks_key.r_sq2, jwks_key.r_sq3, jwks_key.r_sq4,
+                    jwks_key.r_sq5, jwks_key.r_sq6, jwks_key.r_sq7, jwks_key.r_sq8, jwks_key.r_sq9,
+                    jwks_key.r_sq10, jwks_key.r_sq11, jwks_key.r_sq12, jwks_key.r_sq13,
+                    jwks_key.r_sq14, jwks_key.r_sq15,
                 ],
             };
             assert!(
@@ -921,7 +910,7 @@ pub mod Cavos {
             let calls = *outside_execution.calls;
             let mut hashed_calls: Array<felt252> = array![];
             let mut i: usize = 0;
-            while i < calls.len() {
+            while i != calls.len() {
                 let call = calls[i];
                 // Hash call: poseidon_hash_span([CALL_TYPE_HASH, to, selector,
                 // poseidon_hash_span(calldata)])
@@ -1146,11 +1135,12 @@ pub mod Cavos {
             assert!(now < jwt_exp, "JWT expired");
 
             // 5. Verify address_seed = Poseidon(sub, salt, wallet_name?)
-            let mut seed_elements: Array<felt252> = array![jwt_sub, salt];
-            if wallet_name != 0 {
-                seed_elements.append(wallet_name);
-            }
-            let computed_seed = core::poseidon::poseidon_hash_span(seed_elements.span());
+            let computed_seed = if wallet_name != 0 {
+                PoseidonTrait::new().update(jwt_sub).update(salt).update(wallet_name).finalize()
+            } else {
+                let (h, _, _) = hades_permutation(jwt_sub, salt, 2);
+                h
+            };
             assert!(computed_seed == self.address_seed.read(), "Address seed mismatch");
 
             // 6. Verify JWKS key is valid
@@ -1165,38 +1155,12 @@ pub mod Cavos {
 
             let mut rsa_limbs: Array<u128> = array![];
             let mut li: usize = 0;
-            while li < 16 {
+            while li != 16 {
                 let limb: u128 = (*signature[rsa_sig_start + 1 + li]).try_into().unwrap();
                 rsa_limbs.append(limb);
                 li += 1;
             }
             let rsa_sig = biguint_from_limbs(rsa_limbs.span());
-
-            let n_prime_start: usize = 37;
-            let n_prime_len: usize = (*signature[n_prime_start]).try_into().unwrap();
-            assert!(n_prime_len == 16, "n_prime must be 16 limbs");
-
-            let mut n_prime_limbs: Array<u128> = array![];
-            let mut ni: usize = 0;
-            while ni < 16 {
-                let limb: u128 = (*signature[n_prime_start + 1 + ni]).try_into().unwrap();
-                n_prime_limbs.append(limb);
-                ni += 1;
-            }
-            let n_prime = biguint_from_limbs(n_prime_limbs.span());
-
-            let r_sq_start: usize = 54;
-            let r_sq_len: usize = (*signature[r_sq_start]).try_into().unwrap();
-            assert!(r_sq_len == 16, "R^2 must be 16 limbs");
-
-            let mut r_sq_limbs: Array<u128> = array![];
-            let mut ri: usize = 0;
-            while ri < 16 {
-                let limb: u128 = (*signature[r_sq_start + 1 + ri]).try_into().unwrap();
-                r_sq_limbs.append(limb);
-                ri += 1;
-            }
-            let r_sq = biguint_from_limbs(r_sq_limbs.span());
 
             let jwks_key = registry.get_key(jwt_kid);
             let modulus = BigUint2048 {
@@ -1206,15 +1170,31 @@ pub mod Cavos {
                     jwks_key.n12, jwks_key.n13, jwks_key.n14, jwks_key.n15,
                 ],
             };
+            let n_prime = BigUint2048 {
+                limbs: [
+                    jwks_key.n_prime0, jwks_key.n_prime1, jwks_key.n_prime2, jwks_key.n_prime3,
+                    jwks_key.n_prime4, jwks_key.n_prime5, jwks_key.n_prime6, jwks_key.n_prime7,
+                    jwks_key.n_prime8, jwks_key.n_prime9, jwks_key.n_prime10, jwks_key.n_prime11,
+                    jwks_key.n_prime12, jwks_key.n_prime13, jwks_key.n_prime14, jwks_key.n_prime15,
+                ],
+            };
+            let r_sq = BigUint2048 {
+                limbs: [
+                    jwks_key.r_sq0, jwks_key.r_sq1, jwks_key.r_sq2, jwks_key.r_sq3, jwks_key.r_sq4,
+                    jwks_key.r_sq5, jwks_key.r_sq6, jwks_key.r_sq7, jwks_key.r_sq8, jwks_key.r_sq9,
+                    jwks_key.r_sq10, jwks_key.r_sq11, jwks_key.r_sq12, jwks_key.r_sq13,
+                    jwks_key.r_sq14, jwks_key.r_sq15,
+                ],
+            };
 
-            let jwt_data_start: usize = 71;
+            let jwt_data_start: usize = 37;
             let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
 
             let mut jwt_bytes = "";
             let mut current_byte = 0;
             let mut chunk_idx = 0;
 
-            while current_byte < jwt_bytes_len {
+            while current_byte != jwt_bytes_len {
                 let packed_chunk = *signature[jwt_data_start + 1 + chunk_idx];
                 let remaining = jwt_bytes_len - current_byte;
                 let chunk_len = if remaining >= 31 {
@@ -1290,8 +1270,8 @@ pub mod Cavos {
             let jwt_nonce = *signature[7];
 
             // Compute policy fields position (after JWT bytes)
-            // wallet_name at [13] shifts jwt_data_start from 70 to 71
-            let jwt_data_start: usize = 71;
+            // wallet_name at [13] shifts jwt_data_start from 36 to 37
+            let jwt_data_start: usize = 37;
             let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
             let jwt_chunks = (jwt_bytes_len + 30) / 31;
             let policy_start: usize = jwt_data_start + 1 + jwt_chunks;
@@ -1314,7 +1294,7 @@ pub mod Cavos {
             let sp_felt_count: usize = spending_policies_len * 3;
             let mut spending_data: Array<felt252> = array![];
             let mut si: usize = 0;
-            while si < sp_felt_count {
+            while si != sp_felt_count {
                 spending_data.append(*signature[sp_start + si]);
                 si += 1;
             }
@@ -1486,7 +1466,7 @@ pub mod Cavos {
                 * 3; // token + limit_low + limit_high per policy
             let mut spending_data: Array<felt252> = array![];
             let mut si: usize = 0;
-            while si < sp_felt_count {
+            while si != sp_felt_count {
                 spending_data.append(*signature[sp_start + si]);
                 si += 1;
             }
@@ -1540,11 +1520,12 @@ pub mod Cavos {
             assert!(now < jwt_exp, "JWT expired");
 
             // Verify address_seed = Poseidon(sub, salt, wallet_name?)
-            let mut seed_elements: Array<felt252> = array![jwt_sub, salt];
-            if wallet_name != 0 {
-                seed_elements.append(wallet_name);
-            }
-            let computed_seed = core::poseidon::poseidon_hash_span(seed_elements.span());
+            let computed_seed = if wallet_name != 0 {
+                PoseidonTrait::new().update(jwt_sub).update(salt).update(wallet_name).finalize()
+            } else {
+                let (h, _, _) = hades_permutation(jwt_sub, salt, 2);
+                h
+            };
             assert!(computed_seed == self.address_seed.read(), "Address seed mismatch");
 
             // Verify JWKS key
@@ -1559,7 +1540,7 @@ pub mod Cavos {
 
             let mut rsa_limbs: Array<u128> = array![];
             let mut li: usize = 0;
-            while li < 16 {
+            while li != 16 {
                 let limb: u128 = (*signature[rsa_sig_start + 1 + li]).try_into().unwrap();
                 rsa_limbs.append(limb);
                 li += 1;
@@ -1573,7 +1554,7 @@ pub mod Cavos {
             );
             let mut n_prime_limbs: Array<u128> = array![];
             let mut ni: usize = 0;
-            while ni < 16 {
+            while ni != 16 {
                 let limb: u128 = (*signature[n_prime_start + 1 + ni]).try_into().unwrap();
                 n_prime_limbs.append(limb);
                 ni += 1;
@@ -1586,7 +1567,7 @@ pub mod Cavos {
             );
             let mut r_sq_limbs: Array<u128> = array![];
             let mut ri: usize = 0;
-            while ri < 16 {
+            while ri != 16 {
                 let limb: u128 = (*signature[r_sq_start + 1 + ri]).try_into().unwrap();
                 r_sq_limbs.append(limb);
                 ri += 1;
@@ -1607,7 +1588,7 @@ pub mod Cavos {
             let mut jwt_bytes = "";
             let mut current_byte = 0;
             let mut chunk_idx = 0;
-            while current_byte < jwt_bytes_len {
+            while current_byte != jwt_bytes_len {
                 let packed_chunk = *signature[jwt_data_start + 1 + chunk_idx];
                 let remaining = jwt_bytes_len - current_byte;
                 let chunk_len = if remaining >= 31 {
@@ -1667,7 +1648,7 @@ pub mod Cavos {
         ) {
             self.session_spending_policy_count.write(session_key, count);
             let mut i: u32 = 0;
-            while i < count {
+            while i != count {
                 let base: usize = (i * 3);
                 let token_felt: felt252 = *policies[base];
                 let limit_low: u128 = (*policies[base + 1]).try_into().unwrap();
@@ -1693,7 +1674,7 @@ pub mod Cavos {
 
             let mut sig_idx: usize = 4; // Start after [magic, r, s, session_key]
             let mut i: usize = 0;
-            while i < calls.len() {
+            while i != calls.len() {
                 let call = calls[i];
                 let contract: ContractAddress = *call.to;
                 let selector = *call.selector;
@@ -1705,7 +1686,7 @@ pub mod Cavos {
                 // Build proof span
                 let mut proof: Array<felt252> = array![];
                 let mut j: usize = 0;
-                while j < proof_len {
+                while j != proof_len {
                     proof.append(*signature[sig_idx + j]);
                     j += 1;
                 }
@@ -1727,7 +1708,7 @@ pub mod Cavos {
                 let mut current = PoseidonTrait::new().update(contract.into()).finalize();
                 let proof_span = proof.span();
                 let mut k: usize = 0;
-                while k < proof_span.len() {
+                while k != proof_span.len() {
                     let sibling = *proof_span[k];
                     let current_u256: u256 = current.into();
                     let sibling_u256: u256 = sibling.into();
@@ -1756,7 +1737,7 @@ pub mod Cavos {
             }
 
             let mut i: usize = 0;
-            while i < calls.len() {
+            while i != calls.len() {
                 let call = calls[i];
                 let sel = *call.selector;
 
@@ -1780,7 +1761,7 @@ pub mod Cavos {
                     let mut found = false;
                     let mut limit = u256 { low: 0, high: 0 };
                     let mut pi: u32 = 0;
-                    while pi < policy_count {
+                    while pi != policy_count {
                         let policy = self.session_spending_policies.read((session_key, pi));
                         if policy.token == token {
                             found = true;
