@@ -38,10 +38,14 @@ pub trait ICavos<TContractState> {
     ) -> u256;
     /// Revoke a specific session key. Authentication handled by tx validation layer.
     fn revoke_session(ref self: TContractState, session_key: felt252);
-    /// Emergency revoke all session keys. Authentication handled by tx validation layer.
     fn emergency_revoke(ref self: TContractState);
 
     fn get_version(self: @TContractState) -> u8;
+
+    /// SRC6 standard signature validation
+    fn is_valid_signature(
+        self: @TContractState, hash: felt252, signature: Array<felt252>,
+    ) -> felt252;
 }
 
 #[starknet::interface]
@@ -285,6 +289,21 @@ pub mod Cavos {
 
         fn get_jwks_registry(self: @ContractState) -> ContractAddress {
             self.jwks_registry.read()
+        }
+
+        fn is_valid_signature(
+            self: @ContractState, hash: felt252, signature: Array<felt252>,
+        ) -> felt252 {
+            let sig_span = signature.span();
+            if sig_span.is_empty() {
+                return 0;
+            }
+            let sig_type = *sig_span[0];
+            if sig_type == SESSION_SIG_MAGIC {
+                self.validate_session_signature_readonly(hash, sig_span)
+            } else {
+                0
+            }
         }
 
         /// Renew a session using an existing session that is in its grace period.
@@ -1292,7 +1311,7 @@ pub mod Cavos {
 
             // Extract spending policies
             let sp_start = policy_start + 4;
-            let sp_felt_count: usize = spending_policies_len.into() * 3;
+            let sp_felt_count: usize = spending_policies_len * 3;
             let mut spending_data: Array<felt252> = array![];
             let mut si: usize = 0;
             while si < sp_felt_count {
@@ -1463,7 +1482,7 @@ pub mod Cavos {
 
             // Extract spending policies as span
             let sp_start = policy_start + 4;
-            let sp_felt_count: usize = spending_policies_len.into()
+            let sp_felt_count: usize = spending_policies_len
                 * 3; // token + limit_low + limit_high per policy
             let mut spending_data: Array<felt252> = array![];
             let mut si: usize = 0;
@@ -1649,7 +1668,7 @@ pub mod Cavos {
             self.session_spending_policy_count.write(session_key, count);
             let mut i: u32 = 0;
             while i < count {
-                let base: usize = (i * 3).into();
+                let base: usize = (i * 3);
                 let token_felt: felt252 = *policies[base];
                 let limit_low: u128 = (*policies[base + 1]).try_into().unwrap();
                 let limit_high: u128 = (*policies[base + 2]).try_into().unwrap();
