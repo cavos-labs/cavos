@@ -1,37 +1,9 @@
 use core::sha256::compute_sha256_byte_array;
 /// RSA-SHA256 (PKCS#1 v1.5) signature verification.
 /// Verifies JWT RS256 signatures from Google/Apple OAuth providers.
+/// Uses Montgomery reduction for efficient modular exponentiation.
 
-use super::bignum::{BigUint2048, biguint_eq, biguint_from_bytes, biguint_modexp_65537};
-
-/// PKCS#1 v1.5 DigestInfo prefix for SHA-256.
-/// DER encoding: 30 31 30 0d 06 09 60 86 48 01 65 03 04 02 01 05 00 04 20
-/// This is the ASN.1 encoding that prepends the hash in PKCS#1 v1.5 signatures.
-const PKCS1_SHA256_PREFIX_LEN: usize = 19;
-
-/// Verify an RSA-SHA256 signature (PKCS#1 v1.5) with e=65537.
-///
-/// Arguments:
-/// - message: The signed message bytes (typically "header.payload" of a JWT)
-/// - signature: The RSA signature as 2048-bit number (16 x u128 limbs, little-endian)
-/// - modulus: The RSA public key modulus n as 2048-bit number (16 x u128 limbs, little-endian)
-///
-/// Returns true if the signature is valid.
-pub fn verify_rsa_sha256(
-    message: @ByteArray, signature: @BigUint2048, modulus: @BigUint2048,
-) -> bool {
-    // Step 1: RSA verification - compute signature^65537 mod n
-    let decrypted = biguint_modexp_65537(signature, modulus);
-
-    // Step 2: SHA-256 hash the message
-    let hash = compute_sha256_byte_array(message);
-
-    // Step 3: Construct expected PKCS#1 v1.5 padded value
-    let expected = pkcs1_v15_encode(@hash);
-
-    // Step 4: Compare
-    biguint_eq(@decrypted, @expected)
-}
+use super::bignum::{BigUint2048, biguint_eq};
 
 
 /// Verify RSA signature using Montgomery Reduction (Optimized).
@@ -91,59 +63,54 @@ pub fn verify_rsa_sha256_prehashed_mont(
 ///
 /// For RSA-2048 (256 bytes): PS is 256 - 3 - 19 - 32 = 202 bytes of 0xFF.
 fn pkcs1_v15_encode(hash: @[u32; 8]) -> BigUint2048 {
-    // Build the 256-byte padded message in big-endian
-    let mut padded: Array<u8> = array![];
+    // A PKCS#1 v1.5 padding block for SHA-256 with a 2048-bit (256-byte) modulus
+    // exactly maps to predefined 128-bit static limbs.
+    // Bytes 0-1: 0x00 0x01
+    // Bytes 2-203: 0xFF
+    // Byte 204: 0x00
+    // Bytes 205-223: ASN.1 DigestInfo prefix
+    // Bytes 224-255: SHA-256 hash (32 bytes)
 
-    // 0x00 0x01
-    padded.append(0x00);
-    padded.append(0x01);
-
-    // PS: 202 bytes of 0xFF
-    let mut i: usize = 0;
-    while i < 202 {
-        padded.append(0xff);
-        i += 1;
-    }
-
-    // 0x00 separator
-    padded.append(0x00);
-
-    // DigestInfo ASN.1 prefix for SHA-256
-    padded.append(0x30);
-    padded.append(0x31);
-    padded.append(0x30);
-    padded.append(0x0d);
-    padded.append(0x06);
-    padded.append(0x09);
-    padded.append(0x60);
-    padded.append(0x86);
-    padded.append(0x48);
-    padded.append(0x01);
-    padded.append(0x65);
-    padded.append(0x03);
-    padded.append(0x04);
-    padded.append(0x02);
-    padded.append(0x01);
-    padded.append(0x05);
-    padded.append(0x00);
-    padded.append(0x04);
-    padded.append(0x20);
-
-    // SHA-256 hash (32 bytes from 8 x u32)
     let hash_span = hash.span();
-    let mut h_idx: usize = 0;
-    while h_idx < 8 {
-        let word: u32 = *hash_span[h_idx];
-        // Big-endian: high byte first
-        padded.append(((word / 0x1000000) & 0xff).try_into().unwrap());
-        padded.append(((word / 0x10000) & 0xff).try_into().unwrap());
-        padded.append(((word / 0x100) & 0xff).try_into().unwrap());
-        padded.append((word & 0xff).try_into().unwrap());
-        h_idx += 1;
+
+    // Limb 1: first half of hash (words 0..3)
+    let w0: u128 = (*hash_span[0]).into();
+    let w1: u128 = (*hash_span[1]).into();
+    let w2: u128 = (*hash_span[2]).into();
+    let w3: u128 = (*hash_span[3]).into();
+    let limb_1 = (w0 * 0x1000000000000000000000000_u128)
+        + (w1 * 0x10000000000000000_u128)
+        + (w2 * 0x100000000_u128)
+        + w3;
+
+    // Limb 0: second half of hash (words 4..7)
+    let w4: u128 = (*hash_span[4]).into();
+    let w5: u128 = (*hash_span[5]).into();
+    let w6: u128 = (*hash_span[6]).into();
+    let w7: u128 = (*hash_span[7]).into();
+    let limb_0 = (w4 * 0x1000000000000000000000000_u128)
+        + (w5 * 0x10000000000000000_u128)
+        + (w6 * 0x100000000_u128)
+        + w7;
+
+    BigUint2048 {
+        limbs: [
+            limb_0, // limb 0 (bytes 240..255)
+            limb_1, // limb 1 (bytes 224..239)
+            0x0d060960864801650304020105000420, // limb 2 (bytes 208..223, ASN.1 lower)
+            0xffffffffffffffffffffffff00303130, // limb 3 (bytes 192..207, PS + 0x00 + ASN.1 upper)
+            0xffffffffffffffffffffffffffffffff, // limb 4
+            0xffffffffffffffffffffffffffffffff, // limb 5
+            0xffffffffffffffffffffffffffffffff, // limb 6
+            0xffffffffffffffffffffffffffffffff, // limb 7
+            0xffffffffffffffffffffffffffffffff, // limb 8
+            0xffffffffffffffffffffffffffffffff, // limb 9
+            0xffffffffffffffffffffffffffffffff, // limb 10
+            0xffffffffffffffffffffffffffffffff, // limb 11
+            0xffffffffffffffffffffffffffffffff, // limb 12
+            0xffffffffffffffffffffffffffffffff, // limb 13
+            0xffffffffffffffffffffffffffffffff, // limb 14
+            0x0001ffffffffffffffffffffffffffff // limb 15 (bytes 0..15, 0x00 0x01 + PS)
+        ],
     }
-
-    assert!(padded.len() == 256, "PKCS#1 padding must be 256 bytes");
-
-    // Convert big-endian bytes to BigUint2048
-    biguint_from_bytes(padded.span())
 }

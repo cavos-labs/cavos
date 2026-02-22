@@ -71,105 +71,435 @@ fn biguint_gte(a: @BigUint2048, b: @BigUint2048) -> bool {
 /// Adds two BigUint2048 values. Returns (result, carry).
 /// Does NOT reduce modulo anything.
 fn biguint_add(a: @BigUint2048, b: @BigUint2048) -> (BigUint2048, u128) {
-    let a_limbs = a.limbs.span();
-    let b_limbs = b.limbs.span();
-    let mut result: Array<u128> = array![];
-    let mut carry: u128 = 0;
-    let mut i: usize = 0;
-    while i != 16 {
-        let a_val: u256 = (*a_limbs[i]).into();
-        let b_val: u256 = (*b_limbs[i]).into();
-        let sum: u256 = a_val + b_val + carry.into();
-        let limb: u128 = sum.low;
-        carry = sum.high.try_into().unwrap();
-        result.append(limb);
-        i += 1;
-    }
-    let res = BigUint2048 { limbs: array_to_fixed_16(ref result) };
-    (res, carry)
+    let al = a.limbs.span();
+    let bl = b.limbs.span();
+    let s0: u256 = (*al[0]).into() + (*bl[0]).into();
+    let l0 = s0.low;
+    let mut c: u128 = s0.high.try_into().unwrap();
+    let s1: u256 = (*al[1]).into() + (*bl[1]).into() + c.into();
+    let l1 = s1.low;
+    c = s1.high;
+    let s2: u256 = (*al[2]).into() + (*bl[2]).into() + c.into();
+    let l2 = s2.low;
+    c = s2.high;
+    let s3: u256 = (*al[3]).into() + (*bl[3]).into() + c.into();
+    let l3 = s3.low;
+    c = s3.high;
+    let s4: u256 = (*al[4]).into() + (*bl[4]).into() + c.into();
+    let l4 = s4.low;
+    c = s4.high;
+    let s5: u256 = (*al[5]).into() + (*bl[5]).into() + c.into();
+    let l5 = s5.low;
+    c = s5.high;
+    let s6: u256 = (*al[6]).into() + (*bl[6]).into() + c.into();
+    let l6 = s6.low;
+    c = s6.high;
+    let s7: u256 = (*al[7]).into() + (*bl[7]).into() + c.into();
+    let l7 = s7.low;
+    c = s7.high;
+    let s8: u256 = (*al[8]).into() + (*bl[8]).into() + c.into();
+    let l8 = s8.low;
+    c = s8.high;
+    let s9: u256 = (*al[9]).into() + (*bl[9]).into() + c.into();
+    let l9 = s9.low;
+    c = s9.high;
+    let s10: u256 = (*al[10]).into() + (*bl[10]).into() + c.into();
+    let l10 = s10.low;
+    c = s10.high;
+    let s11: u256 = (*al[11]).into() + (*bl[11]).into() + c.into();
+    let l11 = s11.low;
+    c = s11.high;
+    let s12: u256 = (*al[12]).into() + (*bl[12]).into() + c.into();
+    let l12 = s12.low;
+    c = s12.high;
+    let s13: u256 = (*al[13]).into() + (*bl[13]).into() + c.into();
+    let l13 = s13.low;
+    c = s13.high;
+    let s14: u256 = (*al[14]).into() + (*bl[14]).into() + c.into();
+    let l14 = s14.low;
+    c = s14.high;
+    let s15: u256 = (*al[15]).into() + (*bl[15]).into() + c.into();
+    let l15 = s15.low;
+    c = s15.high;
+    (
+        BigUint2048 {
+            limbs: [l0, l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15],
+        },
+        c,
+    )
 }
 
 /// Subtracts b from a (assumes a >= b). Returns result.
 fn biguint_sub(a: @BigUint2048, b: @BigUint2048) -> BigUint2048 {
-    let a_limbs = a.limbs.span();
-    let b_limbs = b.limbs.span();
-    let mut result: Array<u128> = array![];
-    let mut borrow: u128 = 0;
-    let mut i: usize = 0;
-    while i != 16 {
-        let a_val: u256 = (*a_limbs[i]).into();
-        let b_val: u256 = (*b_limbs[i]).into() + borrow.into();
-        if a_val >= b_val {
-            let diff: u128 = (a_val - b_val).try_into().unwrap();
-            result.append(diff);
-            borrow = 0;
-        } else {
-            // Borrow from next limb
-            let diff: u128 = (a_val + 0x100000000000000000000000000000000_u256 - b_val)
-                .try_into()
-                .unwrap();
-            result.append(diff);
-            borrow = 1;
-        }
-        i += 1;
-    }
-    BigUint2048 { limbs: array_to_fixed_16(ref result) }
+    let al = a.limbs.span();
+    let bl = b.limbs.span();
+
+    let v0: u256 = (*al[0]).into();
+    let k0: u256 = (*bl[0]).into();
+    let (l0, mut bw) = if v0 >= k0 {
+        ((v0 - k0).try_into().unwrap(), 0)
+    } else {
+        ((v0 + 0x100000000000000000000000000000000_u256 - k0).try_into().unwrap(), 1_u256)
+    };
+    let v1: u256 = (*al[1]).into();
+    let k1: u256 = (*bl[1]).into() + bw;
+    let (l1, bw) = if v1 >= k1 {
+        ((v1 - k1).try_into().unwrap(), 0)
+    } else {
+        ((v1 + 0x100000000000000000000000000000000_u256 - k1).try_into().unwrap(), 1_u256)
+    };
+    let v2: u256 = (*al[2]).into();
+    let k2: u256 = (*bl[2]).into() + bw;
+    let (l2, bw) = if v2 >= k2 {
+        ((v2 - k2).try_into().unwrap(), 0)
+    } else {
+        ((v2 + 0x100000000000000000000000000000000_u256 - k2).try_into().unwrap(), 1_u256)
+    };
+    let v3: u256 = (*al[3]).into();
+    let k3: u256 = (*bl[3]).into() + bw;
+    let (l3, bw) = if v3 >= k3 {
+        ((v3 - k3).try_into().unwrap(), 0)
+    } else {
+        ((v3 + 0x100000000000000000000000000000000_u256 - k3).try_into().unwrap(), 1_u256)
+    };
+    let v4: u256 = (*al[4]).into();
+    let k4: u256 = (*bl[4]).into() + bw;
+    let (l4, bw) = if v4 >= k4 {
+        ((v4 - k4).try_into().unwrap(), 0)
+    } else {
+        ((v4 + 0x100000000000000000000000000000000_u256 - k4).try_into().unwrap(), 1_u256)
+    };
+    let v5: u256 = (*al[5]).into();
+    let k5: u256 = (*bl[5]).into() + bw;
+    let (l5, bw) = if v5 >= k5 {
+        ((v5 - k5).try_into().unwrap(), 0)
+    } else {
+        ((v5 + 0x100000000000000000000000000000000_u256 - k5).try_into().unwrap(), 1_u256)
+    };
+    let v6: u256 = (*al[6]).into();
+    let k6: u256 = (*bl[6]).into() + bw;
+    let (l6, bw) = if v6 >= k6 {
+        ((v6 - k6).try_into().unwrap(), 0)
+    } else {
+        ((v6 + 0x100000000000000000000000000000000_u256 - k6).try_into().unwrap(), 1_u256)
+    };
+    let v7: u256 = (*al[7]).into();
+    let k7: u256 = (*bl[7]).into() + bw;
+    let (l7, bw) = if v7 >= k7 {
+        ((v7 - k7).try_into().unwrap(), 0)
+    } else {
+        ((v7 + 0x100000000000000000000000000000000_u256 - k7).try_into().unwrap(), 1_u256)
+    };
+    let v8: u256 = (*al[8]).into();
+    let k8: u256 = (*bl[8]).into() + bw;
+    let (l8, bw) = if v8 >= k8 {
+        ((v8 - k8).try_into().unwrap(), 0)
+    } else {
+        ((v8 + 0x100000000000000000000000000000000_u256 - k8).try_into().unwrap(), 1_u256)
+    };
+    let v9: u256 = (*al[9]).into();
+    let k9: u256 = (*bl[9]).into() + bw;
+    let (l9, bw) = if v9 >= k9 {
+        ((v9 - k9).try_into().unwrap(), 0)
+    } else {
+        ((v9 + 0x100000000000000000000000000000000_u256 - k9).try_into().unwrap(), 1_u256)
+    };
+    let v10: u256 = (*al[10]).into();
+    let k10: u256 = (*bl[10]).into() + bw;
+    let (l10, bw) = if v10 >= k10 {
+        ((v10 - k10).try_into().unwrap(), 0)
+    } else {
+        ((v10 + 0x100000000000000000000000000000000_u256 - k10).try_into().unwrap(), 1_u256)
+    };
+    let v11: u256 = (*al[11]).into();
+    let k11: u256 = (*bl[11]).into() + bw;
+    let (l11, bw) = if v11 >= k11 {
+        ((v11 - k11).try_into().unwrap(), 0)
+    } else {
+        ((v11 + 0x100000000000000000000000000000000_u256 - k11).try_into().unwrap(), 1_u256)
+    };
+    let v12: u256 = (*al[12]).into();
+    let k12: u256 = (*bl[12]).into() + bw;
+    let (l12, bw) = if v12 >= k12 {
+        ((v12 - k12).try_into().unwrap(), 0)
+    } else {
+        ((v12 + 0x100000000000000000000000000000000_u256 - k12).try_into().unwrap(), 1_u256)
+    };
+    let v13: u256 = (*al[13]).into();
+    let k13: u256 = (*bl[13]).into() + bw;
+    let (l13, bw) = if v13 >= k13 {
+        ((v13 - k13).try_into().unwrap(), 0)
+    } else {
+        ((v13 + 0x100000000000000000000000000000000_u256 - k13).try_into().unwrap(), 1_u256)
+    };
+    let v14: u256 = (*al[14]).into();
+    let k14: u256 = (*bl[14]).into() + bw;
+    let (l14, bw) = if v14 >= k14 {
+        ((v14 - k14).try_into().unwrap(), 0)
+    } else {
+        ((v14 + 0x100000000000000000000000000000000_u256 - k14).try_into().unwrap(), 1_u256)
+    };
+    let v15: u256 = (*al[15]).into();
+    let k15: u256 = (*bl[15]).into() + bw;
+    let (l15, _bw) = if v15 >= k15 {
+        ((v15 - k15).try_into().unwrap(), 0)
+    } else {
+        ((v15 + 0x100000000000000000000000000000000_u256 - k15).try_into().unwrap(), 1_u256)
+    };
+
+    BigUint2048 { limbs: [l0, l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15] }
 }
 
-/// Schoolbook multiplication of two 2048-bit numbers.
-/// Returns a 4096-bit result.
-/// Schoolbook multiplication of two 2048-bit numbers.
-/// Returns a 4096-bit result.
-/// Optimized to use column-based accumulation to avoid array allocations.
-fn biguint_mul_wide(a: @BigUint2048, b: @BigUint2048) -> BigUint4096 {
-    let a_limbs = a.limbs.span();
-    let b_limbs = b.limbs.span();
-
+/// Schoolbook multiplication of two 8-limb halves.
+/// a_span and b_span must each have exactly 8 elements.
+/// Returns 16 result limbs in an Array<u128>.
+fn schoolbook_8x8(a_span: Span<u128>, b_span: Span<u128>) -> Array<u128> {
     let mut result_limbs: Array<u128> = array![];
     let mut carry: u256 = 0;
 
-    // We compute the result limb by limb, from k=0 to k=31.
-    // k is the index in the result array (weight 2^(128*k)).
     let mut k: usize = 0;
-    while k != 32 {
-        let mut loop_sum_low: u256 = 0;
-        let mut loop_sum_high: u256 = 0;
+    while k != 16 {
+        let mut loop_sum_low: felt252 = 0;
+        let mut loop_sum_high: felt252 = 0;
 
-        let start_i = if k > 15 {
-            k - 15
+        let start_i = if k > 7 {
+            k - 7
         } else {
             0
         };
-        let end_i = if k < 15 {
+        let end_i = if k < 7 {
             k
         } else {
-            15
+            7
         };
 
         let mut i: usize = start_i;
         while i <= end_i {
             let j = k - i;
-            let a_limb = *a_limbs[i];
-            let b_limb = *b_limbs[j];
-
-            // Inline wide multiplication logic manually if needed,
-            // but u128_wide_mul is a builtin/optimized lib call.
-            let prod = a_limb.wide_mul(b_limb);
-
+            let prod = (*a_span[i]).wide_mul(*b_span[j]);
             loop_sum_low += prod.low.into();
             loop_sum_high += prod.high.into();
-
             i += 1;
         }
 
-        let total_flat = carry + loop_sum_low;
+        let lsl256: u256 = loop_sum_low.into();
+        let lsh256: u256 = loop_sum_high.into();
+        let total_flat = carry + lsl256;
         result_limbs.append(total_flat.low);
-        carry = total_flat.high.into() + loop_sum_high;
-
+        carry = total_flat.high.into() + lsh256;
         k += 1;
     }
 
-    BigUint4096 { limbs: array_to_fixed_32(ref result_limbs) }
+    result_limbs
+}
+
+/// Schoolbook multiplication of two 9-limb numbers (for Karatsuba cross-product).
+/// a_span and b_span must each have exactly 9 elements.
+/// Returns 18 result limbs in an Array<u128>.
+fn schoolbook_9x9(a_span: Span<u128>, b_span: Span<u128>) -> Array<u128> {
+    let mut result_limbs: Array<u128> = array![];
+    let mut carry: u256 = 0;
+
+    let mut k: usize = 0;
+    while k != 18 {
+        let mut loop_sum_low: felt252 = 0;
+        let mut loop_sum_high: felt252 = 0;
+
+        let start_i = if k > 8 {
+            k - 8
+        } else {
+            0
+        };
+        let end_i = if k < 8 {
+            k
+        } else {
+            8
+        };
+
+        let mut i: usize = start_i;
+        while i <= end_i {
+            let j = k - i;
+            let prod = (*a_span[i]).wide_mul(*b_span[j]);
+            loop_sum_low += prod.low.into();
+            loop_sum_high += prod.high.into();
+            i += 1;
+        }
+
+        let lsl256: u256 = loop_sum_low.into();
+        let lsh256: u256 = loop_sum_high.into();
+        let total_flat = carry + lsl256;
+        result_limbs.append(total_flat.low);
+        carry = total_flat.high.into() + lsh256;
+        k += 1;
+    }
+
+    result_limbs
+}
+
+/// Karatsuba multiplication of two 2048-bit numbers.
+/// Splits each 16-limb number into two 8-limb halves:
+///   a = a_hi * B + a_lo, b = b_hi * B + b_lo (B = 2^1024)
+/// Then: a * b = z2*B² + z1*B + z0
+///   z0 = a_lo * b_lo (8×8 = 64 products)
+///   z2 = a_hi * b_hi (8×8 = 64 products)
+///   z1 = (a_lo + a_hi) * (b_lo + b_hi) - z0 - z2 (9×9 = 81 products)
+/// Total: ~209 products vs 256 schoolbook.
+fn biguint_mul_wide(a: @BigUint2048, b: @BigUint2048) -> BigUint4096 {
+    let a_limbs = a.limbs.span();
+    let b_limbs = b.limbs.span();
+
+    // Split into halves
+    let a_lo = a_limbs.slice(0, 8);
+    let a_hi = a_limbs.slice(8, 8);
+    let b_lo = b_limbs.slice(0, 8);
+    let b_hi = b_limbs.slice(8, 8);
+
+    // z0 = a_lo × b_lo (16 limbs)
+    let z0 = schoolbook_8x8(a_lo, b_lo);
+    let z0_span = z0.span();
+
+    // z2 = a_hi × b_hi (16 limbs)
+    let z2 = schoolbook_8x8(a_hi, b_hi);
+    let z2_span = z2.span();
+
+    // Compute (a_lo + a_hi) and (b_lo + b_hi) — each can be up to 9 limbs
+    let mut sum_a: Array<u128> = array![];
+    let mut c_a: u128 = 0;
+    let mut i: usize = 0;
+    while i != 8 {
+        let s: u256 = (*a_lo[i]).into() + (*a_hi[i]).into() + c_a.into();
+        sum_a.append(s.low);
+        c_a = s.high;
+        i += 1;
+    }
+    sum_a.append(c_a);
+
+    let mut sum_b: Array<u128> = array![];
+    let mut c_b: u128 = 0;
+    let mut j: usize = 0;
+    while j != 8 {
+        let s: u256 = (*b_lo[j]).into() + (*b_hi[j]).into() + c_b.into();
+        sum_b.append(s.low);
+        c_b = s.high;
+        j += 1;
+    }
+    sum_b.append(c_b);
+
+    // z_mid = (a_lo + a_hi) × (b_lo + b_hi) (9×9 = 81 products, 18 limbs)
+    let z_mid = schoolbook_9x9(sum_a.span(), sum_b.span());
+    let z_mid_span = z_mid.span();
+
+    // z1 = z_mid - z0 - z2 (can be up to 18 limbs, stored with borrow handling)
+    // First pass: temp1 = z_mid - z0
+    let mut temp1: Array<u128> = array![];
+    let mut borrow: u256 = 0;
+    let mut k: usize = 0;
+    while k != 18 {
+        let mid_val: u256 = (*z_mid_span[k]).into();
+        let z0_val: u256 = if k < 16 {
+            (*z0_span[k]).into()
+        } else {
+            0
+        };
+        let sub_total = z0_val + borrow;
+
+        let (limb, new_borrow) = if mid_val >= sub_total {
+            ((mid_val - sub_total).try_into().unwrap(), 0_u256)
+        } else {
+            (
+                (mid_val + 0x100000000000000000000000000000000_u256 - sub_total)
+                    .try_into()
+                    .unwrap(),
+                1_u256,
+            )
+        };
+        temp1.append(limb);
+        borrow = new_borrow;
+        k += 1;
+    }
+    let temp1_span = temp1.span();
+
+    // Second pass: z1_arr = temp1 - z2
+    let mut z1_arr: Array<u128> = array![];
+    let mut borrow2: u256 = 0;
+    let mut k: usize = 0;
+    while k != 18 {
+        let temp1_val: u256 = (*temp1_span[k]).into();
+        let z2_val: u256 = if k < 16 {
+            (*z2_span[k]).into()
+        } else {
+            0
+        };
+        let sub_total = z2_val + borrow2;
+
+        let (limb, new_borrow) = if temp1_val >= sub_total {
+            ((temp1_val - sub_total).try_into().unwrap(), 0_u256)
+        } else {
+            (
+                (temp1_val + 0x100000000000000000000000000000000_u256 - sub_total)
+                    .try_into()
+                    .unwrap(),
+                1_u256,
+            )
+        };
+        z1_arr.append(limb);
+        borrow2 = new_borrow;
+        k += 1;
+    }
+    let z1_span = z1_arr.span();
+
+    // Assemble result: r[0..7] = z0[0..7]
+    //                   r[8..15] = z0[8..15] + z1[0..7]
+    //                   r[16..23] = z2[0..7] + z1[8..15]
+    //                   r[24..31] = z2[8..15] + z1[16..17]
+    let mut result: Array<u128> = array![];
+    let mut carry: u256 = 0;
+
+    // Limbs 0..7: just z0
+    let mut p: usize = 0;
+    while p != 8 {
+        result.append(*z0_span[p]);
+        p += 1;
+    }
+
+    // Limbs 8..15: z0[8..15] + z1[0..7]
+    let mut p: usize = 0;
+    while p != 8 {
+        let s: u256 = (*z0_span[8 + p]).into() + (*z1_span[p]).into() + carry;
+        result.append(s.low);
+        carry = s.high.into();
+        p += 1;
+    }
+
+    // Limbs 16..23: z2[0..7] + z1[8..15]
+    let mut p: usize = 0;
+    while p != 8 {
+        let z1_val: u256 = if (8 + p) < 18 {
+            (*z1_span[8 + p]).into()
+        } else {
+            0
+        };
+        let s: u256 = (*z2_span[p]).into() + z1_val + carry;
+        result.append(s.low);
+        carry = s.high.into();
+        p += 1;
+    }
+
+    // Limbs 24..31: z2[8..15] + z1[16..17] (z1 only has 18 limbs, so 16,17 are the tail)
+    let mut p: usize = 0;
+    while p != 8 {
+        let z1_val: u256 = if (16 + p) < 18 {
+            (*z1_span[16 + p]).into()
+        } else {
+            0
+        };
+        let s: u256 = (*z2_span[8 + p]).into() + z1_val + carry;
+        result.append(s.low);
+        carry = s.high.into();
+        p += 1;
+    }
+
+    BigUint4096 { limbs: array_to_fixed_32(ref result) }
 }
 
 /// Specialized multiplication that only returns the lower 2048 bits (16 limbs).
@@ -184,8 +514,8 @@ pub fn biguint_mul_low(a: @BigUint2048, b: @BigUint2048) -> BigUint2048 {
 
     let mut k: usize = 0;
     while k != 16 {
-        let mut loop_sum_low: u256 = 0;
-        let mut loop_sum_high: u256 = 0;
+        let mut loop_sum_low: felt252 = 0;
+        let mut loop_sum_high: felt252 = 0;
 
         let mut i: usize = 0;
         while i <= k {
@@ -196,197 +526,16 @@ pub fn biguint_mul_low(a: @BigUint2048, b: @BigUint2048) -> BigUint2048 {
             i += 1;
         }
 
-        let total_flat = carry + loop_sum_low;
+        let lsl256: u256 = loop_sum_low.into();
+        let lsh256: u256 = loop_sum_high.into();
+
+        let total_flat = carry + lsl256;
         result_limbs.append(total_flat.low);
-        carry = total_flat.high.into() + loop_sum_high;
+        carry = total_flat.high.into() + lsh256;
         k += 1;
     }
 
     BigUint2048 { limbs: array_to_fixed_16(ref result_limbs) }
-}
-
-/// Modular multiplication: (a * b) mod n
-/// Uses schoolbook multiply then Barrett-like reduction.
-pub fn biguint_mulmod(a: @BigUint2048, b: @BigUint2048, n: @BigUint2048) -> BigUint2048 {
-    let product = biguint_mul_wide(a, b);
-    biguint_mod_4096(@product, n)
-}
-
-/// Reduces a 4096-bit number modulo a 2048-bit modulus.
-/// Uses repeated subtraction with shifting for simplicity.
-/// For RSA-65537, this is called only ~17 times so performance is acceptable.
-fn biguint_mod_4096(a: @BigUint4096, n: @BigUint2048) -> BigUint2048 {
-    // We use a simple bit-by-bit reduction approach:
-    // Process from MSB to LSB, shift left and subtract modulus.
-    // Optimized with biguint_step to reduce allocations.
-    let a_limbs = a.limbs.span();
-    let mut result = biguint_zero();
-
-    // Find highest non-zero bit in a (4096-bit)
-    let total_bits: usize = 4096;
-    let mut bit_idx: usize = total_bits;
-
-    while bit_idx != 0 {
-        bit_idx -= 1;
-
-        // Get current bit of a
-        let limb_idx = bit_idx / 128;
-        let bit_pos: u32 = (bit_idx % 128);
-        let limb_val = *a_limbs[limb_idx];
-        let bit: u128 = (limb_val / pow2_u128(bit_pos)) % 2;
-
-        // Fused step: result = (result * 2 + bit) % n
-        result = biguint_step(@result, bit, n);
-    }
-    result
-}
-
-/// Fused step for modular reduction: (rem * 2 + bit) % n
-/// Replaces separate shift, add, check, sub operations to save steps/memory.
-fn biguint_step(rem: @BigUint2048, bit: u128, n: @BigUint2048) -> BigUint2048 {
-    let rem_limbs = rem.limbs.span();
-    let n_limbs = n.limbs.span();
-    let mut doubled_limbs: Array<u128> = array![];
-    let mut carry: u128 = 0;
-    let mut i: usize = 0;
-
-    // Step 1: Compute rem * 2 + bit efficiently
-    while i != 16 {
-        let val = *rem_limbs[i];
-        let val256: u256 = val.into();
-        let mut shifted256 = val256 * 2;
-
-        if i == 0 {
-            shifted256 += bit.into();
-        }
-
-        let low: u128 = shifted256.low;
-        let new_carry: u128 = shifted256.high.try_into().unwrap();
-
-        doubled_limbs.append(low + carry);
-        carry = new_carry;
-        i += 1;
-    }
-
-    // high_carry is the 2049th bit (1 or 0)
-    let high_carry = carry;
-    let doubled_fixed = array_to_fixed_16(ref doubled_limbs);
-    let doubled_val = BigUint2048 { limbs: doubled_fixed };
-
-    // Step 2: Check if we need to subtract n
-    // We subtract if high_carry is set OR if doubled_val >= n
-    let need_sub = high_carry == 1 || biguint_gte(@doubled_val, n);
-
-    if need_sub {
-        // Compute (doubled_val + high_carry * 2^2048) - n
-        // Since we only have 2048-bit arithmetic, we handle high_carry implicitly
-        // If high_carry is 1, effective value is > n (since n < 2^2048)
-
-        let mut result_arr: Array<u128> = array![];
-        let mut borrow: u128 = 0;
-        let mut j: usize = 0;
-        let d_limbs = doubled_fixed.span();
-
-        while j != 16 {
-            let d_val: u256 = (*d_limbs[j]).into();
-            let n_val: u256 = (*n_limbs[j]).into() + borrow.into();
-
-            if d_val >= n_val {
-                let diff: u128 = (d_val - n_val).try_into().unwrap();
-                result_arr.append(diff);
-                borrow = 0;
-            } else {
-                // Borrow
-                let diff: u128 = (d_val + 0x100000000000000000000000000000000_u256 - n_val)
-                    .try_into()
-                    .unwrap();
-                result_arr.append(diff);
-                borrow = 1;
-            }
-            j += 1;
-        }
-
-        // If high_carry was 1, we effectively had a 2049th bit = 1.
-        // The borrow from the last step cancels this out.
-        // If high_carry was 0, borrow should be 0 because doubled_val >= n.
-
-        BigUint2048 { limbs: array_to_fixed_16(ref result_arr) }
-    } else {
-        doubled_val
-    }
-}
-
-/// Shift a BigUint2048 left by 1 bit.
-fn biguint_shift_left_1(a: @BigUint2048) -> BigUint2048 {
-    let a_limbs = a.limbs.span();
-    let mut result: Array<u128> = array![];
-    let mut carry: u128 = 0;
-    let mut i: usize = 0;
-    while i != 16 {
-        let val = *a_limbs[i];
-        let val256: u256 = val.into();
-        let shifted256 = val256 * 2;
-        let low: u128 = (shifted256 & 0xffffffffffffffffffffffffffffffff_u256).try_into().unwrap();
-        let new_carry: u128 = (shifted256 / 0x100000000000000000000000000000000_u256)
-            .try_into()
-            .unwrap();
-        result.append(low + carry);
-        carry = new_carry;
-        i += 1;
-    }
-    // Discard top carry (we only have 2048 bits)
-    BigUint2048 { limbs: array_to_fixed_16(ref result) }
-}
-
-/// Modular exponentiation: base^exp mod n
-/// Optimized for exp = 65537 (RSA public exponent).
-/// Uses square-and-multiply (right-to-left binary method).
-pub fn biguint_modexp(base: @BigUint2048, exp: @BigUint2048, n: @BigUint2048) -> BigUint2048 {
-    let mut result = biguint_one();
-    let mut b = *base;
-    let exp_limbs = exp.limbs.span();
-
-    // Process each bit of the exponent
-    let mut limb_idx: usize = 0;
-    while limb_idx != 16 {
-        let limb = *exp_limbs[limb_idx];
-        if limb == 0 && limb_idx > 0 {
-            // Still need to square base 128 times for this limb
-            let mut bit: u32 = 0;
-            while bit != 128 {
-                b = biguint_mulmod(@b, @b, n);
-                bit += 1;
-            }
-            limb_idx += 1;
-            continue;
-        }
-        let mut bit: u32 = 0;
-        while bit != 128 {
-            // Check if current bit is set
-            let bit_val = (limb / pow2_u128(bit)) % 2;
-            if bit_val == 1 {
-                result = biguint_mulmod(@result, @b, n);
-            }
-            b = biguint_mulmod(@b, @b, n);
-            bit += 1;
-        }
-        limb_idx += 1;
-    }
-    result
-}
-
-/// Modular exponentiation specifically for e=65537.
-/// 65537 = 2^16 + 1, so we need only 16 squarings and 2 multiplications.
-pub fn biguint_modexp_65537(base: @BigUint2048, n: @BigUint2048) -> BigUint2048 {
-    let mut result = *base;
-    let mut i: u32 = 0;
-    while i != 16 {
-        result = biguint_mulmod(@result, @result, n);
-        i += 1;
-    }
-    // Now result = base^(2^16). Multiply by base to get base^(2^16 + 1) = base^65537
-    result = biguint_mulmod(@result, base, n);
-    result
 }
 
 /// Montgomery multiplication: (a * b * R^-1) mod n
@@ -457,65 +606,6 @@ fn array_to_fixed_16_high_from_32(limbs: @[u128; 32]) -> [u128; 16] {
     ]
 }
 
-/// Modular exponentiation using Montgomery Multiplication.
-/// base_mont: base converted to Montgomery form (base * R mod n)
-/// exp: exponent
-/// n: modulus
-/// n_prime: -n^-1 mod R
-/// one_mont: 1 converted to Montgomery form (1 * R mod n = R mod n)
-pub fn biguint_modexp_mont(
-    base_mont: @BigUint2048,
-    exp: @BigUint2048,
-    n: @BigUint2048,
-    n_prime: @BigUint2048,
-    one_mont: @BigUint2048,
-) -> BigUint2048 {
-    let mut result = *one_mont;
-    let mut b = *base_mont;
-    let exp_limbs = exp.limbs.span();
-
-    // Process each bit of the exponent
-    let mut limb_idx: usize = 0;
-    while limb_idx != 16 {
-        let limb = *exp_limbs[limb_idx];
-        if limb == 0 && limb_idx > 0 {
-            // Optimization for zero limbs
-            let mut bit: u32 = 0;
-            while bit != 128 {
-                b = biguint_mul_mont(@b, @b, n, n_prime);
-                bit += 1;
-            }
-            limb_idx += 1;
-            continue;
-        }
-
-        let mut bit: u32 = 0;
-        while bit != 128 {
-            let bit_val = (limb / pow2_u128(bit)) % 2;
-            if bit_val == 1 {
-                result = biguint_mul_mont(@result, @b, n, n_prime);
-            }
-            b = biguint_mul_mont(@b, @b, n, n_prime);
-            bit += 1;
-        }
-    }
-    result
-}
-
-// Power of 2 for u128 (returns 2^exp for exp in 0..127).
-fn pow2_u128(exp: u32) -> u128 {
-    if exp == 0 {
-        return 1;
-    }
-    let mut result: u128 = 1;
-    let mut i: u32 = 0;
-    while i != exp {
-        result = result * 2;
-        i += 1;
-    }
-    result
-}
-
 /// Montgomery exponentiation specifically for e=65537.
 pub fn biguint_modexp_65537_mont(
     base_mont: @BigUint2048, n: @BigUint2048, n_prime: @BigUint2048,
@@ -572,38 +662,39 @@ fn array_set_u256(ref arr: Array<u256>, idx: usize, value: u256) -> Array<u256> 
 /// Construct BigUint2048 from an Array<u128> of exactly 16 limbs (little-endian).
 pub fn biguint_from_limbs(limbs: Span<u128>) -> BigUint2048 {
     assert!(limbs.len() == 16, "Expected 16 limbs for BigUint2048");
-    let mut arr: Array<u128> = array![];
-    let mut i: usize = 0;
-    while i != 16 {
-        arr.append(*limbs[i]);
-        i += 1;
+    BigUint2048 {
+        limbs: [
+            *limbs[0], *limbs[1], *limbs[2], *limbs[3], *limbs[4], *limbs[5], *limbs[6], *limbs[7],
+            *limbs[8], *limbs[9], *limbs[10], *limbs[11], *limbs[12], *limbs[13], *limbs[14],
+            *limbs[15],
+        ],
     }
-    BigUint2048 { limbs: array_to_fixed_16(ref arr) }
 }
 
 /// Construct BigUint2048 from a byte array (big-endian, 256 bytes for RSA-2048).
 pub fn biguint_from_bytes(bytes: Span<u8>) -> BigUint2048 {
     assert!(bytes.len() <= 256, "Too many bytes for BigUint2048");
-    // Pad to 256 bytes (big-endian, left-pad with zeros)
     let pad_len = 256 - bytes.len();
     let mut limbs: Array<u128> = array![];
 
-    // Process 16 bytes at a time (128 bits), from least significant (end) to most significant
     let mut limb_idx: usize = 0;
     while limb_idx != 16 {
         let mut limb: u128 = 0;
         let mut byte_idx: usize = 0;
+        let mut multiplier: u128 = 1;
+
         while byte_idx != 16 {
-            // The byte position in big-endian order
-            // limb_idx=0 is least significant, so byte positions 240..255
             let be_pos: usize = 255 - (limb_idx * 16 + byte_idx);
             let byte_val: u128 = if be_pos < pad_len {
                 0
             } else {
                 (*bytes[be_pos - pad_len]).into()
             };
-            // byte_idx=0 is least significant byte in this limb
-            limb = limb + byte_val * pow2_u128(byte_idx * 8);
+            limb = limb + byte_val * multiplier;
+
+            if byte_idx != 15 {
+                multiplier *= 256;
+            }
             byte_idx += 1;
         }
         limbs.append(limb);
