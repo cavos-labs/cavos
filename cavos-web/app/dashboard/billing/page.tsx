@@ -15,7 +15,7 @@ interface ConnectedWallet {
     id: string;
     name: string;
     icon: string | { dark: string; light: string };
-    account: { execute: (calls: unknown[]) => Promise<{ transaction_hash: string }> };
+    account?: { execute: (calls: unknown[]) => Promise<{ transaction_hash: string }> };
     selectedAddress: string;
 }
 
@@ -135,44 +135,71 @@ export default function BillingPage() {
     };
 
     const handleDeposit = async () => {
-        const account = (walletObj as unknown as { account: ConnectedWallet['account'] })?.account;
-        if (!account || !orgId || !balance?.org_felt_id || !depositAmount) return;
+        const walletRaw = walletObj as unknown as Record<string, unknown> | null;
+        const account = (walletObj as unknown as { account?: ConnectedWallet['account'] })?.account;
+        const hasRequest = typeof walletRaw?.request === 'function';
+        if (!orgId || !balance?.org_felt_id || !depositAmount) return;
+        if (!walletRaw) return;
+        if (!hasRequest && !account?.execute) {
+            setTxError('Wallet does not support transactions');
+            setTxStatus('error');
+            return;
+        }
 
         setTxStatus('pending_wallet');
         setTxError(null);
 
         try {
             const [amountLow, amountHigh] = toU256Calldata(depositAmount);
-
-            const calls = [
-                {
-                    contractAddress: STRK_TOKEN,
-                    entrypoint: 'approve',
-                    calldata: [GAS_TANK_CONTRACT, amountLow, amountHigh],
-                },
-                {
-                    contractAddress: GAS_TANK_CONTRACT,
-                    entrypoint: 'deposit',
-                    calldata: [balance.org_felt_id, amountLow, amountHigh],
-                },
-            ];
-
-            const result = await account.execute(calls);
-            const txHash: string = result.transaction_hash;
+            let txHash: string;
+            if (hasRequest) {
+                const callsSnake = [
+                    {
+                        contract_address: STRK_TOKEN,
+                        entry_point: 'approve',
+                        calldata: [GAS_TANK_CONTRACT, amountLow, amountHigh],
+                    },
+                    {
+                        contract_address: GAS_TANK_CONTRACT,
+                        entry_point: 'deposit',
+                        calldata: [balance.org_felt_id, amountLow, amountHigh],
+                    },
+                ];
+                const result = await (walletRaw.request as (args: {
+                    type: string;
+                    params: { calls: typeof callsSnake };
+                }) => Promise<{ transaction_hash: string }>)({
+                    type: 'wallet_addInvokeTransaction',
+                    params: { calls: callsSnake },
+                });
+                txHash = result.transaction_hash;
+            } else {
+                const calls = [
+                    {
+                        contractAddress: STRK_TOKEN,
+                        entrypoint: 'approve',
+                        calldata: [GAS_TANK_CONTRACT, amountLow, amountHigh],
+                    },
+                    {
+                        contractAddress: GAS_TANK_CONTRACT,
+                        entrypoint: 'deposit',
+                        calldata: [balance.org_felt_id, amountLow, amountHigh],
+                    },
+                ];
+                const result = await account!.execute(calls);
+                txHash = result.transaction_hash;
+            }
 
             setTxStatus('pending_confirm');
-
             const provider = new RpcProvider({ nodeUrl: RPC_URL });
             await provider.waitForTransaction(txHash, { retryInterval: 2000 });
 
             setTxStatus('registering');
-
             const res = await fetch('/api/gas/deposit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ tx_hash: txHash, org_id: orgId }),
             });
-
             if (!res.ok) {
                 const data = await res.json();
                 throw new Error(data.error || 'Failed to register deposit');
@@ -181,7 +208,6 @@ export default function BillingPage() {
             setTxStatus('done');
             setDepositAmount('');
             await fetchData();
-
             setTimeout(() => {
                 setTxStatus('idle');
                 setShowDepositForm(false);
