@@ -426,7 +426,7 @@ export default function AppEmailsPage() {
                         </div>
                     </div>
 
-                    {/* Email Template */}
+                    {/* Template Editor */}
                     <div className="pt-6 border-t border-black/10">
                         <div className="flex items-center justify-between mb-4">
                             <div>
@@ -497,6 +497,7 @@ export default function AppEmailsPage() {
                             )}
                         </div>
                     </div>
+
 
                     {/* Messages */}
                     {error && (
