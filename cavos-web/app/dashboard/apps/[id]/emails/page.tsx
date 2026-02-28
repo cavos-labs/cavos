@@ -198,10 +198,7 @@ export default function AppEmailsPage() {
         setSuccess(false)
 
         try {
-            // If template is the same as default, save as null to use default
-            const templateToSave = formData.email_template_html === DEFAULT_TEMPLATE
-                ? ''
-                : formData.email_template_html
+            const templateToSave = formData.email_template_html === DEFAULT_TEMPLATE ? '' : formData.email_template_html
 
             const res = await fetch(`/api/apps/${appId}`, {
                 method: 'PATCH',
@@ -429,7 +426,7 @@ export default function AppEmailsPage() {
                         </div>
                     </div>
 
-                    {/* Template Editor */}
+                    {/* Email Template */}
                     <div className="pt-6 border-t border-black/10">
                         <div className="flex items-center justify-between mb-4">
                             <div>
@@ -500,7 +497,6 @@ export default function AppEmailsPage() {
                             )}
                         </div>
                     </div>
-
 
                     {/* Messages */}
                     {error && (
