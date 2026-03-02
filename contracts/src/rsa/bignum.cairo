@@ -671,6 +671,27 @@ pub fn biguint_from_limbs(limbs: Span<u128>) -> BigUint2048 {
     }
 }
 
+/// Compute R mod n = 2^{2048} mod n for a standard RSA-2048 modulus n.
+/// Requires 2^{2047} < n < 2^{2048} (MSB set), which holds for all 2048-bit RSA keys.
+/// Under this condition floor(2^{2048} / n) == 1, so R mod n == 2^{2048} - n
+/// == two's complement of n in 2048 bits == NOT(n) + 1.
+pub fn compute_r_mod_n(n: @BigUint2048) -> BigUint2048 {
+    let max: u128 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+    let s = n.limbs.span();
+    let mut result: Array<u128> = array![];
+    let mut carry: u128 = 1;
+    let mut i: usize = 0;
+    while i < 16 {
+        let not_limb: u128 = max - *s[i];
+        let sum: u256 = not_limb.into() + carry.into();
+        result.append(sum.low);
+        carry = sum.high;
+        i += 1;
+    }
+    // carry is 0 for all nonzero n (guaranteed for RSA moduli)
+    biguint_from_limbs(result.span())
+}
+
 /// Construct BigUint2048 from a byte array (big-endian, 256 bytes for RSA-2048).
 pub fn biguint_from_bytes(bytes: Span<u8>) -> BigUint2048 {
     assert!(bytes.len() <= 256, "Too many bytes for BigUint2048");
