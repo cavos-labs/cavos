@@ -6,13 +6,20 @@ const nextConfig: NextConfig = {
     '*': ['./circuits/**'],
   },
   serverExternalPackages: [
-    'snarkjs',
-    'poseidon-lite',
+    'snarkjs', 
+    'poseidon-lite', 
+    'koffi', 
     '@reclaimprotocol/zk-fetch',
     '@reclaimprotocol/attestor-core',
     're2',
     'koffi',
   ],
+  async rewrites() {
+    return [
+      // Standard JWKS discovery path → Cavos Firebase public key endpoint
+      { source: '/.well-known/jwks.json', destination: '/api/jwks/cavos-firebase' },
+    ];
+  },
   async headers() {
     return [
       {
