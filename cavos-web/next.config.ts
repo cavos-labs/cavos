@@ -5,7 +5,14 @@ const nextConfig: NextConfig = {
   outputFileTracingExcludes: {
     '*': ['./circuits/**'],
   },
-  serverExternalPackages: ['snarkjs', 'poseidon-lite'],
+  serverExternalPackages: [
+    'snarkjs',
+    'poseidon-lite',
+    '@reclaimprotocol/zk-fetch',
+    '@reclaimprotocol/attestor-core',
+    're2',
+    'koffi',
+  ],
   async headers() {
     return [
       {
