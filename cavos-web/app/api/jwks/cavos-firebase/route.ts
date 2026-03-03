@@ -2,13 +2,13 @@
  * Cavos Firebase JWKS Endpoint (public, standard format)
  *
  * Serves the Cavos Firebase RSA public key in standard JWKS format.
- * This endpoint is used by Reclaim Protocol's zkFetch to generate
- * trustless proofs that Argus can verify on-chain.
+ * Used by Reclaim Protocol's zkFetch to generate trustless proofs
+ * that Argus verifies on-chain via CAVOS_FIREBASE_JWKS_URL_HASH.
  *
- * URL: https://cavos.app/api/jwks/cavos-firebase
- * Also served at: /.well-known/jwks.json (via next.config.ts rewrite)
+ * Direct URL:    https://cavos.xyz/api/jwks/cavos-firebase
+ * Discovery URL: https://cavos.xyz/.well-known/jwks.json  (via next.config.ts rewrite)
  *
- * Format: standard JWKS {"keys": [...]} — Reclaim-parseable via regex on kid and n.
+ * Format: {"keys": [...]} — standard JWKS, Reclaim-parseable via regex on kid and n.
  */
 
 import { NextResponse } from 'next/server';
