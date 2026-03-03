@@ -5,7 +5,15 @@ const nextConfig: NextConfig = {
   outputFileTracingExcludes: {
     '*': ['./circuits/**'],
   },
-  serverExternalPackages: ['snarkjs', 'poseidon-lite', 'koffi', '@reclaimprotocol/zk-fetch'],
+  serverExternalPackages: [
+    'snarkjs', 
+    'poseidon-lite', 
+    'koffi', 
+    '@reclaimprotocol/zk-fetch',
+    '@reclaimprotocol/attestor-core',
+    're2',
+    'koffi',
+  ],
   async rewrites() {
     return [
       // Standard JWKS discovery path → Cavos Firebase public key endpoint

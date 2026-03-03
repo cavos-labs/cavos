@@ -118,21 +118,40 @@ export async function POST(request: Request) {
             return ApiResponse.unauthorized('Invalid App ID');
         }
 
+        // Check if email is verified via firebase verification tokens (for Firebase email/password users)
+        let emailVerified = false;
+        const adminSupabase = createAdminClient();
+        if (email) {
+            const { data: verifiedToken } = await adminSupabase
+                .from('email_verification_tokens')
+                .select('verified_at')
+                .eq('firebase_uid', user_social_id)
+                .eq('app_id', app_id)
+                .not('verified_at', 'is', null)
+                .limit(1)
+                .single();
+            emailVerified = !!verifiedToken;
+        }
+
         // Save wallet
         logger.debug('Saving wallet', { user_social_id, network, address });
-        const adminSupabase = createAdminClient();
+        const walletData: Record<string, any> = {
+            app_id,
+            user_social_id,
+            network,
+            address,
+            encrypted_pk_blob,
+            email: email || null,
+            updated_at: new Date().toISOString(),
+        };
+        if (emailVerified) {
+            walletData.email_verified = true;
+            walletData.email_verified_at = new Date().toISOString();
+        }
         const { data, error } = await adminSupabase
             .from('wallets')
             .upsert(
-                {
-                    app_id,
-                    user_social_id,
-                    network,
-                    address,
-                    encrypted_pk_blob,
-                    email: email || null,
-                    updated_at: new Date().toISOString(),
-                },
+                walletData,
                 {
                     onConflict: 'app_id,user_social_id,network',
                     ignoreDuplicates: false
