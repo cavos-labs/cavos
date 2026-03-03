@@ -3,7 +3,7 @@ use core::sha256::compute_sha256_byte_array;
 /// Verifies JWT RS256 signatures from Google/Apple OAuth providers.
 /// Uses Montgomery reduction for efficient modular exponentiation.
 
-use super::bignum::{BigUint2048, biguint_eq};
+use super::bignum::{BigUint2048, biguint_eq, biguint_mont_reduce};
 
 
 /// Verify RSA signature using Montgomery Reduction (Optimized).
@@ -22,9 +22,8 @@ pub fn verify_rsa_sha256_mont(
     // 1.2 Exponentiate: val_mont = sig_mont^65537
     let decrypted_mont = super::bignum::biguint_modexp_65537_mont(@sig_mont, modulus, n_prime);
 
-    // 1.3 Convert back to standard form: val = val_mont * 1 * R^-1
-    let one = super::bignum::biguint_one();
-    let decrypted = super::bignum::biguint_mul_mont(@decrypted_mont, @one, modulus, n_prime);
+    // 1.3 Convert back to standard form (Tier 3: skip x*1 Karatsuba)
+    let decrypted = biguint_mont_reduce(@decrypted_mont, modulus, n_prime);
 
     // Step 2: SHA-256 hash
     let hash = compute_sha256_byte_array(message);
@@ -48,9 +47,8 @@ pub fn verify_rsa_sha256_prehashed_mont(
     // 1.2 Exponentiate
     let decrypted_mont = super::bignum::biguint_modexp_65537_mont(@sig_mont, modulus, n_prime);
 
-    // 1.3 Convert back
-    let one = super::bignum::biguint_one();
-    let decrypted = super::bignum::biguint_mul_mont(@decrypted_mont, @one, modulus, n_prime);
+    // 1.3 Convert back (Tier 3: skip x*1 Karatsuba)
+    let decrypted = biguint_mont_reduce(@decrypted_mont, modulus, n_prime);
 
     let expected = pkcs1_v15_encode(hash);
     biguint_eq(@decrypted, @expected)

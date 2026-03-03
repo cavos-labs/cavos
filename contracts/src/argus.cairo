@@ -111,15 +111,19 @@ pub mod Argus {
     //
     // Values: poseidon_hash_span(serialize_bytearray(url_string))
     //   GOOGLE: hash_bytearray("https://www.googleapis.com/oauth2/v3/certs")
-    //   APPLE:  hash_bytearray("https://appleid.apple.com/auth/keys")
+    //   APPLE:   hash_bytearray("https://appleid.apple.com/auth/keys")
+    //   CAVOS:   hash_bytearray("https://cavos.xyz/.well-known/jwks.json")
     const GOOGLE_JWKS_URL_HASH: felt252 =
         0x5d0f6a0095ecd091f1fc24c38367644e4ff5f4d8facb6fb2a96cb303f1d3e58;
     const APPLE_JWKS_URL_HASH: felt252 =
         0x727dd48aaaca91fa4058b351266e69106b68058ef57cdf8e073c79fcbad4607;
+    const CAVOS_FIREBASE_JWKS_URL_HASH: felt252 =
+        0x5ce128d7bed38fb8a9d57e9231fe9a56685a9c8aa35b92ec9e7f313ed6f27b5;
 
     // Provider labels stored in JWKSKey.provider
     const PROVIDER_GOOGLE: felt252 = 0x676f6f676c65; // 'google'
     const PROVIDER_APPLE: felt252 = 0x6170706c65; // 'apple'
+    const PROVIDER_FIREBASE: felt252 = 0x6669726562617365; // 'firebase'
 
     // ── Storage
     // ───────────────────────────────────────────────────────────────
@@ -181,6 +185,8 @@ pub mod Argus {
                 PROVIDER_GOOGLE
             } else if url_hash == APPLE_JWKS_URL_HASH {
                 PROVIDER_APPLE
+            } else if url_hash == CAVOS_FIREBASE_JWKS_URL_HASH {
+                PROVIDER_FIREBASE
             } else {
                 panic!("JWKS URL not whitelisted")
             };

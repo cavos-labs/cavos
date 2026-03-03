@@ -652,14 +652,6 @@ pub mod Cavos {
             let salt = *signature[12];
             let wallet_name = *signature[13];
 
-            // Extract claim offsets for verification
-            let _sub_offset: usize = (*signature[14]).try_into().unwrap();
-            let _sub_len: usize = (*signature[15]).try_into().unwrap();
-            let _nonce_offset: usize = (*signature[16]).try_into().unwrap();
-            let _nonce_len: usize = (*signature[17]).try_into().unwrap();
-            let _kid_offset: usize = (*signature[18]).try_into().unwrap();
-            let _kid_len: usize = (*signature[19]).try_into().unwrap();
-
             // RSA signature starts at index 20
             let rsa_sig_start: usize = 20;
             let rsa_sig_len: usize = (*signature[rsa_sig_start]).try_into().unwrap();
@@ -674,8 +666,10 @@ pub mod Cavos {
             }
             let rsa_sig = biguint_from_limbs(rsa_limbs.span());
 
-            // Extract JWT signed data (header.payload bytes)
-            let jwt_data_start: usize = 36;
+            // Extract JWT signed data (header.payload bytes).
+            // n_prime/r_sq are NOT in calldata — read from registry via get_key_if_valid.
+            // RSA limbs end at [36], so JWT length is at [37] (matches outside-execution format).
+            let jwt_data_start: usize = 37;
 
             // The value at jwt_data_start is the TOTAL BYTE LENGTH of the JWT data
             let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
@@ -779,12 +773,13 @@ pub mod Cavos {
             );
 
             // SECURITY: Verify claims in JWT bytes match the provided parameters
-            let sub_offset: usize = (*signature[13]).try_into().unwrap();
-            let sub_len: usize = (*signature[14]).try_into().unwrap();
-            let nonce_offset: usize = (*signature[15]).try_into().unwrap();
-            let nonce_len: usize = (*signature[16]).try_into().unwrap();
-            let kid_offset: usize = (*signature[17]).try_into().unwrap();
-            let kid_len: usize = (*signature[18]).try_into().unwrap();
+            // wallet_name at [13], claim offsets at [14-19]
+            let sub_offset: usize = (*signature[14]).try_into().unwrap();
+            let sub_len: usize = (*signature[15]).try_into().unwrap();
+            let nonce_offset: usize = (*signature[16]).try_into().unwrap();
+            let nonce_len: usize = (*signature[17]).try_into().unwrap();
+            let kid_offset: usize = (*signature[18]).try_into().unwrap();
+            let kid_len: usize = (*signature[19]).try_into().unwrap();
 
             let (header_end, payload_start, payload_end) = split_signed_data(@jwt_bytes);
             let payload_len = payload_end - payload_start;
@@ -1146,6 +1141,7 @@ pub mod Cavos {
             // 6. Verify JWKS key is valid
             let registry = IJWKSRegistryDispatcher { contract_address: self.jwks_registry.read() };
             assert!(registry.is_key_valid(jwt_kid), "JWKS key invalid or expired");
+            let jwks_key = registry.get_key(jwt_kid);
 
             // 7. Extract and verify RSA signature
             // wallet_name at [13], claim offsets [14-19], RSA sig starts at [20]
@@ -1161,8 +1157,6 @@ pub mod Cavos {
                 li += 1;
             }
             let rsa_sig = biguint_from_limbs(rsa_limbs.span());
-
-            let jwks_key = registry.get_key(jwt_kid);
             let modulus = BigUint2048 {
                 limbs: [
                     jwks_key.n0, jwks_key.n1, jwks_key.n2, jwks_key.n3, jwks_key.n4, jwks_key.n5,
@@ -1400,27 +1394,24 @@ pub mod Cavos {
         /// Performs complete RSA verification and registers the session.
         /// Expensive - only used during deployment or explicit session registration.
         ///
-        /// Signature format:
-        /// [0]  = OAUTH_JWT_V1 magic
-        /// [1-3] = session key (r, s, pubkey)
-        /// [4-5] = valid_until, randomness
-        /// [6-12] = jwt_sub, jwt_nonce, jwt_exp, jwt_kid, jwt_iss, jwt_aud, salt
-        /// [13-18] = claim offsets (sub_offset, sub_len, nonce_offset, nonce_len, kid_offset,
-        /// kid_len)
-        /// [19] = RSA sig length (16)
-        /// [20-35] = RSA signature (16 u128 limbs)
-        /// [36] = n_prime length (16)
-        /// [37-52] = n_prime (16 u128 limbs)
-        /// [53] = R^2 length (16)
-        /// [54-69] = R^2 (16 u128 limbs)
-        /// [70] = JWT data length
-        /// [71+] = JWT bytes
+        /// Signature format (unified with execute_from_outside_v2):
+        /// [0]     = OAUTH_JWT_V1 magic
+        /// [1-3]   = session key (r, s, pubkey)
+        /// [4-5]   = valid_until, randomness
+        /// [6-13]  = jwt_sub, jwt_nonce, jwt_exp, jwt_kid, jwt_iss, jwt_aud, salt, wallet_name
+        /// [14-19] = claim offsets: sub_offset, sub_len, nonce_offset, nonce_len, kid_offset,
+        ///           kid_len
+        /// [20]    = RSA sig length (16)
+        /// [21-36] = RSA signature (16 u128 limbs)
+        /// [37]    = JWT data byte length
+        /// [38+]   = JWT bytes (header.payload, packed as 31-byte felt252 chunks)
         /// After JWT bytes:
-        /// [jwt_end] = valid_after
+        /// [jwt_end]   = valid_after
         /// [jwt_end+1] = allowed_contracts_root
         /// [jwt_end+2] = max_calls_per_tx
         /// [jwt_end+3] = spending_policies_count
         /// [jwt_end+4..] = spending_policies: [token, limit_low, limit_high, ...]
+        /// Note: n_prime and r_sq are NOT in calldata — fetched from the JWKS registry.
         fn validate_full_oauth_and_register_session(
             ref self: ContractState, tx_hash: felt252, signature: Span<felt252>,
         ) -> felt252 {
@@ -1441,8 +1432,11 @@ pub mod Cavos {
             let valid_until: u64 = valid_until_felt.try_into().expect('valid_until overflow');
             let jwt_nonce = *signature[7];
 
-            // 3. Compute policy fields position (after JWT bytes)
-            let jwt_data_idx: usize = 71; // Shifted due to wallet_name at index 13
+            // 3. Compute policy fields position (after JWT bytes).
+            // n_prime/r_sq removed from calldata — JWT length is now at [37] (same as
+            // outside-execution format: magic[0] sig[1-3] params[4-5] claims[6-13]
+            // offsets[14-19] rsa_len[20] rsa[21-36] jwt_len[37] jwt[38+]).
+            let jwt_data_idx: usize = 37;
             let jwt_bytes_len: usize = (*signature[jwt_data_idx]).try_into().unwrap();
             let jwt_chunks = (jwt_bytes_len + 30) / 31; // ceil(len/31)
             let policy_start: usize = jwt_data_idx + 1 + jwt_chunks;
@@ -1547,33 +1541,7 @@ pub mod Cavos {
             }
             let rsa_sig = biguint_from_limbs(rsa_limbs.span());
 
-            let n_prime_start: usize = 37;
-            assert!(
-                (*signature[n_prime_start]).try_into().unwrap() == 16_usize,
-                "n_prime must be 16 limbs",
-            );
-            let mut n_prime_limbs: Array<u128> = array![];
-            let mut ni: usize = 0;
-            while ni != 16 {
-                let limb: u128 = (*signature[n_prime_start + 1 + ni]).try_into().unwrap();
-                n_prime_limbs.append(limb);
-                ni += 1;
-            }
-            let n_prime = biguint_from_limbs(n_prime_limbs.span());
-
-            let r_sq_start: usize = 54;
-            assert!(
-                (*signature[r_sq_start]).try_into().unwrap() == 16_usize, "R^2 must be 16 limbs",
-            );
-            let mut r_sq_limbs: Array<u128> = array![];
-            let mut ri: usize = 0;
-            while ri != 16 {
-                let limb: u128 = (*signature[r_sq_start + 1 + ri]).try_into().unwrap();
-                r_sq_limbs.append(limb);
-                ri += 1;
-            }
-            let r_sq = biguint_from_limbs(r_sq_limbs.span());
-
+            // n_prime and r_sq come from the registry (same as other code paths)
             let jwks_key = registry.get_key(jwt_kid);
             let modulus = BigUint2048 {
                 limbs: [
@@ -1582,8 +1550,24 @@ pub mod Cavos {
                     jwks_key.n12, jwks_key.n13, jwks_key.n14, jwks_key.n15,
                 ],
             };
+            let n_prime = BigUint2048 {
+                limbs: [
+                    jwks_key.n_prime0, jwks_key.n_prime1, jwks_key.n_prime2, jwks_key.n_prime3,
+                    jwks_key.n_prime4, jwks_key.n_prime5, jwks_key.n_prime6, jwks_key.n_prime7,
+                    jwks_key.n_prime8, jwks_key.n_prime9, jwks_key.n_prime10, jwks_key.n_prime11,
+                    jwks_key.n_prime12, jwks_key.n_prime13, jwks_key.n_prime14, jwks_key.n_prime15,
+                ],
+            };
+            let r_sq = BigUint2048 {
+                limbs: [
+                    jwks_key.r_sq0, jwks_key.r_sq1, jwks_key.r_sq2, jwks_key.r_sq3, jwks_key.r_sq4,
+                    jwks_key.r_sq5, jwks_key.r_sq6, jwks_key.r_sq7, jwks_key.r_sq8, jwks_key.r_sq9,
+                    jwks_key.r_sq10, jwks_key.r_sq11, jwks_key.r_sq12, jwks_key.r_sq13,
+                    jwks_key.r_sq14, jwks_key.r_sq15,
+                ],
+            };
 
-            let jwt_data_start: usize = 71;
+            let jwt_data_start: usize = 37;
             let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
             let mut jwt_bytes = "";
             let mut current_byte = 0;

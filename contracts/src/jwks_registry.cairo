@@ -78,6 +78,8 @@ pub trait IJWKSRegistry<TContractState> {
     fn get_key(self: @TContractState, kid: felt252) -> JWKSKey;
     /// Check if a key is valid (exists, active, not expired).
     fn is_key_valid(self: @TContractState, kid: felt252) -> bool;
+    /// Get a key by its kid, asserting it is valid. Saves one external call vs is_key_valid+get_key.
+    fn get_key_if_valid(self: @TContractState, kid: felt252) -> JWKSKey;
     /// Transfer admin to a new address. Admin only.
     fn transfer_admin(ref self: TContractState, new_admin: ContractAddress);
     /// Get current admin address.
@@ -167,6 +169,15 @@ pub mod JWKSRegistry {
                 }
             }
             true
+        }
+
+        fn get_key_if_valid(self: @ContractState, kid: felt252) -> JWKSKey {
+            let key = self.keys.read(kid);
+            assert!(key.is_active, "JWKS key invalid or expired");
+            if key.valid_until != 0 {
+                assert!(get_block_timestamp() <= key.valid_until, "JWKS key invalid or expired");
+            }
+            key
         }
 
         fn transfer_admin(ref self: ContractState, new_admin: ContractAddress) {

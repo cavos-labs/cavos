@@ -65,19 +65,9 @@ export async function POST(request: NextRequest) {
       .eq('app_id', app_id)
       .single();
 
-    if (wallet && !wallet.email_verified) {
-      return NextResponse.json(
-        {
-          error: 'email_not_verified',
-          message:
-            'Please verify your email before logging in. Check your inbox for the verification link.',
-        },
-        { status: 403 }
-      );
-    }
-
-    // If wallet doesn't exist, check verification tokens
-    if (!wallet) {
+    // If wallet exists and is already verified, proceed
+    // If wallet doesn't exist OR exists with email_verified = false, check the token table
+    if (!wallet || !wallet.email_verified) {
       const { data: verifiedToken } = await adminSupabase
         .from('email_verification_tokens')
         .select('verified_at')
@@ -95,6 +85,15 @@ export async function POST(request: NextRequest) {
           },
           { status: 403 }
         );
+      }
+
+      // Token is verified — if wallet exists with email_verified = false, fix it now
+      if (wallet && !wallet.email_verified) {
+        await adminSupabase
+          .from('wallets')
+          .update({ email_verified: true, email_verified_at: new Date().toISOString() })
+          .eq('user_social_id', userRecord.uid)
+          .eq('app_id', app_id);
       }
     }
 

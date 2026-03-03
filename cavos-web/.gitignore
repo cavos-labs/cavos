@@ -43,3 +43,5 @@ next-env.d.ts
 certificates*.pem
 .env.local
 .env.firebase
+
+/scripts
