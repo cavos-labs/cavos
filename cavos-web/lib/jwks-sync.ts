@@ -199,7 +199,7 @@ function calculateMontgomeryConstants(n_limbs: bigint[]): { n_prime: bigint[]; r
  * Fetch and format JWKS keys from a single provider.
  */
 async function fetchProviderKeys(
-  provider: 'google' | 'apple',
+  provider: 'google' | 'apple' | 'firebase',
   jwksUrl: string,
   providerFelt: string,
 ): Promise<FormattedKey[]> {
