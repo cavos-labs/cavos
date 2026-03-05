@@ -101,8 +101,6 @@ interface FormattedKey {
   kid: string;
   kidFelt: string;
   nLimbs: bigint[];
-  rSqLimbs: bigint[];
-  nPrimeLimbs: bigint[];
   provider: string;
   /** Raw base64url modulus string from the JWKS JSON (needed for Reclaim proof params). */
   nBase64url: string;
@@ -150,52 +148,6 @@ function modulusToLimbs(base64url: string): bigint[] {
 }
 
 /**
- * Compute R^2 and n_prime for Montgomery reduction.
- */
-function calculateMontgomeryConstants(n_limbs: bigint[]): { n_prime: bigint[]; r_sq: bigint[] } {
-  let n = 0n;
-  for (let i = 0; i < n_limbs.length; i++) {
-    n += n_limbs[i] * (1n << (BigInt(i) * 128n));
-  }
-
-  const R = 1n << 2048n;
-
-  function modInverse(n: bigint, mod: bigint): bigint {
-    let t = 0n;
-    let newt = 1n;
-    let r = mod;
-    let newr = n;
-
-    while (newr !== 0n) {
-      const quotient = r / newr;
-      [t, newt] = [newt, t - quotient * newt];
-      [r, newr] = [newr, r - quotient * newr];
-    }
-
-    if (r > 1n) throw new Error('n is not invertible');
-    if (t < 0n) t = t + mod;
-    return t;
-  }
-
-  const n_inv = modInverse(n, R);
-  const n_prime_val = (R - n_inv) % R;
-  const r_sq_val = (R * R) % n;
-
-  const toLimbs = (val: bigint): bigint[] => {
-    const limbs: bigint[] = [];
-    for (let i = 0; i < 16; i++) {
-      limbs.push((val >> (BigInt(i) * 128n)) & ((1n << 128n) - 1n));
-    }
-    return limbs;
-  };
-
-  return {
-    n_prime: toLimbs(n_prime_val),
-    r_sq: toLimbs(r_sq_val),
-  };
-}
-
-/**
  * Fetch and format JWKS keys from a single provider.
  */
 async function fetchProviderKeys(
@@ -214,20 +166,14 @@ async function fetchProviderKeys(
 
   return data.keys
     .filter((k) => k.kty === 'RSA' && k.alg === 'RS256')
-    .map((k) => {
-      const nLimbs = modulusToLimbs(k.n);
-      const mont = calculateMontgomeryConstants(nLimbs);
-      return {
-        kid: k.kid,
-        kidFelt: kidToFelt(k.kid),
-        nLimbs,
-        rSqLimbs: mont.r_sq,
-        nPrimeLimbs: mont.n_prime,
-        provider: providerFelt,
-        nBase64url: k.n,
-        validUntil,
-      };
-    });
+    .map((k) => ({
+      kid: k.kid,
+      kidFelt: kidToFelt(k.kid),
+      nLimbs: modulusToLimbs(k.n),
+      provider: providerFelt,
+      nBase64url: k.n,
+      validUntil,
+    }));
 }
 
 /**
@@ -393,10 +339,8 @@ function buildRegisterKeyCalldata(proof: ReclaimProof, key: FormattedKey): strin
     }),
     // ── kid ──────────────────────────────────────────────────────────────────
     key.kidFelt,
-    // ── JWKSKey ──────────────────────────────────────────────────────────────
+    // ── JWKSKey (slim: 16 n limbs + 3 metadata, no Montgomery constants) ─────
     ...key.nLimbs.map(h),
-    ...key.rSqLimbs.map(h),
-    ...key.nPrimeLimbs.map(h),
     key.provider,
     h(BigInt(key.validUntil)),
     '0x1', // is_active: true

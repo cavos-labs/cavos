@@ -7,6 +7,7 @@ use starknet::ContractAddress;
 
 /// RSA public key stored on-chain.
 /// The modulus `n` is a 2048-bit RSA key stored as 16 x u128 limbs (little-endian).
+/// Montgomery constants (r_sq, n_prime) removed in Tier 5: witnesses are provided in calldata.
 #[derive(Copy, Drop, Serde, starknet::Store)]
 pub struct JWKSKey {
     /// RSA modulus limb 0 (least significant)
@@ -26,40 +27,6 @@ pub struct JWKSKey {
     pub n13: u128,
     pub n14: u128,
     pub n15: u128,
-    // R^2 for Montgomery reduction
-    pub r_sq0: u128,
-    pub r_sq1: u128,
-    pub r_sq2: u128,
-    pub r_sq3: u128,
-    pub r_sq4: u128,
-    pub r_sq5: u128,
-    pub r_sq6: u128,
-    pub r_sq7: u128,
-    pub r_sq8: u128,
-    pub r_sq9: u128,
-    pub r_sq10: u128,
-    pub r_sq11: u128,
-    pub r_sq12: u128,
-    pub r_sq13: u128,
-    pub r_sq14: u128,
-    pub r_sq15: u128,
-    // n_prime for Montgomery reduction
-    pub n_prime0: u128,
-    pub n_prime1: u128,
-    pub n_prime2: u128,
-    pub n_prime3: u128,
-    pub n_prime4: u128,
-    pub n_prime5: u128,
-    pub n_prime6: u128,
-    pub n_prime7: u128,
-    pub n_prime8: u128,
-    pub n_prime9: u128,
-    pub n_prime10: u128,
-    pub n_prime11: u128,
-    pub n_prime12: u128,
-    pub n_prime13: u128,
-    pub n_prime14: u128,
-    pub n_prime15: u128,
     /// Provider identifier (hash of 'google' or 'apple')
     pub provider: felt252,
     /// Expiry timestamp (0 = no expiry)

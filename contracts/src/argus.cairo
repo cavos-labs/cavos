@@ -95,10 +95,6 @@ pub mod Argus {
     use starknet::{ClassHash, ContractAddress, SyscallResultTrait, get_caller_address};
     use crate::jwks_registry::{IJWKSRegistryDispatcher, IJWKSRegistryDispatcherTrait, JWKSKey};
     use crate::jwt::base64::base64url_decode;
-    use crate::rsa::bignum::{
-        BigUint2048, biguint_eq, biguint_from_limbs, biguint_mul_low, biguint_mul_mont, biguint_one,
-        compute_r_mod_n,
-    };
     use super::{IArgus, IReclaimDispatcher, IReclaimDispatcherTrait, Proof};
 
     // ── Hardcoded JWKS endpoint URL hashes
@@ -206,15 +202,6 @@ pub mod Argus {
 
             // Step 5: Assert every limb matches — the critical anti-substitution check.
             verify_n_limbs(@computed_limbs, @key);
-
-            // Step 5a: Verify n_prime = -n^{-1} mod 2^{2048}.
-            // Ensures (n × n_prime) mod 2^{2048} == all-ones, the unique solution.
-            verify_n_prime(@computed_limbs, @key);
-
-            // Step 5b: Verify r_sq = 2^{4096} mod n.
-            // Uses identity MONT(r_sq, 1, n, n_prime) == R mod n == 2^{2048} - n.
-            // Requires n_prime to be valid (checked in Step 5a).
-            verify_r_sq(@computed_limbs, @key);
 
             // Step 6: The key's declared provider must match the whitelisted label.
             assert!(key.provider == provider_felt, "key.provider mismatch");
@@ -355,57 +342,4 @@ pub mod Argus {
         assert!(*computed.at(15) == *key.n15, "RSA modulus limb 15 mismatch");
     }
 
-    /// Verify that n_prime = -n^{-1} mod 2^{2048}.
-    /// Checks (n × n_prime) mod 2^{2048} == 2^{2048} - 1 (all 16 limbs equal u128::MAX).
-    /// There is exactly one such value for any odd n (all RSA moduli are odd).
-    fn verify_n_prime(n_limbs: @Array<u128>, key: @JWKSKey) {
-        let n = biguint_from_limbs(n_limbs.span());
-        let n_prime = BigUint2048 {
-            limbs: [
-                *key.n_prime0, *key.n_prime1, *key.n_prime2, *key.n_prime3, *key.n_prime4,
-                *key.n_prime5, *key.n_prime6, *key.n_prime7, *key.n_prime8, *key.n_prime9,
-                *key.n_prime10, *key.n_prime11, *key.n_prime12, *key.n_prime13, *key.n_prime14,
-                *key.n_prime15,
-            ],
-        };
-        let product = biguint_mul_low(@n, @n_prime);
-        let s = product.limbs.span();
-        let max: u128 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-        let mut i: usize = 0;
-        while i < 16 {
-            assert!(*s[i] == max, "n_prime invalid: n * n_prime != -1 mod 2^2048");
-            i += 1;
-        }
-    }
-
-    /// Verify that r_sq = R^2 mod n = 2^{4096} mod n.
-    /// Uses the identity MONT(r_sq, 1, n, n_prime) == R mod n == 2^{2048} - n.
-    /// Valid for all 2048-bit RSA keys where 2^{2047} < n < 2^{2048}.
-    /// Caller must ensure n_prime is valid before calling (see verify_n_prime).
-    fn verify_r_sq(n_limbs: @Array<u128>, key: @JWKSKey) {
-        let n = biguint_from_limbs(n_limbs.span());
-        let n_prime = BigUint2048 {
-            limbs: [
-                *key.n_prime0, *key.n_prime1, *key.n_prime2, *key.n_prime3, *key.n_prime4,
-                *key.n_prime5, *key.n_prime6, *key.n_prime7, *key.n_prime8, *key.n_prime9,
-                *key.n_prime10, *key.n_prime11, *key.n_prime12, *key.n_prime13, *key.n_prime14,
-                *key.n_prime15,
-            ],
-        };
-        let r_sq = BigUint2048 {
-            limbs: [
-                *key.r_sq0, *key.r_sq1, *key.r_sq2, *key.r_sq3, *key.r_sq4, *key.r_sq5, *key.r_sq6,
-                *key.r_sq7, *key.r_sq8, *key.r_sq9, *key.r_sq10, *key.r_sq11, *key.r_sq12,
-                *key.r_sq13, *key.r_sq14, *key.r_sq15,
-            ],
-        };
-        // MONT(r_sq, 1, n, n_prime) = r_sq * R^{-1} mod n = R^2 * R^{-1} mod n = R mod n
-        let computed_r_mod_n = biguint_mul_mont(@r_sq, @biguint_one(), @n, @n_prime);
-        // R mod n = 2^{2048} - n (since 2^{2047} < n, floor(R/n) = 1)
-        let expected_r_mod_n = compute_r_mod_n(@n);
-        assert!(
-            biguint_eq(@computed_r_mod_n, @expected_r_mod_n),
-            "r_sq invalid: MONT(r_sq,1) != R mod n",
-        );
-    }
 }
