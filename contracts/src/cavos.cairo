@@ -93,7 +93,7 @@ pub mod Cavos {
     use crate::jwks_registry::{IJWKSRegistryDispatcher, IJWKSRegistryDispatcherTrait};
     use crate::jwt::base64::base64url_decode_window;
     use crate::jwt::jwt_parser::{parse_decimal, parse_hex, split_signed_data};
-    use crate::rsa::bignum::{BigUint2048, biguint_from_limbs};
+    use crate::rsa::bignum::BigUint2048;
 
     /// Magic number to identify full OAuth JWT signatures (used during deployment/session
     /// registration).
@@ -657,19 +657,37 @@ pub mod Cavos {
             let rsa_sig_len: usize = (*signature[rsa_sig_start]).try_into().unwrap();
             assert!(rsa_sig_len == 16, "RSA signature must be 16 limbs");
 
-            let mut rsa_limbs: Array<u128> = array![];
-            let mut li: usize = 0;
-            while li != 16 {
-                let limb: u128 = (*signature[rsa_sig_start + 1 + li]).try_into().unwrap();
-                rsa_limbs.append(limb);
-                li += 1;
-            }
-            let rsa_sig = biguint_from_limbs(rsa_limbs.span());
+            let mut rsa_span = signature.slice(rsa_sig_start + 1, 16);
+            let rsa_sig = BigUint2048 {
+                limbs: [
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                ],
+            };
 
-            // Extract JWT signed data (header.payload bytes).
-            // n_prime/r_sq are NOT in calldata — read from registry via get_key_if_valid.
-            // RSA limbs end at [36], so JWT length is at [37] (matches outside-execution format).
-            let jwt_data_start: usize = 37;
+            // Read RSA witnesses directly from calldata (Tier 6: zero-copy v2).
+            // Format: [37] witnesses_len=574, [38..611] raw witness felts,
+            //         [612] jwt_bytes_len, [613+] packed JWT bytes.
+            let witnesses_start: usize = 37;
+            let witnesses_len: usize = (*signature[witnesses_start]).try_into().unwrap();
+            assert!(witnesses_len == 574, "Witnesses must be 574 felts");
+
+            // JWT signed data starts after all witnesses
+            let jwt_data_start: usize = witnesses_start + 1 + witnesses_len;
 
             // The value at jwt_data_start is the TOTAL BYTE LENGTH of the JWT data
             let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
@@ -728,12 +746,11 @@ pub mod Cavos {
             };
             assert!(computed_seed == self.address_seed.read(), "Address seed mismatch");
 
-            // 7. Verify JWKS key is valid
+            // 7. Verify JWKS key is valid and fetch in one call (fixes double-read bug)
             let registry = IJWKSRegistryDispatcher { contract_address: self.jwks_registry.read() };
-            assert!(registry.is_key_valid(jwt_kid), "JWKS key invalid or expired");
+            let jwks_key = registry.get_key_if_valid(jwt_kid);
 
-            // 8. Verify RSA signature with Montgomery Reduction
-            let jwks_key = registry.get_key(jwt_kid);
+            // 8. Verify RSA signature using Schwartz-Zippel v2 (Tier 6: zero-copy)
             let modulus = BigUint2048 {
                 limbs: [
                     jwks_key.n0, jwks_key.n1, jwks_key.n2, jwks_key.n3, jwks_key.n4, jwks_key.n5,
@@ -741,27 +758,11 @@ pub mod Cavos {
                     jwks_key.n12, jwks_key.n13, jwks_key.n14, jwks_key.n15,
                 ],
             };
-            let n_prime = BigUint2048 {
-                limbs: [
-                    jwks_key.n_prime0, jwks_key.n_prime1, jwks_key.n_prime2, jwks_key.n_prime3,
-                    jwks_key.n_prime4, jwks_key.n_prime5, jwks_key.n_prime6, jwks_key.n_prime7,
-                    jwks_key.n_prime8, jwks_key.n_prime9, jwks_key.n_prime10, jwks_key.n_prime11,
-                    jwks_key.n_prime12, jwks_key.n_prime13, jwks_key.n_prime14, jwks_key.n_prime15,
-                ],
-            };
-            let r_sq = BigUint2048 {
-                limbs: [
-                    jwks_key.r_sq0, jwks_key.r_sq1, jwks_key.r_sq2, jwks_key.r_sq3, jwks_key.r_sq4,
-                    jwks_key.r_sq5, jwks_key.r_sq6, jwks_key.r_sq7, jwks_key.r_sq8, jwks_key.r_sq9,
-                    jwks_key.r_sq10, jwks_key.r_sq11, jwks_key.r_sq12, jwks_key.r_sq13,
-                    jwks_key.r_sq14, jwks_key.r_sq15,
-                ],
-            };
             assert!(
-                crate::rsa::rsa_verify::verify_rsa_sha256_mont(
-                    @jwt_bytes, @rsa_sig, @modulus, @n_prime, @r_sq,
+                crate::rsa::rsa_verify::verify_rsa_schwartz_zippel_v2(
+                    @jwt_bytes, @rsa_sig, @modulus, signature, witnesses_start + 1,
                 ),
-                "RSA verification failed (Montgomery)",
+                "RSA verification failed (Schwartz-Zippel)",
             );
 
             // Verify issuer is Google, Apple, or Firebase
@@ -1138,25 +1139,37 @@ pub mod Cavos {
             };
             assert!(computed_seed == self.address_seed.read(), "Address seed mismatch");
 
-            // 6. Verify JWKS key is valid
+            // 6. Verify JWKS key is valid and fetch in one call (fixes double-read bug)
             let registry = IJWKSRegistryDispatcher { contract_address: self.jwks_registry.read() };
-            assert!(registry.is_key_valid(jwt_kid), "JWKS key invalid or expired");
-            let jwks_key = registry.get_key(jwt_kid);
+            let jwks_key = registry.get_key_if_valid(jwt_kid);
 
-            // 7. Extract and verify RSA signature
+            // 7. Extract and verify RSA signature using Schwartz-Zippel (Tier 5)
             // wallet_name at [13], claim offsets [14-19], RSA sig starts at [20]
             let rsa_sig_start: usize = 20;
             let rsa_sig_len: usize = (*signature[rsa_sig_start]).try_into().unwrap();
             assert!(rsa_sig_len == 16, "RSA signature must be 16 limbs");
 
-            let mut rsa_limbs: Array<u128> = array![];
-            let mut li: usize = 0;
-            while li != 16 {
-                let limb: u128 = (*signature[rsa_sig_start + 1 + li]).try_into().unwrap();
-                rsa_limbs.append(limb);
-                li += 1;
-            }
-            let rsa_sig = biguint_from_limbs(rsa_limbs.span());
+            let mut rsa_span = signature.slice(rsa_sig_start + 1, 16);
+            let rsa_sig = BigUint2048 {
+                limbs: [
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                ],
+            };
             let modulus = BigUint2048 {
                 limbs: [
                     jwks_key.n0, jwks_key.n1, jwks_key.n2, jwks_key.n3, jwks_key.n4, jwks_key.n5,
@@ -1164,24 +1177,13 @@ pub mod Cavos {
                     jwks_key.n12, jwks_key.n13, jwks_key.n14, jwks_key.n15,
                 ],
             };
-            let n_prime = BigUint2048 {
-                limbs: [
-                    jwks_key.n_prime0, jwks_key.n_prime1, jwks_key.n_prime2, jwks_key.n_prime3,
-                    jwks_key.n_prime4, jwks_key.n_prime5, jwks_key.n_prime6, jwks_key.n_prime7,
-                    jwks_key.n_prime8, jwks_key.n_prime9, jwks_key.n_prime10, jwks_key.n_prime11,
-                    jwks_key.n_prime12, jwks_key.n_prime13, jwks_key.n_prime14, jwks_key.n_prime15,
-                ],
-            };
-            let r_sq = BigUint2048 {
-                limbs: [
-                    jwks_key.r_sq0, jwks_key.r_sq1, jwks_key.r_sq2, jwks_key.r_sq3, jwks_key.r_sq4,
-                    jwks_key.r_sq5, jwks_key.r_sq6, jwks_key.r_sq7, jwks_key.r_sq8, jwks_key.r_sq9,
-                    jwks_key.r_sq10, jwks_key.r_sq11, jwks_key.r_sq12, jwks_key.r_sq13,
-                    jwks_key.r_sq14, jwks_key.r_sq15,
-                ],
-            };
 
-            let jwt_data_start: usize = 37;
+            // Read witnesses directly from calldata (Tier 6: zero-copy v2).
+            let witnesses_start: usize = 37;
+            let witnesses_len: usize = (*signature[witnesses_start]).try_into().unwrap();
+            assert!(witnesses_len == 574, "Witnesses must be 574 felts");
+
+            let jwt_data_start: usize = witnesses_start + 1 + witnesses_len;
             let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
 
             let mut jwt_bytes = "";
@@ -1202,10 +1204,10 @@ pub mod Cavos {
             }
 
             assert!(
-                crate::rsa::rsa_verify::verify_rsa_sha256_mont(
-                    @jwt_bytes, @rsa_sig, @modulus, @n_prime, @r_sq,
+                crate::rsa::rsa_verify::verify_rsa_schwartz_zippel_v2(
+                    @jwt_bytes, @rsa_sig, @modulus, signature, witnesses_start + 1,
                 ),
-                "RSA verification failed (Montgomery)",
+                "RSA verification failed (Schwartz-Zippel)",
             );
 
             // Verify claims - indices account for wallet_name at [13]
@@ -1263,9 +1265,11 @@ pub mod Cavos {
             let valid_until: u64 = valid_until_felt.try_into().expect('valid_until overflow');
             let jwt_nonce = *signature[7];
 
-            // Compute policy fields position (after JWT bytes)
-            // wallet_name at [13] shifts jwt_data_start from 36 to 37
-            let jwt_data_start: usize = 37;
+            // Compute policy fields position (after witnesses + JWT bytes).
+            // Tier 5: witnesses_len is at [37], jwt_bytes_len follows witnesses.
+            let witnesses_start: usize = 37;
+            let witnesses_len: usize = (*signature[witnesses_start]).try_into().unwrap();
+            let jwt_data_start: usize = witnesses_start + 1 + witnesses_len;
             let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
             let jwt_chunks = (jwt_bytes_len + 30) / 31;
             let policy_start: usize = jwt_data_start + 1 + jwt_chunks;
@@ -1522,27 +1526,38 @@ pub mod Cavos {
             };
             assert!(computed_seed == self.address_seed.read(), "Address seed mismatch");
 
-            // Verify JWKS key
+            // Verify JWKS key is valid and fetch in one call (fixes double-read bug)
             let registry = IJWKSRegistryDispatcher { contract_address: self.jwks_registry.read() };
-            assert!(registry.is_key_valid(jwt_kid), "JWKS key invalid or expired");
+            let jwks_key = registry.get_key_if_valid(jwt_kid);
 
-            // Extract and verify RSA signature
+            // Extract and verify RSA signature using Schwartz-Zippel (Tier 5)
             // wallet_name at [13], claim offsets [14-19], RSA sig starts at [20]
             let rsa_sig_start: usize = 20;
             let rsa_sig_len: usize = (*signature[rsa_sig_start]).try_into().unwrap();
             assert!(rsa_sig_len == 16, "RSA signature must be 16 limbs");
 
-            let mut rsa_limbs: Array<u128> = array![];
-            let mut li: usize = 0;
-            while li != 16 {
-                let limb: u128 = (*signature[rsa_sig_start + 1 + li]).try_into().unwrap();
-                rsa_limbs.append(limb);
-                li += 1;
-            }
-            let rsa_sig = biguint_from_limbs(rsa_limbs.span());
+            let mut rsa_span = signature.slice(rsa_sig_start + 1, 16);
+            let rsa_sig = BigUint2048 {
+                limbs: [
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
+                ],
+            };
 
-            // n_prime and r_sq come from the registry (same as other code paths)
-            let jwks_key = registry.get_key(jwt_kid);
             let modulus = BigUint2048 {
                 limbs: [
                     jwks_key.n0, jwks_key.n1, jwks_key.n2, jwks_key.n3, jwks_key.n4, jwks_key.n5,
@@ -1550,24 +1565,13 @@ pub mod Cavos {
                     jwks_key.n12, jwks_key.n13, jwks_key.n14, jwks_key.n15,
                 ],
             };
-            let n_prime = BigUint2048 {
-                limbs: [
-                    jwks_key.n_prime0, jwks_key.n_prime1, jwks_key.n_prime2, jwks_key.n_prime3,
-                    jwks_key.n_prime4, jwks_key.n_prime5, jwks_key.n_prime6, jwks_key.n_prime7,
-                    jwks_key.n_prime8, jwks_key.n_prime9, jwks_key.n_prime10, jwks_key.n_prime11,
-                    jwks_key.n_prime12, jwks_key.n_prime13, jwks_key.n_prime14, jwks_key.n_prime15,
-                ],
-            };
-            let r_sq = BigUint2048 {
-                limbs: [
-                    jwks_key.r_sq0, jwks_key.r_sq1, jwks_key.r_sq2, jwks_key.r_sq3, jwks_key.r_sq4,
-                    jwks_key.r_sq5, jwks_key.r_sq6, jwks_key.r_sq7, jwks_key.r_sq8, jwks_key.r_sq9,
-                    jwks_key.r_sq10, jwks_key.r_sq11, jwks_key.r_sq12, jwks_key.r_sq13,
-                    jwks_key.r_sq14, jwks_key.r_sq15,
-                ],
-            };
 
-            let jwt_data_start: usize = 37;
+            // Read witnesses directly from calldata (Tier 6: zero-copy v2).
+            let witnesses_start: usize = 37;
+            let witnesses_len: usize = (*signature[witnesses_start]).try_into().unwrap();
+            assert!(witnesses_len == 574, "Witnesses must be 574 felts");
+
+            let jwt_data_start: usize = witnesses_start + 1 + witnesses_len;
             let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
             let mut jwt_bytes = "";
             let mut current_byte = 0;
@@ -1586,10 +1590,10 @@ pub mod Cavos {
             }
 
             assert!(
-                crate::rsa::rsa_verify::verify_rsa_sha256_mont(
-                    @jwt_bytes, @rsa_sig, @modulus, @n_prime, @r_sq,
+                crate::rsa::rsa_verify::verify_rsa_schwartz_zippel_v2(
+                    @jwt_bytes, @rsa_sig, @modulus, signature, witnesses_start + 1,
                 ),
-                "RSA verification failed",
+                "RSA verification failed (Schwartz-Zippel)",
             );
 
             // Verify issuer
