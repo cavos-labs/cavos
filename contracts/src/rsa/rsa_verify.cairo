@@ -8,58 +8,10 @@
 use core::hash::HashStateTrait;
 use core::poseidon::PoseidonTrait;
 use core::sha256::compute_sha256_byte_array;
-use super::bignum::{BigUint2048, biguint_eq, biguint_mont_reduce};
+use super::bignum::BigUint2048;
 
 
-/// Verify RSA signature using Montgomery Reduction (Optimized).
-/// Requires precomputed Montgomery constants n_prime and R^2.
-pub fn verify_rsa_sha256_mont(
-    message: @ByteArray,
-    signature: @BigUint2048,
-    modulus: @BigUint2048,
-    n_prime: @BigUint2048,
-    r_sq: @BigUint2048,
-) -> bool {
-    // Step 1: RSA verification (Montgomery)
-    // 1.1 Convert signature to Montgomery form: sig_mont = sig * R^2 * R^-1 = sig * R
-    let sig_mont = super::bignum::biguint_mul_mont(signature, r_sq, modulus, n_prime);
-
-    // 1.2 Exponentiate: val_mont = sig_mont^65537
-    let decrypted_mont = super::bignum::biguint_modexp_65537_mont(@sig_mont, modulus, n_prime);
-
-    // 1.3 Convert back to standard form (Tier 3: skip x*1 Karatsuba)
-    let decrypted = biguint_mont_reduce(@decrypted_mont, modulus, n_prime);
-
-    // Step 2: SHA-256 hash
-    let hash = compute_sha256_byte_array(message);
-    let expected = pkcs1_v15_encode(@hash);
-
-    // Step 3: Compare
-    biguint_eq(@decrypted, @expected)
-}
-
-/// Verify RSA signature (prehashed) using Montgomery Reduction.
-pub fn verify_rsa_sha256_prehashed_mont(
-    hash: @[u32; 8],
-    signature: @BigUint2048,
-    modulus: @BigUint2048,
-    n_prime: @BigUint2048,
-    r_sq: @BigUint2048,
-) -> bool {
-    // 1.1 Convert signature to Montgomery form
-    let sig_mont = super::bignum::biguint_mul_mont(signature, r_sq, modulus, n_prime);
-
-    // 1.2 Exponentiate
-    let decrypted_mont = super::bignum::biguint_modexp_65537_mont(@sig_mont, modulus, n_prime);
-
-    // 1.3 Convert back (Tier 3: skip x*1 Karatsuba)
-    let decrypted = biguint_mont_reduce(@decrypted_mont, modulus, n_prime);
-
-    let expected = pkcs1_v15_encode(hash);
-    biguint_eq(@decrypted, @expected)
-}
-
-// ── Schwartz-Zippel RSA verification (Tier 5 + Tier 6 optimizations)
+// ── Schwartz-Zippel RSA verification
 // ─────────────────────────────────
 //
 // Integer identity: a² = q·n + r
