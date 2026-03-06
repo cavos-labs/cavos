@@ -1,7 +1,6 @@
 // OAuth Account - On-chain JWT verification for OAuth-based wallets on StarkNet
 
 // Core contracts
-pub mod argus;
 pub mod cavos;
 pub mod deployer;
 pub mod jwks_registry;

@@ -90,6 +90,9 @@ pub fn base64url_decode_window(
     target_len: usize,
 ) -> Array<u8> {
     let mut output: Array<u8> = array![];
+    if target_len == 0 {
+        return output;
+    }
 
     // Each 4 Base64 chars = 3 decoded bytes
     let start_chunk = target_offset / 3;
@@ -98,7 +101,9 @@ pub fn base64url_decode_window(
     let mut chunk_idx = start_chunk;
     while chunk_idx != end_chunk {
         let i = chunk_idx * 4;
-        if i + 3 < segment_len {
+        assert!(i < segment_len, "window out of bounds");
+        let remaining_chars = segment_len - i;
+        if remaining_chars >= 4 {
             let a = decode_char(input.at(segment_start + i).unwrap()).expect('invalid base64 char');
             let b = decode_char(input.at(segment_start + i + 1).unwrap())
                 .expect('invalid base64 char');
@@ -113,8 +118,31 @@ pub fn base64url_decode_window(
                 + d.into();
 
             output.append(((combined / 0x10000) & 0xff).try_into().unwrap());
-            output.append(((combined / 0x100) & 0xff).try_into().unwrap());
-            output.append((combined & 0xff).try_into().unwrap());
+            let char_c = input.at(segment_start + i + 2).unwrap();
+            let char_d = input.at(segment_start + i + 3).unwrap();
+            if char_c != '=' {
+                output.append(((combined / 0x100) & 0xff).try_into().unwrap());
+            }
+            if char_d != '=' {
+                output.append((combined & 0xff).try_into().unwrap());
+            }
+        } else if remaining_chars == 3 {
+            let a = decode_char(input.at(segment_start + i).unwrap()).expect('invalid base64 char');
+            let b = decode_char(input.at(segment_start + i + 1).unwrap())
+                .expect('invalid base64 char');
+            let c = decode_char(input.at(segment_start + i + 2).unwrap())
+                .expect('invalid base64 char');
+            let combined: u32 = a.into() * 0x1000_u32 + b.into() * 0x40_u32 + c.into();
+            output.append(((combined / 0x400) & 0xff).try_into().unwrap());
+            output.append(((combined / 0x4) & 0xff).try_into().unwrap());
+        } else if remaining_chars == 2 {
+            let a = decode_char(input.at(segment_start + i).unwrap()).expect('invalid base64 char');
+            let b = decode_char(input.at(segment_start + i + 1).unwrap())
+                .expect('invalid base64 char');
+            let combined: u32 = a.into() * 0x40_u32 + b.into();
+            output.append(((combined / 0x10) & 0xff).try_into().unwrap());
+        } else {
+            panic!("invalid base64 length")
         }
         chunk_idx += 1;
     }
@@ -122,6 +150,7 @@ pub fn base64url_decode_window(
     // Slice the output to get the exact window (pointer-based, no per-element copy)
     let internal_offset = target_offset % 3;
     let output_span = output.span();
+    assert!(output_span.len() >= internal_offset + target_len, "window out of bounds");
     let window = output_span.slice(internal_offset, target_len);
     let mut result: Array<u8> = array![];
     let mut remaining = window;

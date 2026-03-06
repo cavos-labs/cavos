@@ -12,7 +12,7 @@ export async function GET() {
   try {
     const jwks = await getFirebaseJWKS();
 
-    // Also convert to contract format (16 u128 limbs)
+    // Also convert to contract format (17 x 123-bit proof limbs)
     const contractFormat = await convertToContractFormat(jwks.keys[0]);
 
     return NextResponse.json({
@@ -37,11 +37,11 @@ async function convertToContractFormat(key: any) {
   const n = BigInt('0x' + nBuf.toString('hex'));
   const e = BigInt('0x' + eBuf.toString('hex'));
 
-  // Split into 16 u128 limbs (2048 bits = 16 * 128 bits)
+  // Split into 17 x 123-bit proof limbs (little-endian)
   const limbs: string[] = [];
-  for (let i = 0; i < 16; i++) {
-    const shift = BigInt(i * 128);
-    const mask = (1n << 128n) - 1n;
+  const mask = (1n << 123n) - 1n;
+  for (let i = 0; i < 17; i++) {
+    const shift = BigInt(i * 123);
     const limb = (n >> shift) & mask;
     limbs.push('0x' + limb.toString(16));
   }

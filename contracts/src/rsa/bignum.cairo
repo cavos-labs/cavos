@@ -33,21 +33,6 @@ pub fn biguint_one() -> BigUint2048 {
     biguint_from_u128(1)
 }
 
-/// Checks if two BigUint2048 are equal.
-pub fn biguint_eq(a: @BigUint2048, b: @BigUint2048) -> bool {
-    let a_limbs = a.limbs.span();
-    let b_limbs = b.limbs.span();
-    let mut i: usize = 0;
-    loop {
-        if i == 16 {
-            break true;
-        }
-        if *a_limbs[i] != *b_limbs[i] {
-            break false;
-        }
-        i += 1;
-    }
-}
 
 /// Compares a >= b for 2048-bit numbers.
 fn biguint_gte(a: @BigUint2048, b: @BigUint2048) -> bool {
@@ -1465,100 +1450,6 @@ pub fn biguint_mul_low(a: @BigUint2048, b: @BigUint2048) -> BigUint2048 {
     BigUint2048 { limbs: [l0, l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15] }
 }
 
-/// Montgomery multiplication: (a * b * R^-1) mod n
-/// R = 2^2048. n_prime = -n^-1 mod R.
-/// Assumes a < n, b < n.
-pub fn biguint_mul_mont(
-    a: @BigUint2048, b: @BigUint2048, n: @BigUint2048, n_prime: @BigUint2048,
-) -> BigUint2048 {
-    // 1. T = a * b
-    let T = biguint_mul_wide(a, b); // 4096 bits
-
-    // 2. m = (T mod R) * n' mod R
-    // T mod R is just the lower 16 limbs of T.
-    let T_low_limbs = array_to_fixed_16_from_32(@T.limbs);
-    let T_low = BigUint2048 { limbs: T_low_limbs };
-
-    // We only need the lower 16 limbs of the product result for mod R
-    let m = biguint_mul_low(@T_low, n_prime);
-
-    // 3. t = (T + m * n) / R
-    let mn_wide = biguint_mul_wide(@m, n);
-    let (_sum_low, carry_low) = biguint_add(
-        @T_low, @biguint_from_limbs(array_to_fixed_16_from_32(@mn_wide.limbs).span()),
-    );
-
-    // We need to add T + mn. Since we divide by R, we are interested in the upper 2048+ bits.
-    // T + mn = (T_high * R + T_low) + (mn_high * R + mn_low)
-    // We know T_low + mn_low should be 0 mod R, effectively just producing a carry to the high
-    // part.
-    // So (T + mn) / R = T_high + mn_high + carry_from_low_addition
-
-    let T_high_limbs = array_to_fixed_16_high_from_32(@T.limbs);
-    let T_high = BigUint2048 { limbs: T_high_limbs };
-
-    let mn_high_limbs = array_to_fixed_16_high_from_32(@mn_wide.limbs);
-    let mn_high = BigUint2048 { limbs: mn_high_limbs };
-
-    // Add high parts and the carry from the low part addition
-    let (res_partial, carry1) = biguint_add(@T_high, @mn_high);
-    let (res, carry2) = biguint_add(@res_partial, @biguint_from_u128(carry_low));
-
-    let total_carry = carry1 + carry2; // Can be at most 1 because a,b < n < R
-
-    // 4. if t >= n then t - n else t
-    // If we have a carry overflow (total_carry > 0), result is definitely >= n (actually >= R > n)
-    if total_carry > 0 || biguint_gte(@res, n) {
-        biguint_sub(@res, n)
-    } else {
-        res
-    }
-}
-
-/// Montgomery reduction (Tier 3 optimization): converts x from Montgomery form to standard form.
-/// Equivalent to biguint_mul_mont(x, one, n, n_prime) but skips the x*1 Karatsuba multiplication.
-/// Since T = x * 1 = x (with implicit zero upper 2048 bits), x is used directly as T_low.
-/// Saves one full Karatsuba call (~209 wide_mul operations) vs biguint_mul_mont(x, one, ...).
-pub fn biguint_mont_reduce(x: @BigUint2048, n: @BigUint2048, n_prime: @BigUint2048) -> BigUint2048 {
-    // T = x (T_low = x, T_high = 0 — no multiplication needed)
-    let m = biguint_mul_low(x, n_prime);
-
-    // mn = m * n (full width)
-    let mn_wide = biguint_mul_wide(@m, n);
-
-    // carry_from_low = carry bit from (T_low + mn_low) = (x + mn_low)
-    let (_sum_low, carry_low) = biguint_add(
-        x, @biguint_from_limbs(array_to_fixed_16_from_32(@mn_wide.limbs).span()),
-    );
-
-    // (T + mn) / R: T_high = 0, so result = mn_high + carry_low
-    let mn_high = BigUint2048 { limbs: array_to_fixed_16_high_from_32(@mn_wide.limbs) };
-    let (res, carry2) = biguint_add(@mn_high, @biguint_from_u128(carry_low));
-
-    // carry1 = 0 (since T_high = 0, biguint_add(0, mn_high) never overflows)
-    if carry2 > 0 || biguint_gte(@res, n) {
-        biguint_sub(@res, n)
-    } else {
-        res
-    }
-}
-
-/// Montgomery exponentiation specifically for e=65537.
-pub fn biguint_modexp_65537_mont(
-    base_mont: @BigUint2048, n: @BigUint2048, n_prime: @BigUint2048,
-) -> BigUint2048 {
-    let mut result = *base_mont;
-    let mut i: u32 = 0;
-    // Square 16 times
-    while i != 16 {
-        result = biguint_mul_mont(@result, @result, n, n_prime);
-        i += 1;
-    }
-    // Multiply by base once
-    result = biguint_mul_mont(@result, base_mont, n, n_prime);
-    result
-}
-
 
 /// Helper: Convert a mutable Array<u128> of exactly 16 elements to a fixed array.
 fn array_to_fixed_16(ref arr: Array<u128>) -> [u128; 16] {
@@ -1609,27 +1500,6 @@ pub fn biguint_from_limbs(limbs: Span<u128>) -> BigUint2048 {
     }
 }
 
-/// Compute R mod n = 2^{2048} mod n for a standard RSA-2048 modulus n.
-/// Requires 2^{2047} < n < 2^{2048} (MSB set), which holds for all 2048-bit RSA keys.
-/// Under this condition floor(2^{2048} / n) == 1, so R mod n == 2^{2048} - n
-/// == two's complement of n in 2048 bits == NOT(n) + 1.
-pub fn compute_r_mod_n(n: @BigUint2048) -> BigUint2048 {
-    let max: u128 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-    let s = n.limbs.span();
-    let mut result: Array<u128> = array![];
-    let mut carry: u128 = 1;
-    let mut i: usize = 0;
-    // Tier 1 fix: use != instead of < (eliminates range_check builtin per iteration)
-    while i != 16 {
-        let not_limb: u128 = max - *s[i];
-        let sum: u256 = not_limb.into() + carry.into();
-        result.append(sum.low);
-        carry = sum.high;
-        i += 1;
-    }
-    // carry is 0 for all nonzero n (guaranteed for RSA moduli)
-    biguint_from_limbs(result.span())
-}
 
 /// Construct BigUint2048 from a byte array (big-endian, 256 bytes for RSA-2048).
 pub fn biguint_from_bytes(bytes: Span<u8>) -> BigUint2048 {

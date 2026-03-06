@@ -5,6 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { CallData, byteArray, hash } from 'starknet';
 
 const GOOGLE_JWKS_URL = 'https://www.googleapis.com/oauth2/v3/certs';
 
@@ -39,22 +40,22 @@ function base64UrlToBytes(base64url: string): Uint8Array {
 }
 
 /**
- * Convert bytes to u128 limbs (little-endian, 16 limbs for 2048-bit RSA)
+ * Convert bytes to 17 x 123-bit proof limbs (little-endian).
  */
-function bytesToU128Limbs(bytes: Uint8Array): string[] {
+function bytesToProofLimbs(bytes: Uint8Array): string[] {
   // Pad to 256 bytes if needed
   const padded = new Uint8Array(256);
   padded.set(bytes, 256 - bytes.length);
 
+  let modulus = 0n;
+  for (const byte of padded) {
+    modulus = (modulus << 8n) + BigInt(byte);
+  }
+
+  const mask = (1n << 123n) - 1n;
   const limbs: string[] = [];
-  // Process from end to start (little-endian)
-  for (let i = 15; i >= 0; i--) {
-    let limb = 0n;
-    for (let j = 0; j < 16; j++) {
-      const byteIdx = i * 16 + (15 - j);
-      limb = limb * 256n + BigInt(padded[byteIdx]);
-    }
-    limbs.unshift('0x' + limb.toString(16));
+  for (let i = 0; i < 17; i++) {
+    limbs.push('0x' + ((modulus >> (BigInt(i) * 123n)) & mask).toString(16));
   }
   return limbs;
 }
@@ -70,7 +71,7 @@ function formatKeyForContract(key: JWK): {
 } {
   // Decode the modulus (n) from Base64URL
   const nBytes = base64UrlToBytes(key.n);
-  const nLimbs = bytesToU128Limbs(nBytes);
+  const nLimbs = bytesToProofLimbs(nBytes);
 
   // Decode the exponent (e) - usually 65537 (AQAB in Base64)
   const eBytes = base64UrlToBytes(key.e);
@@ -79,15 +80,10 @@ function formatKeyForContract(key: JWK): {
     e = e * 256n + BigInt(b);
   }
 
-  // Hash kid to felt252
-  const kidBytes = new TextEncoder().encode(key.kid);
-  let kidFelt = 0n;
-  for (let i = 0; i < kidBytes.length && i < 31; i++) {
-    kidFelt = kidFelt * 256n + BigInt(kidBytes[i]);
-  }
-
   return {
-    kid: '0x' + kidFelt.toString(16),
+    kid: hash.computePoseidonHashOnElements(
+      CallData.compile(byteArray.byteArrayFromString(key.kid))
+    ),
     n: nLimbs,
     e: '0x' + e.toString(16),
     provider: '0x676f6f676c65', // 'google' as felt252
