@@ -6,7 +6,7 @@
 use starknet::ContractAddress;
 
 /// RSA public key stored on-chain.
-/// The modulus `n` is a 2048-bit RSA key stored as 16 x u128 limbs (little-endian).
+/// The modulus `n` is a 2048-bit RSA key stored as 17 x 123-bit limbs (little-endian).
 /// Montgomery constants (r_sq, n_prime) removed in Tier 5: witnesses are provided in calldata.
 #[derive(Copy, Drop, Serde, starknet::Store)]
 pub struct JWKSKey {
@@ -27,6 +27,7 @@ pub struct JWKSKey {
     pub n13: u128,
     pub n14: u128,
     pub n15: u128,
+    pub n16: u128,
     /// Provider identifier (hash of 'google' or 'apple')
     pub provider: felt252,
     /// Expiry timestamp (0 = no expiry)

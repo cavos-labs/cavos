@@ -26,10 +26,10 @@ mod tests {
             i += 1;
         }
 
-        signature.append(574);
+        signature.append(610);
 
         i = 0;
-        while i < 574 {
+        while i < 610 {
             signature.append(0);
             i += 1;
         }
@@ -155,6 +155,6 @@ mod tests {
         let signature = build_oauth_signature_prefix(62);
         let policy_start = oauth_policy_start(signature.span());
 
-        assert!(policy_start == 615, "policy_start should skip witnesses and JWT chunks");
+        assert!(policy_start == 651, "policy_start should skip witnesses and JWT chunks");
     }
 }

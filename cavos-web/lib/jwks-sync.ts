@@ -9,7 +9,7 @@
  *   2. Generate a Reclaim zkFetch proof for the provider's JWKS endpoint.
  *      The proof cryptographically attests that `kid` and `n` were fetched over TLS
  *      from the declared URL.
- *   3. Compute the JWKSKey (n limbs + Montgomery constants).
+ *   3. Compute the JWKSKey proof limbs.
  *   4. Call JWKSRegistryTrustless.register_key(proof, kid, key).
  *      Any account with enough ETH for gas can submit — no admin privileges needed.
  *
@@ -71,6 +71,10 @@ interface SyncResult {
   errors: string[];
 }
 
+interface SyncOptions {
+  force?: boolean;
+}
+
 function getNetworkConfig(network: 'sepolia' | 'mainnet'): NetworkConfig {
   const suffix = network === 'sepolia' ? 'SEPOLIA' : 'MAINNET';
   return {
@@ -117,8 +121,8 @@ function kidToFelt(kid: string): string {
 }
 
 /**
- * Decode a base64url RSA modulus into 16 × 128-bit limbs (little-endian).
- * limbs[0] = n0 = least significant 128-bit chunk.
+ * Decode a base64url RSA modulus into 17 × 123-bit proof limbs (little-endian).
+ * limbs[0] = n0 = least significant 123-bit chunk.
  */
 function modulusToLimbs(base64url: string): bigint[] {
   const base64 = base64url
@@ -132,14 +136,11 @@ function modulusToLimbs(base64url: string): bigint[] {
   const padded = Buffer.alloc(256);
   bytes.copy(padded, 256 - bytes.length);
 
-  // Little-endian: limbs[0] = LSB chunk (padded[240..255]), limbs[15] = MSB chunk.
+  const modulus = BigInt('0x' + padded.toString('hex'));
+  const mask = (1n << 123n) - 1n;
   const limbs: bigint[] = [];
-  for (let i = 15; i >= 0; i--) {
-    let value = 0n;
-    for (let j = 0; j < 16; j++) {
-      value = value * 256n + BigInt(padded[i * 16 + j]);
-    }
-    limbs.push(value);
+  for (let i = 0; i < 17; i++) {
+    limbs.push((modulus >> (BigInt(i) * 123n)) & mask);
   }
   return limbs;
 }
@@ -336,7 +337,7 @@ function buildRegisterKeyCalldata(proof: ReclaimProof, key: FormattedKey): strin
     }),
     // ── kid ──────────────────────────────────────────────────────────────────
     key.kidFelt,
-    // ── JWKSKey (slim: 16 n limbs + 3 metadata, no Montgomery constants) ─────
+    // ── JWKSKey (slim: 17 proof limbs + 3 metadata) ──────────────────────────
     ...key.nLimbs.map(h),
     key.provider,
     h(BigInt(key.validUntil)),
@@ -353,9 +354,13 @@ interface ProviderConfig {
   providerFelt: string;
 }
 
-export async function syncJWKS(network: 'sepolia' | 'mainnet'): Promise<SyncResult> {
+export async function syncJWKS(
+  network: 'sepolia' | 'mainnet',
+  options: SyncOptions = {},
+): Promise<SyncResult> {
   const config = getNetworkConfig(network);
   const results: SyncResult = { added: [], skipped: [], errors: [] };
+  const force = options.force ?? false;
 
   if (!config.registryAddress || !config.trustlessRegistryAddress) {
     throw new Error(`Missing ${network} registry addresses. Check environment variables.`);
@@ -368,6 +373,9 @@ export async function syncJWKS(network: 'sepolia' | 'mainnet'): Promise<SyncResu
   console.log(`[${network}] JWKS Registry:            ${config.registryAddress}`);
   console.log(`[${network}] Trustless Registry:       ${config.trustlessRegistryAddress}`);
   console.log(`[${network}] Gas submitter:            ${config.submitterAddress}`);
+  if (force) {
+    console.log(`[${network}] Force mode enabled: existing valid keys will be re-registered`);
+  }
 
   const provider = new RpcProvider({ nodeUrl: config.rpcUrl });
   const account = new Account({
@@ -403,9 +411,14 @@ export async function syncJWKS(network: 'sepolia' | 'mainnet'): Promise<SyncResu
       continue;
     }
 
-    // First, skip all keys that are already on-chain.
+    // By default, skip keys that are already valid on-chain.
+    // Force mode re-registers them so storage gets rewritten to the latest layout.
     const needsRegistration = (
       await Promise.all(keys.map(async (key) => {
+        if (force) {
+          console.log(`[${network}] Force re-registering key: ${key.kid}`);
+          return key;
+        }
         const isValid = await isKeyValidOnChain(readContract, key.kidFelt);
         if (isValid) {
           results.skipped.push(key.kid);
@@ -461,20 +474,29 @@ export async function syncAllNetworks(): Promise<{
   sepolia: SyncResult;
   mainnet: SyncResult;
 }> {
+  return syncAllNetworksWithOptions();
+}
+
+export async function syncAllNetworksWithOptions(
+  options: SyncOptions = {},
+): Promise<{
+  sepolia: SyncResult;
+  mainnet: SyncResult;
+}> {
   const results = {
     sepolia: { added: [], skipped: [], errors: [] } as SyncResult,
     mainnet: { added: [], skipped: [], errors: [] } as SyncResult,
   };
 
   try {
-    results.sepolia = await syncJWKS('sepolia');
+    results.sepolia = await syncJWKS('sepolia', options);
   } catch (error: any) {
     results.sepolia.errors.push(`Sepolia sync failed: ${error.message}`);
     console.error('Sepolia sync failed:', error);
   }
 
   try {
-    results.mainnet = await syncJWKS('mainnet');
+    results.mainnet = await syncJWKS('mainnet', options);
   } catch (error: any) {
     results.mainnet.errors.push(`Mainnet sync failed: ${error.message}`);
     console.error('Mainnet sync failed:', error);

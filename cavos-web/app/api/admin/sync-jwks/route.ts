@@ -2,7 +2,7 @@
  * Manual JWKS Sync Endpoint
  * Allows admins to manually trigger JWKS sync for testing or emergencies.
  *
- * POST /api/admin/sync-jwks?network=sepolia
+ * POST /api/admin/sync-jwks?network=sepolia&force=1
  * Headers: x-admin-key: YOUR_ADMIN_KEY
  */
 
@@ -25,6 +25,8 @@ export async function POST(request: NextRequest) {
 
   // Get network from query params
   const network = request.nextUrl.searchParams.get('network') as 'sepolia' | 'mainnet' | null;
+  const forceParam = request.nextUrl.searchParams.get('force');
+  const force = forceParam === '1' || forceParam === 'true';
 
   if (!network || !['sepolia', 'mainnet'].includes(network)) {
     return NextResponse.json(
@@ -33,16 +35,17 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  console.log(`Manual JWKS sync triggered for ${network}`);
+  console.log(`Manual JWKS sync triggered for ${network} (force=${force})`);
   const startTime = Date.now();
 
   try {
-    const results = await syncJWKS(network);
+    const results = await syncJWKS(network, { force });
     const duration = Date.now() - startTime;
 
     const response = {
       success: true,
       network,
+      force,
       timestamp: new Date().toISOString(),
       durationMs: duration,
       results: {
@@ -60,6 +63,7 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         network,
+        force,
         timestamp: new Date().toISOString(),
         error: error.message,
       },

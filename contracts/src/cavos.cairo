@@ -94,6 +94,7 @@ pub mod Cavos {
     use crate::jwt::base64::base64url_decode_window;
     use crate::jwt::jwt_parser::{hash_utf8_bytes, parse_decimal, parse_hex, split_signed_data};
     use crate::rsa::bignum::BigUint2048;
+    use crate::rsa::rsa_verify::ProofBigUint2048;
 
     /// Magic number to identify full OAuth JWT signatures (used during deployment/session
     /// registration).
@@ -116,7 +117,7 @@ pub mod Cavos {
     const SNIP9_OUTSIDE_EXECUTION_V2_ID: felt252 =
         0x1d1144bb2138366ff28d8e9ab57456b1d332ac42196230c3a602003c89872;
     const OAUTH_WITNESSES_START: usize = 37;
-    const OAUTH_WITNESSES_LEN: usize = 574;
+    const OAUTH_WITNESSES_LEN: usize = 610;
 
     /// Session data for registered session keys
     #[derive(Copy, Drop, Serde, starknet::Store)]
@@ -197,7 +198,7 @@ pub mod Cavos {
 
     pub fn oauth_policy_start(signature: Span<felt252>) -> usize {
         let witnesses_len: usize = (*signature[OAUTH_WITNESSES_START]).try_into().unwrap();
-        assert!(witnesses_len == OAUTH_WITNESSES_LEN, "Witnesses must be 574 felts");
+        assert!(witnesses_len == OAUTH_WITNESSES_LEN, "Witnesses must be 610 felts");
 
         let jwt_data_start: usize = OAUTH_WITNESSES_START + 1 + witnesses_len;
         let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
@@ -774,11 +775,11 @@ pub mod Cavos {
             };
 
             // Read RSA witnesses directly from calldata (Tier 6: zero-copy v2).
-            // Format: [37] witnesses_len=574, [38..611] raw witness felts,
-            //         [612] jwt_bytes_len, [613+] packed JWT bytes.
+            // Format: [37] witnesses_len=610, [38..647] raw witness felts,
+            //         [648] jwt_bytes_len, [649+] packed JWT bytes.
             let witnesses_start: usize = OAUTH_WITNESSES_START;
             let witnesses_len: usize = (*signature[witnesses_start]).try_into().unwrap();
-            assert!(witnesses_len == OAUTH_WITNESSES_LEN, "Witnesses must be 574 felts");
+            assert!(witnesses_len == OAUTH_WITNESSES_LEN, "Witnesses must be 610 felts");
 
             // JWT signed data starts after all witnesses
             let jwt_data_start: usize = witnesses_start + 1 + witnesses_len;
@@ -844,11 +845,13 @@ pub mod Cavos {
             let jwks_key = registry.get_key_if_valid(jwt_kid);
 
             // 8. Verify RSA signature using Schwartz-Zippel v2 (Tier 6: zero-copy)
-            let modulus = BigUint2048 {
+            let modulus = ProofBigUint2048 {
                 limbs: [
-                    jwks_key.n0, jwks_key.n1, jwks_key.n2, jwks_key.n3, jwks_key.n4, jwks_key.n5,
-                    jwks_key.n6, jwks_key.n7, jwks_key.n8, jwks_key.n9, jwks_key.n10, jwks_key.n11,
-                    jwks_key.n12, jwks_key.n13, jwks_key.n14, jwks_key.n15,
+                    jwks_key.n0.into(), jwks_key.n1.into(), jwks_key.n2.into(), jwks_key.n3.into(),
+                    jwks_key.n4.into(), jwks_key.n5.into(), jwks_key.n6.into(), jwks_key.n7.into(),
+                    jwks_key.n8.into(), jwks_key.n9.into(), jwks_key.n10.into(),
+                    jwks_key.n11.into(), jwks_key.n12.into(), jwks_key.n13.into(),
+                    jwks_key.n14.into(), jwks_key.n15.into(), jwks_key.n16.into(),
                 ],
             };
             assert!(
@@ -1275,18 +1278,20 @@ pub mod Cavos {
                     (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
                 ],
             };
-            let modulus = BigUint2048 {
+            let modulus = ProofBigUint2048 {
                 limbs: [
-                    jwks_key.n0, jwks_key.n1, jwks_key.n2, jwks_key.n3, jwks_key.n4, jwks_key.n5,
-                    jwks_key.n6, jwks_key.n7, jwks_key.n8, jwks_key.n9, jwks_key.n10, jwks_key.n11,
-                    jwks_key.n12, jwks_key.n13, jwks_key.n14, jwks_key.n15,
+                    jwks_key.n0.into(), jwks_key.n1.into(), jwks_key.n2.into(), jwks_key.n3.into(),
+                    jwks_key.n4.into(), jwks_key.n5.into(), jwks_key.n6.into(), jwks_key.n7.into(),
+                    jwks_key.n8.into(), jwks_key.n9.into(), jwks_key.n10.into(),
+                    jwks_key.n11.into(), jwks_key.n12.into(), jwks_key.n13.into(),
+                    jwks_key.n14.into(), jwks_key.n15.into(), jwks_key.n16.into(),
                 ],
             };
 
             // Read witnesses directly from calldata (Tier 6: zero-copy v2).
             let witnesses_start: usize = OAUTH_WITNESSES_START;
             let witnesses_len: usize = (*signature[witnesses_start]).try_into().unwrap();
-            assert!(witnesses_len == OAUTH_WITNESSES_LEN, "Witnesses must be 574 felts");
+            assert!(witnesses_len == OAUTH_WITNESSES_LEN, "Witnesses must be 610 felts");
 
             let jwt_data_start: usize = witnesses_start + 1 + witnesses_len;
             let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
@@ -1519,10 +1524,10 @@ pub mod Cavos {
         ///           kid_len
         /// [20]    = RSA sig length (16)
         /// [21-36] = RSA signature (16 u128 limbs)
-        /// [37]    = witnesses length (574)
-        /// [38-611]= RSA witnesses
-        /// [612]   = JWT data byte length
-        /// [613+]  = JWT bytes (header.payload, packed as 31-byte felt252 chunks)
+        /// [37]    = witnesses length (610)
+        /// [38-647]= RSA witnesses
+        /// [648]   = JWT data byte length
+        /// [649+]  = JWT bytes (header.payload, packed as 31-byte felt252 chunks)
         /// After JWT bytes:
         /// [jwt_end]   = valid_after
         /// [jwt_end+1] = allowed_contracts_root
@@ -1670,18 +1675,20 @@ pub mod Cavos {
                 ],
             };
 
-            let modulus = BigUint2048 {
+            let modulus = ProofBigUint2048 {
                 limbs: [
-                    jwks_key.n0, jwks_key.n1, jwks_key.n2, jwks_key.n3, jwks_key.n4, jwks_key.n5,
-                    jwks_key.n6, jwks_key.n7, jwks_key.n8, jwks_key.n9, jwks_key.n10, jwks_key.n11,
-                    jwks_key.n12, jwks_key.n13, jwks_key.n14, jwks_key.n15,
+                    jwks_key.n0.into(), jwks_key.n1.into(), jwks_key.n2.into(), jwks_key.n3.into(),
+                    jwks_key.n4.into(), jwks_key.n5.into(), jwks_key.n6.into(), jwks_key.n7.into(),
+                    jwks_key.n8.into(), jwks_key.n9.into(), jwks_key.n10.into(),
+                    jwks_key.n11.into(), jwks_key.n12.into(), jwks_key.n13.into(),
+                    jwks_key.n14.into(), jwks_key.n15.into(), jwks_key.n16.into(),
                 ],
             };
 
             // Read witnesses directly from calldata (Tier 6: zero-copy v2).
             let witnesses_start: usize = OAUTH_WITNESSES_START;
             let witnesses_len: usize = (*signature[witnesses_start]).try_into().unwrap();
-            assert!(witnesses_len == OAUTH_WITNESSES_LEN, "Witnesses must be 574 felts");
+            assert!(witnesses_len == OAUTH_WITNESSES_LEN, "Witnesses must be 610 felts");
 
             let jwt_data_start: usize = witnesses_start + 1 + witnesses_len;
             let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
