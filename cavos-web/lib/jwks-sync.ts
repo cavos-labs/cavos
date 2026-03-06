@@ -22,7 +22,7 @@
  * Uses starknet.js v9 Account.execute() for native V3 transaction support.
  */
 
-import { Account, RpcProvider, Contract } from 'starknet';
+import { Account, CallData, Contract, RpcProvider, byteArray, hash } from 'starknet';
 
 // ── Provider JWKS endpoints ──────────────────────────────────────────────────
 const GOOGLE_JWKS_URL   = 'https://www.googleapis.com/oauth2/v3/certs';
@@ -108,15 +108,12 @@ interface FormattedKey {
 }
 
 /**
- * Convert a key ID string to felt252 (max 31 bytes, big-endian UTF-8).
+ * Hash a key ID string to felt252 using the Starknet ByteArray encoding.
  */
 function kidToFelt(kid: string): string {
-  const bytes = Buffer.from(kid, 'utf8');
-  let felt = 0n;
-  for (let i = 0; i < Math.min(bytes.length, 31); i++) {
-    felt = felt * 256n + BigInt(bytes[i]);
-  }
-  return '0x' + felt.toString(16);
+  return hash.computePoseidonHashOnElements(
+    CallData.compile(byteArray.byteArrayFromString(kid))
+  );
 }
 
 /**

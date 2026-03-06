@@ -5,6 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { CallData, byteArray, hash } from 'starknet';
 
 const GOOGLE_JWKS_URL = 'https://www.googleapis.com/oauth2/v3/certs';
 
@@ -79,15 +80,10 @@ function formatKeyForContract(key: JWK): {
     e = e * 256n + BigInt(b);
   }
 
-  // Hash kid to felt252
-  const kidBytes = new TextEncoder().encode(key.kid);
-  let kidFelt = 0n;
-  for (let i = 0; i < kidBytes.length && i < 31; i++) {
-    kidFelt = kidFelt * 256n + BigInt(kidBytes[i]);
-  }
-
   return {
-    kid: '0x' + kidFelt.toString(16),
+    kid: hash.computePoseidonHashOnElements(
+      CallData.compile(byteArray.byteArrayFromString(key.kid))
+    ),
     n: nLimbs,
     e: '0x' + e.toString(16),
     provider: '0x676f6f676c65', // 'google' as felt252

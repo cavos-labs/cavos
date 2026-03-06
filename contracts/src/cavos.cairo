@@ -92,7 +92,7 @@ pub mod Cavos {
     };
     use crate::jwks_registry::{IJWKSRegistryDispatcher, IJWKSRegistryDispatcherTrait};
     use crate::jwt::base64::base64url_decode_window;
-    use crate::jwt::jwt_parser::{parse_decimal, parse_hex, split_signed_data};
+    use crate::jwt::jwt_parser::{hash_utf8_bytes, parse_decimal, parse_hex, split_signed_data};
     use crate::rsa::bignum::BigUint2048;
 
     /// Magic number to identify full OAuth JWT signatures (used during deployment/session
@@ -115,18 +115,95 @@ pub mod Cavos {
     /// SNIP-9 Outside Execution V2 Interface ID (Rev 1)
     const SNIP9_OUTSIDE_EXECUTION_V2_ID: felt252 =
         0x1d1144bb2138366ff28d8e9ab57456b1d332ac42196230c3a602003c89872;
+    const OAUTH_WITNESSES_START: usize = 37;
+    const OAUTH_WITNESSES_LEN: usize = 574;
 
     /// Session data for registered session keys
     #[derive(Copy, Drop, Serde, starknet::Store)]
     pub struct SessionData {
-        pub nonce: felt252, // JWT nonce that authorized this session
-        pub valid_after: u64, // Timestamp - session not valid before this
-        pub valid_until: u64, // Timestamp - session expires at this
-        pub renewal_deadline: u64, // Timestamp - can renew until this
-        pub registered_at: u64, // Block number when registered
-        pub allowed_contracts_root: felt252, // Merkle root of allowed contracts
-        pub max_calls_per_tx: u32, // Max calls per transaction
-        pub revocation_epoch: u64 // Epoch when session was created
+        // Unpacked fields
+        pub nonce: felt252, // 1 slot
+        pub allowed_contracts_root: felt252, // 1 slot
+        // Packed structs
+        pub time_limits: SessionTimeLimits, // 1 slot
+        pub usage_limits: SessionUsageLimits // 1 slot
+    }
+
+    /// Pack 1: Time validations (192 bits total)
+    #[derive(Copy, Drop, Serde)]
+    pub struct SessionTimeLimits {
+        pub valid_after: u64,
+        pub valid_until: u64,
+        pub registered_at: u64,
+    }
+
+    /// Pack 2: Usage config and revocation (160 bits total)
+    #[derive(Copy, Drop, Serde)]
+    pub struct SessionUsageLimits {
+        pub renewal_deadline: u64,
+        pub max_calls_per_tx: u32,
+        pub revocation_epoch: u64,
+    }
+
+    pub impl SessionTimeLimitsStorePacking of starknet::storage_access::StorePacking<
+        SessionTimeLimits, felt252,
+    > {
+        fn pack(value: SessionTimeLimits) -> felt252 {
+            let mut state = 0_felt252;
+            state = state + value.valid_after.into();
+            state = state + value.valid_until.into() * 0x10000000000000000;
+            state = state + value.registered_at.into() * 0x100000000000000000000000000000000;
+            state
+        }
+
+        fn unpack(value: felt252) -> SessionTimeLimits {
+            let val: u256 = value.into();
+            let valid_after: u64 = (val.low & 0xFFFFFFFFFFFFFFFF).try_into().unwrap();
+            let valid_until: u64 = ((val.low / 0x10000000000000000) & 0xFFFFFFFFFFFFFFFF)
+                .try_into()
+                .unwrap();
+            let registered_at: u64 = (val.high & 0xFFFFFFFFFFFFFFFF).try_into().unwrap();
+
+            SessionTimeLimits { valid_after, valid_until, registered_at }
+        }
+    }
+
+    pub impl SessionUsageLimitsStorePacking of starknet::storage_access::StorePacking<
+        SessionUsageLimits, felt252,
+    > {
+        fn pack(value: SessionUsageLimits) -> felt252 {
+            let mut state = 0_felt252;
+            state = state + value.renewal_deadline.into();
+            state = state + value.max_calls_per_tx.into() * 0x10000000000000000;
+            state = state + value.revocation_epoch.into() * 0x1000000000000000000000000;
+            state
+        }
+
+        fn unpack(value: felt252) -> SessionUsageLimits {
+            let val: u256 = value.into();
+            let renewal_deadline: u64 = (val.low & 0xFFFFFFFFFFFFFFFF).try_into().unwrap();
+            let max_calls_per_tx: u32 = ((val.low / 0x10000000000000000) & 0xFFFFFFFF)
+                .try_into()
+                .unwrap();
+            let revocation_epoch_low: u64 = (val.low / 0x1000000000000000000000000)
+                .try_into()
+                .unwrap();
+            let revocation_epoch_high: u64 = (val.high & 0xFFFFFFFF).try_into().unwrap();
+            let revocation_epoch = revocation_epoch_low + revocation_epoch_high * 0x100000000_u64;
+
+            SessionUsageLimits { renewal_deadline, max_calls_per_tx, revocation_epoch }
+        }
+    }
+
+    pub fn oauth_policy_start(signature: Span<felt252>) -> usize {
+        let witnesses_len: usize = (*signature[OAUTH_WITNESSES_START]).try_into().unwrap();
+        assert!(witnesses_len == OAUTH_WITNESSES_LEN, "Witnesses must be 574 felts");
+
+        let jwt_data_start: usize = OAUTH_WITNESSES_START + 1 + witnesses_len;
+        let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
+        let jwt_chunks = (jwt_bytes_len + 30) / 31;
+
+        jwt_data_start + 1 + jwt_chunks
     }
 
     /// Spending policy for a session key
@@ -331,8 +408,8 @@ pub mod Cavos {
             assert!(old_session.nonce != 0, "Old session not registered");
 
             // 2. Verify old session is in grace period (expired but can still renew)
-            assert!(now >= old_session.valid_until, "Old session not yet expired");
-            assert!(now < old_session.renewal_deadline, "Renewal period expired");
+            assert!(now >= old_session.time_limits.valid_until, "Old session not yet expired");
+            assert!(now < old_session.usage_limits.renewal_deadline, "Renewal period expired");
 
             // 3. Verify signature: old key signs the new session params
             let message = PoseidonTrait::new()
@@ -362,13 +439,17 @@ pub mod Cavos {
             // 6. Register the new session
             let session_data = SessionData {
                 nonce: new_nonce,
-                valid_after: new_valid_after,
-                valid_until: new_valid_until,
-                renewal_deadline: new_renewal_deadline,
-                registered_at: get_block_number(),
                 allowed_contracts_root: new_allowed_contracts_root,
-                max_calls_per_tx: new_max_calls_per_tx,
-                revocation_epoch: self.revocation_epoch.read(),
+                time_limits: SessionTimeLimits {
+                    valid_after: new_valid_after,
+                    valid_until: new_valid_until,
+                    registered_at: get_block_number(),
+                },
+                usage_limits: SessionUsageLimits {
+                    renewal_deadline: new_renewal_deadline,
+                    max_calls_per_tx: new_max_calls_per_tx,
+                    revocation_epoch: self.revocation_epoch.read(),
+                },
             };
             self.sessions.write(new_session_key, session_data);
 
@@ -389,19 +470,18 @@ pub mod Cavos {
                 );
         }
 
-        /// Get session data for a session key
         fn get_session(
             self: @ContractState, session_key: felt252,
         ) -> (felt252, u64, u64, u64, u64, felt252, u32) {
             let session = self.sessions.read(session_key);
             (
                 session.nonce,
-                session.valid_after,
-                session.valid_until,
-                session.renewal_deadline,
-                session.registered_at,
+                session.time_limits.valid_after,
+                session.time_limits.valid_until,
+                session.usage_limits.renewal_deadline,
+                session.time_limits.registered_at,
                 session.allowed_contracts_root,
-                session.max_calls_per_tx,
+                session.usage_limits.max_calls_per_tx,
             )
         }
 
@@ -419,13 +499,11 @@ pub mod Cavos {
             // Zero out the session
             let zero_session = SessionData {
                 nonce: 0,
-                valid_after: 0,
-                valid_until: 0,
-                renewal_deadline: 0,
-                registered_at: 0,
                 allowed_contracts_root: 0,
-                max_calls_per_tx: 0,
-                revocation_epoch: 0,
+                time_limits: SessionTimeLimits { valid_after: 0, valid_until: 0, registered_at: 0 },
+                usage_limits: SessionUsageLimits {
+                    renewal_deadline: 0, max_calls_per_tx: 0, revocation_epoch: 0,
+                },
             };
             self.sessions.write(session_key, zero_session);
 
@@ -617,6 +695,22 @@ pub mod Cavos {
             assert!(val == expected, "Claim mismatch (hex)");
         }
 
+        fn assert_hashed_claim_match(
+            self: @ContractState,
+            jwt_ba: @ByteArray,
+            segment_start: usize,
+            segment_len: usize,
+            offset: usize,
+            len: usize,
+            expected: felt252,
+        ) {
+            let decoded: Array<u8> = base64url_decode_window(
+                jwt_ba, segment_start, segment_len, offset, len,
+            );
+            let val = hash_utf8_bytes(decoded.span());
+            assert!(val == expected, "Claim hash mismatch after decoding");
+        }
+
         /// Internal helper that performs JWT verification and session registration.
         /// Called from validate_full_oauth_and_register_session.
         fn verify_jwt_and_register_session_internal(
@@ -682,9 +776,9 @@ pub mod Cavos {
             // Read RSA witnesses directly from calldata (Tier 6: zero-copy v2).
             // Format: [37] witnesses_len=574, [38..611] raw witness felts,
             //         [612] jwt_bytes_len, [613+] packed JWT bytes.
-            let witnesses_start: usize = 37;
+            let witnesses_start: usize = OAUTH_WITNESSES_START;
             let witnesses_len: usize = (*signature[witnesses_start]).try_into().unwrap();
-            assert!(witnesses_len == 574, "Witnesses must be 574 felts");
+            assert!(witnesses_len == OAUTH_WITNESSES_LEN, "Witnesses must be 574 felts");
 
             // JWT signed data starts after all witnesses
             let jwt_data_start: usize = witnesses_start + 1 + witnesses_len;
@@ -693,11 +787,12 @@ pub mod Cavos {
             let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
 
             let mut jwt_bytes = "";
-            let mut current_byte = 0;
-            let mut chunk_idx = 0;
+            let remaining_len = signature.len() - (jwt_data_start + 1);
+            let mut jwt_span = signature.slice(jwt_data_start + 1, remaining_len);
 
+            let mut current_byte = 0;
             while current_byte != jwt_bytes_len {
-                let packed_chunk = *signature[jwt_data_start + 1 + chunk_idx];
+                let packed_chunk = *jwt_span.pop_front().unwrap();
                 let remaining = jwt_bytes_len - current_byte;
                 let chunk_len = if remaining >= 31 {
                     31
@@ -706,9 +801,7 @@ pub mod Cavos {
                 };
 
                 jwt_bytes.append_word(packed_chunk, chunk_len);
-
                 current_byte += chunk_len;
-                chunk_idx += 1;
             }
 
             // 1. Verify session key matches what was provided
@@ -800,21 +893,22 @@ pub mod Cavos {
                 .assert_claim_hex_match(
                     @jwt_bytes, payload_start, payload_len, nonce_offset, nonce_len, jwt_nonce,
                 );
-            self
-                .assert_decoded_claim_match(
-                    @jwt_bytes, 0, header_end, kid_offset, kid_len, jwt_kid,
-                );
+            self.assert_hashed_claim_match(@jwt_bytes, 0, header_end, kid_offset, kid_len, jwt_kid);
 
             // Register the session
             let session_data = SessionData {
                 nonce: jwt_nonce,
-                valid_after: valid_after,
-                valid_until: valid_until,
-                renewal_deadline: renewal_deadline,
-                registered_at: get_block_number(),
                 allowed_contracts_root: allowed_contracts_root,
-                max_calls_per_tx: max_calls_per_tx,
-                revocation_epoch: self.revocation_epoch.read(),
+                time_limits: SessionTimeLimits {
+                    valid_after: valid_after,
+                    valid_until: valid_until,
+                    registered_at: get_block_number(),
+                },
+                usage_limits: SessionUsageLimits {
+                    renewal_deadline: renewal_deadline,
+                    max_calls_per_tx: max_calls_per_tx,
+                    revocation_epoch: self.revocation_epoch.read(),
+                },
             };
             self.sessions.write(session_key, session_data);
 
@@ -882,12 +976,15 @@ pub mod Cavos {
             assert!(session.nonce != 0, "Session not registered");
 
             // Check revocation epoch
-            assert!(session.revocation_epoch == self.revocation_epoch.read(), "Session revoked");
+            assert!(
+                session.usage_limits.revocation_epoch == self.revocation_epoch.read(),
+                "Session revoked",
+            );
 
             // Timestamp-based expiry
             let now = get_block_timestamp();
-            assert!(now >= session.valid_after, "Session not yet active");
-            assert!(now < session.valid_until, "Session expired");
+            assert!(now >= session.time_limits.valid_after, "Session not yet active");
+            assert!(now < session.time_limits.valid_until, "Session expired");
 
             VALIDATED
         }
@@ -999,17 +1096,19 @@ pub mod Cavos {
 
                 // 3. Check revocation epoch
                 assert!(
-                    session.revocation_epoch == self.revocation_epoch.read(), "Session revoked",
+                    session.usage_limits.revocation_epoch == self.revocation_epoch.read(),
+                    "Session revoked",
                 );
 
                 // 4. Check time validity
                 let now = get_block_timestamp();
-                assert!(now >= session.valid_after, "Session not yet active");
-                assert!(now < session.valid_until, "Session expired");
+                assert!(now >= session.time_limits.valid_after, "Session not yet active");
+                assert!(now < session.time_limits.valid_until, "Session expired");
 
                 // 5. Check max_calls_per_tx
                 assert!(
-                    calls.len() <= session.max_calls_per_tx.into(), "Too many calls in transaction",
+                    calls.len() <= session.usage_limits.max_calls_per_tx.into(),
+                    "Too many calls in transaction",
                 );
 
                 // 6. Verify allowed contracts via Merkle proofs
@@ -1056,11 +1155,14 @@ pub mod Cavos {
 
             let session = self.sessions.read(session_key);
             assert!(session.nonce != 0, "Session not registered");
-            assert!(session.revocation_epoch == self.revocation_epoch.read(), "Session revoked");
+            assert!(
+                session.usage_limits.revocation_epoch == self.revocation_epoch.read(),
+                "Session revoked",
+            );
 
             let now = get_block_timestamp();
-            assert!(now >= session.valid_after, "Session not yet active");
-            assert!(now < session.valid_until, "Session expired");
+            assert!(now >= session.time_limits.valid_after, "Session not yet active");
+            assert!(now < session.time_limits.valid_until, "Session expired");
         }
 
         /// Validates lightweight session signature for outside execution, skipping expiry.
@@ -1080,10 +1182,13 @@ pub mod Cavos {
 
             let session = self.sessions.read(session_key);
             assert!(session.nonce != 0, "Session not registered");
-            assert!(session.revocation_epoch == self.revocation_epoch.read(), "Session revoked");
+            assert!(
+                session.usage_limits.revocation_epoch == self.revocation_epoch.read(),
+                "Session revoked",
+            );
 
             let now = get_block_timestamp();
-            assert!(now < session.renewal_deadline, "Renewal period expired");
+            assert!(now < session.usage_limits.renewal_deadline, "Renewal period expired");
         }
 
         /// Validates full OAuth JWT signature for outside execution
@@ -1179,19 +1284,21 @@ pub mod Cavos {
             };
 
             // Read witnesses directly from calldata (Tier 6: zero-copy v2).
-            let witnesses_start: usize = 37;
+            let witnesses_start: usize = OAUTH_WITNESSES_START;
             let witnesses_len: usize = (*signature[witnesses_start]).try_into().unwrap();
-            assert!(witnesses_len == 574, "Witnesses must be 574 felts");
+            assert!(witnesses_len == OAUTH_WITNESSES_LEN, "Witnesses must be 574 felts");
 
             let jwt_data_start: usize = witnesses_start + 1 + witnesses_len;
             let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
 
             let mut jwt_bytes = "";
+            let remaining_len = signature.len() - (jwt_data_start + 1);
+            let mut jwt_span = signature.slice(jwt_data_start + 1, remaining_len);
+
             let mut current_byte = 0;
-            let mut chunk_idx = 0;
 
             while current_byte != jwt_bytes_len {
-                let packed_chunk = *signature[jwt_data_start + 1 + chunk_idx];
+                let packed_chunk = *jwt_span.pop_front().unwrap();
                 let remaining = jwt_bytes_len - current_byte;
                 let chunk_len = if remaining >= 31 {
                     31
@@ -1200,7 +1307,6 @@ pub mod Cavos {
                 };
                 jwt_bytes.append_word(packed_chunk, chunk_len);
                 current_byte += chunk_len;
-                chunk_idx += 1;
             }
 
             assert!(
@@ -1236,10 +1342,7 @@ pub mod Cavos {
                 .assert_claim_hex_match(
                     @jwt_bytes, payload_start, payload_len, nonce_offset, nonce_len, jwt_nonce,
                 );
-            self
-                .assert_decoded_claim_match(
-                    @jwt_bytes, 0, header_end, kid_offset, kid_len, jwt_kid,
-                );
+            self.assert_hashed_claim_match(@jwt_bytes, 0, header_end, kid_offset, kid_len, jwt_kid);
 
             assert!(
                 jwt_iss == EXPECTED_ISS_GOOGLE
@@ -1266,13 +1369,7 @@ pub mod Cavos {
             let jwt_nonce = *signature[7];
 
             // Compute policy fields position (after witnesses + JWT bytes).
-            // Tier 5: witnesses_len is at [37], jwt_bytes_len follows witnesses.
-            let witnesses_start: usize = 37;
-            let witnesses_len: usize = (*signature[witnesses_start]).try_into().unwrap();
-            let jwt_data_start: usize = witnesses_start + 1 + witnesses_len;
-            let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
-            let jwt_chunks = (jwt_bytes_len + 30) / 31;
-            let policy_start: usize = jwt_data_start + 1 + jwt_chunks;
+            let policy_start: usize = oauth_policy_start(signature);
 
             // Extract policy fields
             let valid_after: u64 = (*signature[policy_start])
@@ -1291,9 +1388,13 @@ pub mod Cavos {
             let sp_start = policy_start + 4;
             let sp_felt_count: usize = spending_policies_len * 3;
             let mut spending_data: Array<felt252> = array![];
+
+            let remaining_len = signature.len() - sp_start;
+            let mut sp_span = signature.slice(sp_start, remaining_len);
+
             let mut si: usize = 0;
             while si != sp_felt_count {
-                spending_data.append(*signature[sp_start + si]);
+                spending_data.append(*sp_span.pop_front().unwrap());
                 si += 1;
             }
 
@@ -1306,13 +1407,17 @@ pub mod Cavos {
             // Register the session
             let session_data = SessionData {
                 nonce: jwt_nonce,
-                valid_after: valid_after,
-                valid_until: valid_until,
-                renewal_deadline: renewal_deadline,
-                registered_at: get_block_number(),
                 allowed_contracts_root: allowed_contracts_root,
-                max_calls_per_tx: max_calls_per_tx,
-                revocation_epoch: self.revocation_epoch.read(),
+                time_limits: SessionTimeLimits {
+                    valid_after: valid_after,
+                    valid_until: valid_until,
+                    registered_at: get_block_number(),
+                },
+                usage_limits: SessionUsageLimits {
+                    renewal_deadline: renewal_deadline,
+                    max_calls_per_tx: max_calls_per_tx,
+                    revocation_epoch: self.revocation_epoch.read(),
+                },
             };
             self.sessions.write(session_key, session_data);
 
@@ -1350,16 +1455,20 @@ pub mod Cavos {
             assert!(session.nonce != 0, "Session not registered");
 
             // 3. Check revocation epoch
-            assert!(session.revocation_epoch == self.revocation_epoch.read(), "Session revoked");
+            assert!(
+                session.usage_limits.revocation_epoch == self.revocation_epoch.read(),
+                "Session revoked",
+            );
 
             // 4. Verify session time validity (timestamp-based)
             let now = get_block_timestamp();
-            assert!(now >= session.valid_after, "Session not yet active");
-            assert!(now < session.valid_until, "Session expired");
+            assert!(now >= session.time_limits.valid_after, "Session not yet active");
+            assert!(now < session.time_limits.valid_until, "Session expired");
 
             // 5. Check max_calls_per_tx
             assert!(
-                calls.len() <= session.max_calls_per_tx.into(), "Too many calls in transaction",
+                calls.len() <= session.usage_limits.max_calls_per_tx.into(),
+                "Too many calls in transaction",
             );
 
             // 6. Verify allowed contracts via Merkle proofs (appended after sig[3])
@@ -1386,10 +1495,13 @@ pub mod Cavos {
 
             let session = self.sessions.read(session_key);
             assert!(session.nonce != 0, "Session not registered");
-            assert!(session.revocation_epoch == self.revocation_epoch.read(), "Session revoked");
+            assert!(
+                session.usage_limits.revocation_epoch == self.revocation_epoch.read(),
+                "Session revoked",
+            );
 
             let now = get_block_timestamp();
-            assert!(now < session.renewal_deadline, "Renewal period expired");
+            assert!(now < session.usage_limits.renewal_deadline, "Renewal period expired");
 
             VALIDATED
         }
@@ -1407,8 +1519,10 @@ pub mod Cavos {
         ///           kid_len
         /// [20]    = RSA sig length (16)
         /// [21-36] = RSA signature (16 u128 limbs)
-        /// [37]    = JWT data byte length
-        /// [38+]   = JWT bytes (header.payload, packed as 31-byte felt252 chunks)
+        /// [37]    = witnesses length (574)
+        /// [38-611]= RSA witnesses
+        /// [612]   = JWT data byte length
+        /// [613+]  = JWT bytes (header.payload, packed as 31-byte felt252 chunks)
         /// After JWT bytes:
         /// [jwt_end]   = valid_after
         /// [jwt_end+1] = allowed_contracts_root
@@ -1436,14 +1550,8 @@ pub mod Cavos {
             let valid_until: u64 = valid_until_felt.try_into().expect('valid_until overflow');
             let jwt_nonce = *signature[7];
 
-            // 3. Compute policy fields position (after JWT bytes).
-            // n_prime/r_sq removed from calldata — JWT length is now at [37] (same as
-            // outside-execution format: magic[0] sig[1-3] params[4-5] claims[6-13]
-            // offsets[14-19] rsa_len[20] rsa[21-36] jwt_len[37] jwt[38+]).
-            let jwt_data_idx: usize = 37;
-            let jwt_bytes_len: usize = (*signature[jwt_data_idx]).try_into().unwrap();
-            let jwt_chunks = (jwt_bytes_len + 30) / 31; // ceil(len/31)
-            let policy_start: usize = jwt_data_idx + 1 + jwt_chunks;
+            // 3. Compute policy fields position (after witnesses + JWT bytes).
+            let policy_start: usize = oauth_policy_start(signature);
 
             // 4. Extract policy fields
             let valid_after: u64 = (*signature[policy_start])
@@ -1463,9 +1571,13 @@ pub mod Cavos {
             let sp_felt_count: usize = spending_policies_len
                 * 3; // token + limit_low + limit_high per policy
             let mut spending_data: Array<felt252> = array![];
+
+            let remaining_len = signature.len() - sp_start;
+            let mut sp_span = signature.slice(sp_start, remaining_len);
+
             let mut si: usize = 0;
             while si != sp_felt_count {
-                spending_data.append(*signature[sp_start + si]);
+                spending_data.append(*sp_span.pop_front().unwrap());
                 si += 1;
             }
 
@@ -1567,17 +1679,19 @@ pub mod Cavos {
             };
 
             // Read witnesses directly from calldata (Tier 6: zero-copy v2).
-            let witnesses_start: usize = 37;
+            let witnesses_start: usize = OAUTH_WITNESSES_START;
             let witnesses_len: usize = (*signature[witnesses_start]).try_into().unwrap();
-            assert!(witnesses_len == 574, "Witnesses must be 574 felts");
+            assert!(witnesses_len == OAUTH_WITNESSES_LEN, "Witnesses must be 574 felts");
 
             let jwt_data_start: usize = witnesses_start + 1 + witnesses_len;
             let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
             let mut jwt_bytes = "";
+            let remaining_len = signature.len() - (jwt_data_start + 1);
+            let mut jwt_span = signature.slice(jwt_data_start + 1, remaining_len);
             let mut current_byte = 0;
-            let mut chunk_idx = 0;
+
             while current_byte != jwt_bytes_len {
-                let packed_chunk = *signature[jwt_data_start + 1 + chunk_idx];
+                let packed_chunk = *jwt_span.pop_front().unwrap();
                 let remaining = jwt_bytes_len - current_byte;
                 let chunk_len = if remaining >= 31 {
                     31
@@ -1586,7 +1700,6 @@ pub mod Cavos {
                 };
                 jwt_bytes.append_word(packed_chunk, chunk_len);
                 current_byte += chunk_len;
-                chunk_idx += 1;
             }
 
             assert!(
@@ -1624,24 +1737,27 @@ pub mod Cavos {
                         @jwt_bytes, payload_start, payload_len, sub_offset, sub_len, jwt_sub,
                     );
             }
-            self
-                .assert_decoded_claim_match(
-                    @jwt_bytes, 0, header_end, kid_offset, kid_len, jwt_kid,
-                );
+            self.assert_hashed_claim_match(@jwt_bytes, 0, header_end, kid_offset, kid_len, jwt_kid);
         }
 
         /// Store spending policies for a session key
         fn store_spending_policies(
-            ref self: ContractState, session_key: felt252, count: u32, policies: Span<felt252>,
+            ref self: ContractState, session_key: felt252, count: u32, mut policies: Span<felt252>,
         ) {
             self.session_spending_policy_count.write(session_key, count);
             let mut i: u32 = 0;
-            while i != count {
-                let base: usize = (i * 3);
-                let token_felt: felt252 = *policies[base];
-                let limit_low: u128 = (*policies[base + 1]).try_into().unwrap();
-                let limit_high: u128 = (*policies[base + 2]).try_into().unwrap();
+            while let Option::Some(chunks) = policies.multi_pop_front::<3>() {
+                if i == count {
+                    break;
+                }
+
+                let unboxed = chunks.unbox();
+                let [token_chunk, limit_low_chunk, limit_high_chunk] = unboxed;
+                let token_felt: felt252 = token_chunk;
+                let limit_low: u128 = limit_low_chunk.try_into().unwrap();
+                let limit_high: u128 = limit_high_chunk.try_into().unwrap();
                 let token: ContractAddress = token_felt.try_into().unwrap();
+
                 let policy = SpendingPolicy {
                     token: token, limit: u256 { low: limit_low, high: limit_high },
                 };

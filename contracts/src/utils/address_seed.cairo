@@ -1,3 +1,4 @@
+use core::hash::HashStateTrait;
 /// Address seed computation for deterministic wallet addresses.
 /// address_seed = Poseidon(sub, salt)
 ///
@@ -5,7 +6,6 @@
 /// OAuth `sub` claim and a salt value. Same Google account = same wallet.
 
 use core::poseidon::PoseidonTrait;
-use core::hash::HashStateTrait;
 
 /// Compute the address seed from a user's OAuth `sub` claim and salt.
 pub fn compute_address_seed(sub: felt252, salt: felt252) -> felt252 {

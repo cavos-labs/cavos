@@ -1,3 +1,4 @@
+use core::hash::HashStateTrait;
 /// Nonce verification for OAuth wallet sessions.
 /// The nonce ties an ephemeral key to a JWT, preventing replay attacks.
 ///
@@ -10,7 +11,6 @@
 /// - randomness: random value for uniqueness
 
 use core::poseidon::PoseidonTrait;
-use core::hash::HashStateTrait;
 
 /// Compute the expected nonce from session parameters.
 pub fn compute_nonce(
