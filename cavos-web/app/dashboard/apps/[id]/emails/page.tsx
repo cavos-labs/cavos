@@ -198,10 +198,7 @@ export default function AppEmailsPage() {
         setSuccess(false)
 
         try {
-            // If template is the same as default, save as null to use default
-            const templateToSave = formData.email_template_html === DEFAULT_TEMPLATE
-                ? ''
-                : formData.email_template_html
+            const templateToSave = formData.email_template_html === DEFAULT_TEMPLATE ? '' : formData.email_template_html
 
             const res = await fetch(`/api/apps/${appId}`, {
                 method: 'PATCH',

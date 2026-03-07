@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { AppForm } from '@/components/AppForm'
-import { AppWindow, Trash2, ArrowLeft, Copy, Check, Search, Loader2, Building2, Pencil, Mail } from 'lucide-react'
+import { AppWindow, Trash2, ArrowLeft, Copy, Check, Search, Loader2, Building2, Pencil, Mail, Lock } from 'lucide-react'
 
 export default function AppDetailPage() {
     const router = useRouter()
@@ -229,7 +229,7 @@ export default function AppDetailPage() {
                 </div>
             </Card>
 
-            {/* Email Verification Section */}
+            {/* Email Verification */}
             <Card>
                 <div className="flex items-start justify-between">
                     <div>
@@ -243,6 +243,26 @@ export default function AppDetailPage() {
                         size="sm"
                         onClick={() => router.push(`/dashboard/apps/${appId}/emails`)}
                         icon={<Mail className="w-4 h-4" />}
+                    >
+                        Configure
+                    </Button>
+                </div>
+            </Card>
+
+            {/* Password reset custom email */}
+            <Card>
+                <div className="flex items-start justify-between">
+                    <div>
+                        <h2 className="text-lg font-semibold mb-2">Password reset custom email</h2>
+                        <p className="text-sm text-black/60">
+                            Customize the email sent when users request a password reset (forgot password).
+                        </p>
+                    </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push(`/dashboard/apps/${appId}/emails/password-reset`)}
+                        icon={<Lock className="w-4 h-4" />}
                     >
                         Configure
                     </Button>
