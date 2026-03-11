@@ -5,12 +5,6 @@ pub mod cavos;
 pub mod deployer;
 pub mod jwks_registry;
 
-// RSA verification library
-pub mod rsa {
-    pub mod bignum;
-    pub mod rsa_verify;
-}
-
 // JWT parsing
 pub mod jwt {
     pub mod base64;

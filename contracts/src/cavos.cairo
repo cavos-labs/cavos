@@ -90,11 +90,12 @@ pub mod Cavos {
         ClassHash, ContractAddress, SyscallResultTrait, VALIDATED, get_block_number,
         get_block_timestamp, get_caller_address, get_contract_address, get_tx_info,
     };
-    use crate::jwks_registry::{IJWKSRegistryDispatcher, IJWKSRegistryDispatcherTrait};
+    use crate::jwks_registry::{IJWKSRegistryDispatcher, IJWKSRegistryDispatcherTrait, JWKSKey};
     use crate::jwt::base64::base64url_decode_window;
     use crate::jwt::jwt_parser::{hash_utf8_bytes, parse_decimal, parse_hex, split_signed_data};
-    use crate::rsa::bignum::BigUint2048;
-    use crate::rsa::rsa_verify::ProofBigUint2048;
+    use garaga::signatures::rsa::{
+        RSA2048PublicKey, RSA2048SignatureWithHint, is_valid_rsa2048_sha256_signature,
+    };
 
     /// Magic number to identify full OAuth JWT signatures (used during deployment/session
     /// registration).
@@ -116,8 +117,8 @@ pub mod Cavos {
     /// SNIP-9 Outside Execution V2 Interface ID (Rev 1)
     const SNIP9_OUTSIDE_EXECUTION_V2_ID: felt252 =
         0x1d1144bb2138366ff28d8e9ab57456b1d332ac42196230c3a602003c89872;
-    const OAUTH_WITNESSES_START: usize = 37;
-    const OAUTH_WITNESSES_LEN: usize = 610;
+    const GARAGA_RSA_START: usize = 19;
+    const GARAGA_RSA_LEN: usize = 864;
 
     /// Session data for registered session keys
     #[derive(Copy, Drop, Serde, starknet::Store)]
@@ -159,11 +160,13 @@ pub mod Cavos {
 
         fn unpack(value: felt252) -> SessionTimeLimits {
             let val: u256 = value.into();
-            let valid_after: u64 = (val.low & 0xFFFFFFFFFFFFFFFF).try_into().unwrap();
-            let valid_until: u64 = ((val.low / 0x10000000000000000) & 0xFFFFFFFFFFFFFFFF)
-                .try_into()
-                .unwrap();
-            let registered_at: u64 = (val.high & 0xFFFFFFFFFFFFFFFF).try_into().unwrap();
+            // DivRem splits val.low into [valid_until | valid_after] in one op (Rule 1)
+            let (valid_until_u128, valid_after_u128) = DivRem::div_rem(
+                val.low, 0x10000000000000000_u128.try_into().unwrap(),
+            );
+            let valid_after: u64 = valid_after_u128.try_into().unwrap();
+            let valid_until: u64 = valid_until_u128.try_into().unwrap();
+            let registered_at: u64 = val.high.try_into().unwrap();
 
             SessionTimeLimits { valid_after, valid_until, registered_at }
         }
@@ -182,14 +185,17 @@ pub mod Cavos {
 
         fn unpack(value: felt252) -> SessionUsageLimits {
             let val: u256 = value.into();
-            let renewal_deadline: u64 = (val.low & 0xFFFFFFFFFFFFFFFF).try_into().unwrap();
-            let max_calls_per_tx: u32 = ((val.low / 0x10000000000000000) & 0xFFFFFFFF)
-                .try_into()
-                .unwrap();
-            let revocation_epoch_low: u64 = (val.low / 0x1000000000000000000000000)
-                .try_into()
-                .unwrap();
-            let revocation_epoch_high: u64 = (val.high & 0xFFFFFFFF).try_into().unwrap();
+            // Two DivRem calls split val.low into [revocation_low | max_calls | renewal_deadline]
+            let (upper_64, renewal_deadline_u128) = DivRem::div_rem(
+                val.low, 0x10000000000000000_u128.try_into().unwrap(),
+            );
+            let renewal_deadline: u64 = renewal_deadline_u128.try_into().unwrap();
+            let (revocation_epoch_low_u128, max_calls_u128) = DivRem::div_rem(
+                upper_64, 0x100000000_u128.try_into().unwrap(),
+            );
+            let max_calls_per_tx: u32 = max_calls_u128.try_into().unwrap();
+            let revocation_epoch_low: u64 = revocation_epoch_low_u128.try_into().unwrap();
+            let revocation_epoch_high: u64 = val.high.try_into().unwrap();
             let revocation_epoch = revocation_epoch_low + revocation_epoch_high * 0x100000000_u64;
 
             SessionUsageLimits { renewal_deadline, max_calls_per_tx, revocation_epoch }
@@ -197,10 +203,10 @@ pub mod Cavos {
     }
 
     pub fn oauth_policy_start(signature: Span<felt252>) -> usize {
-        let witnesses_len: usize = (*signature[OAUTH_WITNESSES_START]).try_into().unwrap();
-        assert!(witnesses_len == OAUTH_WITNESSES_LEN, "Witnesses must be 610 felts");
+        let garaga_len: usize = (*signature[GARAGA_RSA_START]).try_into().unwrap();
+        assert!(garaga_len == GARAGA_RSA_LEN, "Garaga RSA data must be 864 felts");
 
-        let jwt_data_start: usize = OAUTH_WITNESSES_START + 1 + witnesses_len;
+        let jwt_data_start: usize = GARAGA_RSA_START + 1 + garaga_len;
         let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
         let jwt_chunks = (jwt_bytes_len + 30) / 31;
 
@@ -521,7 +527,7 @@ pub mod Cavos {
         }
 
         fn get_version(self: @ContractState) -> u8 {
-            2
+            3
         }
     }
 
@@ -743,48 +749,13 @@ pub mod Cavos {
             let jwt_exp_felt = *signature[8];
             let jwt_kid = *signature[9];
             let jwt_iss = *signature[10];
-            let _jwt_aud = *signature[11];
-            let salt = *signature[12];
-            let wallet_name = *signature[13];
+            let salt = *signature[11];
+            let wallet_name = *signature[12];
 
-            // RSA signature starts at index 20
-            let rsa_sig_start: usize = 20;
-            let rsa_sig_len: usize = (*signature[rsa_sig_start]).try_into().unwrap();
-            assert!(rsa_sig_len == 16, "RSA signature must be 16 limbs");
-
-            let mut rsa_span = signature.slice(rsa_sig_start + 1, 16);
-            let rsa_sig = BigUint2048 {
-                limbs: [
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                ],
-            };
-
-            // Read RSA witnesses directly from calldata (Tier 6: zero-copy v2).
-            // Format: [37] witnesses_len=610, [38..647] raw witness felts,
-            //         [648] jwt_bytes_len, [649+] packed JWT bytes.
-            let witnesses_start: usize = OAUTH_WITNESSES_START;
-            let witnesses_len: usize = (*signature[witnesses_start]).try_into().unwrap();
-            assert!(witnesses_len == OAUTH_WITNESSES_LEN, "Witnesses must be 610 felts");
-
-            // JWT signed data starts after all witnesses
-            let jwt_data_start: usize = witnesses_start + 1 + witnesses_len;
-
-            // The value at jwt_data_start is the TOTAL BYTE LENGTH of the JWT data
+            // Extract JWT bytes from calldata (after Garaga RSA data)
+            let garaga_len: usize = (*signature[GARAGA_RSA_START]).try_into().unwrap();
+            assert!(garaga_len == GARAGA_RSA_LEN, "Garaga RSA data must be 864 felts");
+            let jwt_data_start: usize = GARAGA_RSA_START + 1 + garaga_len;
             let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
 
             let mut jwt_bytes = "";
@@ -844,22 +815,8 @@ pub mod Cavos {
             let registry = IJWKSRegistryDispatcher { contract_address: self.jwks_registry.read() };
             let jwks_key = registry.get_key_if_valid(jwt_kid);
 
-            // 8. Verify RSA signature using Schwartz-Zippel v2 (Tier 6: zero-copy)
-            let modulus = ProofBigUint2048 {
-                limbs: [
-                    jwks_key.n0.into(), jwks_key.n1.into(), jwks_key.n2.into(), jwks_key.n3.into(),
-                    jwks_key.n4.into(), jwks_key.n5.into(), jwks_key.n6.into(), jwks_key.n7.into(),
-                    jwks_key.n8.into(), jwks_key.n9.into(), jwks_key.n10.into(),
-                    jwks_key.n11.into(), jwks_key.n12.into(), jwks_key.n13.into(),
-                    jwks_key.n14.into(), jwks_key.n15.into(), jwks_key.n16.into(),
-                ],
-            };
-            assert!(
-                crate::rsa::rsa_verify::verify_rsa_schwartz_zippel_v2(
-                    @jwt_bytes, @rsa_sig, @modulus, signature, witnesses_start + 1,
-                ),
-                "RSA verification failed (Schwartz-Zippel)",
-            );
+            // 8. Verify RSA signature using Garaga RSA-2048
+            Self::verify_rsa_garaga(signature, @jwks_key, @jwt_bytes);
 
             // Verify issuer is Google, Apple, or Firebase
             assert!(
@@ -870,13 +827,13 @@ pub mod Cavos {
             );
 
             // SECURITY: Verify claims in JWT bytes match the provided parameters
-            // wallet_name at [13], claim offsets at [14-19]
-            let sub_offset: usize = (*signature[14]).try_into().unwrap();
-            let sub_len: usize = (*signature[15]).try_into().unwrap();
-            let nonce_offset: usize = (*signature[16]).try_into().unwrap();
-            let nonce_len: usize = (*signature[17]).try_into().unwrap();
-            let kid_offset: usize = (*signature[18]).try_into().unwrap();
-            let kid_len: usize = (*signature[19]).try_into().unwrap();
+            // wallet_name at [12], claim offsets at [13-18]
+            let sub_offset: usize = (*signature[13]).try_into().unwrap();
+            let sub_len: usize = (*signature[14]).try_into().unwrap();
+            let nonce_offset: usize = (*signature[15]).try_into().unwrap();
+            let nonce_len: usize = (*signature[16]).try_into().unwrap();
+            let kid_offset: usize = (*signature[17]).try_into().unwrap();
+            let kid_len: usize = (*signature[18]).try_into().unwrap();
 
             let (header_end, payload_start, payload_end) = split_signed_data(@jwt_bytes);
             let payload_len = payload_end - payload_start;
@@ -1005,17 +962,12 @@ pub mod Cavos {
             // Hash each call
             let calls = *outside_execution.calls;
             let mut hashed_calls: Array<felt252> = array![];
-            let mut i: usize = 0;
-            while i != calls.len() {
-                let call = calls[i];
-                // Hash call: poseidon_hash_span([CALL_TYPE_HASH, to, selector,
-                // poseidon_hash_span(calldata)])
+            for call in calls {
                 let calldata_hash = core::poseidon::poseidon_hash_span(*call.calldata);
                 let call_hash = core::poseidon::poseidon_hash_span(
                     array![CALL_TYPE_HASH, (*call.to).into(), *call.selector, calldata_hash].span(),
                 );
                 hashed_calls.append(call_hash);
-                i += 1;
             }
             let calls_hash = core::poseidon::poseidon_hash_span(hashed_calls.span());
 
@@ -1211,9 +1163,8 @@ pub mod Cavos {
             let jwt_exp_felt = *signature[8];
             let jwt_kid = *signature[9];
             let jwt_iss = *signature[10];
-            let _jwt_aud = *signature[11];
-            let salt = *signature[12];
-            let wallet_name = *signature[13];
+            let salt = *signature[11];
+            let wallet_name = *signature[12];
 
             // 1. Verify session key signed the message hash
             assert!(
@@ -1251,49 +1202,10 @@ pub mod Cavos {
             let registry = IJWKSRegistryDispatcher { contract_address: self.jwks_registry.read() };
             let jwks_key = registry.get_key_if_valid(jwt_kid);
 
-            // 7. Extract and verify RSA signature using Schwartz-Zippel (Tier 5)
-            // wallet_name at [13], claim offsets [14-19], RSA sig starts at [20]
-            let rsa_sig_start: usize = 20;
-            let rsa_sig_len: usize = (*signature[rsa_sig_start]).try_into().unwrap();
-            assert!(rsa_sig_len == 16, "RSA signature must be 16 limbs");
-
-            let mut rsa_span = signature.slice(rsa_sig_start + 1, 16);
-            let rsa_sig = BigUint2048 {
-                limbs: [
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                ],
-            };
-            let modulus = ProofBigUint2048 {
-                limbs: [
-                    jwks_key.n0.into(), jwks_key.n1.into(), jwks_key.n2.into(), jwks_key.n3.into(),
-                    jwks_key.n4.into(), jwks_key.n5.into(), jwks_key.n6.into(), jwks_key.n7.into(),
-                    jwks_key.n8.into(), jwks_key.n9.into(), jwks_key.n10.into(),
-                    jwks_key.n11.into(), jwks_key.n12.into(), jwks_key.n13.into(),
-                    jwks_key.n14.into(), jwks_key.n15.into(), jwks_key.n16.into(),
-                ],
-            };
-
-            // Read witnesses directly from calldata (Tier 6: zero-copy v2).
-            let witnesses_start: usize = OAUTH_WITNESSES_START;
-            let witnesses_len: usize = (*signature[witnesses_start]).try_into().unwrap();
-            assert!(witnesses_len == OAUTH_WITNESSES_LEN, "Witnesses must be 610 felts");
-
-            let jwt_data_start: usize = witnesses_start + 1 + witnesses_len;
+            // 7. Extract JWT bytes and verify RSA signature using Garaga
+            let garaga_len: usize = (*signature[GARAGA_RSA_START]).try_into().unwrap();
+            assert!(garaga_len == GARAGA_RSA_LEN, "Garaga RSA data must be 864 felts");
+            let jwt_data_start: usize = GARAGA_RSA_START + 1 + garaga_len;
             let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
 
             let mut jwt_bytes = "";
@@ -1314,20 +1226,15 @@ pub mod Cavos {
                 current_byte += chunk_len;
             }
 
-            assert!(
-                crate::rsa::rsa_verify::verify_rsa_schwartz_zippel_v2(
-                    @jwt_bytes, @rsa_sig, @modulus, signature, witnesses_start + 1,
-                ),
-                "RSA verification failed (Schwartz-Zippel)",
-            );
+            Self::verify_rsa_garaga(signature, @jwks_key, @jwt_bytes);
 
-            // Verify claims - indices account for wallet_name at [13]
-            let sub_offset: usize = (*signature[14]).try_into().unwrap();
-            let sub_len: usize = (*signature[15]).try_into().unwrap();
-            let nonce_offset: usize = (*signature[16]).try_into().unwrap();
-            let nonce_len: usize = (*signature[17]).try_into().unwrap();
-            let kid_offset: usize = (*signature[18]).try_into().unwrap();
-            let kid_len: usize = (*signature[19]).try_into().unwrap();
+            // Verify claims - indices account for wallet_name at [12]
+            let sub_offset: usize = (*signature[13]).try_into().unwrap();
+            let sub_len: usize = (*signature[14]).try_into().unwrap();
+            let nonce_offset: usize = (*signature[15]).try_into().unwrap();
+            let nonce_len: usize = (*signature[16]).try_into().unwrap();
+            let kid_offset: usize = (*signature[17]).try_into().unwrap();
+            let kid_len: usize = (*signature[18]).try_into().unwrap();
 
             let (header_end, payload_start, payload_end) = split_signed_data(@jwt_bytes);
             let payload_len = payload_end - payload_start;
@@ -1618,8 +1525,8 @@ pub mod Cavos {
             let jwt_exp_felt = *signature[8];
             let jwt_kid = *signature[9];
             let jwt_iss = *signature[10];
-            let salt = *signature[12];
-            let wallet_name = *signature[13];
+            let salt = *signature[11];
+            let wallet_name = *signature[12];
 
             // Verify nonce = Poseidon(session_key, valid_until, randomness)
             let expected_nonce = PoseidonTrait::new()
@@ -1647,50 +1554,10 @@ pub mod Cavos {
             let registry = IJWKSRegistryDispatcher { contract_address: self.jwks_registry.read() };
             let jwks_key = registry.get_key_if_valid(jwt_kid);
 
-            // Extract and verify RSA signature using Schwartz-Zippel (Tier 5)
-            // wallet_name at [13], claim offsets [14-19], RSA sig starts at [20]
-            let rsa_sig_start: usize = 20;
-            let rsa_sig_len: usize = (*signature[rsa_sig_start]).try_into().unwrap();
-            assert!(rsa_sig_len == 16, "RSA signature must be 16 limbs");
-
-            let mut rsa_span = signature.slice(rsa_sig_start + 1, 16);
-            let rsa_sig = BigUint2048 {
-                limbs: [
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                    (*rsa_span.pop_front().unwrap()).try_into().unwrap(),
-                ],
-            };
-
-            let modulus = ProofBigUint2048 {
-                limbs: [
-                    jwks_key.n0.into(), jwks_key.n1.into(), jwks_key.n2.into(), jwks_key.n3.into(),
-                    jwks_key.n4.into(), jwks_key.n5.into(), jwks_key.n6.into(), jwks_key.n7.into(),
-                    jwks_key.n8.into(), jwks_key.n9.into(), jwks_key.n10.into(),
-                    jwks_key.n11.into(), jwks_key.n12.into(), jwks_key.n13.into(),
-                    jwks_key.n14.into(), jwks_key.n15.into(), jwks_key.n16.into(),
-                ],
-            };
-
-            // Read witnesses directly from calldata (Tier 6: zero-copy v2).
-            let witnesses_start: usize = OAUTH_WITNESSES_START;
-            let witnesses_len: usize = (*signature[witnesses_start]).try_into().unwrap();
-            assert!(witnesses_len == OAUTH_WITNESSES_LEN, "Witnesses must be 610 felts");
-
-            let jwt_data_start: usize = witnesses_start + 1 + witnesses_len;
+            // Extract JWT bytes and verify RSA signature using Garaga
+            let garaga_len: usize = (*signature[GARAGA_RSA_START]).try_into().unwrap();
+            assert!(garaga_len == GARAGA_RSA_LEN, "Garaga RSA data must be 864 felts");
+            let jwt_data_start: usize = GARAGA_RSA_START + 1 + garaga_len;
             let jwt_bytes_len: usize = (*signature[jwt_data_start]).try_into().unwrap();
             let mut jwt_bytes = "";
             let remaining_len = signature.len() - (jwt_data_start + 1);
@@ -1709,12 +1576,7 @@ pub mod Cavos {
                 current_byte += chunk_len;
             }
 
-            assert!(
-                crate::rsa::rsa_verify::verify_rsa_schwartz_zippel_v2(
-                    @jwt_bytes, @rsa_sig, @modulus, signature, witnesses_start + 1,
-                ),
-                "RSA verification failed (Schwartz-Zippel)",
-            );
+            Self::verify_rsa_garaga(signature, @jwks_key, @jwt_bytes);
 
             // Verify issuer
             assert!(
@@ -1725,10 +1587,10 @@ pub mod Cavos {
             );
 
             // Verify claims match - indices account for wallet_name at [13]
-            let sub_offset: usize = (*signature[14]).try_into().unwrap();
-            let sub_len: usize = (*signature[15]).try_into().unwrap();
-            let kid_offset: usize = (*signature[18]).try_into().unwrap();
-            let kid_len: usize = (*signature[19]).try_into().unwrap();
+            let sub_offset: usize = (*signature[13]).try_into().unwrap();
+            let sub_len: usize = (*signature[14]).try_into().unwrap();
+            let kid_offset: usize = (*signature[17]).try_into().unwrap();
+            let kid_len: usize = (*signature[18]).try_into().unwrap();
 
             let (header_end, payload_start, payload_end) = split_signed_data(@jwt_bytes);
             let payload_len = payload_end - payload_start;
@@ -1745,6 +1607,38 @@ pub mod Cavos {
                     );
             }
             self.assert_hashed_claim_match(@jwt_bytes, 0, header_end, kid_offset, kid_len, jwt_kid);
+        }
+
+        /// Construct a Garaga RSA2048PublicKey from JWKSKey's 24 felt252 limbs.
+        fn jwks_key_to_rsa2048_public_key(key: @JWKSKey) -> RSA2048PublicKey {
+            let mut key_span: Span<felt252> = array![
+                *key.n0, *key.n1, *key.n2, *key.n3, *key.n4, *key.n5, *key.n6, *key.n7, *key.n8,
+                *key.n9, *key.n10, *key.n11, *key.n12, *key.n13, *key.n14, *key.n15, *key.n16,
+                *key.n17, *key.n18, *key.n19, *key.n20, *key.n21, *key.n22, *key.n23,
+            ]
+                .span();
+            Serde::<RSA2048PublicKey>::deserialize(ref key_span).unwrap()
+        }
+
+        /// Verify RSA-2048 signature using Garaga's audited library.
+        /// Deserializes RSA2048SignatureWithHint from calldata at GARAGA_RSA_START,
+        /// constructs the public key from JWKSKey, and verifies against jwt_bytes.
+        fn verify_rsa_garaga(
+            signature: Span<felt252>, jwks_key: @JWKSKey, jwt_bytes: @ByteArray,
+        ) {
+            let public_key = Self::jwks_key_to_rsa2048_public_key(jwks_key);
+
+            let garaga_len: usize = (*signature[GARAGA_RSA_START]).try_into().unwrap();
+            assert!(garaga_len == GARAGA_RSA_LEN, "Garaga RSA data must be 864 felts");
+
+            let mut rsa_span = signature.slice(GARAGA_RSA_START + 1, garaga_len);
+            let sig_with_hint = Serde::<RSA2048SignatureWithHint>::deserialize(ref rsa_span)
+                .unwrap();
+
+            assert!(
+                is_valid_rsa2048_sha256_signature(@sig_with_hint, @public_key, jwt_bytes),
+                "RSA verification failed",
+            );
         }
 
         /// Store spending policies for a session key
@@ -1784,8 +1678,9 @@ pub mod Cavos {
             }
 
             let mut sig_idx: usize = 4; // Start after [magic, r, s, session_key]
+            let n_calls = calls.len(); // cache .len() (Rule 5)
             let mut i: usize = 0;
-            while i != calls.len() {
+            while i != n_calls {
                 let call = calls[i];
                 let contract: ContractAddress = *call.to;
                 let selector = *call.selector;
@@ -1794,13 +1689,8 @@ pub mod Cavos {
                 let proof_len: usize = (*signature[sig_idx]).try_into().unwrap();
                 sig_idx += 1;
 
-                // Build proof span
-                let mut proof: Array<felt252> = array![];
-                let mut j: usize = 0;
-                while j != proof_len {
-                    proof.append(*signature[sig_idx + j]);
-                    j += 1;
-                }
+                // Use span.slice() instead of building an Array (Rule 6)
+                let proof_span = signature.slice(sig_idx, proof_len);
                 sig_idx += proof_len;
 
                 // SECURITY BYPASS: If call is to self, allow it regardless of Merkle tree
@@ -1817,10 +1707,8 @@ pub mod Cavos {
                 // Leaf = PoseidonTrait::new().update(contract).finalize()
                 // Matches SDK's computePoseidonHashOnElements([contract])
                 let mut current = PoseidonTrait::new().update(contract.into()).finalize();
-                let proof_span = proof.span();
-                let mut k: usize = 0;
-                while k != proof_span.len() {
-                    let sibling = *proof_span[k];
+                for sibling in proof_span {
+                    let sibling = *sibling;
                     let current_u256: u256 = current.into();
                     let sibling_u256: u256 = sibling.into();
                     if current_u256 < sibling_u256 {
@@ -1828,7 +1716,6 @@ pub mod Cavos {
                     } else {
                         current = PoseidonTrait::new().update(sibling).update(current).finalize();
                     }
-                    k += 1;
                 }
                 assert!(current == root, "Contract not in allowed list");
 
@@ -1847,9 +1734,7 @@ pub mod Cavos {
                 return;
             }
 
-            let mut i: usize = 0;
-            while i != calls.len() {
-                let call = calls[i];
+            for call in calls {
                 let sel = *call.selector;
 
                 // Check for ERC-20 transfer(recipient, amount_low, amount_high)
@@ -1895,8 +1780,6 @@ pub mod Cavos {
                     self.session_amount_spent_low.write((session_key, token), new_spent.low);
                     self.session_amount_spent_high.write((session_key, token), new_spent.high);
                 }
-
-                i += 1;
             };
         }
     }

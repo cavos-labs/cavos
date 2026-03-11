@@ -6,28 +6,35 @@
 use starknet::ContractAddress;
 
 /// RSA public key stored on-chain.
-/// The modulus `n` is a 2048-bit RSA key stored as 17 x 123-bit limbs (little-endian).
-/// Montgomery constants (r_sq, n_prime) removed in Tier 5: witnesses are provided in calldata.
+/// The modulus `n` is a 2048-bit RSA key stored as 24 × u96 limbs (little-endian),
+/// matching Garaga's RSA2048Chunks format (6 × u384, each u384 = 4 × u96).
 #[derive(Copy, Drop, Serde, starknet::Store)]
 pub struct JWKSKey {
-    /// RSA modulus limb 0 (least significant)
-    pub n0: u128,
-    pub n1: u128,
-    pub n2: u128,
-    pub n3: u128,
-    pub n4: u128,
-    pub n5: u128,
-    pub n6: u128,
-    pub n7: u128,
-    pub n8: u128,
-    pub n9: u128,
-    pub n10: u128,
-    pub n11: u128,
-    pub n12: u128,
-    pub n13: u128,
-    pub n14: u128,
-    pub n15: u128,
-    pub n16: u128,
+    /// RSA modulus as 24 × u96 limbs (little-endian, Garaga-compatible)
+    pub n0: felt252,
+    pub n1: felt252,
+    pub n2: felt252,
+    pub n3: felt252,
+    pub n4: felt252,
+    pub n5: felt252,
+    pub n6: felt252,
+    pub n7: felt252,
+    pub n8: felt252,
+    pub n9: felt252,
+    pub n10: felt252,
+    pub n11: felt252,
+    pub n12: felt252,
+    pub n13: felt252,
+    pub n14: felt252,
+    pub n15: felt252,
+    pub n16: felt252,
+    pub n17: felt252,
+    pub n18: felt252,
+    pub n19: felt252,
+    pub n20: felt252,
+    pub n21: felt252,
+    pub n22: felt252,
+    pub n23: felt252,
     /// Provider identifier (hash of 'google' or 'apple')
     pub provider: felt252,
     /// Expiry timestamp (0 = no expiry)

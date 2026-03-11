@@ -121,8 +121,9 @@ function kidToFelt(kid: string): string {
 }
 
 /**
- * Decode a base64url RSA modulus into 17 × 123-bit proof limbs (little-endian).
- * limbs[0] = n0 = least significant 123-bit chunk.
+ * Decode a base64url RSA modulus into 24 × 96-bit limbs (little-endian).
+ * Matches Garaga's RSA2048Chunks format (6 × u384, each u384 = 4 × u96).
+ * limbs[0] = n0 = least significant 96-bit chunk.
  */
 function modulusToLimbs(base64url: string): bigint[] {
   const base64 = base64url
@@ -137,10 +138,10 @@ function modulusToLimbs(base64url: string): bigint[] {
   bytes.copy(padded, 256 - bytes.length);
 
   const modulus = BigInt('0x' + padded.toString('hex'));
-  const mask = (1n << 123n) - 1n;
+  const mask = (1n << 96n) - 1n;
   const limbs: bigint[] = [];
-  for (let i = 0; i < 17; i++) {
-    limbs.push((modulus >> (BigInt(i) * 123n)) & mask);
+  for (let i = 0; i < 24; i++) {
+    limbs.push((modulus >> (BigInt(i) * 96n)) & mask);
   }
   return limbs;
 }
@@ -337,7 +338,7 @@ function buildRegisterKeyCalldata(proof: ReclaimProof, key: FormattedKey): strin
     }),
     // ── kid ──────────────────────────────────────────────────────────────────
     key.kidFelt,
-    // ── JWKSKey (slim: 17 proof limbs + 3 metadata) ──────────────────────────
+    // ── JWKSKey (24 × u96 Garaga-compatible limbs + 3 metadata) ───────────────
     ...key.nLimbs.map(h),
     key.provider,
     h(BigInt(key.validUntil)),
