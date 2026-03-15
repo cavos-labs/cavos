@@ -5,7 +5,7 @@ import Link from 'next/link'
 
 export const metadata = {
     title: "Cavos vs The Rest | The Sovereignty Matrix",
-    description: "Technical comparison between Cavos, Privy, Dynamic, and Passkey Wallets. Why verifiable, MPC-free signers are the future of Starknet.",
+    description: "Technical comparison between Cavos, Privy, Dynamic, and Passkey Wallets. Why verifiable, MPC-free signers are the future of embedded wallets.",
 }
 
 export default function ComparePage() {
@@ -22,7 +22,7 @@ export default function ComparePage() {
             cavos: "Truly Verifiable On-chain",
             privy: "Provider-managed Shards",
             passkey: "Browser-based Auth Hooks",
-            benefit: "Anyone can verify the authorization proof on Starknet explorer. MPC relies on provider backend."
+            benefit: "Anyone can verify the authorization proof on-chain. MPC relies on provider backend."
         },
         {
             feature: "AI Agent Signer",
@@ -70,8 +70,8 @@ export default function ComparePage() {
             feature: "Production Usage",
             cavos: "10+ dApps • 81+ wallets (growing)",
             privy: "Strong cross-chain adoption",
-            passkey: "Dominant in Starknet gaming",
-            benefit: "Cavos is the chosen infrastructure for high-growth Starknet consumer applications."
+            passkey: "Dominant in onchain gaming",
+            benefit: "Cavos is the chosen infrastructure for high-growth consumer applications."
         },
         {
             feature: "Performance",
@@ -109,8 +109,8 @@ export default function ComparePage() {
                         The Sovereignty Matrix
                     </h1>
                     <p className="text-xl text-gray-500 max-w-3xl mx-auto">
-                        Choosing a wallet infrastructure is a decision about trust. 
-                        Cavos is the only **verifiable, MPC-free** infrastructure built natively for Starknet.
+                        Choosing a wallet infrastructure is a decision about trust.
+                        Cavos is the only **verifiable, MPC-free** infrastructure built natively for on-chain account abstraction.
                     </p>
                 </header>
 
@@ -170,7 +170,7 @@ export default function ComparePage() {
                             </div>
                         </div>
                         <p className="text-2xl text-gray-600 leading-tight font-serif italic">
-                            "Cavos enables us to onboard coffee farmers directly to Starknet without the friction of traditional wallets. They get the benefits of decentralization and middleman-free sales, while the blockchain remains invisible."
+                            "Cavos enables us to onboard coffee farmers directly without the friction of traditional wallets. They get the benefits of decentralization and middleman-free sales, while the blockchain remains invisible."
                         </p>
                         <div className="pt-6 border-t border-gray-200 flex flex-wrap gap-8 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">
                             <span className="flex items-center gap-2 text-black"><span className="w-2 h-2 bg-green-500 rounded-full"></span> Middleman-Free</span>
@@ -196,22 +196,22 @@ export default function ComparePage() {
                             <p className="text-gray-600">
                                 AI agents need signers that can operate autonomously without exposing long-lived private keys. 
                                 Cavos session tokens are authorized for specific contracts and spending limits on-chain, 
-                                making it the standard for the next generation of autonomous Starknet apps.
+                                making it the standard for the next generation of autonomous onchain apps.
                             </p>
                         </div>
                         <div className="space-y-4">
                             <h3 className="text-2xl font-bold">Protocol-Native DX</h3>
                             <p className="text-gray-600">
-                                While others build cross-chain abstractions that add latency, Cavos is 100% Starknet-native. 
-                                From integrated AVNU paymasters to sub-account naming via named wallets, 
-                                every feature is optimized for the Starknet native AA ecosystem.
+                                While others build cross-chain abstractions that add latency, Cavos is 100% protocol-native.
+                                From integrated AVNU paymasters to sub-account naming via named wallets,
+                                every feature is optimized for the native AA ecosystem.
                             </p>
                         </div>
                         <div className="space-y-4">
                             <h3 className="text-2xl font-bold">Invisible UX, Total Control</h3>
                             <p className="text-gray-600">
                                 Get your users into your app in under 30 seconds. No browser popups, no seed phrases, no extensions. 
-                                Just a seamless Web2 login that results in a fully self-custodial Starknet account 
+                                Just a seamless Web2 login that results in a fully self-custodial account
                                 that works across every device.
                             </p>
                         </div>

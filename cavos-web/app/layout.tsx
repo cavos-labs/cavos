@@ -14,15 +14,13 @@ export const metadata: Metadata = {
     default: "Cavos | Invisible Crypto Infrastructure",
     template: "%s | Cavos"
   },
-  description: "Verifiable, MPC-free embedded wallets for Starknet. Turn OAuth identities (Google, Apple) into self-custodial wallets with on-chain RSA verification.",
+  description: "Verifiable, MPC-free embedded wallets. Turn OAuth identities (Google, Apple) into self-custodial wallets with on-chain RSA verification.",
   keywords: [
-    "Starknet",
     "Account Abstraction",
     "Embedded Wallet",
     "OAuth Wallet",
     "Self-Custodial",
     "MPC-free",
-    "Starknet API",
     "Web3 Onboarding",
     "Crypto Infrastructure",
     "AI Agent Signer"
@@ -35,7 +33,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Cavos | Invisible Crypto Infrastructure",
-    description: "The premier verifiable signer for sovereign humans and AI agents on Starknet.",
+    description: "The premier verifiable signer for sovereign humans and AI agents.",
     url: "https://cavos.xyz",
     siteName: "Cavos",
     images: [
@@ -52,7 +50,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Cavos | OAuth for Blockchain",
-    description: "Verifiable, MPC-free embedded wallets for Starknet agents and humans.",
+    description: "Verifiable, MPC-free embedded wallets for agents and humans.",
     creator: "@cavosxyz",
     images: ["/og-image.png"],
   },

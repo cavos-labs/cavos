@@ -2,15 +2,13 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Fuel, ArrowDown, Clock, ExternalLink, Wallet, CheckCircle, Loader2 } from 'lucide-react';
+import { Fuel, ArrowDown, Clock, ExternalLink, Wallet, CheckCircle, Loader2, X, TrendingDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { connect, disconnect } from 'starknetkit';
 import { RpcProvider } from 'starknet';
 
-// Wallets inject account + selectedAddress at runtime on top of the base type
 interface ConnectedWallet {
     id: string;
     name: string;
@@ -43,12 +41,15 @@ interface GasDeposit {
     created_at: string;
 }
 
-// Convert STRK float to u256 calldata [low, high]
 function toU256Calldata(amount: string): [string, string] {
     const wei = BigInt(Math.floor(parseFloat(amount) * 1e18));
     const low = (wei & BigInt('0xffffffffffffffffffffffffffffffff')).toString();
     const high = (wei >> BigInt(128)).toString();
     return [low, high];
+}
+
+function shortAddr(addr: string) {
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 }
 
 export default function BillingPage() {
@@ -59,11 +60,9 @@ export default function BillingPage() {
     const [depositAmount, setDepositAmount] = useState('');
     const [showDepositForm, setShowDepositForm] = useState(false);
 
-    // Wallet state
     const [walletObj, setWalletObj] = useState<ConnectedWallet | null>(null);
     const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
-    // Deposit flow state
     const [txStatus, setTxStatus] = useState<TxStatus>('idle');
     const [txError, setTxError] = useState<string | null>(null);
 
@@ -73,10 +72,7 @@ export default function BillingPage() {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
-        if (!user) {
-            router.replace('/login');
-            return;
-        }
+        if (!user) { router.replace('/login'); return; }
 
         const { data: org } = await supabase
             .from('organizations')
@@ -84,10 +80,7 @@ export default function BillingPage() {
             .eq('owner_id', user.id)
             .single();
 
-        if (!org) {
-            setLoading(false);
-            return;
-        }
+        if (!org) { setLoading(false); return; }
 
         setOrgId(org.id);
 
@@ -107,8 +100,6 @@ export default function BillingPage() {
 
     useEffect(() => {
         fetchData();
-        // Try to restore last connected wallet
-        // Silently restore last connected wallet if previously authorized
         connect({ modalMode: 'neverAsk' }).then(({ wallet, connectorData }) => {
             if (wallet && connectorData?.account) {
                 setWalletObj(wallet as unknown as ConnectedWallet);
@@ -118,10 +109,7 @@ export default function BillingPage() {
     }, [fetchData]);
 
     const handleConnectWallet = async () => {
-        const { wallet, connectorData } = await connect({
-            modalMode: 'alwaysAsk',
-            dappName: 'Cavos',
-        });
+        const { wallet, connectorData } = await connect({ modalMode: 'alwaysAsk', dappName: 'Cavos' });
         if (wallet && connectorData?.account) {
             setWalletObj(wallet as unknown as ConnectedWallet);
             setWalletAddress(connectorData.account);
@@ -138,8 +126,7 @@ export default function BillingPage() {
         const walletRaw = walletObj as unknown as Record<string, unknown> | null;
         const account = (walletObj as unknown as { account?: ConnectedWallet['account'] })?.account;
         const hasRequest = typeof walletRaw?.request === 'function';
-        if (!orgId || !balance?.org_felt_id || !depositAmount) return;
-        if (!walletRaw) return;
+        if (!orgId || !balance?.org_felt_id || !depositAmount || !walletRaw) return;
         if (!hasRequest && !account?.execute) {
             setTxError('Wallet does not support transactions');
             setTxStatus('error');
@@ -152,39 +139,21 @@ export default function BillingPage() {
         try {
             const [amountLow, amountHigh] = toU256Calldata(depositAmount);
             let txHash: string;
+
             if (hasRequest) {
                 const callsSnake = [
-                    {
-                        contract_address: STRK_TOKEN,
-                        entry_point: 'approve',
-                        calldata: [GAS_TANK_CONTRACT, amountLow, amountHigh],
-                    },
-                    {
-                        contract_address: GAS_TANK_CONTRACT,
-                        entry_point: 'deposit',
-                        calldata: [balance.org_felt_id, amountLow, amountHigh],
-                    },
+                    { contract_address: STRK_TOKEN, entry_point: 'approve', calldata: [GAS_TANK_CONTRACT, amountLow, amountHigh] },
+                    { contract_address: GAS_TANK_CONTRACT, entry_point: 'deposit', calldata: [balance.org_felt_id, amountLow, amountHigh] },
                 ];
-                const result = await (walletRaw.request as (args: {
-                    type: string;
-                    params: { calls: typeof callsSnake };
-                }) => Promise<{ transaction_hash: string }>)({
+                const result = await (walletRaw.request as (args: { type: string; params: { calls: typeof callsSnake } }) => Promise<{ transaction_hash: string }>)({
                     type: 'wallet_addInvokeTransaction',
                     params: { calls: callsSnake },
                 });
                 txHash = result.transaction_hash;
             } else {
                 const calls = [
-                    {
-                        contractAddress: STRK_TOKEN,
-                        entrypoint: 'approve',
-                        calldata: [GAS_TANK_CONTRACT, amountLow, amountHigh],
-                    },
-                    {
-                        contractAddress: GAS_TANK_CONTRACT,
-                        entrypoint: 'deposit',
-                        calldata: [balance.org_felt_id, amountLow, amountHigh],
-                    },
+                    { contractAddress: STRK_TOKEN, entrypoint: 'approve', calldata: [GAS_TANK_CONTRACT, amountLow, amountHigh] },
+                    { contractAddress: GAS_TANK_CONTRACT, entrypoint: 'deposit', calldata: [balance.org_felt_id, amountLow, amountHigh] },
                 ];
                 const result = await account!.execute(calls);
                 txHash = result.transaction_hash;
@@ -208,13 +177,9 @@ export default function BillingPage() {
             setTxStatus('done');
             setDepositAmount('');
             await fetchData();
-            setTimeout(() => {
-                setTxStatus('idle');
-                setShowDepositForm(false);
-            }, 3000);
+            setTimeout(() => { setTxStatus('idle'); setShowDepositForm(false); }, 3000);
         } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Transaction failed';
-            setTxError(message);
+            setTxError(err instanceof Error ? err.message : 'Transaction failed');
             setTxStatus('error');
         }
     };
@@ -235,186 +200,228 @@ export default function BillingPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[50vh]">
-                <div className="w-8 h-8 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                <div className="w-7 h-7 border-2 border-black/15 border-t-black/60 rounded-full animate-spin" />
             </div>
         );
     }
 
+    const availableBalance = balance ? parseFloat(String(balance.balance_strk)) : 0;
+    const totalDeposited = balance ? parseFloat(String(balance.total_deposited)) : 0;
+    const totalConsumed = balance ? parseFloat(String(balance.total_consumed)) : 0;
+    const consumedPct = totalDeposited > 0 ? Math.min(100, (totalConsumed / totalDeposited) * 100) : 0;
+
     return (
-        <div className="space-y-8 animate-fadeIn max-w-5xl">
-            <div className="flex items-start justify-between">
+        <div className="space-y-6 animate-fadeIn max-w-4xl">
+
+            {/* ── Page header ── */}
+            <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-semibold tracking-tight mb-2">Gas Balance</h1>
-                    <p className="text-black/60">Deposit STRK to sponsor gasless transactions for your users.</p>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-black/30 mb-1.5">Billing</p>
+                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Gas Balance</h1>
+                    <p className="text-xs text-black/40 mt-1 font-medium">Deposit STRK to sponsor gasless transactions for your users.</p>
                 </div>
 
+                {/* Wallet connection */}
                 {walletAddress ? (
-                    <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
-                            <div className="w-2 h-2 bg-green-500 rounded-full" />
-                            {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                    <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-2 px-3.5 py-2 bg-[#F7F5F2] border border-[#EAE5DC] rounded-xl text-xs font-semibold text-black/60">
+                            <span className="w-1.5 h-1.5 rounded-full bg-black/50" />
+                            {shortAddr(walletAddress)}
                         </div>
                         <button
                             onClick={handleDisconnectWallet}
-                            className="text-xs text-black/40 hover:text-black/70"
+                            className="text-xs text-black/30 hover:text-black/60 transition-colors px-2"
                         >
                             Disconnect
                         </button>
                     </div>
                 ) : (
-                    <Button variant="secondary" onClick={handleConnectWallet}>
-                        <Wallet className="w-4 h-4 mr-2" />
+                    <Button variant="outline" onClick={handleConnectWallet} icon={<Wallet className="w-3.5 h-3.5" />}>
                         Connect Wallet
                     </Button>
                 )}
             </div>
 
-            {/* Balance Card */}
-            <Card className="bg-linear-to-br from-black/2 to-black/5 border-black/10">
-                <div className="flex flex-col md:flex-row justify-between gap-6 md:items-center">
-                    <div>
-                        <div className="flex items-center gap-2 mb-2">
-                            <Fuel className="w-5 h-5 text-black/60" />
-                            <span className="text-sm text-black/60">Available Balance</span>
+            {/* ── Balance card — dark ── */}
+            <div className="relative overflow-hidden rounded-2xl bg-[#0A0908] text-white p-7 dark-grain">
+                <div
+                    className="absolute top-0 right-0 w-72 h-72 pointer-events-none"
+                    style={{ background: 'radial-gradient(ellipse at top right, #EAE5DC0C 0%, transparent 65%)' }}
+                />
+
+                <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                            <Fuel className="w-3.5 h-3.5 text-[#EAE5DC]/50" />
+                            <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/30">Available Balance</span>
                         </div>
-                        <h2 className="text-3xl font-bold mb-1">
-                            {balance ? parseFloat(String(balance.balance_strk)).toFixed(4) : '0.0000'} STRK
-                        </h2>
-                        <div className="flex gap-4 mt-2 text-sm text-black/50">
-                            <span>Deposited: {balance ? parseFloat(String(balance.total_deposited)).toFixed(2) : '0.00'} STRK</span>
-                            <span>Consumed: {balance ? parseFloat(String(balance.total_consumed)).toFixed(2) : '0.00'} STRK</span>
+
+                        <div className="space-y-1">
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-5xl font-bold tracking-tighter tabular-nums">{availableBalance.toFixed(4)}</span>
+                                <span className="text-lg font-bold text-white/40">STRK</span>
+                            </div>
+                        </div>
+
+                        {/* Progress bar: consumed vs deposited */}
+                        <div className="space-y-2 max-w-xs">
+                            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-[#EAE5DC]/50 rounded-full transition-all"
+                                    style={{ width: `${consumedPct}%` }}
+                                />
+                            </div>
+                            <div className="flex items-center gap-5 text-[10px] font-semibold text-white/30">
+                                <span>Deposited: {totalDeposited.toFixed(2)} STRK</span>
+                                <span className="flex items-center gap-1">
+                                    <TrendingDown className="w-3 h-3" />
+                                    Consumed: {totalConsumed.toFixed(2)} STRK
+                                </span>
+                            </div>
                         </div>
                     </div>
 
-                    <Button variant="primary" onClick={() => setShowDepositForm(!showDepositForm)}>
-                        <ArrowDown className="w-4 h-4 mr-2" />
+                    <button
+                        onClick={() => setShowDepositForm(!showDepositForm)}
+                        className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-white text-black text-sm font-semibold rounded-xl hover:bg-[#EAE5DC] transition-all active:scale-[0.97]"
+                    >
+                        <ArrowDown className="w-3.5 h-3.5" />
                         Deposit STRK
-                    </Button>
+                    </button>
                 </div>
-            </Card>
+            </div>
 
-            {/* Deposit Form */}
+            {/* ── Deposit form ── */}
             {showDepositForm && (
-                <Card>
-                    <h3 className="text-lg font-semibold mb-4">Deposit STRK</h3>
+                <div className="rounded-2xl bg-white border border-[#EAE5DC] p-6 space-y-5">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-base font-bold">Deposit STRK</h3>
+                        <button
+                            onClick={() => { setShowDepositForm(false); setTxStatus('idle'); setTxError(null); setDepositAmount(''); }}
+                            className="w-7 h-7 flex items-center justify-center text-black/30 hover:text-black transition-colors rounded-lg hover:bg-black/5"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
 
+                    {/* Connect wallet prompt */}
                     {!walletAddress && (
-                        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700 flex items-center gap-3">
-                            <Wallet className="w-4 h-4 shrink-0" />
-                            <span>Connect your wallet to deposit STRK.</span>
-                            <Button variant="secondary" onClick={handleConnectWallet} className="ml-auto shrink-0">
-                                Connect
-                            </Button>
+                        <div className="flex items-center gap-3 p-4 bg-[#F7F5F2] border border-[#EAE5DC] rounded-xl text-sm">
+                            <Wallet className="w-4 h-4 text-black/40 shrink-0" />
+                            <span className="text-black/55 flex-1">Connect your wallet to deposit STRK.</span>
+                            <Button variant="outline" size="sm" onClick={handleConnectWallet}>Connect</Button>
                         </div>
                     )}
 
-                    <div className="space-y-4">
-                        <div>
-                            <label className="text-sm font-medium text-black/70 block mb-1">Amount (STRK)</label>
-                            <Input
-                                type="number"
-                                placeholder="100"
-                                value={depositAmount}
-                                onChange={(e) => setDepositAmount(e.target.value)}
-                                min="0"
-                                step="0.01"
-                                disabled={isDepositing}
-                            />
-                        </div>
-
-                        {depositAmount && parseFloat(depositAmount) > 0 && (
-                            <div className="p-4 bg-black/5 rounded-lg text-sm space-y-2">
-                                <div className="flex justify-between">
-                                    <span className="text-black/60">Deposit amount</span>
-                                    <span>{parseFloat(depositAmount).toFixed(4)} STRK</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-black/60">Platform fee (5%)</span>
-                                    <span>-{feeAmount.toFixed(4)} STRK</span>
-                                </div>
-                                <div className="border-t border-black/10 pt-2 flex justify-between font-medium">
-                                    <span>Credited to balance</span>
-                                    <span>{netAmount.toFixed(4)} STRK</span>
-                                </div>
-                            </div>
-                        )}
-
-                        {txStatus !== 'idle' && (
-                            <div className={`p-4 rounded-lg text-sm flex items-center gap-3 ${
-                                txStatus === 'done' ? 'bg-green-50 border border-green-200 text-green-700' :
-                                txStatus === 'error' ? 'bg-red-50 border border-red-200 text-red-700' :
-                                'bg-blue-50 border border-blue-200 text-blue-700'
-                            }`}>
-                                {txStatus === 'done' ? (
-                                    <CheckCircle className="w-4 h-4 shrink-0" />
-                                ) : txStatus === 'error' ? (
-                                    <span className="shrink-0">✕</span>
-                                ) : (
-                                    <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
-                                )}
-                                <span>{txStatus === 'error' ? txError : statusLabel[txStatus]}</span>
-                            </div>
-                        )}
-
-                        <Button
-                            variant="primary"
-                            onClick={handleDeposit}
-                            loading={isDepositing}
-                            disabled={!walletAddress || !depositAmount || parseFloat(depositAmount) <= 0 || isDepositing}
-                            className="w-full"
-                        >
-                            {isDepositing ? statusLabel[txStatus] : 'Deposit STRK'}
-                        </Button>
+                    {/* Amount input */}
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-bold uppercase tracking-[0.15em] text-black/40 block">Amount (STRK)</label>
+                        <Input
+                            type="number"
+                            placeholder="100"
+                            value={depositAmount}
+                            onChange={(e) => setDepositAmount(e.target.value)}
+                            min="0"
+                            step="0.01"
+                            disabled={isDepositing}
+                        />
                     </div>
-                </Card>
+
+                    {/* Fee breakdown */}
+                    {depositAmount && parseFloat(depositAmount) > 0 && (
+                        <div className="rounded-xl bg-[#F7F5F2] border border-[#EAE5DC] p-4 space-y-2 text-sm">
+                            {[
+                                { label: 'Deposit amount',    value: `${parseFloat(depositAmount).toFixed(4)} STRK`, muted: false },
+                                { label: 'Platform fee (5%)', value: `-${feeAmount.toFixed(4)} STRK`,               muted: true },
+                            ].map((row) => (
+                                <div key={row.label} className="flex justify-between">
+                                    <span className={row.muted ? 'text-black/40' : 'text-black/60'}>{row.label}</span>
+                                    <span className={row.muted ? 'text-black/40' : ''}>{row.value}</span>
+                                </div>
+                            ))}
+                            <div className="flex justify-between font-bold pt-2 border-t border-[#EAE5DC]">
+                                <span>Credited to balance</span>
+                                <span>{netAmount.toFixed(4)} STRK</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Tx status */}
+                    {txStatus !== 'idle' && (
+                        <div className={`flex items-center gap-3 p-4 rounded-xl text-sm border ${
+                            txStatus === 'done'  ? 'bg-[#F7F5F2] border-[#EAE5DC] text-black/70' :
+                            txStatus === 'error' ? 'bg-red-50 border-red-200 text-red-700' :
+                            'bg-[#F7F5F2] border-[#EAE5DC] text-black/60'
+                        }`}>
+                            {txStatus === 'done'  ? <CheckCircle className="w-4 h-4 shrink-0 text-black/50" /> :
+                             txStatus === 'error' ? <X className="w-4 h-4 shrink-0 text-red-500" /> :
+                             <Loader2 className="w-4 h-4 shrink-0 animate-spin" />}
+                            <span>{txStatus === 'error' ? txError : statusLabel[txStatus]}</span>
+                        </div>
+                    )}
+
+                    <Button
+                        variant="primary"
+                        onClick={handleDeposit}
+                        loading={isDepositing}
+                        disabled={!walletAddress || !depositAmount || parseFloat(depositAmount) <= 0 || isDepositing}
+                        className="w-full rounded-xl"
+                    >
+                        {isDepositing ? statusLabel[txStatus] : 'Deposit STRK'}
+                    </Button>
+                </div>
             )}
 
-            {/* Deposit History */}
-            <Card>
-                <h3 className="text-lg font-semibold mb-4">Deposit History</h3>
+            {/* ── Deposit history ── */}
+            <div className="rounded-2xl bg-white border border-[#EAE5DC] overflow-hidden">
+                <div className="px-6 py-4 border-b border-[#EAE5DC]/70 flex items-center justify-between">
+                    <h3 className="text-sm font-bold">Deposit History</h3>
+                    <span className="text-xs text-black/30 font-medium">{deposits.length} deposits</span>
+                </div>
+
                 {deposits.length === 0 ? (
-                    <p className="text-sm text-black/50 text-center py-8">
-                        No deposits yet. Deposit STRK to start sponsoring transactions.
-                    </p>
+                    <div className="px-6 py-16 text-center space-y-2">
+                        <Fuel className="w-8 h-8 text-black/15 mx-auto" />
+                        <p className="text-sm text-black/40">No deposits yet.</p>
+                        <p className="text-xs text-black/25">Deposit STRK above to start sponsoring transactions.</p>
+                    </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="border-b border-black/10 text-left">
-                                    <th className="pb-3 font-medium text-black/60">Date</th>
-                                    <th className="pb-3 font-medium text-black/60">Amount</th>
-                                    <th className="pb-3 font-medium text-black/60">Fee</th>
-                                    <th className="pb-3 font-medium text-black/60">Credited</th>
-                                    <th className="pb-3 font-medium text-black/60">Status</th>
-                                    <th className="pb-3 font-medium text-black/60">Tx</th>
+                                <tr className="bg-[#F7F5F2]">
+                                    {['Date', 'Amount', 'Fee', 'Credited', 'Status', 'Tx'].map((h) => (
+                                        <th key={h} className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-[0.15em] text-black/35 whitespace-nowrap">{h}</th>
+                                    ))}
                                 </tr>
                             </thead>
                             <tbody>
-                                {deposits.map((deposit) => (
-                                    <tr key={deposit.id} className="border-b border-black/5">
-                                        <td className="py-3">
-                                            <div className="flex items-center gap-1">
-                                                <Clock className="w-3 h-3 text-black/40" />
-                                                {new Date(deposit.created_at).toLocaleDateString()}
+                                {deposits.map((deposit, i) => (
+                                    <tr key={deposit.id} className={`border-t border-[#EAE5DC]/60 hover:bg-[#F7F5F2]/50 transition-colors ${i === deposits.length - 1 ? '' : ''}`}>
+                                        <td className="px-5 py-4">
+                                            <div className="flex items-center gap-1.5 text-black/50">
+                                                <Clock className="w-3 h-3 shrink-0" />
+                                                <span className="tabular-nums">{new Date(deposit.created_at).toLocaleDateString()}</span>
                                             </div>
                                         </td>
-                                        <td className="py-3">{parseFloat(String(deposit.amount_strk)).toFixed(4)} STRK</td>
-                                        <td className="py-3 text-black/50">{parseFloat(String(deposit.fee_strk)).toFixed(4)}</td>
-                                        <td className="py-3 font-medium">{parseFloat(String(deposit.net_strk)).toFixed(4)}</td>
-                                        <td className="py-3">
-                                            <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs">
+                                        <td className="px-5 py-4 font-semibold tabular-nums">{parseFloat(String(deposit.amount_strk)).toFixed(4)}</td>
+                                        <td className="px-5 py-4 text-black/40 tabular-nums">{parseFloat(String(deposit.fee_strk)).toFixed(4)}</td>
+                                        <td className="px-5 py-4 font-bold tabular-nums">{parseFloat(String(deposit.net_strk)).toFixed(4)}</td>
+                                        <td className="px-5 py-4">
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#F7F5F2] border border-[#EAE5DC] rounded-full text-[10px] font-bold uppercase tracking-wide text-black/50">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-black/40" />
                                                 {deposit.status}
                                             </span>
                                         </td>
-                                        <td className="py-3">
+                                        <td className="px-5 py-4">
                                             <a
                                                 href={`https://sepolia.starkscan.co/tx/${deposit.tx_hash}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-blue-600 hover:underline flex items-center gap-1"
+                                                className="flex items-center gap-1 text-xs font-mono text-black/40 hover:text-black transition-colors"
                                             >
-                                                {deposit.tx_hash.slice(0, 8)}...
-                                                <ExternalLink className="w-3 h-3" />
+                                                {deposit.tx_hash.slice(0, 8)}…
+                                                <ExternalLink className="w-3 h-3 shrink-0" />
                                             </a>
                                         </td>
                                     </tr>
@@ -423,14 +430,17 @@ export default function BillingPage() {
                         </table>
                     </div>
                 )}
-            </Card>
+            </div>
 
-            <div className="p-6 bg-black/5 rounded-xl">
+            {/* ── On-chain info ── */}
+            <div className="relative overflow-hidden rounded-2xl bg-[#F7F5F2] border border-[#EAE5DC] p-6">
                 <div className="flex gap-4 items-start">
-                    <Fuel className="w-6 h-6 text-black/60 mt-1" />
-                    <div>
-                        <h3 className="font-semibold mb-1">On-Chain Gas Tank</h3>
-                        <p className="text-sm text-black/60 max-w-2xl">
+                    <div className="p-2.5 bg-white border border-[#EAE5DC] rounded-xl shrink-0">
+                        <Fuel className="w-4 h-4 text-black/50" />
+                    </div>
+                    <div className="space-y-1">
+                        <h3 className="text-sm font-bold">On-Chain Gas Tank</h3>
+                        <p className="text-xs text-black/45 leading-relaxed max-w-2xl">
                             Your STRK deposits are held in an on-chain GasTank contract. Gas costs are deducted
                             atomically with each sponsored transaction. All balances and deductions are verifiable on-chain.
                         </p>
