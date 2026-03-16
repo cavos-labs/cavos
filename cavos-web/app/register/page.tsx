@@ -13,6 +13,7 @@ export default function RegisterPage() {
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
     const [success, setSuccess] = useState(false)
+    const [dpaAccepted, setDpaAccepted] = useState(false)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -26,11 +27,17 @@ export default function RegisterPage() {
             return
         }
 
+        if (!dpaAccepted) {
+            setError('You must accept the Terms of Service and Data Processing Agreement to continue')
+            setLoading(false)
+            return
+        }
+
         try {
             const res = await fetch('/api/auth/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password, full_name: fullName }),
+                body: JSON.stringify({ email, password, full_name: fullName, dpa_accepted: true }),
             })
 
             const data = await res.json()
@@ -145,9 +152,31 @@ export default function RegisterPage() {
                                         </p>
                                     </div>
 
+                                    {/* DPA + ToS acceptance */}
+                                    <label className="flex items-start gap-3 cursor-pointer group">
+                                        <input
+                                            type="checkbox"
+                                            checked={dpaAccepted}
+                                            onChange={(e) => setDpaAccepted(e.target.checked)}
+                                            disabled={loading}
+                                            className="mt-0.5 w-4 h-4 rounded border-black/30 accent-black shrink-0 cursor-pointer"
+                                        />
+                                        <span className="text-xs text-black/50 leading-relaxed group-hover:text-black/70 transition-colors">
+                                            I agree to the{' '}
+                                            <Link href="/dpa" target="_blank" className="text-black underline underline-offset-2 hover:text-black/70">
+                                                Data Processing Agreement
+                                            </Link>
+                                            {' '}and{' '}
+                                            <Link href="/privacy" target="_blank" className="text-black underline underline-offset-2 hover:text-black/70">
+                                                Privacy Policy
+                                            </Link>
+                                            . I understand that Cavos acts as a Data Processor for my users&apos; data.
+                                        </span>
+                                    </label>
+
                                     <button
                                         type="submit"
-                                        disabled={loading}
+                                        disabled={loading || !dpaAccepted}
                                         className="w-full px-8 py-3.5 bg-black text-white rounded-full font-medium hover:bg-black/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         {loading ? 'Creating account...' : 'Create Account'}
