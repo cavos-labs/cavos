@@ -14,26 +14,36 @@ export const metadata: Metadata = {
     default: "Cavos | Invisible Crypto Infrastructure",
     template: "%s | Cavos"
   },
-  description: "Verifiable, MPC-free embedded wallets. Turn OAuth identities (Google, Apple) into self-custodial wallets with on-chain RSA verification.",
+  description: "Cavos is a verifiable, MPC-free embedded wallet SDK for Starknet. Turn Google or Apple OAuth logins into self-custodial smart accounts with on-chain RSA-2048 verification — no seed phrases, no browser extensions, no MPC shards.",
   keywords: [
-    "Account Abstraction",
-    "Embedded Wallet",
-    "OAuth Wallet",
-    "Self-Custodial",
-    "MPC-free",
-    "Web3 Onboarding",
-    "Crypto Infrastructure",
-    "AI Agent Signer"
+    "embedded wallet",
+    "account abstraction",
+    "OAuth wallet",
+    "self-custodial wallet",
+    "MPC-free wallet",
+    "Web3 onboarding",
+    "crypto infrastructure",
+    "AI agent signer",
+    "Starknet wallet",
+    "gasless transactions",
+    "session keys",
+    "smart accounts",
+    "social login Web3",
+    "on-chain RSA verification",
+    "Cairo smart contracts",
+    "invisible wallet",
+    "Privy alternative",
+    "Dynamic alternative",
+    "embedded crypto wallet SDK"
   ],
-  authors: [{ name: "Cavos Labs" }],
+  applicationName: "Cavos",
+  authors: [{ name: "Cavos Labs", url: "https://cavos.xyz" }],
   creator: "Cavos Labs",
+  publisher: "Cavos Labs",
   metadataBase: new URL("https://cavos.xyz"),
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
     title: "Cavos | Invisible Crypto Infrastructure",
-    description: "The premier verifiable signer for sovereign humans and AI agents.",
+    description: "Verifiable, MPC-free embedded wallets for Starknet. Turn OAuth identities into self-custodial smart accounts with on-chain RSA-2048 verification.",
     url: "https://cavos.xyz",
     siteName: "Cavos",
     images: [
@@ -41,7 +51,7 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Cavos - OAuth for Blockchain",
+        alt: "Cavos — MPC-free embedded wallets with on-chain RSA verification for Starknet",
       },
     ],
     locale: "en_US",
@@ -49,8 +59,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cavos | OAuth for Blockchain",
-    description: "Verifiable, MPC-free embedded wallets for agents and humans.",
+    title: "Cavos | Invisible Crypto Infrastructure",
+    description: "Verifiable, MPC-free embedded wallets. OAuth logins → self-custodial Starknet smart accounts. No seed phrases, no MPC shards.",
     creator: "@cavosxyz",
     images: ["/og-image.png"],
   },
@@ -67,6 +77,40 @@ export const metadata: Metadata = {
   },
 };
 
+const globalJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://cavos.xyz/#organization",
+      "name": "Cavos Labs",
+      "url": "https://cavos.xyz",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://cavos.xyz/CavosLogo.png"
+      },
+      "description": "Cavos Labs builds invisible crypto infrastructure — verifiable, MPC-free embedded wallets for Starknet.",
+      "sameAs": [
+        "https://twitter.com/cavosxyz",
+        "https://github.com/cavos-labs"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "hello@cavos.xyz",
+        "contactType": "customer support"
+      }
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://cavos.xyz/#website",
+      "url": "https://cavos.xyz",
+      "name": "Cavos",
+      "description": "Invisible crypto infrastructure — verifiable, MPC-free embedded wallets for Starknet",
+      "publisher": { "@id": "https://cavos.xyz/#organization" }
+    }
+  ]
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -76,6 +120,11 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="icon" href="/favicon.ico" />
+        <link rel="alternate" type="text/plain" href="/llms.txt" title="LLMs.txt — Cavos for AI" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(globalJsonLd) }}
+        />
       </head>
       <body
         className={`${romagothicbold.variable} ${geist.variable} antialiased`}

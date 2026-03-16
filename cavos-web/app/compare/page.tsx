@@ -4,8 +4,16 @@ import Script from 'next/script'
 import Link from 'next/link'
 
 export const metadata = {
-    title: "Cavos vs The Rest | The Sovereignty Matrix",
-    description: "Technical comparison between Cavos, Privy, Dynamic, and Passkey Wallets. Why verifiable, MPC-free signers are the future of embedded wallets.",
+    title: "Cavos vs Privy vs Dynamic — Embedded Wallet Comparison",
+    description: "Compare Cavos vs Privy, Dynamic, and Passkey Wallets across architecture, AI agent support, mobile UX, and key sovereignty. Cavos is the only MPC-free embedded wallet with on-chain RSA-2048 verification on Starknet.",
+    alternates: {
+        canonical: "https://cavos.xyz/compare",
+    },
+    openGraph: {
+        title: "Cavos vs Privy vs Dynamic — Embedded Wallet Comparison",
+        description: "Compare Cavos vs Privy, Dynamic, and Passkey Wallets. On-chain RSA-2048 verification, zero MPC shards, native AI agent signing.",
+        url: "https://cavos.xyz/compare",
+    },
 }
 
 export default function ComparePage() {
@@ -84,15 +92,62 @@ export default function ComparePage() {
 
     const jsonLd = {
         "@context": "https://schema.org",
-        "@type": "FAQPage",
-        "mainEntity": comparison.map(row => ({
-            "@type": "Question",
-            "name": `How does Cavos compare on ${row.feature}?`,
-            "acceptedAnswer": {
-                "@type": "Answer",
-                "text": row.benefit
+        "@graph": [
+            {
+                "@type": "FAQPage",
+                "@id": "https://cavos.xyz/compare#faq",
+                "mainEntity": [
+                    ...comparison.map(row => ({
+                        "@type": "Question",
+                        "name": `How does Cavos compare to Privy and Dynamic on ${row.feature}?`,
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": `Cavos: ${row.cavos}. Privy/Dynamic: ${row.privy}. Passkey Wallets: ${row.passkey}. ${row.benefit}`
+                        }
+                    })),
+                    {
+                        "@type": "Question",
+                        "name": "What is the difference between Cavos and Privy?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "Cavos and Privy are both embedded wallet SDKs, but differ architecturally. Privy uses MPC (Multi-Party Computation) shards stored on provider servers to sign transactions. Cavos is MPC-free — it performs RSA-2048 JWT verification directly on-chain in Cairo via Garaga, so no key fragments are ever stored off-chain. Cavos is Starknet-native and supports AI agent signing with session keys."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "What is the difference between Cavos and Dynamic?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "Dynamic is a multi-chain embedded wallet platform that supports MPC-based key management across EVM chains. Cavos is a Starknet-native embedded wallet with on-chain RSA verification and zero MPC shards. Cavos is purpose-built for account abstraction on Starknet, offering native Cairo smart accounts, AVNU paymaster integration, and headless AI agent signing."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "Is Cavos self-custodial?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "Yes. Cavos is fully self-custodial. No key fragments or MPC shards are ever stored by Cavos. Each user's wallet is a self-custodial smart account (SRC-6) on Starknet. The account is controlled by the user's OAuth identity (Google or Apple), verified on-chain via RSA-2048 using the Garaga library."
+                        }
+                    },
+                    {
+                        "@type": "Question",
+                        "name": "Does Cavos support AI agents?",
+                        "acceptedAnswer": {
+                            "@type": "Answer",
+                            "text": "Yes. Cavos natively supports AI agent signers through session keys. Session tokens are authorized for specific contracts and spending limits on-chain, allowing AI agents (such as Eliza-based frameworks) to operate autonomously without storing long-lived private keys. This makes Cavos the standard for autonomous on-chain applications."
+                        }
+                    }
+                ]
+            },
+            {
+                "@type": "WebPage",
+                "@id": "https://cavos.xyz/compare",
+                "url": "https://cavos.xyz/compare",
+                "name": "Cavos vs Privy vs Dynamic — Embedded Wallet Comparison",
+                "description": "Technical comparison of Cavos vs Privy, Dynamic, and Passkey Wallets for embedded wallet infrastructure on Starknet.",
+                "isPartOf": { "@id": "https://cavos.xyz/#website" }
             }
-        }))
+        ]
     }
 
     return (
@@ -110,7 +165,7 @@ export default function ComparePage() {
                     </h1>
                     <p className="text-xl text-gray-500 max-w-3xl mx-auto">
                         Choosing a wallet infrastructure is a decision about trust.
-                        Cavos is the only **verifiable, MPC-free** infrastructure built natively for on-chain account abstraction.
+                        Cavos is the only <strong>verifiable, MPC-free</strong> infrastructure built natively for on-chain account abstraction.
                     </p>
                 </header>
 
@@ -186,8 +241,8 @@ export default function ComparePage() {
                         <div className="space-y-4">
                             <h3 className="text-2xl font-bold">Verifiable Sovereignty</h3>
                             <p className="text-gray-600">
-                                Traditional embedded wallets rely on MPC "black boxes"—centralized clusters holding fragments of your keys. 
-                                Cavos is the only infrastructure that performs **RSA-2048 verification directly on-chain** in Cairo. 
+                                Traditional embedded wallets rely on MPC "black boxes"—centralized clusters holding fragments of your keys.
+                                Cavos is the only infrastructure that performs <strong>RSA-2048 verification directly on-chain</strong> in Cairo.
                                 Your identity is validated by the protocol, not a provider.
                             </p>
                         </div>

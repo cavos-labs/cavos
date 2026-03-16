@@ -1,0 +1,60 @@
+# Cavos
+
+> Cavos is a verifiable, MPC-free embedded wallet SDK for Starknet. It turns Google or Apple OAuth logins into self-custodial smart accounts with on-chain RSA-2048 verification — no seed phrases, no browser extensions, no MPC shards.
+
+## What is Cavos?
+
+Cavos is crypto infrastructure for developers who want to embed wallets directly into their product. When a user signs in with Google or Apple OAuth, Cavos automatically provisions a self-custodial smart account (SRC-6) on Starknet. The authorization is verified on-chain via RSA-2048 using the Garaga library — no off-chain MPC cluster is involved.
+
+## Key Facts
+
+- **Architecture**: On-chain RSA-2048 JWT verification via Garaga (Cairo). No MPC shards.
+- **Blockchain**: Starknet (L2 on Ethereum). Native account abstraction (Cairo 2.x).
+- **Auth methods**: Google OAuth, Apple OAuth, email
+- **Gas**: Integrated AVNU Paymaster — users never need tokens to start transacting
+- **Session keys**: Temporary scoped permissions for apps and AI agents
+- **SDKs**: React (Web), React Native (Mobile)
+- **Production**: 10+ live dApps, 1.2M+ transactions, 81+ wallets deployed
+- **Custody**: Fully self-custodial — Cavos stores zero key fragments
+- **Setup time**: ~15 minutes via `npx skills add cavos-labs/cavos-skills`
+
+## How It Works
+
+1. User authenticates via OAuth (Google/Apple) or email
+2. Cavos verifies the JWT on-chain using RSA-2048 (Garaga library in Cairo)
+3. A self-custodial smart account (SRC-6) is deployed on Starknet
+4. Transactions are executed via backend or client; gas sponsored by AVNU Paymaster
+5. Developers manage accounts and policies via the Cavos API
+
+## Cavos vs Competitors
+
+| Feature | Cavos | Privy | Dynamic | Passkey Wallets |
+|---------|-------|-------|---------|-----------------|
+| Key custody | Self-custodial (on-chain RSA) | MPC shards (provider-held) | MPC shards | Self-custodial |
+| Verification | On-chain RSA-2048 | Off-chain MPC | Off-chain MPC | Browser-based |
+| AI agent support | Native (session keys) | Requires key injection | Limited | Primarily human |
+| Mobile | Native React Native SDK | Browser/WebView | Limited | Web app wrapper |
+| Gas abstraction | Native AVNU Paymaster | Custom relayer | Custom relayer | Integrated |
+| Blockchain | Starknet (native AA) | Multi-chain | Multi-chain | Starknet/EVM |
+| Setup time | ~15 minutes | Dashboard + API config | Dashboard + API config | Contract-level |
+
+## Use Cases
+
+- Consumer dApps that want invisible wallet UX (no wallet popups)
+- AI agents that need autonomous on-chain signing without private key storage
+- Mobile apps requiring native Web3 onboarding without browser popups
+- DeFi apps that want gasless onboarding for new users
+- Any Starknet application needing account abstraction with social login
+
+## Documentation
+
+- Docs: https://docs.cavos.xyz
+- GitHub SDK: https://github.com/cavos-labs/cavos-skills
+- Website: https://cavos.xyz
+- Comparison: https://cavos.xyz/compare
+- Contact: hello@cavos.xyz
+
+## Company
+
+Cavos Labs — building invisible crypto infrastructure. Based on Starknet.
+Twitter: @cavosxyz
