@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
-import { ArrowLeft, Wallet, ExternalLink, Loader2 } from 'lucide-react'
+import { ArrowLeft, Wallet, Loader2 } from 'lucide-react'
 
 export default function WalletDetailPage() {
     const router = useRouter()
@@ -94,14 +94,10 @@ export default function WalletDetailPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6 border-t border-black/10">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t border-black/10">
                     <div>
                         <p className="text-xs text-black/60 mb-1">Network</p>
                         <Badge variant="neutral" className="capitalize">{wallet.network}</Badge>
-                    </div>
-                    <div>
-                        <p className="text-xs text-black/60 mb-1">User Email</p>
-                        <p className="text-sm font-medium">{wallet.email || '-'}</p>
                     </div>
                     <div>
                         <p className="text-xs text-black/60 mb-1">Created</p>
@@ -127,30 +123,20 @@ export default function WalletDetailPage() {
                         <table className="w-full text-left text-sm">
                             <thead>
                                 <tr className="bg-black/2 border-b border-black/5">
-                                    <th className="px-6 py-3 font-medium text-black/60">Hash</th>
+                                    <th className="px-6 py-3 font-medium text-black/60">#</th>
                                     <th className="px-6 py-3 font-medium text-black/60">Date</th>
-                                    <th className="px-6 py-3 font-medium text-black/60 text-right">Action</th>
+                                    <th className="px-6 py-3 font-medium text-black/60">Network</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-black/5">
-                                {transactions.map((tx) => (
-                                    <tr key={tx.id} className="group hover:bg-black/2 transition-colors">
-                                        <td className="px-6 py-4 font-mono text-black/80">
-                                            {tx.hash.slice(0, 8)}...{tx.hash.slice(-6)}
-                                        </td>
+                                {transactions.map((tx, i) => (
+                                    <tr key={tx.id} className="hover:bg-black/2 transition-colors">
+                                        <td className="px-6 py-4 text-black/40 text-xs">{i + 1}</td>
                                         <td className="px-6 py-4 text-black/60">
                                             {new Date(tx.created_at).toLocaleString()}
                                         </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <a
-                                                href={`https://${wallet.network === 'mainnet' ? '' : 'sepolia.'}starkscan.co/tx/${tx.hash}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-flex items-center text-blue-600 hover:underline"
-                                            >
-                                                View on Explorer
-                                                <ExternalLink className="w-3 h-3 ml-1" />
-                                            </a>
+                                        <td className="px-6 py-4">
+                                            <Badge variant="neutral" className="capitalize">{tx.network}</Badge>
                                         </td>
                                     </tr>
                                 ))}

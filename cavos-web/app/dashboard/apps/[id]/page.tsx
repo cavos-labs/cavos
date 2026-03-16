@@ -300,7 +300,7 @@ export default function AppDetailPage() {
                             {/* Search Input */}
                             <div className="w-full sm:w-64">
                                 <Input
-                                    placeholder="Search address or email..."
+                                    placeholder="Search address..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     icon={<Search className="w-4 h-4" />}
@@ -325,16 +325,13 @@ export default function AppDetailPage() {
                                 <tr className="bg-black/2 border-b border-black/5">
                                     <th className="px-6 py-3 font-medium text-black/60">Address</th>
                                     <th className="px-6 py-3 font-medium text-black/60">Network</th>
-                                    <th className="px-6 py-3 font-medium text-black/60">Email</th>
                                     <th className="px-6 py-3 font-medium text-black/60">Created</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-black/5">
                                 {wallets
                                     .filter(wallet => {
-                                        const matchesSearch =
-                                            wallet.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                            (wallet.email && wallet.email.toLowerCase().includes(searchTerm.toLowerCase()));
+                                        const matchesSearch = wallet.address.toLowerCase().includes(searchTerm.toLowerCase());
                                         const matchesNetwork = networkFilter === 'all' || wallet.network === networkFilter;
                                         return matchesSearch && matchesNetwork;
                                     })
@@ -350,7 +347,6 @@ export default function AppDetailPage() {
                                             <td className="px-6 py-4">
                                                 <Badge variant="neutral" className="capitalize">{wallet.network}</Badge>
                                             </td>
-                                            <td className="px-6 py-4 text-black/80">{wallet.email || '-'}</td>
                                             <td className="px-6 py-4 text-black/60">
                                                 {new Date(wallet.created_at).toLocaleDateString()}
                                             </td>
@@ -359,9 +355,7 @@ export default function AppDetailPage() {
                             </tbody>
                         </table>
                         {wallets.filter(wallet => {
-                            const matchesSearch =
-                                wallet.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                (wallet.email && wallet.email.toLowerCase().includes(searchTerm.toLowerCase()));
+                            const matchesSearch = wallet.address.toLowerCase().includes(searchTerm.toLowerCase());
                             const matchesNetwork = networkFilter === 'all' || wallet.network === networkFilter;
                             return matchesSearch && matchesNetwork;
                         }).length === 0 && (

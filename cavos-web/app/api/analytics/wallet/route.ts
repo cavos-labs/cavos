@@ -7,7 +7,7 @@ export async function POST(request: Request) {
         const supabase = await createClient();
         const adminSupabase = createAdminClient();
         const body = await request.json();
-        const { address, appId, network, email } = body;
+        const { address, appId, network } = body;
 
         if (!address || !appId || !network) {
             return NextResponse.json(
@@ -37,7 +37,6 @@ export async function POST(request: Request) {
                 {
                     address,
                     app_id: appId,
-                    email: email || null,
                     network,
                     updated_at: new Date().toISOString(),
                 },
