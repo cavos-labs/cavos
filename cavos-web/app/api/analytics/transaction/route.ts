@@ -7,9 +7,9 @@ export async function POST(request: Request) {
         const supabase = await createClient();
         const adminSupabase = createAdminClient();
         const body = await request.json();
-        const { hash, walletAddress, appId, status, network } = body;
+        const { walletAddress, appId, network } = body;
 
-        if (!hash || !walletAddress || !appId || !status || !network) {
+        if (!walletAddress || !appId || !network) {
             return NextResponse.json(
                 { error: 'Missing required fields' },
                 { status: 400 }
@@ -47,20 +47,14 @@ export async function POST(request: Request) {
             );
         }
 
-        // Insert transaction
+        // Insert transaction (no hash stored — count only)
         const { data, error } = await adminSupabase
             .from('transactions')
-            .upsert(
-                {
-                    hash,
-                    wallet_id: wallet.id,
-                    app_id: appId,
-                    status,
-                    network,
-                    updated_at: new Date().toISOString(),
-                },
-                { onConflict: 'hash,network' }
-            )
+            .insert({
+                wallet_id: wallet.id,
+                app_id: appId,
+                network,
+            })
             .select()
             .single();
 
