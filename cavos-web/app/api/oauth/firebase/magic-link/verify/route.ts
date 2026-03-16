@@ -131,10 +131,11 @@ function errorHtml(message: string): string {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const email   = searchParams.get('email');
-  const oobCode = searchParams.get('oobCode');
-  const nonce   = searchParams.get('nonce');
-  const app_id  = searchParams.get('app_id');
+  const email        = searchParams.get('email');
+  const oobCode      = searchParams.get('oobCode');
+  const nonce        = searchParams.get('nonce');
+  const app_id       = searchParams.get('app_id');
+  const redirect_uri = searchParams.get('redirect_uri');
 
   if (!email || !oobCode || !nonce || !app_id) {
     return htmlResponse(errorHtml('Invalid or incomplete link.'));
@@ -193,6 +194,18 @@ export async function GET(request: NextRequest) {
   }
 
   console.log(`[MagicLink] Verified and signed JWT for ${verifiedEmail} (uid: ${localId})`);
+
+  // Redirect back to the app with auth_data in the URL — works on mobile where
+  // window.close() is blocked. The SDK's CavosContext handles ?auth_data= on load.
+  if (redirect_uri) {
+    try {
+      const dest = new URL(redirect_uri);
+      dest.searchParams.set('auth_data', JSON.stringify({ jwt, uid: localId, email: verifiedEmail }));
+      return Response.redirect(dest.toString(), 302);
+    } catch {
+      // Fall through to HTML response if redirect_uri is malformed
+    }
+  }
 
   return htmlResponse(successHtml(jwt, localId, verifiedEmail));
 }
