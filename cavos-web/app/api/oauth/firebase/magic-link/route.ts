@@ -31,7 +31,7 @@ function checkRateLimit(key: string): { allowed: boolean; waitSeconds: number } 
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, nonce, app_id } = await request.json();
+    const { email, nonce, app_id, redirect_uri } = await request.json();
 
     if (!email || !nonce || !app_id) {
       return NextResponse.json(
@@ -101,12 +101,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Build our branded magic link — nonce travels in the URL (it's a hash, not a secret)
-    const magicLink = `${baseUrl}/api/oauth/firebase/magic-link/verify?${new URLSearchParams({
-      email,
-      oobCode,
-      nonce,
-      app_id,
-    })}`;
+    const verifyParams: Record<string, string> = { email, oobCode, nonce, app_id };
+    if (redirect_uri) verifyParams.redirect_uri = redirect_uri;
+    const magicLink = `${baseUrl}/api/oauth/firebase/magic-link/verify?${new URLSearchParams(verifyParams)}`;
 
     await sendMagicLinkEmail(email, magicLink, app_id);
 
