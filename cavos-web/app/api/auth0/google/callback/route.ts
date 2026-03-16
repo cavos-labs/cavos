@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    console.log('[AUTH0-GOOGLE-CALLBACK] User profile:', JSON.stringify(userProfileResponse.data, null, 2));
+    console.log('[AUTH0-GOOGLE-CALLBACK] User profile fetched for sub:', userProfileResponse.data?.user_id);
 
     // Find Google identity
     const googleIdentity = userProfileResponse.data.identities?.find(
