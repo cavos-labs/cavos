@@ -5,12 +5,11 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Card } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
 import { Input } from '@/components/ui/Input'
+import { Button } from '@/components/ui/Button'
 import {
     Building2, AppWindow, Trash2, ArrowLeft, Plus, Loader2,
-    Key, Copy, Check, X
+    Key, Copy, Check, X, ArrowRight, ChevronRight
 } from 'lucide-react'
 
 interface ApiKey {
@@ -34,7 +33,6 @@ export default function OrganizationDetailPage() {
     const [showDeleteModal, setShowDeleteModal] = useState(false)
     const [deleting, setDeleting] = useState(false)
 
-    // API Keys state
     const [apiKeys, setApiKeys] = useState<ApiKey[]>([])
     const [keysLoading, setKeysLoading] = useState(true)
     const [showCreateKeyModal, setShowCreateKeyModal] = useState(false)
@@ -56,18 +54,13 @@ export default function OrganizationDetailPage() {
     const fetchOrganization = async () => {
         try {
             const res = await fetch(`/api/organizations/${organizationId}`)
-
             if (!res.ok) {
-                if (res.status === 401) {
-                    router.push('/login')
-                    return
-                }
+                if (res.status === 401) { router.push('/login'); return }
                 throw new Error('Failed to fetch organization')
             }
-
             const data = await res.json()
             setOrganization(data.organization)
-        } catch (err) {
+        } catch {
             setError('Failed to load organization')
         } finally {
             setLoading(false)
@@ -104,17 +97,11 @@ export default function OrganizationDetailPage() {
     const handleDelete = async () => {
         setDeleting(true)
         try {
-            const res = await fetch(`/api/organizations/${organizationId}`, {
-                method: 'DELETE',
-            })
-
-            if (!res.ok) {
-                throw new Error('Failed to delete organization')
-            }
-
+            const res = await fetch(`/api/organizations/${organizationId}`, { method: 'DELETE' })
+            if (!res.ok) throw new Error('Failed to delete organization')
             router.push('/dashboard/organizations')
             router.refresh()
-        } catch (err) {
+        } catch {
             setError('Failed to delete organization')
             setDeleting(false)
             setShowDeleteModal(false)
@@ -125,26 +112,19 @@ export default function OrganizationDetailPage() {
         if (!newKeyName.trim()) return
         setCreatingKey(true)
         setCreateKeyError('')
-
         try {
             const res = await fetch(`/api/organizations/${organizationId}/api-keys`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: newKeyName.trim() }),
             })
-
             const data = await res.json()
-
-            if (!res.ok) {
-                setCreateKeyError(data.error || 'Failed to create key')
-                return
-            }
-
+            if (!res.ok) { setCreateKeyError(data.error || 'Failed to create key'); return }
             setRevealedKey(data.plaintext)
             setNewKeyName('')
             setShowCreateKeyModal(false)
             setApiKeys(prev => [data.key, ...prev])
-        } catch (err) {
+        } catch {
             setCreateKeyError('Failed to create key')
         } finally {
             setCreatingKey(false)
@@ -154,14 +134,8 @@ export default function OrganizationDetailPage() {
     const handleRevokeKey = async (keyId: string) => {
         setRevokingKeyId(keyId)
         try {
-            const res = await fetch(
-                `/api/organizations/${organizationId}/api-keys/${keyId}`,
-                { method: 'DELETE' }
-            )
-
-            if (res.ok) {
-                setApiKeys(prev => prev.filter(k => k.id !== keyId))
-            }
+            const res = await fetch(`/api/organizations/${organizationId}/api-keys/${keyId}`, { method: 'DELETE' })
+            if (res.ok) setApiKeys(prev => prev.filter(k => k.id !== keyId))
         } catch (err) {
             console.error('Failed to revoke key:', err)
         } finally {
@@ -197,241 +171,224 @@ export default function OrganizationDetailPage() {
     }
 
     return (
-        <div className="space-y-8 animate-fadeIn">
-            {/* Back Link */}
+        <div className="space-y-5 animate-fadeIn">
+
+            {/* Back */}
             <Link
                 href="/dashboard/organizations"
-                className="inline-flex items-center text-sm text-black/60 hover:text-black transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm text-black/40 hover:text-black transition-colors"
             >
-                <ArrowLeft className="w-4 h-4 mr-1" />
-                Back to Organizations
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Organizations
             </Link>
 
-            {/* Header Card */}
-            <Card>
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
+            {/* ── Org Header ──────────────────────────────── */}
+            <div className="bg-[#0A0908] rounded-2xl p-6 text-white relative overflow-hidden">
+                <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 60% 80% at 0% 50%, #EAE5DC08 0%, transparent 60%)' }} />
+
+                <div className="relative flex flex-col sm:flex-row sm:items-start justify-between gap-5">
                     <div className="flex items-start gap-4">
-                        <div className="p-4 bg-black/5 rounded-xl">
-                            <Building2 className="w-8 h-8 text-black/80" />
+                        <div className="w-14 h-14 rounded-xl bg-white/[0.07] border border-white/[0.1] flex items-center justify-center shrink-0">
+                            <Building2 className="w-7 h-7 text-white/30" />
                         </div>
-                        <div>
-                            <h1 className="text-2xl font-semibold tracking-tight mb-1">
-                                {organization.name}
-                            </h1>
-                            <p className="text-black/50 font-mono text-sm mb-2">
-                                {organization.slug}
-                            </p>
+                        <div className="space-y-1 min-w-0">
+                            <h1 className="text-xl font-bold tracking-tight text-white">{organization.name}</h1>
+                            <p className="text-xs font-mono text-white/30">{organization.slug}</p>
                             {organization.description && (
-                                <p className="text-black/70 max-w-xl">
-                                    {organization.description}
-                                </p>
+                                <p className="text-sm text-white/35 leading-relaxed pt-0.5">{organization.description}</p>
                             )}
                         </div>
                     </div>
 
-                    <Button
-                        variant="danger"
-                        size="sm"
+                    <button
                         onClick={() => setShowDeleteModal(true)}
-                        icon={<Trash2 className="w-4 h-4" />}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-400/70 hover:text-red-400 border border-red-500/[0.15] hover:border-red-500/30 rounded-lg transition-all shrink-0"
                     >
+                        <Trash2 className="w-3.5 h-3.5" />
                         Delete
-                    </Button>
+                    </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-8 pt-6 border-t border-black/10">
-                    <div>
-                        <p className="text-xs text-black/60 mb-1">Applications</p>
-                        <p className="text-xl font-semibold">{apps.length}</p>
-                    </div>
-                    <div>
-                        <p className="text-xs text-black/60 mb-1">Created</p>
-                        <p className="text-sm font-medium">
-                            {new Date(organization.created_at).toLocaleDateString()}
-                        </p>
-                    </div>
-                    <div>
-                        <p className="text-xs text-black/60 mb-1">ID</p>
-                        <p className="text-xs font-mono text-black/70 truncate" title={organization.id}>
-                            {organization.id}
-                        </p>
-                    </div>
+                {/* Stats mini-bar */}
+                <div className="relative mt-6 pt-5 border-t border-white/[0.07] flex flex-wrap gap-6">
+                    {[
+                        { label: 'Applications', value: apps.length },
+                        { label: 'API Keys', value: apiKeys.length },
+                        { label: 'Created', value: new Date(organization.created_at).toLocaleDateString() },
+                    ].map((s) => (
+                        <div key={s.label} className="space-y-0.5">
+                            <div className="text-[10px] uppercase tracking-[0.2em] text-white/25 font-bold">{s.label}</div>
+                            <div className="text-sm font-bold text-white tabular-nums">{s.value}</div>
+                        </div>
+                    ))}
                 </div>
-            </Card>
+            </div>
 
-            {/* Applications Section */}
-            <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold tracking-tight">Applications</h2>
-                    <Link href={`/dashboard/apps/new?org=${organizationId}`}>
-                        <Button size="sm" icon={<Plus className="w-4 h-4" />}>
-                            Create App
-                        </Button>
+            {/* ── Applications ────────────────────────────── */}
+            <div className="bg-white border border-[#EAE5DC] rounded-2xl overflow-hidden">
+                <div className="px-5 py-4 border-b border-[#EAE5DC] flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-7 h-7 rounded-lg bg-[#F7F5F2] border border-[#EAE5DC] flex items-center justify-center shrink-0">
+                            <AppWindow className="w-3.5 h-3.5 text-black/40" />
+                        </div>
+                        <div>
+                            <h2 className="text-sm font-semibold leading-none">Applications</h2>
+                            <p className="text-[11px] text-black/35 mt-0.5">{apps.length} app{apps.length !== 1 ? 's' : ''}</p>
+                        </div>
+                    </div>
+                    <Link
+                        href={`/dashboard/apps/new?org=${organizationId}`}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0A0908] text-white text-xs font-semibold rounded-lg hover:bg-black/80 transition-all active:scale-95"
+                    >
+                        <Plus className="w-3.5 h-3.5" />
+                        New App
                     </Link>
                 </div>
 
                 {apps.length === 0 ? (
-                    <Card className="py-12 text-center">
-                        <div className="w-12 h-12 bg-black/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <AppWindow className="w-6 h-6 text-black/40" />
+                    <div className="text-center py-12">
+                        <div className="w-10 h-10 rounded-xl bg-[#F7F5F2] border border-[#EAE5DC] flex items-center justify-center mx-auto mb-3">
+                            <AppWindow className="w-5 h-5 text-black/20" />
                         </div>
-                        <h3 className="font-semibold mb-1">No applications yet</h3>
-                        <p className="text-sm text-black/60 mb-4">
-                            Create your first application for this organization
-                        </p>
-                        <Link href={`/dashboard/apps/new?org=${organizationId}`}>
-                            <Button variant="outline" size="sm">Create Application</Button>
-                        </Link>
-                    </Card>
+                        <p className="text-sm text-black/35">No applications yet.</p>
+                        <p className="text-xs text-black/25 mt-1">Create your first app for this organization.</p>
+                    </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="divide-y divide-[#EAE5DC]/60">
                         {apps.map((app) => (
-                            <Link key={app.id} href={`/dashboard/apps/${app.id}`}>
-                                <Card className="h-full hover:border-black/30 transition-colors cursor-pointer group">
-                                    <div className="flex items-start gap-3">
-                                        <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-black/5 border border-black/10 shrink-0">
-                                            {app.logo_url ? (
-                                                <Image
-                                                    src={app.logo_url}
-                                                    alt={app.name}
-                                                    fill
-                                                    className="object-cover"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center">
-                                                    <AppWindow className="w-5 h-5 text-black/20" />
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="font-medium truncate mb-1">{app.name}</h3>
-                                            {app.description && (
-                                                <p className="text-xs text-black/60 line-clamp-2">
-                                                    {app.description}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-                                </Card>
+                            <Link
+                                key={app.id}
+                                href={`/dashboard/apps/${app.id}`}
+                                className="group flex items-center gap-4 px-5 py-3.5 hover:bg-[#F7F5F2]/70 transition-colors"
+                            >
+                                <div className="relative w-9 h-9 rounded-lg overflow-hidden bg-[#F7F5F2] border border-[#EAE5DC] shrink-0 flex items-center justify-center">
+                                    {app.logo_url ? (
+                                        <Image src={app.logo_url} alt={app.name} fill className="object-cover" />
+                                    ) : (
+                                        <AppWindow className="w-4 h-4 text-black/25" />
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-semibold text-black truncate">{app.name}</p>
+                                    {app.description && (
+                                        <p className="text-xs text-black/40 truncate mt-0.5">{app.description}</p>
+                                    )}
+                                </div>
+                                <ChevronRight className="w-3.5 h-3.5 text-black/20 group-hover:text-black/50 transition-colors shrink-0" />
                             </Link>
                         ))}
                     </div>
                 )}
             </div>
 
-            {/* API Keys Section */}
-            <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-xl font-semibold tracking-tight">API Keys</h2>
-                        <p className="text-sm text-black/50 mt-0.5">
-                            Use these keys to create apps programmatically via the API.
-                        </p>
+            {/* ── API Keys ─────────────────────────────────── */}
+            <div className="bg-white border border-[#EAE5DC] rounded-2xl overflow-hidden">
+                <div className="px-5 py-4 border-b border-[#EAE5DC] flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-7 h-7 rounded-lg bg-[#F7F5F2] border border-[#EAE5DC] flex items-center justify-center shrink-0">
+                            <Key className="w-3.5 h-3.5 text-black/40" />
+                        </div>
+                        <div>
+                            <h2 className="text-sm font-semibold leading-none">API Keys</h2>
+                            <p className="text-[11px] text-black/35 mt-0.5">Use these keys to access the Cavos REST API.</p>
+                        </div>
                     </div>
-                    <Button
-                        size="sm"
-                        icon={<Key className="w-4 h-4" />}
+                    <button
                         onClick={() => setShowCreateKeyModal(true)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0A0908] text-white text-xs font-semibold rounded-lg hover:bg-black/80 transition-all active:scale-95"
                     >
-                        Generate Key
-                    </Button>
+                        <Plus className="w-3.5 h-3.5" />
+                        Generate
+                    </button>
                 </div>
 
                 {keysLoading ? (
-                    <Card className="py-8 flex justify-center">
+                    <div className="flex justify-center py-10">
                         <Loader2 className="w-5 h-5 animate-spin text-black/20" />
-                    </Card>
+                    </div>
                 ) : apiKeys.length === 0 ? (
-                    <Card className="py-10 text-center">
-                        <div className="w-12 h-12 bg-black/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Key className="w-6 h-6 text-black/30" />
+                    <div className="text-center py-12">
+                        <div className="w-10 h-10 rounded-xl bg-[#F7F5F2] border border-[#EAE5DC] flex items-center justify-center mx-auto mb-3">
+                            <Key className="w-5 h-5 text-black/20" />
                         </div>
-                        <h3 className="font-semibold mb-1">No API keys yet</h3>
-                        <p className="text-sm text-black/60 mb-4">
-                            Generate a key to create apps via the REST API
-                        </p>
-                        <Button variant="outline" size="sm" onClick={() => setShowCreateKeyModal(true)}>
-                            Generate API Key
-                        </Button>
-                    </Card>
+                        <p className="text-sm text-black/35">No API keys yet.</p>
+                        <p className="text-xs text-black/25 mt-1">Generate a key to create apps via the REST API.</p>
+                    </div>
                 ) : (
-                    <Card noPadding>
-                        <div className="divide-y divide-black/5">
-                            {apiKeys.map((apiKey) => (
-                                <div
-                                    key={apiKey.id}
-                                    className="flex items-center justify-between gap-4 px-6 py-4"
-                                >
-                                    <div className="flex items-center gap-3 min-w-0">
-                                        <div className="p-2 bg-black/5 rounded-lg shrink-0">
-                                            <Key className="w-4 h-4 text-black/50" />
-                                        </div>
-                                        <div className="min-w-0">
-                                            <p className="font-medium text-sm truncate">{apiKey.name}</p>
-                                            <p className="text-xs font-mono text-black/40 mt-0.5">
-                                                {apiKey.key_prefix}••••••••••••••••••••••
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-4 shrink-0">
-                                        <div className="hidden sm:block text-right">
-                                            <p className="text-xs text-black/40">
-                                                {apiKey.last_used_at
-                                                    ? `Last used ${new Date(apiKey.last_used_at).toLocaleDateString()}`
-                                                    : 'Never used'}
-                                            </p>
-                                            <p className="text-xs text-black/30 mt-0.5">
-                                                Created {new Date(apiKey.created_at).toLocaleDateString()}
-                                            </p>
-                                        </div>
-                                        <Badge variant={apiKey.is_active ? 'success' : 'neutral'}>
-                                            {apiKey.is_active ? 'Active' : 'Revoked'}
-                                        </Badge>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                                            loading={revokingKeyId === apiKey.id}
-                                            onClick={() => handleRevokeKey(apiKey.id)}
-                                        >
-                                            Revoke
-                                        </Button>
-                                    </div>
+                    <div className="divide-y divide-[#EAE5DC]/60">
+                        {apiKeys.map((apiKey) => (
+                            <div key={apiKey.id} className="flex items-center gap-4 px-5 py-3.5">
+                                <div className="w-7 h-7 rounded-lg bg-[#F7F5F2] border border-[#EAE5DC] flex items-center justify-center shrink-0">
+                                    <Key className="w-3.5 h-3.5 text-black/35" />
                                 </div>
-                            ))}
-                        </div>
-                    </Card>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-sm font-semibold text-black truncate">{apiKey.name}</p>
+                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${
+                                            apiKey.is_active
+                                                ? 'bg-[#F7F5F2] border border-[#EAE5DC] text-black/50'
+                                                : 'bg-red-50 border border-red-100 text-red-400'
+                                        }`}>
+                                            {apiKey.is_active ? 'Active' : 'Revoked'}
+                                        </span>
+                                    </div>
+                                    <p className="text-[11px] font-mono text-black/30 mt-0.5">
+                                        {apiKey.key_prefix}••••••••••••••••••••
+                                    </p>
+                                </div>
+                                <div className="hidden sm:block text-right shrink-0">
+                                    <p className="text-[11px] text-black/35">
+                                        {apiKey.last_used_at
+                                            ? `Used ${new Date(apiKey.last_used_at).toLocaleDateString()}`
+                                            : 'Never used'}
+                                    </p>
+                                    <p className="text-[11px] text-black/25 mt-0.5">
+                                        {new Date(apiKey.created_at).toLocaleDateString()}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => handleRevokeKey(apiKey.id)}
+                                    disabled={revokingKeyId === apiKey.id}
+                                    className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-semibold text-red-400/70 hover:text-red-500 border border-red-200/60 hover:border-red-300 rounded-lg transition-all disabled:opacity-40 shrink-0"
+                                >
+                                    {revokingKeyId === apiKey.id
+                                        ? <Loader2 className="w-3 h-3 animate-spin" />
+                                        : <X className="w-3 h-3" />
+                                    }
+                                    Revoke
+                                </button>
+                            </div>
+                        ))}
+                    </div>
                 )}
 
-                {/* API usage hint */}
-                <div className="bg-black/[0.02] border border-black/5 rounded-xl p-4">
-                    <p className="text-xs text-black/50 font-mono leading-relaxed">
-                        <span className="text-black/30">POST</span> https://cavos.xyz/api/v1/apps<br />
-                        <span className="text-black/30">Authorization:</span> Bearer cav_••••••••••••
+                {/* API hint */}
+                <div className="px-5 py-3.5 border-t border-[#EAE5DC]/60 bg-[#F7F5F2]/40">
+                    <p className="text-[11px] font-mono text-black/30 leading-relaxed">
+                        <span className="text-black/20">POST</span> https://cavos.xyz/api/v1/apps &nbsp;
+                        <span className="text-black/20">·</span> &nbsp;
+                        <span className="text-black/20">Authorization:</span> Bearer cav_••••••
                     </p>
                 </div>
             </div>
 
-            {/* Create Key Modal */}
+            {/* ── Create Key Modal ─────────────────────────── */}
             {showCreateKeyModal && (
                 <>
-                    <div
-                        className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
-                        onClick={() => !creatingKey && setShowCreateKeyModal(false)}
-                    />
+                    <div className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm" onClick={() => !creatingKey && setShowCreateKeyModal(false)} />
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                        <Card className="w-full max-w-md">
+                        <div className="bg-white rounded-2xl border border-[#EAE5DC] p-6 w-full max-w-md shadow-xl">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-semibold">Generate API Key</h3>
+                                <h3 className="text-lg font-bold">Generate API Key</h3>
                                 <button
                                     onClick={() => setShowCreateKeyModal(false)}
-                                    className="text-black/30 hover:text-black/60 transition-colors"
                                     disabled={creatingKey}
+                                    className="w-7 h-7 flex items-center justify-center text-black/30 hover:text-black rounded-lg hover:bg-black/5 transition-colors"
                                 >
-                                    <X className="w-5 h-5" />
+                                    <X className="w-4 h-4" />
                                 </button>
                             </div>
-                            <p className="text-sm text-black/60 mb-5">
+                            <p className="text-sm text-black/45 mb-5">
                                 Give this key a name to identify where it&apos;s used (e.g. &quot;CI Pipeline&quot;, &quot;Backend Service&quot;).
                             </p>
                             <Input
@@ -444,113 +401,104 @@ export default function OrganizationDetailPage() {
                                 autoFocus
                             />
                             {createKeyError && (
-                                <p className="text-sm text-red-600 mt-2">{createKeyError}</p>
+                                <p className="text-xs text-red-600 mt-2">{createKeyError}</p>
                             )}
-                            <div className="flex gap-3 mt-5">
-                                <Button
-                                    className="flex-1"
+                            <div className="flex gap-2.5 mt-5">
+                                <button
                                     onClick={handleCreateKey}
-                                    loading={creatingKey}
-                                    disabled={!newKeyName.trim()}
+                                    disabled={creatingKey || !newKeyName.trim()}
+                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0A0908] text-white text-sm font-semibold rounded-xl hover:bg-black/80 disabled:opacity-50 transition-all"
                                 >
+                                    {creatingKey ? <Loader2 className="w-4 h-4 animate-spin" /> : <Key className="w-4 h-4" />}
                                     Generate
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    className="flex-1"
+                                </button>
+                                <button
                                     onClick={() => setShowCreateKeyModal(false)}
                                     disabled={creatingKey}
+                                    className="flex-1 px-4 py-2.5 bg-[#F7F5F2] border border-[#EAE5DC] text-sm font-semibold rounded-xl hover:border-[#C4BFB6] disabled:opacity-50 transition-all"
                                 >
                                     Cancel
-                                </Button>
+                                </button>
                             </div>
-                        </Card>
+                        </div>
                     </div>
                 </>
             )}
 
-            {/* Revealed Key Modal — shown once after creation */}
+            {/* ── Revealed Key Modal ───────────────────────── */}
             {revealedKey && (
                 <>
                     <div className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm" />
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                        <Card className="w-full max-w-lg">
+                        <div className="bg-white rounded-2xl border border-[#EAE5DC] p-6 w-full max-w-lg shadow-xl">
                             <div className="flex items-center gap-3 mb-1">
-                                <div className="p-2 bg-green-100 rounded-lg">
-                                    <Key className="w-5 h-5 text-green-600" />
+                                <div className="w-8 h-8 rounded-lg bg-[#F7F5F2] border border-[#EAE5DC] flex items-center justify-center">
+                                    <Key className="w-4 h-4 text-black/50" />
                                 </div>
-                                <h3 className="text-lg font-semibold">API Key Generated</h3>
+                                <h3 className="text-lg font-bold">API Key Generated</h3>
                             </div>
-                            <p className="text-sm text-black/60 mb-5">
+                            <p className="text-sm text-black/45 mb-5">
                                 Copy this key now — it won&apos;t be shown again.
                             </p>
 
-                            <div className="bg-black/[0.03] border border-black/10 rounded-xl p-4 flex items-center gap-3">
-                                <code className="text-sm font-mono flex-1 break-all text-black/80">
+                            <div className="bg-[#F7F5F2] border border-[#EAE5DC] rounded-xl p-4 flex items-center gap-3">
+                                <code className="text-xs font-mono flex-1 break-all text-black/65 leading-relaxed">
                                     {revealedKey}
                                 </code>
                                 <button
                                     onClick={() => handleCopy(revealedKey)}
-                                    className="shrink-0 p-2 rounded-lg hover:bg-black/5 text-black/50 hover:text-black transition-colors"
+                                    className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-[#EAE5DC] hover:border-[#C4BFB6] text-black/40 hover:text-black transition-all"
                                     title="Copy"
                                 >
-                                    {copied ? (
-                                        <Check className="w-4 h-4 text-green-600" />
-                                    ) : (
-                                        <Copy className="w-4 h-4" />
-                                    )}
+                                    {copied ? <Check className="w-3.5 h-3.5 text-black" /> : <Copy className="w-3.5 h-3.5" />}
                                 </button>
                             </div>
 
-                            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                <p className="text-xs text-yellow-800">
+                            <div className="mt-3 px-4 py-3 bg-[#F7F5F2] border border-[#EAE5DC] rounded-xl">
+                                <p className="text-xs text-black/45">
                                     Store this key securely. It cannot be recovered after closing this dialog.
                                 </p>
                             </div>
 
-                            <Button
-                                className="w-full mt-5"
+                            <button
                                 onClick={() => setRevealedKey(null)}
+                                className="w-full mt-5 px-4 py-2.5 bg-[#0A0908] text-white text-sm font-semibold rounded-xl hover:bg-black/80 transition-all"
                             >
                                 I&apos;ve saved it, close
-                            </Button>
-                        </Card>
+                            </button>
+                        </div>
                     </div>
                 </>
             )}
 
-            {/* Delete Org Modal */}
+            {/* ── Delete Modal ─────────────────────────────── */}
             {showDeleteModal && (
                 <>
-                    <div
-                        className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
-                        onClick={() => !deleting && setShowDeleteModal(false)}
-                    />
+                    <div className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm" onClick={() => !deleting && setShowDeleteModal(false)} />
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                        <Card className="w-full max-w-md">
-                            <h3 className="text-xl font-semibold mb-2">Delete Organization</h3>
-                            <p className="text-black/70 mb-6 text-sm">
-                                Are you sure you want to delete <strong>{organization.name}</strong>? This action cannot be undone and will also delete all associated applications.
+                        <div className="bg-white rounded-2xl border border-[#EAE5DC] p-6 w-full max-w-md shadow-xl">
+                            <h3 className="text-lg font-bold mb-1">Delete Organization</h3>
+                            <p className="text-sm text-black/50 mb-6">
+                                Are you sure you want to delete <strong className="text-black">{organization.name}</strong>? This will also delete all associated applications and cannot be undone.
                             </p>
-                            <div className="flex gap-3">
-                                <Button
-                                    variant="danger"
-                                    className="flex-1"
+                            <div className="flex gap-2.5">
+                                <button
                                     onClick={handleDelete}
-                                    loading={deleting}
+                                    disabled={deleting}
+                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-xl hover:bg-red-700 disabled:opacity-60 transition-all"
                                 >
+                                    {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                                     Delete
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    className="flex-1"
+                                </button>
+                                <button
                                     onClick={() => setShowDeleteModal(false)}
                                     disabled={deleting}
+                                    className="flex-1 px-4 py-2.5 bg-[#F7F5F2] border border-[#EAE5DC] text-sm font-semibold rounded-xl hover:border-[#C4BFB6] disabled:opacity-60 transition-all"
                                 >
                                     Cancel
-                                </Button>
+                                </button>
                             </div>
-                        </Card>
+                        </div>
                     </div>
                 </>
             )}

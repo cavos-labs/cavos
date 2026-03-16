@@ -3,10 +3,25 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Card } from '@/components/ui/Card'
+import { ArrowLeft, Wallet, Loader2, Copy, Check, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
-import { ArrowLeft, Wallet, Loader2 } from 'lucide-react'
+
+function NetworkBadge({ network }: { network: string }) {
+    if (network === 'mainnet') {
+        return (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-[#0A0908] text-white">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#EAE5DC]/70" />
+                Mainnet
+            </span>
+        )
+    }
+    return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-[#F7F5F2] border border-[#EAE5DC] text-black/50">
+            <span className="w-1.5 h-1.5 rounded-full bg-black/25" />
+            Sepolia
+        </span>
+    )
+}
 
 export default function WalletDetailPage() {
     const router = useRouter()
@@ -18,32 +33,35 @@ export default function WalletDetailPage() {
     const [transactions, setTransactions] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+    const [copied, setCopied] = useState(false)
 
     useEffect(() => {
-        if (appId && walletId) {
-            fetchData()
-        }
+        if (appId && walletId) fetchData()
     }, [appId, walletId])
 
     const fetchData = async () => {
         try {
-            // Fetch wallet details
             const walletRes = await fetch(`/api/apps/${appId}/wallets/${walletId}`)
             if (!walletRes.ok) throw new Error('Failed to fetch wallet')
             const walletData = await walletRes.json()
             setWallet(walletData.wallet)
 
-            // Fetch transactions
             const txRes = await fetch(`/api/apps/${appId}/wallets/${walletId}/transactions`)
             if (txRes.ok) {
                 const txData = await txRes.json()
                 setTransactions(txData.transactions)
             }
-        } catch (err) {
+        } catch {
             setError('Failed to load wallet details')
         } finally {
             setLoading(false)
         }
+    }
+
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
     }
 
     if (loading) {
@@ -68,75 +86,99 @@ export default function WalletDetailPage() {
     }
 
     return (
-        <div className="space-y-8 animate-fadeIn">
-            {/* Back Link */}
+        <div className="space-y-5 animate-fadeIn">
+
+            {/* Back */}
             <Link
                 href={`/dashboard/apps/${appId}`}
-                className="inline-flex items-center text-sm text-black/60 hover:text-black transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm text-black/40 hover:text-black transition-colors"
             >
-                <ArrowLeft className="w-4 h-4 mr-1" />
+                <ArrowLeft className="w-3.5 h-3.5" />
                 Back to App
             </Link>
 
-            {/* Wallet Header */}
-            <Card>
-                <div className="flex items-start gap-4 mb-6">
-                    <div className="p-4 bg-black/5 rounded-xl">
-                        <Wallet className="w-8 h-8 text-black/80" />
+            {/* ── Wallet Header ─────────────────────────────── */}
+            <div className="bg-[#0A0908] rounded-2xl p-6 text-white relative overflow-hidden">
+                <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 60% 80% at 100% 50%, #EAE5DC06 0%, transparent 60%)' }} />
+
+                <div className="relative flex items-start justify-between gap-4 mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-white/[0.07] border border-white/[0.1] flex items-center justify-center shrink-0">
+                            <Wallet className="w-5 h-5 text-white/40" />
+                        </div>
+                        <div>
+                            <div className="text-[10px] uppercase tracking-[0.2em] text-white/25 font-bold mb-0.5">Wallet</div>
+                            <NetworkBadge network={wallet.network} />
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="text-2xl font-semibold tracking-tight mb-1">
-                            Wallet Details
-                        </h1>
-                        <p className="font-mono text-sm text-black/60 break-all">
+                </div>
+
+                {/* Full address */}
+                <div className="relative space-y-2">
+                    <div className="text-[10px] uppercase tracking-[0.2em] text-white/25 font-bold">Address</div>
+                    <div className="flex items-center gap-2">
+                        <code className="flex-1 text-xs font-mono text-white/60 break-all leading-relaxed">
                             {wallet.address}
-                        </p>
+                        </code>
+                        <button
+                            onClick={() => copyToClipboard(wallet.address)}
+                            className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/[0.07] border border-white/[0.1] hover:bg-white/[0.12] transition-all shrink-0"
+                            title="Copy address"
+                        >
+                            {copied ? <Check className="w-3.5 h-3.5 text-[#EAE5DC]" /> : <Copy className="w-3.5 h-3.5 text-white/40" />}
+                        </button>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t border-black/10">
-                    <div>
-                        <p className="text-xs text-black/60 mb-1">Network</p>
-                        <Badge variant="neutral" className="capitalize">{wallet.network}</Badge>
+                {/* Meta row */}
+                <div className="relative mt-6 pt-5 border-t border-white/[0.07] flex flex-wrap gap-6">
+                    <div className="space-y-0.5">
+                        <div className="text-[10px] uppercase tracking-[0.2em] text-white/25 font-bold">Created</div>
+                        <div className="text-sm font-medium text-white">{new Date(wallet.created_at).toLocaleString()}</div>
                     </div>
-                    <div>
-                        <p className="text-xs text-black/60 mb-1">Created</p>
-                        <p className="text-sm font-medium">
-                            {new Date(wallet.created_at).toLocaleString()}
-                        </p>
+                    <div className="space-y-0.5">
+                        <div className="text-[10px] uppercase tracking-[0.2em] text-white/25 font-bold">Transactions</div>
+                        <div className="text-sm font-bold text-white tabular-nums">{transactions.length}</div>
                     </div>
                 </div>
-            </Card>
+            </div>
 
-            {/* Transactions Section */}
-            <Card noPadding>
-                <div className="p-6 border-b border-black/10">
-                    <h2 className="text-lg font-semibold">Transactions</h2>
+            {/* ── Transactions ──────────────────────────────── */}
+            <div className="bg-white border border-[#EAE5DC] rounded-2xl overflow-hidden">
+                <div className="px-5 py-4 border-b border-[#EAE5DC] flex items-center justify-between">
+                    <h2 className="text-sm font-semibold">Transactions</h2>
+                    <span className="text-[11px] text-black/35 font-medium">{transactions.length} total</span>
                 </div>
 
                 {transactions.length === 0 ? (
-                    <div className="text-center py-12">
-                        <p className="text-black/40">No transactions found.</p>
+                    <div className="text-center py-16">
+                        <div className="w-10 h-10 rounded-xl bg-[#F7F5F2] border border-[#EAE5DC] flex items-center justify-center mx-auto mb-3">
+                            <ExternalLink className="w-5 h-5 text-black/20" />
+                        </div>
+                        <p className="text-sm text-black/35">No transactions yet.</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
+                        <table className="w-full text-left">
                             <thead>
-                                <tr className="bg-black/2 border-b border-black/5">
-                                    <th className="px-6 py-3 font-medium text-black/60">#</th>
-                                    <th className="px-6 py-3 font-medium text-black/60">Date</th>
-                                    <th className="px-6 py-3 font-medium text-black/60">Network</th>
+                                <tr className="bg-[#F7F5F2] border-b border-[#EAE5DC]">
+                                    <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-black/35">#</th>
+                                    <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-black/35">Date</th>
+                                    <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-black/35">Network</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-black/5">
+                            <tbody>
                                 {transactions.map((tx, i) => (
-                                    <tr key={tx.id} className="hover:bg-black/2 transition-colors">
-                                        <td className="px-6 py-4 text-black/40 text-xs">{i + 1}</td>
-                                        <td className="px-6 py-4 text-black/60">
-                                            {new Date(tx.created_at).toLocaleString()}
+                                    <tr
+                                        key={tx.id}
+                                        className={`transition-colors hover:bg-[#F7F5F2]/70 ${i < transactions.length - 1 ? 'border-b border-[#EAE5DC]/60' : ''}`}
+                                    >
+                                        <td className="px-5 py-3.5 text-xs font-mono text-black/30 tabular-nums">{String(i + 1).padStart(2, '0')}</td>
+                                        <td className="px-5 py-3.5 text-xs text-black/55">
+                                            {new Date(tx.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <Badge variant="neutral" className="capitalize">{tx.network}</Badge>
+                                        <td className="px-5 py-3.5">
+                                            <NetworkBadge network={tx.network} />
                                         </td>
                                     </tr>
                                 ))}
@@ -144,7 +186,7 @@ export default function WalletDetailPage() {
                         </table>
                     </div>
                 )}
-            </Card>
+            </div>
         </div>
     )
 }

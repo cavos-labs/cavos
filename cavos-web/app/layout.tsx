@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { romagothicbold, geist } from "@/lib/fonts";
 import "./globals.css";
-import { Analytics } from "@vercel/analytics/next";
+import { AnalyticsConsent } from "@/components/AnalyticsConsent";
 
 export const viewport: Viewport = {
   themeColor: "#FFFFFF",
@@ -81,7 +81,7 @@ export default function RootLayout({
         className={`${romagothicbold.variable} ${geist.variable} antialiased`}
       >
         {children}
-        <Analytics />
+        <AnalyticsConsent />
       </body>
     </html>
   );
