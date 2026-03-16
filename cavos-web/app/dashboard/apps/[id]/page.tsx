@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { AppForm } from '@/components/AppForm'
-import { AppWindow, Trash2, ArrowLeft, Copy, Check, Search, Loader2, Building2, Pencil, Mail, Lock, ChevronLeft, ChevronRight, Wallet, ArrowRight, ExternalLink } from 'lucide-react'
+import { AppWindow, Trash2, ArrowLeft, Copy, Check, Search, Loader2, Building2, Pencil, Mail, ChevronLeft, ChevronRight, Wallet, ArrowRight, ExternalLink } from 'lucide-react'
 
 const WALLETS_PER_PAGE = 10
 
@@ -248,7 +248,7 @@ export default function AppDetailPage() {
             {/* ── Config Cards ────────────────────────────── */}
             <div className="grid sm:grid-cols-2 gap-4">
                 <button
-                    onClick={() => router.push(`/dashboard/apps/${appId}/emails`)}
+                    onClick={() => router.push(`/dashboard/apps/${appId}/emails/magic-link`)}
                     className="group text-left bg-white border border-[#EAE5DC] hover:border-[#C4BFB6] hover:shadow-sm rounded-2xl p-5 transition-all"
                 >
                     <div className="flex items-start justify-between mb-3">
@@ -257,22 +257,8 @@ export default function AppDetailPage() {
                         </div>
                         <ArrowRight className="w-4 h-4 text-black/20 group-hover:text-black/50 group-hover:translate-x-0.5 transition-all" />
                     </div>
-                    <h3 className="text-sm font-semibold mb-1">Email Verification</h3>
-                    <p className="text-xs text-black/40 leading-relaxed">Customize verification emails sent to users on registration.</p>
-                </button>
-
-                <button
-                    onClick={() => router.push(`/dashboard/apps/${appId}/emails/password-reset`)}
-                    className="group text-left bg-white border border-[#EAE5DC] hover:border-[#C4BFB6] hover:shadow-sm rounded-2xl p-5 transition-all"
-                >
-                    <div className="flex items-start justify-between mb-3">
-                        <div className="w-8 h-8 rounded-lg bg-[#F7F5F2] border border-[#EAE5DC] flex items-center justify-center">
-                            <Lock className="w-4 h-4 text-black/40" />
-                        </div>
-                        <ArrowRight className="w-4 h-4 text-black/20 group-hover:text-black/50 group-hover:translate-x-0.5 transition-all" />
-                    </div>
-                    <h3 className="text-sm font-semibold mb-1">Password Reset Email</h3>
-                    <p className="text-xs text-black/40 leading-relaxed">Customize the email sent when users request a password reset.</p>
+                    <h3 className="text-sm font-semibold mb-1">Magic Link Email</h3>
+                    <p className="text-xs text-black/40 leading-relaxed">Customize the passwordless sign-in email sent to users.</p>
                 </button>
             </div>
 
