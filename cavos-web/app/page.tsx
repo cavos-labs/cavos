@@ -5,22 +5,92 @@ import { CodeDemoSection } from '@/components/CodeDemoSection'
 import { Footer } from '@/components/Footer'
 import Script from 'next/script'
 
+export const metadata = {
+    title: "Cavos | Invisible Crypto Infrastructure",
+    description: "Cavos is a verifiable, MPC-free embedded wallet SDK for Starknet. Turn Google or Apple OAuth logins into self-custodial smart accounts with on-chain RSA-2048 verification — no seed phrases, no browser extensions, no MPC shards.",
+    alternates: {
+        canonical: "https://cavos.xyz",
+    },
+}
+
 export default function LandingPage() {
     const jsonLd = {
         "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "Cavos",
-        "operatingSystem": "Web, iOS, Android",
-        "applicationCategory": "FinanceApplication",
-        "description": "Cavos embeds smart accounts directly into your product — with social login, gas abstraction, and programmable security.",
-        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-        "author": { "@type": "Organization", "name": "Cavos Labs", "url": "https://cavos.xyz" }
+        "@graph": [
+            {
+                "@type": "SoftwareApplication",
+                "@id": "https://cavos.xyz/#software",
+                "name": "Cavos",
+                "url": "https://cavos.xyz",
+                "operatingSystem": "Web, iOS, Android",
+                "applicationCategory": "DeveloperApplication",
+                "description": "Cavos is a verifiable, MPC-free embedded wallet SDK for Starknet. Smart accounts are created automatically when users sign in with Google or Apple. No seed phrases, no browser extensions, no MPC shards. Powered by on-chain RSA-2048 verification via Garaga.",
+                "offers": {
+                    "@type": "Offer",
+                    "price": "0",
+                    "priceCurrency": "USD",
+                    "description": "Free tier available. Start building at no cost."
+                },
+                "author": { "@id": "https://cavos.xyz/#organization" },
+                "featureList": [
+                    "OAuth wallet creation via Google and Apple login",
+                    "On-chain RSA-2048 JWT verification via Garaga",
+                    "Gas abstraction with AVNU Paymaster integration",
+                    "Session keys with programmable spending policies",
+                    "Native account abstraction on Starknet",
+                    "MPC-free — zero key shards stored",
+                    "Self-custodial smart accounts (SRC-6)",
+                    "AI agent signer support with headless sessions",
+                    "React and React Native SDKs"
+                ],
+                "screenshot": "https://cavos.xyz/og-image.png",
+                "aggregateRating": {
+                    "@type": "AggregateRating",
+                    "ratingValue": "5",
+                    "reviewCount": "10",
+                    "bestRating": "5"
+                }
+            },
+            {
+                "@type": "HowTo",
+                "@id": "https://cavos.xyz/#howto",
+                "name": "How to integrate Cavos embedded wallets into your app",
+                "description": "Integrate self-custodial smart accounts with OAuth login in four steps using the Cavos SDK.",
+                "totalTime": "PT15M",
+                "step": [
+                    {
+                        "@type": "HowToStep",
+                        "position": 1,
+                        "name": "Authenticate",
+                        "text": "Users log in via OAuth (Google or Apple) or email. Cavos verifies the JWT on-chain using RSA-2048 via Garaga."
+                    },
+                    {
+                        "@type": "HowToStep",
+                        "position": 2,
+                        "name": "Provision Account",
+                        "text": "Cavos automatically deploys a self-custodial smart account (SRC-6) on Starknet tied to the user's OAuth identity."
+                    },
+                    {
+                        "@type": "HowToStep",
+                        "position": 3,
+                        "name": "Execute Transactions",
+                        "text": "Transactions run through your backend or client. Gas is sponsored via AVNU Paymaster — users never need tokens to start."
+                    },
+                    {
+                        "@type": "HowToStep",
+                        "position": 4,
+                        "name": "Scale",
+                        "text": "Manage accounts, policies, and session keys via API. Define granular spending rules and integrate with any Starknet protocol."
+                    }
+                ]
+            }
+        ]
     }
 
     return (
         <main className="min-h-screen w-full bg-white text-black font-sans antialiased overflow-x-hidden">
             <Script
-                id="json-ld"
+                id="page-json-ld"
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
