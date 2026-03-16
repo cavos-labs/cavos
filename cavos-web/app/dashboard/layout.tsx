@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Sidebar } from '@/components/Sidebar'
+import { DpaConsentModal } from '@/components/DpaConsentModal'
 import { Menu, X } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -58,6 +59,8 @@ export default function DashboardLayout({
                     </div>
                 </main>
             </div>
+
+            <DpaConsentModal />
         </div>
     )
 }

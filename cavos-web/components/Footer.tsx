@@ -41,8 +41,8 @@ export function Footer() {
                 <div className="space-y-5">
                     <h5 className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/50">Legal</h5>
                     <ul className="space-y-3 text-sm font-medium text-black/25">
-                        <li><span className="cursor-not-allowed">Privacy Policy</span></li>
-                        <li><span className="cursor-not-allowed">Terms of Service</span></li>
+                        <li><Link href="/privacy" className="hover:text-black transition-colors">Privacy Policy</Link></li>
+                        <li><Link href="/dpa" className="hover:text-black transition-colors">Data Processing Agreement</Link></li>
                     </ul>
                 </div>
             </div>
