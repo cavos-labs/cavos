@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { AppWindow, Check, ExternalLink, KeyRound, PlugZap, Sparkles, X } from 'lucide-react'
+import { AppWindow, Building2, Check, ExternalLink, KeyRound, PlugZap, Sparkles, X } from 'lucide-react'
 
 const DISMISS_KEY = 'cavos:onboarding:how-to-start:dismissed'
 const DONE_KEY_PREFIX = 'cavos:onboarding:how-to-start:done:'
@@ -47,7 +47,7 @@ export default function HowToStartPage() {
   const [done, setDone] = useState<Record<string, boolean>>(() => {
     try {
       const next: Record<string, boolean> = {}
-      for (const stepId of ['app', 'oauth', 'paymaster', 'grant', 'sdk']) {
+      for (const stepId of ['org', 'app', 'oauth', 'paymaster', 'grant', 'sdk']) {
         next[stepId] = localStorage.getItem(`${DONE_KEY_PREFIX}${stepId}`) === '1'
       }
       return next
@@ -58,9 +58,17 @@ export default function HowToStartPage() {
 
   const steps = useMemo(() => ([
     {
+      id: 'org',
+      title: 'Create organization',
+      description: 'Create organization for your following apps.',
+      icon: <Building2 className="w-4 h-4 text-black/45" />,
+      cta: { label: 'Create organization', href: '/dashboard/organizations/new', external: false },
+      optional: false,
+    },
+    {
       id: 'app',
-      title: 'Create app → get app_id',
-      description: 'Create your application in the dashboard and copy the app_id for the SDK.',
+      title: 'Create app',
+      description: 'Create app_id to setup in your app.',
       icon: <AppWindow className="w-4 h-4 text-black/45" />,
       cta: { label: 'Create app', href: '/dashboard/apps/new', external: false },
       optional: false,
@@ -122,7 +130,7 @@ export default function HowToStartPage() {
   }
 
   return (
-    <div className="space-y-6 animate-fadeIn max-w-4xl">
+    <div className="space-y-6 animate-fadeIn w-full">
       <div>
         <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-black/30 mb-1.5">Getting started</p>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
@@ -182,6 +190,7 @@ export default function HowToStartPage() {
                           )}
                         </div>
                         <p className="text-xs text-black/45 mt-1 leading-relaxed">{s.description}</p>
+
                       </div>
                     </div>
 
@@ -200,12 +209,64 @@ export default function HowToStartPage() {
                     </div>
                   </div>
 
-                  <div className="mt-3 flex items-center gap-2 text-[11px] font-semibold">
+                  {s.id === 'org' && (
+                    <div className="mt-4 flex justify-center">
+                      <div className="w-full max-w-xs rounded-xl overflow-hidden border border-[#EAE5DC] bg-black">
+                        <video
+                          controls
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                          preload="auto"
+                          className="w-full h-auto"
+                        >
+                          <source src="/videos/createOrg.mp4" type="video/mp4" />
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
+                    </div>
+                  )}
+
+                  {s.id === 'app' && (
+                    <div className="mt-4 flex justify-center">
+                      <div className="w-full max-w-xs rounded-xl overflow-hidden border border-[#EAE5DC] bg-black">
+                        <video
+                          controls
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                          preload="auto"
+                          className="w-full h-auto"
+                        >
+                          <source src="/videos/createApp.mp4" type="video/mp4" />
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mt-3">
                     <button
                       onClick={() => toggleDone(s.id)}
-                      className="inline-flex items-center gap-1 text-black/40 hover:text-black transition-colors"
+                      aria-pressed={Boolean(done[s.id])}
+                      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all ${
+                        done[s.id]
+                          ? 'bg-[#0A0908] text-white border-[#0A0908]'
+                          : 'bg-white text-black/50 border-[#EAE5DC] hover:border-[#C4BFB6] hover:text-black/70'
+                      }`}
                     >
-                      {done[s.id] ? 'Mark as not done' : 'Mark as done'}
+                      <span
+                        className={`w-4 h-4 rounded-[5px] border flex items-center justify-center transition-all ${
+                          done[s.id]
+                            ? 'border-white/40 bg-white/15'
+                            : 'border-black/20 bg-transparent'
+                        }`}
+                      >
+                        {done[s.id] && <Check className="w-3 h-3" />}
+                      </span>
+                      {done[s.id] ? 'Completed' : 'Mark as done'}
                     </button>
                   </div>
                 </div>
