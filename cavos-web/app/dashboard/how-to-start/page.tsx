@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { AppWindow, Building2, Check, ExternalLink, KeyRound, PlugZap, Sparkles, X } from 'lucide-react'
+import { CavosProviderCodeBlock } from '@/components/CavosProviderCodeBlock'
 
 const DISMISS_KEY = 'cavos:onboarding:how-to-start:dismissed'
 const DONE_KEY_PREFIX = 'cavos:onboarding:how-to-start:done:'
@@ -59,18 +60,20 @@ export default function HowToStartPage() {
   const steps = useMemo(() => ([
     {
       id: 'org',
-      title: 'Create organization',
-      description: 'Create organization for your following apps.',
+      title: 'Create organization and get API key',
+      description: 'Create your organization, then copy an org API key for the SDK and paymaster.',
       icon: <Building2 className="w-4 h-4 text-black/45" />,
       cta: { label: 'Create organization', href: '/dashboard/organizations/new', external: false },
+      secondaryCta: { label: 'Org API keys', href: '/dashboard/organizations' },
       optional: false,
     },
     {
       id: 'app',
-      title: 'Create app',
-      description: 'Create app_id to setup in your app.',
+      title: 'Create app and get app id',
+      description: 'Create an application under your org, then copy the app id for CavosProvider and the SDK.',
       icon: <AppWindow className="w-4 h-4 text-black/45" />,
       cta: { label: 'Create app', href: '/dashboard/apps/new', external: false },
+      secondaryCta: { label: 'Applications', href: '/dashboard/apps' },
       optional: false,
     },
     {
@@ -78,7 +81,8 @@ export default function HowToStartPage() {
       title: 'Configure OAuth providers (Google, Apple, Email)',
       description: 'Set up Google, Apple, and Email authentication for your users.',
       icon: <PlugZap className="w-4 h-4 text-black/45" />,
-      cta: { label: 'Open auth docs', href: 'https://docs.cavos.xyz/web/authentication.md', external: true },
+      secondaryCta: { label: 'Web installation', href: 'https://docs.cavos.xyz/web/installation', external: true },
+      cta: { label: 'Mobile installation', href: 'https://docs.cavos.xyz/react-native/installation', external: true },
       optional: false,
     },
     {
@@ -194,14 +198,20 @@ export default function HowToStartPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
                       {s.secondaryCta?.href && (
-                        <Link
-                          href={s.secondaryCta.href}
-                          className="inline-flex items-center justify-center px-4 py-2.5 bg-white border border-[#EAE5DC] text-sm font-semibold rounded-xl hover:border-[#C4BFB6] transition-all"
-                        >
-                          {s.secondaryCta.label}
-                        </Link>
+                        s.secondaryCta.external ? (
+                          <CtaButton href={s.secondaryCta.href} external>
+                            {s.secondaryCta.label}
+                          </CtaButton>
+                        ) : (
+                          <Link
+                            href={s.secondaryCta.href}
+                            className="inline-flex items-center justify-center px-4 py-2.5 bg-white border border-[#EAE5DC] text-sm font-semibold rounded-xl hover:border-[#C4BFB6] transition-all"
+                          >
+                            {s.secondaryCta.label}
+                          </Link>
+                        )
                       )}
                       <CtaButton href={s.cta.href} external={s.cta.external}>
                         {s.cta.label}
@@ -244,6 +254,15 @@ export default function HowToStartPage() {
                           Your browser does not support the video tag.
                         </video>
                       </div>
+                    </div>
+                  )}
+
+                  {s.id === 'oauth' && (
+                    <div className="mt-4">
+                      <p className="text-[11px] font-semibold text-black/40 uppercase tracking-wide mb-2">
+                        CavosProvider (web)
+                      </p>
+                      <CavosProviderCodeBlock />
                     </div>
                   )}
 
