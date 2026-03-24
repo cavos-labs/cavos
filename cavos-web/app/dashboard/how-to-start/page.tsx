@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { AppWindow, Building2, Check, ExternalLink, KeyRound, PlugZap, Sparkles, X } from 'lucide-react'
 import { CavosProviderCodeBlock } from '@/components/CavosProviderCodeBlock'
@@ -37,25 +37,8 @@ function CtaButton({
 }
 
 export default function HowToStartPage() {
-  const [dismissed, setDismissed] = useState(() => {
-    try {
-      return localStorage.getItem(DISMISS_KEY) === '1'
-    } catch {
-      return false
-    }
-  })
-
-  const [done, setDone] = useState<Record<string, boolean>>(() => {
-    try {
-      const next: Record<string, boolean> = {}
-      for (const stepId of ['org', 'app', 'oauth', 'paymaster', 'grant', 'sdk']) {
-        next[stepId] = localStorage.getItem(`${DONE_KEY_PREFIX}${stepId}`) === '1'
-      }
-      return next
-    } catch {
-      return {}
-    }
-  })
+  const [dismissed, setDismissed] = useState(false)
+  const [done, setDone] = useState<Record<string, boolean>>({})
 
   const steps = useMemo(() => ([
     {
@@ -87,10 +70,10 @@ export default function HowToStartPage() {
     },
     {
       id: 'paymaster',
-      title: 'Set up paymaster → get paymasterApiKey',
-      description: 'Generate an org API key and use it as paymasterApiKey in your SDK config.',
+      title: 'Add STRK for your paymaster and get your paymaster key',
+      description: 'Fund your paymaster with STRK and copy the paymasterApiKey to enable your application to send transactions.',
       icon: <KeyRound className="w-4 h-4 text-black/45" />,
-      cta: { label: 'Open org API keys', href: '/dashboard/organizations', external: false },
+      cta: { label: 'Open org API keys', href: '/dashboard/organizations/ec6c8494-850c-4bfa-8a64-2fba818059ae', external: false },
       secondaryCta: { label: 'Billing', href: '/dashboard/billing' },
       optional: false,
     },
@@ -99,7 +82,7 @@ export default function HowToStartPage() {
       title: '(Optional) Apply for Starknet Propulsion Grant to fund gas',
       description: 'Explore Starknet grants if you want funding support for transaction costs.',
       icon: <Sparkles className="w-4 h-4 text-black/45" />,
-      cta: { label: 'Open grants', href: 'https://www.starknet.io/grants/', external: true },
+      cta: { label: 'Open grants', href: 'https://airtable.com/appfoRv2ottjRfTpL/pag0G55zA8aU4V9bD/form', external: true },
       optional: true,
     },
     {
@@ -107,10 +90,24 @@ export default function HowToStartPage() {
       title: 'Install SDK and go live',
       description: 'Install the SDK, configure CavosProvider, and start onboarding users.',
       icon: <Sparkles className="w-4 h-4 text-black/45" />,
-      cta: { label: 'Open quickstart', href: 'https://docs.cavos.xyz/quickstart.md', external: true },
+      cta: { label: 'Open quickstart', href: 'https://docs.cavos.xyz/quickstart', external: true },
       optional: false,
     },
   ]), [])
+
+  useEffect(() => {
+    try {
+      setDismissed(localStorage.getItem(DISMISS_KEY) === '1')
+
+      const next: Record<string, boolean> = {}
+      for (const stepId of ['org', 'app', 'oauth', 'paymaster', 'grant', 'sdk']) {
+        next[stepId] = localStorage.getItem(`${DONE_KEY_PREFIX}${stepId}`) === '1'
+      }
+      setDone(next)
+    } catch {
+      // ignore localStorage access failures
+    }
+  }, [])
 
   const progress = useMemo(() => {
     const required = steps.filter(s => !s.optional)
@@ -263,6 +260,73 @@ export default function HowToStartPage() {
                         CavosProvider (web)
                       </p>
                       <CavosProviderCodeBlock />
+                    </div>
+                  )}
+
+                  {s.id === 'paymaster' && (
+                    <div className="mt-4 flex justify-center">
+                      <div className="w-full max-w-xs rounded-xl overflow-hidden border border-[#EAE5DC] bg-black">
+                        <video
+                          controls
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                          preload="auto"
+                          className="w-full h-auto"
+                        >
+                          <source src="/videos/paymaster.mp4" type="video/mp4" />
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
+                    </div>
+                  )}
+
+                  {s.id === 'sdk' && (
+                    <div className="mt-4 space-y-3">
+                      <div className="flex justify-center">
+                        <div className="w-full max-w-xs rounded-xl overflow-hidden border border-[#EAE5DC] bg-black">
+                          <video
+                            controls
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            preload="auto"
+                            className="w-full h-auto"
+                          >
+                            <source src="/videos/demo.mp4" type="video/mp4" />
+                            Your browser does not support the video tag.
+                          </video>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-[11px] font-semibold text-black/40 uppercase tracking-wide mb-1.5">
+                          Web
+                        </p>
+                        <pre className="overflow-x-auto rounded-xl border border-[#EAE5DC] bg-[#0A0908] px-3 py-2.5 font-mono text-[12px] text-white/95">
+                          <code>npm install @cavos/react starknet</code>
+                        </pre>
+                      </div>
+
+                      <div>
+                        <p className="text-[11px] font-semibold text-black/40 uppercase tracking-wide mb-1.5">
+                          Mobile
+                        </p>
+                        <pre className="overflow-x-auto rounded-xl border border-[#EAE5DC] bg-[#0A0908] px-3 py-2.5 font-mono text-[12px] text-white/95">
+                          <code>npm install @cavos/react-native starknet</code>
+                        </pre>
+                      </div>
+
+                      <div>
+                        <p className="text-[11px] font-semibold text-black/40 uppercase tracking-wide mb-1.5">
+                          Scaffold app
+                        </p>
+                        <pre className="overflow-x-auto rounded-xl border border-[#EAE5DC] bg-[#0A0908] px-3 py-2.5 font-mono text-[12px] text-white/95">
+                          <code>npx create-cavos-appx</code>
+                        </pre>
+                      </div>
                     </div>
                   )}
 
