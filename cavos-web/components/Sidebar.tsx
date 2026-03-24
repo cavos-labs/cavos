@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { LayoutDashboard, Building2, AppWindow, LogOut, FileText, CreditCard, ExternalLink } from 'lucide-react'
+import { LayoutDashboard, Building2, AppWindow, LogOut, FileText, CreditCard, ExternalLink, Sparkles } from 'lucide-react'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 
@@ -79,6 +79,20 @@ export function Sidebar() {
 
             {/* Footer */}
             <div className="p-3 border-t border-[#EAE5DC]/70 space-y-0.5">
+                <Link
+                    href="/dashboard/how-to-start"
+                    className={`
+                        flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all
+                        ${pathname === '/dashboard/how-to-start'
+                            ? 'bg-white text-black shadow-sm border border-[#EAE5DC] shadow-black/[0.04]'
+                            : 'text-black/40 hover:text-black hover:bg-white/60'
+                        }
+                    `}
+                >
+                    <Sparkles className="w-4 h-4 shrink-0 text-black/35" />
+                    How to start
+                </Link>
+
                 <a
                     href="https://docs.cavos.xyz"
                     target="_blank"
