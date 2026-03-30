@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { syncJWKS } from '@/lib/jwks-sync';
+import { syncJWKS, syncJWKSSlot } from '@/lib/jwks-sync';
 
 // Vercel serverless config
 export const maxDuration = 60; // 60 seconds max execution time
@@ -24,13 +24,13 @@ export async function POST(request: NextRequest) {
   }
 
   // Get network from query params
-  const network = request.nextUrl.searchParams.get('network') as 'sepolia' | 'mainnet' | null;
+  const network = request.nextUrl.searchParams.get('network') as 'sepolia' | 'mainnet' | 'slot' | null;
   const forceParam = request.nextUrl.searchParams.get('force');
   const force = forceParam === '1' || forceParam === 'true';
 
-  if (!network || !['sepolia', 'mainnet'].includes(network)) {
+  if (!network || !['sepolia', 'mainnet', 'slot'].includes(network)) {
     return NextResponse.json(
-      { error: 'Invalid network. Use ?network=sepolia or ?network=mainnet' },
+      { error: 'Invalid network. Use ?network=sepolia, ?network=mainnet, or ?network=slot' },
       { status: 400 }
     );
   }
@@ -39,7 +39,9 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now();
 
   try {
-    const results = await syncJWKS(network, { force });
+    const results = network === 'slot'
+      ? await syncJWKSSlot({ force })
+      : await syncJWKS(network, { force });
     const duration = Date.now() - startTime;
 
     const response = {

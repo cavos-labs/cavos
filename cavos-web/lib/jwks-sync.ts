@@ -29,10 +29,11 @@ const GOOGLE_JWKS_URL   = 'https://www.googleapis.com/oauth2/v3/certs';
 const APPLE_JWKS_URL    = 'https://appleid.apple.com/auth/keys';
 const CAVOS_FIREBASE_JWKS_URL = 'https://cavos.xyz/.well-known/jwks.json';
 
-// Provider label felt252 values (big-endian UTF-8 encoding of the label string).
-const PROVIDER_GOOGLE   = '0x676f6f676c65';   // 'google'
-const PROVIDER_APPLE    = '0x6170706c65';     // 'apple'
-const PROVIDER_FIREBASE = '0x6669726562617365'; // 'firebase'
+// Provider felt252 values — must match EXPECTED_ISS_* constants in cavos_account.cairo.
+// These are the full issuer URL strings packed as big-endian felt252.
+const PROVIDER_GOOGLE   = '0x68747470733a2f2f6163636f756e74732e676f6f676c652e636f6d'; // 'https://accounts.google.com'
+const PROVIDER_APPLE    = '0x68747470733a2f2f6170706c6569642e6170706c652e636f6d';     // 'https://appleid.apple.com'
+const PROVIDER_FIREBASE = '0x68747470733a2f2f6361766f732e6170702f6669726562617365';   // 'https://cavos.app/firebase'
 
 // Reclaim application credentials (from https://dev.reclaimprotocol.org)
 const RECLAIM_APP_ID = process.env['RECLAIM_APP_ID'] ?? '';
@@ -87,6 +88,34 @@ function getNetworkConfig(network: 'sepolia' | 'mainnet'): NetworkConfig {
     trustlessRegistryAddress: process.env[`JWKS_TRUSTLESS_REGISTRY_${suffix}`]!,
     submitterAddress: process.env[`JWKS_SUBMITTER_ADDRESS_${suffix}`]!,
     submitterPrivateKey: process.env[`JWKS_SUBMITTER_PRIVATE_KEY_${suffix}`]!,
+  };
+}
+
+interface SlotConfig {
+  rpcUrl: string;
+  /** Address of JWKSRegistry on the Slot (same as mainnet since it's a fork). */
+  registryAddress: string;
+  /** Admin account that controls the registry (same keys as mainnet admin). */
+  adminAddress: string;
+  adminPrivateKey: string;
+}
+
+function getSlotConfig(): SlotConfig {
+  return {
+    rpcUrl:
+      process.env['SLOT_RPC_URL'] || 'https://api.cartridge.gg/x/cavos/katana',
+    // Falls back to mainnet registry address — Slot is a mainnet fork.
+    registryAddress:
+      process.env['JWKS_REGISTRY_SLOT'] ||
+      process.env['JWKS_REGISTRY_MAINNET'] ||
+      '0x076ff6853197538b4d4c925b2c775014fae9b5c14f63262b13f2e49f732e21f7',
+    // Falls back to mainnet admin — same account exists on the fork.
+    adminAddress:
+      process.env['JWKS_ADMIN_ADDRESS_SLOT'] ||
+      process.env['JWKS_ADMIN_ADDRESS_MAINNET']!,
+    adminPrivateKey:
+      process.env['JWKS_ADMIN_PRIVATE_KEY_SLOT'] ||
+      process.env['JWKS_ADMIN_PRIVATE_KEY_MAINNET']!,
   };
 }
 
@@ -503,5 +532,142 @@ export async function syncAllNetworksWithOptions(
     console.error('Mainnet sync failed:', error);
   }
 
+  return results;
+}
+
+// ── Slot (Katana) Sync ────────────────────────────────────────────────────────
+//
+// Katana forks mainnet state, so the registry contract exists at the same
+// address with the same admin.  Because Katana has no_fee = true and doesn't
+// run the Reclaim verifier, we bypass the trustless flow entirely and call
+// set_key() directly via the admin account.
+//
+// Calldata layout for set_key(kid: felt252, key: JWKSKey):
+//   [kidFelt, n0..n23 (24 limbs), provider, valid_until, is_active]
+// Total: 28 felt252 values.
+
+function buildSetKeyCalldata(kidFelt: string, key: FormattedKey): string[] {
+  const h = (v: bigint | number) => '0x' + BigInt(v).toString(16);
+  return [
+    kidFelt,
+    ...key.nLimbs.map(h),
+    key.provider,
+    h(key.validUntil),
+    '0x1', // is_active: true
+  ];
+}
+
+/**
+ * Sync JWKS keys to a Cartridge Slot (Katana) chain.
+ *
+ * Uses the admin account to call set_key() directly — no Reclaim proof needed
+ * since Katana doesn't run the Reclaim verifier and gas is free.
+ */
+export async function syncJWKSSlot(options: SyncOptions = {}): Promise<SyncResult> {
+  const config = getSlotConfig();
+  const results: SyncResult = { added: [], skipped: [], errors: [] };
+  const force = options.force ?? false;
+
+  if (!config.adminAddress || !config.adminPrivateKey) {
+    throw new Error(
+      'Missing Slot admin account. Set JWKS_ADMIN_ADDRESS_SLOT / JWKS_ADMIN_PRIVATE_KEY_SLOT ' +
+      '(or the _MAINNET variants as fallback).',
+    );
+  }
+
+  console.log('[slot] Starting direct JWKS sync (admin set_key, no Reclaim proof)...');
+  console.log('[slot] RPC URL:            ', config.rpcUrl);
+  console.log('[slot] Registry address:   ', config.registryAddress);
+  console.log('[slot] Admin address:      ', config.adminAddress);
+  if (force) console.log('[slot] Force mode: existing valid keys will be re-registered');
+
+  const provider = new RpcProvider({ nodeUrl: config.rpcUrl });
+  const account = new Account({
+    provider: { nodeUrl: config.rpcUrl },
+    address: config.adminAddress,
+    signer: config.adminPrivateKey,
+  });
+
+  const readContract = new Contract({
+    abi: JWKS_REGISTRY_ABI as any,
+    address: config.registryAddress,
+    providerOrAccount: provider,
+  });
+
+  const providers: ProviderConfig[] = [
+    { name: 'google',   jwksUrl: GOOGLE_JWKS_URL,        providerFelt: PROVIDER_GOOGLE   },
+    { name: 'apple',    jwksUrl: APPLE_JWKS_URL,          providerFelt: PROVIDER_APPLE    },
+    { name: 'firebase', jwksUrl: CAVOS_FIREBASE_JWKS_URL, providerFelt: PROVIDER_FIREBASE },
+  ];
+
+  for (const providerCfg of providers) {
+    let keys: FormattedKey[] = [];
+
+    try {
+      keys = await fetchProviderKeys(providerCfg.name, providerCfg.jwksUrl, providerCfg.providerFelt);
+      console.log(`[slot] Fetched ${keys.length} ${providerCfg.name} keys`);
+    } catch (error: any) {
+      results.errors.push(`Failed to fetch ${providerCfg.name} keys: ${error.message}`);
+      console.error(`[slot] ${providerCfg.name} fetch error:`, error.message);
+      continue;
+    }
+
+    const needsRegistration = (
+      await Promise.all(keys.map(async (key) => {
+        if (force) {
+          console.log(`[slot] Force re-registering key: ${key.kid}`);
+          return key;
+        }
+        const isValid = await isKeyValidOnChain(readContract, key.kidFelt);
+        if (isValid) {
+          results.skipped.push(key.kid);
+          console.log(`[slot] Key already on-chain: ${key.kid}`);
+          return null;
+        }
+        return key;
+      }))
+    ).filter((k): k is FormattedKey => k !== null);
+
+    if (needsRegistration.length === 0) continue;
+
+    for (const key of needsRegistration) {
+      try {
+        console.log(`[slot] Registering ${providerCfg.name} kid=${key.kid}...`);
+        const calldata = buildSetKeyCalldata(key.kidFelt, key);
+
+        // Katana has no_fee=true — bypass fee estimation by providing explicit
+        // zero resource bounds for a V3 transaction.
+        const { transaction_hash } = await account.execute(
+          {
+            contractAddress: config.registryAddress,
+            entrypoint: 'set_key',
+            calldata,
+          },
+          {
+            resourceBounds: {
+              l1_gas:      { max_amount: 0n, max_price_per_unit: 0n },
+              l2_gas:      { max_amount: 0n, max_price_per_unit: 0n },
+              l1_data_gas: { max_amount: 0n, max_price_per_unit: 0n },
+            },
+          },
+        );
+
+        console.log(`[slot] Transaction submitted: ${transaction_hash}`);
+        await provider.waitForTransaction(transaction_hash);
+        console.log(`[slot] Transaction confirmed: ${transaction_hash}`);
+
+        results.added.push(key.kid);
+      } catch (error: any) {
+        const errorMsg = `Failed to register ${providerCfg.name} key ${key.kid}: ${error.message}`;
+        results.errors.push(errorMsg);
+        console.error(`[slot] ${errorMsg}`);
+      }
+    }
+  }
+
+  console.log(
+    `[slot] Sync complete. Added: ${results.added.length}, ` +
+      `Skipped: ${results.skipped.length}, Errors: ${results.errors.length}`,
+  );
   return results;
 }
