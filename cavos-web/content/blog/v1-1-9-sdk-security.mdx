@@ -1,0 +1,127 @@
+---
+title: "v1.1.9 — Session Key Fix & Security Hardening"
+date: "2025-03-30"
+excerpt: "Fix crítico de y-parity en session keys para Slot, relayer pre-configurado para Cartridge Katana, y hardening de verificación JWT en el contrato cavos-account."
+category: "Release"
+slug: "v1-1-9-sdk-security"
+---
+
+We're shipping **v1.1.9** of the Cavos React SDK along with a round of security hardening in `cavos-account`. This release fixes a critical bug that caused ~50% of Slot session registrations to fail with "Invalid session key signature", simplifies Slot configuration for developers, and closes two potential attack vectors in the Cairo contract.
+
+## What's new in @cavos/react v1.1.9
+
+### Fix: Session key y-parity normalization
+
+When a session key was generated for `execute_from_outside_v2` on Cartridge Slot, roughly half of all keys were being rejected by the contract with **"Invalid session key signature"**.
+
+The root cause: Cairo's `check_ecdsa_signature` reconstructs the signer's public key using the **smaller y-coordinate** (y < p/2, also called the "positive" root in the Stark field convention). For a given x on the STARK curve, two valid y values exist: y and p−y. If the randomly generated session key had y > p/2, Cairo would pick the wrong point and the signature would always fail.
+
+The fix normalizes all session key pairs before use:
+
+```typescript
+const STARK_FIELD_PRIME = BigInt(
+  '0x800000000000011000000000000000000000000000000000000000000000001'
+);
+
+// After key generation, check if y > p/2
+const pubFull = ec.starkCurve.getPublicKey(privateKeyHex, false); // uncompressed
+const yBig = BigInt('0x' + Buffer.from(pubFull.slice(33)).toString('hex'));
+
+if (yBig * 2n > STARK_FIELD_PRIME) {
+  // Negate the private key to get the complementary point with y < p/2
+  privateKeyBigInt = CURVE_ORDER - privateKeyBigInt;
+}
+```
+
+This fix is applied at all three session key generation sites (`initializeSession`, `generateNewSession`, `freshenSession`) in `OAuthWalletManager`.
+
+### Slot: built-in relayer — no configuration needed
+
+Previously, using Cartridge Slot required developers to provide a relayer address and private key. This was unnecessary friction.
+
+The Cavos SDK now ships with a **built-in relayer for Slot**. The relayer is not overridable — it's hardcoded in the SDK to keep the developer API clean:
+
+```tsx
+// Before v1.1.9 — required relayer config
+slot: {
+  rpcUrl: 'https://api.cartridge.gg/x/your-project/katana',
+  relayerAddress: '0x...',     // ← no longer needed
+  relayerPrivateKey: '0x...',  // ← no longer needed
+}
+
+// v1.1.9 — just the RPC URL
+slot: {
+  rpcUrl: 'https://api.cartridge.gg/x/your-project/katana',
+}
+```
+
+The relayer is only needed for the first session registration on Slot (JWT verification requires `call_contract`, which is only allowed outside `__validate__`). All subsequent transactions use the session key directly — no relayer involved.
+
+### Slot: configurable chain ID
+
+By default, the SDK fetches the chain ID from the Slot RPC on every call. If you want to skip that round-trip or use a local Katana with a custom chain ID, you can now pin it:
+
+```tsx
+slot: {
+  rpcUrl: 'https://api.cartridge.gg/x/your-project/katana',
+  chainId: '0x534e5f4d41494e', // optional — omit to auto-detect
+}
+```
+
+---
+
+## Security hardening in cavos-account
+
+The following fixes are live in the deployed `cavos-account` contract. No action required from SDK users — the SDK already targets the correct class hash.
+
+### Offset-injection attack prevention
+
+JWT claims (like `exp`, `iss`, `sub`, `nonce`, `kid`) are extracted by offset from the raw JWT byte array. A maliciously crafted offset could previously point to an arbitrary position in the token, potentially matching an attacker-controlled value.
+
+The fix adds `assert_json_key_prefix()`, which validates that the bytes immediately before the provided offset form the expected JSON key:
+
+```cairo
+// For the "exp" claim, the bytes at offset-7..offset must be:
+// 34 'e' 'x' 'p' 34 ':' ' '  →  "exp":
+fn assert_json_key_prefix(jwt_bytes: @ByteArray, value_offset: u32, key: felt252) {
+    // Checks that the field key appears exactly before the value in the raw JWT
+    // Panics on mismatch — prevents any offset-crafting attack
+}
+```
+
+This is applied to every claim verified during JWT validation.
+
+### Cross-provider issuer binding
+
+A JWKS registry entry (the public key used to verify a JWT) now carries a `provider` field that must match the JWT's `iss` claim:
+
+```cairo
+assert!(jwks_key.provider == jwt_iss, "Key/issuer provider mismatch");
+```
+
+Without this check, a compromised JWKS key registered for one provider (e.g., Apple) could theoretically be used to forge a valid JWT for another provider (e.g., Google), enabling cross-provider account takeover. The binding closes this vector.
+
+### Self-revocation protection
+
+`revoke_session` and `emergency_revoke` can now only be called by the account itself:
+
+```cairo
+assert!(
+  get_caller_address() == get_contract_address(),
+  "Only self can revoke session"
+);
+```
+
+This prevents an external contract or EOA from force-revoking sessions on another user's account.
+
+---
+
+## How to upgrade
+
+```bash
+npm install @cavos/react@1.1.9
+```
+
+If you were passing `relayerAddress` or `relayerPrivateKey` in your `slot` config, remove them — they are no longer accepted.
+
+As always, reach out on [Discord](https://discord.gg/Vvq2ekEV47) if you run into anything.
