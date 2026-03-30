@@ -14,9 +14,10 @@ export function Header() {
     const [isAuthenticated, setIsAuthenticated] = useState(false)
     const [scrolled, setScrolled] = useState(false)
 
-    // Dark hero on landing page before scroll
+    // Dark hero on landing page and blog pages before scroll
     const isLanding = pathname === '/'
-    const isDark = isLanding && !scrolled
+    const isChangelog = pathname === '/blog' || pathname.startsWith('/blog/')
+    const isDark = (isLanding || isChangelog) && !scrolled
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -73,6 +74,12 @@ export function Header() {
                             Docs
                             <ExternalLink className="w-3 h-3" />
                         </a>
+                        <Link
+                            href="/blog"
+                            className={`text-sm font-medium transition-colors ${isDark ? 'text-white/50 hover:text-white' : 'text-black/50 hover:text-black'}`}
+                        >
+                            Changelog
+                        </Link>
                         <a
                             href="https://discord.gg/Vvq2ekEV47"
                             target="_blank"
@@ -182,6 +189,7 @@ export function Header() {
                                     </Link>
                                 ))}
                                 <a href="https://docs.cavos.xyz" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3 text-sm font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Docs</a>
+                                <Link href="/blog" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3 text-sm font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Changelog</Link>
                                 <button onClick={handleLogout} className="w-full text-left px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors">Sign Out</button>
                             </>
                         ) : (
@@ -189,6 +197,7 @@ export function Header() {
                                 <Link href="/login" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3 text-sm font-medium text-black hover:bg-black/5 rounded-xl transition-colors">Log in</Link>
                                 <Link href="/register" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3 text-sm font-medium text-black hover:bg-black/5 rounded-xl transition-colors">Start building</Link>
                                 <a href="https://docs.cavos.xyz" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3 text-sm font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Docs</a>
+                                <Link href="/blog" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3 text-sm font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Changelog</Link>
                                 <a href="https://discord.gg/Vvq2ekEV47" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3 text-sm font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Discord</a>
                             </>
                         )}
