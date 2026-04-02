@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Fuel, ArrowDown, Clock, ExternalLink, Wallet, CheckCircle, Loader2, X, TrendingDown } from 'lucide-react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { connect, disconnect } from 'starknetkit';
 import { RpcProvider } from 'starknet';
@@ -289,6 +290,39 @@ export default function BillingPage() {
                         Deposit STRK
                     </button>
                 </div>
+            </div>
+
+            {/* ── Propulsion Grant Banner ── */}
+            <div className="relative overflow-hidden rounded-2xl bg-[#141A2E] p-5 md:p-6 flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6">
+                <div
+                    className="absolute left-0 top-0 w-64 h-64 pointer-events-none"
+                    style={{ background: 'radial-gradient(ellipse at top left, rgba(99,102,241,0.08) 0%, transparent 65%)' }}
+                />
+
+                <div className="relative shrink-0">
+                    <Image
+                        src="/sn-propulsion.png"
+                        alt="Starknet Propulsion"
+                        width={72}
+                        height={72}
+                        className="rounded-xl w-14 h-14 md:w-[72px] md:h-[72px]"
+                    />
+                </div>
+
+                <div className="relative flex-1 min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/30 mb-1.5">Starknet Propulsion</p>
+                    <p className="text-lg md:text-xl font-bold text-white tracking-tight leading-snug">Apply for Propulsion Grant and get your gas for free</p>
+                </div>
+
+                <a
+                    href="https://propulsion.starknet.org/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="relative shrink-0 w-full md:w-auto flex items-center justify-center md:justify-start gap-2 px-4 py-2.5 md:py-2 bg-white/10 rounded-xl text-white text-xs font-semibold transition-all hover:bg-white/20 active:scale-[0.97]"
+                >
+                    Apply Now
+                    <ExternalLink className="w-3.5 h-3.5" />
+                </a>
             </div>
 
             {/* ── Deposit form ── */}
