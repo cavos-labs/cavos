@@ -412,6 +412,54 @@ export default function LandingPage() {
                 </div>
             </section>
 
+            {/* ── PRICING ───────────────────────────────────── */}
+            <section className="py-28 px-6 bg-white border-t border-black/[0.05]">
+                <div className="max-w-4xl mx-auto space-y-16">
+                    <div className="text-center space-y-3">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/30">Pricing</div>
+                        <h2 className="text-4xl md:text-5xl font-bold tracking-tighter">Pay only for what you use.</h2>
+                        <p className="text-sm text-black/40 max-w-lg mx-auto leading-relaxed">
+                            No subscriptions. No tiers. You only pay for the gas your users consume.
+                        </p>
+                    </div>
+
+                    <div className="relative rounded-2xl border border-[#EAE5DC] overflow-hidden">
+                        {/* Main pricing card */}
+                        <div className="p-10 md:p-14 text-center space-y-6 bg-[#F7F5F2]">
+                            <div className="text-[10px] font-bold uppercase tracking-[0.25em] text-black/30">Usage-based</div>
+                            <div className="flex items-baseline justify-center gap-2">
+                                <span className="text-6xl md:text-7xl font-bold tracking-tighter">5%</span>
+                                <span className="text-lg text-black/30 font-semibold">fee on gas deposits</span>
+                            </div>
+                            <p className="text-sm text-black/45 max-w-md mx-auto leading-relaxed">
+                                Deposit STRK to your Gas Tank. We take a 5% platform fee — the rest goes directly to sponsoring your users&apos; transactions.
+                            </p>
+                            <Link
+                                href="/register"
+                                className="inline-flex px-8 py-3.5 bg-[#0A0908] text-white rounded-xl font-semibold text-sm hover:bg-black/80 transition-all active:scale-[0.97]"
+                            >
+                                Start building →
+                            </Link>
+                        </div>
+
+                        {/* What's included */}
+                        <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-px bg-[#EAE5DC]">
+                            {[
+                                { title: 'SDK Access',          desc: 'React & React Native' },
+                                { title: 'Gasless Transactions', desc: 'Sponsored via Paymaster' },
+                                { title: 'Session Keys',        desc: 'Programmable policies' },
+                                { title: 'Testnet',             desc: 'Free — no deposit needed' },
+                            ].map((item) => (
+                                <div key={item.title} className="bg-white p-6 space-y-1.5">
+                                    <h4 className="text-sm font-bold">{item.title}</h4>
+                                    <p className="text-xs text-black/40">{item.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* ── BUILT FOR ─────────────────────────────────── */}
             <section className="py-28 px-6 bg-[#F7F5F2] border-b border-[#EAE5DC]/60">
                 <div className="max-w-6xl mx-auto space-y-14">
