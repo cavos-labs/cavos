@@ -1,0 +1,25 @@
+name: Sync JWKS
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: sync-jwks
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Sync JWKS keys
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Call JWKS sync endpoint
+        env:
+          SYNC_JWKS_URL: ${{ secrets.SYNC_JWKS_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl -fsS --max-time 120 "$SYNC_JWKS_URL" \
+            -H "Authorization: Bearer $CRON_SECRET"
