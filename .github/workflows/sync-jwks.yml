@@ -19,7 +19,7 @@ jobs:
       - name: Call JWKS sync endpoint
         env:
           SYNC_JWKS_URL: ${{ secrets.SYNC_JWKS_URL }}
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
         run: |
-          curl -fLsS --max-time 120 "$SYNC_JWKS_URL" \
-            -H "Authorization: Bearer $CRON_SECRET"
+          curl -fLsS --max-time 120 -X POST "$SYNC_JWKS_URL" \
+            -H "x-admin-key: $ADMIN_API_KEY"
