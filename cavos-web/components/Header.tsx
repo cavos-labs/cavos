@@ -13,11 +13,8 @@ export function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isAuthenticated, setIsAuthenticated] = useState(false)
     const [scrolled, setScrolled] = useState(false)
-
-    // Dark hero on landing page and blog pages before scroll
     const isLanding = pathname === '/'
-    const isChangelog = pathname === '/blog' || pathname.startsWith('/blog/')
-    const isDark = (isLanding || isChangelog) && !scrolled
+    const transparent = isLanding && !scrolled
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -46,37 +43,38 @@ export function Header() {
     return (
         <>
             <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-                scrolled
-                    ? 'bg-white/92 backdrop-blur-md border-b border-black/[0.06] shadow-sm shadow-black/[0.03]'
-                    : 'bg-transparent'
+                transparent
+                    ? 'bg-transparent'
+                    : 'bg-white/85 backdrop-blur-md border-b border-line'
             }`}>
-                <div className="max-w-[1400px] mx-auto px-6 md:px-8 h-[4.5rem] flex items-center justify-between gap-6">
+                <div className="max-w-[1280px] mx-auto px-6 md:px-8 h-[4.5rem] flex items-center justify-between gap-6">
 
-                    {/* Logo — inverted on dark hero */}
-                    <Link href="/" className="flex items-center shrink-0 hover:opacity-75 transition-opacity">
+                  <div className="flex items-center gap-10">
+                    {/* Logo */}
+                    <Link href="/" className="flex items-center shrink-0 hover:opacity-70 transition-opacity">
                         <Image
                             src="/cavos-black.png"
                             alt="Cavos"
                             width={112}
                             height={44}
-                            className={`h-9 w-auto transition-all duration-300 ${isDark ? 'invert' : ''}`}
+                            className="h-9 w-auto"
                         />
                     </Link>
 
                     {/* Desktop nav */}
-                    <nav className="hidden md:flex items-center gap-7">
+                    <nav className="hidden md:flex items-center gap-8">
                         <a
                             href="https://docs.cavos.xyz"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className={`flex items-center gap-1 text-sm font-medium transition-colors ${isDark ? 'text-white/50 hover:text-white' : 'text-black/50 hover:text-black'}`}
+                            className="flex items-center gap-1 text-sm font-medium text-ink/60 hover:text-ink transition-colors"
                         >
                             Docs
                             <ExternalLink className="w-3 h-3" />
                         </a>
                         <Link
                             href="/blog"
-                            className={`text-sm font-medium transition-colors ${isDark ? 'text-white/50 hover:text-white' : 'text-black/50 hover:text-black'}`}
+                            className="text-sm font-medium text-ink/60 hover:text-ink transition-colors"
                         >
                             Changelog
                         </Link>
@@ -84,49 +82,42 @@ export function Header() {
                             href="https://discord.gg/Vvq2ekEV47"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className={`text-sm font-medium transition-colors ${isDark ? 'text-white/50 hover:text-white' : 'text-black/50 hover:text-black'}`}
+                            className="text-sm font-medium text-ink/60 hover:text-ink transition-colors"
                         >
                             Discord
                         </a>
                         {isAuthenticated && (
                             <Link
                                 href="/dashboard"
-                                className={`text-sm font-medium transition-colors ${isDark ? 'text-white/50 hover:text-white' : 'text-black/50 hover:text-black'}`}
+                                className="text-sm font-medium text-ink/60 hover:text-ink transition-colors"
                             >
                                 Dashboard
                             </Link>
                         )}
                     </nav>
+                  </div>
 
                     {/* Desktop CTA */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5">
                         {!isAuthenticated ? (
                             <>
                                 <Link
                                     href="/login"
-                                    className={`hidden md:block text-sm font-medium transition-colors px-3 py-2 ${isDark ? 'text-white/50 hover:text-white' : 'text-black/50 hover:text-black'}`}
+                                    className="hidden md:inline-flex items-center px-4 py-2 text-sm font-semibold text-ink bg-white rounded-md border border-line-strong hover:border-ink/40 transition-all"
                                 >
-                                    Log in
+                                    Sign In
                                 </Link>
                                 <Link
-                                    href="/register"
-                                    className={`px-5 py-2 text-sm font-semibold rounded-xl transition-all active:scale-95 ${
-                                        isDark
-                                            ? 'bg-white text-black hover:bg-[#EAE5DC]'
-                                            : 'bg-black text-white hover:bg-black/85'
-                                    }`}
+                                    href="mailto:hello@cavos.xyz"
+                                    className="hidden md:inline-flex items-center px-4 py-2 text-sm font-semibold rounded-md bg-brand text-white hover:bg-brand-hover transition-all active:scale-[0.97]"
                                 >
-                                    Start building
+                                    Contact Us
                                 </Link>
                             </>
                         ) : (
                             <Link
                                 href="/dashboard"
-                                className={`px-5 py-2 text-sm font-semibold rounded-xl transition-all active:scale-95 ${
-                                    isDark
-                                        ? 'bg-white text-black hover:bg-[#EAE5DC]'
-                                        : 'bg-black text-white hover:bg-black/85'
-                                }`}
+                                className="hidden md:inline-flex items-center px-4 py-2 text-sm font-semibold rounded-md bg-brand text-white hover:bg-brand-hover transition-all active:scale-[0.97]"
                             >
                                 Dashboard
                             </Link>
@@ -135,7 +126,7 @@ export function Header() {
                         {/* Hamburger */}
                         <button
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            className={`md:hidden ml-1 w-9 h-9 flex items-center justify-center transition-colors ${isDark ? 'text-white/60 hover:text-white' : 'text-black/70 hover:text-black'}`}
+                            className={`md:hidden ml-1 w-9 h-9 flex items-center justify-center transition-colors ${transparent ? 'text-white mix-blend-difference' : 'text-ink/70 hover:text-ink'}`}
                             aria-label="Toggle menu"
                         >
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -157,8 +148,8 @@ export function Header() {
                 />
             )}
 
-            {/* Mobile slide-in menu */}
-            <div className={`fixed top-0 right-0 h-full w-72 bg-white z-50 shadow-2xl transform transition-transform duration-300 ease-in-out md:hidden ${
+            {/* Mobile slide-in menu — full screen */}
+            <div className={`fixed inset-0 h-full w-full bg-white z-50 transform transition-transform duration-300 ease-in-out md:hidden ${
                 isMenuOpen ? 'translate-x-0' : 'translate-x-full'
             }`}>
                 <div className="flex flex-col h-full">
@@ -183,22 +174,22 @@ export function Header() {
                                         key={item.href}
                                         href={item.href}
                                         onClick={() => setIsMenuOpen(false)}
-                                        className="block px-4 py-3 text-sm font-medium text-black hover:bg-black/5 rounded-xl transition-colors"
+                                        className="block px-4 py-3.5 text-lg font-medium text-black hover:bg-black/5 rounded-xl transition-colors"
                                     >
                                         {item.label}
                                     </Link>
                                 ))}
-                                <a href="https://docs.cavos.xyz" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3 text-sm font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Docs</a>
-                                <Link href="/blog" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3 text-sm font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Changelog</Link>
-                                <button onClick={handleLogout} className="w-full text-left px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors">Sign Out</button>
+                                <a href="https://docs.cavos.xyz" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Docs</a>
+                                <Link href="/blog" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Changelog</Link>
+                                <button onClick={handleLogout} className="w-full text-left px-4 py-3.5 text-lg font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors">Sign Out</button>
                             </>
                         ) : (
                             <>
-                                <Link href="/login" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3 text-sm font-medium text-black hover:bg-black/5 rounded-xl transition-colors">Log in</Link>
-                                <Link href="/register" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3 text-sm font-medium text-black hover:bg-black/5 rounded-xl transition-colors">Start building</Link>
-                                <a href="https://docs.cavos.xyz" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3 text-sm font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Docs</a>
-                                <Link href="/blog" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3 text-sm font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Changelog</Link>
-                                <a href="https://discord.gg/Vvq2ekEV47" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3 text-sm font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Discord</a>
+                                <Link href="/login" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black hover:bg-black/5 rounded-xl transition-colors">Log in</Link>
+                                <Link href="/register" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black hover:bg-black/5 rounded-xl transition-colors">Start building</Link>
+                                <a href="https://docs.cavos.xyz" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Docs</a>
+                                <Link href="/blog" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Changelog</Link>
+                                <a href="https://discord.gg/Vvq2ekEV47" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Discord</a>
                             </>
                         )}
                     </nav>
