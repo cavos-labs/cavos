@@ -10,6 +10,9 @@
   },
   "dependencies": {
     "@auth0/nextjs-auth0": "^4.13.0",
+    "@gsap/react": "^2.1.2",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
     "@reclaimprotocol/zk-fetch": "^0.8.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.83.0",
@@ -18,8 +21,8 @@
     "firebase-admin": "^13.6.0",
     "framer-motion": "^12.23.24",
     "geist": "^1.5.1",
-    "get-starknet-core": "^4.0.0",
     "gray-matter": "^4.0.3",
+    "gsap": "^3.15.0",
     "jose": "^5.10.0",
     "jotai": "^2.15.1",
     "lucide-react": "^0.554.0",
@@ -35,6 +38,7 @@
     "snarkjs": "^0.7.4",
     "starknet": "^9.2.1",
     "starknetkit": "^3.4.3",
+    "three": "^0.184.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {

@@ -85,13 +85,13 @@ export function CodeDemoSection() {
     }, [isVisible])
 
     return (
-        <div ref={sectionRef} className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20 bg-white">
+        <div ref={sectionRef} className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
             {/* Left Column: Contextual Text */}
             <div className="flex-1 space-y-6">
-                <h3 className="text-4xl font-bold tracking-tight text-black leading-[1.1]">
+                <h2 className="text-3xl md:text-4xl font-bold tracking-[-0.03em] text-ink leading-[1.1]">
                     The easiest way to get users into crypto.
-                </h3>
-                <p className="text-lg text-gray-500 leading-relaxed">
+                </h2>
+                <p className="text-lg text-ink/55 leading-relaxed">
                     Blockchain stays invisible, but the perks are clear. Sign transactions gasless without ever leaving your UI.
                 </p>
                 <div className="pt-4 flex flex-col gap-3">
@@ -108,7 +108,7 @@ export function CodeDemoSection() {
 
             {/* Right Column: Integrated Code Window */}
             <div className="flex-1 w-full max-w-xl">
-                <div className="rounded-[2rem] overflow-hidden bg-[#0a0a0a] shadow-2xl border border-black/5">
+                <div className="rounded-2xl overflow-hidden bg-[#0a0a0a] border border-line">
                     {/* Window Controls */}
                     <div className="flex items-center gap-2 px-6 py-4 bg-[#111] border-b border-white/5">
                         <div className="w-2.5 h-2.5 rounded-full bg-[#333]" />
@@ -121,7 +121,7 @@ export function CodeDemoSection() {
                         <pre className="font-mono text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
                             <code>
                                 {highlightCode(displayedCode)}
-                                <span className="animate-pulse inline-block w-1.5 h-4 bg-primary ml-1 align-middle"></span>
+                                <span className="animate-pulse inline-block w-1.5 h-4 bg-brand ml-1 align-middle"></span>
                             </code>
                         </pre>
                     </div>

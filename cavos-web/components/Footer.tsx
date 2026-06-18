@@ -3,7 +3,7 @@ import Image from 'next/image'
 
 export function Footer() {
     return (
-        <footer className="bg-[#F7F5F2] border-t border-[#EAE5DC] py-20 px-8 md:px-12">
+        <footer className="bg-surface border-t border-line py-20 px-8 md:px-12">
             <div className="max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 md:gap-20">
                 <div className="col-span-2 space-y-6">
                     <Link href="/" className="inline-block hover:opacity-75 transition-opacity">
@@ -47,7 +47,7 @@ export function Footer() {
                 </div>
             </div>
 
-            <div className="max-w-[1400px] mx-auto mt-16 pt-8 border-t border-[#EAE5DC] flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="max-w-[1400px] mx-auto mt-16 pt-8 border-t border-line flex flex-col md:flex-row justify-between items-center gap-6">
                 <p className="text-[10px] font-bold text-black/25 uppercase tracking-[0.2em]">© 2026 Cavos Labs. All rights reserved.</p>
                 <div className="flex items-center gap-8 opacity-30 hover:opacity-70 transition-opacity">
                     <Link href="https://twitter.com/cavosxyz" target="_blank">

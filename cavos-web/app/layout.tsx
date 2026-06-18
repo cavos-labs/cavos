@@ -4,7 +4,7 @@ import "./globals.css";
 import { AnalyticsConsent } from "@/components/AnalyticsConsent";
 
 export const viewport: Viewport = {
-  themeColor: "#FFFFFF",
+  themeColor: "#402AFF",
   width: "device-width",
   initialScale: 1,
 };
