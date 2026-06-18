@@ -110,7 +110,7 @@ export default function LandingPage() {
                     {/* ── HERO ──────────────────────────────────── */}
                     <section className="relative md:flex-1 flex items-start md:items-center px-6 md:px-16 lg:px-24 pt-14 md:pt-20 pb-12 md:pb-20">
                         <div className="space-y-10 md:space-y-14">
-                            <h1 data-hero className="text-[clamp(1.75rem,2.3vw,2.375rem)] font-normal tracking-[-0.02em] leading-[1.3] text-white mix-blend-difference">
+                            <h1 className="text-[clamp(1.75rem,2.3vw,2.375rem)] font-normal tracking-[-0.02em] leading-[1.3] text-white mix-blend-difference">
                                 <span className="font-medium">Smart accounts embedded directly into your product.</span><br />
                                 Social login, gas abstraction, programmable security.<br />
                                 No extensions. No seed phrases.
