@@ -3,7 +3,7 @@
 import { Canvas, useFrame } from '@react-three/fiber'
 import { MeshDistortMaterial, Sphere, Environment, Lightformer } from '@react-three/drei'
 import { useRef, useState, useEffect } from 'react'
-import type { Mesh, Group } from 'three'
+import { ACESFilmicToneMapping, type Mesh, type Group } from 'three'
 
 /**
  * Glossy morphing 3D orb in Cavos indigo. A high-poly sphere distorts with
@@ -33,14 +33,17 @@ function Orb({ animate, mobile }: { animate: boolean; mobile: boolean }) {
 
     return (
         <group ref={group} position={pos} scale={scale}>
-            <Sphere ref={mesh} args={[1.5, 192, 192]}>
+            <Sphere ref={mesh} args={[1.5, 256, 256]}>
                 <MeshDistortMaterial
                     color="#4733FF"
-                    distort={animate ? 0.5 : 0.3}
-                    speed={animate ? 2.4 : 0}
-                    roughness={0.14}
-                    metalness={0.6}
-                    envMapIntensity={1.4}
+                    distort={animate ? 0.42 : 0.28}
+                    speed={animate ? 2.2 : 0}
+                    roughness={0.1}
+                    metalness={0.65}
+                    envMapIntensity={1.5}
+                    clearcoat={1}
+                    clearcoatRoughness={0.12}
+                    dithering
                 />
             </Sphere>
         </group>
@@ -83,7 +86,12 @@ export function HeroOrb() {
                 className="!absolute inset-0"
                 camera={{ position: [0, 0, 4.2], fov: 45 }}
                 dpr={[1, 2]}
-                gl={{ antialias: true, alpha: true }}
+                gl={{
+                    antialias: true,
+                    alpha: true,
+                    toneMapping: ACESFilmicToneMapping,
+                    toneMappingExposure: 1.05,
+                }}
                 frameloop={animate ? 'always' : 'demand'}
             >
                 <ambientLight intensity={0.7} />
@@ -92,7 +100,7 @@ export function HeroOrb() {
                 <pointLight position={[4, -4, -1]} intensity={3} color="#2E7BFF" />
 
                 {/* self-contained environment for glossy reflections (no external HDR) */}
-                <Environment resolution={256}>
+                <Environment resolution={512}>
                     <Lightformer intensity={3} position={[-3, 2, 4]} scale={[7, 7, 1]} color="#9B82FF" />
                     <Lightformer intensity={2.4} position={[3, -2, 3]} scale={[7, 7, 1]} color="#2E7BFF" />
                     <Lightformer intensity={4} position={[0, 4, -2]} scale={[12, 2, 1]} color="#ffffff" />
