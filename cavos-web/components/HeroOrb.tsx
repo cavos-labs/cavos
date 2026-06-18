@@ -68,7 +68,7 @@ export function HeroOrb() {
     }, [])
 
     return (
-        <div aria-hidden="true" className="absolute top-0 left-0 w-screen h-screen overflow-hidden pointer-events-none -z-10">
+        <div aria-hidden="true" className="absolute top-0 left-0 w-screen h-screen overflow-hidden pointer-events-none -z-10 bg-white">
             {/* indigo glow — from the top on mobile, from the right edge on desktop */}
             <div
                 className="absolute inset-0"
