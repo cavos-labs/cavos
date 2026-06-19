@@ -45,7 +45,7 @@ export async function GET(request: Request) {
         const adminSupabase = createAdminClient();
         const { data, error } = await adminSupabase
             .from('wallets')
-            .select('encrypted_pk_blob, address, email, updated_at, wallet_devices(pub_x, pub_y, device_label)')
+            .select('encrypted_pk_blob, address, updated_at, wallet_devices(pub_x, pub_y, device_label)')
             .eq('app_id', app_id)
             .eq('user_social_id', user_social_id)
             .eq('network', network)
@@ -68,7 +68,6 @@ export async function GET(request: Request) {
             found: true,
             encrypted_pk_blob: data.encrypted_pk_blob,
             address: data.address,
-            email: data.email,
             updated_at: data.updated_at,
             devices: (data.wallet_devices ?? []).map((d: { pub_x: string; pub_y: string; device_label: string | null }) => ({
                 pub_x: d.pub_x,
@@ -138,15 +137,15 @@ export async function POST(request: Request) {
             emailVerified = !!verifiedToken;
         }
 
-        // Save wallet
+        // Save wallet. (`email` was removed from the wallets table in the PII
+        // cleanup migration; email-verification is tracked via email_verified*.)
         logger.debug('Saving wallet', { user_social_id, network, address });
         const walletData: Record<string, any> = {
             app_id,
             user_social_id,
             network,
             address,
-            encrypted_pk_blob,
-            email: email || null,
+            encrypted_pk_blob: encrypted_pk_blob ?? null,
             updated_at: new Date().toISOString(),
         };
         if (emailVerified) {
