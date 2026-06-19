@@ -114,7 +114,10 @@ export async function POST(request: Request) {
       return ApiResponse.badRequest('Wallet not found');
     }
 
-    // Reject duplicates: a pending, non-expired request for the same wallet+pubkey.
+    // Reuse a pending, non-expired request for the same wallet+pubkey if one
+    // exists; otherwise create a new one. In BOTH cases we (re)send the approval
+    // email — a returning user must be able to re-trigger it if the first one
+    // never arrived or was dismissed.
     const { data: existing } = await adminSupabase
       .from('device_addition_requests')
       .select('id, status, expires_at')
@@ -125,29 +128,32 @@ export async function POST(request: Request) {
       .limit(1)
       .maybeSingle();
 
-    if (existing && existing.status === 'pending' && new Date(existing.expires_at).getTime() > Date.now()) {
-      logger.info('Reusing existing pending request', { id: existing.id });
-      logger.complete(true);
-      return ApiResponse.success({ request_id: existing.id, already_pending: true });
-    }
+    const reused =
+      existing && existing.status === 'pending' && new Date(existing.expires_at).getTime() > Date.now();
+    let requestId: string;
 
-    // Create the request.
-    const { data: reqRow, error: reqErr } = await adminSupabase
-      .from('device_addition_requests')
-      .insert({
-        app_id,
-        wallet_id: wallet.id,
-        new_pub_x,
-        new_pub_y,
-        device_label: device_label ?? null,
-      })
-      .select('id')
-      .single();
+    if (reused) {
+      logger.info('Reusing existing pending request', { id: existing!.id });
+      requestId = existing!.id;
+    } else {
+      const { data: reqRow, error: reqErr } = await adminSupabase
+        .from('device_addition_requests')
+        .insert({
+          app_id,
+          wallet_id: wallet.id,
+          new_pub_x,
+          new_pub_y,
+          device_label: device_label ?? null,
+        })
+        .select('id')
+        .single();
 
-    if (reqErr || !reqRow) {
-      logger.error('Failed to create request', reqErr);
-      logger.complete(false);
-      return ApiResponse.serverError('Failed to create request');
+      if (reqErr || !reqRow) {
+        logger.error('Failed to create request', reqErr);
+        logger.complete(false);
+        return ApiResponse.serverError('Failed to create request');
+      }
+      requestId = reqRow.id;
     }
 
     // Build the approval link. The app's device-approval URL (or website_url)
@@ -159,7 +165,7 @@ export async function POST(request: Request) {
       .eq('id', app_id)
       .single();
     const origin = appRow?.device_approval_url || appRow?.website_url || '';
-    const approveLink = origin ? `${origin.replace(/\/$/, '')}/approve-device?request=${reqRow.id}` : '';
+    const approveLink = origin ? `${origin.replace(/\/$/, '')}/approve-device?request=${requestId}` : '';
 
     // The owner's email comes from the SDK (it has it from login). The wallet
     // stores a uid/sub, not an email (wallets.email was dropped in the PII
@@ -176,9 +182,13 @@ export async function POST(request: Request) {
       logger.warn('No owner email provided; skipping approval email', { wallet_id: wallet.id });
     }
 
-    logger.info('Device addition request created', { request_id: reqRow.id });
+    logger.info('Device addition request ready', { request_id: requestId, reused: !!reused });
     logger.complete(true);
-    return ApiResponse.success({ request_id: reqRow.id, approve_link: approveLink || undefined });
+    return ApiResponse.success({
+      request_id: requestId,
+      approve_link: approveLink || undefined,
+      already_pending: !!reused,
+    });
   } catch (error) {
     logger.error('Unexpected error', error);
     logger.complete(false);
