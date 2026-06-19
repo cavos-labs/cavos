@@ -13,6 +13,7 @@ import { ApiLogger } from '@/lib/api/logger';
 import { ApiResponse } from '@/lib/api/response';
 import { ApiMiddleware } from '@/lib/api/middleware';
 import { sendDeviceApprovalEmail } from '@/lib/email/device-approval';
+import { auth } from '@/lib/firebase-admin';
 
 interface DeviceAdditionRequestBody {
   app_id: string;
@@ -102,7 +103,7 @@ export async function POST(request: Request) {
     // Find the wallet row this request refers to (scoped to the app).
     const { data: wallet, error: walletErr } = await adminSupabase
       .from('wallets')
-      .select('id, user_social_id, email, network')
+      .select('id, user_social_id, network')
       .eq('app_id', app_id)
       .eq('address', wallet_address)
       .single();
@@ -148,13 +149,27 @@ export async function POST(request: Request) {
       return ApiResponse.serverError('Failed to create request');
     }
 
-    // Build the approval link and email the owner. Prefer the app's configured
-    // device-approval URL, falling back to website_url.
-    const origin = (app as { device_approval_url?: string | null })?.device_approval_url ||
-      (app as { website_url?: string | null })?.website_url;
+    // Build the approval link. The app's device-approval URL (or website_url)
+    // determines where the owner lands. verifyAppId only returns id/name, so we
+    // fetch the origin columns here.
+    const { data: appRow } = await adminSupabase
+      .from('apps')
+      .select('device_approval_url, website_url')
+      .eq('id', app_id)
+      .single();
+    const origin = appRow?.device_approval_url || appRow?.website_url || '';
     const approveLink = origin ? `${origin.replace(/\/$/, '')}/approve-device?request=${reqRow.id}` : '';
 
-    const ownerEmail = wallet.email as string | null;
+    // Resolve the owner's email from Firebase (the wallet stores a uid, not an
+    // email — wallets.email was dropped in the PII cleanup).
+    let ownerEmail: string | null = null;
+    try {
+      const userRecord = await auth.getUser(wallet.user_social_id);
+      ownerEmail = userRecord.email ?? null;
+    } catch (e) {
+      logger.warn('Could not resolve owner email from Firebase', e);
+    }
+
     if (ownerEmail) {
       try {
         await sendDeviceApprovalEmail(ownerEmail, approveLink, device_label ?? '', app_id);
@@ -163,7 +178,7 @@ export async function POST(request: Request) {
         logger.warn('Approval email failed', e);
       }
     } else {
-      logger.warn('No owner email on wallet; skipping approval email', { wallet_id: wallet.id });
+      logger.warn('No owner email; skipping approval email', { wallet_id: wallet.id });
     }
 
     logger.info('Device addition request created', { request_id: reqRow.id });
