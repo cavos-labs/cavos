@@ -40,12 +40,12 @@ export async function GET(request: Request) {
             return ApiResponse.unauthorized('Invalid App ID');
         }
 
-        // Fetch wallet
+        // Fetch wallet (+ its authorized device signers via wallet_devices).
         logger.debug('Fetching wallet', { user_social_id, network });
         const adminSupabase = createAdminClient();
         const { data, error } = await adminSupabase
             .from('wallets')
-            .select('encrypted_pk_blob, address, email, updated_at')
+            .select('encrypted_pk_blob, address, email, updated_at, wallet_devices(pub_x, pub_y, device_label)')
             .eq('app_id', app_id)
             .eq('user_social_id', user_social_id)
             .eq('network', network)
@@ -69,7 +69,12 @@ export async function GET(request: Request) {
             encrypted_pk_blob: data.encrypted_pk_blob,
             address: data.address,
             email: data.email,
-            updated_at: data.updated_at
+            updated_at: data.updated_at,
+            devices: (data.wallet_devices ?? []).map((d: { pub_x: string; pub_y: string; device_label: string | null }) => ({
+                pub_x: d.pub_x,
+                pub_y: d.pub_y,
+                device_label: d.device_label,
+            })),
         });
 
     } catch (error) {
@@ -94,16 +99,16 @@ export async function POST(request: Request) {
             return ApiResponse.badRequest('Invalid request body');
         }
 
-        const { app_id, user_social_id, network, address, encrypted_pk_blob, email } = body;
+        const { app_id, user_social_id, network, address, encrypted_pk_blob, email, devices } = body;
 
-        // Validate required fields
-        const validation = ApiValidator.validateRequired<WalletSaveRequest>(body, [
-            'app_id',
-            'user_social_id',
-            'network',
-            'address',
-            'encrypted_pk_blob'
-        ]);
+        // Validate required fields. `encrypted_pk_blob` is required for legacy
+        // JWT/WebAuthn wallets; device-signer wallets send `devices` instead and
+        // may omit the blob.
+        const required: (keyof WalletSaveRequest)[] = ['app_id', 'user_social_id', 'network', 'address'];
+        if (!devices || !Array.isArray(devices) || devices.length === 0) {
+            required.push('encrypted_pk_blob');
+        }
+        const validation = ApiValidator.validateRequired<WalletSaveRequest>(body, required);
 
         if (!validation.valid) {
             logger.warn('Missing required fields', { missing: validation.missing });
@@ -164,6 +169,19 @@ export async function POST(request: Request) {
             logger.error('Database error', error);
             logger.complete(false);
             return ApiResponse.serverError('Failed to save wallet');
+        }
+
+        // Store the authorized device signer(s) for device-signer wallets.
+        if (devices && Array.isArray(devices) && devices.length > 0) {
+            const rows = devices.map((d: { x: string; y: string; label?: string }) => ({
+                wallet_id: data.id,
+                pub_x: d.x,
+                pub_y: d.y,
+                device_label: d.label ?? null,
+            }));
+            await adminSupabase
+                .from('wallet_devices')
+                .upsert(rows, { onConflict: 'wallet_id,pub_x,pub_y', ignoreDuplicates: false });
         }
 
         logger.info('Wallet saved successfully');
