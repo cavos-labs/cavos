@@ -6,10 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import {
-    ArrowLeft, Loader2, Mail, Upload, ImageIcon,
-    CheckCircle2, AlertCircle, RotateCcw, Zap, Copy
-} from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
 import { createClient } from '@/lib/supabase/client'
 
 // ─── Default Template ────────────────────────────────────────────────────────
@@ -225,7 +222,7 @@ export default function MagicLinkEmailPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[50vh]">
-                <Loader2 className="w-7 h-7 animate-spin text-black/20" />
+                <Icon.Spinner className="w-7 h-7 animate-spin text-black/20" />
             </div>
         )
     }
@@ -234,7 +231,7 @@ export default function MagicLinkEmailPage() {
         return (
             <div className="max-w-md mx-auto mt-16 text-center">
                 <div className="w-10 h-10 rounded-full bg-red-50 border border-red-100 flex items-center justify-center mx-auto mb-4">
-                    <AlertCircle className="w-5 h-5 text-red-400" />
+                    <Icon.Warning className="w-5 h-5 text-red-400" />
                 </div>
                 <p className="text-sm text-black/60 mb-4">{error}</p>
                 <Link href="/dashboard/apps">
@@ -255,20 +252,20 @@ export default function MagicLinkEmailPage() {
                     href={`/dashboard/apps/${appId}`}
                     className="inline-flex items-center gap-1.5 text-sm text-black/40 hover:text-black/80 transition-colors group"
                 >
-                    <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+                    <Icon.ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
                     {app?.name || 'App'}
                 </Link>
 
                 {/* Passwordless badge */}
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F7F5F2] border border-[#EAE5DC] text-[10px] font-semibold uppercase tracking-widest text-black/40">
-                    <Zap className="w-2.5 h-2.5" />
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface border border-line text-[10px] font-semibold uppercase tracking-widest text-black/40">
+                    <Icon.Bolt className="w-2.5 h-2.5" />
                     Passwordless
                 </div>
             </div>
 
             {/* ── Page header ─────────────────────────────────────────────── */}
-            <div>
-                <h1 className="text-xl font-semibold tracking-tight text-[#0A0908] mb-1">
+            <div data-dash-header>
+                <h1 className="text-xl font-semibold tracking-tight text-ink mb-1">
                     Magic Link Email
                 </h1>
                 <p className="text-sm text-black/40">
@@ -278,6 +275,7 @@ export default function MagicLinkEmailPage() {
 
             {/* ── Two-pane workspace ──────────────────────────────────────── */}
             <div
+                data-dash-panel
                 className="grid gap-4"
                 style={{
                     gridTemplateColumns: '320px 1fr',
@@ -286,7 +284,7 @@ export default function MagicLinkEmailPage() {
                 }}
             >
                 {/* ── Left: Settings panel ──────────────────────────────── */}
-                <div className="flex flex-col gap-0 bg-white border border-[#EAE5DC] rounded-2xl overflow-hidden">
+                <div className="flex flex-col gap-0 bg-white border border-line rounded-2xl overflow-hidden">
                     <div className="overflow-y-auto flex-1 p-5 space-y-6">
 
                         {/* App info */}
@@ -312,7 +310,7 @@ export default function MagicLinkEmailPage() {
                                                 overflow-hidden transition-all group shrink-0
                                                 ${formData.logo_url
                                                     ? 'border-black/10 bg-white'
-                                                    : 'border-dashed border-black/15 bg-[#F7F5F2] hover:bg-[#EAE5DC]'
+                                                    : 'border-dashed border-black/15 bg-surface hover:bg-black/[0.04]'
                                                 }
                                             `}
                                         >
@@ -325,13 +323,13 @@ export default function MagicLinkEmailPage() {
                                                         className="w-full h-full object-cover"
                                                     />
                                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                        <Upload className="w-4 h-4 text-white" />
+                                                        <Icon.Upload className="w-4 h-4 text-white" />
                                                     </div>
                                                 </>
                                             ) : (
                                                 uploading
-                                                    ? <Loader2 className="w-4 h-4 text-black/30 animate-spin" />
-                                                    : <ImageIcon className="w-4 h-4 text-black/20" />
+                                                    ? <Icon.Spinner className="w-4 h-4 text-black/30 animate-spin" />
+                                                    : <Icon.Image className="w-4 h-4 text-black/20" />
                                             )}
                                         </div>
                                         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
@@ -343,7 +341,7 @@ export default function MagicLinkEmailPage() {
                                                 placeholder="https://…/logo.png"
                                                 value={formData.logo_url}
                                                 onChange={e => setFormData({ ...formData, logo_url: e.target.value })}
-                                                className="w-full text-xs px-3 py-2 bg-[#F7F5F2] border border-[#EAE5DC] rounded-lg focus:outline-none focus:border-black/30 text-black/70 placeholder:text-black/25"
+                                                className="w-full text-xs px-3 py-2 bg-surface border border-line rounded-lg focus:outline-none focus:border-black/30 text-black/70 placeholder:text-black/25"
                                             />
                                             {formData.logo_url && (
                                                 <button
@@ -360,14 +358,14 @@ export default function MagicLinkEmailPage() {
                         </div>
 
                         {/* Separator */}
-                        <div className="border-t border-[#EAE5DC]" />
+                        <div className="border-t border-line" />
 
                         {/* Sender config */}
                         <div>
                             <SectionLabel>Sender</SectionLabel>
                             <div className="space-y-3">
-                                <div className="flex items-center gap-2 px-3 py-2 bg-[#F7F5F2] border border-[#EAE5DC] rounded-lg">
-                                    <Mail className="w-3 h-3 text-black/30 shrink-0" />
+                                <div className="flex items-center gap-2 px-3 py-2 bg-surface border border-line rounded-lg">
+                                    <Icon.Mail className="w-3 h-3 text-black/30 shrink-0" />
                                     <span className="text-[11px] text-black/40 font-mono">noreply@cavos.xyz</span>
                                 </div>
                                 <Input
@@ -387,7 +385,7 @@ export default function MagicLinkEmailPage() {
                         </div>
 
                         {/* Separator */}
-                        <div className="border-t border-[#EAE5DC]" />
+                        <div className="border-t border-line" />
 
                         {/* Placeholder chips */}
                         <div>
@@ -399,11 +397,11 @@ export default function MagicLinkEmailPage() {
                                 {PLACEHOLDERS.map(({ key, label, description }) => (
                                     <div
                                         key={key}
-                                        className="group flex items-center gap-2 px-3 py-2.5 rounded-xl border border-[#EAE5DC] bg-[#F7F5F2] hover:bg-white hover:border-[#C4BFB6] hover:shadow-sm transition-all cursor-pointer"
+                                        className="group flex items-center gap-2 px-3 py-2.5 rounded-xl border border-line bg-surface hover:bg-white hover:border-line-strong hover:shadow-sm transition-all cursor-pointer"
                                         onClick={() => insertPlaceholder(key)}
                                     >
                                         <div className="flex-1 min-w-0">
-                                            <code className="text-[11px] font-mono text-[#0A0908] block truncate">
+                                            <code className="text-[11px] font-mono text-ink block truncate">
                                                 {`{{${label}}}`}
                                             </code>
                                             <span className="text-[10px] text-black/35">{description}</span>
@@ -414,8 +412,8 @@ export default function MagicLinkEmailPage() {
                                             title="Copy"
                                         >
                                             {copied === key
-                                                ? <CheckCircle2 className="w-3 h-3 text-green-500" />
-                                                : <Copy className="w-3 h-3 text-black/30" />
+                                                ? <Icon.CheckCircle className="w-3 h-3 text-green-500" />
+                                                : <Icon.Copy className="w-3 h-3 text-black/30" />
                                             }
                                         </button>
                                     </div>
@@ -426,7 +424,7 @@ export default function MagicLinkEmailPage() {
                 </div>
 
                 {/* ── Right: Editor / Preview ───────────────────────────── */}
-                <div className="flex flex-col rounded-2xl overflow-hidden border border-[#EAE5DC] bg-[#0A0908]">
+                <div className="flex flex-col rounded-2xl overflow-hidden border border-line bg-ink">
 
                     {/* Tab bar */}
                     <div className="flex items-center border-b border-white/[0.06] shrink-0">
@@ -456,7 +454,7 @@ export default function MagicLinkEmailPage() {
                                 title="Reset to default"
                                 className="flex items-center gap-1 text-[10px] text-white/25 hover:text-white/50 transition-colors"
                             >
-                                <RotateCcw className="w-3 h-3" />
+                                <Icon.Refresh className="w-3 h-3" />
                                 Reset
                             </button>
                         </div>
@@ -470,7 +468,7 @@ export default function MagicLinkEmailPage() {
                             onChange={e => setFormData(prev => ({ ...prev, email_magic_link_template_html: e.target.value }))}
                             spellCheck={false}
                             className="flex-1 w-full bg-transparent text-[#d4cfc8] font-mono text-xs leading-6 p-5 resize-none focus:outline-none"
-                            style={{ caretColor: '#EAE5DC' }}
+                            style={{ caretColor: '#402AFF' }}
                             placeholder="Paste your HTML template here…"
                         />
                     )}
@@ -492,13 +490,13 @@ export default function MagicLinkEmailPage() {
                 <div className="flex items-center gap-2 h-8">
                     {toast === 'saved' && (
                         <div className="flex items-center gap-1.5 text-xs text-green-600 animate-in fade-in duration-200">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <Icon.CheckCircle className="w-3.5 h-3.5" />
                             Saved
                         </div>
                     )}
                     {toast === 'error' && (
                         <div className="flex items-center gap-1.5 text-xs text-red-500">
-                            <AlertCircle className="w-3.5 h-3.5" />
+                            <Icon.Warning className="w-3.5 h-3.5" />
                             {error}
                         </div>
                     )}
@@ -517,13 +515,13 @@ export default function MagicLinkEmailPage() {
                         disabled={saving || uploading}
                         className="
                             inline-flex items-center gap-2 h-9 px-4 rounded-xl text-sm font-semibold
-                            bg-[#0A0908] text-white hover:bg-black/80 active:scale-95
+                            bg-ink text-white hover:bg-black/80 active:scale-95
                             disabled:opacity-50 disabled:cursor-not-allowed transition-all
                         "
                     >
                         {saving
-                            ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving…</>
-                            : <><Mail className="w-3.5 h-3.5" /> Save Settings</>
+                            ? <><Icon.Spinner className="w-3.5 h-3.5 animate-spin" /> Saving…</>
+                            : <><Icon.Mail className="w-3.5 h-3.5" /> Save Settings</>
                         }
                     </button>
                 </div>

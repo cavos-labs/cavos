@@ -3,15 +3,15 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { LayoutDashboard, Building2, AppWindow, LogOut, FileText, CreditCard, ExternalLink, Sparkles } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 
 const navigation = [
-    { name: 'Overview',      href: '/dashboard',               icon: LayoutDashboard },
-    { name: 'Organizations', href: '/dashboard/organizations', icon: Building2 },
-    { name: 'Applications',  href: '/dashboard/apps',          icon: AppWindow },
-    { name: 'Billing',       href: '/dashboard/billing',       icon: CreditCard },
+    { name: 'Overview',      href: '/dashboard',               icon: Icon.Overview },
+    { name: 'Organizations', href: '/dashboard/organizations', icon: Icon.Org },
+    { name: 'Applications',  href: '/dashboard/apps',          icon: Icon.Apps },
+    { name: 'Billing',       href: '/dashboard/billing',       icon: Icon.Billing },
 ]
 
 export function Sidebar() {
@@ -36,10 +36,10 @@ export function Sidebar() {
     }
 
     return (
-        <div className="flex flex-col h-full bg-[#F7F5F2] border-r border-[#EAE5DC]">
+        <div className="flex flex-col h-full bg-white border-r border-line">
 
             {/* Logo */}
-            <div className="h-16 flex items-center px-5 border-b border-[#EAE5DC]/70">
+            <div className="h-16 flex items-center px-5 border-b border-line">
                 <Link href="/dashboard" className="hover:opacity-75 transition-opacity">
                     <Image
                         src="/cavos-black.png"
@@ -62,15 +62,20 @@ export function Sidebar() {
                         <Link
                             key={item.name}
                             href={item.href}
+                            aria-current={isActive ? 'page' : undefined}
                             className={`
-                                flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
+                                group flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 active:scale-[0.98]
                                 ${isActive
-                                    ? 'bg-white text-black shadow-sm border border-[#EAE5DC] shadow-black/[0.04]'
-                                    : 'text-black/45 hover:text-black hover:bg-white/60'
+                                    ? 'text-brand font-semibold bg-black/[0.04]'
+                                    : 'text-black/60 font-medium hover:text-black hover:bg-black/[0.035]'
                                 }
                             `}
                         >
-                            <item.icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-black' : 'text-black/35'}`} />
+                            <item.icon
+                                size={19}
+                                weight={isActive ? 'fill' : 'regular'}
+                                className={`shrink-0 transition-colors ${isActive ? 'text-brand' : 'text-black/55 group-hover:text-black'}`}
+                            />
                             {item.name}
                         </Link>
                     )
@@ -78,18 +83,18 @@ export function Sidebar() {
             </nav>
 
             {/* Footer */}
-            <div className="p-3 border-t border-[#EAE5DC]/70 space-y-0.5">
+            <div className="p-3 border-t border-line space-y-0.5">
                 <Link
                     href="/dashboard/how-to-start"
                     className={`
-                        flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all
+                        flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-all
                         ${pathname === '/dashboard/how-to-start'
-                            ? 'bg-white text-black shadow-sm border border-[#EAE5DC] shadow-black/[0.04]'
-                            : 'text-black/40 hover:text-black hover:bg-white/60'
+                            ? 'text-brand font-semibold'
+                            : 'text-black/45 hover:text-black hover:bg-black/[0.03]'
                         }
                     `}
                 >
-                    <Sparkles className="w-4 h-4 shrink-0 text-black/35" />
+                    <Icon.Spark size={17} className="shrink-0 text-black/40" />
                     How to start
                 </Link>
 
@@ -97,17 +102,17 @@ export function Sidebar() {
                     href="https://docs.cavos.xyz"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-black/40 hover:text-black hover:bg-white/60 rounded-xl transition-all"
+                    className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-black/45 hover:text-black hover:bg-black/[0.03] rounded-lg transition-all"
                 >
-                    <FileText className="w-4 h-4 shrink-0" />
+                    <Icon.Docs size={17} className="shrink-0 text-black/40" />
                     Documentation
-                    <ExternalLink className="w-3 h-3 ml-auto text-black/25" />
+                    <Icon.External size={13} weight="bold" className="ml-auto text-black/25" />
                 </a>
 
                 {/* User info */}
                 {userEmail && (
                     <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl">
-                        <div className="w-7 h-7 rounded-full bg-[#EAE5DC] flex items-center justify-center text-xs font-bold text-black/50 shrink-0 select-none">
+                        <div className="w-7 h-7 rounded-full bg-black/[0.06] flex items-center justify-center text-xs font-bold text-black/55 shrink-0 select-none">
                             {userEmail[0].toUpperCase()}
                         </div>
                         <span className="text-xs font-medium text-black/50 truncate min-w-0">{userEmail}</span>
@@ -118,7 +123,7 @@ export function Sidebar() {
                     onClick={handleLogout}
                     className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-500/70 hover:text-red-600 hover:bg-red-50/80 rounded-xl transition-all"
                 >
-                    <LogOut className="w-4 h-4 shrink-0" />
+                    <Icon.Logout size={17} className="shrink-0" />
                     Sign Out
                 </button>
             </div>

@@ -13,7 +13,6 @@ import { ApiLogger } from '@/lib/api/logger';
 import { ApiResponse } from '@/lib/api/response';
 import { ApiMiddleware } from '@/lib/api/middleware';
 import { sendDeviceApprovalEmail } from '@/lib/email/device-approval';
-import { auth } from '@/lib/firebase-admin';
 
 interface DeviceAdditionRequestBody {
   app_id: string;
@@ -21,6 +20,8 @@ interface DeviceAdditionRequestBody {
   new_pub_x: string;
   new_pub_y: string;
   device_label?: string;
+  /** Owner email to send the approval link to (the SDK has it from login). */
+  email?: string;
 }
 
 /**
@@ -85,7 +86,7 @@ export async function POST(request: Request) {
       return ApiResponse.badRequest('Invalid request body');
     }
 
-    const { app_id, wallet_address, new_pub_x, new_pub_y, device_label } = body;
+    const { app_id, wallet_address, new_pub_x, new_pub_y, device_label, email } = body;
     if (!app_id || !wallet_address || !new_pub_x || !new_pub_y) {
       return ApiResponse.badRequest('Missing required fields', {
         required: ['app_id', 'wallet_address', 'new_pub_x', 'new_pub_y'],
@@ -160,16 +161,10 @@ export async function POST(request: Request) {
     const origin = appRow?.device_approval_url || appRow?.website_url || '';
     const approveLink = origin ? `${origin.replace(/\/$/, '')}/approve-device?request=${reqRow.id}` : '';
 
-    // Resolve the owner's email from Firebase (the wallet stores a uid, not an
-    // email — wallets.email was dropped in the PII cleanup).
-    let ownerEmail: string | null = null;
-    try {
-      const userRecord = await auth.getUser(wallet.user_social_id);
-      ownerEmail = userRecord.email ?? null;
-    } catch (e) {
-      logger.warn('Could not resolve owner email from Firebase', e);
-    }
-
+    // The owner's email comes from the SDK (it has it from login). The wallet
+    // stores a uid/sub, not an email (wallets.email was dropped in the PII
+    // cleanup), so the client passes it explicitly.
+    const ownerEmail = email ?? null;
     if (ownerEmail) {
       try {
         await sendDeviceApprovalEmail(ownerEmail, approveLink, device_label ?? '', app_id);
@@ -178,7 +173,7 @@ export async function POST(request: Request) {
         logger.warn('Approval email failed', e);
       }
     } else {
-      logger.warn('No owner email; skipping approval email', { wallet_id: wallet.id });
+      logger.warn('No owner email provided; skipping approval email', { wallet_id: wallet.id });
     }
 
     logger.info('Device addition request created', { request_id: reqRow.id });

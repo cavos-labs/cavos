@@ -10,8 +10,6 @@ import {
     ResponsiveContainer,
     Legend
 } from 'recharts'
-import { Card } from '@/components/ui/Card'
-
 interface ActivityChartProps {
     data: {
         date: string
@@ -24,24 +22,27 @@ interface ActivityChartProps {
 export function ActivityChart({ data, loading }: ActivityChartProps) {
     if (loading) {
         return (
-            <Card className="h-[400px] flex items-center justify-center">
-                <div className="w-8 h-8 border-4 border-black/10 border-t-black rounded-full animate-spin" />
-            </Card>
+            <div className="rounded-xl bg-white border border-line h-[300px] flex items-center justify-center">
+                <div className="w-7 h-7 border-2 border-brand/20 border-t-brand rounded-full animate-spin" />
+            </div>
         )
     }
 
     if (!data || data.length === 0) {
         return (
-            <Card className="h-[400px] flex items-center justify-center text-black/40">
+            <div className="rounded-xl bg-white border border-line h-[300px] flex items-center justify-center text-black/40 text-sm">
                 No activity data available
-            </Card>
+            </div>
         )
     }
 
     return (
-        <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-6">Activity Overview</h3>
-            <div className="h-[300px] w-full">
+        <div className="rounded-xl bg-white border border-line p-5" data-dash-panel>
+            <div className="flex items-center justify-between mb-5 pb-3 border-b border-line">
+                <h3 className="text-[13px] font-bold text-ink">Activity</h3>
+                <span className="text-[11px] font-medium text-black/40">Last 7 days</span>
+            </div>
+            <div className="h-[240px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                     <AreaChart
                         data={data}
@@ -54,26 +55,28 @@ export function ActivityChart({ data, loading }: ActivityChartProps) {
                     >
                         <defs>
                             <linearGradient id="colorWallets" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#000000" stopOpacity={0.1} />
-                                <stop offset="95%" stopColor="#000000" stopOpacity={0} />
+                                <stop offset="5%" stopColor="#402AFF" stopOpacity={0.18} />
+                                <stop offset="95%" stopColor="#402AFF" stopOpacity={0} />
                             </linearGradient>
                             <linearGradient id="colorTx" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#666666" stopOpacity={0.1} />
-                                <stop offset="95%" stopColor="#666666" stopOpacity={0} />
+                                <stop offset="5%" stopColor="#9CA3AF" stopOpacity={0.12} />
+                                <stop offset="95%" stopColor="#9CA3AF" stopOpacity={0} />
                             </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E5E5" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ECECF0" />
                         <XAxis
                             dataKey="date"
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fill: '#666666', fontSize: 12 }}
+                            tick={{ fill: '#9CA3AF', fontSize: 11 }}
                             dy={10}
                         />
                         <YAxis
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fill: '#666666', fontSize: 12 }}
+                            tick={{ fill: '#9CA3AF', fontSize: 11 }}
+                            width={28}
+                            allowDecimals={false}
                         />
                         <Tooltip
                             contentStyle={{
@@ -95,23 +98,26 @@ export function ActivityChart({ data, loading }: ActivityChartProps) {
                             type="monotone"
                             dataKey="wallets"
                             name="New Wallets"
-                            stroke="#000000"
-                            strokeWidth={2}
+                            stroke="#402AFF"
+                            strokeWidth={2.5}
                             fillOpacity={1}
                             fill="url(#colorWallets)"
+                            dot={false}
+                            activeDot={{ r: 4, fill: '#402AFF', stroke: '#fff', strokeWidth: 2 }}
                         />
                         <Area
                             type="monotone"
                             dataKey="transactions"
                             name="Transactions"
-                            stroke="#666666"
+                            stroke="#9CA3AF"
                             strokeWidth={2}
                             fillOpacity={1}
                             fill="url(#colorTx)"
+                            dot={false}
                         />
                     </AreaChart>
                 </ResponsiveContainer>
             </div>
-        </Card>
+        </div>
     )
 }

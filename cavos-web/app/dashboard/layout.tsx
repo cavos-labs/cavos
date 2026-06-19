@@ -3,7 +3,9 @@
 import { useState } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { DpaConsentModal } from '@/components/DpaConsentModal'
-import { Menu, X } from 'lucide-react'
+import { DashboardMotion } from '@/components/DashboardMotion'
+import { DashboardTopBar } from '@/components/DashboardTopBar'
+import { Icon } from '@/components/ui/Icon'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -29,9 +31,10 @@ export default function DashboardLayout({
                 </Link>
                 <button
                     onClick={() => setSidebarOpen(!sidebarOpen)}
-                    className="p-2 text-black/60 hover:text-black"
+                    className="p-2 text-black/60 hover:text-black transition-colors"
+                    aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
                 >
-                    {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                    {sidebarOpen ? <Icon.Close size={24} weight="bold" /> : <Icon.Menu size={24} weight="bold" />}
                 </button>
             </div>
 
@@ -52,9 +55,11 @@ export default function DashboardLayout({
             )}
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col min-h-screen lg:h-screen overflow-hidden">
-                <main className="flex-1 overflow-y-auto pt-24 lg:pt-12 p-4 lg:px-8 lg:pb-8">
+            <div className="flex-1 flex flex-col min-h-screen lg:h-screen overflow-hidden bg-surface/40">
+                <DashboardTopBar />
+                <main className="flex-1 overflow-y-auto pt-20 lg:pt-8 p-4 lg:px-8 lg:pb-12">
                     <div className="max-w-6xl mx-auto">
+                        <DashboardMotion />
                         {children}
                     </div>
                 </main>

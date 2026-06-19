@@ -5,15 +5,9 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
+import { Icon } from '@/components/ui/Icon'
+import { PageHeader } from '@/components/ui/PageHeader'
 import { ActivityChart } from '@/components/ActivityChart'
-import { Building2, AppWindow, Activity, Plus, ArrowRight, Zap, ChevronRight, FileText } from 'lucide-react'
-
-function getGreeting() {
-    const h = new Date().getHours()
-    if (h < 12) return 'Good morning'
-    if (h < 18) return 'Good afternoon'
-    return 'Good evening'
-}
 
 export default function DashboardPage() {
     const router = useRouter()
@@ -96,37 +90,33 @@ export default function DashboardPage() {
     const isEmpty = organizations.length === 0 && apps.length === 0
 
     return (
-        <div className="space-y-7 animate-fadeIn">
+        <div className="space-y-6 animate-fadeIn">
 
             {/* ── Page header ── */}
-            <div className="flex items-start justify-between">
-                <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-black/30 mb-1.5">
-                        {getGreeting()}
-                    </p>
-                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Overview</h1>
-                    <p className="text-xs text-black/35 mt-1 font-medium">{user?.email}</p>
-                </div>
-                <div className="hidden sm:flex items-center gap-2 mt-1">
+            <PageHeader
+                className="pb-5 border-b border-line"
+                title="Overview"
+                subtitle={<span className="font-mono text-[13px]">{user?.email}</span>}
+                actions={
                     <Link href="/dashboard/apps/new">
-                        <Button variant="primary" size="sm" icon={<Plus className="w-3.5 h-3.5" />}>
+                        <Button variant="primary" size="sm" icon={<Icon.Add size={15} weight="bold" />}>
                             New App
                         </Button>
                     </Link>
-                </div>
-            </div>
+                }
+            />
 
             {/* ── Getting started banner (empty state) ── */}
             {isEmpty && (
-                <div className="relative overflow-hidden rounded-2xl bg-[#0A0908] text-white p-7 border border-black/10">
-                    {/* Warm glow */}
+                <div className="relative overflow-hidden rounded-xl bg-ink text-white p-7 border border-black/10">
+                    {/* Brand glow */}
                     <div
                         className="absolute top-0 right-0 w-72 h-72 pointer-events-none"
-                        style={{ background: 'radial-gradient(ellipse at top right, #EAE5DC0D 0%, transparent 70%)' }}
+                        style={{ background: 'radial-gradient(ellipse at top right, #402AFF26 0%, transparent 70%)' }}
                     />
                     <div className="relative space-y-4">
                         <div className="flex items-center gap-2">
-                            <Zap className="w-3.5 h-3.5 text-[#EAE5DC]/50" />
+                            <Icon.Bolt size={15} weight="fill" className="text-brand" />
                             <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/35">Get Started</span>
                         </div>
                         <h3 className="text-xl font-bold">Ready to build?</h3>
@@ -149,40 +139,37 @@ export default function DashboardPage() {
                 </div>
             )}
 
-            {/* ── Stats grid ── */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* ── Stats strip ── */}
+            <div data-dash-stat className="grid grid-cols-1 sm:grid-cols-3 rounded-xl border border-line bg-white divide-y sm:divide-y-0 sm:divide-x divide-line overflow-hidden">
                 {[
-                    { icon: Building2, label: 'Organizations', value: organizations.length,  href: '/dashboard/organizations' },
-                    { icon: AppWindow, label: 'Applications',  value: apps.length,            href: '/dashboard/apps' },
-                    { icon: Activity,  label: 'Total Wallets', value: loadingStats ? null : totalWallets, href: null },
-                ].map((stat, i) => (
-                    <div
-                        key={i}
-                        onClick={() => stat.href && router.push(stat.href)}
-                        className={`group relative overflow-hidden rounded-2xl bg-white border border-black/[0.08] p-6 transition-all
-                            ${stat.href ? 'cursor-pointer hover:border-black/[0.15] hover:shadow-md hover:shadow-black/[0.05]' : ''}
-                        `}
-                    >
-                        {/* Beige orb accent */}
-                        <div className="absolute top-0 right-0 w-24 h-24 rounded-full bg-[#EAE5DC]/25 -translate-y-6 translate-x-6 group-hover:bg-[#EAE5DC]/40 transition-colors" />
-
-                        <div className="relative flex items-start justify-between mb-4">
-                            <div className="p-2.5 bg-[#F2EEE8] rounded-xl group-hover:bg-[#EAE5DC] transition-colors">
-                                <stat.icon className="w-4 h-4 text-black/50" />
+                    { icon: Icon.Org,      label: 'Organizations', value: organizations.length,  href: '/dashboard/organizations' },
+                    { icon: Icon.Apps,     label: 'Applications',  value: apps.length,            href: '/dashboard/apps' },
+                    { icon: Icon.Activity, label: 'Total Wallets', value: loadingStats ? null : totalWallets, href: null },
+                ].map((stat, i) => {
+                    const body = (
+                        <>
+                            <div className="flex items-center justify-between">
+                                <span className="flex items-center gap-2 text-[13px] font-medium text-black/55">
+                                    <stat.icon size={16} className="text-black/40" />
+                                    {stat.label}
+                                </span>
+                                {stat.href && (
+                                    <Icon.ChevronRight size={15} weight="bold" className="text-black/20 group-hover:text-black/45 group-hover:translate-x-0.5 transition-all" />
+                                )}
                             </div>
-                            {stat.href && (
-                                <ChevronRight className="w-4 h-4 text-black/20 group-hover:text-black/40 transition-colors mt-0.5" />
-                            )}
-                        </div>
-
-                        <div className="relative">
-                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/30 mb-1.5">{stat.label}</p>
-                            <p className="text-4xl font-bold tracking-tight tabular-nums">
+                            <span className="font-mono text-[32px] leading-none font-semibold tracking-tight text-ink">
                                 {stat.value === null ? '—' : stat.value}
-                            </p>
-                        </div>
-                    </div>
-                ))}
+                            </span>
+                        </>
+                    )
+                    return stat.href ? (
+                        <Link key={i} href={stat.href} className="group flex flex-col gap-4 p-5 hover:bg-surface transition-colors">
+                            {body}
+                        </Link>
+                    ) : (
+                        <div key={i} className="group flex flex-col gap-4 p-5">{body}</div>
+                    )
+                })}
             </div>
 
             {/* ── Activity chart ── */}
@@ -192,18 +179,14 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                 {/* Recent apps (or manage card if empty) */}
-                <div className="rounded-2xl bg-white border border-black/[0.08] p-6">
-                    <div className="flex items-center justify-between mb-5">
-                        <div className="flex items-center gap-2">
-                            <div className="p-2 bg-[#F2EEE8] rounded-lg">
-                                <AppWindow className="w-3.5 h-3.5 text-black/50" />
-                            </div>
-                            <h3 className="text-sm font-bold">Applications</h3>
-                        </div>
-                        <Link href="/dashboard/apps/new">
-                            <Button size="sm" variant="outline" icon={<Plus className="w-3.5 h-3.5" />}>
-                                New
-                            </Button>
+                <div data-dash-panel className="rounded-xl bg-white border border-line p-5">
+                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-line">
+                        <h3 className="text-[13px] font-bold text-ink flex items-center gap-2">
+                            Applications
+                            <span className="font-mono text-[11px] font-medium text-black/35">{apps.length}</span>
+                        </h3>
+                        <Link href="/dashboard/apps/new" className="inline-flex items-center gap-1 text-xs font-semibold text-black/45 hover:text-ink transition-colors">
+                            <Icon.Add size={14} weight="bold" /> New
                         </Link>
                     </div>
 
@@ -211,32 +194,30 @@ export default function DashboardPage() {
                         <div className="py-4 space-y-3">
                             <p className="text-sm text-black/40 leading-relaxed">No applications yet. Create one to get an App ID and start integrating.</p>
                             <Link href="/dashboard/apps/new" className="inline-flex items-center gap-1 text-xs font-semibold text-black/40 hover:text-black transition-colors">
-                                Create first app <ArrowRight className="w-3 h-3" />
+                                Create first app <Icon.ArrowRight size={13} weight="bold" />
                             </Link>
                         </div>
                     ) : (
                         <div className="space-y-1">
                             {apps.slice(0, 4).map((app: any) => (
                                 <Link key={app.id} href={`/dashboard/apps/${app.id}`}>
-                                    <div className="group flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-[#F7F5F2] transition-colors">
+                                    <div className="group flex items-center justify-between px-3 py-2.5 -mx-2 rounded-lg hover:bg-surface transition-colors">
                                         <div className="flex items-center gap-2.5 min-w-0">
-                                            <div className="w-6 h-6 rounded-lg bg-[#F2EEE8] border border-[#EAE5DC] flex items-center justify-center shrink-0">
-                                                <AppWindow className="w-3 h-3 text-black/30" />
-                                            </div>
+                                            <Icon.Apps size={16} className="text-black/40 shrink-0" />
                                             <div className="min-w-0">
-                                                <p className="text-xs font-semibold truncate">{app.name}</p>
+                                                <p className="text-[13px] font-medium text-ink truncate">{app.name}</p>
                                                 {app.organization && (
-                                                    <p className="text-[10px] text-black/30 truncate">{app.organization.name}</p>
+                                                    <p className="text-[10px] text-black/35 truncate">{app.organization.name}</p>
                                                 )}
                                             </div>
                                         </div>
-                                        <ChevronRight className="w-3.5 h-3.5 text-black/20 group-hover:text-black/50 shrink-0 transition-colors" />
+                                        <Icon.ChevronRight size={14} weight="bold" className="text-black/20 group-hover:text-black/50 shrink-0 transition-colors" />
                                     </div>
                                 </Link>
                             ))}
                             {apps.length > 4 && (
                                 <Link href="/dashboard/apps" className="flex items-center gap-1 px-3 pt-2 text-xs font-semibold text-black/30 hover:text-black transition-colors">
-                                    +{apps.length - 4} more <ArrowRight className="w-3 h-3" />
+                                    +{apps.length - 4} more <Icon.ArrowRight size={13} weight="bold" />
                                 </Link>
                             )}
                         </div>
@@ -244,38 +225,32 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Right column: orgs + resources */}
-                <div className="space-y-4">
+                <div data-dash-panel className="space-y-4">
                     {/* Organizations card */}
-                    <div className="rounded-2xl bg-white border border-black/[0.08] p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-2">
-                                <div className="p-2 bg-[#F2EEE8] rounded-lg">
-                                    <Building2 className="w-3.5 h-3.5 text-black/50" />
-                                </div>
-                                <h3 className="text-sm font-bold">Organizations</h3>
-                            </div>
-                            <Link href="/dashboard/organizations/new">
-                                <Button size="sm" variant="outline" icon={<Plus className="w-3.5 h-3.5" />}>
-                                    New
-                                </Button>
+                    <div className="rounded-xl bg-white border border-line p-5">
+                        <div className="flex items-center justify-between mb-4 pb-3 border-b border-line">
+                            <h3 className="text-[13px] font-bold text-ink flex items-center gap-2">
+                                Organizations
+                                <span className="font-mono text-[11px] font-medium text-black/35">{organizations.length}</span>
+                            </h3>
+                            <Link href="/dashboard/organizations/new" className="inline-flex items-center gap-1 text-xs font-semibold text-black/45 hover:text-ink transition-colors">
+                                <Icon.Add size={14} weight="bold" /> New
                             </Link>
                         </div>
                         {organizations.length === 0 ? (
                             <Link href="/dashboard/organizations/new" className="inline-flex items-center gap-1 text-xs font-semibold text-black/40 hover:text-black transition-colors">
-                                Create first organization <ArrowRight className="w-3 h-3" />
+                                Create first organization <Icon.ArrowRight size={13} weight="bold" />
                             </Link>
                         ) : (
                             <div className="space-y-1">
                                 {organizations.slice(0, 3).map((org: any) => (
                                     <Link key={org.id} href={`/dashboard/organizations/${org.id}`}>
-                                        <div className="group flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-[#F7F5F2] transition-colors">
+                                        <div className="group flex items-center justify-between px-3 py-2.5 -mx-2 rounded-lg hover:bg-surface transition-colors">
                                             <div className="flex items-center gap-2.5 min-w-0">
-                                                <div className="w-6 h-6 rounded-lg bg-[#F2EEE8] border border-[#EAE5DC] flex items-center justify-center shrink-0">
-                                                    <Building2 className="w-3 h-3 text-black/30" />
-                                                </div>
-                                                <p className="text-xs font-semibold truncate">{org.name}</p>
+                                                <Icon.Org size={16} className="text-black/40 shrink-0" />
+                                                <p className="text-[13px] font-medium text-ink truncate">{org.name}</p>
                                             </div>
-                                            <ChevronRight className="w-3.5 h-3.5 text-black/20 group-hover:text-black/50 shrink-0 transition-colors" />
+                                            <Icon.ChevronRight size={14} weight="bold" className="text-black/20 group-hover:text-black/50 shrink-0 transition-colors" />
                                         </div>
                                     </Link>
                                 ))}
@@ -284,14 +259,12 @@ export default function DashboardPage() {
                     </div>
 
                     {/* Resources */}
-                    <div className="rounded-2xl bg-[#F7F5F2] border border-[#EAE5DC] p-5 flex items-center justify-between gap-4">
+                    <div className="rounded-xl bg-surface/60 border border-line p-4 flex items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-white border border-[#EAE5DC] rounded-lg">
-                                <FileText className="w-3.5 h-3.5 text-black/40" />
-                            </div>
+                            <Icon.Docs size={18} className="text-black/45 shrink-0" />
                             <div>
                                 <p className="text-xs font-bold text-black/70">Documentation</p>
-                                <p className="text-[10px] text-black/35">Guides, SDK reference, API docs.</p>
+                                <p className="text-[10px] text-black/40">Guides, SDK reference, API docs.</p>
                             </div>
                         </div>
                         <a
@@ -300,7 +273,7 @@ export default function DashboardPage() {
                             rel="noopener noreferrer"
                             className="shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-black/40 hover:text-black transition-colors"
                         >
-                            Open <ArrowRight className="w-3 h-3" />
+                            Open <Icon.ArrowRight size={13} weight="bold" />
                         </a>
                     </div>
                 </div>

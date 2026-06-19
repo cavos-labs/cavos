@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Fuel, ArrowDown, Clock, ExternalLink, Wallet, CheckCircle, Loader2, X, TrendingDown } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
+import { PageHeader } from '@/components/ui/PageHeader';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { connect, disconnect } from 'starknetkit';
@@ -215,45 +216,43 @@ export default function BillingPage() {
         <div className="space-y-6 animate-fadeIn max-w-4xl">
 
             {/* ── Page header ── */}
-            <div className="flex items-start justify-between gap-4">
-                <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-black/30 mb-1.5">Billing</p>
-                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Gas Balance</h1>
-                    <p className="text-xs text-black/40 mt-1 font-medium">Deposit STRK to sponsor gasless transactions for your users.</p>
-                </div>
-
-                {/* Wallet connection */}
-                {walletAddress ? (
-                    <div className="flex items-center gap-2 shrink-0">
-                        <div className="flex items-center gap-2 px-3.5 py-2 bg-[#F7F5F2] border border-[#EAE5DC] rounded-xl text-xs font-semibold text-black/60">
-                            <span className="w-1.5 h-1.5 rounded-full bg-black/50" />
-                            {shortAddr(walletAddress)}
+            <PageHeader
+                eyebrow="Billing"
+                title="Gas Balance"
+                subtitle="Deposit STRK to sponsor gasless transactions for your users."
+                actions={
+                    walletAddress ? (
+                        <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 px-3.5 py-2 bg-surface border border-line rounded-xl text-xs font-semibold text-black/60">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                {shortAddr(walletAddress)}
+                            </div>
+                            <button
+                                onClick={handleDisconnectWallet}
+                                className="text-xs text-black/30 hover:text-black/60 transition-colors px-2"
+                            >
+                                Disconnect
+                            </button>
                         </div>
-                        <button
-                            onClick={handleDisconnectWallet}
-                            className="text-xs text-black/30 hover:text-black/60 transition-colors px-2"
-                        >
-                            Disconnect
-                        </button>
-                    </div>
-                ) : (
-                    <Button variant="outline" onClick={handleConnectWallet} icon={<Wallet className="w-3.5 h-3.5" />}>
-                        Connect Wallet
-                    </Button>
-                )}
-            </div>
+                    ) : (
+                        <Button variant="outline" onClick={handleConnectWallet} icon={<Icon.Wallet size={15} />}>
+                            Connect Wallet
+                        </Button>
+                    )
+                }
+            />
 
             {/* ── Balance card — dark ── */}
-            <div className="relative overflow-hidden rounded-2xl bg-[#0A0908] text-white p-7 dark-grain">
+            <div data-dash-panel className="relative overflow-hidden rounded-2xl bg-ink text-white p-7 dark-grain">
                 <div
                     className="absolute top-0 right-0 w-72 h-72 pointer-events-none"
-                    style={{ background: 'radial-gradient(ellipse at top right, #EAE5DC0C 0%, transparent 65%)' }}
+                    style={{ background: 'radial-gradient(ellipse at top right, #402AFF1F 0%, transparent 65%)' }}
                 />
 
                 <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="space-y-4">
                         <div className="flex items-center gap-2">
-                            <Fuel className="w-3.5 h-3.5 text-[#EAE5DC]/50" />
+                            <Icon.Gas size={15} weight="fill" className="text-brand" />
                             <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/30">Available Balance</span>
                         </div>
 
@@ -268,14 +267,14 @@ export default function BillingPage() {
                         <div className="space-y-2 max-w-xs">
                             <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
                                 <div
-                                    className="h-full bg-[#EAE5DC]/50 rounded-full transition-all"
+                                    className="h-full bg-white/30 rounded-full transition-all"
                                     style={{ width: `${consumedPct}%` }}
                                 />
                             </div>
                             <div className="flex items-center gap-5 text-[10px] font-semibold text-white/30">
                                 <span>Deposited: {totalDeposited.toFixed(2)} STRK</span>
                                 <span className="flex items-center gap-1">
-                                    <TrendingDown className="w-3 h-3" />
+                                    <Icon.TrendDown size={12} weight="bold" />
                                     Consumed: {totalConsumed.toFixed(2)} STRK
                                 </span>
                             </div>
@@ -284,9 +283,9 @@ export default function BillingPage() {
 
                     <button
                         onClick={() => setShowDepositForm(!showDepositForm)}
-                        className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-white text-black text-sm font-semibold rounded-xl hover:bg-[#EAE5DC] transition-all active:scale-[0.97]"
+                        className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-white text-black text-sm font-semibold rounded-xl hover:bg-white/90 transition-all active:scale-[0.97]"
                     >
-                        <ArrowDown className="w-3.5 h-3.5" />
+                        <Icon.ArrowDown size={15} weight="bold" />
                         Deposit STRK
                     </button>
                 </div>
@@ -321,27 +320,27 @@ export default function BillingPage() {
                     className="relative shrink-0 w-full md:w-auto flex items-center justify-center md:justify-start gap-2 px-4 py-2.5 md:py-2 bg-white/10 rounded-xl text-white text-xs font-semibold transition-all hover:bg-white/20 active:scale-[0.97]"
                 >
                     Apply Now
-                    <ExternalLink className="w-3.5 h-3.5" />
+                    <Icon.External size={15} weight="bold" />
                 </a>
             </div>
 
             {/* ── Deposit form ── */}
             {showDepositForm && (
-                <div className="rounded-2xl bg-white border border-[#EAE5DC] p-6 space-y-5">
+                <div className="rounded-2xl bg-white border border-line p-6 space-y-5">
                     <div className="flex items-center justify-between">
                         <h3 className="text-base font-bold">Deposit STRK</h3>
                         <button
                             onClick={() => { setShowDepositForm(false); setTxStatus('idle'); setTxError(null); setDepositAmount(''); }}
                             className="w-7 h-7 flex items-center justify-center text-black/30 hover:text-black transition-colors rounded-lg hover:bg-black/5"
                         >
-                            <X className="w-4 h-4" />
+                            <Icon.Close size={16} weight="bold" />
                         </button>
                     </div>
 
                     {/* Connect wallet prompt */}
                     {!walletAddress && (
-                        <div className="flex items-center gap-3 p-4 bg-[#F7F5F2] border border-[#EAE5DC] rounded-xl text-sm">
-                            <Wallet className="w-4 h-4 text-black/40 shrink-0" />
+                        <div className="flex items-center gap-3 p-4 bg-surface border border-line rounded-xl text-sm">
+                            <Icon.Wallet size={17} className="text-black/45 shrink-0" />
                             <span className="text-black/55 flex-1">Connect your wallet to deposit STRK.</span>
                             <Button variant="outline" size="sm" onClick={handleConnectWallet}>Connect</Button>
                         </div>
@@ -363,7 +362,7 @@ export default function BillingPage() {
 
                     {/* Fee breakdown */}
                     {depositAmount && parseFloat(depositAmount) > 0 && (
-                        <div className="rounded-xl bg-[#F7F5F2] border border-[#EAE5DC] p-4 space-y-2 text-sm">
+                        <div className="rounded-xl bg-surface border border-line p-4 space-y-2 text-sm">
                             {[
                                 { label: 'Deposit amount',    value: `${parseFloat(depositAmount).toFixed(4)} STRK`, muted: false },
                                 { label: 'Platform fee (5%)', value: `-${feeAmount.toFixed(4)} STRK`,               muted: true },
@@ -373,7 +372,7 @@ export default function BillingPage() {
                                     <span className={row.muted ? 'text-black/40' : ''}>{row.value}</span>
                                 </div>
                             ))}
-                            <div className="flex justify-between font-bold pt-2 border-t border-[#EAE5DC]">
+                            <div className="flex justify-between font-bold pt-2 border-t border-line">
                                 <span>Credited to balance</span>
                                 <span>{netAmount.toFixed(4)} STRK</span>
                             </div>
@@ -383,13 +382,13 @@ export default function BillingPage() {
                     {/* Tx status */}
                     {txStatus !== 'idle' && (
                         <div className={`flex items-center gap-3 p-4 rounded-xl text-sm border ${
-                            txStatus === 'done'  ? 'bg-[#F7F5F2] border-[#EAE5DC] text-black/70' :
+                            txStatus === 'done'  ? 'bg-surface border-line text-black/70' :
                             txStatus === 'error' ? 'bg-red-50 border-red-200 text-red-700' :
-                            'bg-[#F7F5F2] border-[#EAE5DC] text-black/60'
+                            'bg-surface border-line text-black/60'
                         }`}>
-                            {txStatus === 'done'  ? <CheckCircle className="w-4 h-4 shrink-0 text-black/50" /> :
-                             txStatus === 'error' ? <X className="w-4 h-4 shrink-0 text-red-500" /> :
-                             <Loader2 className="w-4 h-4 shrink-0 animate-spin" />}
+                            {txStatus === 'done'  ? <Icon.CheckCircle size={17} weight="fill" className="shrink-0 text-emerald-500" /> :
+                             txStatus === 'error' ? <Icon.Close size={16} weight="bold" className="shrink-0 text-red-500" /> :
+                             <Icon.Spinner size={17} weight="bold" className="shrink-0 animate-spin" />}
                             <span>{txStatus === 'error' ? txError : statusLabel[txStatus]}</span>
                         </div>
                     )}
@@ -407,15 +406,15 @@ export default function BillingPage() {
             )}
 
             {/* ── Deposit history ── */}
-            <div className="rounded-2xl bg-white border border-[#EAE5DC] overflow-hidden">
-                <div className="px-6 py-4 border-b border-[#EAE5DC]/70 flex items-center justify-between">
+            <div data-dash-panel className="rounded-2xl bg-white border border-line overflow-hidden">
+                <div className="px-6 py-4 border-b border-line/70 flex items-center justify-between">
                     <h3 className="text-sm font-bold">Deposit History</h3>
                     <span className="text-xs text-black/30 font-medium">{deposits.length} deposits</span>
                 </div>
 
                 {deposits.length === 0 ? (
                     <div className="px-6 py-16 text-center space-y-2">
-                        <Fuel className="w-8 h-8 text-black/15 mx-auto" />
+                        <Icon.Gas size={34} className="text-black/20 mx-auto" />
                         <p className="text-sm text-black/40">No deposits yet.</p>
                         <p className="text-xs text-black/25">Deposit STRK above to start sponsoring transactions.</p>
                     </div>
@@ -423,7 +422,7 @@ export default function BillingPage() {
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="bg-[#F7F5F2]">
+                                <tr className="bg-surface">
                                     {['Date', 'Amount', 'Fee', 'Credited', 'Status', 'Tx'].map((h) => (
                                         <th key={h} className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-[0.15em] text-black/35 whitespace-nowrap">{h}</th>
                                     ))}
@@ -431,10 +430,10 @@ export default function BillingPage() {
                             </thead>
                             <tbody>
                                 {deposits.map((deposit, i) => (
-                                    <tr key={deposit.id} className={`border-t border-[#EAE5DC]/60 hover:bg-[#F7F5F2]/50 transition-colors ${i === deposits.length - 1 ? '' : ''}`}>
+                                    <tr key={deposit.id} className={`border-t border-line/60 hover:bg-surface/50 transition-colors ${i === deposits.length - 1 ? '' : ''}`}>
                                         <td className="px-5 py-4">
                                             <div className="flex items-center gap-1.5 text-black/50">
-                                                <Clock className="w-3 h-3 shrink-0" />
+                                                <Icon.Clock size={13} className="shrink-0" />
                                                 <span className="tabular-nums">{new Date(deposit.created_at).toLocaleDateString()}</span>
                                             </div>
                                         </td>
@@ -442,7 +441,7 @@ export default function BillingPage() {
                                         <td className="px-5 py-4 text-black/40 tabular-nums">{parseFloat(String(deposit.fee_strk)).toFixed(4)}</td>
                                         <td className="px-5 py-4 font-bold tabular-nums">{parseFloat(String(deposit.net_strk)).toFixed(4)}</td>
                                         <td className="px-5 py-4">
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#F7F5F2] border border-[#EAE5DC] rounded-full text-[10px] font-bold uppercase tracking-wide text-black/50">
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-surface border border-line rounded-full text-[10px] font-bold uppercase tracking-wide text-black/50">
                                                 <span className="w-1.5 h-1.5 rounded-full bg-black/40" />
                                                 {deposit.status}
                                             </span>
@@ -455,7 +454,7 @@ export default function BillingPage() {
                                                 className="flex items-center gap-1 text-xs font-mono text-black/40 hover:text-black transition-colors"
                                             >
                                                 {deposit.tx_hash.slice(0, 8)}…
-                                                <ExternalLink className="w-3 h-3 shrink-0" />
+                                                <Icon.External size={13} weight="bold" className="shrink-0" />
                                             </a>
                                         </td>
                                     </tr>
@@ -467,10 +466,10 @@ export default function BillingPage() {
             </div>
 
             {/* ── On-chain info ── */}
-            <div className="relative overflow-hidden rounded-2xl bg-[#F7F5F2] border border-[#EAE5DC] p-6">
+            <div className="relative overflow-hidden rounded-2xl bg-surface border border-line p-6">
                 <div className="flex gap-4 items-start">
-                    <div className="p-2.5 bg-white border border-[#EAE5DC] rounded-xl shrink-0">
-                        <Fuel className="w-4 h-4 text-black/50" />
+                    <div className="p-2.5 bg-white border border-line rounded-xl shrink-0 text-ink/60">
+                        <Icon.Gas size={17} />
                     </div>
                     <div className="space-y-1">
                         <h3 className="text-sm font-bold">On-Chain Gas Tank</h3>

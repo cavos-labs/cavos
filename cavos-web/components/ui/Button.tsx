@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader2 } from 'lucide-react';
+import { Icon } from './Icon';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline';
@@ -10,14 +10,14 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className = '', variant = 'primary', size = 'md', loading, icon, children, disabled, ...props }, ref) => {
-    const baseStyles = 'inline-flex items-center justify-center rounded-lg font-medium transition-all focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed';
+    const baseStyles = 'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed';
 
     const variants = {
-      primary: 'bg-black text-white hover:bg-black/90 active:scale-95',
-      secondary: 'bg-black/5 text-black hover:bg-black/10 active:scale-95',
-      ghost: 'bg-transparent text-black/60 hover:text-black hover:bg-black/5',
+      primary: 'bg-brand text-white hover:bg-brand-hover active:scale-95',
+      secondary: 'bg-black/[0.05] text-ink hover:bg-black/[0.08] active:scale-95',
+      ghost: 'bg-transparent text-muted hover:text-ink hover:bg-black/5',
       danger: 'bg-red-600 text-white hover:bg-red-700 active:scale-95',
-      outline: 'border border-black/20 text-black hover:border-black/40 hover:bg-black/5 active:scale-95'
+      outline: 'border border-line-strong text-ink hover:border-ink/40 hover:bg-black/5 active:scale-95'
     };
 
     const sizes = {
@@ -33,7 +33,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || loading}
         {...props}
       >
-        {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+        {loading && <Icon.Spinner size={16} weight="bold" className="mr-2 animate-spin" />}
         {!loading && icon && <span className="mr-2">{icon}</span>}
         {children}
       </button>

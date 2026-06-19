@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { AppWindow, Building2, Check, ExternalLink, KeyRound, PlugZap, Sparkles, X } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
 import { CavosProviderCodeBlock } from '@/components/CavosProviderCodeBlock'
 
 const DONE_KEY_PREFIX = 'cavos:onboarding:how-to-start:done:'
@@ -23,7 +23,7 @@ function CtaButton({
     return (
       <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
         {children}
-        <ExternalLink className="w-4 h-4 text-white/70" />
+        <Icon.External className="w-4 h-4 text-white/70" />
       </a>
     )
   }
@@ -43,7 +43,7 @@ export default function HowToStartPage() {
       id: 'org',
       title: 'Create organization and get API key',
       description: 'Create your organization, then copy an org API key for the SDK and paymaster.',
-      icon: <Building2 className="w-4 h-4 text-neutral-500 group-hover:text-white transition-colors" />,
+      icon: <Icon.Org className="w-4 h-4 text-neutral-500 group-hover:text-white transition-colors" />,
       cta: { label: 'Create organization', href: '/dashboard/organizations/new', external: false },
       secondaryCta: { label: 'Org API keys', href: '/dashboard/organizations' },
       optional: false,
@@ -52,7 +52,7 @@ export default function HowToStartPage() {
       id: 'app',
       title: 'Create app and get app id',
       description: 'Create an application under your org, then copy the app id for CavosProvider and the SDK.',
-      icon: <AppWindow className="w-4 h-4 text-neutral-500 group-hover:text-white transition-colors" />,
+      icon: <Icon.Apps className="w-4 h-4 text-neutral-500 group-hover:text-white transition-colors" />,
       cta: { label: 'Create app', href: '/dashboard/apps/new', external: false },
       secondaryCta: { label: 'Applications', href: '/dashboard/apps' },
       optional: false,
@@ -61,7 +61,7 @@ export default function HowToStartPage() {
       id: 'oauth',
       title: 'Configure OAuth providers (Google, Apple, Email)',
       description: 'Set up Google, Apple, and Email authentication for your users.',
-      icon: <PlugZap className="w-4 h-4 text-neutral-500 group-hover:text-white transition-colors" />,
+      icon: <Icon.Connect className="w-4 h-4 text-neutral-500 group-hover:text-white transition-colors" />,
       secondaryCta: { label: 'Web installation', href: 'https://docs.cavos.xyz/web/installation', external: true },
       cta: { label: 'Mobile installation', href: 'https://docs.cavos.xyz/react-native/installation', external: true },
       optional: false,
@@ -70,7 +70,7 @@ export default function HowToStartPage() {
       id: 'paymaster',
       title: 'Add STRK for your paymaster and get your paymaster key',
       description: 'Fund your paymaster with STRK and copy the paymasterApiKey to enable your application to send transactions.',
-      icon: <KeyRound className="w-4 h-4 text-neutral-500 group-hover:text-white transition-colors" />,
+      icon: <Icon.Key className="w-4 h-4 text-neutral-500 group-hover:text-white transition-colors" />,
       cta: { label: 'Open org API keys', href: '/dashboard/organizations/ec6c8494-850c-4bfa-8a64-2fba818059ae', external: false },
       secondaryCta: { label: 'Billing', href: '/dashboard/billing' },
       optional: false,
@@ -79,7 +79,7 @@ export default function HowToStartPage() {
       id: 'grant',
       title: '(Optional) Apply for Starknet Propulsion Grant to fund gas',
       description: 'Explore Starknet grants if you want funding support for transaction costs.',
-      icon: <Sparkles className="w-4 h-4 text-neutral-500 group-hover:text-white transition-colors" />,
+      icon: <Icon.Spark className="w-4 h-4 text-neutral-500 group-hover:text-white transition-colors" />,
       cta: { label: 'Open grants', href: 'https://airtable.com/appfoRv2ottjRfTpL/pag0G55zA8aU4V9bD/form', external: true },
       optional: true,
     },
@@ -87,7 +87,7 @@ export default function HowToStartPage() {
       id: 'sdk',
       title: 'Install SDK and go live',
       description: 'Install the SDK, configure CavosProvider, and start onboarding users.',
-      icon: <Sparkles className="w-4 h-4 text-neutral-500 group-hover:text-white transition-colors" />,
+      icon: <Icon.Spark className="w-4 h-4 text-neutral-500 group-hover:text-white transition-colors" />,
       cta: { label: 'Open quickstart', href: 'https://docs.cavos.xyz/quickstart', external: true },
       optional: false,
     },
@@ -123,10 +123,10 @@ export default function HowToStartPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full">
-      <div className="px-1">
+      <div data-dash-header className="px-1">
         <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-neutral-400 mb-2">Getting started</p>
         <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-neutral-900 flex items-center gap-2">
-          <Sparkles className="w-7 h-7 text-neutral-800" />
+          <Icon.Spark className="w-7 h-7 text-neutral-800" />
           How to start
         </h1>
         <p className="text-sm text-neutral-500 mt-2 font-medium max-w-2xl leading-relaxed">
@@ -135,7 +135,7 @@ export default function HowToStartPage() {
       </div>
 
       {/* Checklist */}
-      <div className="bg-white/80 backdrop-blur-xl border border-neutral-200/80 shadow-sm rounded-3xl p-6 sm:p-8">
+      <div data-dash-panel className="bg-white/80 backdrop-blur-xl border border-neutral-200/80 shadow-sm rounded-3xl p-6 sm:p-8">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-base font-bold text-neutral-900">Setup checklist</p>
@@ -165,7 +165,7 @@ export default function HowToStartPage() {
                           <p className="text-sm font-bold text-neutral-900">{s.title}</p>
                           {done[s.id] && (
                             <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-green-700 bg-green-50 px-2 py-0.5 rounded-md border border-green-200/50">
-                              <Check className="w-3 h-3" />
+                              <Icon.Check className="w-3 h-3" />
                               Done
                             </span>
                           )}
@@ -326,7 +326,7 @@ export default function HowToStartPage() {
                             : 'border-neutral-300 bg-neutral-50 group-hover:border-neutral-400 group-hover:bg-white shadow-inner'
                         }`}
                       >
-                        {done[s.id] && <Check strokeWidth={3} className="w-3.5 h-3.5" />}
+                        {done[s.id] && <Icon.Check weight="bold" className="w-3.5 h-3.5" />}
                       </span>
                       {done[s.id] ? 'Completed' : 'Mark as done'}
                     </button>

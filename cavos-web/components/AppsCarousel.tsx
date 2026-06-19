@@ -1,7 +1,6 @@
 import Image from 'next/image'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { AppWindow } from 'lucide-react'
-
+import { Icon } from '@/components/ui/Icon'
 export async function AppsCarousel() {
     const supabase = createAdminClient()
     const { data: rawApps } = await supabase
@@ -45,7 +44,7 @@ export async function AppsCarousel() {
                                         className="object-contain"
                                     />
                                 ) : (
-                                    <AppWindow className="w-6 h-6 text-ink/30" />
+                                    <Icon.Apps className="w-6 h-6 text-ink/30" />
                                 )}
 
                                 {/* Tooltip */}

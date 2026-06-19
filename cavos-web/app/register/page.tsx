@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Header } from '@/components/Header'
+import { Icon } from '@/components/ui/Icon'
 
 export default function RegisterPage() {
     const router = useRouter()
@@ -62,25 +63,23 @@ export default function RegisterPage() {
             <Header />
 
             <div className="pt-24 md:pt-32 pb-12 md:pb-20 px-4 md:px-6 flex items-center justify-center min-h-screen">
-                <div className="w-full max-w-md">
+                <div className="w-full max-w-md animate-fadeIn">
                     {/* Title */}
                     <div className="text-center mb-6 md:mb-8">
-                        <h1 className="text-3xl md:text-4xl font-semibold tracking-[-0.02em] mb-2">
+                        <h1 className="text-3xl md:text-4xl font-semibold tracking-[-0.02em] mb-2 text-balance">
                             Create account
                         </h1>
-                        <p className="text-black/60 text-sm md:text-base">
+                        <p className="text-black/55 text-sm md:text-base">
                             Start building with Cavos
                         </p>
                     </div>
 
                     {/* Form Card */}
-                    <div className="bg-white border border-black/10 rounded-2xl p-6 md:p-8 shadow-sm">
+                    <div className="bg-white border border-line rounded-2xl p-6 md:p-8 shadow-sm shadow-black/[0.03]">
                         {success ? (
                             <div className="text-center py-8">
-                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                    </svg>
+                                <div className="w-16 h-16 bg-brand-soft rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                    <Icon.Mail size={30} className="text-brand" />
                                 </div>
                                 <h3 className="text-xl font-semibold text-black mb-2">Check your email</h3>
                                 <p className="text-black/60 mb-6">
@@ -88,7 +87,7 @@ export default function RegisterPage() {
                                 </p>
                                 <Link
                                     href="/login"
-                                    className="inline-block w-full px-8 py-3.5 bg-black text-white rounded-full font-medium hover:bg-black/90 transition-all"
+                                    className="inline-block w-full px-8 py-3.5 bg-brand text-white rounded-xl font-semibold hover:bg-brand-hover transition-all"
                                 >
                                     Go to Login
                                 </Link>
@@ -113,7 +112,7 @@ export default function RegisterPage() {
                                             onChange={(e) => setFullName(e.target.value)}
                                             placeholder="John Doe"
                                             disabled={loading}
-                                            className="w-full px-4 py-3 bg-white border border-black/20 rounded-lg text-black placeholder:text-black/40 focus:outline-none focus:border-black/50 transition-colors disabled:opacity-50"
+                                            className="w-full px-4 py-3 bg-white border border-line-strong rounded-lg text-black placeholder:text-black/40 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 transition-all disabled:opacity-50"
                                         />
                                     </div>
 
@@ -121,32 +120,38 @@ export default function RegisterPage() {
                                         <label htmlFor="email" className="block text-sm font-medium text-black/80 mb-2">
                                             Email
                                         </label>
-                                        <input
-                                            id="email"
-                                            type="email"
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            placeholder="you@example.com"
-                                            required
-                                            disabled={loading}
-                                            className="w-full px-4 py-3 bg-white border border-black/20 rounded-lg text-black placeholder:text-black/40 focus:outline-none focus:border-black/50 transition-colors disabled:opacity-50"
-                                        />
+                                        <div className="relative">
+                                            <Icon.Mail size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-black/30 pointer-events-none" />
+                                            <input
+                                                id="email"
+                                                type="email"
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                                placeholder="you@example.com"
+                                                required
+                                                disabled={loading}
+                                                className="w-full pl-10 pr-4 py-3 bg-white border border-line-strong rounded-lg text-black placeholder:text-black/40 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 transition-all disabled:opacity-50"
+                                            />
+                                        </div>
                                     </div>
 
                                     <div>
                                         <label htmlFor="password" className="block text-sm font-medium text-black/80 mb-2">
                                             Password
                                         </label>
-                                        <input
-                                            id="password"
-                                            type="password"
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                            placeholder="••••••••"
-                                            required
-                                            disabled={loading}
-                                            className="w-full px-4 py-3 bg-white border border-black/20 rounded-lg text-black placeholder:text-black/40 focus:outline-none focus:border-black/50 transition-colors disabled:opacity-50"
-                                        />
+                                        <div className="relative">
+                                            <Icon.Lock size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-black/30 pointer-events-none" />
+                                            <input
+                                                id="password"
+                                                type="password"
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                placeholder="••••••••"
+                                                required
+                                                disabled={loading}
+                                                className="w-full pl-10 pr-4 py-3 bg-white border border-line-strong rounded-lg text-black placeholder:text-black/40 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 transition-all disabled:opacity-50"
+                                            />
+                                        </div>
                                         <p className="text-xs text-black/50 mt-1">
                                             Must be at least 8 characters
                                         </p>
@@ -159,15 +164,15 @@ export default function RegisterPage() {
                                             checked={dpaAccepted}
                                             onChange={(e) => setDpaAccepted(e.target.checked)}
                                             disabled={loading}
-                                            className="mt-0.5 w-4 h-4 rounded border-black/30 accent-black shrink-0 cursor-pointer"
+                                            className="mt-0.5 w-4 h-4 rounded border-black/30 accent-brand shrink-0 cursor-pointer"
                                         />
                                         <span className="text-xs text-black/50 leading-relaxed group-hover:text-black/70 transition-colors">
                                             I agree to the{' '}
-                                            <Link href="/dpa" target="_blank" className="text-black underline underline-offset-2 hover:text-black/70">
+                                            <Link href="/dpa" target="_blank" className="text-brand underline underline-offset-2 hover:opacity-80">
                                                 Data Processing Agreement
                                             </Link>
                                             {' '}and{' '}
-                                            <Link href="/privacy" target="_blank" className="text-black underline underline-offset-2 hover:text-black/70">
+                                            <Link href="/privacy" target="_blank" className="text-brand underline underline-offset-2 hover:opacity-80">
                                                 Privacy Policy
                                             </Link>
                                             . I understand that Cavos acts as a Data Processor for my users&apos; data.
@@ -177,8 +182,9 @@ export default function RegisterPage() {
                                     <button
                                         type="submit"
                                         disabled={loading || !dpaAccepted}
-                                        className="w-full px-8 py-3.5 bg-black text-white rounded-full font-medium hover:bg-black/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="w-full px-8 py-3.5 bg-brand text-white rounded-xl font-semibold hover:bg-brand-hover active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
                                     >
+                                        {loading && <Icon.Spinner size={16} weight="bold" className="animate-spin" />}
                                         {loading ? 'Creating account...' : 'Create Account'}
                                     </button>
                                 </form>
@@ -190,7 +196,7 @@ export default function RegisterPage() {
                     <div className="mt-6 text-center">
                         <p className="text-black/60 text-sm">
                             Already have an account?{' '}
-                            <Link href="/login" className="text-black font-medium hover:underline">
+                            <Link href="/login" className="text-brand font-semibold hover:underline underline-offset-2">
                                 Sign in
                             </Link>
                         </p>
