@@ -103,6 +103,8 @@ export async function PATCH(request: Request, context: RouteContext) {
       email_password_reset_template_html,
       email_magic_link_template_html,
       email_otp_template_html,
+      email_device_approval_template_html,
+      device_approval_url,
     } = body
 
     const updates: Record<string, any> = {}
@@ -136,6 +138,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (email_password_reset_template_html !== undefined) updates.email_password_reset_template_html = email_password_reset_template_html || null
     if (email_magic_link_template_html !== undefined) updates.email_magic_link_template_html = email_magic_link_template_html || null
     if (email_otp_template_html !== undefined) updates.email_otp_template_html = email_otp_template_html || null
+    if (email_device_approval_template_html !== undefined) updates.email_device_approval_template_html = email_device_approval_template_html || null
+    if (device_approval_url !== undefined) updates.device_approval_url = device_approval_url || null
 
     if (Object.keys(updates).length === 0) {
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })

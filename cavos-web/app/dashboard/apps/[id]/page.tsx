@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { AppForm } from '@/components/AppForm'
-import { AppWindow, Trash2, ArrowLeft, Copy, Check, Search, Loader2, Building2, Pencil, Mail, ShieldCheck, ChevronLeft, ChevronRight, Wallet, ArrowRight, ExternalLink } from 'lucide-react'
+import { AppWindow, Trash2, ArrowLeft, Copy, Check, Search, Loader2, Building2, Pencil, Mail, ShieldCheck, ChevronLeft, ChevronRight, Wallet, ArrowRight, ExternalLink, Smartphone } from 'lucide-react'
 
 const WALLETS_PER_PAGE = 10
 
@@ -273,6 +273,20 @@ export default function AppDetailPage() {
                     </div>
                     <h3 className="text-sm font-semibold mb-1">OTP Email</h3>
                     <p className="text-xs text-black/40 leading-relaxed">Customize the one-time code email used by OTP login.</p>
+                </button>
+
+                <button
+                    onClick={() => router.push(`/dashboard/apps/${appId}/emails/device-approval`)}
+                    className="group text-left bg-white border border-[#EAE5DC] hover:border-[#C4BFB6] hover:shadow-sm rounded-2xl p-5 transition-all"
+                >
+                    <div className="flex items-start justify-between mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-[#F7F5F2] border border-[#EAE5DC] flex items-center justify-center">
+                            <Smartphone className="w-4 h-4 text-black/40" />
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-black/20 group-hover:text-black/50 group-hover:translate-x-0.5 transition-all" />
+                    </div>
+                    <h3 className="text-sm font-semibold mb-1">Device Approval</h3>
+                    <p className="text-xs text-black/40 leading-relaxed">New-device approval email and the URL users land on to approve a device.</p>
                 </button>
             </div>
 

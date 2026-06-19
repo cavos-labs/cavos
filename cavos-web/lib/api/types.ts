@@ -7,8 +7,11 @@ export interface WalletSaveRequest {
     user_social_id: string;
     network: string;
     address: string;
-    encrypted_pk_blob: string;
+    /** Legacy JWT/WebAuthn wallets store an encrypted key here; device-signer wallets send `devices` instead. */
+    encrypted_pk_blob?: string;
     email?: string;
+    /** Device-signer wallets: the authorized device public keys (secp256r1, hex). */
+    devices?: { x: string; y: string; label?: string }[];
 }
 
 export interface WalletGetRequest {
