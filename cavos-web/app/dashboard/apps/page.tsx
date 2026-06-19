@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
-import { AppWindow, Plus, Loader2, ArrowRight } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
+import { PageHeader } from '@/components/ui/PageHeader'
 
 export default function AppsPage() {
     const router = useRouter()
@@ -34,7 +35,7 @@ export default function AppsPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[50vh]">
-                <Loader2 className="w-6 h-6 animate-spin text-black/20" />
+                <Icon.Spinner size={26} weight="bold" className="animate-spin text-black/25" />
             </div>
         )
     }
@@ -43,18 +44,18 @@ export default function AppsPage() {
         <div className="space-y-7 animate-fadeIn">
 
             {/* Header */}
-            <div className="flex items-start justify-between gap-4">
-                <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-black/30 mb-1.5">Dashboard</p>
-                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Applications</h1>
-                    <p className="text-xs text-black/40 mt-1 font-medium">Manage your apps with embedded wallets.</p>
-                </div>
-                <Link href="/dashboard/apps/new">
-                    <Button icon={<Plus className="w-3.5 h-3.5" />}>
-                        New Application
-                    </Button>
-                </Link>
-            </div>
+            <PageHeader
+                eyebrow="Dashboard"
+                title="Applications"
+                subtitle="Manage your apps with embedded wallets."
+                actions={
+                    <Link href="/dashboard/apps/new">
+                        <Button icon={<Icon.Add size={15} weight="bold" />}>
+                            New Application
+                        </Button>
+                    </Link>
+                }
+            />
 
             {/* Error */}
             {error && (
@@ -65,14 +66,14 @@ export default function AppsPage() {
 
             {/* Empty state */}
             {apps.length === 0 ? (
-                <div className="relative overflow-hidden rounded-2xl bg-[#0A0908] text-white p-8 border border-black/10">
+                <div data-dash-panel className="relative overflow-hidden rounded-2xl bg-ink text-white p-8 border border-black/10">
                     <div
                         className="absolute top-0 right-0 w-64 h-64 pointer-events-none"
-                        style={{ background: 'radial-gradient(ellipse at top right, #EAE5DC0C 0%, transparent 65%)' }}
+                        style={{ background: 'radial-gradient(ellipse at top right, #402AFF1F 0%, transparent 65%)' }}
                     />
                     <div className="relative space-y-4 max-w-md">
                         <div className="w-10 h-10 rounded-xl bg-white/[0.07] border border-white/[0.08] flex items-center justify-center">
-                            <AppWindow className="w-5 h-5 text-white/50" />
+                            <Icon.Apps size={20} className="text-white/55" />
                         </div>
                         <div>
                             <h3 className="text-lg font-bold mb-1">No applications yet</h3>
@@ -88,13 +89,13 @@ export default function AppsPage() {
                     </div>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div data-dash-panel className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {apps.map((app) => (
                         <Link key={app.id} href={`/dashboard/apps/${app.id}`}>
                             <div className="group h-full bg-white border border-black/[0.08] rounded-2xl p-6 hover:border-black/[0.18] hover:shadow-md hover:shadow-black/[0.05] transition-all">
                                 <div className="flex items-start justify-between mb-4">
                                     {/* App logo or fallback */}
-                                    <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-[#F2EEE8] border border-[#EAE5DC] shrink-0 group-hover:border-[#C4BFB6] transition-colors">
+                                    <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-black/[0.04] border border-line shrink-0 group-hover:border-line-strong transition-colors">
                                         {app.logo_url ? (
                                             <Image
                                                 src={app.logo_url}
@@ -104,11 +105,11 @@ export default function AppsPage() {
                                             />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center">
-                                                <AppWindow className="w-4 h-4 text-black/25" />
+                                                <Icon.Apps size={16} className="text-black/30" />
                                             </div>
                                         )}
                                     </div>
-                                    <ArrowRight className="w-4 h-4 text-black/20 group-hover:text-black/50 transition-all group-hover:translate-x-0.5" />
+                                    <Icon.ArrowRight size={16} weight="bold" className="text-black/20 group-hover:text-black/50 transition-all group-hover:translate-x-0.5" />
                                 </div>
                                 <div className="space-y-1">
                                     <h3 className="font-bold text-sm truncate">{app.name}</h3>
@@ -129,9 +130,9 @@ export default function AppsPage() {
 
                     {/* Add new card */}
                     <Link href="/dashboard/apps/new">
-                        <div className="group h-full min-h-[120px] bg-[#F7F5F2] border border-dashed border-[#D4CFC6] rounded-2xl p-6 hover:border-black/30 hover:bg-[#F0EDE8] transition-all flex items-center justify-center gap-2">
-                            <Plus className="w-4 h-4 text-black/30 group-hover:text-black/60 transition-colors" />
-                            <span className="text-xs font-semibold text-black/35 group-hover:text-black/60 transition-colors">New Application</span>
+                        <div className="group h-full min-h-[120px] bg-surface border border-dashed border-line-strong rounded-2xl p-6 hover:border-black/30 hover:bg-black/[0.03] transition-all flex items-center justify-center gap-2">
+                            <Icon.Add size={16} weight="bold" className="text-black/35 group-hover:text-black/60 transition-colors" />
+                            <span className="text-xs font-semibold text-black/40 group-hover:text-black/70 transition-colors">New Application</span>
                         </div>
                     </Link>
                 </div>

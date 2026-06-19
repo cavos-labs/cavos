@@ -6,8 +6,7 @@ import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { ArrowLeft } from 'lucide-react'
-
+import { Icon } from '@/components/ui/Icon'
 export default function NewOrganizationPage() {
     const router = useRouter()
     const [name, setName] = useState('')
@@ -50,12 +49,12 @@ export default function NewOrganizationPage() {
                 href="/dashboard/organizations"
                 className="inline-flex items-center text-sm text-black/60 hover:text-black transition-colors"
             >
-                <ArrowLeft className="w-4 h-4 mr-1" />
+                <Icon.ArrowLeft className="w-4 h-4 mr-1" />
                 Back to Organizations
             </Link>
 
             {/* Header */}
-            <div>
+            <div data-dash-header>
                 <h1 className="text-3xl font-semibold tracking-tight mb-2">
                     Create Organization
                 </h1>
@@ -65,7 +64,7 @@ export default function NewOrganizationPage() {
             </div>
 
             {/* Form */}
-            <Card>
+            <Card data-dash-panel>
                 {error && (
                     <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
                         {error}

@@ -5,8 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { ArrowLeft, Loader2, Lock, Eye } from 'lucide-react'
-
+import { Icon } from '@/components/ui/Icon'
 const DEFAULT_PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -119,7 +118,7 @@ export default function PasswordResetEmailPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[50vh]">
-                <Loader2 className="w-8 h-8 animate-spin text-black/20" />
+                <Icon.Spinner className="w-8 h-8 animate-spin text-black/20" />
             </div>
         )
     }
@@ -143,18 +142,18 @@ export default function PasswordResetEmailPage() {
                 href={`/dashboard/apps/${appId}`}
                 className="inline-flex items-center text-sm text-black/60 hover:text-black transition-colors"
             >
-                <ArrowLeft className="w-4 h-4 mr-1" />
+                <Icon.ArrowLeft className="w-4 h-4 mr-1" />
                 Back to {app?.name}
             </Link>
 
-            <div>
+            <div data-dash-header>
                 <h1 className="text-2xl font-semibold tracking-tight mb-2">Password reset custom email</h1>
                 <p className="text-black/60">
                     Customize the email sent when users request a password reset (forgot password). App name and logo are shared from your app settings.
                 </p>
             </div>
 
-            <Card>
+            <Card data-dash-panel>
                 <div className="space-y-6">
                     <div className="flex items-center justify-between">
                         <div>
@@ -165,7 +164,7 @@ export default function PasswordResetEmailPage() {
                             <Button variant="ghost" size="sm" onClick={() => setTemplate(DEFAULT_PASSWORD_RESET_TEMPLATE)}>
                                 Reset to default
                             </Button>
-                            <Button variant="outline" size="sm" onClick={() => setShowPreview(!showPreview)} icon={<Eye className="w-4 h-4" />}>
+                            <Button variant="outline" size="sm" onClick={() => setShowPreview(!showPreview)} icon={<Icon.Eye className="w-4 h-4" />}>
                                 {showPreview ? 'Hide' : 'Show'} preview
                             </Button>
                         </div>
@@ -229,7 +228,7 @@ export default function PasswordResetEmailPage() {
                         <Button variant="outline" onClick={() => router.push(`/dashboard/apps/${appId}`)}>
                             Cancel
                         </Button>
-                        <Button onClick={handleSave} loading={saving} disabled={saving} icon={<Lock className="w-4 h-4" />}>
+                        <Button onClick={handleSave} loading={saving} disabled={saving} icon={<Icon.Lock className="w-4 h-4" />}>
                             Save
                         </Button>
                     </div>

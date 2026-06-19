@@ -48,10 +48,10 @@ export function DpaConsentModal() {
 
             {/* Modal */}
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-2xl border border-[#EAE5DC] shadow-2xl w-full max-w-md">
+                <div className="bg-white rounded-2xl border border-line shadow-2xl w-full max-w-md">
 
                     {/* Header */}
-                    <div className="bg-[#0A0908] rounded-t-2xl px-6 py-5">
+                    <div className="bg-ink rounded-t-2xl px-6 py-5">
                         <div className="flex items-center gap-2.5 mb-2">
                             <div className="w-7 h-7 rounded-lg bg-white/[0.07] border border-white/[0.1] flex items-center justify-center shrink-0">
                                 <svg className="w-3.5 h-3.5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -67,13 +67,13 @@ export function DpaConsentModal() {
 
                     {/* Body */}
                     <div className="px-6 py-5 space-y-3">
-                        <div className="bg-[#F7F5F2] border border-[#EAE5DC] rounded-xl p-4 space-y-2.5">
+                        <div className="bg-surface border border-line rounded-xl p-4 space-y-2.5">
                             <AgreementItem
                                 href="/dpa"
                                 title="Data Processing Agreement"
                                 description="How Cavos processes your users' data as a GDPR-compliant processor."
                             />
-                            <div className="h-px bg-[#EAE5DC]" />
+                            <div className="h-px bg-line" />
                             <AgreementItem
                                 href="/privacy"
                                 title="Privacy Policy"
@@ -91,7 +91,7 @@ export function DpaConsentModal() {
                         <button
                             onClick={handleAccept}
                             disabled={accepting}
-                            className="w-full py-3 bg-[#0A0908] text-white text-sm font-semibold rounded-xl hover:bg-black/80 disabled:opacity-60 transition-all"
+                            className="w-full py-3 bg-ink text-white text-sm font-semibold rounded-xl hover:bg-black/80 disabled:opacity-60 transition-all"
                         >
                             {accepting ? 'Saving...' : 'Accept and continue'}
                         </button>
@@ -118,7 +118,7 @@ function AgreementItem({ href, title, description }: { href: string; title: stri
             <Link
                 href={href}
                 target="_blank"
-                className="shrink-0 text-[10px] font-bold uppercase tracking-wide text-black/40 hover:text-black border border-[#EAE5DC] hover:border-[#C4BFB6] px-2.5 py-1.5 rounded-lg transition-all"
+                className="shrink-0 text-[10px] font-bold uppercase tracking-wide text-black/40 hover:text-black border border-line hover:border-line-strong px-2.5 py-1.5 rounded-lg transition-all"
             >
                 Review
             </Link>

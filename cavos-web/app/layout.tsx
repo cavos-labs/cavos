@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { romagothicbold, geist } from "@/lib/fonts";
+import { romagothicbold, geist, geistMono } from "@/lib/fonts";
 import "./globals.css";
 import { AnalyticsConsent } from "@/components/AnalyticsConsent";
 
@@ -127,7 +127,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${romagothicbold.variable} ${geist.variable} antialiased`}
+        className={`${romagothicbold.variable} ${geist.variable} ${geistMono.variable} antialiased`}
       >
         {children}
         <AnalyticsConsent />

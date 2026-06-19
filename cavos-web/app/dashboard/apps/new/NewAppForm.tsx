@@ -6,8 +6,7 @@ import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { AppForm } from '@/components/AppForm'
-import { ArrowLeft, Loader2 } from 'lucide-react'
-
+import { Icon } from '@/components/ui/Icon'
 export function NewAppForm() {
     const router = useRouter()
     const searchParams = useSearchParams()
@@ -37,7 +36,7 @@ export function NewAppForm() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[50vh]">
-                <Loader2 className="w-8 h-8 animate-spin text-black/20" />
+                <Icon.Spinner className="w-8 h-8 animate-spin text-black/20" />
             </div>
         )
     }
@@ -64,11 +63,11 @@ export function NewAppForm() {
                 href="/dashboard/apps"
                 className="inline-flex items-center text-sm text-black/60 hover:text-black transition-colors"
             >
-                <ArrowLeft className="w-4 h-4 mr-1" />
+                <Icon.ArrowLeft className="w-4 h-4 mr-1" />
                 Back to Applications
             </Link>
 
-            <div>
+            <div data-dash-header>
                 <h1 className="text-3xl font-semibold tracking-tight mb-2">
                     New Application
                 </h1>
@@ -77,7 +76,7 @@ export function NewAppForm() {
                 </p>
             </div>
 
-            <Card>
+            <Card data-dash-panel>
                 <AppForm
                     mode="create"
                     organizations={organizations}

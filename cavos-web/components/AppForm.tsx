@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { createClient } from '@/lib/supabase/client'
-import { Upload, X, Loader2, Image as ImageIcon } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
 import Image from 'next/image'
 
 interface AppFormProps {
@@ -121,7 +121,7 @@ export function AppForm({ initialData, organizations, mode, onSuccess, onCancel 
                                 className="w-full h-full object-cover"
                             />
                         ) : (
-                            <ImageIcon className="w-8 h-8 text-black/20" />
+                            <Icon.Image className="w-8 h-8 text-black/20" />
                         )}
 
                         {/* Overlay */}
@@ -133,7 +133,7 @@ export function AppForm({ initialData, organizations, mode, onSuccess, onCancel 
                                 className="text-white hover:text-white hover:bg-white/20"
                                 onClick={() => fileInputRef.current?.click()}
                             >
-                                <Upload className="w-4 h-4" />
+                                <Icon.Upload className="w-4 h-4" />
                             </Button>
                         </div>
                     </div>

@@ -7,7 +7,7 @@ import Image from 'next/image'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { ArrowLeft, Loader2, Mail, Eye, Upload, ImageIcon } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
 import { createClient } from '@/lib/supabase/client'
 
 const DEFAULT_TEMPLATE = `<!DOCTYPE html>
@@ -238,7 +238,7 @@ export default function AppEmailsPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[50vh]">
-                <Loader2 className="w-8 h-8 animate-spin text-black/20" />
+                <Icon.Spinner className="w-8 h-8 animate-spin text-black/20" />
             </div>
         )
     }
@@ -263,12 +263,12 @@ export default function AppEmailsPage() {
                 href={`/dashboard/apps/${appId}`}
                 className="inline-flex items-center text-sm text-black/60 hover:text-black transition-colors"
             >
-                <ArrowLeft className="w-4 h-4 mr-1" />
+                <Icon.ArrowLeft className="w-4 h-4 mr-1" />
                 Back to {app?.name}
             </Link>
 
             {/* Header */}
-            <div>
+            <div data-dash-header>
                 <h1 className="text-2xl font-semibold tracking-tight mb-2">Email Verification Settings</h1>
                 <p className="text-black/60">
                     Customize the verification emails sent when users register with email/password.
@@ -276,7 +276,7 @@ export default function AppEmailsPage() {
             </div>
 
             {/* Settings Card */}
-            <Card>
+            <Card data-dash-panel>
                 <div className="space-y-6">
                     {/* App Info */}
                     <div>
@@ -316,7 +316,7 @@ export default function AppEmailsPage() {
                                                     className="w-full h-full object-cover"
                                                 />
                                             ) : (
-                                                <ImageIcon className="w-8 h-8 text-black/20" />
+                                                <Icon.Image className="w-8 h-8 text-black/20" />
                                             )}
 
                                             {/* Overlay */}
@@ -328,7 +328,7 @@ export default function AppEmailsPage() {
                                                     className="text-white hover:text-white hover:bg-white/20"
                                                     onClick={() => fileInputRef.current?.click()}
                                                 >
-                                                    <Upload className="w-4 h-4" />
+                                                    <Icon.Upload className="w-4 h-4" />
                                                 </Button>
                                             </div>
                                         </div>
@@ -447,7 +447,7 @@ export default function AppEmailsPage() {
                                     variant="outline"
                                     size="sm"
                                     onClick={() => setShowPreview(!showPreview)}
-                                    icon={<Eye className="w-4 h-4" />}
+                                    icon={<Icon.Eye className="w-4 h-4" />}
                                 >
                                     {showPreview ? 'Hide' : 'Show'} Preview
                                 </Button>
@@ -524,7 +524,7 @@ export default function AppEmailsPage() {
                             onClick={handleSave}
                             loading={saving || uploading}
                             disabled={saving || uploading}
-                            icon={<Mail className="w-4 h-4" />}
+                            icon={<Icon.Mail className="w-4 h-4" />}
                         >
                             Save Settings
                         </Button>

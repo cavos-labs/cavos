@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowLeft, AlertCircle, CheckCircle2, Copy, ImageIcon, Loader2, Mail, RotateCcw, ShieldCheck, Smartphone, Upload } from 'lucide-react'
+import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { createClient } from '@/lib/supabase/client'
@@ -217,7 +217,7 @@ export default function DeviceApprovalEmailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="w-7 h-7 animate-spin text-black/20" />
+        <Icon.Spinner className="w-7 h-7 animate-spin text-black/20" />
       </div>
     )
   }
@@ -226,7 +226,7 @@ export default function DeviceApprovalEmailPage() {
     return (
       <div className="max-w-md mx-auto mt-16 text-center">
         <div className="w-10 h-10 rounded-full bg-red-50 border border-red-100 flex items-center justify-center mx-auto mb-4">
-          <AlertCircle className="w-5 h-5 text-red-400" />
+          <Icon.Warning className="w-5 h-5 text-red-400" />
         </div>
         <p className="text-sm text-black/60 mb-4">{error}</p>
         <Link href="/dashboard/apps">
@@ -243,22 +243,22 @@ export default function DeviceApprovalEmailPage() {
     <div className="flex flex-col gap-5 pb-4">
       <div className="flex items-center justify-between">
         <Link href={`/dashboard/apps/${appId}`} className="inline-flex items-center gap-1.5 text-sm text-black/40 hover:text-black/80 transition-colors group">
-          <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+          <Icon.ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
           {app?.name || 'App'}
         </Link>
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F7F5F2] border border-[#EAE5DC] text-[10px] font-semibold uppercase tracking-widest text-black/40">
-          <ShieldCheck className="w-2.5 h-2.5" />
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface border border-line text-[10px] font-semibold uppercase tracking-widest text-black/40">
+          <Icon.Shield className="w-2.5 h-2.5" />
           Multi-Device
         </div>
       </div>
 
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight text-[#0A0908] mb-1">Device Approval</h1>
+      <div data-dash-header>
+        <h1 className="text-xl font-semibold tracking-tight text-ink mb-1">Device Approval</h1>
         <p className="text-sm text-black/40">Customize the email users receive when a new device requests access to their wallet, and where to send them to approve it.</p>
       </div>
 
-      <div className="grid gap-4" style={{ gridTemplateColumns: '320px 1fr', height: 'calc(100vh - 290px)', minHeight: '520px' }}>
-        <div className="flex flex-col bg-white border border-[#EAE5DC] rounded-2xl overflow-hidden">
+      <div data-dash-panel className="grid gap-4" style={{ gridTemplateColumns: '320px 1fr', height: 'calc(100vh - 290px)', minHeight: '520px' }}>
+        <div className="flex flex-col bg-white border border-line rounded-2xl overflow-hidden">
           <div className="overflow-y-auto flex-1 p-5 space-y-6">
             <div>
               <SectionLabel>App info</SectionLabel>
@@ -267,26 +267,26 @@ export default function DeviceApprovalEmailPage() {
                 <div>
                   <label className="block text-sm font-medium text-black/80 mb-2">App Logo</label>
                   <div className="flex items-center gap-3">
-                    <div onClick={() => fileInputRef.current?.click()} className="relative w-14 h-14 rounded-xl border flex items-center justify-center cursor-pointer overflow-hidden transition-all group shrink-0 border-dashed border-black/15 bg-[#F7F5F2] hover:bg-[#EAE5DC]">
+                    <div onClick={() => fileInputRef.current?.click()} className="relative w-14 h-14 rounded-xl border flex items-center justify-center cursor-pointer overflow-hidden transition-all group shrink-0 border-dashed border-black/15 bg-surface hover:bg-black/[0.04]">
                       {formData.logo_url ? (
                         <>
                           <Image src={formData.logo_url} alt="Logo" width={56} height={56} className="w-full h-full object-cover" />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <Upload className="w-4 h-4 text-white" />
+                            <Icon.Upload className="w-4 h-4 text-white" />
                           </div>
                         </>
-                      ) : uploading ? <Loader2 className="w-4 h-4 text-black/30 animate-spin" /> : <ImageIcon className="w-4 h-4 text-black/20" />}
+                      ) : uploading ? <Icon.Spinner className="w-4 h-4 text-black/30 animate-spin" /> : <Icon.Image className="w-4 h-4 text-black/20" />}
                     </div>
                     <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
                     <div className="flex-1 min-w-0">
-                      <input type="url" placeholder="https://.../logo.png" value={formData.logo_url} onChange={e => setFormData({ ...formData, logo_url: e.target.value })} className="w-full text-xs px-3 py-2 bg-[#F7F5F2] border border-[#EAE5DC] rounded-lg focus:outline-none focus:border-black/30 text-black/70 placeholder:text-black/25" />
+                      <input type="url" placeholder="https://.../logo.png" value={formData.logo_url} onChange={e => setFormData({ ...formData, logo_url: e.target.value })} className="w-full text-xs px-3 py-2 bg-surface border border-line rounded-lg focus:outline-none focus:border-black/30 text-black/70 placeholder:text-black/25" />
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="border-t border-[#EAE5DC]" />
+            <div className="border-t border-line" />
 
             <div>
               <SectionLabel>Approval destination</SectionLabel>
@@ -294,13 +294,13 @@ export default function DeviceApprovalEmailPage() {
               <p className="text-[11px] text-black/35 mt-1.5">When a new device signs in, we email a link to <code className="font-mono">{'{this URL}/approve-device?request=...'}</code> so the user approves from a device they trust.</p>
             </div>
 
-            <div className="border-t border-[#EAE5DC]" />
+            <div className="border-t border-line" />
 
             <div>
               <SectionLabel>Sender</SectionLabel>
               <div className="space-y-3">
-                <div className="flex items-center gap-2 px-3 py-2 bg-[#F7F5F2] border border-[#EAE5DC] rounded-lg">
-                  <Mail className="w-3 h-3 text-black/30 shrink-0" />
+                <div className="flex items-center gap-2 px-3 py-2 bg-surface border border-line rounded-lg">
+                  <Icon.Mail className="w-3 h-3 text-black/30 shrink-0" />
                   <span className="text-[11px] text-black/40 font-mono">noreply@cavos.xyz</span>
                 </div>
                 <Input label="Sender Name" placeholder={formData.name || 'Your App'} value={formData.email_from_name} onChange={e => setFormData({ ...formData, email_from_name: e.target.value })} />
@@ -308,19 +308,19 @@ export default function DeviceApprovalEmailPage() {
               </div>
             </div>
 
-            <div className="border-t border-[#EAE5DC]" />
+            <div className="border-t border-line" />
 
             <div>
               <SectionLabel>Placeholders</SectionLabel>
               <div className="space-y-1.5">
                 {PLACEHOLDERS.map(({ key, label, description }) => (
-                  <div key={key} className="group flex items-center gap-2 px-3 py-2.5 rounded-xl border border-[#EAE5DC] bg-[#F7F5F2] hover:bg-white hover:border-[#C4BFB6] hover:shadow-sm transition-all cursor-pointer" onClick={() => insertPlaceholder(key)}>
+                  <div key={key} className="group flex items-center gap-2 px-3 py-2.5 rounded-xl border border-line bg-surface hover:bg-white hover:border-line-strong hover:shadow-sm transition-all cursor-pointer" onClick={() => insertPlaceholder(key)}>
                     <div className="flex-1 min-w-0">
-                      <code className="text-[11px] font-mono text-[#0A0908] block truncate">{`{{${label}}}`}</code>
+                      <code className="text-[11px] font-mono text-ink block truncate">{`{{${label}}}`}</code>
                       <span className="text-[10px] text-black/35">{description}</span>
                     </div>
                     <button onClick={e => { e.stopPropagation(); copyPlaceholder(key) }} className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-black/5" title="Copy">
-                      {copied === key ? <CheckCircle2 className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3 text-black/30" />}
+                      {copied === key ? <Icon.CheckCircle className="w-3 h-3 text-green-500" /> : <Icon.Copy className="w-3 h-3 text-black/30" />}
                     </button>
                   </div>
                 ))}
@@ -329,7 +329,7 @@ export default function DeviceApprovalEmailPage() {
           </div>
         </div>
 
-        <div className="flex flex-col rounded-2xl overflow-hidden border border-[#EAE5DC] bg-[#0A0908]">
+        <div className="flex flex-col rounded-2xl overflow-hidden border border-line bg-ink">
           <div className="flex items-center border-b border-white/[0.06] shrink-0">
             {(['code', 'preview'] as const).map(tab => (
               <button key={tab} onClick={() => setActiveTab(tab)} className={`px-5 py-3 text-xs font-medium transition-colors capitalize ${activeTab === tab ? 'text-white border-b border-white/40 -mb-px' : 'text-white/30 hover:text-white/60'}`}>
@@ -339,14 +339,14 @@ export default function DeviceApprovalEmailPage() {
             <div className="ml-auto flex items-center gap-3 pr-4">
               <span className="text-[10px] font-mono text-white/20">{lineCount}L - {charCount}ch</span>
               <button onClick={() => setFormData(prev => ({ ...prev, email_device_approval_template_html: DEFAULT_TEMPLATE }))} title="Reset to default" className="flex items-center gap-1 text-[10px] text-white/25 hover:text-white/50 transition-colors">
-                <RotateCcw className="w-3 h-3" />
+                <Icon.Refresh className="w-3 h-3" />
                 Reset
               </button>
             </div>
           </div>
 
           {activeTab === 'code' ? (
-            <textarea ref={editorRef} value={formData.email_device_approval_template_html} onChange={e => setFormData(prev => ({ ...prev, email_device_approval_template_html: e.target.value }))} spellCheck={false} className="flex-1 w-full bg-transparent text-[#d4cfc8] font-mono text-xs leading-6 p-5 resize-none focus:outline-none" style={{ caretColor: '#EAE5DC' }} placeholder="Paste your HTML template here..." />
+            <textarea ref={editorRef} value={formData.email_device_approval_template_html} onChange={e => setFormData(prev => ({ ...prev, email_device_approval_template_html: e.target.value }))} spellCheck={false} className="flex-1 w-full bg-transparent text-[#d4cfc8] font-mono text-xs leading-6 p-5 resize-none focus:outline-none" style={{ caretColor: '#402AFF' }} placeholder="Paste your HTML template here..." />
           ) : (
             <iframe srcDoc={previewHtml} className="flex-1 w-full bg-white" title="Email Preview" sandbox="allow-same-origin" />
           )}
@@ -355,13 +355,13 @@ export default function DeviceApprovalEmailPage() {
 
       <div className="flex items-center justify-between pt-1">
         <div className="flex items-center gap-2 h-8">
-          {toast === 'saved' && <div className="flex items-center gap-1.5 text-xs text-green-600"><CheckCircle2 className="w-3.5 h-3.5" />Saved</div>}
-          {toast === 'error' && <div className="flex items-center gap-1.5 text-xs text-red-500"><AlertCircle className="w-3.5 h-3.5" />{error}</div>}
+          {toast === 'saved' && <div className="flex items-center gap-1.5 text-xs text-green-600"><Icon.CheckCircle className="w-3.5 h-3.5" />Saved</div>}
+          {toast === 'error' && <div className="flex items-center gap-1.5 text-xs text-red-500"><Icon.Warning className="w-3.5 h-3.5" />{error}</div>}
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => router.push(`/dashboard/apps/${appId}`)}>Cancel</Button>
-          <button onClick={handleSave} disabled={saving || uploading} className="inline-flex items-center gap-2 h-9 px-4 rounded-xl text-sm font-semibold bg-[#0A0908] text-white hover:bg-black/80 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
-            {saving ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...</> : <><Smartphone className="w-3.5 h-3.5" /> Save Settings</>}
+          <button onClick={handleSave} disabled={saving || uploading} className="inline-flex items-center gap-2 h-9 px-4 rounded-xl text-sm font-semibold bg-ink text-white hover:bg-black/80 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+            {saving ? <><Icon.Spinner className="w-3.5 h-3.5 animate-spin" /> Saving...</> : <><Icon.Device className="w-3.5 h-3.5" /> Save Settings</>}
           </button>
         </div>
       </div>

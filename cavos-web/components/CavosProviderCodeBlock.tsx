@@ -1,8 +1,7 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import { Check, Copy } from 'lucide-react'
-
+import { Icon } from '@/components/ui/Icon'
 /**
  * Colors aligned with Mintlify / One Dark–style fenced blocks (same snippet as docs/web/installation.mdx).
  * Docs repo: ../docs — MDX has no local theme file; highlighting matches hosted docs (One Dark–like).
@@ -59,7 +58,7 @@ export function CavosProviderCodeBlock() {
         aria-label={copied ? 'Copied' : 'Copy code'}
         className="absolute top-3 right-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/6 text-[#abb2bf]/80 transition-colors hover:bg-white/10 hover:text-[#abb2bf] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#61afef]/40"
       >
-        {copied ? <Check className="h-4 w-4 text-[#98c379]" /> : <Copy className="h-4 w-4" />}
+        {copied ? <Icon.Check className="h-4 w-4 text-[#98c379]" /> : <Icon.Copy className="h-4 w-4" />}
       </button>
 
       <pre className="overflow-x-auto p-4 pt-12 pr-14 font-mono text-[11px] leading-[1.65] sm:text-[12px] [tab-size:2] [scrollbar-color:#30363d_transparent]">
