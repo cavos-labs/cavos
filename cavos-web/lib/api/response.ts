@@ -62,6 +62,22 @@ export class ApiResponse {
     }
 
     /**
+     * Payment required (402) — billing gate. Used when a free-tier org hits its
+     * wallet-count limit. Body shape is stable so SDKs / dashboards can route
+     * to checkout: `{ error: 'wallet_limit_reached', count, limit, upgrade_url }`.
+     */
+    static paymentRequired(message: string, details?: any): NextResponse {
+        const body: any = { error: message };
+        // Always include details for 402 — the count/limit/upgrade_url are
+        // needed by the client to surface the upgrade path, not just debug info.
+        if (details) body.details = details;
+        return NextResponse.json(body, {
+            status: 402,
+            headers: CORS_HEADERS,
+        });
+    }
+
+    /**
      * Internal server error (500)
      */
     static serverError(message: string = 'Internal server error', error?: any): NextResponse {

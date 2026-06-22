@@ -47,6 +47,7 @@ import {
     Bell,
     GearSix,
     Question,
+    Code,
 } from '@phosphor-icons/react'
 
 /**
@@ -132,6 +133,7 @@ export const Icon = {
     Bell: wrap(Bell),
     Settings: wrap(GearSix),
     Help: wrap(Question),
+    Code: wrap(Code),
 } as const
 
 export type IconName = keyof typeof Icon

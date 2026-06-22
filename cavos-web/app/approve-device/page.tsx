@@ -47,14 +47,24 @@ function Approve() {
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
 
-  const requestId =
-    typeof window !== 'undefined'
-      ? new URLSearchParams(window.location.search).get('request') || ''
-      : '';
-
-  // Load the pending request. We don't have an appId at compile time, so use a
-  // transient recovery client without one — the GET endpoint is appId-agnostic.
+  // Read the request id. The "Sign in to approve" step redirects to Google/Apple
+  // which returns with ?auth_data=…, overwriting ?request=. Persist the id in
+  // sessionStorage so it survives that OAuth round-trip.
+  const [requestId, setRequestId] = useState<string | null>(null);
   useEffect(() => {
+    const fromUrl = new URLSearchParams(window.location.search).get('request') || '';
+    const STASH = 'cavos.approve.requestId';
+    if (fromUrl) {
+      sessionStorage.setItem(STASH, fromUrl);
+      setRequestId(fromUrl);
+    } else {
+      setRequestId(sessionStorage.getItem(STASH) || '');
+    }
+  }, []);
+
+  // Load the pending request once we know the id.
+  useEffect(() => {
+    if (requestId === null) return; // still resolving
     if (!requestId) {
       setError('Missing request id.');
       setLoading(false);
