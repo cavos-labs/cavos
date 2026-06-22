@@ -105,14 +105,6 @@ export function Header() {
                         >
                             Changelog
                         </Link>
-                        <a
-                            href="https://discord.gg/Vvq2ekEV47"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm font-medium text-ink/60 hover:text-ink transition-colors"
-                        >
-                            Discord
-                        </a>
                         <Link
                             href="/pricing"
                             className="text-sm font-medium text-ink/60 hover:text-ink transition-colors"
@@ -219,17 +211,9 @@ export function Header() {
                                 <Link href="/pricing" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Pricing</Link>
                                 <a href="https://docs.cavos.xyz" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Docs</a>
                                 <Link href="/blog" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Changelog</Link>
-                                <a href="https://discord.gg/Vvq2ekEV47" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Discord</a>
                             </>
                         )}
                     </nav>
-
-                    <div className="px-6 py-5 border-t border-black/[0.06]">
-                        <a href="https://discord.gg/Vvq2ekEV47" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 text-xs text-black/40 hover:text-black/70 transition-colors">
-                            <Image src="/discord-logo.png" alt="Discord" width={20} height={20} className="w-5 h-5" />
-                            Join our Discord
-                        </a>
-                    </div>
                 </div>
             </div>
         </>
