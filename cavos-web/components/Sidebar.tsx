@@ -11,6 +11,7 @@ const navigation = [
     { name: 'Overview',      href: '/dashboard',               icon: Icon.Overview },
     { name: 'Organizations', href: '/dashboard/organizations', icon: Icon.Org },
     { name: 'Applications',  href: '/dashboard/apps',          icon: Icon.Apps },
+    { name: 'Paymasters',    href: '/dashboard/paymasters',    icon: Icon.Gas },
     { name: 'Billing',       href: '/dashboard/billing',       icon: Icon.Billing },
 ]
 
@@ -84,20 +85,6 @@ export function Sidebar() {
 
             {/* Footer */}
             <div className="p-3 border-t border-line space-y-0.5">
-                <Link
-                    href="/dashboard/how-to-start"
-                    className={`
-                        flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-all
-                        ${pathname === '/dashboard/how-to-start'
-                            ? 'text-brand font-semibold'
-                            : 'text-black/45 hover:text-black hover:bg-black/[0.03]'
-                        }
-                    `}
-                >
-                    <Icon.Spark size={17} className="shrink-0 text-black/40" />
-                    How to start
-                </Link>
-
                 <a
                     href="https://docs.cavos.xyz"
                     target="_blank"

@@ -40,7 +40,7 @@ export async function GET(request: Request) {
     const adminSupabase = createAdminClient();
     const { data, error } = await adminSupabase
       .from('device_addition_requests')
-      .select('id, wallet_id, new_pub_x, new_pub_y, device_label, status, expires_at, created_at, wallets(address)')
+      .select('id, wallet_id, app_id, new_pub_x, new_pub_y, device_label, status, expires_at, created_at, wallets(address)')
       .eq('id', id)
       .single();
 
@@ -58,6 +58,7 @@ export async function GET(request: Request) {
     return ApiResponse.success({
       found: true,
       request_id: data.id,
+      app_id: data.app_id,
       wallet_address: (data.wallets as { address: string }[] | null)?.[0]?.address ?? null,
       new_pub_x: data.new_pub_x,
       new_pub_y: data.new_pub_y,
@@ -164,8 +165,16 @@ export async function POST(request: Request) {
       .select('device_approval_url, website_url')
       .eq('id', app_id)
       .single();
-    const origin = appRow?.device_approval_url || appRow?.website_url || '';
-    const approveLink = origin ? `${origin.replace(/\/$/, '')}/approve-device?request=${requestId}` : '';
+    // Where the owner lands to approve:
+    //   1. the app's configured device-approval URL (their own page), else
+    //   2. their website_url, else
+    //   3. Cavos's own hosted approval page (default — works with zero config).
+    // The target page is always at `${origin}/approve-device?request=<id>` —
+    // Cavos ships that page at cavos.xyz/approve-device; integrating apps that
+    // set device_approval_url must expose the same path.
+    const hostedOrigin = process.env.NEXT_PUBLIC_APP_URL || 'https://cavos.xyz';
+    const origin = appRow?.device_approval_url || appRow?.website_url || hostedOrigin;
+    const approveLink = `${origin.replace(/\/$/, '')}/approve-device?request=${requestId}`;
 
     // The owner's email comes from the SDK (it has it from login). The wallet
     // stores a uid/sub, not an email (wallets.email was dropped in the PII

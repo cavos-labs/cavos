@@ -7,10 +7,14 @@
  */
 
 import { createAdminClient } from '@/lib/supabase/admin';
+import { NextResponse } from 'next/server';
 import { ApiLogger } from '@/lib/api/logger';
 import { ApiResponse } from '@/lib/api/response';
 import { ApiValidator } from '@/lib/api/validation';
 import { ApiMiddleware } from '@/lib/api/middleware';
+import { checkRateLimit, clientIp } from '@/lib/api/rateLimit';
+import { canCreateWallet, resolveOrgForApp } from '@/lib/billing/limits';
+import { shouldBlock } from '@/lib/billing/enforce';
 import type { WalletSaveRequest, WalletGetRequest } from '@/lib/api/types';
 
 /**
@@ -91,6 +95,18 @@ export async function POST(request: Request) {
     logger.info('Wallet save request');
 
     try {
+        // IP rate-limit (best-effort, per-process) — near-term quota-griefing cap
+        // while the wallet routes are un-keyed. See lib/api/rateLimit.ts.
+        const ip = clientIp(request);
+        const rl = checkRateLimit(`wallet-create:${ip}`, 20, 60_000);
+        if (!rl.allowed) {
+            logger.warn('Wallet creation rate-limited', { ip });
+            return NextResponse.json(
+                { error: 'rate_limited', message: 'Too many wallet requests. Slow down.' },
+                { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } }
+            );
+        }
+
         // Parse request body
         const body = await ApiMiddleware.parseBody<WalletSaveRequest>(request);
         if (!body) {
@@ -122,9 +138,49 @@ export async function POST(request: Request) {
             return ApiResponse.unauthorized('Invalid App ID');
         }
 
+        // ── Billing gate ────────────────────────────────────────────────────
+        // Only the creation of NEW wallets is gated. Existing wallets are always
+        // readable/signable. So we pre-check existence by the kit conflict key
+        // `(app_id, user_social_id, network)` and skip the gate on re-save.
+        // Resolves app_id → org internally; both SDKs already send app_id, so
+        // this needs no SDK change. See lib/billing/limits.ts.
+        const adminSupabase = createAdminClient();
+        const { data: existingWallet } = await adminSupabase
+            .from('wallets')
+            .select('id')
+            .eq('app_id', app_id)
+            .eq('user_social_id', user_social_id)
+            .eq('network', network)
+            .limit(1)
+            .maybeSingle();
+
+        if (!existingWallet) {
+            const orgId = await resolveOrgForApp(app_id);
+            if (orgId) {
+                const gate = await canCreateWallet(orgId);
+                if (!gate.allowed) {
+                    const upgradeUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/dashboard/billing`;
+                    if (shouldBlock(gate.allowed)) {
+                        logger.warn('Wallet creation blocked — org at limit', {
+                            app_id, org_id: orgId, count: gate.count, limit: gate.limit
+                        });
+                        logger.complete(false);
+                        return ApiResponse.paymentRequired('wallet_limit_reached', {
+                            count: gate.count,
+                            limit: gate.limit,
+                            upgrade_url: upgradeUrl,
+                        });
+                    }
+                    // warn mode: log + allow through so we can soak before enforcing.
+                    logger.warn('Wallet creation over limit (warn mode, allowing)', {
+                        app_id, org_id: orgId, count: gate.count, limit: gate.limit
+                    });
+                }
+            }
+        }
+
         // Check if email is verified via firebase verification tokens (for Firebase email/password users)
         let emailVerified = false;
-        const adminSupabase = createAdminClient();
         if (email) {
             const { data: verifiedToken } = await adminSupabase
                 .from('email_verification_tokens')

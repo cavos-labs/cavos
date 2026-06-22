@@ -2,201 +2,141 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Badge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
 import { PageHeader } from '@/components/ui/PageHeader';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { connect, disconnect } from 'starknetkit';
-import { RpcProvider } from 'starknet';
+import { tokenizeOnvoCard } from '@/lib/onvo-client';
 
-interface ConnectedWallet {
-    id: string;
-    name: string;
-    icon: string | { dark: string; light: string };
-    account?: { execute: (calls: unknown[]) => Promise<{ transaction_hash: string }> };
-    selectedAddress: string;
+interface PlanUsage {
+    tier: 'free' | 'pro' | 'custom';
+    status: 'active' | 'past_due' | 'canceled';
+    /** Wallet count for the org, summed across all apps + networks. `-1` = unlimited. */
+    count: number;
+    /** Wallet limit. `null` = unlimited (pro / custom without cap). */
+    limit: number | null;
+    /** `'approaching_limit'` at ≥80% on a capped plan. */
+    warning: 'approaching_limit' | null;
+    current_period_end: string | null;
+    cancel_at_period_end: boolean;
 }
 
-const GAS_TANK_CONTRACT = process.env.NEXT_PUBLIC_GAS_TANK_CONTRACT_ADDRESS!;
-const STRK_TOKEN = process.env.NEXT_PUBLIC_STRK_TOKEN_ADDRESS!;
-const RPC_URL = process.env.NEXT_PUBLIC_STARKNET_RPC_URL!;
-const FEE_BPS = 500;
+const TIER_LABEL: Record<PlanUsage['tier'], string> = { free: 'Free', pro: 'Pro', custom: 'Custom' };
 
-type TxStatus = 'idle' | 'pending_wallet' | 'pending_confirm' | 'registering' | 'done' | 'error';
-
-interface GasBalance {
-    balance_strk: number;
-    total_deposited: number;
-    total_consumed: number;
-    org_felt_id: string;
-}
-
-interface GasDeposit {
-    id: string;
-    tx_hash: string;
-    amount_strk: number;
-    fee_strk: number;
-    net_strk: number;
-    status: string;
-    created_at: string;
-}
-
-function toU256Calldata(amount: string): [string, string] {
-    const wei = BigInt(Math.floor(parseFloat(amount) * 1e18));
-    const low = (wei & BigInt('0xffffffffffffffffffffffffffffffff')).toString();
-    const high = (wei >> BigInt(128)).toString();
-    return [low, high];
-}
-
-function shortAddr(addr: string) {
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+function formatDate(iso: string | null): string | null {
+    if (!iso) return null;
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? null : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 export default function BillingPage() {
     const [loading, setLoading] = useState(true);
-    const [orgId, setOrgId] = useState<string | null>(null);
-    const [balance, setBalance] = useState<GasBalance | null>(null);
-    const [deposits, setDeposits] = useState<GasDeposit[]>([]);
-    const [depositAmount, setDepositAmount] = useState('');
-    const [showDepositForm, setShowDepositForm] = useState(false);
-
-    const [walletObj, setWalletObj] = useState<ConnectedWallet | null>(null);
-    const [walletAddress, setWalletAddress] = useState<string | null>(null);
-
-    const [txStatus, setTxStatus] = useState<TxStatus>('idle');
-    const [txError, setTxError] = useState<string | null>(null);
+    const [plan, setPlan] = useState<PlanUsage | null>(null);
+    const [planError, setPlanError] = useState<string | null>(null);
+    const [showUpgradeForm, setShowUpgradeForm] = useState(false);
+    const [checkoutStatus, setCheckoutStatus] = useState<'idle' | 'submitting' | 'done' | 'error'>('idle');
+    const [checkoutError, setCheckoutError] = useState<string | null>(null);
+    const [notice, setNotice] = useState<string | null>(null);
+    const [card, setCard] = useState({ number: '', expiry: '', cvc: '', holderName: '', email: '' });
 
     const router = useRouter();
 
     const fetchData = useCallback(async () => {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
-
         if (!user) { router.replace('/login'); return; }
 
-        const { data: org } = await supabase
-            .from('organizations')
-            .select('id')
-            .eq('owner_id', user.id)
-            .single();
-
-        if (!org) { setLoading(false); return; }
-
-        setOrgId(org.id);
-
-        const balanceRes = await fetch(`/api/gas/balance?org_id=${org.id}`);
-        if (balanceRes.ok) setBalance(await balanceRes.json());
-
-        const { data: depositData } = await supabase
-            .from('gas_deposits')
-            .select('*')
-            .eq('org_id', org.id)
-            .order('created_at', { ascending: false })
-            .limit(20);
-
-        setDeposits(depositData || []);
+        try {
+            const statusRes = await fetch('/api/billing/status', { cache: 'no-store' });
+            if (statusRes.ok) {
+                const s = await statusRes.json() as {
+                    plan_tier: PlanUsage['tier'];
+                    status: PlanUsage['status'];
+                    wallet_count: number;
+                    wallet_limit: number | null;
+                    warning: PlanUsage['warning'];
+                    current_period_end: string | null;
+                    cancel_at_period_end?: boolean;
+                };
+                setPlan({
+                    tier: s.plan_tier,
+                    status: s.status,
+                    count: s.wallet_count,
+                    limit: s.wallet_limit,
+                    warning: s.warning,
+                    current_period_end: s.current_period_end,
+                    cancel_at_period_end: s.cancel_at_period_end ?? false,
+                });
+                setPlanError(null);
+            } else {
+                setPlanError('Could not load plan usage. Refresh to retry.');
+            }
+        } catch {
+            setPlanError('Could not load plan usage. Refresh to retry.');
+        }
         setLoading(false);
     }, [router]);
 
-    useEffect(() => {
-        fetchData();
-        connect({ modalMode: 'neverAsk' }).then(({ wallet, connectorData }) => {
-            if (wallet && connectorData?.account) {
-                setWalletObj(wallet as unknown as ConnectedWallet);
-                setWalletAddress(connectorData.account);
-            }
-        }).catch(() => {});
-    }, [fetchData]);
+    useEffect(() => { fetchData(); }, [fetchData]);
 
-    const handleConnectWallet = async () => {
-        const { wallet, connectorData } = await connect({ modalMode: 'alwaysAsk', dappName: 'Cavos' });
-        if (wallet && connectorData?.account) {
-            setWalletObj(wallet as unknown as ConnectedWallet);
-            setWalletAddress(connectorData.account);
+    const handleUpgrade = async () => {
+        const publicKey = process.env.NEXT_PUBLIC_ONVO_PUBLIC_KEY;
+        if (!publicKey) {
+            setCheckoutError('Payments are not configured. Contact support to upgrade.');
+            setCheckoutStatus('error');
+            return;
         }
-    };
-
-    const handleDisconnectWallet = async () => {
-        await disconnect({ clearLastWallet: true });
-        setWalletObj(null);
-        setWalletAddress(null);
-    };
-
-    const handleDeposit = async () => {
-        const walletRaw = walletObj as unknown as Record<string, unknown> | null;
-        const account = (walletObj as unknown as { account?: ConnectedWallet['account'] })?.account;
-        const hasRequest = typeof walletRaw?.request === 'function';
-        if (!orgId || !balance?.org_felt_id || !depositAmount || !walletRaw) return;
-        if (!hasRequest && !account?.execute) {
-            setTxError('Wallet does not support transactions');
-            setTxStatus('error');
+        if (!card.number || !card.expiry || !card.cvc || !card.holderName || !card.email) {
+            setCheckoutError('Fill in all card details.');
+            setCheckoutStatus('error');
             return;
         }
 
-        setTxStatus('pending_wallet');
-        setTxError(null);
-
+        setCheckoutStatus('submitting');
+        setCheckoutError(null);
         try {
-            const [amountLow, amountHigh] = toU256Calldata(depositAmount);
-            let txHash: string;
+            // Tokenize browser-side — raw card data never hits our server. Onvo
+            // also creates/associates a customer for the card.
+            const { paymentMethodId, customerId } = await tokenizeOnvoCard(publicKey, card);
 
-            if (hasRequest) {
-                const callsSnake = [
-                    { contract_address: STRK_TOKEN, entry_point: 'approve', calldata: [GAS_TANK_CONTRACT, amountLow, amountHigh] },
-                    { contract_address: GAS_TANK_CONTRACT, entry_point: 'deposit', calldata: [balance.org_felt_id, amountLow, amountHigh] },
-                ];
-                const result = await (walletRaw.request as (args: { type: string; params: { calls: typeof callsSnake } }) => Promise<{ transaction_hash: string }>)({
-                    type: 'wallet_addInvokeTransaction',
-                    params: { calls: callsSnake },
-                });
-                txHash = result.transaction_hash;
-            } else {
-                const calls = [
-                    { contractAddress: STRK_TOKEN, entrypoint: 'approve', calldata: [GAS_TANK_CONTRACT, amountLow, amountHigh] },
-                    { contractAddress: GAS_TANK_CONTRACT, entrypoint: 'deposit', calldata: [balance.org_felt_id, amountLow, amountHigh] },
-                ];
-                const result = await account!.execute(calls);
-                txHash = result.transaction_hash;
-            }
-
-            setTxStatus('pending_confirm');
-            const provider = new RpcProvider({ nodeUrl: RPC_URL });
-            await provider.waitForTransaction(txHash, { retryInterval: 2000 });
-
-            setTxStatus('registering');
-            const res = await fetch('/api/gas/deposit', {
+            // plan_tier is NOT flipped here — the Onvo renewal webhook does that.
+            const res = await fetch('/api/billing/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tx_hash: txHash, org_id: orgId }),
+                body: JSON.stringify({ paymentMethodId, customerId }),
             });
-            if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.error || 'Failed to register deposit');
-            }
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Checkout failed.');
 
-            setTxStatus('done');
-            setDepositAmount('');
+            setCheckoutStatus('done');
             await fetchData();
-            setTimeout(() => { setTxStatus('idle'); setShowDepositForm(false); }, 3000);
-        } catch (err: unknown) {
-            setTxError(err instanceof Error ? err.message : 'Transaction failed');
-            setTxStatus('error');
+            setTimeout(() => {
+                setCheckoutStatus('idle');
+                setShowUpgradeForm(false);
+                setCard({ number: '', expiry: '', cvc: '', holderName: '', email: '' });
+            }, 3000);
+        } catch (err) {
+            setCheckoutError(err instanceof Error ? err.message : 'Checkout failed.');
+            setCheckoutStatus('error');
         }
     };
 
-    const feeAmount = depositAmount ? (parseFloat(depositAmount) * FEE_BPS / 10000) : 0;
-    const netAmount = depositAmount ? (parseFloat(depositAmount) - feeAmount) : 0;
-    const isDepositing = txStatus !== 'idle' && txStatus !== 'error' && txStatus !== 'done';
-
-    const statusLabel: Record<TxStatus, string> = {
-        idle: '',
-        pending_wallet: 'Confirm in wallet...',
-        pending_confirm: 'Waiting for confirmation...',
-        registering: 'Registering deposit...',
-        done: 'Deposit confirmed!',
-        error: '',
+    const handleCancel = async () => {
+        if (!window.confirm('Cancel Pro? You keep Pro until the end of the current billing period, then drop to Free.')) return;
+        setNotice(null);
+        try {
+            const res = await fetch('/api/billing/portal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'cancel' }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Could not cancel subscription.');
+            setNotice(data.reason || 'Your Pro plan will not renew.');
+            await fetchData();
+        } catch (err) {
+            setNotice(err instanceof Error ? err.message : 'Could not cancel subscription.');
+        }
     };
 
     if (loading) {
@@ -207,278 +147,294 @@ export default function BillingPage() {
         );
     }
 
-    const availableBalance = balance ? parseFloat(String(balance.balance_strk)) : 0;
-    const totalDeposited = balance ? parseFloat(String(balance.total_deposited)) : 0;
-    const totalConsumed = balance ? parseFloat(String(balance.total_consumed)) : 0;
-    const consumedPct = totalDeposited > 0 ? Math.min(100, (totalConsumed / totalDeposited) * 100) : 0;
+    const tier = plan?.tier ?? 'free';
+    const renewal = formatDate(plan?.current_period_end ?? null);
+    const usagePct = plan && plan.limit ? Math.min(100, (plan.count / plan.limit) * 100) : 0;
 
     return (
-        <div className="space-y-6 animate-fadeIn max-w-4xl">
+        <div className="space-y-7 animate-fadeIn max-w-4xl">
 
-            {/* ── Page header ── */}
             <PageHeader
                 eyebrow="Billing"
-                title="Gas Balance"
-                subtitle="Deposit STRK to sponsor gasless transactions for your users."
-                actions={
-                    walletAddress ? (
-                        <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-2 px-3.5 py-2 bg-surface border border-line rounded-xl text-xs font-semibold text-black/60">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                {shortAddr(walletAddress)}
-                            </div>
-                            <button
-                                onClick={handleDisconnectWallet}
-                                className="text-xs text-black/30 hover:text-black/60 transition-colors px-2"
-                            >
-                                Disconnect
-                            </button>
-                        </div>
-                    ) : (
-                        <Button variant="outline" onClick={handleConnectWallet} icon={<Icon.Wallet size={15} />}>
-                            Connect Wallet
-                        </Button>
-                    )
-                }
+                title="Plan &amp; Billing"
+                subtitle="Your subscription, wallet usage, and available plans."
             />
 
-            {/* ── Balance card — dark ── */}
-            <div data-dash-panel className="relative overflow-hidden rounded-2xl bg-ink text-white p-7 dark-grain">
-                <div
-                    className="absolute top-0 right-0 w-72 h-72 pointer-events-none"
-                    style={{ background: 'radial-gradient(ellipse at top right, #402AFF1F 0%, transparent 65%)' }}
-                />
-
-                <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-2">
-                            <Icon.Gas size={15} weight="fill" className="text-brand" />
-                            <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/30">Available Balance</span>
+            {/* ── Current plan — light, compact panel ── */}
+            <section data-dash-panel className="rounded-2xl bg-white border border-line p-6 md:p-7">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div className="space-y-2.5">
+                        <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-black/40">Current plan</span>
+                        <div className="flex items-center gap-3">
+                            <h2 className="text-2xl font-bold tracking-tight text-ink">{plan ? TIER_LABEL[tier] : '—'}</h2>
+                            {plan && (
+                                <Badge
+                                    variant={
+                                        plan.cancel_at_period_end ? 'warning'
+                                        : plan.status === 'past_due' ? 'warning'
+                                        : plan.status === 'active' && tier !== 'free' ? 'success'
+                                        : plan.warning === 'approaching_limit' ? 'warning'
+                                        : 'neutral'
+                                    }
+                                >
+                                    {plan.cancel_at_period_end ? 'Cancels at period end'
+                                        : tier === 'free' ? (plan.warning === 'approaching_limit' ? 'Near limit' : 'Free plan')
+                                        : plan.status === 'active' ? 'Active'
+                                        : plan.status === 'past_due' ? 'Past due' : 'Canceled'}
+                                </Badge>
+                            )}
                         </div>
-
-                        <div className="space-y-1">
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-5xl font-bold tracking-tighter tabular-nums">{availableBalance.toFixed(4)}</span>
-                                <span className="text-lg font-bold text-white/40">STRK</span>
-                            </div>
-                        </div>
-
-                        {/* Progress bar: consumed vs deposited */}
-                        <div className="space-y-2 max-w-xs">
-                            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-white/30 rounded-full transition-all"
-                                    style={{ width: `${consumedPct}%` }}
-                                />
-                            </div>
-                            <div className="flex items-center gap-5 text-[10px] font-semibold text-white/30">
-                                <span>Deposited: {totalDeposited.toFixed(2)} STRK</span>
-                                <span className="flex items-center gap-1">
-                                    <Icon.TrendDown size={12} weight="bold" />
-                                    Consumed: {totalConsumed.toFixed(2)} STRK
-                                </span>
-                            </div>
-                        </div>
+                        {tier !== 'free' && renewal && (
+                            <p className="text-xs text-black/45 font-medium">
+                                {plan?.cancel_at_period_end ? 'Access until' : 'Renews'} {renewal}
+                            </p>
+                        )}
                     </div>
 
-                    <button
-                        onClick={() => setShowDepositForm(!showDepositForm)}
-                        className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-white text-black text-sm font-semibold rounded-xl hover:bg-white/90 transition-all active:scale-[0.97]"
-                    >
-                        <Icon.ArrowDown size={15} weight="bold" />
-                        Deposit STRK
-                    </button>
-                </div>
-            </div>
-
-            {/* ── Propulsion Grant Banner ── */}
-            <div className="relative overflow-hidden rounded-2xl bg-[#141A2E] p-5 md:p-6 flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6">
-                <div
-                    className="absolute left-0 top-0 w-64 h-64 pointer-events-none"
-                    style={{ background: 'radial-gradient(ellipse at top left, rgba(99,102,241,0.08) 0%, transparent 65%)' }}
-                />
-
-                <div className="relative shrink-0">
-                    <Image
-                        src="/sn-propulsion.png"
-                        alt="Starknet Propulsion"
-                        width={72}
-                        height={72}
-                        className="rounded-xl w-14 h-14 md:w-[72px] md:h-[72px]"
-                    />
-                </div>
-
-                <div className="relative flex-1 min-w-0">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/30 mb-1.5">Starknet Propulsion</p>
-                    <p className="text-lg md:text-xl font-bold text-white tracking-tight leading-snug">Apply for Propulsion Grant and get your gas for free</p>
-                </div>
-
-                <a
-                    href="https://propulsion.starknet.org/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="relative shrink-0 w-full md:w-auto flex items-center justify-center md:justify-start gap-2 px-4 py-2.5 md:py-2 bg-white/10 rounded-xl text-white text-xs font-semibold transition-all hover:bg-white/20 active:scale-[0.97]"
-                >
-                    Apply Now
-                    <Icon.External size={15} weight="bold" />
-                </a>
-            </div>
-
-            {/* ── Deposit form ── */}
-            {showDepositForm && (
-                <div className="rounded-2xl bg-white border border-line p-6 space-y-5">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-base font-bold">Deposit STRK</h3>
+                    {/* Plan CTA */}
+                    {plan && tier === 'free' && (
                         <button
-                            onClick={() => { setShowDepositForm(false); setTxStatus('idle'); setTxError(null); setDepositAmount(''); }}
+                            type="button"
+                            disabled
+                            className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-ink/40 text-white text-sm font-semibold rounded-xl cursor-not-allowed"
+                        >
+                            <Icon.Bolt size={15} weight="fill" />
+                            Upgrade to Pro — Coming soon
+                        </button>
+                    )}
+                    {plan && tier === 'pro' && !plan.cancel_at_period_end && (
+                        <button
+                            type="button"
+                            onClick={handleCancel}
+                            className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 border border-line text-black/60 text-sm font-semibold rounded-xl hover:bg-surface hover:text-ink transition-all active:scale-[0.97]"
+                        >
+                            Cancel plan
+                        </button>
+                    )}
+                </div>
+
+                {/* Usage */}
+                <div className="mt-6 space-y-2 max-w-md">
+                    {planError ? (
+                        <p className="text-xs text-red-600">{planError}</p>
+                    ) : !plan ? (
+                        <div className="space-y-2">
+                            <div className="h-1.5 bg-black/[0.06] rounded-full overflow-hidden"><div className="h-full w-1/3 bg-black/15 rounded-full" /></div>
+                            <div className="h-3 w-40 bg-black/[0.06] rounded" />
+                        </div>
+                    ) : plan.limit === null ? (
+                        <p className="text-sm text-black/55">
+                            {plan.count === -1
+                                ? 'Unlimited wallets on your plan.'
+                                : <>You&apos;ve created <span className="tabular-nums font-semibold text-ink">{plan.count.toLocaleString()}</span> wallets — unlimited on your plan.</>}
+                        </p>
+                    ) : plan.count === 0 ? (
+                        <p className="text-sm text-black/55">
+                            No wallets yet. Your free plan includes <span className="tabular-nums font-semibold text-ink">{plan.limit.toLocaleString()}</span>.
+                        </p>
+                    ) : (
+                        <>
+                            <div className="h-1.5 bg-black/[0.06] rounded-full overflow-hidden">
+                                <div
+                                    className={`h-full rounded-full transition-all ${plan.warning ? 'bg-amber-500' : 'bg-ink'}`}
+                                    style={{ width: `${usagePct}%` }}
+                                />
+                            </div>
+                            <div className="flex items-center justify-between text-[11px] font-semibold text-black/45">
+                                <span className="tabular-nums">{plan.count.toLocaleString()} / {plan.limit.toLocaleString()} wallets</span>
+                                {plan.warning && <span className="text-amber-600">Approaching limit</span>}
+                            </div>
+                        </>
+                    )}
+                </div>
+
+                {notice && (
+                    <div className="mt-5 flex items-start gap-2 p-3 rounded-xl bg-surface border border-line text-xs text-black/65">
+                        <Icon.CheckCircle size={15} weight="fill" className="shrink-0 mt-px text-emerald-500" />
+                        <span>{notice}</span>
+                    </div>
+                )}
+
+                <p className="mt-5 text-[11px] text-black/40 leading-relaxed max-w-xl">
+                    Wallet count is the sum across every app and network your organization owns.
+                    Creating new wallets is gated at the limit; existing wallets always keep working.
+                    {tier === 'custom' && ' Your plan is managed under a custom contract.'}
+                </p>
+            </section>
+
+            {/* ── Upgrade card form (Free tier only) ── */}
+            {showUpgradeForm && tier === 'free' && (
+                <div className="rounded-2xl bg-white border border-line p-6 space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-bold">Upgrade to Pro — $99/mo</h3>
+                        <button
+                            onClick={() => { setShowUpgradeForm(false); setCheckoutStatus('idle'); setCheckoutError(null); }}
                             className="w-7 h-7 flex items-center justify-center text-black/30 hover:text-black transition-colors rounded-lg hover:bg-black/5"
                         >
                             <Icon.Close size={16} weight="bold" />
                         </button>
                     </div>
 
-                    {/* Connect wallet prompt */}
-                    {!walletAddress && (
-                        <div className="flex items-center gap-3 p-4 bg-surface border border-line rounded-xl text-sm">
-                            <Icon.Wallet size={17} className="text-black/45 shrink-0" />
-                            <span className="text-black/55 flex-1">Connect your wallet to deposit STRK.</span>
-                            <Button variant="outline" size="sm" onClick={handleConnectWallet}>Connect</Button>
-                        </div>
-                    )}
+                    <p className="text-xs text-black/50 leading-relaxed">
+                        Unlimited wallets across all your apps. Cancel anytime. Card details are tokenized in your
+                        browser and never reach our server.
+                    </p>
 
-                    {/* Amount input */}
-                    <div className="space-y-1.5">
-                        <label className="text-xs font-bold uppercase tracking-[0.15em] text-black/40 block">Amount (STRK)</label>
-                        <Input
-                            type="number"
-                            placeholder="100"
-                            value={depositAmount}
-                            onChange={(e) => setDepositAmount(e.target.value)}
-                            min="0"
-                            step="0.01"
-                            disabled={isDepositing}
-                        />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {[
+                            { key: 'holderName', label: 'Cardholder name', placeholder: 'Jane Doe', span: true, type: 'text', mode: undefined, auto: 'cc-name' },
+                            { key: 'email', label: 'Email', placeholder: 'you@company.com', span: true, type: 'email', mode: undefined, auto: 'email' },
+                            { key: 'number', label: 'Card number', placeholder: '4242 4242 4242 4242', span: true, type: 'text', mode: 'numeric', auto: 'cc-number' },
+                            { key: 'expiry', label: 'Expiry', placeholder: 'MM/YY', span: false, type: 'text', mode: 'numeric', auto: 'cc-exp' },
+                            { key: 'cvc', label: 'CVC', placeholder: '123', span: false, type: 'text', mode: 'numeric', auto: 'cc-csc' },
+                        ].map((f) => (
+                            <div key={f.key} className={`space-y-1.5 ${f.span ? 'sm:col-span-2' : ''}`}>
+                                <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-black/40 block">{f.label}</label>
+                                <input
+                                    type={f.type}
+                                    inputMode={f.mode as React.HTMLAttributes<HTMLInputElement>['inputMode']}
+                                    autoComplete={f.auto}
+                                    placeholder={f.placeholder}
+                                    value={card[f.key as keyof typeof card]}
+                                    onChange={(e) => setCard({ ...card, [f.key]: e.target.value })}
+                                    className="w-full h-10 px-3 rounded-lg bg-surface border border-line text-sm text-ink placeholder:text-black/30 focus:outline-none focus:border-ink/30 focus:bg-white transition-colors tabular-nums"
+                                />
+                            </div>
+                        ))}
                     </div>
 
-                    {/* Fee breakdown */}
-                    {depositAmount && parseFloat(depositAmount) > 0 && (
-                        <div className="rounded-xl bg-surface border border-line p-4 space-y-2 text-sm">
-                            {[
-                                { label: 'Deposit amount',    value: `${parseFloat(depositAmount).toFixed(4)} STRK`, muted: false },
-                                { label: 'Platform fee (5%)', value: `-${feeAmount.toFixed(4)} STRK`,               muted: true },
-                            ].map((row) => (
-                                <div key={row.label} className="flex justify-between">
-                                    <span className={row.muted ? 'text-black/40' : 'text-black/60'}>{row.label}</span>
-                                    <span className={row.muted ? 'text-black/40' : ''}>{row.value}</span>
-                                </div>
-                            ))}
-                            <div className="flex justify-between font-bold pt-2 border-t border-line">
-                                <span>Credited to balance</span>
-                                <span>{netAmount.toFixed(4)} STRK</span>
-                            </div>
+                    {checkoutStatus === 'error' && checkoutError && (
+                        <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">
+                            <Icon.Warning size={14} weight="fill" className="shrink-0" />
+                            <span>{checkoutError}</span>
+                        </div>
+                    )}
+                    {checkoutStatus === 'done' && (
+                        <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-700">
+                            <Icon.CheckCircle size={14} weight="fill" className="shrink-0" />
+                            <span>Subscription created. Your plan updates to Pro once Onvo confirms the charge.</span>
                         </div>
                     )}
 
-                    {/* Tx status */}
-                    {txStatus !== 'idle' && (
-                        <div className={`flex items-center gap-3 p-4 rounded-xl text-sm border ${
-                            txStatus === 'done'  ? 'bg-surface border-line text-black/70' :
-                            txStatus === 'error' ? 'bg-red-50 border-red-200 text-red-700' :
-                            'bg-surface border-line text-black/60'
-                        }`}>
-                            {txStatus === 'done'  ? <Icon.CheckCircle size={17} weight="fill" className="shrink-0 text-emerald-500" /> :
-                             txStatus === 'error' ? <Icon.Close size={16} weight="bold" className="shrink-0 text-red-500" /> :
-                             <Icon.Spinner size={17} weight="bold" className="shrink-0 animate-spin" />}
-                            <span>{txStatus === 'error' ? txError : statusLabel[txStatus]}</span>
-                        </div>
-                    )}
-
-                    <Button
-                        variant="primary"
-                        onClick={handleDeposit}
-                        loading={isDepositing}
-                        disabled={!walletAddress || !depositAmount || parseFloat(depositAmount) <= 0 || isDepositing}
-                        className="w-full rounded-xl"
+                    <button
+                        type="button"
+                        onClick={handleUpgrade}
+                        disabled={checkoutStatus === 'submitting'}
+                        className="w-full inline-flex items-center justify-center gap-2 h-11 px-5 bg-ink text-white text-sm font-semibold rounded-xl hover:bg-ink/90 transition-all active:scale-[0.98] disabled:opacity-50"
                     >
-                        {isDepositing ? statusLabel[txStatus] : 'Deposit STRK'}
-                    </Button>
+                        {checkoutStatus === 'submitting'
+                            ? <><Icon.Spinner size={15} weight="bold" className="animate-spin" /> Processing…</>
+                            : <><Icon.Bolt size={15} weight="fill" /> Start Pro — $99/mo</>}
+                    </button>
                 </div>
             )}
 
-            {/* ── Deposit history ── */}
-            <div data-dash-panel className="rounded-2xl bg-white border border-line overflow-hidden">
-                <div className="px-6 py-4 border-b border-line/70 flex items-center justify-between">
-                    <h3 className="text-sm font-bold">Deposit History</h3>
-                    <span className="text-xs text-black/30 font-medium">{deposits.length} deposits</span>
-                </div>
+            {/* ── Plans comparison ── */}
+            <PlansComparison tier={tier} onUpgrade={() => { setShowUpgradeForm(true); setCheckoutStatus('idle'); setCheckoutError(null); }} />
+        </div>
+    );
+}
 
-                {deposits.length === 0 ? (
-                    <div className="px-6 py-16 text-center space-y-2">
-                        <Icon.Gas size={34} className="text-black/20 mx-auto" />
-                        <p className="text-sm text-black/40">No deposits yet.</p>
-                        <p className="text-xs text-black/25">Deposit STRK above to start sponsoring transactions.</p>
-                    </div>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="bg-surface">
-                                    {['Date', 'Amount', 'Fee', 'Credited', 'Status', 'Tx'].map((h) => (
-                                        <th key={h} className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-[0.15em] text-black/35 whitespace-nowrap">{h}</th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {deposits.map((deposit, i) => (
-                                    <tr key={deposit.id} className={`border-t border-line/60 hover:bg-surface/50 transition-colors ${i === deposits.length - 1 ? '' : ''}`}>
-                                        <td className="px-5 py-4">
-                                            <div className="flex items-center gap-1.5 text-black/50">
-                                                <Icon.Clock size={13} className="shrink-0" />
-                                                <span className="tabular-nums">{new Date(deposit.created_at).toLocaleDateString()}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-5 py-4 font-semibold tabular-nums">{parseFloat(String(deposit.amount_strk)).toFixed(4)}</td>
-                                        <td className="px-5 py-4 text-black/40 tabular-nums">{parseFloat(String(deposit.fee_strk)).toFixed(4)}</td>
-                                        <td className="px-5 py-4 font-bold tabular-nums">{parseFloat(String(deposit.net_strk)).toFixed(4)}</td>
-                                        <td className="px-5 py-4">
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-surface border border-line rounded-full text-[10px] font-bold uppercase tracking-wide text-black/50">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-black/40" />
-                                                {deposit.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-5 py-4">
-                                            <a
-                                                href={`https://sepolia.starkscan.co/tx/${deposit.tx_hash}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex items-center gap-1 text-xs font-mono text-black/40 hover:text-black transition-colors"
-                                            >
-                                                {deposit.tx_hash.slice(0, 8)}…
-                                                <Icon.External size={13} weight="bold" className="shrink-0" />
-                                            </a>
-                                        </td>
-                                    </tr>
+/* ── Plans comparison ───────────────────────────────────────────
+   Three tiers, each visually distinct (not an identical card grid):
+   Free is the baseline, Pro is the emphasized brand tier, Custom is
+   the contact-sales lane. The current tier is marked inline. */
+
+interface TierDef {
+    id: PlanUsage['tier'];
+    name: string;
+    price: string;
+    cadence: string;
+    blurb: string;
+    features: string[];
+}
+
+const TIERS: TierDef[] = [
+    {
+        id: 'free', name: 'Free', price: '$0', cadence: 'forever',
+        blurb: 'Everything you need to ship.',
+        features: ['Up to 1,000 wallets', 'OAuth + session keys', 'Gasless paymaster', 'All core SDK features', 'Community support'],
+    },
+    {
+        id: 'pro', name: 'Pro', price: '$99', cadence: 'per month',
+        blurb: 'For apps growing past the free tier.',
+        features: ['Unlimited wallets', 'Everything in Free', 'Higher rate limits', 'Priority support', 'Cancel anytime'],
+    },
+    {
+        id: 'custom', name: 'Custom', price: "Let's talk", cadence: 'tailored',
+        blurb: 'Volume, compliance, and SLAs.',
+        features: ['Volume-based pricing', 'Dedicated infrastructure', 'Invoicing & contracts'],
+    },
+];
+
+function PlansComparison({ tier, onUpgrade }: { tier: PlanUsage['tier']; onUpgrade: () => void }) {
+    return (
+        <div className="space-y-4">
+            <h2 className="text-[10px] font-bold uppercase tracking-[0.18em] text-black/40 px-1">Plans</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-line rounded-2xl border border-line overflow-hidden">
+                {TIERS.map((t) => {
+                    const isCurrent = t.id === tier;
+                    const isPro = t.id === 'pro';
+                    return (
+                        <div
+                            key={t.id}
+                            className={`relative flex flex-col p-6 ${isPro ? 'bg-surface' : 'bg-white'}`}
+                        >
+                            <div className="flex items-center justify-between gap-2 min-h-[22px]">
+                                <h3 className="text-sm font-bold tracking-tight text-ink">{t.name}</h3>
+                                {isPro && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-ink text-white text-[9px] font-bold uppercase tracking-[0.12em]">
+                                        Popular
+                                    </span>
+                                )}
+                            </div>
+
+                            <p className="mt-1.5 text-xs text-black/45 leading-relaxed">{t.blurb}</p>
+
+                            <div className="mt-5 flex items-baseline gap-1.5">
+                                <span className="text-[26px] font-bold tracking-tight text-ink leading-none">{t.price}</span>
+                                <span className="text-xs font-medium text-black/35">{t.cadence}</span>
+                            </div>
+
+                            <div className="mt-5 h-px bg-line" />
+
+                            <ul className="mt-5 space-y-2.5 flex-1">
+                                {t.features.map((f) => (
+                                    <li key={f} className="flex items-start gap-2.5 text-sm">
+                                        <Icon.Check size={14} weight="bold" className="shrink-0 mt-1 text-ink/70" />
+                                        <span className="text-black/65">{f}</span>
+                                    </li>
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </div>
+                            </ul>
 
-            {/* ── On-chain info ── */}
-            <div className="relative overflow-hidden rounded-2xl bg-surface border border-line p-6">
-                <div className="flex gap-4 items-start">
-                    <div className="p-2.5 bg-white border border-line rounded-xl shrink-0 text-ink/60">
-                        <Icon.Gas size={17} />
-                    </div>
-                    <div className="space-y-1">
-                        <h3 className="text-sm font-bold">On-Chain Gas Tank</h3>
-                        <p className="text-xs text-black/45 leading-relaxed max-w-2xl">
-                            Your STRK deposits are held in an on-chain GasTank contract. Gas costs are deducted
-                            atomically with each sponsored transaction. All balances and deductions are verifiable on-chain.
-                        </p>
-                    </div>
-                </div>
+                            <div className="mt-6">
+                                {isCurrent ? (
+                                    <div className="inline-flex items-center justify-center gap-1.5 w-full h-10 rounded-xl text-sm font-semibold bg-surface border border-line text-black/45">
+                                        <Icon.Check size={14} weight="bold" /> Current plan
+                                    </div>
+                                ) : t.id === 'pro' ? (
+                                    <button
+                                        disabled
+                                        className="w-full h-10 inline-flex items-center justify-center gap-1.5 bg-ink/40 text-white text-sm font-semibold rounded-xl cursor-not-allowed"
+                                    >
+                                        <Icon.Bolt size={14} weight="fill" /> Coming soon
+                                    </button>
+                                ) : t.id === 'custom' ? (
+                                    <a
+                                        href="/contact-sales"
+                                        className="w-full h-10 inline-flex items-center justify-center gap-1.5 border border-ink/80 text-ink text-sm font-semibold rounded-xl hover:bg-ink hover:text-white transition-all active:scale-[0.98]"
+                                    >
+                                        Contact sales <Icon.ArrowRight size={14} weight="bold" />
+                                    </a>
+                                ) : (
+                                    <div className="inline-flex items-center justify-center w-full h-10 rounded-xl text-sm font-medium bg-surface border border-line text-black/40">
+                                        Included
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );
