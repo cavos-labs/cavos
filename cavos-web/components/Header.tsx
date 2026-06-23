@@ -207,7 +207,6 @@ export function Header() {
                         ) : (
                             <>
                                 <Link href="/login" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black hover:bg-black/5 rounded-xl transition-colors">Log in</Link>
-                                <Link href="/register" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black hover:bg-black/5 rounded-xl transition-colors">Start building</Link>
                                 <Link href="/pricing" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Pricing</Link>
                                 <a href="https://docs.cavos.xyz" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Docs</a>
                                 <Link href="/blog" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Changelog</Link>

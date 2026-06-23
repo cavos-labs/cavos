@@ -120,16 +120,6 @@ export default function LoginPage() {
                             </button>
                         </form>
                     </div>
-
-                    {/* Footer */}
-                    <div className="mt-6 text-center">
-                        <p className="text-black/60 text-sm">
-                            Don't have an account?{' '}
-                            <Link href="/register" className="text-brand font-semibold hover:underline underline-offset-2">
-                                Sign up
-                            </Link>
-                        </p>
-                    </div>
                 </div>
             </div>
         </main>
