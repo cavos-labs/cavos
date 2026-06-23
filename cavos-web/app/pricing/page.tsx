@@ -61,6 +61,7 @@ export const metadata = {
         title: "Cavos Pricing — Free, Pro & Custom",
         description: "Free up to 1,000 wallets. Pro at $99/mo for unlimited wallets. Custom plans with volume pricing and dedicated support.",
         url: "https://cavos.xyz/pricing",
+        images: ["/og-image.png"],
     },
 }
 

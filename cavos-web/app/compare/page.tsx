@@ -13,6 +13,7 @@ export const metadata = {
         title: "Cavos vs Privy vs Dynamic — Embedded Wallet Comparison",
         description: "Compare Cavos vs Privy, Dynamic, and Passkey Wallets. On-chain RSA-2048 verification, zero MPC shards, native AI agent signing.",
         url: "https://cavos.xyz/compare",
+        images: ["/og-image.png"],
     },
 }
 

@@ -29,6 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url: `https://cavos.xyz/blog/${slug}`,
       type: 'article',
       publishedTime: post.meta.date,
+      images: ['/og-image.png'],
     },
   };
 }

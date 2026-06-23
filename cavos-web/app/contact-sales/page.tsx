@@ -15,6 +15,7 @@ export const metadata = {
         description:
             'Talk to the Cavos team about embedded wallets, gasless transactions, and account abstraction for your product.',
         url: 'https://cavos.xyz/contact-sales',
+        images: ['/og-image.png'],
     },
 }
 
