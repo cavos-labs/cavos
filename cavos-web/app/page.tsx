@@ -1,6 +1,9 @@
 import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { AppsCarousel } from '@/components/AppsCarousel'
+import { FeaturesGrid } from '@/components/landing/FeaturesGrid'
+import { CaseStudies } from '@/components/landing/CaseStudies'
+import { CtaSplit } from '@/components/landing/CtaSplit'
 import { HeroOrb } from '@/components/HeroOrb'
 import { Footer } from '@/components/Footer'
 import { LandingMotion } from '@/components/LandingMotion'
@@ -138,6 +141,21 @@ export default function LandingPage() {
                     <div className="border-t border-line">
                         <AppsCarousel />
                     </div>
+                </div>
+
+                {/* ── FEATURES / ADVANTAGES ───────────────────── */}
+                <div className="border-t border-line">
+                    <FeaturesGrid />
+                </div>
+
+                {/* ── CASE STUDIES / IN THE WILD ──────────────── */}
+                <div className="border-t border-line">
+                    <CaseStudies />
+                </div>
+
+                {/* ── PRE-FOOTER CTA ──────────────────────────── */}
+                <div className="border-t border-line">
+                    <CtaSplit />
                 </div>
 
             </div>

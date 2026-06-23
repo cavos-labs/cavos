@@ -215,7 +215,7 @@ export default function PricingPage() {
                         </div>
 
                         <Link
-                            href="/register"
+                            href="/login"
                             className="mt-7 inline-flex items-center justify-center h-11 px-6 rounded-full bg-brand text-white text-[15px] font-medium hover:bg-brand-hover transition-colors duration-200 active:scale-[0.99]"
                         >
                             Get started
@@ -311,7 +311,7 @@ export default function PricingPage() {
                     </div>
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
                         <Link
-                            href="/register"
+                            href="/login"
                             className="inline-flex items-center justify-center h-11 px-6 rounded-md bg-brand text-white text-sm font-semibold hover:bg-brand-hover transition-all active:scale-[0.98]"
                         >
                             Get started free
