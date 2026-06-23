@@ -13,6 +13,7 @@ export const metadata: Metadata = {
     description: 'Release notes, security updates, deep dives, and announcements from the Cavos team.',
     url: 'https://cavos.xyz/blog',
     type: 'website',
+    images: ['/og-image.png'],
   },
 };
 
