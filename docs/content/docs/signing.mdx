@@ -1,0 +1,102 @@
+---
+title: Signing & gasless
+description: How silent device signing and gasless execution work in @cavos/kit.
+---
+
+The defining feature of `@cavos/kit` is **silent signing**: the device key signs
+transactions with no prompt, no biometric, no popup. This page explains the
+mechanism and the gasless execution path.
+
+## The silent device key
+
+On the web, the device signer is a **non-extractable secp256r1 (P-256) key** held
+in IndexedDB via WebCrypto. "Non-extractable" means the private key is never
+visible to JavaScript — it can sign, but it can't be read or copied out.
+
+```ts title="TypeScript"
+import { WebCryptoSigner } from "@cavos/kit";
+
+// Created/loaded automatically by Cavos.connect, keyed by the wallet address.
+const signer = await WebCryptoSigner.loadOrCreate({ keyId: address });
+const pubkey = await signer.getPublicKey();
+```
+
+`Cavos.connect` handles this for you — you rarely touch the signer directly.
+
+## How a signature is built
+
+When you call `cavos.execute(calls)`:
+
+1. starknet.js computes the v3 transaction hash.
+2. The device key signs `sha256(tx_hash)` — WebCrypto's ECDSA hashes the message
+   internally, so there is no user interaction.
+3. The signature is serialized as **5 felts**: `[r_low, r_high, s_low, s_high, y_parity]`.
+4. On-chain, `DeviceAccount.__validate__` recomputes `sha256(tx_hash)`, normalizes
+   high-`s`, recovers the secp256r1 signer, and checks it is authorized.
+
+This 5-felt encoding is byte-compatible with the contract and covered by a
+cross-checked test in the account-contracts repo.
+
+## Gasless execution
+
+`cavos.execute` routes through the **Cavos paymaster** (SNIP-9
+`execute_from_outside`), so the user pays no gas. You supply the paymaster API key
+at connect time:
+
+```ts title="TypeScript"
+const cavos = await Cavos.connect({
+  network: "sepolia",
+  appSalt: "my-app",
+  identity,
+  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+  paymasterApiKey: process.env.CAVOS_PAYMASTER_API_KEY!, // sponsors deploy + execute
+});
+
+const { transactionHash } = await cavos.execute([
+  { contractAddress, entrypoint, calldata },
+]);
+```
+
+Both **account deployment** (on first connect) and **every execution** are
+sponsored — the user never needs ETH or STRK to start.
+
+## Using a plain starknet.js Account (advanced)
+
+`StarknetDeviceSigner` is a drop-in starknet.js `SignerInterface`, so you can plug
+the device key into a standard `Account` and your own paymaster flow:
+
+```ts title="TypeScript"
+import { Account, RpcProvider } from "starknet";
+import { StarknetDeviceSigner, WebCryptoSigner } from "@cavos/kit";
+
+const provider = new RpcProvider({ nodeUrl: "https://api.cartridge.gg/x/starknet/sepolia" });
+const signer = await WebCryptoSigner.loadOrCreate({ keyId: address });
+const account = new Account({
+  provider,
+  address,
+  signer: new StarknetDeviceSigner(signer),
+  cairoVersion: "1",
+});
+```
+
+<Callout type="warn">
+**Gas estimation gotcha (self-funded path).** secp256r1 validation is heavy
+(~27M L2 gas). Default fee estimation uses `SKIP_VALIDATE`, which under-bounds and
+causes "Out of gas". Estimate with validation on and pass those bounds:
+
+```ts title="TypeScript"
+const fee = await account.estimateInvokeFee(calls, { skipValidate: false });
+await account.execute(calls, { resourceBounds: fee.resourceBounds });
+```
+
+The Cavos paymaster path handles this for you — this only matters when you submit
+transactions yourself.
+</Callout>
+
+## Security trade-off
+
+Because signing is silent, there is **no per-signature user-verification gate**
+(unlike a biometric passkey). This is the standard embedded-wallet trade-off
+(Privy / Turnkey model). The key is still non-custodial, device-bound, and
+verified on-chain. [Multi-device](/docs/multi-device) and
+[recovery](/docs/recovery) cover device loss.

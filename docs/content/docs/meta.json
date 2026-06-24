@@ -1,0 +1,20 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "---Get started---",
+    "index",
+    "quickstart",
+    "---Core---",
+    "auth",
+    "signing",
+    "---Recovery---",
+    "multi-device",
+    "recovery",
+    "---Chains---",
+    "chains",
+    "---Reference---",
+    "concepts",
+    "api-reference",
+    "for-agents"
+  ]
+}

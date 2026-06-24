@@ -1,0 +1,94 @@
+---
+title: Quickstart
+description: Install @cavos/kit and send a gasless transaction with a silent device signer.
+---
+
+This page takes you from install to a gasless transaction. The happy path is a
+single `Cavos.connect` call.
+
+## 1. Install
+
+```bash title="Terminal"
+npm install @cavos/kit
+```
+
+Requirements: a Cavos **App ID** and a **paymaster API key** (from the Cavos
+dashboard at [cavos.xyz](https://cavos.xyz)).
+
+## 2. Connect
+
+`Cavos.connect` does everything: authenticate the user, derive the deterministic
+address, create/load the silent device key, auto-deploy the account on first use,
+and wire up the gas sponsor.
+
+```ts title="TypeScript"
+import { Cavos } from "@cavos/kit";
+
+const cavos = await Cavos.connect({
+  network: "sepolia",                 // "sepolia" | "mainnet"
+  appSalt: "my-app",                  // namespaces addresses to your app
+  identity: {                         // from your login (see Authentication)
+    userId: user.id,
+    email: user.email,
+  },
+  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+  paymasterApiKey: process.env.CAVOS_PAYMASTER_API_KEY!,
+});
+
+console.log(cavos.address); // deterministic; deployed on first connect
+```
+
+`connect` returns a `Cavos` instance with:
+
+- `cavos.address` — the smart account address (stable across devices).
+- `cavos.status` — `"ready"` or `"needs-device-approval"` (see [Multi-device](/docs/multi-device)).
+- `cavos.devicePublicKey` — this device's public key.
+
+## 3. Execute a transaction
+
+When `status` is `"ready"`, call `execute` with standard Starknet calls. It is
+signed silently by the device key and sponsored by the paymaster — the user sees
+nothing.
+
+```ts title="TypeScript"
+if (cavos.status === "ready") {
+  const { transactionHash } = await cavos.execute([
+    {
+      contractAddress: STRK_TOKEN,
+      entrypoint: "approve",
+      calldata: [spender, amountLow, amountHigh],
+    },
+  ]);
+  console.log(transactionHash);
+}
+```
+
+<Callout type="info">
+If `status` is `"needs-device-approval"`, this device is new to an existing
+wallet. Approve it from an already-registered device — see
+[Multi-device](/docs/multi-device).
+</Callout>
+
+## 4. Set up recovery (recommended)
+
+So the user can recover if they lose every device, register a passphrase-derived
+backup signer once:
+
+```ts title="TypeScript"
+import { generateRecoveryCode } from "@cavos/kit";
+
+const code = generateRecoveryCode();     // show this to the user ONCE to store
+await cavos.setupRecovery(code);         // registers the backup signer on-chain
+```
+
+The code never leaves the device — only its derived public key is registered.
+See [Recovery](/docs/recovery) for the full lifecycle.
+
+## What you get
+
+- A deployed, gas-sponsored smart account controlled by a silent device key.
+- A deterministic address you can reference before deployment.
+- Multi-device + passphrase recovery, all non-custodial.
+
+Next: wire up real login in [Authentication](/docs/auth), or read how signing
+works under the hood in [Signing & gasless](/docs/signing).

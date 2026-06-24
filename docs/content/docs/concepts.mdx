@@ -1,0 +1,66 @@
+---
+title: Concepts
+description: The non-custodial security model, determinism, and networks.
+---
+
+## Non-custodial by construction
+
+Cavos is non-custodial because **authority lives in the account contract, not the
+backend**. The Cairo `DeviceAccount` gates `add_signer` / `remove_signer` so they
+only succeed when called by the account itself — which only happens inside a
+transaction whose signature was validated against an existing, authorized device
+signer.
+
+Consequences:
+
+- The Cavos backend holds **no key material** and has **no privileged role** on
+  any account. A full backend compromise cannot add a signer to any wallet.
+- Every signer change is authorized by a key the **user** holds (a device key or a
+  passphrase-derived backup key), verified on-chain.
+- Backend services (registry, recovery relay) only **move messages** — they
+  request, notify, and relay. They never sign.
+
+This is the single invariant to remember: **the contract is the sole authority
+over its signers.**
+
+## Deterministic addresses
+
+The wallet address is `f(identity, appSalt)` via `deriveAddressSeed` (Poseidon) →
+counterfactual contract address. It depends only on identity and salt, **never on
+the device key**, so:
+
+- The same user always lands on the same wallet.
+- You can compute the address before the account is deployed.
+- A new device on an existing account is recognized, not forked into a second
+  wallet.
+
+The account starts with zero signers; the first device key is registered via a
+one-time `initialize` submitted atomically with deployment, which prevents
+front-running of the first signer.
+
+## Silent signing trade-off
+
+Device keys sign silently (no biometric / passkey gate). The key is non-extractable
+and device-bound, so it is non-custodial and on-chain verified, but there is no
+per-signature user-verification prompt. This is the embedded-wallet model used by
+Privy and Turnkey. Device loss is handled by [multi-device](/docs/multi-device)
+and [recovery](/docs/recovery).
+
+## Networks & constants
+
+```ts title="TypeScript"
+import { STARKNET_NETWORKS, DEVICE_ACCOUNT_CLASS_HASH } from "@cavos/kit";
+
+STARKNET_NETWORKS.sepolia;            // RPC + chain config
+DEVICE_ACCOUNT_CLASS_HASH.sepolia;    // deployed DeviceAccount class hash
+```
+
+`network` accepts `"sepolia"` (testnet) and `"mainnet"`. The class hash is the
+declared `DeviceAccount` contract; the kit ships the current values.
+
+## Multi-chain by design
+
+Phase 1 implements Starknet only, but the kit is structured around a
+`ChainAdapter` interface (`StarknetAdapter` today). Stellar and Solana adapters
+will slot in behind the same `Cavos` API surface, so application code written
+against `Cavos.connect` / `cavos.execute` stays stable as chains are added.

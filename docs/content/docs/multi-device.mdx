@@ -1,0 +1,75 @@
+---
+title: Multi-device
+description: Add a new device to an existing wallet via approval from a registered device.
+---
+
+A wallet's address depends only on identity, so the **same user on a new device
+lands on the same wallet**. But that new device has its own key, which isn't yet
+an authorized signer on the account. Adding it requires approval from a device
+that already controls the wallet — the contract is the sole authority.
+
+## Detecting a new device
+
+When `Cavos.connect` runs on a device whose key isn't an authorized signer, it
+returns `status: "needs-device-approval"` and records a pending request:
+
+```ts title="TypeScript"
+const cavos = await Cavos.connect({ /* ... */ });
+
+if (cavos.status === "needs-device-approval") {
+  // This device requested addition. Prompt the user to approve from an
+  // existing device. Poll for approval, then reconnect.
+  console.log(cavos.pendingRequestId);
+}
+```
+
+Under the hood, when an `appId` is set, the kit uses the hosted
+`HttpRecoveryClient` to file a device-addition request, which notifies the user
+(styled as a login-approval prompt).
+
+## Approving from a registered device
+
+On a device that **is** already an authorized signer, fetch the pending request
+and approve it. Approving signs an on-chain `add_signer` transaction for the new
+device's public key:
+
+```ts title="TypeScript"
+import { HttpRecoveryClient } from "@cavos/kit";
+
+const recovery = new HttpRecoveryClient({
+  baseUrl: "https://services.cavos.xyz",
+  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+});
+
+const request = await recovery.getPendingRequest(requestId);
+if (request) {
+  // Show the user the device label + pubkey fingerprint before approving.
+  const { transactionHash } = await cavos.addSigner(request.newSigner);
+  await recovery.confirmDeviceAddition({ requestId, txHash: transactionHash });
+}
+```
+
+`cavos.addSigner(pubkey)` is the direct primitive — it builds and submits the
+`add_signer` call, signed silently by this (already authorized) device.
+
+## The non-custodial guarantee
+
+The backend can **request, notify, and relay** a device addition — it can never
+**authorize** one. The account contract gates `add_signer` so it only succeeds
+when called by the account itself, which requires a valid signature from an
+existing on-chain signer. The backend holds no keys and has no privileged
+contract role.
+
+The `newSigner` pubkey in a pending request is only a **proposal** for the UI. The
+approving device's signature commits to the actual pubkey passed to `add_signer`,
+so tampering with the request produces an inert, unsigned record. Always show the
+user the device label and a pubkey fingerprint before they approve.
+
+<Callout type="info">
+**Encourage multiple devices early.** If a user only ever has one device and
+loses it, they fall back to [passphrase recovery](/docs/recovery). Adding a second
+device at onboarding makes recovery effortless.
+</Callout>
+
+See [Concepts → non-custodial model](/docs/concepts) for the full security
+rationale.

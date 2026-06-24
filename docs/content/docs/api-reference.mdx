@@ -1,0 +1,112 @@
+---
+title: API reference
+description: Public exports of @cavos/kit — the surface you build against.
+---
+
+Everything below is exported from the package root: `import { ... } from "@cavos/kit"`.
+
+## `Cavos`
+
+The high-level entry point. Most apps only use this.
+
+### `Cavos.connect(options): Promise<Cavos>`
+
+Logs the user in, derives the address, creates/loads the device key, auto-deploys
+the account, and wires up gas sponsorship.
+
+```ts title="TypeScript"
+interface ConnectOptions {
+  network: "sepolia" | "mainnet";
+  appSalt: string;
+  auth?: AuthProvider;          // pass `auth` OR `identity`
+  identity?: Identity;
+  appId?: string;               // enables hosted registry + recovery relay
+  backendUrl?: string;          // defaults to Cavos hosted services
+  paymasterApiKey: string;      // sponsors deploy + execute
+  paymasterUrl?: string;
+  rpcUrl?: string;
+  classHash?: string;
+  registry?: WalletRegistry;    // off-chain userId -> wallet map
+  recovery?: RecoveryClient;    // device-approval relay
+  createSigner?: (keyId: string) => Promise<DeviceSigner>; // native / tests
+}
+```
+
+### Instance members
+
+| Member | Description |
+|--------|-------------|
+| `cavos.address: string` | The smart account address (deterministic). |
+| `cavos.status: "ready" \| "needs-device-approval"` | Whether this device can operate the wallet. |
+| `cavos.pendingRequestId: string \| null` | Device-addition request id when `status` is `needs-device-approval`. |
+| `cavos.identity: Identity` | The authenticated identity. |
+| `cavos.devicePublicKey: DevicePublicKey` | This device's public key. |
+| `cavos.execute(calls): Promise<{ transactionHash }>` | Sign + submit calls, gasless. Requires `status === "ready"`. |
+| `cavos.addSigner(pubkey): Promise<{ transactionHash }>` | Authorize another device's key on-chain. |
+| `cavos.setupRecovery(code): Promise<{ transactionHash } \| undefined>` | Register a passphrase-derived backup signer. Idempotent. |
+
+### `Cavos.recover(options): Promise<Cavos>`
+
+Recover after losing every device using a saved recovery code.
+
+```ts title="TypeScript"
+interface RecoveryOptions {
+  code: string;
+  identity: Identity;
+  network: "sepolia" | "mainnet";
+  appSalt: string;
+  paymasterApiKey: string;
+  appId?: string;
+  backendUrl?: string;
+  rpcUrl?: string;
+  paymasterUrl?: string;
+  classHash?: string;
+  registry?: WalletRegistry;
+  createSigner?: (keyId: string) => Promise<DeviceSigner>;
+}
+```
+
+## Authentication
+
+| Export | Description |
+|--------|-------------|
+| `CavosAuth` | Hosted login: `getGoogleOAuthUrl`, `getAppleOAuthUrl`, `handleCallback`, `sendOtp`, `verifyOtp`, `sendMagicLink`, `authenticate`. |
+| `StaticIdentity` | Wrap a `{ userId, email }` you already have as an `AuthProvider`. |
+| `AuthProvider`, `Identity` | Types for the auth contract. |
+| `deriveAddressSeed(input)` | Poseidon hash of `{ userId, appSalt }` → `address_seed`. |
+
+## Recovery & multi-device
+
+| Export | Description |
+|--------|-------------|
+| `RecoveryClient`, `PendingDeviceRequest` | Interface for the non-custodial device-approval relay. |
+| `HttpRecoveryClient` | HTTP implementation talking to the Cavos backend. |
+| `WalletRegistry`, `RegisteredWallet` | Off-chain `userId` → wallet map (cross-device recognition). |
+| `InMemoryWalletRegistry`, `HttpWalletRegistry` | Registry implementations. |
+| `BackupSigner` | Passphrase-derived signer (`DeviceSigner`). |
+| `generateRecoveryCode()` | New high-entropy recovery code. |
+| `deriveBackupKey(code)` | Deterministic keypair from a recovery code. |
+
+## Signers
+
+| Export | Description |
+|--------|-------------|
+| `WebCryptoSigner` | Browser silent device signer (non-extractable P-256 in IndexedDB). `loadOrCreate`, `create`, `load`. |
+| `DeviceSigner`, `DevicePublicKey`, `DeviceSignature` | Signer types. |
+| `StarknetDeviceSigner` | Drop-in starknet.js `SignerInterface` backed by a device signer. |
+
+## Chain adapters & constants
+
+| Export | Description |
+|--------|-------------|
+| `StarknetAdapter` | Computes addresses, builds deploy/initialize/add/remove calls, serializes signatures. |
+| `ChainAdapter`, `ChainCall`, `ComputeAddressParams` | Multi-chain interface types. |
+| `STARKNET_NETWORKS`, `StarknetNetwork` | Network configs. |
+| `DEVICE_ACCOUNT_CLASS_HASH`, `UDC_ADDRESS` | Deployed class hash + Universal Deployer address. |
+
+## Low-level crypto (advanced)
+
+| Export | Description |
+|--------|-------------|
+| `signatureToFelts`, `recoverYParity` | secp256r1 signature ↔ 5-felt Starknet encoding. |
+| `u256ToFelts`, `bytesToBigInt`, `bytesToHex`, `hexToBytes`, `bigIntTo32Bytes` | Encoding helpers. |
