@@ -23,6 +23,22 @@ export const metadata: Metadata = {
   description:
     'Documentation for @cavos/kit — device-native, verifiable smart accounts on Starknet. MPC-free, gasless, no seed phrases. Built for agents: send these docs to an LLM and ship.',
   metadataBase: new URL('https://docs.cavos.xyz'),
+  openGraph: {
+    title: 'Cavos Docs — device-native smart accounts',
+    description:
+      'Documentation for @cavos/kit — device-native, verifiable smart accounts. MPC-free, gasless, no seed phrases.',
+    url: 'https://docs.cavos.xyz',
+    siteName: 'Cavos Docs',
+    type: 'website',
+    images: [{ url: '/og-docs.png', width: 1200, height: 675, alt: 'Cavos Docs' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Cavos Docs — device-native smart accounts',
+    description:
+      'Documentation for @cavos/kit — device-native, verifiable smart accounts. MPC-free, gasless, no seed phrases.',
+    images: ['/og-docs.png'],
+  },
 };
 
 export default function Layout({ children }: LayoutProps<'/'>) {
