@@ -1,0 +1,61 @@
+---
+title: Chains
+description: Cavos is chain-agnostic by design. Starknet is available today; more chains slot in behind the same API.
+---
+
+Cavos is built **chain-agnostic**. The model — an identity-derived address
+controlled by a silent device key, verified on-chain — isn't specific to any one
+network. Your application code targets the same `Cavos.connect` / `cavos.execute`
+API regardless of chain; only the `network` you pass changes.
+
+## Status
+
+| Chain | Status | Networks |
+|-------|--------|----------|
+| **Starknet** | ✅ Available | `sepolia`, `mainnet` |
+| **Solana** | 🚧 Planned | — |
+| **Stellar** | 🚧 Planned | — |
+
+Today, **Starknet is the only implemented chain** and it is proven on Sepolia.
+Solana and Stellar are on the roadmap and will appear here as they ship — without
+changing the application API below.
+
+## How the abstraction works
+
+Two layers keep Cavos portable:
+
+- **The device signer is the constant.** A non-extractable secp256r1 (P-256) key
+  on the device is the user's authority on every chain. Identity → `address_seed`
+  derivation is the same everywhere.
+- **A `ChainAdapter` per chain** handles the chain-specific parts: deterministic
+  address computation, signature encoding, and the deploy / add-signer / remove-signer
+  calls. `StarknetAdapter` is the implementation today; Solana and Stellar adapters
+  slot in behind the same interface.
+
+Curves differ across ecosystems, and each adapter resolves that:
+
+- **Starknet** — on-chain secp256r1 verification in the Cairo `DeviceAccount`.
+- **Stellar** — native secp256r1 + Soroban contract accounts (cleanest fit).
+- **Solana** — the P-256 device key authorizes chain-native Ed25519 keys (or
+  on-chain P-256 verification), the established pattern for non-Ed25519 signers.
+
+## Writing chain-agnostic code
+
+Target the high-level API and treat `network` as the only chain-specific input:
+
+```ts title="TypeScript"
+import { Cavos } from "@cavos/kit";
+
+const cavos = await Cavos.connect({
+  network: "sepolia",        // the chain/network — the only line that changes
+  identity: { userId, email },
+  appSalt: "my-app",
+  paymasterApiKey,
+});
+
+await cavos.execute(calls);   // same call shape across chains
+```
+
+When a new chain lands, you pass its `network` value — the rest of your
+integration (login, signing, recovery) stays identical. See
+[Concepts → multi-chain by design](/docs/concepts) for the architecture rationale.

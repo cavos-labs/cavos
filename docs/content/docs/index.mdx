@@ -1,0 +1,57 @@
+---
+title: Overview
+description: What @cavos/kit is and the mental model behind device-native smart accounts.
+---
+
+`@cavos/kit` gives your users a **self-custodial smart account** that they
+control with a **silent device key** — no seed phrase, no MPC, no browser
+extension, no popups. A login (OAuth or email) only derives the wallet address;
+the actual signing happens invisibly with a non-extractable secp256r1 (P-256) key
+that lives on the device.
+
+The model is **chain-agnostic** — the same API works across high-performance
+chains. **Starknet is available today**; Solana and Stellar follow on the same
+interface. See [Chains](/docs/chains).
+
+```ts title="TypeScript"
+import { Cavos } from "@cavos/kit";
+
+const cavos = await Cavos.connect({
+  network: "sepolia",
+  identity: { userId: user.id, email: user.email },
+  appSalt: "my-app",
+  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+  paymasterApiKey: process.env.CAVOS_PAYMASTER_API_KEY!,
+});
+
+if (cavos.status === "ready") {
+  await cavos.execute(calls); // gasless; signed silently by the device key
+}
+```
+
+## Mental model
+
+| Piece | Role |
+|-------|------|
+| **Identity** | A stable `userId` (from your login) + an `appSalt`. Together they derive the wallet address — device-independent. |
+| **Device signer** | A non-extractable secp256r1 key on the device (WebCrypto in the browser). Signs `sha256(tx_hash)` with no UI. |
+| **Account contract** | The on-chain Cavos account for the target chain (a Cairo `DeviceAccount` on Starknet today). Validates device signatures on-chain and is the sole authority over its signers. |
+| **Chain adapter** | The per-chain layer (address derivation, signature encoding, deploy calls). `StarknetAdapter` today; Solana / Stellar slot in behind the same interface. See [Chains](/docs/chains). |
+| **Paymaster** | Sponsors deploy + execute so transactions are gasless for the user. |
+
+## What makes it different
+
+- **No seed phrases.** The user never sees or manages a private key.
+- **MPC-free.** No key sharding, no signing servers. The key is whole and on the device.
+- **Verifiable.** Signatures are checked on-chain by the account contract, not by a backend.
+- **Deterministic address.** Same identity → same wallet address, every time, before deployment.
+- **Gasless.** Deploy and execution are sponsored through the Cavos paymaster.
+
+## Where to next
+
+<Cards>
+  <Card title="Quickstart" href="/docs/quickstart" description="From install to a gasless transaction in one page." />
+  <Card title="Authentication" href="/docs/auth" description="Hosted login (Google / Apple / OTP) or bring your own identity." />
+  <Card title="Recovery" href="/docs/recovery" description="Multi-device and passphrase backup — non-custodial by design." />
+  <Card title="For agents" href="/docs/for-agents" description="Feed this whole site to an LLM and let it build." />
+</Cards>

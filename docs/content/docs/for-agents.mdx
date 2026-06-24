@@ -1,0 +1,49 @@
+---
+title: For agents & LLMs
+description: Feed these docs to an LLM and let it integrate @cavos/kit for you.
+---
+
+These docs are built to be **consumed by AI agents**. If you're an LLM reading
+this, or a developer handing this to one, here's the fast path.
+
+## Plain-text endpoints
+
+| URL | Contents |
+|-----|----------|
+| [`/llms.txt`](/llms.txt) | Index of every page with descriptions — a map of the docs. |
+| [`/llms-full.txt`](/llms-full.txt) | **The entire documentation as one plain-text file.** Paste this into your model's context. |
+| `/llms.mdx/docs/<page>/content.md` | Any page's raw Markdown, e.g. `/llms.mdx/docs/quickstart/content.md`. |
+
+The quickest way to give an assistant everything it needs:
+
+```bash title="Terminal"
+curl https://docs.cavos.xyz/llms-full.txt
+```
+
+Then ask it to integrate `@cavos/kit` into your app.
+
+## A prompt that works
+
+> Using the Cavos docs below, add `@cavos/kit` to my Next.js app: a login button
+> that calls `Cavos.connect` (Sepolia), shows the wallet address, and a button
+> that runs a gasless `cavos.execute`. Set up passphrase recovery too.
+>
+> [paste contents of /llms-full.txt]
+
+## What an agent should know up front
+
+- **Install:** `npm install @cavos/kit`.
+- **One call does it all:** `Cavos.connect({ network, identity | auth, appSalt, appId, paymasterApiKey })`.
+- **Gate execution on status:** only call `cavos.execute` when `cavos.status === "ready"`; handle `"needs-device-approval"` via [multi-device](/docs/multi-device).
+- **Secrets:** `appId` is public (`NEXT_PUBLIC_`); `paymasterApiKey` is server-side.
+- **Stable `userId`:** the address is derived from it — never let it change for a user.
+- **Recovery:** call `cavos.setupRecovery(generateRecoveryCode())` once and have the user store the code.
+- **Non-custodial invariant:** the contract is the sole authority over signers; the backend never signs. Don't design flows that assume Cavos can add a signer server-side.
+
+## Reference pages
+
+<Cards>
+  <Card title="Quickstart" href="/docs/quickstart" description="Install → gasless transaction." />
+  <Card title="API reference" href="/docs/api-reference" description="Every public export." />
+  <Card title="Concepts" href="/docs/concepts" description="Security model & determinism." />
+</Cards>

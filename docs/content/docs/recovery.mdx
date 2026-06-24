@@ -1,0 +1,73 @@
+---
+title: Recovery
+description: Passphrase-derived backup signer for recovering after losing every device.
+---
+
+If a user loses **every** device, multi-device approval can't help — there's no
+existing signer to approve a new one. The fallback is a **passphrase-derived
+backup signer**: a second key the user controls, derived from a recovery code,
+registered on-chain as an ordinary signer. It is fully non-custodial — the code
+never leaves the device and Cavos never sees it.
+
+## Set up recovery (once)
+
+After a successful `connect`, generate a recovery code, show it to the user to
+store somewhere safe, and register its derived signer:
+
+```ts title="TypeScript"
+import { generateRecoveryCode } from "@cavos/kit";
+
+const code = generateRecoveryCode();   // high-entropy; display ONCE for the user to save
+await cavos.setupRecovery(code);       // registers the backup signer on-chain (idempotent)
+```
+
+`setupRecovery` derives a deterministic secp256r1 keypair from the code
+(PBKDF2 + HKDF) and registers **only its public key** via `add_signer`. The code
+itself stays on the device. It is idempotent — calling it again with the same code
+is a no-op.
+
+<Callout type="warn">
+The recovery code is the only way to recover after total device loss. If the user
+loses it **and** all devices, the wallet cannot be recovered. Cavos cannot reset
+it — that is what non-custodial means.
+</Callout>
+
+## Recover on a new device
+
+When the user has lost their devices, they enter the recovery code on a fresh
+device. `Cavos.recover` re-derives the backup signer, uses it to authorize the new
+device's key on-chain, and returns a ready wallet:
+
+```ts title="TypeScript"
+import { Cavos } from "@cavos/kit";
+
+const cavos = await Cavos.recover({
+  code,                                // the recovery code the user saved
+  identity: { userId: user.id, email: user.email },
+  network: "sepolia",
+  appSalt: "my-app",
+  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+  paymasterApiKey: process.env.CAVOS_PAYMASTER_API_KEY!,
+});
+
+// The new device is now an authorized signer; cavos is ready to use.
+await cavos.execute(calls);
+```
+
+## How it stays non-custodial
+
+| | |
+|---|---|
+| **Code derivation** | The recovery code → keypair derivation runs entirely on the device. Cavos never receives the code or the private key. |
+| **On-chain authority** | Recovery works by the backup signer (a key the user holds) signing `add_signer` for the new device. The contract validates it like any other signer. |
+| **No backend key** | The Cavos backend holds no key material and has no privileged contract role. It cannot add a signer under any circumstances. |
+
+This is the best recovery model available without re-introducing custody. The two
+fallbacks compose:
+
+1. **Multiple devices** ([multi-device](/docs/multi-device)) — approve a new device
+   from an existing one. Best UX; encourage it at onboarding.
+2. **Passphrase backup** (this page) — recover from a saved code when all devices
+   are gone.
+
+See [Concepts](/docs/concepts) for the full security model.

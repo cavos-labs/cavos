@@ -1,0 +1,315 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+/* ── Cavos brand tokens ────────────────────────────────────
+   Electric-indigo on white. Single family (Geist), -1% tracking.
+   Mirrors cavos-web/app/globals.css. */
+@theme {
+  --color-brand: #402aff;
+  --color-brand-hover: #3420d6;
+  --color-ink: #0a0a0f;
+  --color-line: #ececf0;
+  --color-line-strong: #e0e0e6;
+  --color-surface: #f7f7fb;
+  --color-muted: #6b6b76;
+
+  --font-sans: var(--font-geist), -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --radius-sm: 0.1875rem;
+  --radius-md: 0.25rem;
+  --radius-lg: 0.375rem;
+  --radius-xl: 0.5rem;
+  --radius-2xl: 0.625rem;
+}
+
+/* ── Map Fumadocs UI design tokens onto the Cavos palette ──
+   Light, restrained, monochrome ink with indigo as the single accent. */
+:root {
+  --color-fd-background: #ffffff;
+  --color-fd-foreground: #0a0a0f;
+  --color-fd-muted: #f7f7fb;
+  --color-fd-muted-foreground: #6b6b76;
+  --color-fd-popover: #ffffff;
+  --color-fd-popover-foreground: #0a0a0f;
+  --color-fd-card: #ffffff;
+  --color-fd-card-foreground: #0a0a0f;
+  --color-fd-border: #ececf0;
+  --color-fd-primary: #402aff;
+  --color-fd-primary-foreground: #ffffff;
+  --color-fd-secondary: #f7f7fb;
+  --color-fd-secondary-foreground: #0a0a0f;
+  /* Neutral gray for ALL hover/active fills (search, nav, dropdowns, TOC).
+     Never the light-indigo tint. */
+  --color-fd-accent: #f4f4f6;
+  --color-fd-accent-foreground: #0a0a0f;
+  --color-fd-ring: #402aff;
+}
+
+html {
+  scrollbar-gutter: stable;
+  letter-spacing: -0.01em;
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}
+
+::selection {
+  background: #402aff;
+  color: #ffffff;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f2f2f6;
+}
+::-webkit-scrollbar-thumb {
+  background: #c9c9d2;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #402aff;
+}
+
+/* Dot grid — reused on the home hero. */
+.dot-grid {
+  background-image: radial-gradient(circle, #d6d6de 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* ── Fumadocs surface polish ───────────────────────────────
+   Crisp, framed, monochrome-ink. Indigo only as the active accent. */
+
+/* Hairline-precise borders everywhere fumadocs draws them. */
+#nd-sidebar,
+#nd-tocnav,
+#nd-nav {
+  --color-fd-border: #ececf0;
+}
+
+/* Top nav: thin, quiet, with a real hairline. */
+#nd-nav {
+  border-bottom: 1px solid var(--color-fd-border);
+  backdrop-filter: saturate(1.1) blur(8px);
+  background: color-mix(in oklch, #ffffff 82%, transparent);
+}
+
+/* Sidebar links: tighter type, indigo only when active, with a
+   left accent rule instead of a heavy filled block. */
+#nd-sidebar a {
+  letter-spacing: -0.01em;
+  border-radius: var(--radius-lg);
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+/* Sidebar links: legible ink by default, indigo when active. No fills —
+   ever (incl. hover). Stripe-style. */
+#nd-sidebar a {
+  color: #45454f;
+  font-size: 0.875rem;
+  letter-spacing: -0.005em;
+  padding: 0.34rem 0 0.34rem 0.85rem;
+  margin-left: 0.15rem;
+  border-left: 1px solid var(--color-line);
+  border-radius: 0;
+  transition:
+    color 0.12s ease,
+    border-color 0.12s ease;
+}
+#nd-sidebar a:hover {
+  background: transparent !important;
+  color: var(--color-ink);
+  border-left-color: #c9c9d2;
+}
+#nd-sidebar a[data-active='true'] {
+  background: transparent !important;
+  color: var(--color-brand);
+  font-weight: 600;
+  border-left-color: var(--color-brand);
+  box-shadow: -1px 0 0 var(--color-brand); /* crisp 2px-feel indigo segment */
+}
+
+/* Sidebar footer links sit outside the rail. */
+#nd-sidebar .sidebar-footer a {
+  border-left: 0;
+  margin-left: 0;
+  padding-left: 0.5rem;
+  box-shadow: none;
+}
+
+/* Section labels (meta.json separators): small, uppercase, tracked, muted.
+   The hallmark of a real docs IA. */
+#nd-sidebar [data-separator],
+#nd-sidebar p:not(:has(a)) {
+  margin-top: 1.75rem;
+  margin-bottom: 0.375rem;
+  padding-left: 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #a2a2ad;
+}
+/* First section label shouldn't push too far from search. */
+#nd-sidebar [data-separator]:first-child,
+#nd-sidebar p:not(:has(a)):first-child {
+  margin-top: 0.5rem;
+}
+
+/* Headings: tighten tracking, balance wrapping — display discipline. */
+#nd-page h1 {
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+  font-weight: 650;
+}
+#nd-page h2,
+#nd-page h3 {
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+#nd-page p,
+#nd-page li {
+  text-wrap: pretty;
+}
+
+/* Body links: indigo, with a restrained underline that fills on hover.
+   Scoped to prose containers so heading anchor links keep ink color. */
+#nd-page p a,
+#nd-page li a,
+#nd-page td a {
+  color: var(--color-brand);
+  text-decoration-color: color-mix(in oklch, var(--color-brand) 35%, transparent);
+  text-underline-offset: 3px;
+}
+#nd-page p a:hover,
+#nd-page li a:hover,
+#nd-page td a:hover {
+  text-decoration-color: var(--color-brand);
+}
+
+/* Heading anchor links stay ink (fumadocs wraps headings in <a>). */
+#nd-page h1 a,
+#nd-page h2 a,
+#nd-page h3 a,
+#nd-page h4 a {
+  color: inherit;
+}
+
+/* Code blocks: Stripe-style dark card on the light page. Deep indigo-navy
+   surface, titled header bar, light syntax tokens (github-dark). */
+#nd-page figure.shiki {
+  --code-bg: #181430;
+  --code-bar: #211c40;
+  --code-line: #2c2654;
+  background: var(--code-bg);
+  border: 1px solid var(--code-line);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 14px 36px -20px rgba(64, 42, 255, 0.35);
+  overflow: hidden;
+}
+#nd-page figure.shiki pre {
+  background: transparent !important;
+  border: 0;
+  border-radius: 0;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+/* The title/header bar (filename + language). */
+#nd-page figure.shiki figcaption {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--code-bar);
+  border-bottom: 1px solid var(--code-line);
+  padding: 0.5rem 0.9rem;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0;
+  color: #b9b4e6;
+}
+
+/* Copy button on the dark surface. */
+#nd-page figure.shiki button {
+  color: #b9b4e6;
+}
+#nd-page figure.shiki button:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Callouts: subtle, not a heavy bordered box. Faint tinted surface, no
+   shadow, no inner colored stripe — just an icon + text. */
+#nd-page div[style*='--callout-color'] {
+  background: #f7f7f9;
+  border: 1px solid #ececf0;
+  border-radius: var(--radius-lg);
+  box-shadow: none !important;
+  padding: 0.7rem 0.85rem;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+#nd-page div[style*='--callout-color'] > div:first-child {
+  display: none; /* the thin colored stripe */
+}
+#nd-page div[style*='--callout-color'] svg {
+  margin-top: 0.1rem;
+  opacity: 0.9;
+}
+
+/* Inline code: understated — ink text on a faint neutral, no color, no
+   pill shape. Reads as code, not as a tag. */
+#nd-page :not(pre) > code {
+  background: #f3f3f6;
+  color: var(--color-ink);
+  border: 0;
+  border-radius: 4px;
+  font-weight: 450;
+  font-size: 0.86em;
+  padding: 0.1em 0.3em;
+}
+
+/* Tables: hairline grid, surface header — framed gridline feel. */
+#nd-page table {
+  border: 1px solid var(--color-fd-border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+#nd-page thead {
+  background: var(--color-surface);
+}
+#nd-page th {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* TOC active marker uses the brand. */
+#nd-tocnav a[data-active='true'] {
+  color: var(--color-brand);
+}
+
+/* Cards (home + overview): framed, lift on hover, indigo edge. */
+#nd-page a[class*='rounded'][class*='border'] {
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+  }
+}

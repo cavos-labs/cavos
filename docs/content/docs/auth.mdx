@@ -1,0 +1,102 @@
+---
+title: Authentication
+description: Use Cavos hosted login (Google / Apple / OTP) or bring your own identity.
+---
+
+Authentication exists for **one reason**: to produce a stable `userId` that, with
+your `appSalt`, derives the wallet address. The login **never signs transactions**
+— that is always the device key.
+
+You have two options: bring your own identity, or use Cavos hosted auth.
+
+## Option A — Bring your own identity
+
+If you already authenticate users (your own auth, Clerk, Auth0, etc.), just pass
+a stable `userId`:
+
+```ts title="TypeScript"
+const cavos = await Cavos.connect({
+  network: "sepolia",
+  appSalt: "my-app",
+  identity: { userId: user.id, email: user.email },
+  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+  paymasterApiKey: process.env.CAVOS_PAYMASTER_API_KEY!,
+});
+```
+
+<Callout type="warn">
+`userId` must be **stable and unique per user**. If it changes, the derived
+address changes and the user gets a different wallet. Use an immutable primary
+key, not an email that can change.
+</Callout>
+
+## Option B — Cavos hosted auth (`CavosAuth`)
+
+`CavosAuth` provides Google, Apple, and email OTP / magic-link login that resolves
+to a Cavos `Identity` you pass straight into `connect`.
+
+```ts title="TypeScript"
+import { CavosAuth } from "@cavos/kit";
+
+const auth = new CavosAuth({
+  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+  // backendUrl defaults to the Cavos hosted services
+});
+```
+
+### OAuth (Google / Apple)
+
+OAuth is multi-step (redirect out, handle the callback), so resolve the identity
+first, then call `connect` with it.
+
+```ts title="TypeScript"
+// 1. Redirect the user to the provider
+const url = await auth.getGoogleOAuthUrl(/* redirectUri? */);
+window.location.href = url;             // or auth.getAppleOAuthUrl()
+
+// 2. On your callback route, exchange the result for an identity
+const identity = await auth.handleCallback(window.location.search);
+
+// 3. Connect with the resolved identity
+const cavos = await Cavos.connect({
+  network: "sepolia",
+  appSalt: "my-app",
+  identity,
+  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+  paymasterApiKey: process.env.CAVOS_PAYMASTER_API_KEY!,
+});
+```
+
+### Email OTP
+
+```ts title="TypeScript"
+await auth.sendOtp(email);
+const identity = await auth.verifyOtp(email, code);
+
+const cavos = await Cavos.connect({
+  network: "sepolia",
+  appSalt: "my-app",
+  identity,
+  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+  paymasterApiKey: process.env.CAVOS_PAYMASTER_API_KEY!,
+});
+```
+
+`sendMagicLink(email)` is also available as an alternative to OTP.
+
+## How the address is derived
+
+Internally, `connect` calls `deriveAddressSeed({ userId, appSalt })` (a Poseidon
+hash) to get a stable `address_seed`, then the Starknet adapter computes the
+counterfactual contract address from that seed. The address depends **only** on
+identity + salt — never on the device key — so the same user always lands on the
+same wallet, and you can compute it before deployment.
+
+```ts title="TypeScript"
+import { deriveAddressSeed, StarknetAdapter, DEVICE_ACCOUNT_CLASS_HASH } from "@cavos/kit";
+
+const addressSeed = deriveAddressSeed({ userId: user.id, appSalt: "my-app" });
+const address = new StarknetAdapter({
+  classHash: DEVICE_ACCOUNT_CLASS_HASH.sepolia,
+}).computeAddress({ addressSeed });
+```
