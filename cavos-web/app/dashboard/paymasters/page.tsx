@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Icon } from '@/components/ui/Icon';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { SolanaGasCard } from '@/components/SolanaGasCard';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { connect, disconnect } from 'starknetkit';
@@ -61,6 +62,10 @@ export default function PaymastersPage() {
     const [deposits, setDeposits] = useState<GasDeposit[]>([]);
     const [depositAmount, setDepositAmount] = useState('');
     const [showDepositForm, setShowDepositForm] = useState(false);
+    // Which chain's gas the user is funding/viewing. One unified page, network
+    // selector on top — each chain keeps its own deposit mechanism underneath
+    // (Starknet: on-chain GasTank; Solana: off-chain lamports ledger).
+    const [selectedChain, setSelectedChain] = useState<'starknet' | 'solana'>('starknet');
 
     const [walletObj, setWalletObj] = useState<ConnectedWallet | null>(null);
     const [walletAddress, setWalletAddress] = useState<string | null>(null);
@@ -219,9 +224,9 @@ export default function PaymastersPage() {
             <PageHeader
                 eyebrow="Paymasters"
                 title="Gas Balance"
-                subtitle="Deposit STRK to sponsor gasless transactions for your users."
+                subtitle="Fund gas per network to sponsor gasless transactions for your users."
                 actions={
-                    walletAddress ? (
+                    selectedChain !== 'starknet' ? null : walletAddress ? (
                         <div className="flex items-center gap-2">
                             <div className="flex items-center gap-2 px-3.5 py-2 bg-surface border border-line rounded-xl text-xs font-semibold text-black/60">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
@@ -242,6 +247,31 @@ export default function PaymastersPage() {
                 }
             />
 
+            {/* ── Network selector — one gas page, pick the chain to fund ── */}
+            <div className="flex bg-surface border border-line p-0.5 rounded-lg w-fit">
+                {([
+                    { id: 'starknet', label: 'Starknet' },
+                    { id: 'solana', label: 'Solana' },
+                ] as const).map((c) => (
+                    <button
+                        key={c.id}
+                        onClick={() => setSelectedChain(c.id)}
+                        className={`px-4 py-1.5 text-[11px] font-bold uppercase tracking-wide rounded-md transition-all ${selectedChain === c.id
+                            ? 'bg-white text-black shadow-sm border border-line'
+                            : 'text-black/40 hover:text-black'
+                        }`}
+                    >
+                        {c.label}
+                    </button>
+                ))}
+            </div>
+
+            {/* ── Solana gas (prepaid off-chain balance) ── */}
+            {selectedChain === 'solana' && orgId && <SolanaGasCard orgId={orgId} />}
+
+            {/* ── Starknet gas tank ── */}
+            {selectedChain === 'starknet' && (
+            <>
             {/* ── Balance card — light, classic ── */}
             <section data-dash-panel className="rounded-2xl bg-white border border-line p-6 md:p-7">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -468,6 +498,8 @@ export default function PaymastersPage() {
                     </div>
                 </div>
             </div>
+            </>
+            )}
         </div>
     );
 }

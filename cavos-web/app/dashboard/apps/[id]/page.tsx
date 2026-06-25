@@ -9,24 +9,9 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { AppForm } from '@/components/AppForm'
 import { Icon } from '@/components/ui/Icon'
+import { NetworkBadge } from '@/components/NetworkBadge'
+import { networkLabel } from '@/lib/constants/networks'
 const WALLETS_PER_PAGE = 10
-
-function NetworkBadge({ network }: { network: string }) {
-    if (network === 'mainnet') {
-        return (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-ink text-white">
-                <span className="w-1.5 h-1.5 rounded-full bg-black/20" />
-                Mainnet
-            </span>
-        )
-    }
-    return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-surface border border-line text-black/50">
-            <span className="w-1.5 h-1.5 rounded-full bg-black/25" />
-            Sepolia
-        </span>
-    )
-}
 
 function truncateAddress(addr: string) {
     if (!addr || addr.length < 16) return addr
@@ -47,7 +32,7 @@ export default function AppDetailPage() {
     const [showEditModal, setShowEditModal] = useState(false)
     const [deleting, setDeleting] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
-    const [networkFilter, setNetworkFilter] = useState<'all' | 'mainnet' | 'sepolia'>('all')
+    const [networkFilter, setNetworkFilter] = useState<string>('all')
     const [copied, setCopied] = useState(false)
     const [page, setPage] = useState(1)
 
@@ -120,8 +105,19 @@ export default function AppDetailPage() {
     const totalPages = Math.ceil(filteredWallets.length / WALLETS_PER_PAGE)
     const pagedWallets = filteredWallets.slice((page - 1) * WALLETS_PER_PAGE, page * WALLETS_PER_PAGE)
 
-    const mainnetCount = wallets.filter(w => w.network === 'mainnet').length
-    const sepoliaCount = wallets.filter(w => w.network === 'sepolia').length
+    // Networks present on this app's wallets, in stable first-seen order, with
+    // counts — so the filter toggle and stats adapt to Starknet + Solana wallets
+    // without hardcoding any network id.
+    const presentNetworks = useMemo(() => {
+        const order: string[] = []
+        const counts: Record<string, number> = {}
+        for (const w of wallets) {
+            const n = w.network as string
+            if (!(n in counts)) { counts[n] = 0; order.push(n) }
+            counts[n]++
+        }
+        return { order, counts }
+    }, [wallets])
 
     if (loading) {
         return (
@@ -207,8 +203,10 @@ export default function AppDetailPage() {
                 <div className="relative mt-6 pt-5 border-t border-white/[0.07] flex flex-wrap gap-6">
                     {[
                         { label: 'Total Wallets', value: wallets.length },
-                        { label: 'Mainnet', value: mainnetCount },
-                        { label: 'Sepolia', value: sepoliaCount },
+                        ...presentNetworks.order.map((n) => ({
+                            label: networkLabel(n),
+                            value: presentNetworks.counts[n],
+                        })),
                         { label: 'Created', value: new Date(app.created_at).toLocaleDateString() },
                     ].map((s) => (
                         <div key={s.label} className="space-y-0.5">
@@ -309,7 +307,7 @@ export default function AppDetailPage() {
                     <div className="flex flex-col sm:flex-row gap-2.5">
                         {/* Network Toggle */}
                         <div className="flex bg-surface border border-line p-0.5 rounded-lg">
-                            {(['all', 'mainnet', 'sepolia'] as const).map((n) => (
+                            {['all', ...presentNetworks.order].map((n) => (
                                 <button
                                     key={n}
                                     onClick={() => setNetworkFilter(n)}
@@ -318,7 +316,7 @@ export default function AppDetailPage() {
                                         : 'text-black/40 hover:text-black'
                                     }`}
                                 >
-                                    {n}
+                                    {n === 'all' ? 'all' : networkLabel(n)}
                                 </button>
                             ))}
                         </div>

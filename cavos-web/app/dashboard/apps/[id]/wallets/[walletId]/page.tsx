@@ -5,23 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Icon } from '@/components/ui/Icon'
 import { Button } from '@/components/ui/Button'
-
-function NetworkBadge({ network }: { network: string }) {
-    if (network === 'mainnet') {
-        return (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-ink text-white">
-                <span className="w-1.5 h-1.5 rounded-full bg-black/20" />
-                Mainnet
-            </span>
-        )
-    }
-    return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-surface border border-line text-black/50">
-            <span className="w-1.5 h-1.5 rounded-full bg-black/25" />
-            Sepolia
-        </span>
-    )
-}
+import { NetworkBadge } from '@/components/NetworkBadge'
 
 export default function WalletDetailPage() {
     const router = useRouter()
