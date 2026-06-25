@@ -3,6 +3,8 @@
  * Type-safe request validation helpers
  */
 
+import { isValidNetwork } from '@/lib/constants/networks';
+
 export class ApiValidator {
     /**
      * Validate required fields in request body
@@ -39,8 +41,9 @@ export class ApiValidator {
      * Validate network
      */
     static isValidNetwork(network: string): boolean {
-        const validNetworks = ['mainnet', 'sepolia', 'goerli'];
-        return validNetworks.includes(network.toLowerCase());
+        // Single source of truth (lib/constants/networks.ts) so Starknet and
+        // Solana networks stay in sync across validation + dashboard UI.
+        return isValidNetwork(network);
     }
 
     /**
