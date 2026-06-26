@@ -9,8 +9,8 @@ import { NextResponse } from 'next/server';
 import {
   connectionFor,
   isSupportedSolanaNetwork,
-  loadRelayerKeypair,
 } from '@/lib/solana/relayer';
+import { getRelayerSigner } from '@/lib/solana/signer';
 import { creditSolanaGas, depositMemo, LAMPORTS_PER_SOL } from '@/lib/solana/gas';
 
 export async function POST(request: Request) {
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Organization not found or unauthorized' }, { status: 403 });
     }
 
-    const relayerPubkey = loadRelayerKeypair('solana-mainnet').publicKey.toBase58();
+    const relayerPubkey = (await getRelayerSigner('solana-mainnet')).publicKey.toBase58();
     const connection = connectionFor(network);
     const parsed = await connection.getParsedTransaction(signature, {
       commitment: 'confirmed',
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
 /** GET — deposit instructions (mainnet deposit address). */
 export async function GET() {
   try {
-    return NextResponse.json({ deposit_address: loadRelayerKeypair('solana-mainnet').publicKey.toBase58() });
+    return NextResponse.json({ deposit_address: (await getRelayerSigner('solana-mainnet')).publicKey.toBase58() });
   } catch {
     return NextResponse.json({ error: 'relayer not configured' }, { status: 500 });
   }

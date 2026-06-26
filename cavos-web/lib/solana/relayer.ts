@@ -11,7 +11,7 @@
  * is rejected. So even a compromised endpoint/env can lose at most the relayer's
  * bounded hot float, never user or org funds.
  */
-import { Connection, Keypair, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 
 export const SECP256R1_PROGRAM_ID = 'Secp256r1SigVerify1111111111111111111111111';
 export const COMPUTE_BUDGET_PROGRAM_ID = 'ComputeBudget111111111111111111111111111111';
@@ -32,24 +32,6 @@ export function rpcUrl(network: SolanaNetwork): string {
     return process.env.SOLANA_MAINNET_RPC_URL ?? 'https://api.mainnet-beta.solana.com';
   }
   return process.env.SOLANA_DEVNET_RPC_URL ?? 'https://api.devnet.solana.com';
-}
-
-/**
- * Load the relayer fee-payer keypair from env (JSON array secret key).
- *
- * Prefers a per-network key so the mainnet (real-money) hot key is isolated from
- * the devnet test key. Falls back to a single `SOLANA_RELAYER_KEYPAIR` so simple
- * setups (one key, funded per cluster) keep working — a Solana keypair has the
- * same address on every cluster, only the balance differs.
- */
-export function loadRelayerKeypair(network?: SolanaNetwork): Keypair {
-  const perNetwork =
-    network === 'solana-mainnet' ? process.env.SOLANA_RELAYER_KEYPAIR_MAINNET :
-    network === 'solana-devnet'  ? process.env.SOLANA_RELAYER_KEYPAIR_DEVNET :
-    undefined;
-  const raw = perNetwork ?? process.env.SOLANA_RELAYER_KEYPAIR;
-  if (!raw) throw new Error(`relayer keypair not configured for ${network ?? 'default'}`);
-  return Keypair.fromSecretKey(Uint8Array.from(JSON.parse(raw)));
 }
 
 /** Program ids the relayer is willing to co-sign at the transaction top level. */
