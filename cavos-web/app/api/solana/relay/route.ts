@@ -38,8 +38,13 @@ export async function GET(request: Request) {
     const network = isSupportedSolanaNetwork(n) ? n : undefined;
     const signer = await getRelayerSigner(network);
     return ApiResponse.success({ fee_payer: signer.publicKey.toBase58() });
-  } catch {
-    return ApiResponse.serverError('relayer not configured');
+  } catch (error) {
+    // Surface the real cause (missing TURNKEY_* env, bad address, import failure)
+    // — this only reveals config errors, never secrets.
+    console.error('Solana relay GET — fee-payer lookup failed', error);
+    return ApiResponse.serverError(
+      `relayer not configured: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 
