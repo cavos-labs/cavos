@@ -5,7 +5,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import { getSolanaGas, depositMemo, LAMPORTS_PER_SOL } from '@/lib/solana/gas';
-import { loadRelayerKeypair } from '@/lib/solana/relayer';
+import { getRelayerSigner } from '@/lib/solana/signer';
 
 export async function GET(request: Request) {
   try {
@@ -38,7 +38,7 @@ export async function GET(request: Request) {
     let depositAddress: string | null = null;
     try {
       // Deposits fund the mainnet prepaid balance → mainnet relayer address.
-      depositAddress = loadRelayerKeypair('solana-mainnet').publicKey.toBase58();
+      depositAddress = (await getRelayerSigner('solana-mainnet')).publicKey.toBase58();
     } catch {
       /* relayer not configured in this env */
     }

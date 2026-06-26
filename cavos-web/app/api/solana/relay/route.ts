@@ -18,9 +18,9 @@ import { checkRateLimit, clientIp } from '@/lib/api/rateLimit';
 import {
   connectionFor,
   isSupportedSolanaNetwork,
-  loadRelayerKeypair,
   validateSponsoredTransaction,
 } from '@/lib/solana/relayer';
+import { getRelayerSigner } from '@/lib/solana/signer';
 import { resolveOrgForApp } from '@/lib/billing/limits';
 import { debitSolanaGas, hasGas, shouldBlockGas } from '@/lib/solana/gas';
 
@@ -36,8 +36,8 @@ export async function GET(request: Request) {
   try {
     const n = new URL(request.url).searchParams.get('network') ?? '';
     const network = isSupportedSolanaNetwork(n) ? n : undefined;
-    const relayer = loadRelayerKeypair(network);
-    return ApiResponse.success({ fee_payer: relayer.publicKey.toBase58() });
+    const signer = await getRelayerSigner(network);
+    return ApiResponse.success({ fee_payer: signer.publicKey.toBase58() });
   } catch {
     return ApiResponse.serverError('relayer not configured');
   }
@@ -77,11 +77,11 @@ export async function POST(request: Request) {
       return ApiResponse.badRequest('Invalid transaction encoding');
     }
 
-    const relayer = loadRelayerKeypair(body.network);
+    const signer = await getRelayerSigner(body.network);
 
     // Security gate: only co-sign the Cavos device-account flow with the relayer
     // as fee payer. Rejects anything that could move the relayer's lamports.
-    const check = validateSponsoredTransaction(tx, relayer.publicKey);
+    const check = validateSponsoredTransaction(tx, signer.publicKey);
     if (!check.ok) {
       logger.warn('Relay rejected', { reason: check.reason, app_id: body.app_id });
       return ApiResponse.badRequest('Transaction not eligible for sponsorship', {
@@ -113,8 +113,8 @@ export async function POST(request: Request) {
     // device-account ixs are authorized by the precompile, not Solana signers).
     const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
     tx.recentBlockhash = blockhash;
-    tx.feePayer = relayer.publicKey;
-    tx.sign(relayer);
+    tx.feePayer = signer.publicKey;
+    await signer.signTransaction(tx);
 
     const signature = await connection.sendRawTransaction(tx.serialize(), {
       skipPreflight: false,
