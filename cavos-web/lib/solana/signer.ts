@@ -71,8 +71,10 @@ export class TurnkeySigner implements RelayerSigner {
       throw new Error('Turnkey: missing TURNKEY_ORGANIZATION_ID / TURNKEY_API_PUBLIC_KEY / TURNKEY_API_PRIVATE_KEY');
     }
 
-    // Lazy import so Turnkey is only loaded when actually selected (keeps the
-    // local-keypair path free of the dep at runtime).
+    // `@turnkey/sdk-server` uses tsyringe (DI), which needs the reflect-metadata
+    // polyfill loaded BEFORE the SDK module is evaluated. Import it first.
+    await import('reflect-metadata');
+    // Lazy import so Turnkey is only loaded when actually selected.
     const { Turnkey } = await import('@turnkey/sdk-server');
     const { TurnkeySigner: SolanaSigner } = await import('@turnkey/solana');
 
