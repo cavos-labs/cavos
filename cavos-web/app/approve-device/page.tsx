@@ -12,7 +12,6 @@ import {
   type CavosModalConfig,
 } from '@cavos/kit/react';
 
-const NETWORK = 'sepolia' as const;
 const RPC_URL = 'https://api.cartridge.gg/x/starknet/sepolia';
 const BACKEND_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://cavos.xyz';
 
@@ -21,35 +20,20 @@ function resolvePaymasterKey(): string {
   return process.env.NEXT_PUBLIC_CAVOS_PAYMASTER_API_KEY || '';
 }
 
-const config: CavosConfig = {
-  network: NETWORK,
-  appSalt: 'cavos-hosted-approve',
-  paymasterApiKey: resolvePaymasterKey(),
-  authBackendUrl: BACKEND_URL,
-  rpcUrl: RPC_URL,
-};
-
 const modal: CavosModalConfig = { appName: 'Cavos', theme: 'dark', emailMode: 'otp' };
 
-export default function ApproveDevicePage() {
-  return (
-    <CavosProvider config={config} modal={modal}>
-      <Approve />
-    </CavosProvider>
-  );
-}
+const btn: React.CSSProperties = {
+  padding: '12px 18px', borderRadius: 999, border: '1px solid #000',
+  background: '#000', color: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: 14,
+};
+const card: React.CSSProperties = { border: '1px solid #eee', borderRadius: 16, padding: 24 };
 
-function Approve() {
-  const { isAuthenticated, address, addSigner, openModal } = useCavos();
-  const [request, setRequest] = useState<PendingDeviceRequest | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState(false);
-  const [error, setError] = useState('');
-
-  // Read the request id. The "Sign in to approve" step redirects to Google/Apple
-  // which returns with ?auth_data=…, overwriting ?request=. Persist the id in
-  // sessionStorage so it survives that OAuth round-trip.
+/**
+ * Resolve the request id. The "Sign in to approve" step redirects to Google/Apple
+ * which returns with ?auth_data=…, overwriting ?request=. Persist the id in
+ * sessionStorage so it survives that OAuth round-trip.
+ */
+function useRequestId(): { requestId: string | null } {
   const [requestId, setRequestId] = useState<string | null>(null);
   useEffect(() => {
     const fromUrl = new URLSearchParams(window.location.search).get('request') || '';
@@ -61,8 +45,63 @@ function Approve() {
       setRequestId(sessionStorage.getItem(STASH) || '');
     }
   }, []);
+  return { requestId };
+}
 
-  // Load the pending request once we know the id.
+/**
+ * Fetch a pending device-addition request, plus the per-app identity context
+ * (appSalt, appId, network) needed to rebuild the SAME wallet the request
+ * refers to. Without this, the hosted page would derive a different wallet
+ * (different appSalt → different address + device key) and never recognize the
+ * approving user as an authorized signer.
+ */
+async function fetchRequest(
+  requestId: string,
+): Promise<{ request: PendingDeviceRequest; appId: string; appSalt: string; network: string | null } | { error: string }> {
+  // The kit's PendingDeviceRequest doesn't (yet) carry appSalt/network, so we
+  // fetch the raw JSON to read those fields alongside the request data.
+  const url = new URL('/api/devices/request', BACKEND_URL);
+  url.searchParams.set('id', requestId);
+  const rawRes = await fetch(url, { headers: { 'Content-Type': 'application/json' } });
+  if (!rawRes.ok) return { error: `Failed to load request (${rawRes.status}).` };
+  const data = await rawRes.json();
+  if (!data.found) return { error: 'Request not found.' };
+
+  const status = data.status as PendingDeviceRequest['status'];
+  if (status === 'expired') return { error: 'This approval link has expired.' };
+
+  const request: PendingDeviceRequest = {
+    requestId: data.request_id,
+    appId: data.app_id,
+    userId: '',
+    accountAddress: data.wallet_address,
+    newSigner: { x: BigInt(data.new_pub_x), y: BigInt(data.new_pub_y) },
+    createdAt: data.created_at,
+    status,
+  };
+
+  const appSalt: string | undefined = data.app_salt;
+  const appId: string | undefined = data.app_id;
+  const network: string | null = data.network ?? null;
+
+  if (!appSalt || !appId) {
+    return { error: 'This request is missing app identity; cannot resolve the wallet.' };
+  }
+
+  return { request, appId, appSalt, network };
+}
+
+export default function ApproveDevicePage() {
+  const { requestId } = useRequestId();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [ctx, setCtx] = useState<{
+    request: PendingDeviceRequest;
+    appId: string;
+    appSalt: string;
+    network: string | null;
+  } | null>(null);
+
   useEffect(() => {
     if (requestId === null) return; // still resolving
     if (!requestId) {
@@ -70,18 +109,86 @@ function Approve() {
       setLoading(false);
       return;
     }
-    const recovery = new HttpRecoveryClient({ baseUrl: BACKEND_URL, appId: '' });
-    recovery
-      .getPendingRequest(requestId)
-      .then((r) => {
-        if (!r) setError('Request not found.');
-        else if (r.status === 'expired') setError('This approval link has expired.');
-        else if (r.status === 'approved') setDone(true);
-        else setRequest(r);
+    fetchRequest(requestId)
+      .then((res) => {
+        if ('error' in res) setError(res.error);
+        else {
+          if (res.request.status === 'approved') {
+            // Already approved — render the success state directly (no provider needed).
+            setCtx({ ...res, request: { ...res.request, status: 'approved' } });
+          } else {
+            setCtx(res);
+          }
+        }
       })
-      .catch((e) => setError(e.message))
+      .catch((e) => setError((e as Error).message))
       .finally(() => setLoading(false));
   }, [requestId]);
+
+  if (loading) {
+    return (
+      <main style={{ maxWidth: 560, margin: '0 auto', padding: 24 }}>
+        <h1 style={{ fontSize: 22 }}>Approve a new device</h1>
+        <p style={{ color: '#666' }}>Loading request…</p>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main style={{ maxWidth: 560, margin: '0 auto', padding: 24 }}>
+        <h1 style={{ fontSize: 22 }}>Approve a new device</h1>
+        <div style={{ ...card, color: '#b00' }}>{error}</div>
+      </main>
+    );
+  }
+
+  if (!ctx) return null;
+
+  // Already approved — show success without mounting a provider.
+  if (ctx.request.status === 'approved') {
+    return (
+      <main style={{ maxWidth: 560, margin: '0 auto', padding: 24 }}>
+        <h1 style={{ fontSize: 22 }}>Approve a new device</h1>
+        <div style={card}>
+          <h2 style={{ marginTop: 0, color: '#16a34a' }}>✓ Device approved</h2>
+          <p style={{ color: '#555' }}>The new device can now access the wallet. You can close this page.</p>
+        </div>
+      </main>
+    );
+  }
+
+  // Build the CavosConfig from the request's identity context so the approving
+  // device is recognized against the SAME wallet the request refers to.
+  // wallets.network stores chain-specific names (e.g. 'sepolia'); the kit's
+  // NetworkEnv is the canonical 'mainnet' | 'testnet'. Map accordingly.
+  const mapNetwork = (raw: string | null): 'mainnet' | 'testnet' => {
+    if (raw === 'mainnet') return 'mainnet';
+    // 'sepolia', 'testnet', and anything else resolve to testnet for Starknet.
+    return 'testnet';
+  };
+  const config: CavosConfig = {
+    network: mapNetwork(ctx.network),
+    appSalt: ctx.appSalt,
+    appId: ctx.appId,
+    paymasterApiKey: resolvePaymasterKey(),
+    authBackendUrl: BACKEND_URL,
+    rpcUrl: RPC_URL,
+  };
+
+  return (
+    <CavosProvider config={config} modal={modal}>
+      <Approve initialRequest={ctx.request} />
+    </CavosProvider>
+  );
+}
+
+function Approve({ initialRequest }: { initialRequest: PendingDeviceRequest }) {
+  const { isAuthenticated, address, addSigner, openModal } = useCavos();
+  const request = initialRequest;
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState('');
 
   const approve = useCallback(async () => {
     if (!request) return;
@@ -100,28 +207,20 @@ function Approve() {
     }
   }, [request, addSigner]);
 
-  const btn: React.CSSProperties = {
-    padding: '12px 18px', borderRadius: 999, border: '1px solid #000',
-    background: '#000', color: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: 14,
-  };
-  const card: React.CSSProperties = { border: '1px solid #eee', borderRadius: 16, padding: 24 };
-
   return (
     <main style={{ maxWidth: 560, margin: '0 auto', padding: 24, fontFamily: 'inherit' }}>
       <h1 style={{ fontSize: 22 }}>Approve a new device</h1>
 
-      {loading && <p style={{ color: '#666' }}>Loading request…</p>}
+      {error && <div style={{ ...card, color: '#b00', marginBottom: 16 }}>{error}</div>}
 
-      {!loading && error && <div style={{ ...card, color: '#b00' }}>{error}</div>}
-
-      {!loading && !error && done && (
+      {done && (
         <div style={card}>
           <h2 style={{ marginTop: 0, color: '#16a34a' }}>✓ Device approved</h2>
           <p style={{ color: '#555' }}>The new device can now access the wallet. You can close this page.</p>
         </div>
       )}
 
-      {!loading && !error && !done && request && (
+      {!done && request && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={card}>
             <p style={{ color: '#555', marginTop: 0 }}>Someone is trying to add a device to the wallet at:</p>

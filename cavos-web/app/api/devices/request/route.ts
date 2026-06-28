@@ -13,6 +13,7 @@ import { ApiLogger } from '@/lib/api/logger';
 import { ApiResponse } from '@/lib/api/response';
 import { ApiMiddleware } from '@/lib/api/middleware';
 import { sendDeviceApprovalEmail } from '@/lib/email/device-approval';
+import { computeAppSalt } from '@/lib/crypto/appSalt';
 
 interface DeviceAdditionRequestBody {
   app_id: string;
@@ -40,7 +41,7 @@ export async function GET(request: Request) {
     const adminSupabase = createAdminClient();
     const { data, error } = await adminSupabase
       .from('device_addition_requests')
-      .select('id, wallet_id, app_id, new_pub_x, new_pub_y, device_label, status, expires_at, created_at, wallets(address)')
+      .select('id, wallet_id, app_id, new_pub_x, new_pub_y, device_label, status, expires_at, created_at, wallets(address, network)')
       .eq('id', id)
       .single();
 
@@ -54,12 +55,22 @@ export async function GET(request: Request) {
       data.status === 'expired' ||
       new Date(data.expires_at).getTime() < Date.now();
 
+    // Resolve the per-app salt so the approving page (cavos.xyz/approve-device)
+    // can rebuild the SAME identity context (appSalt) the wallet was created
+    // under. Without it, the hosted page would derive a different wallet
+    // address + device key and never recognize the owner as a signer.
+    const baseSalt = process.env.CAVOS_BASE_SALT || '0x0';
+    const appSalt = computeAppSalt(data.app_id, baseSalt);
+    const walletNetwork = (data.wallets as { address: string; network: string }[] | null)?.[0]?.network ?? null;
+
     logger.complete(true);
     return ApiResponse.success({
       found: true,
       request_id: data.id,
       app_id: data.app_id,
-      wallet_address: (data.wallets as { address: string }[] | null)?.[0]?.address ?? null,
+      wallet_address: (data.wallets as { address: string; network: string }[] | null)?.[0]?.address ?? null,
+      network: walletNetwork,
+      app_salt: appSalt,
       new_pub_x: data.new_pub_x,
       new_pub_y: data.new_pub_y,
       device_label: data.device_label,
