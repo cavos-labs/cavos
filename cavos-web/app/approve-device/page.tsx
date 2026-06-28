@@ -160,10 +160,15 @@ export default function ApproveDevicePage() {
 
   // Build the CavosConfig from the request's identity context so the approving
   // device is recognized against the SAME wallet the request refers to.
-  // network from wallets is e.g. 'sepolia'; fall back to sepolia (Starknet only here).
-  const network = (ctx.network === 'mainnet' ? 'mainnet' : 'sepolia') as 'sepolia' | 'mainnet';
+  // wallets.network stores chain-specific names (e.g. 'sepolia'); the kit's
+  // NetworkEnv is the canonical 'mainnet' | 'testnet'. Map accordingly.
+  const mapNetwork = (raw: string | null): 'mainnet' | 'testnet' => {
+    if (raw === 'mainnet') return 'mainnet';
+    // 'sepolia', 'testnet', and anything else resolve to testnet for Starknet.
+    return 'testnet';
+  };
   const config: CavosConfig = {
-    network,
+    network: mapNetwork(ctx.network),
     appSalt: ctx.appSalt,
     appId: ctx.appId,
     paymasterApiKey: resolvePaymasterKey(),
