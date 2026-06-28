@@ -3,9 +3,11 @@
  * deposits credit an org, relayed transactions debit the real cost. See
  * supabase/migrations/20260625_solana_gas.sql.
  *
- * Mode (mirrors lib/billing/enforce.ts): SOLANA_GAS_ENFORCE_MODE
- *   warn     (default) — sponsor + log even with no balance (soak window).
- *   enforce            — return 402 when the org has no gas balance.
+ * Mode: SOLANA_GAS_ENFORCE_MODE
+ *   enforce  (default) — return 402 when the org has no gas balance, so the
+ *                        relayer never sponsors unpaid mainnet traffic.
+ *   warn               — sponsor + log even with no balance (opt-in soak window).
+ * Only meaningful on mainnet; devnet is always free/unmetered.
  */
 import { createAdminClient } from '@/lib/supabase/admin';
 
@@ -17,7 +19,8 @@ export const LAMPORTS_PER_SOL = 1_000_000_000;
 export type GasEnforceMode = 'warn' | 'enforce';
 
 export function solanaGasEnforceMode(): GasEnforceMode {
-  return process.env.SOLANA_GAS_ENFORCE_MODE === 'enforce' ? 'enforce' : 'warn';
+  // Enforce by default; only an explicit opt-in turns on the warn soak window.
+  return process.env.SOLANA_GAS_ENFORCE_MODE === 'warn' ? 'warn' : 'enforce';
 }
 
 /** True when an insufficient-balance result should actually 402 (enforce mode). */

@@ -105,6 +105,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       email_otp_template_html,
       email_device_approval_template_html,
       device_approval_url,
+      allowed_solana_programs,
     } = body
 
     const updates: Record<string, any> = {}
@@ -140,6 +141,20 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (email_otp_template_html !== undefined) updates.email_otp_template_html = email_otp_template_html || null
     if (email_device_approval_template_html !== undefined) updates.email_device_approval_template_html = email_device_approval_template_html || null
     if (device_approval_url !== undefined) updates.device_approval_url = device_approval_url || null
+    if (allowed_solana_programs !== undefined) {
+      // Validate it's an array of valid base58 Solana program ids, so a bad input
+      // can't silently widen what the relayer will sponsor.
+      const list = Array.isArray(allowed_solana_programs) ? allowed_solana_programs : []
+      for (const pid of list) {
+        if (typeof pid !== 'string' || pid.length < 32 || pid.length > 44) {
+          return NextResponse.json(
+            { error: `Invalid Solana program id: ${pid}` },
+            { status: 400 },
+          )
+        }
+      }
+      updates.allowed_solana_programs = list
+    }
 
     if (Object.keys(updates).length === 0) {
       return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })

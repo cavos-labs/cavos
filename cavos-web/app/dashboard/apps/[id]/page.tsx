@@ -285,6 +285,20 @@ export default function AppDetailPage() {
                     <h3 className="text-sm font-semibold mb-1">Device Approval</h3>
                     <p className="text-xs text-black/40 leading-relaxed">New-device approval email and the URL users land on to approve a device.</p>
                 </button>
+
+                <button
+                    onClick={() => router.push(`/dashboard/apps/${appId}/programs`)}
+                    className="group text-left bg-white border border-line hover:border-line-strong hover:shadow-sm rounded-2xl p-5 transition-all"
+                >
+                    <div className="flex items-start justify-between mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-surface border border-line flex items-center justify-center">
+                            <Icon.Bolt className="w-4 h-4 text-black/40" />
+                        </div>
+                        <Icon.ArrowRight className="w-4 h-4 text-black/20 group-hover:text-black/50 group-hover:translate-x-0.5 transition-all" />
+                    </div>
+                    <h3 className="text-sm font-semibold mb-1">Solana Programs</h3>
+                    <p className="text-xs text-black/40 leading-relaxed">Allowlist of external programs your Solana wallets may call via sponsored execute (Jupiter, etc.).</p>
+                </button>
             </div>
 
             {/* ── Wallets Table ────────────────────────────── */}

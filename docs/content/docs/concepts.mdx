@@ -60,7 +60,9 @@ declared `DeviceAccount` contract; the kit ships the current values.
 
 ## Multi-chain by design
 
-Phase 1 implements Starknet only, but the kit is structured around a
-`ChainAdapter` interface (`StarknetAdapter` today). Stellar and Solana adapters
-will slot in behind the same `Cavos` API surface, so application code written
-against `Cavos.connect` / `cavos.execute` stays stable as chains are added.
+The kit is structured around a `ChainAdapter` interface, with `StarknetAdapter`
+and `SolanaAdapter` implemented today. The Stellar adapter is on the roadmap and
+will slot in behind the same `Cavos.connect` API surface, so application code
+written against `Cavos.connect` stays stable as chains are added. Each chain
+keeps its native `execute` signature (narrow the returned wallet on
+`wallet.chain`); see [Chains](/docs/chains) for the per-chain guides.

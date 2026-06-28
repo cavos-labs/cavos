@@ -33,17 +33,22 @@ Then ask it to integrate `@cavos/kit` into your app.
 ## What an agent should know up front
 
 - **Install:** `npm install @cavos/kit`.
-- **One call does it all:** `Cavos.connect({ network, identity | auth, appSalt, appId, paymasterApiKey })`.
-- **Gate execution on status:** only call `cavos.execute` when `cavos.status === "ready"`; handle `"needs-device-approval"` via [multi-device](/docs/multi-device).
+- **Two chains today:** **Starknet** and **Solana** are implemented; Stellar is planned. See [Chains](/docs/chains).
+- **One unified entry point:** `Cavos.connect({ chain, network, identity | auth, appSalt, appId, ... })`. The returned wallet is a discriminated union — narrow on `wallet.chain` before calling `execute`.
+- **`execute` differs per chain:** Starknet → `wallet.execute(calls)` (arbitrary calls); Solana → `wallet.execute(amount, destination)` for SOL transfers, or `wallet.executeInstructions(instructions)` for arbitrary CPI (SPL transfers, swaps) gated by the app's program allowlist.
+- **Gas sponsorship:** Starknet needs `paymasterApiKey`; Solana is gasless via the relayer activated by `appId` (no `paymasterApiKey`). Solana arbitrary execute is allowlisted per-app (dashboard → Solana Programs).
+- **Gate execution on status:** only call `execute` when `status === "ready"`; handle `"needs-device-approval"` via [multi-device](/docs/multi-device).
 - **Secrets:** `appId` is public (`NEXT_PUBLIC_`); `paymasterApiKey` is server-side.
 - **Stable `userId`:** the address is derived from it — never let it change for a user.
-- **Recovery:** call `cavos.setupRecovery(generateRecoveryCode())` once and have the user store the code.
-- **Non-custodial invariant:** the contract is the sole authority over signers; the backend never signs. Don't design flows that assume Cavos can add a signer server-side.
+- **Recovery works on both chains:** call `wallet.setupRecovery(generateRecoveryCode())` once on a ready device and have the user store the code. `Cavos.recover` (Starknet) / `CavosSolana.recover` (Solana) restore access after losing every device.
+- **Non-custodial invariant:** the on-chain account is the sole authority over signers; the backend never signs. Don't design flows that assume Cavos can add a signer server-side.
 
 ## Reference pages
 
 <Cards>
   <Card title="Quickstart" href="/docs/quickstart" description="Install → gasless transaction." />
+  <Card title="Starknet" href="/docs/starknet" description="Cairo DeviceAccount + Cavos paymaster." />
+  <Card title="Solana" href="/docs/solana" description="secp256r1 precompile + Cavos relayer." />
   <Card title="API reference" href="/docs/api-reference" description="Every public export." />
   <Card title="Concepts" href="/docs/concepts" description="Security model & determinism." />
 </Cards>
