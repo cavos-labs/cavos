@@ -21,6 +21,7 @@ import {
   validateSponsoredTransaction,
 } from '@/lib/solana/relayer';
 import { getRelayerSigner } from '@/lib/solana/signer';
+import { resolveSolanaProgramAllowlist } from '@/lib/solana/programs';
 import { resolveOrgForApp } from '@/lib/billing/limits';
 import { debitSolanaGas, hasGas, shouldBlockGas } from '@/lib/solana/gas';
 
@@ -84,9 +85,16 @@ export async function POST(request: Request) {
 
     const signer = await getRelayerSigner(body.network);
 
+    // Fetch the app's Solana program allowlist so the sponsor gate can permit
+    // the CPI targets this app configured (e.g. Jupiter). Falls back to the
+    // always-safe set when unset. This is the anti-abuse control for arbitrary
+    // execute: it bounds what an app_id holder can have Cavos bank.
+    const allowedPrograms = await resolveSolanaProgramAllowlist(body.app_id);
+
     // Security gate: only co-sign the Cavos device-account flow with the relayer
-    // as fee payer. Rejects anything that could move the relayer's lamports.
-    const check = validateSponsoredTransaction(tx, signer.publicKey);
+    // as fee payer. Rejects anything that could move the relayer's lamports, and
+    // restricts `execute` CPIs to the app's allowlist (+ the safe set).
+    const check = validateSponsoredTransaction(tx, signer.publicKey, allowedPrograms);
     if (!check.ok) {
       logger.warn('Relay rejected', { reason: check.reason, app_id: body.app_id });
       return ApiResponse.badRequest('Transaction not eligible for sponsorship', {

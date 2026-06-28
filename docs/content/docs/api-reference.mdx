@@ -9,30 +9,46 @@ Everything below is exported from the package root: `import { ... } from "@cavos
 
 The high-level entry point. Most apps only use this.
 
-### `Cavos.connect(options): Promise<Cavos>`
+### `Cavos.connect(options): Promise<CavosWallet>`
 
-Logs the user in, derives the address, creates/loads the device key, auto-deploys
-the account, and wires up gas sponsorship.
+Unified entry point. Pick a `chain` and a `network` environment; the kit resolves
+the concrete network (sepolia / solana-devnet for testnet, mainnet otherwise) and
+returns a chain-native wallet. The result is a discriminated union
+(`wallet.chain`), so `execute()` keeps each chain's native signature.
 
 ```ts title="TypeScript"
 interface ConnectOptions {
-  network: "sepolia" | "mainnet";
+  chain: "starknet" | "solana";        // returned wallet is discriminated by this
+  network: "testnet" | "mainnet";      // resolves to the chain's concrete network
   appSalt: string;
-  auth?: AuthProvider;          // pass `auth` OR `identity`
+  auth?: AuthProvider;                  // pass `auth` OR `identity`
   identity?: Identity;
-  appId?: string;               // enables hosted registry + recovery relay
-  backendUrl?: string;          // defaults to Cavos hosted services
-  paymasterApiKey: string;      // sponsors deploy + execute
-  paymasterUrl?: string;
+  appId?: string;                       // hosted registry + (Starknet) recovery / (Solana) relayer
+  backendUrl?: string;                  // defaults to Cavos hosted services
   rpcUrl?: string;
-  classHash?: string;
-  registry?: WalletRegistry;    // off-chain userId -> wallet map
-  recovery?: RecoveryClient;    // device-approval relay
+  registry?: WalletRegistry;            // off-chain userId -> wallet map
+  recovery?: RecoveryClient;            // device-approval relay (Starknet)
   createSigner?: (keyId: string) => Promise<DeviceSigner>; // native / tests
+  // --- Starknet-only ---
+  paymasterApiKey?: string;             // sponsors deploy + execute (required on Starknet)
+  paymasterUrl?: string;
+  classHash?: string;
+  // --- Solana-only ---
+  programId?: string;                   // device-account program override
+  relayer?: SolanaRelayer;              // gasless sponsorship (defaults to hosted when appId set)
+  feePayer?: Keypair;                   // self-funded fallback
 }
+
+type CavosWallet = Cavos | CavosSolana; // narrow on `wallet.chain`
 ```
 
-### Instance members
+- `chain === "starknet"` → `Cavos` instance (see [Starknet](/docs/starknet)).
+- `chain === "solana"` → `CavosSolana` instance (see [Solana](/docs/solana)).
+
+### Instance members (Starknet)
+
+Members on the `Cavos` instance (`wallet.chain === "starknet"`). The Solana
+counterpart is `CavosSolana` — see [Solana](/docs/solana).
 
 | Member | Description |
 |--------|-------------|
@@ -43,11 +59,12 @@ interface ConnectOptions {
 | `cavos.devicePublicKey: DevicePublicKey` | This device's public key. |
 | `cavos.execute(calls): Promise<{ transactionHash }>` | Sign + submit calls, gasless. Requires `status === "ready"`. |
 | `cavos.addSigner(pubkey): Promise<{ transactionHash }>` | Authorize another device's key on-chain. |
-| `cavos.setupRecovery(code): Promise<{ transactionHash } \| undefined>` | Register a passphrase-derived backup signer. Idempotent. |
+| `cavos.setupRecovery(code): Promise<{ transactionHash } \| undefined>` | Register a passphrase-derived backup signer. Idempotent. (Starknet only.) |
 
 ### `Cavos.recover(options): Promise<Cavos>`
 
-Recover after losing every device using a saved recovery code.
+Recover after losing every device using a saved recovery code. (Starknet path;
+Solana uses `CavosSolana.recover` with the same model.)
 
 ```ts title="TypeScript"
 interface RecoveryOptions {
@@ -92,17 +109,38 @@ interface RecoveryOptions {
 | Export | Description |
 |--------|-------------|
 | `WebCryptoSigner` | Browser silent device signer (non-extractable P-256 in IndexedDB). `loadOrCreate`, `create`, `load`. |
-| `DeviceSigner`, `DevicePublicKey`, `DeviceSignature` | Signer types. |
-| `StarknetDeviceSigner` | Drop-in starknet.js `SignerInterface` backed by a device signer. |
+| `DeviceSigner`, `DevicePublicKey`, `DeviceSignature` | Signer types (shared across chains). |
 
 ## Chain adapters & constants
+
+### Starknet
 
 | Export | Description |
 |--------|-------------|
 | `StarknetAdapter` | Computes addresses, builds deploy/initialize/add/remove calls, serializes signatures. |
-| `ChainAdapter`, `ChainCall`, `ComputeAddressParams` | Multi-chain interface types. |
-| `STARKNET_NETWORKS`, `StarknetNetwork` | Network configs. |
+| `STARKNET_NETWORKS`, `StarknetNetwork` | Network configs (`sepolia`, `mainnet`). |
 | `DEVICE_ACCOUNT_CLASS_HASH`, `UDC_ADDRESS` | Deployed class hash + Universal Deployer address. |
+| `StarknetDeviceSigner` | Drop-in starknet.js `SignerInterface` backed by a device signer. |
+
+### Solana
+
+| Export | Description |
+|--------|-------------|
+| `CavosSolana` | High-level Solana client — the analogue of `Cavos`. `connect`, `execute(amount, destination)` (SOL transfer), `executeInstructions(instructions)` (arbitrary CPI), `addSigner`, `setupRecovery`, static `recover`. Returned by `Cavos.connect({ chain: "solana" })`. |
+| `InstructionData`, `InstructionAccount` | Serializable instruction shape for `executeInstructions` (mirrors the on-chain Borsh layout). |
+| `SolanaRelayer`, `SolanaRelayerOptions` | Cavos gasless sponsoring relayer (co-signs as fee payer). Activated by `appId`. |
+| `SolanaAdapter`, `SolanaAdapterOptions` | Low-level adapter: PDA derivation, the `[secp256r1 precompile, program]` instruction builders, signature encoding. |
+| `compressedPubkey`, `encodeLowSSignature`, `buildSecp256r1Instruction`, `anchorDiscriminator` | Low-level Solana helpers. |
+| `SOLANA_NETWORKS`, `SolanaNetwork` | Network configs (`solana-devnet`, `solana-mainnet`, `solana-localnet`). |
+| `DEVICE_ACCOUNT_PROGRAM_ID`, `SECP256R1_PROGRAM_ID` | Cavos device-account program id + native secp256r1 precompile id. |
+| `deriveAddressSeedSolana` | SHA-256 `address_seed` from `{ userId, appSalt }` (Solana variant of `deriveAddressSeed`). |
+
+### Shared interface types
+
+| Export | Description |
+|--------|-------------|
+| `ChainAdapter`, `ChainCall`, `ComputeAddressParams` | Multi-chain interface types. |
+| `Chain` (`"starknet" \| "solana"`), `NetworkEnv` (`"testnet" \| "mainnet"`), `CavosWallet` | Unified connect types. |
 
 ## Low-level crypto (advanced)
 

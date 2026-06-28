@@ -1,0 +1,141 @@
+---
+title: Starknet
+description: Use @cavos/kit on Starknet — silent device signing, gasless execution, and the Cairo DeviceAccount.
+---
+
+Starknet is the first implemented chain in `@cavos/kit`. A deterministic address
+derived from the user's identity is controlled by a silent secp256r1 (P-256)
+device key, validated on-chain by the Cairo `DeviceAccount` account contract.
+Deploy and execution are sponsored by the Cavos paymaster, so the user pays no
+gas.
+
+## Connect
+
+`Cavos.connect` with `chain: "starknet"` (the default) does everything:
+authenticate, derive the deterministic address, create/load the silent device
+key, auto-deploy the account on first use, and wire up the gas sponsor.
+
+```ts title="TypeScript"
+import { Cavos } from "@cavos/kit";
+
+const wallet = await Cavos.connect({
+  chain: "starknet",                    // default; shown for clarity
+  network: "testnet",                   // "testnet" (sepolia) | "mainnet"
+  appSalt: "my-app",                    // namespaces addresses to your app
+  identity: {                           // from your login (see Authentication)
+    userId: user.id,
+    email: user.email,
+  },
+  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+  paymasterApiKey: process.env.CAVOS_PAYMASTER_API_KEY!, // sponsors deploy + execute
+});
+
+console.log(wallet.address);            // deterministic; deployed on first connect
+```
+
+`wallet.chain` narrows to `"starknet"`. The instance members (`address`,
+`status`, `execute`, `addSigner`, `setupRecovery`) are the ones documented in
+the [API reference](/docs/api-reference).
+
+## Execute a transaction
+
+When `status === "ready"`, call `execute` with standard Starknet calls. It is
+signed silently by the device key and sponsored by the paymaster — the user sees
+nothing.
+
+```ts title="TypeScript"
+if (wallet.chain === "starknet" && wallet.status === "ready") {
+  const { transactionHash } = await wallet.execute([
+    {
+      contractAddress: STRK_TOKEN,
+      entrypoint: "approve",
+      calldata: [spender, amountLow, amountHigh],
+    },
+  ]);
+  console.log(transactionHash);
+}
+```
+
+<Callout type="info">
+If `status` is `"needs-device-approval"`, this device is new to an existing
+wallet. Approve it from an already-registered device — see
+[Multi-device](/docs/multi-device).
+</Callout>
+
+## How signing works
+
+The device key is a **non-extractable secp256r1 key** held in IndexedDB via
+WebCrypto. When you call `execute`:
+
+1. starknet.js computes the v3 transaction hash.
+2. The device key signs `sha256(tx_hash)` — WebCrypto's ECDSA hashes the message
+   internally, so there is no user interaction.
+3. The signature is serialized as **5 felts**:
+   `[r_low, r_high, s_low, s_high, y_parity]`.
+4. On-chain, `DeviceAccount.__validate__` recomputes `sha256(tx_hash)`,
+   normalizes high-`s`, recovers the secp256r1 signer, and checks it is
+   authorized.
+
+This 5-felt encoding is byte-compatible with the contract and covered by a
+cross-checked test in the `account-contracts` repo.
+
+## Gasless execution
+
+`execute` routes through the **Cavos paymaster** (SNIP-9 `execute_from_outside`),
+so the user pays no gas. Both **account deployment** (on first connect) and
+**every execution** are sponsored — the user never needs ETH or STRK to start.
+
+## Advanced: a plain starknet.js Account
+
+`StarknetDeviceSigner` is a drop-in starknet.js `SignerInterface`, so you can
+plug the device key into a standard `Account` and your own paymaster flow:
+
+```ts title="TypeScript"
+import { Account, RpcProvider } from "starknet";
+import { StarknetDeviceSigner, WebCryptoSigner } from "@cavos/kit";
+
+const provider = new RpcProvider({ nodeUrl: "https://api.cartridge.gg/x/starknet/sepolia" });
+const signer = await WebCryptoSigner.loadOrCreate({ keyId: address });
+const account = new Account({
+  provider,
+  address,
+  signer: new StarknetDeviceSigner(signer),
+  cairoVersion: "1",
+});
+```
+
+<Callout type="warn">
+**Gas estimation gotcha (self-funded path).** secp256r1 validation is heavy
+(~27M L2 gas). Default fee estimation uses `SKIP_VALIDATE`, which under-bounds
+and causes "Out of gas". Estimate with validation on and pass those bounds:
+
+```ts title="TypeScript"
+const fee = await account.estimateInvokeFee(calls, { skipValidate: false });
+await account.execute(calls, { resourceBounds: fee.resourceBounds });
+```
+
+The Cavos paymaster path handles this for you — this only matters when you
+submit transactions yourself.
+</Callout>
+
+## Networks & constants
+
+```ts title="TypeScript"
+import { STARKNET_NETWORKS, DEVICE_ACCOUNT_CLASS_HASH } from "@cavos/kit";
+
+STARKNET_NETWORKS.sepolia;            // RPC + chain config
+DEVICE_ACCOUNT_CLASS_HASH.sepolia;    // deployed DeviceAccount class hash
+```
+
+`network` accepts `"testnet"` (resolves to `sepolia`) and `"mainnet"`. The class
+hash is the declared `DeviceAccount` contract; the kit ships the current values.
+
+## What's available
+
+- ✅ Silent secp256r1 device signer, auto-deployed deterministic account.
+- ✅ Gasless execute + deployment via the Cavos paymaster.
+- ✅ [Multi-device](/docs/multi-device) approval + [recovery](/docs/recovery)
+  (passphrase backup) — non-custodial.
+
+For the cross-chain model and how Solana compares, see [Chains](/docs/chains) and
+[Solana](/docs/solana).

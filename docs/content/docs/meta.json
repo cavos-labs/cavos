@@ -12,6 +12,8 @@
     "recovery",
     "---Chains---",
     "chains",
+    "starknet",
+    "solana",
     "---Reference---",
     "concepts",
     "api-reference",

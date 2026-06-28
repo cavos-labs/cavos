@@ -10,7 +10,7 @@ the actual signing happens invisibly with a non-extractable secp256r1 (P-256) ke
 that lives on the device.
 
 The model is **chain-agnostic** — the same API works across high-performance
-chains. **Starknet is available today**; Solana and Stellar follow on the same
+chains. **Starknet and Solana are available today**; Stellar follows on the same
 interface. See [Chains](/docs/chains).
 
 ```ts title="TypeScript"
@@ -36,7 +36,7 @@ if (cavos.status === "ready") {
 | **Identity** | A stable `userId` (from your login) + an `appSalt`. Together they derive the wallet address — device-independent. |
 | **Device signer** | A non-extractable secp256r1 key on the device (WebCrypto in the browser). Signs `sha256(tx_hash)` with no UI. |
 | **Account contract** | The on-chain Cavos account for the target chain (a Cairo `DeviceAccount` on Starknet today). Validates device signatures on-chain and is the sole authority over its signers. |
-| **Chain adapter** | The per-chain layer (address derivation, signature encoding, deploy calls). `StarknetAdapter` today; Solana / Stellar slot in behind the same interface. See [Chains](/docs/chains). |
+| **Chain adapter** | The per-chain layer (address derivation, signature encoding, deploy calls). `StarknetAdapter` and `SolanaAdapter` today; Stellar slots in behind the same interface. See [Chains](/docs/chains). |
 | **Paymaster** | Sponsors deploy + execute so transactions are gasless for the user. |
 
 ## What makes it different
@@ -51,6 +51,8 @@ if (cavos.status === "ready") {
 
 <Cards>
   <Card title="Quickstart" href="/docs/quickstart" description="From install to a gasless transaction in one page." />
+  <Card title="Starknet" href="/docs/starknet" description="Cairo DeviceAccount, silent signing, Cavos paymaster." />
+  <Card title="Solana" href="/docs/solana" description="Device-account PDA, native secp256r1 precompile, Cavos relayer." />
   <Card title="Authentication" href="/docs/auth" description="Hosted login (Google / Apple / OTP) or bring your own identity." />
   <Card title="Recovery" href="/docs/recovery" description="Multi-device and passphrase backup — non-custodial by design." />
   <Card title="For agents" href="/docs/for-agents" description="Feed this whole site to an LLM and let it build." />
