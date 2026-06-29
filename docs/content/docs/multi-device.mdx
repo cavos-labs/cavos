@@ -27,30 +27,109 @@ Under the hood, when an `appId` is set, the kit uses the hosted
 `HttpRecoveryClient` to file a device-addition request, which notifies the user
 (styled as a login-approval prompt).
 
-## Approving from a registered device
+## Host your approval page (required)
 
-On a device that **is** already an authorized signer, fetch the pending request
-and approve it. Approving signs an on-chain `add_signer` transaction for the new
-device's public key:
+<Callout type="warning">
+**Cavos does not host an approval page.** Each integrating app must build its own
+`/approve-device` route and configure its origin in the dashboard. Approving a
+device signs an on-chain `add_signer` transaction paid for with **the app's own
+paymaster API key** — Cavos never sponsors gas for third-party apps.
+</Callout>
 
-```ts title="TypeScript"
-import { HttpRecoveryClient } from "@cavos/kit";
+When a device-addition request is filed, the backend builds the approval link as
+`${device_approval_url}/approve-device?request=<id>` and emails it to the owner.
+Set `device_approval_url` in your app's dashboard (or `website_url` as a
+fallback) — if neither is configured, device addition is rejected.
 
-const recovery = new HttpRecoveryClient({
-  baseUrl: "https://services.cavos.xyz",
-  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
-});
+The approving page you build does three things, on a device that is **already an
+authorized signer**:
 
-const request = await recovery.getPendingRequest(requestId);
-if (request) {
-  // Show the user the device label + pubkey fingerprint before approving.
-  const { transactionHash } = await cavos.addSigner(request.newSigner);
-  await recovery.confirmDeviceAddition({ requestId, txHash: transactionHash });
+1. **Fetch** the pending request to read the new device's public key.
+2. **Approve** it by calling `cavos.addSigner(newSigner)` — this submits the
+   on-chain `add_signer` call, gasless via your paymaster key.
+3. **Confirm** it with the recovery client so the backend marks the request
+   approved.
+
+Your page must construct its `CavosConfig` with the **same** `appSalt`, `appId`,
+and `network` the wallet was created under (the backend returns them in the
+request response), and its own `paymasterApiKey`.
+
+```ts title="app/approve-device/page.tsx"
+'use client';
+
+import { useEffect, useState } from 'react';
+import {
+  CavosProvider,
+  useCavos,
+  HttpRecoveryClient,
+  type CavosConfig,
+} from '@cavos/kit';
+
+const BACKEND_URL = 'https://services.cavos.xyz';
+
+function Approve({ request }: { request: any }) {
+  const { isAuthenticated, openModal, addSigner } = useCavos();
+  const [done, setDone] = useState(false);
+
+  const approve = async () => {
+    // Signs add_signer(newSigner) gaslessly with THIS (registered) device's key.
+    const { transactionHash } = await addSigner(request.newSigner);
+    const recovery = new HttpRecoveryClient({
+      baseUrl: BACKEND_URL,
+      appId: request.appId,
+    });
+    await recovery.confirmDeviceAddition({ requestId: request.requestId, txHash: transactionHash });
+    setDone(true);
+  };
+
+  if (done) return <p>Device approved.</p>;
+  if (!isAuthenticated) return <button onClick={openModal}>Sign in to approve</button>;
+  return <button onClick={approve}>Approve device</button>;
+}
+
+export default function ApproveDevicePage() {
+  const [config, setConfig] = useState<CavosConfig | null>(null);
+  const [request, setRequest] = useState<any>(null);
+
+  useEffect(() => {
+    const requestId = new URLSearchParams(window.location.search).get('request')!;
+    // The GET returns appSalt, appId, network + the new device's pubkey,
+    // so this page can rebuild the SAME wallet identity the owner registered.
+    fetch(`${BACKEND_URL}/api/devices/request?id=${requestId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.found) return;
+        setRequest({
+          requestId: data.request_id,
+          appId: data.app_id,
+          newSigner: { x: BigInt(data.new_pub_x), y: BigInt(data.new_pub_y) },
+        });
+        setConfig({
+          // 'mainnet' or 'testnet' — map from the wallet's network.
+          network: data.network === 'mainnet' ? 'mainnet' : 'testnet',
+          appSalt: data.app_salt,
+          appId: data.app_id,
+          // YOUR paymaster key — never Cavos's.
+          paymasterApiKey: process.env.NEXT_PUBLIC_CAVOS_PAYMASTER_API_KEY!,
+          authBackendUrl: BACKEND_URL,
+        });
+      });
+  }, []);
+
+  if (!config || !request) return <p>Loading…</p>;
+  return (
+    <CavosProvider config={config} modal={{ appName: 'Your App' }}>
+      <Approve request={request} />
+    </CavosProvider>
+  );
 }
 ```
 
-`cavos.addSigner(pubkey)` is the direct primitive — it builds and submits the
-`add_signer` call, signed silently by this (already authorized) device.
+<Callout type="info">
+The approval page is the only place where a registered device authorizes a new
+one. Deploy it at a URL you control and set that URL as the app's
+`device_approval_url` in the Cavos dashboard.
+</Callout>
 
 ## The non-custodial guarantee
 

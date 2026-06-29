@@ -55,10 +55,11 @@ export async function GET(request: Request) {
       data.status === 'expired' ||
       new Date(data.expires_at).getTime() < Date.now();
 
-    // Resolve the per-app salt so the approving page (cavos.xyz/approve-device)
-    // can rebuild the SAME identity context (appSalt) the wallet was created
-    // under. Without it, the hosted page would derive a different wallet
-    // address + device key and never recognize the owner as a signer.
+    // Resolve the per-app salt so the app's OWN approval page (the route the
+    // integrating app builds at its device_approval_url) can rebuild the SAME
+    // identity context (appSalt) the wallet was created under. Without it, the
+    // approving page would derive a different wallet address + device key and
+    // never recognize the owner as a signer.
     const baseSalt = process.env.CAVOS_BASE_SALT || '0x0';
     const appSalt = computeAppSalt(data.app_id, baseSalt);
     const walletNetwork = (data.wallets as { address: string; network: string }[] | null)?.[0]?.network ?? null;
@@ -126,6 +127,30 @@ export async function POST(request: Request) {
       return ApiResponse.badRequest('Wallet not found');
     }
 
+    // Resolve WHERE the owner will land to approve this device. Cavos does NOT
+    // host an approval page — each integrating app must build its own
+    // `/approve-device` route and configure its origin here (it signs the
+    // add_signer tx with the app's OWN paymaster key). verifyAppId only returns
+    // id/name, so we fetch the origin columns directly.
+    const { data: appRow } = await adminSupabase
+      .from('apps')
+      .select('device_approval_url, website_url')
+      .eq('id', app_id)
+      .single();
+
+    // device_approval_url is the recommended destination; website_url is a
+    // convenience fallback for apps that host the approval route on their main
+    // site. If NEITHER is set, we cannot build a valid approval link — reject
+    // before creating any state.
+    const origin = appRow?.device_approval_url || appRow?.website_url;
+    if (!origin) {
+      logger.warn('App has no device-approval URL configured', { app_id });
+      return ApiResponse.badRequest(
+        'This app has no device-approval URL configured. Set `device_approval_url` (or `website_url`) in the dashboard before adding devices.',
+      );
+    }
+    const approveLink = `${origin.replace(/\/$/, '')}/approve-device?request=`;
+
     // Reuse a pending, non-expired request for the same wallet+pubkey if one
     // exists; otherwise create a new one. In BOTH cases we (re)send the approval
     // email — a returning user must be able to re-trigger it if the first one
@@ -168,24 +193,7 @@ export async function POST(request: Request) {
       requestId = reqRow.id;
     }
 
-    // Build the approval link. The app's device-approval URL (or website_url)
-    // determines where the owner lands. verifyAppId only returns id/name, so we
-    // fetch the origin columns here.
-    const { data: appRow } = await adminSupabase
-      .from('apps')
-      .select('device_approval_url, website_url')
-      .eq('id', app_id)
-      .single();
-    // Where the owner lands to approve:
-    //   1. the app's configured device-approval URL (their own page), else
-    //   2. their website_url, else
-    //   3. Cavos's own hosted approval page (default — works with zero config).
-    // The target page is always at `${origin}/approve-device?request=<id>` —
-    // Cavos ships that page at cavos.xyz/approve-device; integrating apps that
-    // set device_approval_url must expose the same path.
-    const hostedOrigin = process.env.NEXT_PUBLIC_APP_URL || 'https://cavos.xyz';
-    const origin = appRow?.device_approval_url || appRow?.website_url || hostedOrigin;
-    const approveLink = `${origin.replace(/\/$/, '')}/approve-device?request=${requestId}`;
+    const fullApproveLink = `${approveLink}${requestId}`;
 
     // The owner's email comes from the SDK (it has it from login). The wallet
     // stores a uid/sub, not an email (wallets.email was dropped in the PII
@@ -193,7 +201,7 @@ export async function POST(request: Request) {
     const ownerEmail = email ?? null;
     if (ownerEmail) {
       try {
-        await sendDeviceApprovalEmail(ownerEmail, approveLink, device_label ?? '', app_id);
+        await sendDeviceApprovalEmail(ownerEmail, fullApproveLink, device_label ?? '', app_id);
       } catch (e) {
         // Non-fatal: the request is created; owner can still approve via a direct link / dashboard.
         logger.warn('Approval email failed', e);
@@ -206,7 +214,7 @@ export async function POST(request: Request) {
     logger.complete(true);
     return ApiResponse.success({
       request_id: requestId,
-      approve_link: approveLink || undefined,
+      approve_link: fullApproveLink || undefined,
       already_pending: !!reused,
     });
   } catch (error) {
