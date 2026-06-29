@@ -280,10 +280,15 @@ export default function AppDetailPage() {
                         <div className="w-8 h-8 rounded-lg bg-surface border border-line flex items-center justify-center">
                             <Icon.Device className="w-4 h-4 text-black/40" />
                         </div>
-                        <Icon.ArrowRight className="w-4 h-4 text-black/20 group-hover:text-black/50 group-hover:translate-x-0.5 transition-all" />
+                        <div className="flex items-center gap-2">
+                            {!(app?.device_approval_url || app?.website_url) && (
+                                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">Not configured</span>
+                            )}
+                            <Icon.ArrowRight className="w-4 h-4 text-black/20 group-hover:text-black/50 group-hover:translate-x-0.5 transition-all" />
+                        </div>
                     </div>
                     <h3 className="text-sm font-semibold mb-1">Device Approval</h3>
-                    <p className="text-xs text-black/40 leading-relaxed">New-device approval email and the URL users land on to approve a device.</p>
+                    <p className="text-xs text-black/40 leading-relaxed">Required for multi-device. Set the URL where your app hosts <code className="font-mono">/approve-device</code> — it signs <code className="font-mono">add_signer</code> with your own paymaster key.</p>
                 </button>
 
                 <button

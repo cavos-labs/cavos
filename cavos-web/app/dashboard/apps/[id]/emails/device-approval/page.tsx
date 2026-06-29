@@ -291,7 +291,9 @@ export default function DeviceApprovalEmailPage() {
             <div>
               <SectionLabel>Approval destination</SectionLabel>
               <Input label="App URL (for approval)" placeholder="https://your-app.com" value={formData.device_approval_url} onChange={e => setFormData({ ...formData, device_approval_url: e.target.value })} />
-              <p className="text-[11px] text-black/35 mt-1.5">When a new device signs in, we email a link to <code className="font-mono">{'{this URL}/approve-device?request=...'}</code> so the user approves from a device they trust.</p>
+              <p className="text-[11px] text-black/35 mt-1.5">
+                <span className="font-medium text-black/50">Required.</span> When a new device signs in, we email a link to <code className="font-mono">{'{this URL}/approve-device?request=...'}</code>. You must build this page in your app — it signs <code className="font-mono">add_signer</code> using <span className="font-medium text-black/50">your own paymaster API key</span>. See the Multi-device docs for a reference implementation.
+              </p>
             </div>
 
             <div className="border-t border-line" />
