@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { Icon } from '@/components/ui/Icon';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SolanaGasCard } from '@/components/SolanaGasCard';
+import { StellarGasCard } from '@/components/StellarGasCard';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { connect, disconnect } from 'starknetkit';
@@ -65,7 +66,7 @@ export default function PaymastersPage() {
     // Which chain's gas the user is funding/viewing. One unified page, network
     // selector on top — each chain keeps its own deposit mechanism underneath
     // (Starknet: on-chain GasTank; Solana: off-chain lamports ledger).
-    const [selectedChain, setSelectedChain] = useState<'starknet' | 'solana'>('starknet');
+    const [selectedChain, setSelectedChain] = useState<'starknet' | 'solana' | 'stellar'>('starknet');
 
     const [walletObj, setWalletObj] = useState<ConnectedWallet | null>(null);
     const [walletAddress, setWalletAddress] = useState<string | null>(null);
@@ -252,6 +253,7 @@ export default function PaymastersPage() {
                 {([
                     { id: 'starknet', label: 'Starknet' },
                     { id: 'solana', label: 'Solana' },
+                    { id: 'stellar', label: 'Stellar' },
                 ] as const).map((c) => (
                     <button
                         key={c.id}
@@ -268,6 +270,9 @@ export default function PaymastersPage() {
 
             {/* ── Solana gas (prepaid off-chain balance) ── */}
             {selectedChain === 'solana' && orgId && <SolanaGasCard orgId={orgId} />}
+
+            {/* ── Stellar gas (prepaid off-chain balance) ── */}
+            {selectedChain === 'stellar' && orgId && <StellarGasCard orgId={orgId} />}
 
             {/* ── Starknet gas tank ── */}
             {selectedChain === 'starknet' && (
