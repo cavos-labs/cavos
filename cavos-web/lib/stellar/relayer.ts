@@ -83,8 +83,20 @@ export function horizonServerFor(network: StellarNetwork): Horizon.Server {
   return new Horizon.Server(url, { allowHttp: url.startsWith('http://') });
 }
 
-/** Account-management functions the relayer will sponsor on a contract account. */
-const ACCOUNT_FUNCTIONS = new Set(['add_signer', 'remove_signer']);
+/**
+ * Account-management functions the relayer will sponsor on a contract account.
+ * `add_signer_via_passkey` is authorized purely by an embedded WebAuthn assertion
+ * (no device signature), which lets a user add a device from a fresh browser — it
+ * only ever ADDS a signer to the account, never moves funds, so it is as safe to
+ * sponsor as `add_signer`. `add_approver`/`remove_approver` are device-signed.
+ */
+const ACCOUNT_FUNCTIONS = new Set([
+  'add_signer',
+  'remove_signer',
+  'add_approver',
+  'remove_approver',
+  'add_signer_via_passkey',
+]);
 
 export interface ValidationResult {
   ok: boolean;
