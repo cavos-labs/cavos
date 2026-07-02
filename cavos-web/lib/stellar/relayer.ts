@@ -60,7 +60,9 @@ export function factoryId(network: StellarNetwork): string {
   }
   return (
     process.env.STELLAR_FACTORY_ID_TESTNET ??
-    'CBRJO52DFWDEZB73IGFAQUVX57CVPPOHEPLNPDXSQKE4SOJ3DVZNQNDO'
+    // Re-deployed 2026-07-01 with the passkey-approval device-account wasm
+    // (batched multi-chain challenge).
+    'CBCJIODXIEBOXXD66KCUCF7ZDYJARKI4ZIVQOVWPULOBH5XGNCDP6W3I'
   );
 }
 

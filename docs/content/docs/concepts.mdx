@@ -40,11 +40,16 @@ front-running of the first signer.
 
 ## Silent signing trade-off
 
-Device keys sign silently (no biometric / passkey gate). The key is non-extractable
-and device-bound, so it is non-custodial and on-chain verified, but there is no
-per-signature user-verification prompt. This is the embedded-wallet model used by
-Privy and Turnkey. Device loss is handled by [multi-device](/docs/multi-device)
-and [recovery](/docs/recovery).
+Device keys sign silently — no per-signature user-verification prompt. The key is
+non-extractable and device-bound, so it is non-custodial and on-chain verified.
+This is the embedded-wallet model used by Privy and Turnkey: maximum UX, no
+friction per transaction.
+
+The user-verification step lives on **device management**, not signing. An
+optional [passkey](/docs/passkeys) acts as a second factor for approving *new*
+devices; it never gates individual transactions. Together with
+[multi-device](/docs/multi-device) and [recovery](/docs/recovery), that covers
+device loss without compromising the silent-signing UX.
 
 ## Networks & constants
 
@@ -60,9 +65,10 @@ declared `DeviceAccount` contract; the kit ships the current values.
 
 ## Multi-chain by design
 
-The kit is structured around a `ChainAdapter` interface, with `StarknetAdapter`
-and `SolanaAdapter` implemented today. The Stellar adapter is on the roadmap and
-will slot in behind the same `Cavos.connect` API surface, so application code
-written against `Cavos.connect` stays stable as chains are added. Each chain
-keeps its native `execute` signature (narrow the returned wallet on
-`wallet.chain`); see [Chains](/docs/chains) for the per-chain guides.
+The kit is structured around a `ChainAdapter` interface, with `StarknetAdapter`,
+`SolanaAdapter`, and `StellarAdapter` implemented today (Stellar is live on
+testnet; mainnet deploys next). New chains slot in behind the same `Cavos.connect`
+API surface, so application code written against `Cavos.connect` stays stable as
+chains are added. Each chain keeps its native `execute` signature (narrow the
+returned wallet on `wallet.chain`); see [Chains](/docs/chains) for the per-chain
+guides.

@@ -84,6 +84,27 @@ await cavos.setupRecovery(code);         // registers the backup signer on-chain
 The code never leaves the device — only its derived public key is registered.
 See [Recovery](/docs/recovery) for the full lifecycle.
 
+## 5. Set up a passkey (recommended)
+
+So the user can log in on a new device without finding an already-logged-in one,
+prompt them for a **passkey** right after signup. Treat it as a 2FA step — it
+approves new devices, it never signs transactions.
+
+```ts title="TypeScript"
+import { PasskeySigner } from "@cavos/kit";
+
+if (await PasskeySigner.isSupported()) {
+  const passkey = new PasskeySigner();
+  await cavos.enrollPasskey(passkey, {
+    userId: user.id,
+    userName: user.email ?? user.id,
+  }); // gasless; registers the passkey's pubkey as a device approver
+}
+```
+
+Later, on a new device, the user confirms one prompt to authorize that device —
+no second device required. See [Passkeys](/docs/passkeys) for the full flow.
+
 ## What you get
 
 - A deployed, gas-sponsored smart account controlled by a silent device key.
