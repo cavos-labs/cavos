@@ -64,23 +64,6 @@ transactions; it only ever appears when a *new device* is being added.
 Only the passkey's **public key** is registered on-chain. The credential itself
 is held and synced by the OS authenticator — the kit never stores it.
 
-## One passkey, every chain
-
-A user with wallets on multiple chains does **not** need to enroll a passkey per
-chain. Enroll once (above), then register that same public key as an approver on
-each chain's wallet. `addApprover` is idempotent: it skips the on-chain call
-entirely if the pubkey is already an approver.
-
-```ts title="TypeScript"
-// After enrolling once on one chain, reuse the same public key everywhere:
-await starknetWallet.addApprover(publicKey);
-await solanaWallet.addApprover(publicKey);
-await stellarWallet.addApprover(publicKey);
-```
-
-`addApprover` requires a ready, authorized device (the registration is
-device-signed and gasless).
-
 ## Approve a new device with a passkey
 
 When the same identity connects on a fresh browser, it lands on the same wallet
@@ -105,25 +88,15 @@ on-chain passkey nonce, the passkey signs a challenge over it, and an
 public key, so the kit recovers both secp256r1 candidates and matches the
 enrolled approver via an on-chain view — no backend lookup.
 
-### One prompt across all chains
-
-`approveDeviceEverywhere` approves the device on every chain's wallet with a
-**single** passkey prompt. It only touches wallets whose status is
-`needs-device-approval`.
-
-```ts title="TypeScript"
-import { approveDeviceEverywhere } from "@cavos/kit";
-
-// results: [{ chain: "starknet", transactionHash }, ...] for each chain that needed it
-const results = await approveDeviceEverywhere(
-  [starknetWallet, solanaWallet, stellarWallet],
-  passkey,
-);
-```
-
-This is the multi-chain equivalent of `approveThisDeviceWithPasskey`: one
-batched challenge (`sha256(concat(leaves))`), one assertion, one submission per
-chain.
+<Callout type="info">
+**Advanced — multiple independent chains.** Each `Cavos` wallet handle is one
+chain. If your app manages several chain wallets for the same user, the low-level
+`approveDeviceEverywhere([wallet, ...], passkey)` util approves the device on each
+with a **single** passkey prompt (one batched challenge, isolated per-chain
+submission). It returns `{ chain, transactionHash?, error? }[]`, and reusing the
+same passkey pubkey across chains is a per-wallet `addApprover(pubkey)` (idempotent).
+Most integrations target one chain and never need this.
+</Callout>
 
 ## Prerequisites & limits
 
