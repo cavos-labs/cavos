@@ -40,7 +40,7 @@ export async function GET(request: Request) {
     const signer = await getRelayerSigner(network);
     return ApiResponse.success({ fee_payer: signer.publicKey.toBase58() });
   } catch (error) {
-    // Surface the real cause (missing TURNKEY_* env, bad address, import failure)
+    // Surface the real cause (missing relayer secret env, bad key encoding)
     // — this only reveals config errors, never secrets.
     console.error('Solana relay GET — fee-payer lookup failed', error);
     return ApiResponse.serverError(

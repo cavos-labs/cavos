@@ -110,7 +110,7 @@ export async function POST(request: Request) {
     }
 
     // The device signature inside the Soroban auth entry authorizes the action;
-    // the relayer signature only pays the fee. Sign the envelope (via Turnkey) and submit.
+    // the relayer signature only pays the fee. Sign the envelope and submit.
     await signer.signTransaction(tx);
     const server = serverFor(body.network);
     const sent = await server.sendTransaction(tx);
