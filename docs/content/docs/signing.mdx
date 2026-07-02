@@ -96,7 +96,13 @@ transactions yourself.
 ## Security trade-off
 
 Because signing is silent, there is **no per-signature user-verification gate**
-(unlike a biometric passkey). This is the standard embedded-wallet trade-off
-(Privy / Turnkey model). The key is still non-custodial, device-bound, and
-verified on-chain. [Multi-device](/docs/multi-device) and
-[recovery](/docs/recovery) cover device loss.
+— every approved call goes through with no prompt. This is the standard
+embedded-wallet trade-off (Privy / Turnkey model): maximum UX, no friction per
+transaction. The key is still non-custodial, device-bound, and verified on-chain.
+
+That gate is intentionally *not* on signing. Instead, Cavos puts the
+user-verification step on **device management**: an optional [passkey](/docs/passkeys)
+acts as a second factor for approving *new devices*, not for approving each
+transaction. Combined with [multi-device](/docs/multi-device) and
+[recovery](/docs/recovery), that covers device loss without breaking the
+silent-signing UX.

@@ -27,6 +27,33 @@ Under the hood, when an `appId` is set, the kit uses the hosted
 `HttpRecoveryClient` to file a device-addition request, which notifies the user
 (styled as a login-approval prompt).
 
+## Approve with a passkey instead
+
+If the user [enrolled a passkey](/docs/passkeys) after signup, they can self-approve
+from the new browser with **one prompt** — no email round-trip, no second device:
+
+```ts title="TypeScript"
+import { Cavos, PasskeySigner } from "@cavos/kit";
+
+const cavos = await Cavos.connect({ /* same identity + appSalt... */ });
+
+if (cavos.status === "needs-device-approval") {
+  await cavos.approveThisDeviceWithPasskey({ passkey: new PasskeySigner() });
+  // cavos is now ready.
+}
+```
+
+Across multiple chains, `approveDeviceEverywhere([wallets], passkey)` approves the
+device everywhere with a single prompt. This is the recommended path for users who
+have a passkey; the hosted approval page below is the fallback for those who don't.
+
+<Callout type="warn">
+**Starknet mainnet caveat.** Passkey approval currently works on **Sepolia** only.
+On Starknet mainnet, fall back to the hosted approval page (or
+[recovery](/docs/recovery)). Solana and Stellar route passkey approval through
+their relayers and are not affected.
+</Callout>
+
 ## Host your approval page (required)
 
 <Callout type="warning">

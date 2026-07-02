@@ -14,12 +14,13 @@ regardless of chain; only the `chain` and `network` you pass change.
 |-------|--------|----------|
 | **Starknet** | ✅ Available | `sepolia`, `mainnet` |
 | **Solana** | ✅ Available | `solana-devnet`, `solana-mainnet` |
-| **Stellar** | 🚧 Planned | — |
+| **Stellar** | 🚧 Testnet | `stellar-testnet` (mainnet next) |
 
-**Starknet and Solana are implemented today.** Starknet is proven on Sepolia;
+**Starknet and Solana are production-ready.** Starknet is proven on Sepolia;
 Solana ships a full device-account program, gasless relayer, and e2e coverage.
-Stellar is on the roadmap and will slot in behind the same API — without
-changing the application interface below.
+**Stellar is live on testnet** — the adapter, `CavosStellar` client, and relayer
+are implemented and tested end-to-end; mainnet deploys next, slotting in behind
+the same API without changing the application interface below.
 
 ## Per-chain guides
 
@@ -40,8 +41,7 @@ Two layers keep Cavos portable:
   derivation is the same everywhere.
 - **A `ChainAdapter` per chain** handles the chain-specific parts: deterministic
   address computation, signature encoding, and the deploy / add-signer / remove-signer
-  calls. `StarknetAdapter` and `SolanaAdapter` ship today; the Stellar adapter
-  will slot in behind the same interface.
+  calls. `StarknetAdapter`, `SolanaAdapter`, and `StellarAdapter` ship today.
 
 Curves differ across ecosystems, and each adapter resolves that:
 

@@ -18,12 +18,12 @@ returns a chain-native wallet. The result is a discriminated union
 
 ```ts title="TypeScript"
 interface ConnectOptions {
-  chain: "starknet" | "solana";        // returned wallet is discriminated by this
+  chain: "starknet" | "solana" | "stellar"; // returned wallet is discriminated by this
   network: "testnet" | "mainnet";      // resolves to the chain's concrete network
   appSalt: string;
   auth?: AuthProvider;                  // pass `auth` OR `identity`
   identity?: Identity;
-  appId?: string;                       // hosted registry + (Starknet) recovery / (Solana) relayer
+  appId?: string;                       // hosted registry + (Starknet) recovery / (Solana, Stellar) relayer
   backendUrl?: string;                  // defaults to Cavos hosted services
   rpcUrl?: string;
   registry?: WalletRegistry;            // off-chain userId -> wallet map
@@ -37,13 +37,18 @@ interface ConnectOptions {
   programId?: string;                   // device-account program override
   relayer?: SolanaRelayer;              // gasless sponsorship (defaults to hosted when appId set)
   feePayer?: Keypair;                   // self-funded fallback
+  // --- Stellar-only ---
+  stellarRelayer?: StellarRelayer;      // gasless sponsorship (defaults to hosted when appId set)
+  stellarSourceKeypair?: StellarKeypair;// relayer-funded source (advanced)
+  factoryId?: string;                   // account factory contract override
 }
 
-type CavosWallet = Cavos | CavosSolana; // narrow on `wallet.chain`
+type CavosWallet = Cavos | CavosSolana | CavosStellar; // narrow on `wallet.chain`
 ```
 
 - `chain === "starknet"` → `Cavos` instance (see [Starknet](/docs/starknet)).
 - `chain === "solana"` → `CavosSolana` instance (see [Solana](/docs/solana)).
+- `chain === "stellar"` → `CavosStellar` instance (testnet; mainnet deploys next).
 
 ### Instance members (Starknet)
 
@@ -59,12 +64,17 @@ counterpart is `CavosSolana` — see [Solana](/docs/solana).
 | `cavos.devicePublicKey: DevicePublicKey` | This device's public key. |
 | `cavos.execute(calls): Promise<{ transactionHash }>` | Sign + submit calls, gasless. Requires `status === "ready"`. |
 | `cavos.addSigner(pubkey): Promise<{ transactionHash }>` | Authorize another device's key on-chain. |
+| `cavos.enrollPasskey(passkey, params): Promise<{ publicKey, transactionHash? }>` | Create a passkey + register it as an approver. Gasless, idempotent. See [Passkeys](/docs/passkeys). |
+| `cavos.addApprover(pubkey): Promise<{ transactionHash? }>` | Register an already-enrolled passkey pubkey as an approver (idempotent). Use to share one passkey across chains. |
+| `cavos.approveThisDeviceWithPasskey({ passkey, submit? }): Promise<{ transactionHash }>` | From a `needs-device-approval` browser, use a synced passkey to authorize this device. |
+| `cavos.passkeyLeafForThisDevice(): Promise<{ leaf, nonce }>` | This device's passkey leaf + on-chain nonce (for batched / multi-chain approval). |
+| `cavos.submitPasskeyApproval(assertion, leaves, leafIndex, nonce, submit?): Promise<{ transactionHash }>` | Submit `add_signer_via_passkey` with a shared assertion. Low-level; prefer `approveThisDeviceWithPasskey`. |
 | `cavos.setupRecovery(code): Promise<{ transactionHash } \| undefined>` | Register a passphrase-derived backup signer. Idempotent. (Starknet only.) |
 
 ### `Cavos.recover(options): Promise<Cavos>`
 
 Recover after losing every device using a saved recovery code. (Starknet path;
-Solana uses `CavosSolana.recover` with the same model.)
+Solana uses `CavosSolana.recover` and Stellar uses `CavosStellar.recover`, same model.)
 
 ```ts title="TypeScript"
 interface RecoveryOptions {
@@ -102,13 +112,34 @@ interface RecoveryOptions {
 | `InMemoryWalletRegistry`, `HttpWalletRegistry` | Registry implementations. |
 | `BackupSigner` | Passphrase-derived signer (`DeviceSigner`). |
 | `generateRecoveryCode()` | New high-entropy recovery code. |
-| `deriveBackupKey(code)` | Deterministic keypair from a recovery code. |
+| `deriveBackupKey(code)` | Deterministic keypair from a recovery code.
+
+## Passkeys
+
+A second factor for approving new devices — not a transaction signer. See
+[Passkeys](/docs/passkeys).
+
+| Export | Description |
+|--------|-------------|
+| `PasskeySigner` | Browser WebAuthn signer. `static isSupported()`, `enroll({ userId, userName, displayName? })` (creates a synced discoverable credential), `assert(challenge)` (produces a `PasskeyAssertion`). |
+| `PasskeySignerOptions`, `PasskeyEnrollParams`, `EnrolledPasskey` | Types for passkey construction + enrollment. |
+| `PasskeyAssertion` | Parsed WebAuthn assertion (`authenticatorData`, `clientDataJSON`, `r`, `s`, `challengeOffset`). |
+| `approveDeviceEverywhere(wallets, passkey)` | Approve this device across multiple chains with a **single** passkey prompt. Only touches wallets whose `status === "needs-device-approval"`. Returns `{ chain, transactionHash }[]`. |
+| `PasskeyApprovable` | Structural interface implemented by `Cavos`, `CavosSolana`, `CavosStellar` — what `approveDeviceEverywhere` operates on. |
+
+<Callout type="warn">
+Passkey approval on **Starknet mainnet** is not yet available (the mainnet
+account class hasn't been re-declared with the `add_signer_via_passkey` surface).
+Use it on **Sepolia**, or on Solana / Stellar (relayer-routed). On Starknet
+mainnet, fall back to [multi-device](/docs/multi-device) / [recovery](/docs/recovery).
+</Callout>
 
 ## Signers
 
 | Export | Description |
 |--------|-------------|
 | `WebCryptoSigner` | Browser silent device signer (non-extractable P-256 in IndexedDB). `loadOrCreate`, `create`, `load`. |
+| `PasskeySigner` | Browser WebAuthn passkey signer — see [Passkeys](/docs/passkeys). |
 | `DeviceSigner`, `DevicePublicKey`, `DeviceSignature` | Signer types (shared across chains). |
 
 ## Chain adapters & constants
@@ -135,12 +166,28 @@ interface RecoveryOptions {
 | `DEVICE_ACCOUNT_PROGRAM_ID`, `SECP256R1_PROGRAM_ID` | Cavos device-account program id + native secp256r1 precompile id. |
 | `deriveAddressSeedSolana` | SHA-256 `address_seed` from `{ userId, appSalt }` (Solana variant of `deriveAddressSeed`). |
 
+### Stellar
+
+Testnet today; mainnet deploys next.
+
+| Export | Description |
+|--------|-------------|
+| `CavosStellar` | High-level Stellar client — the analogue of `Cavos`. `connect`, `execute(amount, destination)` (native XLM transfer, stroops), `executeTransfer(tokenId, amount, destination)` (any SEP-41 token), `balance(tokenId?)`, `addSigner`, `enrollPasskey`, `addApprover`, `approveThisDeviceWithPasskey`, `setupRecovery`, static `recover`. Returned by `Cavos.connect({ chain: "stellar" })`. |
+| `StellarAdapter`, `StellarAdapterOptions` | Low-level adapter: account derivation via the factory, secp256r1 signature encoding for Soroban `__check_auth`. |
+| `StellarRelayer` | Cavos gasless sponsoring relayer for Soroban (signs/submits via a relayer source). Activated by `appId`. |
+| `ConnectStellarOptions`, `RecoverStellarOptions` | Option types for `CavosStellar.connect` / `.recover`. |
+| `STELLAR_NETWORKS`, `StellarNetwork` | Network configs (`stellar-testnet`). |
+| `sec1Pubkey` | Encode a device public key as a Stellar SEC1 key. |
+| `encodeLowSSignature` (alias `encodeStellarLowSSignature`) | Low-s normalized signature encoding for Soroban. |
+| `deviceSignatureScVal` | Wrap a device signature as a Soroban `ScVal`. |
+| `deriveAddressSeedStellar` | SHA-256 `address_seed` from `{ userId, appSalt }` (Stellar variant of `deriveAddressSeed`). |
+
 ### Shared interface types
 
 | Export | Description |
 |--------|-------------|
 | `ChainAdapter`, `ChainCall`, `ComputeAddressParams` | Multi-chain interface types. |
-| `Chain` (`"starknet" \| "solana"`), `NetworkEnv` (`"testnet" \| "mainnet"`), `CavosWallet` | Unified connect types. |
+| `Chain` (`"starknet" \| "solana" \| "stellar"`), `NetworkEnv` (`"testnet" \| "mainnet"`), `CavosWallet` | Unified connect types. |
 
 ## Low-level crypto (advanced)
 
