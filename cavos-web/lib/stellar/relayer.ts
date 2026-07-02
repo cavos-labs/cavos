@@ -191,5 +191,5 @@ export function parseTransaction(xdrBase64: string, network: StellarNetwork): Tr
   return TransactionBuilder.fromXDR(xdrBase64, passphraseFor(network)) as Transaction;
 }
 
-// The relayer signer (source/fee payer) is Turnkey-backed and HSM-held — see
-// lib/stellar/signer.ts. No env-held secret key path exists by design.
+// The relayer signer (source/fee payer) is a local Ed25519 key loaded from the
+// environment — see lib/stellar/signer.ts.

@@ -1,19 +1,18 @@
 /**
- * Relayer signing — Turnkey only.
+ * Relayer signing — local Ed25519.
  *
- * The sponsoring relayer's fee-payer key is a real-money hot key, so it lives
- * exclusively in Turnkey's HSM-backed enclave: it is NEVER present in this
- * process or in any env var. Co-signing goes through `RelayerSigner`, which
- * exposes only the public key and a `signTransaction` operation — we send the
- * transaction's message bytes to Turnkey, get back an Ed25519 signature, and
- * attach it. A compromised process can request signatures while access lasts
- * (mitigated by Turnkey policies/rate limits) but can NEVER exfiltrate the key.
+ * The sponsoring relayer's fee-payer key is a single operational hot key Cavos
+ * controls (not per-user custody), so it is signed in-process: the secret is
+ * loaded once from the environment (injected by a Secret Manager / Vault).
+ * Co-signing goes through `RelayerSigner`, which exposes only the public key and
+ * a `signTransaction` operation.
  *
- * The whitelist in `validateSponsoredTransaction` is the second safety net: the
- * relayer only ever co-signs the Cavos device-account flow, so even a fully
- * abused signer can lose at most the bounded hot float, never user funds.
+ * The whitelist in `validateSponsoredTransaction` is the safety net: the relayer
+ * only ever co-signs the Cavos device-account flow, so even a fully abused
+ * signer can lose at most the bounded hot float, never user funds.
  */
-import { PublicKey, type Transaction } from '@solana/web3.js';
+import { Keypair, PublicKey, type Transaction } from '@solana/web3.js';
+import bs58 from 'bs58';
 import { type SolanaNetwork } from './relayer';
 
 export interface RelayerSigner {
@@ -24,81 +23,67 @@ export interface RelayerSigner {
 }
 
 /**
- * Turnkey-backed signer — the Ed25519 secret never leaves Turnkey. Signs the
- * compiled transaction message remotely and attaches the signature.
+ * Local Ed25519 signer — the fee-payer key lives in the process, loaded once at
+ * construction from a secret the runtime injects (Secret Manager / Vault → env).
+ *
+ * The relay signer is a single operational wallet Cavos controls (not per-user
+ * custody), so in-process signing is safe and costs nothing per signature. The
+ * whitelist in `validateSponsoredTransaction` bounds the blast radius to the hot
+ * float, never user funds.
  *
  * Env (per cluster, falling back to the unsuffixed name):
- *   TURNKEY_API_BASE_URL          (default https://api.turnkey.com)
- *   TURNKEY_API_PUBLIC_KEY        API key public part (P-256)
- *   TURNKEY_API_PRIVATE_KEY       API key private part (P-256) — used only to
- *                                 sign API requests, NOT the Solana key
- *   TURNKEY_ORGANIZATION_ID
- *   SOLANA_RELAYER_TURNKEY_SIGN_WITH[_MAINNET|_DEVNET]   the Solana wallet
- *                                 account address / private-key id to sign with
- *
- * `@turnkey/sdk-server` and `@turnkey/solana` are lazily imported so the deps are
- * only required when Turnkey is actually selected.
+ *   SOLANA_RELAYER_SECRET_KEY[_MAINNET|_DEVNET]
+ *     the fee-payer secret, accepted as any of:
+ *       - a JSON array of 64 bytes (solana-keygen output)
+ *       - base58 of the 64-byte secret key
+ *       - base58 of the 32-byte seed
  */
-export class TurnkeySigner implements RelayerSigner {
-  private constructor(
-    readonly publicKey: PublicKey,
-    /** Official @turnkey/solana signer; `addSignature` mutates the tx in place. */
-    private readonly solanaSigner: { addSignature(tx: Transaction, fromAddress: string): Promise<void> },
-    /** The Solana wallet-account address (base58) Turnkey signs with. */
-    private readonly signWith: string,
-  ) {}
+export class LocalSigner implements RelayerSigner {
+  readonly publicKey: PublicKey;
 
-  static async create(network?: SolanaNetwork): Promise<TurnkeySigner> {
-    // Per-network address is canonical (separate mainnet real-money key from the
-    // devnet test key); the unsuffixed var is a single-key fallback.
+  private constructor(private readonly keypair: Keypair) {
+    this.publicKey = keypair.publicKey;
+  }
+
+  static fromEnv(network?: SolanaNetwork): LocalSigner | undefined {
     const perNetworkVar =
-      network === 'solana-mainnet' ? 'SOLANA_RELAYER_TURNKEY_SIGN_WITH_MAINNET' :
-      network === 'solana-devnet' ? 'SOLANA_RELAYER_TURNKEY_SIGN_WITH_DEVNET' :
+      network === 'solana-mainnet' ? 'SOLANA_RELAYER_SECRET_KEY_MAINNET' :
+      network === 'solana-devnet' ? 'SOLANA_RELAYER_SECRET_KEY_DEVNET' :
       undefined;
-    const signWith =
+    const raw =
       (perNetworkVar && process.env[perNetworkVar]) ||
-      process.env.SOLANA_RELAYER_TURNKEY_SIGN_WITH;
-    const organizationId = process.env.TURNKEY_ORGANIZATION_ID;
-    const apiPublicKey = process.env.TURNKEY_API_PUBLIC_KEY;
-    const apiPrivateKey = process.env.TURNKEY_API_PRIVATE_KEY;
-    if (!signWith) {
-      throw new Error(
-        `Turnkey: no Solana address configured for ${network ?? 'default'} — set ` +
-          `${perNetworkVar ?? 'SOLANA_RELAYER_TURNKEY_SIGN_WITH'} (or SOLANA_RELAYER_TURNKEY_SIGN_WITH).`,
-      );
+      process.env.SOLANA_RELAYER_SECRET_KEY;
+    if (!raw) return undefined;
+    return new LocalSigner(LocalSigner.parseKeypair(raw.trim()));
+  }
+
+  /** Parse a JSON byte array, base58 64-byte secret, or base58 32-byte seed. */
+  private static parseKeypair(raw: string): Keypair {
+    if (raw.startsWith('[')) {
+      const bytes = Uint8Array.from(JSON.parse(raw) as number[]);
+      return Keypair.fromSecretKey(bytes);
     }
-    if (!organizationId || !apiPublicKey || !apiPrivateKey) {
-      throw new Error('Turnkey: missing TURNKEY_ORGANIZATION_ID / TURNKEY_API_PUBLIC_KEY / TURNKEY_API_PRIVATE_KEY');
-    }
-
-    // `@turnkey/sdk-server` uses tsyringe (DI), which needs the reflect-metadata
-    // polyfill loaded BEFORE the SDK module is evaluated. Import it first.
-    await import('reflect-metadata');
-    // Lazy import so Turnkey is only loaded when actually selected.
-    const { Turnkey } = await import('@turnkey/sdk-server');
-    const { TurnkeySigner: SolanaSigner } = await import('@turnkey/solana');
-
-    const sdk = new Turnkey({
-      apiBaseUrl: process.env.TURNKEY_API_BASE_URL ?? 'https://api.turnkey.com',
-      apiPublicKey,
-      apiPrivateKey,
-      defaultOrganizationId: organizationId,
-    });
-
-    // `signWith` is the Solana wallet-account address; its Ed25519 public key IS
-    // the on-chain fee-payer pubkey, so we can set the fee payer from it directly.
-    const solanaSigner = new SolanaSigner({ organizationId, client: sdk.apiClient() });
-    return new TurnkeySigner(new PublicKey(signWith), solanaSigner, signWith);
+    const decoded = bs58.decode(raw);
+    if (decoded.length === 64) return Keypair.fromSecretKey(decoded);
+    if (decoded.length === 32) return Keypair.fromSeed(decoded);
+    throw new Error(
+      `Solana relayer secret has ${decoded.length} bytes; expected 32 (seed) or 64 (secret key).`,
+    );
   }
 
   async signTransaction(tx: Transaction): Promise<void> {
-    // @turnkey/solana sends the tx message to Turnkey (key never leaves the HSM),
-    // gets the Ed25519 signature back, and attaches it under `signWith` in place.
-    await this.solanaSigner.addSignature(tx, this.signWith);
+    // Attach the fee-payer signature in place. partialSign only adds this key's
+    // signature, leaving any others intact.
+    tx.partialSign(this.keypair);
   }
 }
 
-/** Resolve the relayer signer for a network (Turnkey, HSM-held key). */
+/** Resolve the relayer signer for a network (local Ed25519, secret from env). */
 export async function getRelayerSigner(network?: SolanaNetwork): Promise<RelayerSigner> {
-  return TurnkeySigner.create(network);
+  const local = LocalSigner.fromEnv(network);
+  if (local) return local;
+  throw new Error(
+    `No Solana relayer secret configured for ${network ?? 'default'} — set ` +
+      'SOLANA_RELAYER_SECRET_KEY_MAINNET / _DEVNET (or SOLANA_RELAYER_SECRET_KEY).',
+  );
 }
