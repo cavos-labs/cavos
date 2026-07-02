@@ -124,7 +124,7 @@ A second factor for approving new devices — not a transaction signer. See
 | `PasskeySigner` | Browser WebAuthn signer. `static isSupported()`, `enroll({ userId, userName, displayName? })` (creates a synced discoverable credential), `assert(challenge)` (produces a `PasskeyAssertion`). |
 | `PasskeySignerOptions`, `PasskeyEnrollParams`, `EnrolledPasskey` | Types for passkey construction + enrollment. |
 | `PasskeyAssertion` | Parsed WebAuthn assertion (`authenticatorData`, `clientDataJSON`, `r`, `s`, `challengeOffset`). |
-| `approveDeviceEverywhere(wallets, passkey)` | Approve this device across multiple chains with a **single** passkey prompt. Only touches wallets whose `status === "needs-device-approval"`. Returns `{ chain, transactionHash }[]`. |
+| `approveDeviceEverywhere(wallets, passkey)` | Low-level/advanced: approve this device across multiple independently-managed chain wallets with a **single** passkey prompt. Only touches wallets whose `status === "needs-device-approval"`; submits per-chain in parallel with error isolation. Returns `{ chain, transactionHash?, error? }[]`. Most apps target one chain and use `approveThisDeviceWithPasskey` instead. |
 | `PasskeyApprovable` | Structural interface implemented by `Cavos`, `CavosSolana`, `CavosStellar` — what `approveDeviceEverywhere` operates on. |
 
 <Callout type="warn">

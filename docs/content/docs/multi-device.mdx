@@ -43,9 +43,8 @@ if (cavos.status === "needs-device-approval") {
 }
 ```
 
-Across multiple chains, `approveDeviceEverywhere([wallets], passkey)` approves the
-device everywhere with a single prompt. This is the recommended path for users who
-have a passkey; the hosted approval page below is the fallback for those who don't.
+`approveThisDeviceWithPasskey` is the recommended path for users who have a
+passkey; the hosted approval page below is the fallback for those who don't.
 
 <Callout type="warn">
 **Starknet mainnet caveat.** Passkey approval currently works on **Sepolia** only.
