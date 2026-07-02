@@ -30,6 +30,14 @@ import {
   rpc,
   type Transaction,
 } from '@stellar/stellar-sdk';
+// Authoritative factory IDs are maintained in @cavos/kit.
+// We import here so a factory redeploy only needs a kit version bump in web.
+// If the package version in use is older than stellar support, we fall back.
+import * as kit from '@cavos/kit';
+const KIT_FACTORY_IDS: Record<string, string> =
+  (kit as any).FACTORY_CONTRACT_ID ??
+  ((kit as any).default && (kit as any).default.FACTORY_CONTRACT_ID) ??
+  {};
 
 export type StellarNetwork = 'stellar-testnet' | 'stellar-mainnet';
 
@@ -53,17 +61,22 @@ export function rpcUrlFor(network: StellarNetwork): string {
   return process.env.STELLAR_TESTNET_RPC_URL ?? 'https://soroban-testnet.stellar.org';
 }
 
-/** Deployed `cavos-account-factory` id (override via env for other deployments). */
+/** Deployed `cavos-account-factory` id (override via env for other deployments or
+ *  to point at a staging factory). Sources from @cavos/kit when possible so a
+ *  factory redeploy only requires bumping the kit dep + rebuilding the web app.
+ */
 export function factoryId(network: StellarNetwork): string {
+  const fromKit = KIT_FACTORY_IDS[network] ?? '';
+  // Last-resort inline default (kept in sync with kit at the time of writing).
+  // If this ever gets used it means the kit dep resolution didn't provide it.
+  const fallbackTestnet = 'CBCJIODXIEBOXXD66KCUCF7ZDYJARKI4ZIVQOVWPULOBH5XGNCDP6W3I';
+  const effective =
+    fromKit ||
+    (network === 'stellar-testnet' ? fallbackTestnet : '');
   if (network === 'stellar-mainnet') {
-    return process.env.STELLAR_FACTORY_ID_MAINNET ?? '';
+    return process.env.STELLAR_FACTORY_ID_MAINNET ?? effective;
   }
-  return (
-    process.env.STELLAR_FACTORY_ID_TESTNET ??
-    // Re-deployed 2026-07-01 with the passkey-approval device-account wasm
-    // (batched multi-chain challenge).
-    'CBCJIODXIEBOXXD66KCUCF7ZDYJARKI4ZIVQOVWPULOBH5XGNCDP6W3I'
-  );
+  return process.env.STELLAR_FACTORY_ID_TESTNET ?? effective;
 }
 
 export function serverFor(network: StellarNetwork): rpc.Server {
@@ -166,7 +179,11 @@ export function validateSponsoredTransaction(
     return { ok: true };
   }
 
-  return { ok: false, reason: `function ${fn} on ${contract} is not sponsorable` };
+  const expectedFactory = factoryId(network);
+  return {
+    ok: false,
+    reason: `function ${fn} on ${contract} is not sponsorable (expected factory ${expectedFactory} for ${network})`,
+  };
 }
 
 /** Parse a base64 transaction envelope for `network`. */
