@@ -1,0 +1,50 @@
+{
+  "refreshedAt": "2026-07-03T21:23:25.743Z",
+  "chainId": "0x4b4154414e41",
+  "rpcUrl": "https://katana.testnet.jokersofneon.com",
+  "registries": {
+    "0x0112c6a8a69e4d9a2e74b4638e1495d69266de9f6f796727d4a52a7ab0a48db2": {
+      "admin": "0x3d57e5e7421a70396a69274e8dd57dadfc5e38541d27e7a742116c3ef34bb33",
+      "transactionHash": "0x3da1db2bffa76cdae42e852d085374b5934471f131ec68228ebd8defc3464d5",
+      "callCount": 8,
+      "verification": {
+        "google": {
+          "ok": true,
+          "sampleKid": "f36191371c8c4ffd162846cde91a9cb4c2bebae2"
+        },
+        "apple": {
+          "ok": true,
+          "sampleKid": "1E6VioIaNI"
+        },
+        "cavos": {
+          "ok": true,
+          "sampleKid": "firebase-2026"
+        }
+      }
+    },
+    "0x076ff6853197538b4d4c925b2c775014fae9b5c14f63262b13f2e49f732e21f7": {
+      "admin": "0x1d50c5720b760213700aa19ae017bd1bf54ab208325093899df658ac2259897",
+      "transactionHash": "0x2f465bc35695261bd50d5b69f7d424ce5a0c6c3b5b7a0d847d55bc34d82c7a7",
+      "callCount": 8,
+      "verification": {
+        "google": {
+          "ok": true,
+          "sampleKid": "f36191371c8c4ffd162846cde91a9cb4c2bebae2"
+        },
+        "apple": {
+          "ok": true,
+          "sampleKid": "1E6VioIaNI"
+        },
+        "cavos": {
+          "ok": true,
+          "sampleKid": "firebase-2026"
+        }
+      }
+    }
+  },
+  "providerCounts": {
+    "google": 4,
+    "apple": 3,
+    "cavos": 1
+  }
+}

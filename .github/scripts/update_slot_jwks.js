@@ -12,10 +12,25 @@ const DEFAULT_REGISTRY_ADDRESSES = [
   '0x076ff6853197538b4d4c925b2c775014fae9b5c14f63262b13f2e49f732e21f7',
 ];
 
+// Each parity registry is admin-gated by a distinct account. On this Katana
+// dev_setStorageAt is a no-op, so admin was never handed to a shared operator —
+// it stays the real Sepolia/Mainnet registry admin baked in at construction.
+// set_key must therefore be signed by the matching admin for each registry.
+const REGISTRY_ADMINS = {
+  // Sepolia-parity registry -> real Sepolia registry admin
+  '0x0112c6a8a69e4d9a2e74b4638e1495d69266de9f6f796727d4a52a7ab0a48db2': {
+    address: '0x3d57e5e7421a70396a69274e8dd57dadfc5e38541d27e7a742116c3ef34bb33',
+    privateKey: '0x4f7f6f0f318769325539bad869cde209e2cc559753517b9a825314bc393ede',
+  },
+  // Mainnet-parity registry -> real Mainnet registry admin
+  '0x076ff6853197538b4d4c925b2c775014fae9b5c14f63262b13f2e49f732e21f7': {
+    address: '0x1d50c5720b760213700aa19ae017bd1bf54ab208325093899df658ac2259897',
+    privateKey: '0x61d6bcc6dd46bacd5aa23152703a455b306ecad09320f4ed28ec9b4bb27f62e',
+  },
+};
+
 const DEFAULT_CONFIG = {
   rpcUrl: 'https://katana.testnet.jokersofneon.com',
-  accountAddress: '0x509bc857f2a605c74b1537edc3a9542028cadb76589b0c15322bd23e1a61d98',
-  accountPrivateKey: '0x64db47d78b73f5f3cc6fd608eeb9e11f8305d8b30774473d1c33adbbc639378',
   registryAddresses: DEFAULT_REGISTRY_ADDRESSES,
   outputFile: 'slot-jwks-update-summary.json',
 };
@@ -35,17 +50,10 @@ async function main() {
   console.log('  Cavos Slot JWKS Refresh');
   console.log('===========================================\n');
   console.log(`RPC URL:     ${CONFIG.rpcUrl}`);
-  console.log(`Operator:    ${CONFIG.accountAddress}`);
   console.log(`Registries:  ${CONFIG.registryAddresses.join(', ')}`);
   console.log(`Output file: ${CONFIG.outputFile}\n`);
 
   const provider = new RpcProvider({ nodeUrl: CONFIG.rpcUrl });
-  const account = new Account({
-    provider,
-    address: CONFIG.accountAddress,
-    signer: CONFIG.accountPrivateKey,
-    cairoVersion: '1',
-  });
 
   const chainId = await provider.getChainId();
   console.log(`Chain ID: ${chainId}\n`);
@@ -60,7 +68,6 @@ async function main() {
     refreshedAt: new Date().toISOString(),
     chainId,
     rpcUrl: CONFIG.rpcUrl,
-    operator: CONFIG.accountAddress,
     registries: {},
     providerCounts: Object.fromEntries(
       Object.entries(providerKeys).map(([name, keys]) => [name, keys.length]),
@@ -68,11 +75,19 @@ async function main() {
   };
 
   for (const registryAddress of CONFIG.registryAddresses) {
-    console.log(`Updating registry ${registryAddress}...`);
+    const admin = resolveAdmin(registryAddress);
+    console.log(`Updating registry ${registryAddress} (admin ${admin.address})...`);
     const calls = buildCalls(registryAddress, providerKeys);
     if (calls.length === 0) {
       throw new Error(`No JWKS calls generated for ${registryAddress}`);
     }
+
+    const account = new Account({
+      provider,
+      address: admin.address,
+      signer: admin.privateKey,
+      cairoVersion: '1',
+    });
 
     const execution = await account.execute(calls);
     console.log(`  Submitted tx: ${execution.transaction_hash}`);
@@ -81,6 +96,7 @@ async function main() {
 
     const verification = await verifyRegistry(provider, registryAddress, providerKeys);
     summary.registries[registryAddress] = {
+      admin: admin.address,
       transactionHash: execution.transaction_hash,
       callCount: calls.length,
       verification,
@@ -93,6 +109,17 @@ async function main() {
 
   fs.writeFileSync(CONFIG.outputFile, JSON.stringify(summary, null, 2));
   console.log(`Summary written to ${CONFIG.outputFile}`);
+}
+
+function resolveAdmin(registryAddress) {
+  const admin = CONFIG.registryAdmins[normalizeHex(registryAddress)];
+  if (!admin || !admin.address || !admin.privateKey) {
+    throw new Error(
+      `No admin credentials configured for registry ${registryAddress}. ` +
+        'Add it to REGISTRY_ADMINS or SLOT_REGISTRY_ADMINS.'
+    );
+  }
+  return admin;
 }
 
 function buildCalls(registryAddress, providerKeys) {
@@ -230,26 +257,52 @@ function resolveConfig(argv, env) {
 
   return {
     rpcUrl: cli.rpcUrl || env.SLOT_RPC_URL || DEFAULT_CONFIG.rpcUrl,
-    accountAddress: cli.accountAddress || env.SLOT_ACCOUNT_ADDRESS || DEFAULT_CONFIG.accountAddress,
-    accountPrivateKey:
-      cli.accountPrivateKey || env.SLOT_ACCOUNT_PRIVATE_KEY || DEFAULT_CONFIG.accountPrivateKey,
     registryAddresses: registryAddresses
       .split(',')
       .map((value) => value.trim())
       .filter(Boolean),
+    registryAdmins: resolveRegistryAdmins(env),
     outputFile: path.isAbsolute(outputFile) ? outputFile : path.join(process.cwd(), outputFile),
   };
+}
+
+// Build a registry(normalized) -> { address, privateKey } map. Defaults come
+// from REGISTRY_ADMINS; SLOT_REGISTRY_ADMINS (JSON) can override/extend it.
+function resolveRegistryAdmins(env) {
+  const admins = {};
+  for (const [registry, admin] of Object.entries(REGISTRY_ADMINS)) {
+    admins[normalizeHex(registry)] = { ...admin };
+  }
+  if (env.SLOT_REGISTRY_ADMINS) {
+    let override;
+    try {
+      override = JSON.parse(env.SLOT_REGISTRY_ADMINS);
+    } catch (error) {
+      throw new Error(`SLOT_REGISTRY_ADMINS is not valid JSON: ${error.message}`);
+    }
+    for (const [registry, admin] of Object.entries(override)) {
+      admins[normalizeHex(registry)] = admin;
+    }
+  }
+  return admins;
 }
 
 function validateConfig(config) {
   const missing = [];
   if (!config.rpcUrl) missing.push('SLOT_RPC_URL');
-  if (!config.accountAddress) missing.push('SLOT_ACCOUNT_ADDRESS');
-  if (!config.accountPrivateKey) missing.push('SLOT_ACCOUNT_PRIVATE_KEY');
   if (!config.registryAddresses.length) missing.push('SLOT_JWKS_REGISTRY_ADDRESSES');
 
   if (missing.length > 0) {
     throw new Error(`Missing required configuration: ${missing.join(', ')}`);
+  }
+
+  for (const registry of config.registryAddresses) {
+    const admin = config.registryAdmins[normalizeHex(registry)];
+    if (!admin || !admin.address || !admin.privateKey) {
+      throw new Error(
+        `No admin credentials for registry ${registry}. Configure REGISTRY_ADMINS or SLOT_REGISTRY_ADMINS.`
+      );
+    }
   }
 }
 
