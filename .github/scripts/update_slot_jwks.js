@@ -14,8 +14,8 @@ const DEFAULT_REGISTRY_ADDRESSES = [
 
 const DEFAULT_CONFIG = {
   rpcUrl: 'https://katana.testnet.jokersofneon.com',
-  accountAddress: '0x509bc857f2a605c74b1537edc3a9542028cadb76589b0c15322bd23e1a61d98',
-  accountPrivateKey: '0x64db47d78b73f5f3cc6fd608eeb9e11f8305d8b30774473d1c33adbbc639378',
+  accountAddress: '0x7e1a1bcedaf57ace32a2931b54de8b2c2be3347e2d20a78671a99b08897e050',
+  accountPrivateKey: '0x3240476a649126791e8068f23e1c82b0f71e42e240cb7ca112d129d6dce9003',
   registryAddresses: DEFAULT_REGISTRY_ADDRESSES,
   outputFile: 'slot-jwks-update-summary.json',
 };
