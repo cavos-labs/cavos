@@ -1,43 +1,25 @@
 /**
- * Stellar sponsoring relayer — server-side transaction source + fee payer for
- * Cavos device-account (Soroban) transactions.
+ * Stellar sponsoring relayer — server-side fee payer + reserve sponsor for the
+ * Cavos classic `G…` multisig account (the Soroban `C…` device-account path was
+ * removed). The relayer ONLY pays fees / sponsors reserves; it never holds user
+ * funds and is not a custodian. The account's control key (envelope-encrypted in
+ * the account's own data entries) is the sole signer of value-moving transactions.
  *
- * On Stellar the account is a *contract*, which cannot be a transaction source,
- * so the relayer's own G-account is the source AND fee payer. It ONLY pays fees;
- * it never holds user funds and is not a custodian. User assets live in their
- * device-account contracts, controlled solely by P-256 device keys (verified
- * on-chain by `secp256r1_verify` inside `__check_auth`).
- *
- * Security model: the relayer never signs blindly. The dangerous move on Stellar
- * is a token transfer whose `from` is the relayer's own account — because the
- * relayer's tx signature (SourceAccount credentials) would authorize it. So the
- * gate below co-signs ONLY:
- *   - `factory.deploy(...)` (deploy a new account), or
- *   - `account.add_signer/remove_signer(...)` on a contract account, or
- *   - a SEP-41 `transfer(from, to, amount)` whose `from` is a CONTRACT address
- *     (a device account), never the relayer's G-account.
- * Every value-moving auth is therefore a device-signed Address credential; the
- * relayer's signature only pays the fee. Even a fully abused endpoint can lose at
- * most the relayer's bounded hot float, never user funds.
+ * Two gates (see `validateClassicCreate` / `validateClassicFeeBump` below):
+ *   - CREATE: relayer is the tx source + sponsor; only sponsorship + account-setup
+ *     ops, a 0-balance createAccount, and `cv:`-namespaced data. It cannot be
+ *     drained into the new account.
+ *   - FEE-BUMP: the user's control-signed inner tx (source = their `G…`) is wrapped
+ *     in a fee-bump whose fee source is the relayer — it pays only the fee and is
+ *     never a source of any inner op, so it can't move user funds.
  */
 import {
-  Address,
   Horizon,
   Operation,
   TransactionBuilder,
-  scValToNative,
-  xdr,
-  rpc,
   type Transaction,
+  type FeeBumpTransaction,
 } from '@stellar/stellar-sdk';
-// Authoritative factory IDs are maintained in @cavos/kit.
-// We import here so a factory redeploy only needs a kit version bump in web.
-// If the package version in use is older than stellar support, we fall back.
-import * as kit from '@cavos/kit';
-const KIT_FACTORY_IDS: Record<string, string> =
-  (kit as any).FACTORY_CONTRACT_ID ??
-  ((kit as any).default && (kit as any).default.FACTORY_CONTRACT_ID) ??
-  {};
 
 export type StellarNetwork = 'stellar-testnet' | 'stellar-mainnet';
 
@@ -49,39 +31,6 @@ export function passphraseFor(network: StellarNetwork): string {
   return network === 'stellar-mainnet'
     ? 'Public Global Stellar Network ; September 2015'
     : 'Test SDF Network ; September 2015';
-}
-
-export function rpcUrlFor(network: StellarNetwork): string {
-  if (network === 'stellar-mainnet') {
-    return (
-      process.env.STELLAR_MAINNET_RPC_URL ??
-      'https://soroban-rpc.mainnet.stellar.gateway.fm'
-    );
-  }
-  return process.env.STELLAR_TESTNET_RPC_URL ?? 'https://soroban-testnet.stellar.org';
-}
-
-/** Deployed `cavos-account-factory` id (override via env for other deployments or
- *  to point at a staging factory). Sources from @cavos/kit when possible so a
- *  factory redeploy only requires bumping the kit dep + rebuilding the web app.
- */
-export function factoryId(network: StellarNetwork): string {
-  const fromKit = KIT_FACTORY_IDS[network] ?? '';
-  // Last-resort inline default (kept in sync with kit at the time of writing).
-  // If this ever gets used it means the kit dep resolution didn't provide it.
-  const fallbackTestnet = 'CBCJIODXIEBOXXD66KCUCF7ZDYJARKI4ZIVQOVWPULOBH5XGNCDP6W3I';
-  const effective =
-    fromKit ||
-    (network === 'stellar-testnet' ? fallbackTestnet : '');
-  if (network === 'stellar-mainnet') {
-    return process.env.STELLAR_FACTORY_ID_MAINNET ?? effective;
-  }
-  return process.env.STELLAR_FACTORY_ID_TESTNET ?? effective;
-}
-
-export function serverFor(network: StellarNetwork): rpc.Server {
-  const url = rpcUrlFor(network);
-  return new rpc.Server(url, { allowHttp: url.startsWith('http://') });
 }
 
 /** Horizon URL — used to verify classic XLM deposits (memo + payment ops), which
@@ -98,97 +47,153 @@ export function horizonServerFor(network: StellarNetwork): Horizon.Server {
   return new Horizon.Server(url, { allowHttp: url.startsWith('http://') });
 }
 
-/**
- * Account-management functions the relayer will sponsor on a contract account.
- * `add_signer_via_passkey` is authorized purely by an embedded WebAuthn assertion
- * (no device signature), which lets a user add a device from a fresh browser — it
- * only ever ADDS a signer to the account, never moves funds, so it is as safe to
- * sponsor as `add_signer`. `add_approver`/`remove_approver` are device-signed.
- */
-const ACCOUNT_FUNCTIONS = new Set([
-  'add_signer',
-  'remove_signer',
-  'add_approver',
-  'remove_approver',
-  'add_signer_via_passkey',
-]);
-
 export interface ValidationResult {
   ok: boolean;
   reason?: string;
 }
 
-/**
- * Reject any transaction the relayer should not sponsor. Enforces:
- *  - the transaction source is the relayer (it only ever pays its own fees);
- *  - exactly one operation, and it is an InvokeContract host function;
- *  - the target is the factory `deploy`, an account `add_signer/remove_signer`,
- *    or a `transfer` whose `from` is a CONTRACT (never the relayer's G-account).
- */
-export function validateSponsoredTransaction(
-  tx: Transaction,
-  relayerPublicKey: string,
+// ───────────────────────────── classic-G relayer ────────────────────────────
+//
+// The classic-Stellar (`G…`) multisig account (see @cavos/kit chains/stellar-
+// classic) is a *classic* account, not a contract, so the relayer plays two
+// roles, each with its own gate:
+//   - CREATE: relayer is the tx source + fee payer AND sponsors the new account's
+//     reserves. Only sponsorship + account-setup ops are allowed, the new account
+//     is created with a 0 starting balance (relayer can't be drained into it),
+//     and every data key is under the `cv:` namespace.
+//   - FEE-BUMP: the user's control-signed inner tx (source = their `G…`) is
+//     wrapped in a fee-bump whose fee source is the relayer. The relayer pays only
+//     the fee; it is never a source of any inner op, so it can't move user funds.
+
+/** Ops the relayer will sponsor inside a classic create. Anything else (payment,
+ *  accountMerge, path payment, …) is rejected so the relayer can't be drained. */
+const CLASSIC_CREATE_OP_TYPES = new Set([
+  'beginSponsoringFutureReserves',
+  'endSponsoringFutureReserves',
+  'createAccount',
+  'manageData',
+  'setOptions',
+]);
+
+/** Upper bound on ops in a create — bounds how many reserves the relayer sponsors
+ *  in one tx (create + control signer + a handful of `cv:` entries). */
+const CLASSIC_CREATE_MAX_OPS = 16;
+
+/** Parse a base64 envelope that may be a plain OR a fee-bump transaction. */
+export function parseAnyTransaction(
+  xdrBase64: string,
   network: StellarNetwork,
-): ValidationResult {
+): Transaction | FeeBumpTransaction {
+  return TransactionBuilder.fromXDR(xdrBase64, passphraseFor(network));
+}
+
+/**
+ * Gate a classic account-creation transaction. Enforces:
+ *  - source is the relayer (it pays the fee + sponsors reserves);
+ *  - only sponsorship / account-setup ops, at most `CLASSIC_CREATE_MAX_OPS`;
+ *  - exactly one `createAccount` with startingBalance "0", and its destination is
+ *    the single non-relayer op source (the new account);
+ *  - the sponsored id matches that new account;
+ *  - a `setOptions` that zeroes the master weight (our account model);
+ *  - every `manageData` key is under the `cv:` namespace.
+ */
+export function validateClassicCreate(tx: Transaction, relayerPublicKey: string): ValidationResult {
   if (tx.source !== relayerPublicKey) {
     return { ok: false, reason: 'transaction source must be the Cavos relayer' };
   }
-  if (tx.operations.length !== 1) {
-    return { ok: false, reason: 'exactly one operation is allowed' };
-  }
-  const op = tx.operations[0] as Operation.InvokeHostFunction;
-  if (op.type !== 'invokeHostFunction') {
-    return { ok: false, reason: `operation ${op.type} is not sponsorable` };
-  }
-  // An op-level source override must not be anything but the relayer.
-  if (op.source && op.source !== relayerPublicKey) {
-    return { ok: false, reason: 'operation source override is not allowed' };
-  }
-  if (op.func.switch() !== xdr.HostFunctionType.hostFunctionTypeInvokeContract()) {
-    return { ok: false, reason: 'only contract invocations are sponsorable' };
+  if (tx.operations.length === 0 || tx.operations.length > CLASSIC_CREATE_MAX_OPS) {
+    return { ok: false, reason: `create must have 1..${CLASSIC_CREATE_MAX_OPS} operations` };
   }
 
-  const ic = op.func.invokeContract();
-  const contract = Address.fromScAddress(ic.contractAddress()).toString();
-  const fn = ic.functionName().toString();
-  const args = ic.args();
+  let newAccount: string | undefined;
+  let sawCreate = false;
+  let sawMasterZero = false;
 
-  // 1) Factory deploy.
-  if (contract === factoryId(network) && fn === 'deploy') {
-    return { ok: true };
-  }
-  // 2) Account signer management (on a contract account).
-  if (contract.startsWith('C') && ACCOUNT_FUNCTIONS.has(fn)) {
-    return { ok: true };
-  }
-  // 3) SEP-41 transfer OUT of a device account: `from` must be a contract, so the
-  //    relayer's account can never be the spender (which would drain it).
-  if (fn === 'transfer') {
-    let from: string;
-    try {
-      from = scValToNative(args[0]) as string;
-    } catch {
-      return { ok: false, reason: 'could not decode transfer `from`' };
+  for (const op of tx.operations) {
+    if (!CLASSIC_CREATE_OP_TYPES.has(op.type)) {
+      return { ok: false, reason: `operation ${op.type} is not allowed in a sponsored create` };
     }
-    if (typeof from !== 'string' || !from.startsWith('C')) {
-      return { ok: false, reason: 'transfer `from` must be a contract account' };
+    if (op.type === 'createAccount') {
+      const ca = op as Operation.CreateAccount;
+      if (ca.source && ca.source !== relayerPublicKey) {
+        return { ok: false, reason: 'createAccount source must be the relayer' };
+      }
+      if (ca.startingBalance !== '0' && Number(ca.startingBalance) !== 0) {
+        return { ok: false, reason: 'createAccount starting balance must be 0 (reserves are sponsored)' };
+      }
+      if (sawCreate) return { ok: false, reason: 'only one createAccount is allowed' };
+      sawCreate = true;
+      newAccount = ca.destination;
     }
-    if (from === relayerPublicKey) {
-      return { ok: false, reason: 'relayer cannot be the transfer source' };
-    }
-    return { ok: true };
   }
 
-  const expectedFactory = factoryId(network);
-  return {
-    ok: false,
-    reason: `function ${fn} on ${contract} is not sponsorable (expected factory ${expectedFactory} for ${network})`,
-  };
+  if (!sawCreate || !newAccount) return { ok: false, reason: 'create must contain a createAccount op' };
+  if (!newAccount.startsWith('G')) return { ok: false, reason: 'new account must be a classic G address' };
+  if (newAccount === relayerPublicKey) return { ok: false, reason: 'new account cannot be the relayer' };
+
+  for (const op of tx.operations) {
+    // Non-relayer-sourced ops must all belong to the one new account.
+    if (op.type !== 'createAccount' && op.type !== 'beginSponsoringFutureReserves') {
+      if (op.source && op.source !== newAccount) {
+        return { ok: false, reason: 'account-setup ops must be sourced by the new account' };
+      }
+    }
+    if (op.type === 'beginSponsoringFutureReserves') {
+      const b = op as Operation.BeginSponsoringFutureReserves;
+      if (b.source && b.source !== relayerPublicKey) {
+        return { ok: false, reason: 'beginSponsoring source must be the relayer' };
+      }
+      if (b.sponsoredId !== newAccount) {
+        return { ok: false, reason: 'sponsored id must be the new account' };
+      }
+    }
+    if (op.type === 'manageData') {
+      const md = op as Operation.ManageData;
+      if (!md.name.startsWith('cv:')) {
+        return { ok: false, reason: `data key ${md.name} is outside the cv: namespace` };
+      }
+    }
+    if (op.type === 'setOptions') {
+      const so = op as Operation.SetOptions;
+      if (Number(so.masterWeight) === 0) sawMasterZero = true;
+    }
+  }
+
+  if (!sawMasterZero) {
+    return { ok: false, reason: 'create must zero the master weight (Cavos account model)' };
+  }
+  return { ok: true };
 }
 
-/** Parse a base64 transaction envelope for `network`. */
-export function parseTransaction(xdrBase64: string, network: StellarNetwork): Transaction {
-  return TransactionBuilder.fromXDR(xdrBase64, passphraseFor(network)) as Transaction;
+/**
+ * Gate a classic fee-bump. The relayer only pays the fee, so the safety property
+ * is simply that the relayer is never the source of the inner tx or any inner op
+ * (which would let it be the spender). Enforces:
+ *  - fee source is the relayer;
+ *  - inner source is a `G…` account that is NOT the relayer;
+ *  - no inner op is sourced by the relayer.
+ * Fee abuse is bounded by rate limiting + gas metering, not this gate.
+ */
+export function validateClassicFeeBump(
+  fb: FeeBumpTransaction,
+  relayerPublicKey: string,
+): ValidationResult {
+  if (fb.feeSource !== relayerPublicKey) {
+    return { ok: false, reason: 'fee source must be the Cavos relayer' };
+  }
+  const inner = fb.innerTransaction;
+  if (inner.source === relayerPublicKey) {
+    return { ok: false, reason: 'inner transaction source cannot be the relayer' };
+  }
+  if (!inner.source.startsWith('G')) {
+    return { ok: false, reason: 'inner transaction source must be a classic G account' };
+  }
+  for (const op of inner.operations) {
+    if (op.source === relayerPublicKey) {
+      return { ok: false, reason: 'no inner operation may be sourced by the relayer' };
+    }
+  }
+  return { ok: true };
 }
 
 // The relayer signer (source/fee payer) is a local Ed25519 key loaded from the

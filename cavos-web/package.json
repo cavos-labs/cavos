@@ -13,6 +13,7 @@
     "@cavos/kit": "^0.0.3",
     "@creit.tech/stellar-wallets-kit": "^2.5.0",
     "@gsap/react": "^2.1.2",
+    "@noble/curves": "^1.7.0",
     "@phosphor-icons/react": "^2.1.10",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
