@@ -196,5 +196,60 @@ export function validateClassicFeeBump(
   return { ok: true };
 }
 
+/** Max ops in a sponsored data write (begin + a few `cv:` entries + end). */
+const CLASSIC_DATA_MAX_OPS = 12;
+
+/**
+ * Gate a sponsored data write (adding a passkey/recovery factor or a device
+ * slot): the relayer sponsors the reserve of the new subentries. Enforces:
+ *  - source is the relayer (it pays fee + sponsors reserves);
+ *  - a `beginSponsoringFutureReserves` (relayer-sourced) whose sponsoredId is the
+ *    ONE account, and a matching `endSponsoringFutureReserves`;
+ *  - every other op is a `manageData` under the `cv:` namespace, sourced by that
+ *    account — never a payment, setOptions, createAccount, etc.
+ * The account can therefore only gain `cv:` data entries; the relayer can neither
+ * be drained nor made to sponsor anything but this account's envelope.
+ */
+export function validateSponsoredData(tx: Transaction, relayerPublicKey: string): ValidationResult {
+  if (tx.source !== relayerPublicKey) {
+    return { ok: false, reason: 'transaction source must be the Cavos relayer' };
+  }
+  const ops = tx.operations;
+  if (ops.length < 3 || ops.length > CLASSIC_DATA_MAX_OPS) {
+    return { ok: false, reason: `sponsored-data must have 3..${CLASSIC_DATA_MAX_OPS} operations` };
+  }
+  if (ops[0].type !== 'beginSponsoringFutureReserves') {
+    return { ok: false, reason: 'first op must be beginSponsoringFutureReserves' };
+  }
+  if (ops[ops.length - 1].type !== 'endSponsoringFutureReserves') {
+    return { ok: false, reason: 'last op must be endSponsoringFutureReserves' };
+  }
+  const begin = ops[0] as Operation.BeginSponsoringFutureReserves;
+  if (begin.source && begin.source !== relayerPublicKey) {
+    return { ok: false, reason: 'beginSponsoring source must be the relayer' };
+  }
+  const account = begin.sponsoredId;
+  if (!account || !account.startsWith('G') || account === relayerPublicKey) {
+    return { ok: false, reason: 'sponsored account must be a classic G address (not the relayer)' };
+  }
+  for (const op of ops.slice(1, -1)) {
+    if (op.type !== 'manageData') {
+      return { ok: false, reason: `operation ${op.type} is not allowed in a sponsored data write` };
+    }
+    const md = op as Operation.ManageData;
+    if (md.source !== account) {
+      return { ok: false, reason: 'manageData must be sourced by the sponsored account' };
+    }
+    if (!md.name.startsWith('cv:')) {
+      return { ok: false, reason: `data key ${md.name} is outside the cv: namespace` };
+    }
+  }
+  const end = ops[ops.length - 1] as Operation.EndSponsoringFutureReserves;
+  if (end.source !== account) {
+    return { ok: false, reason: 'endSponsoring must be sourced by the sponsored account' };
+  }
+  return { ok: true };
+}
+
 // The relayer signer (source/fee payer) is a local Ed25519 key loaded from the
 // environment — see lib/stellar/signer.ts.

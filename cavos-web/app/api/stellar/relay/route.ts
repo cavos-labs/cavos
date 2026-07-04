@@ -26,16 +26,20 @@ import {
   parseAnyTransaction,
   validateClassicCreate,
   validateClassicFeeBump,
+  validateSponsoredData,
 } from '@/lib/stellar/relayer';
 import { getRelayerSigner } from '@/lib/stellar/signer';
 import { resolveOrgForApp } from '@/lib/billing/limits';
 import { debitStellarGas, hasGas } from '@/lib/stellar/gas';
 
+type RelayKind = 'create' | 'fee-bump' | 'sponsored-data';
+
 interface ClassicRelayRequest {
   app_id: string;
   network: string;
-  kind: 'create' | 'fee-bump';
-  /** base64 tx envelope: a master-signed create, or a control-signed fee-bump. */
+  kind: RelayKind;
+  /** base64 tx envelope: a master-signed create / sponsored-data, or a
+   *  control-signed fee-bump. */
   transaction: string;
 }
 
@@ -78,7 +82,7 @@ export async function POST(request: Request) {
     if (!isSupportedStellarNetwork(body.network)) {
       return ApiResponse.badRequest('Unsupported Stellar network', { network: body.network });
     }
-    if (body.kind !== 'create' && body.kind !== 'fee-bump') {
+    if (body.kind !== 'create' && body.kind !== 'fee-bump' && body.kind !== 'sponsored-data') {
       return ApiResponse.badRequest('Invalid kind', { kind: body.kind });
     }
 
@@ -95,18 +99,20 @@ export async function POST(request: Request) {
     }
 
     // Security gate — pick the validator for the declared kind. A fee-bump must be
-    // a FeeBumpTransaction; a create must be a plain Transaction.
+    // a FeeBumpTransaction; create + sponsored-data are plain Transactions.
     const isFeeBump = 'innerTransaction' in tx;
     if (body.kind === 'fee-bump' && !isFeeBump) {
       return ApiResponse.badRequest('kind=fee-bump requires a fee-bump transaction');
     }
-    if (body.kind === 'create' && isFeeBump) {
-      return ApiResponse.badRequest('kind=create requires a plain transaction');
+    if (body.kind !== 'fee-bump' && isFeeBump) {
+      return ApiResponse.badRequest(`kind=${body.kind} requires a plain transaction`);
     }
     const check =
       body.kind === 'create'
         ? validateClassicCreate(tx as Transaction, signer.publicKey())
-        : validateClassicFeeBump(tx as FeeBumpTransaction, signer.publicKey());
+        : body.kind === 'sponsored-data'
+          ? validateSponsoredData(tx as Transaction, signer.publicKey())
+          : validateClassicFeeBump(tx as FeeBumpTransaction, signer.publicKey());
     if (!check.ok) {
       logger.warn('Classic relay rejected', { reason: check.reason, app_id: body.app_id, kind: body.kind });
       return ApiResponse.badRequest('Transaction not eligible for sponsorship', { reason: check.reason });
