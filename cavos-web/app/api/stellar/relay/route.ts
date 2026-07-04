@@ -1,39 +1,45 @@
 /**
- * Stellar sponsoring relayer.
+ * Classic-Stellar (`G…`) sponsoring relayer.
  *
- * GET  /api/stellar/relay   → { fee_payer } (the relayer G-account the SDK sets
- *                             as the transaction source before serializing).
- * POST /api/stellar/relay   → validate + sign the envelope + submit a Cavos
- *                             device-account transaction.
+ * GET  /api/stellar/relay  → { fee_payer } (the relayer G-account the SDK
+ *                                    sets as source / fee payer / reserve sponsor).
+ * POST /api/stellar/relay  → validate + co-sign + submit a classic-G
+ *                                    account transaction. `kind` selects the gate:
+ *                                      - "create":   sponsored account creation
+ *                                                    (relayer = source + sponsor);
+ *                                      - "fee-bump": a control-signed inner tx
+ *                                                    wrapped in a relayer fee-bump.
  *
- * The relayer is the tx source + fee payer so the user's silent device key
- * (which holds no XLM) gets a gasless experience. It is a fee payer, NOT a
- * custodian — see lib/stellar/relayer.ts for the security model + allowlist.
+ * The relayer is a fee payer + reserve sponsor, never a custodian — the control
+ * key (envelope-encrypted in the account's own data entries) is the sole signer
+ * of value-moving transactions. See lib/stellar/relayer.ts for the two gates.
  */
 import { NextResponse } from 'next/server';
 import { ApiLogger } from '@/lib/api/logger';
 import { ApiResponse } from '@/lib/api/response';
 import { ApiMiddleware } from '@/lib/api/middleware';
 import { checkRateLimit, clientIp } from '@/lib/api/rateLimit';
-import { rpc } from '@stellar/stellar-sdk';
+import type { FeeBumpTransaction, Transaction } from '@stellar/stellar-sdk';
 import {
+  horizonServerFor,
   isSupportedStellarNetwork,
-  parseTransaction,
-  serverFor,
-  validateSponsoredTransaction,
+  parseAnyTransaction,
+  validateClassicCreate,
+  validateClassicFeeBump,
 } from '@/lib/stellar/relayer';
 import { getRelayerSigner } from '@/lib/stellar/signer';
 import { resolveOrgForApp } from '@/lib/billing/limits';
 import { debitStellarGas, hasGas } from '@/lib/stellar/gas';
 
-interface RelayRequest {
+interface ClassicRelayRequest {
   app_id: string;
   network: string;
-  /** base64-encoded Soroban transaction: source = relayer, auth already device-signed. */
+  kind: 'create' | 'fee-bump';
+  /** base64 tx envelope: a master-signed create, or a control-signed fee-bump. */
   transaction: string;
 }
 
-/** GET — expose the relayer source/fee-payer G-account so the SDK can build the tx. */
+/** GET — expose the relayer source/fee-payer/sponsor G-account. */
 export async function GET(request: Request) {
   try {
     const n = new URL(request.url).searchParams.get('network') ?? '';
@@ -43,7 +49,7 @@ export async function GET(request: Request) {
     const signer = await getRelayerSigner(n);
     return ApiResponse.success({ fee_payer: signer.publicKey() });
   } catch (error) {
-    console.error('Stellar relay GET — fee-payer lookup failed', error);
+    console.error('Stellar classic relay GET — fee-payer lookup failed', error);
     return ApiResponse.serverError(
       `relayer not configured: ${error instanceof Error ? error.message : String(error)}`,
     );
@@ -63,14 +69,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = await ApiMiddleware.parseBody<RelayRequest>(request);
-    if (!body?.app_id || !body?.network || !body?.transaction) {
+    const body = await ApiMiddleware.parseBody<ClassicRelayRequest>(request);
+    if (!body?.app_id || !body?.network || !body?.transaction || !body?.kind) {
       return ApiResponse.badRequest('Missing required fields', {
-        required: ['app_id', 'network', 'transaction'],
+        required: ['app_id', 'network', 'kind', 'transaction'],
       });
     }
     if (!isSupportedStellarNetwork(body.network)) {
       return ApiResponse.badRequest('Unsupported Stellar network', { network: body.network });
+    }
+    if (body.kind !== 'create' && body.kind !== 'fee-bump') {
+      return ApiResponse.badRequest('Invalid kind', { kind: body.kind });
     }
 
     const { valid } = await ApiMiddleware.verifyAppId(body.app_id, logger);
@@ -78,77 +87,72 @@ export async function POST(request: Request) {
 
     const signer = await getRelayerSigner(body.network);
 
-    // Deserialize the assembled, device-authorized transaction.
-    let tx;
+    let tx: Transaction | FeeBumpTransaction;
     try {
-      tx = parseTransaction(body.transaction, body.network);
+      tx = parseAnyTransaction(body.transaction, body.network);
     } catch {
       return ApiResponse.badRequest('Invalid transaction encoding');
     }
 
-    // Security gate: only sign the Cavos device-account flow with the relayer as
-    // source. Rejects anything that could move the relayer's own XLM.
-    const check = validateSponsoredTransaction(tx, signer.publicKey(), body.network);
+    // Security gate — pick the validator for the declared kind. A fee-bump must be
+    // a FeeBumpTransaction; a create must be a plain Transaction.
+    const isFeeBump = 'innerTransaction' in tx;
+    if (body.kind === 'fee-bump' && !isFeeBump) {
+      return ApiResponse.badRequest('kind=fee-bump requires a fee-bump transaction');
+    }
+    if (body.kind === 'create' && isFeeBump) {
+      return ApiResponse.badRequest('kind=create requires a plain transaction');
+    }
+    const check =
+      body.kind === 'create'
+        ? validateClassicCreate(tx as Transaction, signer.publicKey())
+        : validateClassicFeeBump(tx as FeeBumpTransaction, signer.publicKey());
     if (!check.ok) {
-      logger.warn('Relay rejected', { reason: check.reason, app_id: body.app_id });
-      return ApiResponse.badRequest('Transaction not eligible for sponsorship', {
-        reason: check.reason,
-      });
+      logger.warn('Classic relay rejected', { reason: check.reason, app_id: body.app_id, kind: body.kind });
+      return ApiResponse.badRequest('Transaction not eligible for sponsorship', { reason: check.reason });
     }
 
-    // ── Gas gate (mainnet only) ──────────────────────────────────────────────
-    // Testnet is FREE — Cavos sponsors all testnet transactions, no balance
-    // required. Only mainnet is metered against the org's prepaid XLM balance,
-    // and an org out of gas is always blocked (no soak/warn window).
+    // Gas gate (mainnet only) — testnet is free; mainnet meters the org's prepaid
+    // XLM balance and blocks an org that is out of gas.
     const metered = body.network === 'stellar-mainnet';
     const orgId = metered ? await resolveOrgForApp(body.app_id) : null;
     if (orgId && !(await hasGas(orgId))) {
-      logger.warn('Relay blocked — org out of gas', { app_id: body.app_id, org_id: orgId });
+      logger.warn('Classic relay blocked — org out of gas', { app_id: body.app_id, org_id: orgId });
       return ApiResponse.paymentRequired('insufficient_gas', {
         message: 'Deposit XLM to sponsor transactions.',
       });
     }
 
-    // The device signature inside the Soroban auth entry authorizes the action;
-    // the relayer signature only pays the fee. Sign the envelope and submit.
+    // The control signature (create: master; fee-bump: control key) already
+    // authorizes the account ops; the relayer signature only pays fees + sponsors.
     await signer.signTransaction(tx);
-    const server = serverFor(body.network);
-    const sent = await server.sendTransaction(tx);
-    if (sent.status === 'ERROR') {
-      logger.warn('Relay submit rejected', { app_id: body.app_id, err: sent.errorResult });
+
+    const server = horizonServerFor(body.network);
+    let hash: string;
+    let feeCharged = 0;
+    try {
+      const res = await server.submitTransaction(tx);
+      hash = res.hash;
+      feeCharged = Number((res as { fee_charged?: string | number }).fee_charged ?? 0);
+    } catch (e) {
+      const codes = (e as { response?: { data?: { extras?: { result_codes?: unknown } } } })?.response?.data
+        ?.extras?.result_codes;
+      logger.warn('Classic relay submit rejected', { app_id: body.app_id, codes });
       return ApiResponse.badRequest('Transaction rejected by network', {
-        detail: JSON.stringify(sent.errorResult),
+        detail: codes ? JSON.stringify(codes) : String((e as Error)?.message ?? e),
       });
     }
 
-    // Poll to confirmation so the caller gets a settled hash.
-    const hash = sent.hash;
-    for (let i = 0; i < 30; i++) {
-      const got = await server.getTransaction(hash);
-      if (got.status === rpc.Api.GetTransactionStatus.SUCCESS) {
-        // Debit the org by the exact stroops the relayer paid on this tx.
-        if (orgId) {
-          try {
-            const feeStroops = Number(got.resultXdr.feeCharged().toString());
-            await debitStellarGas(orgId, feeStroops);
-          } catch {
-            logger.warn('Gas debit failed (tx already landed)', { hash });
-          }
-        }
-        return ApiResponse.success({ hash });
+    if (orgId && feeCharged > 0) {
+      try {
+        await debitStellarGas(orgId, feeCharged);
+      } catch {
+        logger.warn('Gas debit failed (tx already landed)', { hash });
       }
-      if (got.status === rpc.Api.GetTransactionStatus.FAILED) {
-        logger.warn('Relay tx failed on-chain', { app_id: body.app_id, hash });
-        return ApiResponse.badRequest('Transaction failed on-chain', { hash });
-      }
-      await new Promise((r) => setTimeout(r, 1000));
     }
-    // Submitted but not yet confirmed — return the hash so the client can track it.
-    return ApiResponse.success({ hash, pending: true });
+    return ApiResponse.success({ hash });
   } catch (error) {
-    logger.error('Stellar relay POST failed', error);
-    return ApiResponse.serverError(
-      error instanceof Error ? error.message : 'relay failed',
-    );
+    logger.error('Stellar classic relay POST failed', error);
+    return ApiResponse.serverError(error instanceof Error ? error.message : 'relay failed');
   }
 }

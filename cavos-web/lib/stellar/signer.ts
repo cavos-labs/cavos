@@ -12,14 +12,15 @@
  * can lose at most the bounded hot float, never user funds. Mirrors the Solana
  * relayer signer — see lib/solana/signer.ts.
  */
-import { Keypair, type Transaction } from '@stellar/stellar-sdk';
+import { Keypair, type Transaction, type FeeBumpTransaction } from '@stellar/stellar-sdk';
 import { type StellarNetwork } from './relayer';
 
 export interface StellarRelayerSigner {
   /** The relayer public G-address set as the source/fee payer on every tx. */
   publicKey(): string;
-  /** Sign `tx` as source/fee payer — the signature is attached in place. */
-  signTransaction(tx: Transaction): Promise<void>;
+  /** Sign `tx` as source/fee payer — the signature is attached in place. Accepts
+   *  a fee-bump too (the classic relayer signs the outer envelope). */
+  signTransaction(tx: Transaction | FeeBumpTransaction): Promise<void>;
 }
 
 /**
@@ -53,9 +54,9 @@ export class LocalStellarSigner implements StellarRelayerSigner {
     return new LocalStellarSigner(Keypair.fromSecret(secret.trim()));
   }
 
-  async signTransaction(tx: Transaction): Promise<void> {
+  async signTransaction(tx: Transaction | FeeBumpTransaction): Promise<void> {
     // Attach the source/fee-payer DecoratedSignature in place (device auth
-    // inside the tx is untouched).
+    // inside the tx is untouched). Works for both plain and fee-bump envelopes.
     tx.sign(this.keypair);
   }
 }
