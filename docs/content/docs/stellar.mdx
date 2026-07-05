@@ -3,25 +3,25 @@ title: Stellar
 description: Use @cavos/kit on Stellar — a classic G… multisig account whose control key is sealed on-chain and unlocked by a silent device key, gasless via the Cavos relayer.
 ---
 
-Stellar is the third implemented chain in `@cavos/kit`. Unlike Starknet and
-Solana — where a smart-contract / program account verifies a secp256r1 device
-signature — Stellar has no on-chain WebAuthn/P-256 verifier for the classic
-protocol, and a partner integration requires **classic `G…` addresses**. So the
-Stellar path is a **classic multisig account**, not a Soroban contract:
+On Stellar, `@cavos/kit` gives your users a **standard `G…` account** — the same
+address format wallets, exchanges, and every Stellar tool already understand — with
+no seed phrase and no popups. A login derives a deterministic `G…` address, and
+transactions are signed silently on the device. Gas and account reserves are
+sponsored by the Cavos relayer, so the user never needs to fund or manage XLM to
+get started.
 
-- A **deterministic master key** (`ed25519`, derived from the user's identity)
-  defines the `G…` address and is set to **weight 0** at creation — public but
-  powerless.
-- A **random control key** (weight 1, threshold 1) is the real signer. Its seed
-  is sealed **on-chain in the account's own data entries** via envelope
-  encryption, never stored in the clear and never held by a backend.
-- The control key is unwrapped **locally, per device**, from one of several
-  **unlock factors** — so signing stays silent while the account remains
-  self-custodial.
+It's a native Stellar account (not a Soroban contract), so it interoperates with
+the whole ecosystem out of the box. If you've used the [Starknet](/docs/starknet)
+or [Solana](/docs/solana) paths, the app-facing API is identical — same
+`Cavos.connect`, same silent signing, same recovery model.
 
 <Callout type="info">
-This is **the** Stellar implementation. The earlier Soroban `C…` device-account
-path was removed in favor of the classic `G…` model.
+**How it works underneath (optional).** The `G…` account is a multisig: a
+deterministic master key (weight 0) fixes the address, and a random **control
+key** (weight 1) does the signing. The control key is sealed **on-chain** in the
+account's own data entries and unwrapped locally on each device, so signing stays
+silent and the account stays self-custodial — no backend ever holds a key. You
+don't need to manage any of this; `Cavos.connect` handles it.
 </Callout>
 
 ## Connect
