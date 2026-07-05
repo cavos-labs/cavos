@@ -48,7 +48,7 @@ type CavosWallet = Cavos | CavosSolana | CavosStellar; // narrow on `wallet.chai
 
 - `chain === "starknet"` → `Cavos` instance (see [Starknet](/docs/starknet)).
 - `chain === "solana"` → `CavosSolana` instance (see [Solana](/docs/solana)).
-- `chain === "stellar"` → `CavosStellar` instance (testnet; mainnet deploys next).
+- `chain === "stellar"` → `CavosStellar` instance (classic `G…` multisig — see [Stellar](/docs/stellar)).
 
 ### Instance members (Starknet)
 
@@ -172,7 +172,7 @@ mainnet, fall back to [multi-device](/docs/multi-device) / [recovery](/docs/reco
 
 Classic `G…` multisig account (self-custodial, no backend/registry). This is the
 sole Stellar implementation — the earlier Soroban `C…` device-account path was
-removed. Testnet today; mainnet next.
+removed. Live on testnet and mainnet.
 
 | Export | Description |
 |--------|-------------|

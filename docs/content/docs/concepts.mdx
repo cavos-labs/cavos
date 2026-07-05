@@ -68,8 +68,8 @@ chain's concrete network (Starknet testnet → `sepolia`). The `STARKNET_NETWORK
 ## Multi-chain by design
 
 The kit is structured around a `ChainAdapter` interface, with `StarknetAdapter`,
-`SolanaAdapter`, and `StellarAdapter` implemented today (Stellar is live on
-testnet; mainnet deploys next). New chains slot in behind the same `Cavos.connect`
+`SolanaAdapter`, and `StellarAdapter` implemented today (all three live on testnet
+and mainnet). New chains slot in behind the same `Cavos.connect`
 API surface, so application code written against `Cavos.connect` stays stable as
 chains are added. Each chain keeps its native `execute` signature (narrow the
 returned wallet on `wallet.chain`); see [Chains](/docs/chains) for the per-chain
