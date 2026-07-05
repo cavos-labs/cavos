@@ -10,7 +10,7 @@
  * lib/solana/relayer.ts for the security model + instruction whitelist.
  */
 import { NextResponse } from 'next/server';
-import { Transaction } from '@solana/web3.js';
+import { Connection, Transaction } from '@solana/web3.js';
 import { ApiLogger } from '@/lib/api/logger';
 import { ApiResponse } from '@/lib/api/response';
 import { ApiMiddleware } from '@/lib/api/middleware';
@@ -46,6 +46,42 @@ export async function GET(request: Request) {
     return ApiResponse.serverError(
       `relayer not configured: ${error instanceof Error ? error.message : String(error)}`,
     );
+  }
+}
+
+/**
+ * Confirm a submitted transaction via HTTP polling of getSignatureStatuses,
+ * rebroadcasting the raw tx each tick so a dropped send still lands. Resolves
+ * once the signature reaches `confirmed` (or better); throws if the blockhash
+ * validity window is exceeded without confirmation. Avoids the websocket
+ * signatureSubscribe that connection.confirmTransaction relies on.
+ */
+async function confirmBySignaturePolling(
+  connection: Connection,
+  signature: string,
+  raw: Buffer | Uint8Array,
+  lastValidBlockHeight: number,
+): Promise<void> {
+  const POLL_MS = 2_000;
+  for (;;) {
+    const { value } = await connection.getSignatureStatuses([signature]);
+    const status = value[0];
+    if (status) {
+      if (status.err) {
+        throw new Error(`transaction failed: ${JSON.stringify(status.err)}`);
+      }
+      if (status.confirmationStatus === 'confirmed' || status.confirmationStatus === 'finalized') {
+        return;
+      }
+    }
+    // Give up once the blockhash can no longer be included (tx will never land).
+    const blockHeight = await connection.getBlockHeight('confirmed');
+    if (blockHeight > lastValidBlockHeight) {
+      throw new Error('transaction expired (blockhash no longer valid)');
+    }
+    // Rebroadcast to survive transient RPC drops, then wait before re-polling.
+    await connection.sendRawTransaction(raw, { skipPreflight: true }).catch(() => undefined);
+    await new Promise((r) => setTimeout(r, POLL_MS));
   }
 }
 
@@ -129,13 +165,17 @@ export async function POST(request: Request) {
     tx.feePayer = signer.publicKey;
     await signer.signTransaction(tx);
 
-    const signature = await connection.sendRawTransaction(tx.serialize(), {
+    const raw = tx.serialize();
+    const signature = await connection.sendRawTransaction(raw, {
       skipPreflight: false,
     });
-    await connection.confirmTransaction(
-      { signature, blockhash, lastValidBlockHeight },
-      'confirmed',
-    );
+    // Confirm by POLLING getSignatureStatuses over HTTP rather than
+    // connection.confirmTransaction, which opens a websocket signatureSubscribe.
+    // Public RPCs (and serverless runtimes) drop that websocket, so the
+    // subscription-based confirm silently waits out the blockhash window (~60s)
+    // and throws even though the tx landed. Polling depends only on HTTP and
+    // rebroadcasts while we wait, so confirmation lands in a couple of seconds.
+    await confirmBySignaturePolling(connection, signature, raw, lastValidBlockHeight);
 
     // Debit the org by the exact lamports the relayer (fee payer, account index 0)
     // spent on this tx — fee + any rent it funded.
