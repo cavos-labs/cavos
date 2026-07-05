@@ -48,7 +48,11 @@ Curves differ across ecosystems, and each adapter resolves that:
 - **Starknet** — on-chain secp256r1 verification in the Cairo `DeviceAccount`.
 - **Solana** — every guarded action pairs Solana's **native secp256r1 precompile**
   with the Cavos device-account program instruction.
-- **Stellar** — native secp256r1 + Soroban contract accounts (cleanest fit).
+- **Stellar** — a **classic `G…` multisig account** (no Soroban contract): a
+  deterministic master key with weight 0 plus a control key sealed on-chain in the
+  account's data entries. The control key is unwrapped locally per-device (via an
+  ECDH device key, a WebAuthn PRF passkey, or a recovery code) and signs
+  transactions. Self-custodial, no backend key.
 
 ## Writing chain-agnostic code
 

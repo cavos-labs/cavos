@@ -37,10 +37,10 @@ interface ConnectOptions {
   programId?: string;                   // device-account program override
   relayer?: SolanaRelayer;              // gasless sponsorship (defaults to hosted when appId set)
   feePayer?: Keypair;                   // self-funded fallback
-  // --- Stellar-only ---
+  // --- Stellar-only (classic `G…` multisig) ---
   stellarRelayer?: StellarRelayer;      // gasless sponsorship (defaults to hosted when appId set)
-  stellarSourceKeypair?: StellarKeypair;// relayer-funded source (advanced)
-  factoryId?: string;                   // account factory contract override
+  stellarSourceKeypair?: StellarKeypair;// self-funded source/fee-payer (advanced)
+  stellarDeviceKey?: DeviceUnwrapKey;   // this device's ECDH unwrap key (defaults to persisted WebCrypto)
 }
 
 type CavosWallet = Cavos | CavosSolana | CavosStellar; // narrow on `wallet.chain`
@@ -61,7 +61,7 @@ counterpart is `CavosSolana` — see [Solana](/docs/solana).
 | `cavos.status: "ready" \| "needs-device-approval"` | Whether this device can operate the wallet. |
 | `cavos.pendingRequestId: string \| null` | Device-addition request id when `status` is `needs-device-approval`. |
 | `cavos.identity: Identity` | The authenticated identity. |
-| `cavos.devicePublicKey: DevicePublicKey` | This device's public key. |
+| `cavos.publicKey: DevicePublicKey` | This device's public key. |
 | `cavos.execute(calls): Promise<{ transactionHash }>` | Sign + submit calls, gasless. Requires `status === "ready"`. |
 | `cavos.addSigner(pubkey): Promise<{ transactionHash }>` | Authorize another device's key on-chain. |
 | `cavos.enrollPasskey(passkey, params): Promise<{ publicKey, transactionHash? }>` | Create a passkey + register it as an approver. Gasless, idempotent. See [Passkeys](/docs/passkeys). |
@@ -74,13 +74,15 @@ counterpart is `CavosSolana` — see [Solana](/docs/solana).
 ### `Cavos.recover(options): Promise<Cavos>`
 
 Recover after losing every device using a saved recovery code. (Starknet path;
-Solana uses `CavosSolana.recover` and Stellar uses `CavosStellar.recover`, same model.)
+Solana uses `CavosSolana.recover`. On Stellar you reconnect on the fresh device
+and call `wallet.approveThisDeviceWithRecovery(code)` — the recovery code unlocks
+the control key, which authorizes the new device's slot.)
 
 ```ts title="TypeScript"
 interface RecoveryOptions {
   code: string;
   identity: Identity;
-  network: "sepolia" | "mainnet";
+  network: "testnet" | "mainnet";
   appSalt: string;
   paymasterApiKey: string;
   appId?: string;
@@ -125,7 +127,7 @@ A second factor for approving new devices — not a transaction signer. See
 | `PasskeySignerOptions`, `PasskeyEnrollParams`, `EnrolledPasskey` | Types for passkey construction + enrollment. |
 | `PasskeyAssertion` | Parsed WebAuthn assertion (`authenticatorData`, `clientDataJSON`, `r`, `s`, `challengeOffset`). |
 | `approveDeviceEverywhere(wallets, passkey)` | Low-level/advanced: approve this device across multiple independently-managed chain wallets with a **single** passkey prompt. Only touches wallets whose `status === "needs-device-approval"`; submits per-chain in parallel with error isolation. Returns `{ chain, transactionHash?, error? }[]`. Most apps target one chain and use `approveThisDeviceWithPasskey` instead. |
-| `PasskeyApprovable` | Structural interface implemented by `Cavos`, `CavosSolana`, `CavosStellar` — what `approveDeviceEverywhere` operates on. |
+| `PasskeyApprovable` | Structural interface implemented by `Cavos` and `CavosSolana` — what `approveDeviceEverywhere` operates on. Classic Stellar is **not** part of the batch: its passkey factor is a WebAuthn-PRF secret, so approve a Stellar device with `CavosStellar.approveThisDeviceWithPasskey(prfOutput)` separately. |
 
 <Callout type="warn">
 Passkey approval on **Starknet mainnet** is not yet available (the mainnet
@@ -168,18 +170,22 @@ mainnet, fall back to [multi-device](/docs/multi-device) / [recovery](/docs/reco
 
 ### Stellar
 
-Testnet today; mainnet deploys next.
+Classic `G…` multisig account (self-custodial, no backend/registry). This is the
+sole Stellar implementation — the earlier Soroban `C…` device-account path was
+removed. Testnet today; mainnet next.
 
 | Export | Description |
 |--------|-------------|
-| `CavosStellar` | High-level Stellar client — the analogue of `Cavos`. `connect`, `execute(amount, destination)` (native XLM transfer, stroops), `executeTransfer(tokenId, amount, destination)` (any SEP-41 token), `balance(tokenId?)`, `addSigner`, `enrollPasskey`, `addApprover`, `approveThisDeviceWithPasskey`, `setupRecovery`, static `recover`. Returned by `Cavos.connect({ chain: "stellar" })`. |
-| `StellarAdapter`, `StellarAdapterOptions` | Low-level adapter: account derivation via the factory, secp256r1 signature encoding for Soroban `__check_auth`. |
-| `StellarRelayer` | Cavos gasless sponsoring relayer for Soroban (signs/submits via a relayer source). Activated by `appId`. |
-| `ConnectStellarOptions`, `RecoverStellarOptions` | Option types for `CavosStellar.connect` / `.recover`. |
-| `STELLAR_NETWORKS`, `StellarNetwork` | Network configs (`stellar-testnet`). |
-| `sec1Pubkey` | Encode a device public key as a Stellar SEC1 key. |
-| `encodeLowSSignature` (alias `encodeStellarLowSSignature`) | Low-s normalized signature encoding for Soroban. |
-| `deviceSignatureScVal` | Wrap a device signature as a Soroban `ScVal`. |
+| `CavosStellar` | High-level Stellar client — the analogue of `Cavos`. `connect`, `execute(amount, destination)` (native XLM transfer, stroops), `balance()` (XLM, stroops), `enrollPasskey(prfOutput)` (add a WebAuthn-PRF passkey unlock factor), `setupRecovery(code)` (add a recovery-code unlock factor), `approveThisDeviceWithPasskey(prfOutput)`, `approveThisDeviceWithRecovery(code)`, `hasPasskey`, `isReady`, `controlAddress`. Returned by `Cavos.connect({ chain: "stellar" })`. |
+| `StellarAdapter`, `StellarAdapterOptions` | Low-level adapter over Horizon: deterministic master-key derivation, account creation/payment/data-entry transaction builders, fee-bump wrapping, submit. |
+| `StellarRelayer`, `StellarRelayerOptions`, `StellarRelayKind` | Cavos gasless sponsoring relayer (signs/submits/fee-bumps via a relayer source). Activated by `appId`. |
+| `ConnectStellarOptions`, `StellarConnectStatus` | Option/status types for `CavosStellar.connect`. |
+| `STELLAR_NETWORKS`, `StellarNetwork`, `HORIZON_URL`, `XLM_DECIMALS` | Network configs + Horizon endpoints (`stellar-testnet`, `stellar-mainnet`). |
+| `DeviceUnwrapKey`, `LocalDeviceUnwrapKey`, `WebCryptoDeviceUnwrapKey`, `WebCryptoUnwrapKeyOptions`, `deviceSlotId` | This device's ECDH key that unwraps the account's control-key envelope (defaults to a persisted WebCrypto key in the browser). |
+| `PasskeyPrf`, `PasskeyPrfOptions`, `PasskeyPrfEnrollParams` | WebAuthn **PRF** helper: a synced passkey derives a stable secret that unlocks the control key (Stellar's passkey factor is a PRF secret, not an on-chain assertion). |
+| `deriveStellarAddress`, `deriveStellarMasterKeypair`, `generateControlKey` | Deterministic master-address/keypair derivation + control-key generation. |
+| `generateDEK`, `sealControlSeed`, `openControlSeed`, `wrapDEK`, `unwrapDEK`, `eciesWrapDEK`, `eciesUnwrapDEK`, `derivePasskeyKEK`, `deriveRecoveryKEK` | Envelope crypto: seal the control key under a DEK and wrap the DEK per unlock factor (device / passkey / recovery). |
+| `toDataEntries`, `fromDataEntries`, `AccountEnvelope` | Serialize the on-chain control-key envelope to/from account data entries. |
 | `deriveAddressSeedStellar` | SHA-256 `address_seed` from `{ userId, appSalt }` (Stellar variant of `deriveAddressSeed`). |
 
 ### Shared interface types

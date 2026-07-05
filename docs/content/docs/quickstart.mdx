@@ -25,7 +25,7 @@ and wire up the gas sponsor.
 import { Cavos } from "@cavos/kit";
 
 const cavos = await Cavos.connect({
-  network: "sepolia",                 // "sepolia" | "mainnet"
+  network: "testnet",                 // "testnet" (sepolia) | "mainnet"
   appSalt: "my-app",                  // namespaces addresses to your app
   identity: {                         // from your login (see Authentication)
     userId: user.id,
@@ -42,7 +42,7 @@ console.log(cavos.address); // deterministic; deployed on first connect
 
 - `cavos.address` — the smart account address (stable across devices).
 - `cavos.status` — `"ready"` or `"needs-device-approval"` (see [Multi-device](/docs/multi-device)).
-- `cavos.devicePublicKey` — this device's public key.
+- `cavos.publicKey` — this device's public key.
 
 ## 3. Execute a transaction
 

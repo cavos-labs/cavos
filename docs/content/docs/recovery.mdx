@@ -44,7 +44,7 @@ import { Cavos } from "@cavos/kit";
 const cavos = await Cavos.recover({
   code,                                // the recovery code the user saved
   identity: { userId: user.id, email: user.email },
-  network: "sepolia",
+  network: "testnet",
   appSalt: "my-app",
   appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
   paymasterApiKey: process.env.CAVOS_PAYMASTER_API_KEY!,
