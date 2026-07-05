@@ -16,7 +16,7 @@ a stable `userId`:
 
 ```ts title="TypeScript"
 const cavos = await Cavos.connect({
-  network: "sepolia",
+  network: "testnet",
   appSalt: "my-app",
   identity: { userId: user.id, email: user.email },
   appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
@@ -59,7 +59,7 @@ const identity = await auth.handleCallback(window.location.search);
 
 // 3. Connect with the resolved identity
 const cavos = await Cavos.connect({
-  network: "sepolia",
+  network: "testnet",
   appSalt: "my-app",
   identity,
   appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
@@ -74,7 +74,7 @@ await auth.sendOtp(email);
 const identity = await auth.verifyOtp(email, code);
 
 const cavos = await Cavos.connect({
-  network: "sepolia",
+  network: "testnet",
   appSalt: "my-app",
   identity,
   appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,

@@ -60,8 +60,10 @@ STARKNET_NETWORKS.sepolia;            // RPC + chain config
 DEVICE_ACCOUNT_CLASS_HASH.sepolia;    // deployed DeviceAccount class hash
 ```
 
-`network` accepts `"sepolia"` (testnet) and `"mainnet"`. The class hash is the
-declared `DeviceAccount` contract; the kit ships the current values.
+`Cavos.connect` takes `network: "testnet" | "mainnet"` and resolves it to the
+chain's concrete network (Starknet testnet → `sepolia`). The `STARKNET_NETWORKS` /
+`DEVICE_ACCOUNT_CLASS_HASH` maps are still keyed by the concrete Starknet network
+(`sepolia`, `mainnet`); the kit ships the current class-hash values.
 
 ## Multi-chain by design
 

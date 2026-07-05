@@ -95,7 +95,19 @@ chain. If your app manages several chain wallets for the same user, the low-leve
 with a **single** passkey prompt (one batched challenge, isolated per-chain
 submission). It returns `{ chain, transactionHash?, error? }[]`, and reusing the
 same passkey pubkey across chains is a per-wallet `addApprover(pubkey)` (idempotent).
+This covers **Starknet and Solana** (the on-chain assertion model on this page).
 Most integrations target one chain and never need this.
+</Callout>
+
+<Callout type="warn">
+**Stellar passkeys work differently.** The classic `G…` account has no on-chain
+WebAuthn verifier. Instead, the passkey is a **WebAuthn PRF** credential whose
+derived secret unlocks the account's control key — enroll it with
+`stellarWallet.enrollPasskey(prfOutput)` and approve a new device with
+`stellarWallet.approveThisDeviceWithPasskey(prfOutput)`. It is **not** part of the
+`approveDeviceEverywhere` batch and does not use `addApprover` /
+`add_signer_via_passkey`. The React `CavosProvider` wraps this for you via
+`enrollPasskeyDefault()` / `approveDeviceWithPasskey()`.
 </Callout>
 
 ## Prerequisites & limits
