@@ -14,13 +14,12 @@ regardless of chain; only the `chain` and `network` you pass change.
 |-------|--------|----------|
 | **Starknet** | ✅ Available | `sepolia`, `mainnet` |
 | **Solana** | ✅ Available | `solana-devnet`, `solana-mainnet` |
-| **Stellar** | 🚧 Testnet | `stellar-testnet` (mainnet next) |
+| **Stellar** | ✅ Available | `stellar-testnet`, `stellar-mainnet` |
 
-**Starknet and Solana are production-ready.** Starknet is proven on Sepolia;
-Solana ships a full device-account program, gasless relayer, and e2e coverage.
-**Stellar is live on testnet** — the adapter, `CavosStellar` client, and relayer
-are implemented and tested end-to-end; mainnet deploys next, slotting in behind
-the same API without changing the application interface below.
+**All three chains are production-ready.** Starknet is proven on Sepolia; Solana
+ships a full device-account program, gasless relayer, and e2e coverage. Stellar
+runs a classic `G…` multisig account with the `CavosStellar` client and gasless
+relayer, live on testnet and mainnet. See [Stellar](/docs/stellar).
 
 ## Per-chain guides
 
@@ -30,6 +29,7 @@ details:
 <Cards>
   <Card title="Starknet" href="/docs/starknet" description="Cairo DeviceAccount, 5-felt signatures, Cavos paymaster." />
   <Card title="Solana" href="/docs/solana" description="Native secp256r1 precompile, device-account PDA, Cavos relayer." />
+  <Card title="Stellar" href="/docs/stellar" description="Classic G… multisig, on-chain sealed control key, Cavos relayer." />
 </Cards>
 
 ## How the abstraction works
@@ -64,8 +64,8 @@ import { Cavos } from "@cavos/kit";
 
 // One entry point; chain + network are the only chain-specific inputs.
 const wallet = await Cavos.connect({
-  chain: "starknet",          // "starknet" | "solana"
-  network: "testnet",         // resolves to sepolia / solana-devnet
+  chain: "starknet",          // "starknet" | "solana" | "stellar"
+  network: "testnet",         // resolves to sepolia / solana-devnet / stellar-testnet
   identity: { userId, email },
   appSalt: "my-app",
   appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
@@ -78,6 +78,8 @@ if (wallet.chain === "starknet") {
   await wallet.execute(calls);                 // arbitrary Starknet calls
 } else if (wallet.chain === "solana") {
   await wallet.execute(amount, destination);   // lamport transfer
+} else if (wallet.chain === "stellar") {
+  await wallet.execute(amount, destination);   // XLM transfer (stroops)
 }
 ```
 

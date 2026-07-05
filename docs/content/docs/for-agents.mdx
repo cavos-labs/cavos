@@ -33,7 +33,7 @@ Then ask it to integrate `@cavos/kit` into your app.
 ## What an agent should know up front
 
 - **Install:** `npm install @cavos/kit`.
-- **Three chains:** **Starknet** and **Solana** are production-ready; **Stellar** is implemented on testnet (mainnet deploys next). See [Chains](/docs/chains).
+- **Three chains, all production-ready:** **Starknet**, **Solana**, and **Stellar** (classic `G…` multisig) are live on testnet and mainnet. See [Chains](/docs/chains).
 - **Passkeys are a 2FA step-up, not a signer.** After signup, prompt the user for a passkey (`cavos.enrollPasskey`); it approves *new devices* on any browser — it never signs transactions. Use `approveThisDeviceWithPasskey` / `approveDeviceEverywhere` to self-approve on a fresh device. Caveat: passkey approval on **Starknet mainnet** isn't available yet (Sepolia only). See [Passkeys](/docs/passkeys).
 - **One unified entry point:** `Cavos.connect({ chain, network, identity | auth, appSalt, appId, ... })`. The returned wallet is a discriminated union — narrow on `wallet.chain` before calling `execute`.
 - **`execute` differs per chain:** Starknet → `wallet.execute(calls)` (arbitrary calls); Solana → `wallet.execute(amount, destination)` for SOL transfers, or `wallet.executeInstructions(instructions)` for arbitrary CPI (SPL transfers, swaps) gated by the app's program allowlist; Stellar → `wallet.execute(amount, destination)` for XLM (stroops), plus `wallet.balance()`. Stellar is a classic `G…` multisig account (not Soroban); no arbitrary-call surface today.

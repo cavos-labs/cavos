@@ -1,0 +1,224 @@
+---
+title: Stellar
+description: Use @cavos/kit on Stellar — a classic G… multisig account whose control key is sealed on-chain and unlocked by a silent device key, gasless via the Cavos relayer.
+---
+
+Stellar is the third implemented chain in `@cavos/kit`. Unlike Starknet and
+Solana — where a smart-contract / program account verifies a secp256r1 device
+signature — Stellar has no on-chain WebAuthn/P-256 verifier for the classic
+protocol, and a partner integration requires **classic `G…` addresses**. So the
+Stellar path is a **classic multisig account**, not a Soroban contract:
+
+- A **deterministic master key** (`ed25519`, derived from the user's identity)
+  defines the `G…` address and is set to **weight 0** at creation — public but
+  powerless.
+- A **random control key** (weight 1, threshold 1) is the real signer. Its seed
+  is sealed **on-chain in the account's own data entries** via envelope
+  encryption, never stored in the clear and never held by a backend.
+- The control key is unwrapped **locally, per device**, from one of several
+  **unlock factors** — so signing stays silent while the account remains
+  self-custodial.
+
+<Callout type="info">
+This is **the** Stellar implementation. The earlier Soroban `C…` device-account
+path was removed in favor of the classic `G…` model.
+</Callout>
+
+## Connect
+
+Use the same unified `Cavos.connect`, passing `chain: "stellar"`. An `appId`
+activates the gasless relayer (it sponsors the account's XLM reserves and pays
+fees). No `paymasterApiKey` is used on Stellar.
+
+```ts title="TypeScript"
+import { Cavos } from "@cavos/kit";
+
+const wallet = await Cavos.connect({
+  chain: "stellar",                     // selects the classic-Stellar path
+  network: "testnet",                   // "testnet" | "mainnet"
+  appSalt: "my-app",                    // namespaces addresses to your app
+  identity: {                           // from your login (see Authentication)
+    userId: user.id,
+    email: user.email,
+  },
+  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID, // activates the gasless relayer
+});
+
+console.log(wallet.address);            // deterministic G… master address
+```
+
+`network: "testnet"` resolves to `stellar-testnet`; `"mainnet"` resolves to
+`stellar-mainnet`. The returned `wallet` is a discriminated union, so narrow on
+`wallet.chain === "stellar"` before calling chain-native methods.
+
+<Callout type="info">
+`Cavos.connect` provisions this device's **ECDH unwrap key** for you (a persisted,
+non-extractable P-256 key via `WebCryptoDeviceUnwrapKey` in the browser). On React
+Native / server, pass your own `stellarDeviceKey`. The low-level
+`CavosStellar.connect` requires an explicit `deviceKey`.
+</Callout>
+
+## Execute a transfer
+
+On Stellar, `execute(amount, destination)` moves `amount` **stroops** of native
+XLM out of the account to `destination`. It is signed by the control key
+(unlocked silently from the on-chain envelope) and, by default, sponsored by the
+relayer, which fee-bumps and pays the fee.
+
+```ts title="TypeScript"
+if (wallet.chain === "stellar" && wallet.status === "ready") {
+  const hash = await wallet.execute(
+    10_000_000n,                         // 1 XLM, in stroops
+    "GDESTINATION...ADDRESS",            // recipient G… address
+  );
+  console.log(hash);                     // Horizon transaction hash
+}
+```
+
+`amount` is a `bigint` of stroops (`1 XLM = 10_000_000 stroops`). Pass
+`{ sponsored: false }` to submit directly — the account pays its own (tiny) fee
+from its XLM balance instead of the relayer.
+
+Read the native balance with `wallet.balance()` (stroops):
+
+```ts title="TypeScript"
+const stroops = await wallet.balance();  // bigint, native XLM
+```
+
+## Unlock factors & silent signing
+
+The control key's seed is sealed under a **DEK** (data-encryption key), and that
+DEK is wrapped once **per unlock factor**. Opening any single factor yields the
+same DEK → the same control key:
+
+| Factor | Purpose | How it's derived |
+|--------|---------|------------------|
+| **Device** (P-256 ECIES) | Silent daily signing on a known device | This device's ECDH key unwraps its own on-chain slot |
+| **Passkey** (WebAuthn PRF) | Synced anchor to approve a new device / recover | A synced passkey's PRF output derives the KEK |
+| **Recovery code** | Offline backup (optional) | A stored code derives the KEK |
+
+On a returning device, `connect` unwraps the device slot and the wallet is
+`ready` — no prompt. On a **new** device there is no device slot yet, so status
+is `needs-device-approval` until the user approves it with a passkey or recovery
+code (below).
+
+## Add a passkey (recommended)
+
+A passkey is the synced factor that lets a user approve a **new** device without
+finding an already-authorized one. On Stellar it is a **WebAuthn PRF** credential
+whose derived secret wraps the account DEK — it is *not* an on-chain signer and
+not part of the cross-chain `approveDeviceEverywhere` batch.
+
+```ts title="TypeScript"
+import { PasskeyPrf } from "@cavos/kit";
+
+// On a ready device, right after signup:
+const prf = new PasskeyPrf({ rpName: "My App" });
+const { secret } = await prf.enroll({
+  userId: user.id,
+  userName: user.email ?? user.id,
+});
+await wallet.enrollPasskey(secret);       // writes the cv:wp factor on-chain
+```
+
+The React `CavosProvider` wraps this as `enrollPasskeyDefault()` /
+`approveDeviceWithPasskey()`, so app code never touches `PasskeyPrf` directly.
+
+## Approve a new device
+
+When the same identity connects on a fresh device, it lands on the same `G…`
+address with `status: "needs-device-approval"`. Unlock with the passkey (or a
+recovery code) to wrap the DEK to this device's slot — future sessions then
+unlock silently:
+
+```ts title="TypeScript"
+const wallet = await Cavos.connect({ chain: "stellar", /* ...same identity + appSalt... */ });
+
+if (wallet.chain === "stellar" && wallet.status === "needs-device-approval") {
+  const prf = new PasskeyPrf({ rpName: "My App" });
+  await wallet.approveThisDeviceWithPasskey(await prf.getSecret());
+  // wallet is now ready; no second device required.
+}
+```
+
+The unlocking device can itself sign the on-chain write that adds its own slot —
+because any factor yields the control key, there is no trip back to an old
+device. See [Multi-device](/docs/multi-device) for the cross-chain model.
+
+## Recovery
+
+Set up a recovery code as an offline backup factor. It wraps the same DEK, so it
+can unlock the account after every device is lost:
+
+```ts title="TypeScript"
+import { generateRecoveryCode } from "@cavos/kit";
+
+// On a ready device — run once, have the user store the code:
+const code = generateRecoveryCode();
+await wallet.setupRecovery(code);          // writes the cv:wr factor (idempotent)
+```
+
+```ts title="TypeScript"
+// After losing every device — reconnect on the new device, then approve it:
+const wallet = await Cavos.connect({ chain: "stellar", /* ...same identity + appSalt... */ });
+
+if (wallet.chain === "stellar" && wallet.status === "needs-device-approval") {
+  await wallet.approveThisDeviceWithRecovery(code);
+  // wallet is now ready, bound to the new device.
+}
+```
+
+Recovery is self-custodial: the code never leaves the device and only its
+DEK-wrap is stored on-chain. Cavos never sees the code. See
+[Recovery](/docs/recovery) for the model.
+
+## Gasless vs self-funded
+
+| Path | When | Who pays |
+|------|------|----------|
+| **Relayer (gasless, default)** | `appId` is set | The Cavos relayer is the tx source + fee payer and **sponsors the account's reserves** |
+| **Self-funded fallback** | no `appId`, a `stellarSourceKeypair` is passed | Your funded keypair funds reserves + pays fees |
+
+Every Stellar account locks XLM **reserves** (a base reserve plus ~0.5 XLM per
+subentry — data entries and the control signer). With the relayer, those reserves
+and all fees are sponsored, so the user locks no XLM. The relayer is **only** a
+fee payer + reserve sponsor — never a custodian or identity authority: a bad or
+absent relayer can cost fees but can never move funds or squat an address.
+
+## Address derivation
+
+The `G…` address is the deterministic master key derived from identity + salt
+(`deriveStellarAddress` / `deriveStellarMasterKeypair`), so the same user always
+lands on the same account, computable before creation. The master is set to
+weight 0 at creation; the control key (weight 1) does the signing.
+
+```ts title="TypeScript"
+import { deriveStellarAddress } from "@cavos/kit";
+
+const address = deriveStellarAddress({ userId: user.id, appSalt: "my-app" }); // G…
+```
+
+## Networks & constants
+
+```ts title="TypeScript"
+import { STELLAR_NETWORKS, HORIZON_URL, XLM_DECIMALS } from "@cavos/kit";
+
+STELLAR_NETWORKS["stellar-testnet"];     // network config
+HORIZON_URL["stellar-mainnet"];          // https://horizon.stellar.org
+XLM_DECIMALS;                            // 7 (1 XLM = 10^7 stroops)
+```
+
+Networks: `"stellar-testnet"`, `"stellar-mainnet"`.
+
+## What's available
+
+- ✅ Deterministic classic `G…` multisig account (master weight 0 + on-chain
+  sealed control key), self-custodial with no backend/registry.
+- ✅ Silent signing via the control key unwrapped by this device's ECDH key.
+- ✅ Gasless create + execute via the Cavos relayer (reserves sponsored).
+- ✅ Native XLM transfer (`execute(amount, destination)`) + `balance()`.
+- ✅ **Passkey** (WebAuthn PRF) and **recovery-code** unlock factors for
+  approving new devices and recovering after total device loss.
+
+For the cross-chain model and how this compares to the other chains, see
+[Chains](/docs/chains) and [Concepts](/docs/concepts).
