@@ -32,6 +32,61 @@ through the OS, a single WebAuthn prompt from **any** browser can authorize the
 new device's key on-chain — no second device hunt, no passphrase. It is the
 lowest-friction path to "log in on my new phone."
 
+## Control when it's asked (React SDK)
+
+If you use the `CavosProvider` with the built-in auth modal, the kit shows a
+**"Secure your account"** step automatically right after a brand-new wallet is
+created. You decide — per app — whether that step interrupts onboarding, runs as
+an optional nudge, or is skipped entirely. The `secureStep` modal option is the
+single knob for this:
+
+```tsx title="app/layout.tsx"
+import { CavosProvider } from '@cavos/kit/react';
+
+<CavosProvider
+  config={config}
+  modal={{
+    appName: 'My App',
+    // When the passkey / recovery prompt appears after signup:
+    secureStep: 'optional', // 'optional' | 'required' | 'off'
+  }}
+>
+  {children}
+</CavosProvider>
+```
+
+| `secureStep` | Behavior after a new account is created |
+| --- | --- |
+| `'optional'` *(default)* | Shows the "Secure your account" screen with a **Skip for now** button. Low friction — the user can defer passkey setup and still finish onboarding. |
+| `'required'` | Shows the screen **without** Skip. The user must set up a passkey (or save a [recovery passphrase](/docs/recovery)) before they can continue. Use this for high-value apps where a second factor is mandatory. |
+| `'off'` | Skips the screen entirely — onboarding ends the moment the wallet is ready. Choose this when you want to drive the 2FA prompt yourself later in the journey (e.g. a "Secure your account" banner on the dashboard), instead of interrupting signup. |
+
+### Picking the right moment
+
+The right value depends on **where in the user journey** asking for a passkey
+feels natural, not disruptive:
+
+- **`'off'` — ask later.** Friction-free onboarding. Drop the user straight into
+  the app, then surface the passkey prompt from your own UI once they've hit an
+  "aha" moment (first transaction, settings page, or a dedicated security
+  screen). You can still enroll any time with `enrollPasskey` from
+  [`useCavos()`](/docs/multi-device) — `secureStep: 'off'` only removes the
+  *automatic* post-signup screen.
+- **`'optional'` — ask now, let them skip.** The default. Good when you want to
+  plant the seed early but respect the user's pace; the skip keeps conversion
+  high while the prompt keeps the option visible.
+- **`'required'` — ask now, no skipping.** Best for custody-like UX, treasuries,
+  or any context where losing device access is unacceptable. Pair it with the
+  recovery passphrase fallback (the screen offers both) so the user always has a
+  path forward even without a platform authenticator.
+
+<Callout type="info">
+The passkey setup is **gasless, idempotent, and device-signed** — the same call
+described in [Set it up after signup](#set-it-up-after-signup). `secureStep`
+only controls *whether and when* the built-in modal shows it automatically; the
+underlying `enrollPasskey` API is always available to trigger on your own terms.
+</Callout>
+
 ## Set it up after signup
 
 Once `connect` returns `status: "ready"`, gate on platform support and enroll.
