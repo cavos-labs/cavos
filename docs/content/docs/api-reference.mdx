@@ -63,6 +63,8 @@ counterpart is `CavosSolana` — see [Solana](/docs/solana).
 | `cavos.identity: Identity` | The authenticated identity. |
 | `cavos.publicKey: DevicePublicKey` | This device's public key. |
 | `cavos.execute(calls): Promise<{ transactionHash }>` | Sign + submit calls, gasless. Requires `status === "ready"`. |
+| `cavos.signMessage(message): Promise<MessageSignature>` | Sign an arbitrary message off-chain with the device key (secp256r1). Uniform return across chains. See [After sign-in](/docs/post-login). |
+| `cavos.signTransaction(calls): Promise<StarknetSignedTransaction>` | Build + sign a multicall WITHOUT submitting. Single-use (binds to nonce + resource bounds). |
 | `cavos.addSigner(pubkey): Promise<{ transactionHash }>` | Authorize another device's key on-chain. |
 | `cavos.enrollPasskey(passkey, params): Promise<{ publicKey, transactionHash? }>` | Create a passkey + register it as an approver. Gasless, idempotent. See [Passkeys](/docs/passkeys). |
 | `cavos.addApprover(pubkey): Promise<{ transactionHash? }>` | Register an already-enrolled passkey pubkey as an approver (idempotent). Use to share one passkey across chains. |
@@ -159,7 +161,7 @@ mainnet, fall back to [multi-device](/docs/multi-device) / [recovery](/docs/reco
 
 | Export | Description |
 |--------|-------------|
-| `CavosSolana` | High-level Solana client — the analogue of `Cavos`. `connect`, `execute(amount, destination)` (SOL transfer), `executeInstructions(instructions)` (arbitrary CPI), `addSigner`, `setupRecovery`, static `recover`. Returned by `Cavos.connect({ chain: "solana" })`. |
+| `CavosSolana` | High-level Solana client — the analogue of `Cavos`. `connect`, `execute(amount, destination)` (SOL transfer), `executeInstructions(instructions)` (arbitrary CPI), `signMessage(message)` (off-chain, P-256), `signTransaction(amount, destination)` (device precompile signature, relayer-bound), `addSigner`, `setupRecovery`, static `recover`. Returned by `Cavos.connect({ chain: "solana" })`. |
 | `InstructionData`, `InstructionAccount` | Serializable instruction shape for `executeInstructions` (mirrors the on-chain Borsh layout). |
 | `SolanaRelayer`, `SolanaRelayerOptions` | Cavos gasless sponsoring relayer (co-signs as fee payer). Activated by `appId`. |
 | `SolanaAdapter`, `SolanaAdapterOptions` | Low-level adapter: PDA derivation, the `[secp256r1 precompile, program]` instruction builders, signature encoding. |
@@ -175,7 +177,7 @@ testnet and mainnet.
 
 | Export | Description |
 |--------|-------------|
-| `CavosStellar` | High-level Stellar client — the analogue of `Cavos`. `connect`, `execute(amount, destination)` (native XLM transfer, stroops), `balance()` (XLM, stroops), `enrollPasskey(prfOutput)` (add a WebAuthn-PRF passkey unlock factor), `setupRecovery(code)` (add a recovery-code unlock factor), `approveThisDeviceWithPasskey(prfOutput)`, `approveThisDeviceWithRecovery(code)`, `hasPasskey`, `isReady`, `controlAddress`. Returned by `Cavos.connect({ chain: "stellar" })`. |
+| `CavosStellar` | High-level Stellar client — the analogue of `Cavos`. `connect`, `execute(amount, destination)` (native XLM transfer, stroops), `signMessage(message)` (off-chain, **ed25519** control key), `signTransaction(amount, destination)` (signed inner XDR, not submitted), `balance()` (XLM, stroops), `enrollPasskey(prfOutput)` (add a WebAuthn-PRF passkey unlock factor), `setupRecovery(code)` (add a recovery-code unlock factor), `approveThisDeviceWithPasskey(prfOutput)`, `approveThisDeviceWithRecovery(code)`, `hasPasskey`, `isReady`, `controlAddress`. Returned by `Cavos.connect({ chain: "stellar" })`. |
 | `StellarAdapter`, `StellarAdapterOptions` | Low-level adapter over Horizon: deterministic master-key derivation, account creation/payment/data-entry transaction builders, fee-bump wrapping, submit. |
 | `StellarRelayer`, `StellarRelayerOptions`, `StellarRelayKind` | Cavos gasless sponsoring relayer (signs/submits/fee-bumps via a relayer source). Activated by `appId`. |
 | `ConnectStellarOptions`, `StellarConnectStatus` | Option/status types for `CavosStellar.connect`. |
@@ -193,6 +195,10 @@ testnet and mainnet.
 |--------|-------------|
 | `ChainAdapter`, `ChainCall`, `ComputeAddressParams` | Multi-chain interface types. |
 | `Chain` (`"starknet" \| "solana" \| "stellar"`), `NetworkEnv` (`"testnet" \| "mainnet"`), `CavosWallet` | Unified connect types. |
+| `MessageSignature` | `{ signature: Uint8Array; publicKey: string; curve: "secp256r1" \| "ed25519" }` — off-chain message signature. See [After sign-in](/docs/post-login). |
+| `SignedTransaction`, `StarknetSignedTransaction`, `StellarSignedTransaction`, `SolanaSignedTransaction` | Sign-without-submit result, chain-specific (narrow on `chain`). |
+| `SignatureCurve` | `"secp256r1" \| "ed25519"` — which curve a `MessageSignature` was produced with. |
+| `CAVOS_MESSAGE_PREFIX`, `prefixedMessageBytes(message)` | The off-chain message prefix scheme (`"Cavos Signed Message:\n<len>\n"`). |
 
 ## React (`@cavos/kit/react`)
 

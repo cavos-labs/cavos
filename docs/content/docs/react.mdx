@@ -85,11 +85,14 @@ function Wallet() {
 | Method | Description |
 |--------|-------------|
 | `execute(calls, opts?)` | **Starknet only.** Multicall signed by the device key, gasless by default. Returns `{ transactionHash }`. |
+| `signMessage(message)` | **All chains.** Sign an arbitrary message off-chain; returns a uniform `MessageSignature`. See [After sign-in](/docs/post-login). |
 
 <Callout type="info">
-On **Solana and Stellar**, call the wallet directly instead of the context's
-`execute`: narrow on `wallet.chain`, then `wallet.execute(amount, destination)`.
-See [After sign-in](/docs/post-login) and [Chains](/docs/chains).
+On **Solana and Stellar**, call the wallet directly for chain-native actions
+instead of the context's `execute`: narrow on `wallet.chain`, then
+`wallet.execute(amount, destination)`. For `signTransaction` (sign without
+submit), also call `wallet.signTransaction(...)` directly after narrowing —
+the args differ per chain. See [After sign-in](/docs/post-login).
 </Callout>
 
 ### Device & recovery
