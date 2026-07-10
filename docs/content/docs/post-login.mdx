@@ -1,0 +1,166 @@
+---
+title: After sign-in
+description: Read balances, send native tokens, fund from a faucet, and manage security once the wallet is connected.
+---
+
+Once `walletStatus.isReady` is true, the wallet is deployed and this device is
+an authorized signer. This page covers the common things you do next — all of it
+via `useCavos()` inside a `<CavosProvider>`. See [React](/docs/react) for the
+provider/hook setup.
+
+Every chain-specific call narrows on `wallet.chain` first, because `execute`
+keeps each chain's native signature. See [Chains](/docs/chains).
+
+## Read the native balance
+
+The kit exposes each chain's balance read differently.
+
+### Solana
+
+`CavosSolana` exposes the underlying `@solana/web3.js` `Connection`, so you read
+SOL directly. Balance is in **lamports** (1 SOL = 10⁹ lamports).
+
+```ts title="TypeScript"
+const { wallet, address } = useCavos();
+if (wallet?.chain === "solana") {
+  const lamports = await wallet.connection.getBalance(address); // number
+  const sol = lamports / 1e9;
+}
+```
+
+### Stellar
+
+`CavosStellar` has a `balance()` method. It returns native XLM in **stroops**
+(1 XLM = 10⁷ stroops).
+
+```ts title="TypeScript"
+if (wallet?.chain === "stellar") {
+  const stroops = await wallet.balance(); // bigint
+  const xlm = Number(stroops) / 1e7;
+}
+```
+
+### Starknet
+
+There is no single "native balance" call in the kit for Starknet (the fee token
+is an ERC-20). Read a specific token with a `balanceOf` call via
+[execute](/docs/signing), or query the RPC directly with starknet.js.
+
+## Fund from a testnet faucet
+
+Only on `testnet`. Handy for demos and first-run UX.
+
+### Solana — airdrop
+
+```ts title="TypeScript"
+if (wallet?.chain === "solana") {
+  const sig = await wallet.connection.requestAirdrop(address, 1_000_000_000); // 1 SOL
+  // confirm with connection.getSignatureStatus(sig) if you need to wait
+}
+```
+
+<Callout type="warn">
+Public Solana devnet rate-limits airdrops. For reliable funding, use a private
+RPC (Helius/Alchemy) as your `rpcUrl`, or the official Solana faucet.
+</Callout>
+
+### Stellar — friendbot
+
+Stellar testnet is funded by the public friendbot:
+
+```ts title="TypeScript"
+await fetch(`https://friendbot.stellar.org?addr=${encodeURIComponent(address)}`);
+```
+
+## Send native tokens
+
+### Solana — SOL transfer
+
+`CavosSolana.execute(amount, destination)` transfers SOL, sponsored by the
+relayer when `appId` is set. `amount` is in **lamports** (bigint).
+
+```ts title="TypeScript"
+if (wallet?.chain === "solana") {
+  const txHash = await wallet.execute(1_000_000_000n, destinationAddress); // 1 SOL
+}
+```
+
+### Stellar — XLM transfer
+
+Same signature, `amount` in **stroops** (bigint).
+
+```ts title="TypeScript"
+if (wallet?.chain === "stellar") {
+  const txHash = await wallet.execute(10_000_0000n, destinationAddress); // 1 XLM
+}
+```
+
+Both return the transaction hash as a string. Build explorer links per chain —
+Solana: `https://explorer.solana.com/tx/${hash}?cluster=devnet`; Stellar testnet:
+`https://stellar.expert/explorer/testnet/tx/${hash}`.
+
+### Starknet — arbitrary calls
+
+On Starknet, use the context's `execute(calls)` for a multicall (transfers,
+swaps, any contract interaction). It's sponsored by default.
+
+```ts title="TypeScript"
+const { execute } = useCavos();
+const { transactionHash } = await execute([
+  { contractAddress: TOKEN, entrypoint: "transfer", calldata: [to, amountLow, amountHigh] },
+]);
+```
+
+<Callout type="info">
+Formatting amounts? Parse a human input (`"1.5"`) to base units by multiplying
+by `10 ** decimals` and rounding; format a base-unit bigint back by dividing.
+Decimals per chain: Solana 9, Stellar 7, Starknet fee token 18.
+</Callout>
+
+## Security after sign-in
+
+These are chain-agnostic wrappers on `useCavos()` — they work identically on all
+three chains. They are the same primitives documented in
+[Passkeys](/docs/passkeys) and [Recovery](/docs/recovery), surfaced through the
+React hook.
+
+### Passkey (2FA for new devices)
+
+```ts title="TypeScript"
+const { walletStatus, enrollPasskeyDefault, passkeySupported } = useCavos();
+
+if (passkeySupported && !walletStatus.hasPasskey) {
+  await enrollPasskeyDefault(); // prompts the platform authenticator once
+}
+```
+
+`walletStatus.hasPasskey` flips to true once enrolled.
+
+### Recovery code
+
+```ts title="TypeScript"
+const { setupRecovery } = useCavos();
+
+const code = await setupRecovery(); // string — show this to the user ONCE
+```
+
+<Callout type="warn">
+The recovery code is returned **once**. Display it immediately and tell the
+user to store it somewhere safe. Only its derived public key is registered
+on-chain — the code itself never leaves the device.
+</Callout>
+
+### Approve a new device
+
+When a user signs in on a fresh device, `walletStatus.needsDeviceApproval` is
+true and they can't transact yet. If they have a synced passkey:
+
+```ts title="TypeScript"
+const { walletStatus, approveDeviceWithPasskey } = useCavos();
+
+if (walletStatus.needsDeviceApproval) {
+  await approveDeviceWithPasskey(); // one passkey prompt authorizes this device
+}
+```
+
+See [Multi-device](/docs/multi-device) for the full device-approval flow.

@@ -10,13 +10,14 @@ the actual signing happens invisibly with a non-extractable secp256r1 (P-256) ke
 that lives on the device.
 
 The model is **chain-agnostic** — the same API works across high-performance
-chains. **Starknet and Solana are available today**; **Stellar is live on
-testnet**. See [Chains](/docs/chains).
+chains. **Starknet, Solana, and Stellar are available today.** See
+[Chains](/docs/chains).
 
 ```ts title="TypeScript"
 import { Cavos } from "@cavos/kit";
 
 const cavos = await Cavos.connect({
+  chain: "starknet",                   // "starknet" | "solana" | "stellar"
   network: "testnet",
   identity: { userId: user.id, email: user.email },
   appSalt: "my-app",
@@ -36,7 +37,7 @@ if (cavos.status === "ready") {
 | **Identity** | A stable `userId` (from your login) + an `appSalt`. Together they derive the wallet address — device-independent. |
 | **Device signer** | A non-extractable secp256r1 key on the device (WebCrypto in the browser). Signs `sha256(tx_hash)` with no UI. |
 | **Account contract** | The on-chain Cavos account for the target chain (a Cairo `DeviceAccount` on Starknet today). Validates device signatures on-chain and is the sole authority over its signers. |
-| **Chain adapter** | The per-chain layer (address derivation, signature encoding, deploy calls). `StarknetAdapter`, `SolanaAdapter`, and `StellarAdapter` today (Stellar on testnet). See [Chains](/docs/chains). |
+| **Chain adapter** | The per-chain layer (address derivation, signature encoding, deploy calls). `StarknetAdapter`, `SolanaAdapter`, and `StellarAdapter` today. See [Chains](/docs/chains). |
 | **Paymaster** | Sponsors deploy + execute so transactions are gasless for the user. |
 
 ## What makes it different
