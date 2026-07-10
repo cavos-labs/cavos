@@ -1,0 +1,232 @@
+---
+title: React
+description: Drop-in React bindings for @cavos/kit — provider, hooks, and the customizable login modal.
+---
+
+`@cavos/kit` ships React bindings under the `@cavos/kit/react` subpath (same
+package). Wrap your app once in `<CavosProvider>` and every descendant can call
+`useCavos()` to read wallet state and trigger actions — no prop drilling, no
+imperative `connect` calls.
+
+```tsx title="Terminal"
+npm install @cavos/kit
+```
+
+```tsx title="app/provider.tsx"
+import { CavosProvider } from "@cavos/kit/react";
+
+export function Providers({ children }) {
+  return (
+    <CavosProvider
+      config={{
+        appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+        chain: "solana",        // "starknet" | "solana" | "stellar"
+        network: "testnet",     // resolves to the chain's devnet/sepolia
+        appSalt: "my-app",
+      }}
+      modal={{
+        appName: "My App",
+        theme: "light",
+      }}
+    >
+      {children}
+    </CavosProvider>
+  );
+}
+```
+
+The provider manages **exactly one chain**. Behind the scenes it resolves the
+identity, deploys the device-signer account gaslessly on first use, and keeps
+the wallet handle ready for sponsored transactions. See
+[Chains](/docs/chains) for the chain model.
+
+## `useCavos()`
+
+The primary hook. Returns the full wallet surface:
+
+```tsx
+import { useCavos } from "@cavos/kit/react";
+
+function Wallet() {
+  const { address, isAuthenticated, walletStatus, logout } = useCavos();
+  if (!isAuthenticated) return <button onClick={openModal}>Sign in</button>;
+  return <div>{address} · ready={walletStatus.isReady}</div>;
+}
+```
+
+### State
+
+| Field | Description |
+|-------|-------------|
+| `isAuthenticated: boolean` | Whether a wallet is connected and ready. |
+| `user: UserInfo \| null` | `{ userId, email?, provider? }` from the login. |
+| `wallet: CavosWallet \| null` | The connected wallet, discriminated by `wallet.chain`. Narrow on it before chain-native calls. |
+| `address: string \| null` | The deterministic account address. |
+| `chain: Chain` | The active chain (`"starknet" \| "solana" \| "stellar"`). |
+| `walletStatus: WalletStatus` | Deployment / device-approval / passkey flags (see below). |
+| `isLoading: boolean` | True during an in-flight login or connect. |
+| `authError: string \| null` | Last unrecoverable auth/connect error. Null while healthy. |
+| `passkeySupported: boolean` | Whether this device/browser can use a platform passkey. |
+
+`WalletStatus`: `{ isDeploying, isReady, needsDeviceApproval, awaitingApproval, pendingRequestId, hasPasskey, isNewAccount }`. Gate any transaction on `walletStatus.isReady`.
+
+### Login
+
+| Method | Description |
+|--------|-------------|
+| `login(provider)` | OAuth social login (`"google" \| "apple"`) — opens the hosted flow. |
+| `sendOtp(email)` | Send an email OTP code. |
+| `verifyOtp(email, code)` | Verify an OTP / complete a magic link and deploy the wallet. |
+| `sendMagicLink(email)` | Send a passwordless magic-link email. |
+| `handleCallback(authData)` | Resolve identity from an OAuth callback (`?auth_data=…`) and deploy. |
+
+### Transactions
+
+| Method | Description |
+|--------|-------------|
+| `execute(calls, opts?)` | **Starknet only.** Multicall signed by the device key, gasless by default. Returns `{ transactionHash }`. |
+
+<Callout type="info">
+On **Solana and Stellar**, call the wallet directly instead of the context's
+`execute`: narrow on `wallet.chain`, then `wallet.execute(amount, destination)`.
+See [After sign-in](/docs/post-login) and [Chains](/docs/chains).
+</Callout>
+
+### Device & recovery
+
+| Method | Description |
+|--------|-------------|
+| `addSigner(pubkey)` | Authorize another device signer (gasless `add_signer`). |
+| `enrollPasskeyDefault()` | Enroll a synced passkey as an approver (2FA for new devices). Requires a ready device. |
+| `approveDeviceWithPasskey()` | From a `needs-device-approval` browser, prompt the synced passkey to authorize this device. |
+| `setupRecovery()` | Register a backup signer derived from a generated recovery code. **Resolves with the code** — show it to the user once. |
+| `recover(code)` | Recover access after losing every device. Brings the provider to a ready state. |
+| `resendDeviceApproval()` | Re-request the device-approval email for the current pending request. |
+
+These wrappers are **chain-agnostic** — they work the same on Starknet, Solana,
+and Stellar. See [Passkeys](/docs/passkeys) and [Recovery](/docs/recovery) for
+the full lifecycle.
+
+### Modal & session
+
+| Method | Description |
+|--------|-------------|
+| `openModal()` / `closeModal()` | Open/close the built-in auth modal (the provider mounts it automatically when `modal` is set). |
+| `logout()` | Sign out and clear local wallet state. |
+| `clearAuthError()` | Clear `authError` (e.g. when the user starts a new login attempt). |
+
+## `useCavosAuth()`
+
+A deliberately thin subset for components that only need to open the modal and
+read basic auth state — no wallet, no transactions:
+
+```ts
+{
+  openModal, closeModal,
+  isAuthenticated, address, user, walletStatus, logout,
+}
+```
+
+## `<CavosAuthModal>`
+
+A fully customizable, themeable login modal. The provider mounts it
+automatically when you pass `modal={...}`; you can also render it directly (for
+a live preview, or to control its lifecycle yourself).
+
+```tsx
+import { CavosAuthModal } from "@cavos/kit/react";
+
+<CavosAuthModal
+  open={open}
+  onClose={() => setOpen(false)}
+  appName="My App"
+  appLogo="https://myapp.com/logo.png"
+  appLogoSize={56}
+  providers={["email", "google", "apple"]}
+  emailMode="otp"
+  primaryColor="#402AFF"
+  theme="light"
+  radius={16}
+  secureStep="optional"
+/>
+```
+
+### Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `open` | `boolean` | Whether the modal is shown (ignored when `inline`). |
+| `onClose` | `() => void` | Called when the user dismisses the modal. |
+| `appName` | `string?` | Shown in the heading (`"Sign in to {appName}"`). |
+| `appLogo` | `string?` | Image URL for the logo. If omitted, the Cavos star is shown. The provider also loads it from your app's dashboard config automatically; a local `appLogo` overrides that. |
+| `appLogoSize` | `number?` | Logo height in px. Defaults to `40` (image) / `34` (Cavos star). |
+| `providers` | `("google" \| "apple" \| "email")[]?` | Which login buttons to show. Defaults to all three. |
+| `emailMode` | `"magic-link" \| "otp"?` | How the email provider authenticates. Defaults to `magic-link`. |
+| `primaryColor` | `string?` | Accent color for buttons / focus rings (hex). |
+| `theme` | `"light" \| "dark"?` | Card theme. Defaults to `light`. |
+| `backgroundColor` | `string?` | Override the card background (defaults to white / `#111` per theme). |
+| `radius` | `number?` | Card & button corner radius in px (card defaults to `16`). |
+| `inline` | `boolean?` | Render the card in-flow (no overlay/backdrop) — for live previews. When `true`, `open` is ignored. |
+| `secureStep` | `"optional" \| "required" \| "off"?` | The one-time "secure your account" step after a new account. `optional` (default) shows Skip; `required` forces it; `off` skips it. |
+| `onSuccess` | `(address: string) => void?` | Fired when authentication + deployment succeed. |
+
+## `CavosModalConfig`
+
+The object you pass as `modal={...}` to `<CavosProvider>`. Same fields as
+`CavosAuthModalProps` except no `open` / `onClose` / `inline` (the provider
+manages those), plus `onSuccess`.
+
+## Theming
+
+All visual props (`primaryColor`, `theme`, `backgroundColor`, `radius`,
+`appLogo`, `appLogoSize`) apply identically whether you set them on
+`<CavosProvider modal={...}>` or on a direct `<CavosAuthModal ... />`.
+
+```tsx
+<CavosProvider
+  config={{ chain: "solana", network: "testnet", appSalt: "my-app", appId }}
+  modal={{
+    appName: "My App",
+    appLogo: "/logo.png",
+    appLogoSize: 48,
+    primaryColor: "#7C3AED",
+    theme: "dark",
+    backgroundColor: "#0A0A0F",
+    radius: 20,
+  }}
+>
+  <App />
+</CavosProvider>
+```
+
+## Mobile: automatic bottom sheet
+
+On viewports **`max-width: 640px`** the modal becomes a **bottom sheet** — it
+slides up from the bottom with rounded top corners and a grab handle, overlaying
+the page with a blurred backdrop. This is fully automatic; there is no prop to
+toggle. On desktop the modal renders centered. The `inline` mode disables the
+overlay/sheet entirely (the card is embedded in your layout).
+
+## Multi-chain in React
+
+The provider is single-chain by design. To let a user switch chains, **remount
+the provider** with a new `key` — this resets auth state and connects a fresh
+wallet for the new chain:
+
+```tsx
+const [chain, setChain] = useState<"solana" | "stellar" | "starknet">("solana");
+
+<CavosProvider key={chain} config={{ chain, network: "testnet", appSalt: "my-app", appId }}>
+  <App onChainChange={setChain} />
+</CavosProvider>
+```
+
+<Callout type="warn">
+Changing the `key` signs the user out — each chain has a separate wallet and
+session. Surface this in your UI (e.g. "Switching chain signs you out").
+</Callout>
+
+<Callout type="info">
+`Chain` and `NetworkEnv` types are exported from the **core** entry
+(`import type { Chain } from "@cavos/kit"`), not from `@cavos/kit/react`.
+</Callout>

@@ -194,6 +194,29 @@ testnet and mainnet.
 | `ChainAdapter`, `ChainCall`, `ComputeAddressParams` | Multi-chain interface types. |
 | `Chain` (`"starknet" \| "solana" \| "stellar"`), `NetworkEnv` (`"testnet" \| "mainnet"`), `CavosWallet` | Unified connect types. |
 
+## React (`@cavos/kit/react`)
+
+React bindings shipped in the same package under the `/react` subpath. See
+[React](/docs/react) for the full guide.
+
+| Export | Description |
+|--------|-------------|
+| `CavosProvider` | Wrap your app once; manages one chain's wallet + mounts the auth modal. Props: `config: CavosConfig`, `modal?: CavosModalConfig`, `children`. |
+| `useCavos()` | Primary hook — full wallet surface: state (`address`, `wallet`, `chain`, `walletStatus`, `user`, `isAuthenticated`), login, `execute` (Starknet), device/recovery wrappers, `logout`. |
+| `useCavosAuth()` | Thin subset for components that only open the modal and read auth state (`openModal`, `closeModal`, `isAuthenticated`, `address`, `user`, `walletStatus`, `logout`). |
+| `CavosAuthModal` | Customizable login modal. Renders as a bottom sheet automatically on mobile (`max-width: 640px`). |
+| `CavosConfig`, `CavosModalConfig`, `CavosAuthModalProps`, `CavosProviderProps`, `CavosContextValue`, `UserInfo`, `WalletStatus` | Type-only exports for the React layer. |
+
+`CavosAuthModalProps` / `CavosModalConfig` include theming (`theme`,
+`backgroundColor`, `primaryColor`, `radius`), branding (`appName`, `appLogo`,
+`appLogoSize`), `providers`, `emailMode`, `secureStep`, and `onSuccess`.
+
+<Callout type="info">
+`Chain` and `NetworkEnv` are exported from the **core** entry
+(`@cavos/kit`), not from `@cavos/kit/react`. Import them from
+`import type { Chain } from "@cavos/kit"`.
+</Callout>
+
 ## Low-level crypto (advanced)
 
 | Export | Description |

@@ -16,6 +16,7 @@ a stable `userId`:
 
 ```ts title="TypeScript"
 const cavos = await Cavos.connect({
+  chain: "starknet",
   network: "testnet",
   appSalt: "my-app",
   identity: { userId: user.id, email: user.email },
@@ -59,6 +60,7 @@ const identity = await auth.handleCallback(window.location.search);
 
 // 3. Connect with the resolved identity
 const cavos = await Cavos.connect({
+  chain: "starknet",
   network: "testnet",
   appSalt: "my-app",
   identity,
@@ -74,6 +76,7 @@ await auth.sendOtp(email);
 const identity = await auth.verifyOtp(email, code);
 
 const cavos = await Cavos.connect({
+  chain: "starknet",
   network: "testnet",
   appSalt: "my-app",
   identity,
