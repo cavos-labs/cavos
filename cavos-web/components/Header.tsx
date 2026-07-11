@@ -5,7 +5,44 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { ExternalLink } from 'lucide-react'
+import { MegaMenu, type MegaMenuProps } from '@/components/MegaMenu'
+
+const DEVELOPER_MENU: Omit<MegaMenuProps, 'onOpenChange'> = {
+    label: 'Developer',
+    left: {
+        heading: 'Developer',
+        items: [
+            { title: 'Documentation', description: 'Guides, architecture and the device-signer model.', href: 'https://docs.cavos.xyz' },
+            { title: 'API Reference', description: 'Endpoints, authentication and chain configuration.', href: 'https://docs.cavos.xyz' },
+            { title: 'SDKs & Libraries', description: 'Install @cavos/kit and start integrating.', href: 'https://docs.cavos.xyz' },
+        ],
+    },
+    right: {
+        heading: 'Explore',
+        cards: [
+            { title: 'Playground', description: 'Try the SDK live in an interactive demo.', href: 'https://demo.cavos.xyz', art: 'playground' },
+            { title: 'Dashboard', description: 'Manage apps, API keys and usage.', href: '/dashboard', art: 'dashboard' },
+        ],
+    },
+    footer: { title: 'Start building', description: 'Create an app and get your API key.', ctaLabel: 'Get started', href: 'https://docs.cavos.xyz' },
+}
+
+const RESOURCES_MENU: Omit<MegaMenuProps, 'onOpenChange'> = {
+    label: 'Resources',
+    left: {
+        heading: 'Contact',
+        items: [
+            { title: 'Contact sales', description: 'Talk to us about your integration and pricing.', href: '/contact-sales' },
+            { title: 'Email us', description: 'adrianvrj@cavos.xyz', href: 'mailto:adrianvrj@cavos.xyz' },
+        ],
+    },
+    right: {
+        heading: 'Company',
+        cards: [
+            { title: 'About', description: 'Our mission and the team behind Cavos.', art: 'about', disabled: true },
+        ],
+    },
+}
 
 export function Header() {
     const router = useRouter()
@@ -15,6 +52,9 @@ export function Header() {
     const [scrolled, setScrolled] = useState(false)
     const [hidden, setHidden] = useState(false)
     const [hovered, setHovered] = useState(false)
+    const [devOpen, setDevOpen] = useState(false)
+    const [resOpen, setResOpen] = useState(false)
+    const anyMenuOpen = devOpen || resOpen
     const isLanding = pathname === '/'
     // Focused pages (e.g. contact sales) show only the logo + a single account
     // action, so nothing competes with the task in front of the visitor.
@@ -69,7 +109,9 @@ export function Header() {
                 className={`fixed top-0 left-0 right-0 z-50 px-6 md:px-8 transition-all duration-300 ${
                     hidden && !isMenuOpen ? '-translate-y-full' : 'translate-y-0'
                 }`}>
-                <div className={`max-w-[1232px] mx-auto my-2 px-4 md:px-5 h-14 flex items-center justify-between gap-6 rounded-xl transition-all duration-300 ${
+                <div className={`max-w-[1232px] mx-auto my-2 px-4 md:px-5 h-14 flex items-center justify-between gap-6 transition-all duration-300 ${
+                    anyMenuOpen ? 'rounded-t-xl rounded-b-none' : 'rounded-xl'
+                } ${
                     transparent
                         ? 'bg-transparent'
                         : 'bg-white/95 backdrop-blur-md shadow-sm'
@@ -90,21 +132,8 @@ export function Header() {
                     {/* Desktop nav */}
                     {!minimal && (
                     <nav className="hidden md:flex items-center gap-8">
-                        <a
-                            href="https://docs.cavos.xyz"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-sm font-medium text-ink/60 hover:text-ink transition-colors"
-                        >
-                            Docs
-                            <ExternalLink className="w-3 h-3" />
-                        </a>
-                        <Link
-                            href="/blog"
-                            className="text-sm font-medium text-ink/60 hover:text-ink transition-colors"
-                        >
-                            Changelog
-                        </Link>
+                        <MegaMenu {...DEVELOPER_MENU} onOpenChange={setDevOpen} />
+                        <MegaMenu {...RESOURCES_MENU} onOpenChange={setResOpen} />
                         <Link
                             href="/pricing"
                             className="text-sm font-medium text-ink/60 hover:text-ink transition-colors"
@@ -201,7 +230,7 @@ export function Header() {
                                 ))}
                                 <Link href="/pricing" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Pricing</Link>
                                 <a href="https://docs.cavos.xyz" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Docs</a>
-                                <Link href="/blog" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Changelog</Link>
+                                <a href="https://demo.cavos.xyz" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Playground</a>
                                 <button onClick={handleLogout} className="w-full text-left px-4 py-3.5 text-lg font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors">Sign Out</button>
                             </>
                         ) : (
@@ -209,7 +238,7 @@ export function Header() {
                                 <Link href="/login" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black hover:bg-black/5 rounded-xl transition-colors">Log in</Link>
                                 <Link href="/pricing" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Pricing</Link>
                                 <a href="https://docs.cavos.xyz" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Docs</a>
-                                <Link href="/blog" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Changelog</Link>
+                                <a href="https://demo.cavos.xyz" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Playground</a>
                             </>
                         )}
                     </nav>
