@@ -27,13 +27,6 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Registration is disabled — hide the register page entirely
-  if (request.nextUrl.pathname.startsWith('/register')) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
-  }
-
   // Refresh session if expired
   const {
     data: { user },
@@ -47,7 +40,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect authenticated users away from auth pages
-  if (user && (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup'))) {
+  if (user && (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register'))) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
