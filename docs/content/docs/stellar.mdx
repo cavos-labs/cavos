@@ -1,6 +1,6 @@
 ---
 title: Stellar
-description: Use @cavos/kit on Stellar — a classic G… multisig account whose control key is sealed on-chain and unlocked by a silent device key, gasless via the Cavos relayer.
+description: Use @cavos/kit on Stellar — a classic G… multisig account whose control key is sealed on-chain and unlocked by a silent device key, gasless via the Cavos relayer, and able to sign Soroban contract calls and Trustless Work escrows.
 ---
 
 On Stellar, `@cavos/kit` gives your users a **standard `G…` account** — the same
@@ -11,9 +11,11 @@ sponsored by the Cavos relayer, so the user never needs to fund or manage XLM to
 get started.
 
 It's a native Stellar account (not a Soroban contract), so it interoperates with
-the whole ecosystem out of the box. If you've used the [Starknet](/docs/starknet)
-or [Solana](/docs/solana) paths, the app-facing API is identical — same
-`Cavos.connect`, same silent signing, same recovery model.
+the whole ecosystem out of the box — and it can still **sign Soroban contract
+invocations**, so the same `G…` account acts as a `require_auth` role in on-chain
+apps like [escrows](#soroban-contracts--escrows). If you've used the
+[Starknet](/docs/starknet) or [Solana](/docs/solana) paths, the app-facing API is
+identical — same `Cavos.connect`, same silent signing, same recovery model.
 
 <Callout type="info">
 **How it works underneath (optional).** The `G…` account is a multisig: a
@@ -84,6 +86,116 @@ Read the native balance with `wallet.balance()` (stroops):
 ```ts title="TypeScript"
 const stroops = await wallet.balance();  // bigint, native XLM
 ```
+
+## Soroban contracts & escrows
+
+Beyond native XLM transfers, the account can **invoke Soroban contracts**. Because
+the control key is a real Stellar signer, it can satisfy a contract's
+`require_auth` for this account's address — so your `G…` account participates in
+on-chain apps (escrows, marketplaces, DeFi) as a first-class signer, still silent
+and still gasless.
+
+`invokeContract` builds and simulates the call, re-signs **only** the Soroban auth
+entry belonging to this account with the control key (other roles' entries are
+untouched), and submits it — sponsored by the relayer by default:
+
+```ts title="TypeScript"
+if (wallet.chain === "stellar" && wallet.status === "ready") {
+  const hash = await wallet.invokeContract({
+    contractId: "C...ESCROW",             // the Soroban contract
+    method: "approve_milestone",
+    args: [0, wallet.address],            // ScVals, or JS values auto-converted
+  });
+}
+```
+
+To hold or receive a classic asset (e.g. USDC — needed to fund a USDC escrow),
+open a trustline first. A trustline adds a subentry (reserve); sponsored by the
+relayer by default:
+
+```ts title="TypeScript"
+await wallet.addTrustline({ code: "USDC", issuer: "GA...ISSUER" });
+const bal = await wallet.tokenBalance({ code: "USDC", issuer: "GA...ISSUER" }); // "0" if none
+```
+
+### Trustless Work escrows
+
+`@cavos/kit` ships a first-class wrapper for [Trustless Work](https://www.trustlesswork.com/)
+milestone escrows — a Soroban platform where auth is spread across six roles
+(`approver`, `service_provider`, `platform`, `release_signer`, `dispute_resolver`,
+`receiver`), each an address that signs contract calls. A Cavos account can hold
+any of these roles: the wrapper passes this account's `G…` as the role argument and
+its control key signs the matching auth entry.
+
+Deploy a fresh escrow through the Trustless Work factory, signed by a Cavos
+account:
+
+```ts title="TypeScript"
+import { deployEscrow, StellarAdapter } from "@cavos/kit";
+
+const adapter = new StellarAdapter({ network: "testnet" });
+
+const { escrowId } = await deployEscrow(wallet, {
+  factoryId: "C...FACTORY",
+  wasmHash: "96e4eb6a...",                // the escrow contract's wasm hash
+  adapter,
+  escrow: {
+    engagementId: "job-42",
+    title: "Landing page",
+    description: "Design + build",
+    amount: 2_000_000n,                    // total, in the token's base units (7-dp)
+    platformFeeBps: 100,                   // 1%
+    roles: {
+      approver: client.address,
+      serviceProvider: freelancer.address,
+      platform: client.address,
+      releaseSigner: client.address,
+      disputeResolver: client.address,
+      receiver: freelancer.address,
+    },
+    milestones: [{ description: "Ship v1" }],
+    trustline: "C...USDC",                 // the token SAC (native XLM SAC needs no trustline)
+  },
+});
+```
+
+Then drive the lifecycle. Each method acts as the role it maps to, so it must be
+called by the account holding that role:
+
+```ts title="TypeScript"
+import { TrustlessWorkEscrow, buildEscrowScVal } from "@cavos/kit";
+
+const escrow = new TrustlessWorkEscrow(wallet, escrowId);
+
+// Client funds the escrow (fund BEFORE any milestone change — the expected
+// struct must match stored state; rebuild it from the same EscrowInput):
+await escrow.fundEscrow(buildEscrowScVal(escrowInput), 2_000_000n);
+
+// Service provider marks work delivered:
+await escrow.changeMilestoneStatus(0, "delivered");
+
+// Client approves:
+await escrow.approveMilestone(0);
+
+// Once every milestone is approved and the escrow is funded, release funds —
+// pays the receiver, minus the Trustless Work + platform fees:
+await escrow.releaseFunds("G...TRUSTLESS_WORK");
+
+// Read live on-chain state at any time:
+const state = await escrow.getEscrow(adapter);
+console.log(state.flags.released, state.milestones[0].approved);
+```
+
+`disputeEscrow()` and `resolveDispute(...)` cover the dispute path. Every method is
+gasless by default; pass `{ sponsored: false }` to have the account pay its own fee.
+
+<Callout type="info">
+**Gasless status.** Native XLM `execute` and trustlines are sponsored by the
+relayer today. Soroban invocations (`invokeContract`, escrow methods) sign
+silently and route through the relayer for a fee-bump when available; backend
+co-signing of Soroban calls is still being wired, so on testnet you may run these
+with `{ sponsored: false }` against a self-funded account.
+</Callout>
 
 ## Unlock factors & silent signing
 
@@ -217,6 +329,12 @@ Networks: `"stellar-testnet"`, `"stellar-mainnet"`.
 - ✅ Silent signing via the control key unwrapped by this device's ECDH key.
 - ✅ Gasless create + execute via the Cavos relayer (reserves sponsored).
 - ✅ Native XLM transfer (`execute(amount, destination)`) + `balance()`.
+- ✅ **Soroban contract invocation** (`invokeContract`) — the account signs its own
+  `require_auth` entry, so it acts as a role in on-chain apps, plus USDC-style
+  trustlines (`addTrustline` / `tokenBalance`).
+- ✅ **Trustless Work escrows** out of the box: `deployEscrow` (via factory) and
+  the `TrustlessWorkEscrow` wrapper (fund → deliver → approve → release, plus
+  disputes) with `getEscrow` live state reads.
 - ✅ **Passkey** (WebAuthn PRF) and **recovery-code** unlock factors for
   approving new devices and recovering after total device loss.
 
