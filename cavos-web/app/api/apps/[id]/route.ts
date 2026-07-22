@@ -37,12 +37,6 @@ export async function GET(request: Request, context: RouteContext) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Verify user owns the organization
-    const organization = app.organization as unknown as { id: string; name: string; slug: string; owner_id: string }
-    if (organization.owner_id !== user.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
-    }
-
     return NextResponse.json({ app })
   } catch (error) {
     console.error('Unexpected error:', error)
