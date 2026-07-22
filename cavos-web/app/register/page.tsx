@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Header } from '@/components/Header'
@@ -15,6 +15,15 @@ export default function RegisterPage() {
     const [loading, setLoading] = useState(false)
     const [success, setSuccess] = useState(false)
     const [dpaAccepted, setDpaAccepted] = useState(false)
+    const [nextPath, setNextPath] = useState('/dashboard')
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search)
+        const requestedNext = params.get('next')
+        const invitedEmail = params.get('email')
+        if (requestedNext?.startsWith('/') && !requestedNext.startsWith('//')) setNextPath(requestedNext)
+        if (invitedEmail) setEmail(invitedEmail)
+    }, [])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -38,7 +47,7 @@ export default function RegisterPage() {
             const res = await fetch('/api/auth/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password, full_name: fullName, dpa_accepted: true }),
+                body: JSON.stringify({ email, password, full_name: fullName, dpa_accepted: true, next: nextPath }),
             })
 
             const data = await res.json()
@@ -50,7 +59,12 @@ export default function RegisterPage() {
                 return
             }
 
-            // Show success message
+            if (data.session) {
+                router.push(nextPath)
+                router.refresh()
+                return
+            }
+
             setSuccess(true)
         } catch (err) {
             setError('An unexpected error occurred')
@@ -86,7 +100,7 @@ export default function RegisterPage() {
                                     We've sent a confirmation link to <span className="font-medium text-black">{email}</span>. Please verify your email to continue.
                                 </p>
                                 <Link
-                                    href="/login"
+                                    href={`/login?${new URLSearchParams({ email, next: nextPath }).toString()}`}
                                     className="inline-block w-full px-8 py-3.5 bg-brand text-white rounded-xl font-semibold hover:bg-brand-hover transition-all"
                                 >
                                     Go to Login
@@ -196,7 +210,7 @@ export default function RegisterPage() {
                     <div className="mt-6 text-center">
                         <p className="text-black/60 text-sm">
                             Already have an account?{' '}
-                            <Link href="/login" className="text-brand font-semibold hover:underline underline-offset-2">
+                            <Link href={`/login?${new URLSearchParams({ email, next: nextPath }).toString()}`} className="text-brand font-semibold hover:underline underline-offset-2">
                                 Sign in
                             </Link>
                         </p>

@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   try {
     const supabase = await createClient()
     const body = await request.json()
-    const { email, password, full_name, dpa_accepted } = body
+    const { email, password, full_name, dpa_accepted, next } = body
 
     if (!email || !password) {
       return NextResponse.json(
@@ -24,10 +24,16 @@ export async function POST(request: Request) {
       )
     }
 
+    const requestedNext = typeof next === 'string' && next.startsWith('/') && !next.startsWith('//')
+      ? next
+      : '/dashboard'
+    const origin = new URL(request.url).origin
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(requestedNext)}`,
         data: {
           full_name: full_name || null,
         },

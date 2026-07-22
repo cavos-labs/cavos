@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Header } from '@/components/Header'
@@ -12,6 +12,15 @@ export default function LoginPage() {
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
+    const [nextPath, setNextPath] = useState('/dashboard')
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search)
+        const requestedNext = params.get('next')
+        const invitedEmail = params.get('email')
+        if (requestedNext?.startsWith('/') && !requestedNext.startsWith('//')) setNextPath(requestedNext)
+        if (invitedEmail) setEmail(invitedEmail)
+    }, [])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -33,8 +42,7 @@ export default function LoginPage() {
                 return
             }
 
-            // Redirect to dashboard
-            router.push('/dashboard')
+            router.push(nextPath)
             router.refresh()
         } catch (err) {
             setError('An unexpected error occurred')
