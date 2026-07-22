@@ -87,6 +87,36 @@ const cavos = await Cavos.connect({
 
 `sendMagicLink(email)` is also available as an alternative to OTP.
 
+## React Native authentication
+
+React Native apps use `NativeCavosAuth` from `@cavos/kit/react-native`. It opens
+Google or Apple in the system browser and returns through the registered
+`redirectUri`; OTP and magic links use the same app ID and callback validation.
+
+```ts
+import { NativeCavosAuth } from "@cavos/kit/react-native";
+
+const auth = new NativeCavosAuth({
+  appId,
+  redirectUri: "myapp://auth",
+  backendUrl: "https://cavos.xyz",
+});
+
+const identity = await auth.login("google");
+const wallet = await Cavos.connect({
+  chain: "stellar",
+  network: "testnet",
+  appSalt: "my-app",
+  appId,
+  identity,
+});
+```
+
+The native auth layer persists only the public `Identity` and pending nonce in
+application-private storage. It never stores device private keys or OAuth
+tokens. Register every mobile scheme or universal link exactly in the Cavos
+dashboard; unregistered redirects are rejected by the backend.
+
 ## How the address is derived
 
 Internally, `connect` calls `deriveAddressSeed({ userId, appSalt })` (a Poseidon

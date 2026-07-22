@@ -34,9 +34,10 @@ the device key**, so:
 - A new device on an existing account is recognized, not forked into a second
   wallet.
 
-The account starts with zero signers; the first device key is registered via a
-one-time `initialize` submitted atomically with deployment, which prevents
-front-running of the first signer.
+Each chain registers the first device according to its native account model:
+Starknet uses a one-time `initialize`, Solana uses the deterministic device
+account PDA, and Stellar uses a classic `G…` multisig whose control key is sealed
+in on-chain data. The address remains device-independent.
 
 ## Silent signing trade-off
 
@@ -68,8 +69,7 @@ chain's concrete network (Starknet testnet → `sepolia`). The `STARKNET_NETWORK
 ## Multi-chain by design
 
 The kit is structured around a `ChainAdapter` interface, with `StarknetAdapter`,
-`SolanaAdapter`, and `StellarAdapter` implemented today (all three live on testnet
-and mainnet). New chains slot in behind the same `Cavos.connect`
+`SolanaAdapter`, and `StellarAdapter` implemented today. New chains slot in behind the same `Cavos.connect`
 API surface, so application code written against `Cavos.connect` stays stable as
 chains are added. Each chain keeps its native `execute` signature (narrow the
 returned wallet on `wallet.chain`); see [Chains](/docs/chains) for the per-chain

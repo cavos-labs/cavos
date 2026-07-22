@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
+import { validateAppRedirect } from '@/lib/oauth/redirects';
 
 /**
  * Direct Google OAuth initiation for ZK Login
@@ -17,6 +18,7 @@ export async function GET(request: NextRequest) {
   try {
     const nonce = request.nextUrl.searchParams.get('nonce');
     const redirectUri = request.nextUrl.searchParams.get('redirect_uri');
+    const appId = request.nextUrl.searchParams.get('app_id');
     const state = request.nextUrl.searchParams.get('state');
 
     // Validate required parameters
@@ -27,12 +29,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (!redirectUri) {
+    if (!redirectUri || !appId) {
       return NextResponse.json(
-        { error: 'Missing redirect_uri parameter' },
+        { error: 'Missing redirect_uri or app_id parameter' },
         { status: 400 }
       );
     }
+    await validateAppRedirect(appId, redirectUri);
 
     const googleClientId = process.env.GOOGLE_CLIENT_ID;
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
@@ -70,6 +73,7 @@ export async function GET(request: NextRequest) {
       csrf: csrfState,
       redirect_uri: redirectUri,
       nonce: nonce, // Pass nonce through state for verification in callback
+      app_id: appId,
     });
     url.searchParams.set('state', Buffer.from(statePayload).toString('base64url'));
 
@@ -90,4 +94,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

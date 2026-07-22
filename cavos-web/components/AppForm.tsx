@@ -16,6 +16,8 @@ interface AppFormProps {
         description?: string
         logo_url?: string
         organization_id?: string
+        callback_urls?: string[]
+        allowed_web_origins?: string[]
     }
     organizations?: any[]
     mode: 'create' | 'edit'
@@ -31,7 +33,9 @@ export function AppForm({ initialData, organizations, mode, onSuccess, onCancel 
         name: initialData?.name || '',
         description: initialData?.description || '',
         organization_id: initialData?.organization_id || '',
-        logo_url: initialData?.logo_url || ''
+        logo_url: initialData?.logo_url || '',
+        callback_urls: (initialData?.callback_urls || []).join('\n'),
+        allowed_web_origins: (initialData?.allowed_web_origins || []).join('\n')
     })
 
     const [loading, setLoading] = useState(false)
@@ -82,7 +86,11 @@ export function AppForm({ initialData, organizations, mode, onSuccess, onCancel 
             const res = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
+                body: JSON.stringify({
+                    ...formData,
+                    callback_urls: formData.callback_urls.split('\n').map(v => v.trim()).filter(Boolean),
+                    allowed_web_origins: formData.allowed_web_origins.split('\n').map(v => v.trim()).filter(Boolean),
+                }),
             })
 
             if (!res.ok) {
@@ -186,6 +194,36 @@ export function AppForm({ initialData, organizations, mode, onSuccess, onCancel 
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-black/80 mb-1.5">
+                        Callback URLs
+                    </label>
+                    <textarea
+                        className="w-full px-3 py-2 bg-white border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all resize-y h-24 text-sm font-mono"
+                        placeholder={'https://app.example.com/auth/callback\nmyapp://cavos-auth'}
+                        value={formData.callback_urls}
+                        onChange={(e) => setFormData({ ...formData, callback_urls: e.target.value })}
+                    />
+                    <p className="mt-1.5 text-xs text-black/55">
+                        One exact URL per line. React Native may use a custom scheme or universal link; it must match <code>redirectUri</code> exactly.
+                    </p>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-black/80 mb-1.5">
+                        Allowed web origins / passkey RP
+                    </label>
+                    <textarea
+                        className="w-full px-3 py-2 bg-white border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all resize-y h-20 text-sm font-mono"
+                        placeholder="https://app.example.com"
+                        value={formData.allowed_web_origins}
+                        onChange={(e) => setFormData({ ...formData, allowed_web_origins: e.target.value })}
+                    />
+                    <p className="mt-1.5 text-xs text-black/55">
+                        For native passkeys, use the hostname as <code>rpId</code> and publish Apple <code>apple-app-site-association</code> plus Android <code>assetlinks.json</code> on that domain.
+                    </p>
                 </div>
 
 

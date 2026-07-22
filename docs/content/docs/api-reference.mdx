@@ -4,6 +4,7 @@ description: Public exports of @cavos/kit — the surface you build against.
 ---
 
 Everything below is exported from the package root: `import { ... } from "@cavos/kit"`.
+React Native-specific exports are available from `@cavos/kit/react-native`.
 
 ## `Cavos`
 
@@ -147,6 +148,21 @@ mainnet, fall back to [multi-device](/docs/multi-device) / [recovery](/docs/reco
 | `DeviceSigner`, `DevicePublicKey`, `DeviceSignature` | Signer types (shared across chains). |
 
 ## Chain adapters & constants
+
+## React Native exports
+
+| Export | Description |
+|--------|-------------|
+| `CavosProvider`, `useCavos`, `CavosAuthModal` | React Native context, hook, and native auth UI. |
+| `NativeCavosAuth` | Google, Apple, OTP, and magic-link auth through mobile callbacks. |
+| `NativeDeviceSigner` | Secure Enclave/Keychain or Android Keystore P-256 signer. |
+| `NativeDeviceUnwrapKey` | Separate P-256 ECDH key for Stellar envelopes. |
+| `NativePasskeySigner`, `NativePasskeyPrf` | AuthenticationServices/Credential Manager passkey adapters. |
+| `getNativeCapabilities()` | Reports signing, ECDH, passkey, and PRF support. |
+| `deleteDeviceKeys(keyId)` | Explicitly removes native device keys; `logout()` preserves them. |
+| `approveDeviceEverywhere` | Shared Starknet/Solana passkey approval helper. |
+
+See [React Native](/docs/react-native) for installation and native configuration.
 
 ### Starknet
 

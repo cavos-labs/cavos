@@ -33,7 +33,8 @@ Then ask it to integrate `@cavos/kit` into your app.
 ## What an agent should know up front
 
 - **Install:** `npm install @cavos/kit`.
-- **Three chains, all production-ready:** **Starknet**, **Solana**, and **Stellar** (classic `G…` multisig) are live on testnet and mainnet. See [Chains](/docs/chains).
+- **Three chain adapters:** **Starknet**, **Solana**, and **Stellar** (classic `G…` multisig) share the unified API. See [Chains](/docs/chains). React Native hardware compatibility remains gated on physical-device E2E validation.
+- **React Native:** use `@cavos/kit/react-native` with Expo Development Builds/EAS or bare React Native. Expo Go is not supported; configure `redirectUri`, `rpId`, and the native config plugin. See [React Native](/docs/react-native).
 - **Passkeys are a 2FA step-up, not a signer.** After signup, prompt the user for a passkey (`cavos.enrollPasskey`); it approves *new devices* on any browser — it never signs transactions. Use `approveThisDeviceWithPasskey` / `approveDeviceEverywhere` to self-approve on a fresh device. Caveat: passkey approval on **Starknet mainnet** isn't available yet (Sepolia only). See [Passkeys](/docs/passkeys).
 - **One unified entry point:** `Cavos.connect({ chain, network, identity | auth, appSalt, appId, ... })`. The returned wallet is a discriminated union — narrow on `wallet.chain` before calling `execute`.
 - **`execute` differs per chain:** Starknet → `wallet.execute(calls)` (arbitrary calls); Solana → `wallet.execute(amount, destination)` for SOL transfers, or `wallet.executeInstructions(instructions)` for arbitrary CPI (SPL transfers, swaps) gated by the app's program allowlist; Stellar → `wallet.execute(amount, destination)` for XLM (stroops), plus `wallet.balance()`. Stellar is a classic `G…` multisig account (not Soroban); no arbitrary-call surface today.

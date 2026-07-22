@@ -8,6 +8,7 @@
     "auth",
     "signing",
     "react",
+    "react-native",
     "post-login",
     "---Recovery---",
     "multi-device",

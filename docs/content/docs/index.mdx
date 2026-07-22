@@ -35,8 +35,8 @@ if (cavos.status === "ready") {
 | Piece | Role |
 |-------|------|
 | **Identity** | A stable `userId` (from your login) + an `appSalt`. Together they derive the wallet address — device-independent. |
-| **Device signer** | A non-extractable secp256r1 key on the device (WebCrypto in the browser). Signs `sha256(tx_hash)` with no UI. |
-| **Account contract** | The on-chain Cavos account for the target chain (a Cairo `DeviceAccount` on Starknet today). Validates device signatures on-chain and is the sole authority over its signers. |
+| **Device signer** | A non-extractable secp256r1 key on the device (WebCrypto in browsers, Secure Enclave/Keychain on iOS, Keystore on Android). Signs `sha256(tx_hash)` with no UI. |
+| **Account contract** | The chain-specific Cavos account for the target chain. It validates device signatures on-chain and is the sole authority over its signers. |
 | **Chain adapter** | The per-chain layer (address derivation, signature encoding, deploy calls). `StarknetAdapter`, `SolanaAdapter`, and `StellarAdapter` today. See [Chains](/docs/chains). |
 | **Paymaster** | Sponsors deploy + execute so transactions are gasless for the user. |
 
@@ -56,6 +56,7 @@ if (cavos.status === "ready") {
   <Card title="Starknet" href="/docs/starknet" description="Cairo DeviceAccount, silent signing, Cavos paymaster." />
   <Card title="Solana" href="/docs/solana" description="Device-account PDA, native secp256r1 precompile, Cavos relayer." />
   <Card title="Authentication" href="/docs/auth" description="Hosted login (Google / Apple / OTP) or bring your own identity." />
+  <Card title="React Native" href="/docs/react-native" description="Expo Development Builds and bare React Native on iOS and Android." />
   <Card title="Recovery" href="/docs/recovery" description="Multi-device and passphrase backup — non-custodial by design." />
   <Card title="Passkeys" href="/docs/passkeys" description="A second factor for approving new devices — set up right after signup." />
   <Card title="For agents" href="/docs/for-agents" description="Feed this whole site to an LLM and let it build." />

@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/firebase-admin';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendMagicLinkEmail } from '@/lib/email/magic-link';
+import { validateAppRedirect } from '@/lib/oauth/redirects';
 
 // In-memory rate limiter: 1 request per email+app_id per 60s
 const rateLimitMap = new Map<string, number>();
@@ -39,6 +40,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+    if (redirect_uri) await validateAppRedirect(app_id, redirect_uri);
 
     // Validate app exists
     const adminSupabase = createAdminClient();

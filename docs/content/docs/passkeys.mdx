@@ -167,6 +167,26 @@ derived secret unlocks the account's control key — enroll it with
 
 ## Prerequisites & limits
 
+### React Native
+
+Use `NativePasskeySigner` for Starknet/Solana and `NativePasskeyPrf` for Stellar:
+
+```ts
+import { NativePasskeySigner, NativePasskeyPrf } from "@cavos/kit/react-native";
+
+const approver = new NativePasskeySigner({ rpId: "auth.example.com" });
+const stellarFactor = new NativePasskeyPrf({ rpId: "auth.example.com" });
+```
+
+Native passkeys require `rpId`, an associated domain, and a Development Build
+or bare app. iOS uses AuthenticationServices; Android uses Credential Manager.
+If Android does not return a PRF result for Stellar, use the recovery code or
+another authorized device instead of changing the Stellar account model.
+
+- Expo Go is not supported because it cannot load the custom native module.
+- iOS requires 16 or later; Android requires API 28 or later.
+- Test Secure Enclave/StrongBox claims on physical devices, not simulators.
+
 - **Secure context required.** WebAuthn needs HTTPS or `http://localhost`. A LAN
   IP fails — the kit throws an actionable error pointing you to `localhost`, a
   real HTTPS domain, or a tunnel (cloudflared / ngrok). The silent device key
