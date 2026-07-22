@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@auth0/nextjs-auth0": "^4.13.0",
-    "@cavos/kit": "^0.0.3",
+    "@cavos/kit": "^0.0.6",
     "@creit.tech/stellar-wallets-kit": "^2.5.0",
     "@gsap/react": "^2.1.2",
     "@noble/curves": "^1.7.0",
@@ -21,7 +21,7 @@
     "@solana/web3.js": "^1.98.4",
     "@stellar/stellar-sdk": "^16.0.1",
     "@supabase/ssr": "^0.7.0",
-    "@supabase/supabase-js": "^2.83.0",
+    "@supabase/supabase-js": "^2.110.8",
     "@vercel/analytics": "^1.6.1",
     "axios": "^1.13.2",
     "bs58": "^6.0.0",

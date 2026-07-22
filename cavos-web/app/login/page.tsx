@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Header } from '@/components/Header'
 import { Icon } from '@/components/ui/Icon'
+import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
     const router = useRouter()
@@ -13,6 +14,7 @@ export default function LoginPage() {
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
     const [nextPath, setNextPath] = useState('/dashboard')
+    const [passkeyLoading, setPasskeyLoading] = useState(false)
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
@@ -50,6 +52,22 @@ export default function LoginPage() {
         }
     }
 
+    const signInWithPasskey = async () => {
+        setError('')
+        setPasskeyLoading(true)
+        try {
+            const supabase = createClient()
+            const { error: passkeyError } = await supabase.auth.signInWithPasskey()
+            if (passkeyError) throw passkeyError
+            router.push(nextPath)
+            router.refresh()
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Passkey sign-in failed')
+        } finally {
+            setPasskeyLoading(false)
+        }
+    }
+
     return (
         <main className="min-h-screen bg-[#FFFFFF]">
             <Header />
@@ -68,6 +86,16 @@ export default function LoginPage() {
 
                     {/* Form Card */}
                     <div className="bg-white border border-line rounded-2xl p-6 md:p-8 shadow-sm shadow-black/[0.03]">
+                        <button
+                            type="button"
+                            onClick={signInWithPasskey}
+                            disabled={loading || passkeyLoading}
+                            className="mb-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-line-strong bg-white px-8 py-3.5 font-semibold text-black transition-colors hover:bg-black/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            {passkeyLoading ? <Icon.Spinner size={17} className="animate-spin" /> : <Icon.Key size={17} />}
+                            {passkeyLoading ? 'Waiting for passkey…' : 'Sign in with passkey'}
+                        </button>
+                        <div className="mb-5 flex items-center gap-3 text-xs text-black/35"><span className="h-px flex-1 bg-line" /><span>or use your password</span><span className="h-px flex-1 bg-line" /></div>
                         {error && (
                             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
                                 <p className="text-red-600 text-sm">{error}</p>
