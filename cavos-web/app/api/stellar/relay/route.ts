@@ -31,12 +31,14 @@ import {
 import { getRelayerSigner } from '@/lib/stellar/signer';
 import { resolveOrgForApp } from '@/lib/billing/limits';
 import { debitStellarGas, hasGas } from '@/lib/stellar/gas';
+import { recordCavosEvent, resolveEnvironment } from '@/lib/operations/events';
 
 type RelayKind = 'create' | 'fee-bump' | 'sponsored-data';
 
 interface ClassicRelayRequest {
   app_id: string;
   network: string;
+  environment?: 'development' | 'production';
   kind: RelayKind;
   /** base64 tx envelope: a master-signed create / sponsored-data, or a
    *  control-signed fee-bump. */
@@ -88,6 +90,8 @@ export async function POST(request: Request) {
 
     const { valid } = await ApiMiddleware.verifyAppId(body.app_id, logger);
     if (!valid) return ApiResponse.unauthorized('Invalid App ID');
+    const environment = await resolveEnvironment(body.app_id, body.environment);
+    if (body.environment && !environment) return ApiResponse.badRequest('environment does not belong to app_id');
 
     const signer = await getRelayerSigner(body.network);
 
@@ -115,6 +119,7 @@ export async function POST(request: Request) {
           : validateClassicFeeBump(tx as FeeBumpTransaction, signer.publicKey());
     if (!check.ok) {
       logger.warn('Classic relay rejected', { reason: check.reason, app_id: body.app_id, kind: body.kind });
+      await recordCavosEvent({ appId: body.app_id, environmentId: environment?.id, eventType: 'relay.rejected', status: 'failed', severity: 'warning', requestId: logger.requestId, network: body.network, errorCode: 'not_eligible', metadata: { reason: check.reason, kind: body.kind } });
       return ApiResponse.badRequest('Transaction not eligible for sponsorship', { reason: check.reason });
     }
 
@@ -124,6 +129,7 @@ export async function POST(request: Request) {
     const orgId = metered ? await resolveOrgForApp(body.app_id) : null;
     if (orgId && !(await hasGas(orgId))) {
       logger.warn('Classic relay blocked — org out of gas', { app_id: body.app_id, org_id: orgId });
+      await recordCavosEvent({ appId: body.app_id, environmentId: environment?.id, eventType: 'sponsorship.rejected', status: 'failed', severity: 'warning', requestId: logger.requestId, network: body.network, errorCode: 'insufficient_gas' });
       return ApiResponse.paymentRequired('insufficient_gas', {
         message: 'Deposit XLM to sponsor transactions.',
       });
@@ -156,7 +162,8 @@ export async function POST(request: Request) {
         logger.warn('Gas debit failed (tx already landed)', { hash });
       }
     }
-    return ApiResponse.success({ hash });
+    await recordCavosEvent({ appId: body.app_id, environmentId: environment?.id, eventType: 'relay.submitted', status: 'success', requestId: logger.requestId, network: body.network, txReference: hash, metadata: { kind: body.kind } });
+    return ApiResponse.success({ hash, request_id: logger.requestId });
   } catch (error) {
     logger.error('Stellar classic relay POST failed', error);
     return ApiResponse.serverError(error instanceof Error ? error.message : 'relay failed');

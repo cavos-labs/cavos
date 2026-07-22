@@ -75,6 +75,21 @@ button:hover {
   cursor: pointer;
 }
 
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 2px solid #402AFF;
+  outline-offset: 2px;
+}
+
+button:active:not(:disabled),
+[role="button"]:active:not([aria-disabled="true"]) {
+  transform: scale(0.98);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 /* Animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
@@ -124,6 +139,46 @@ button:hover {
 .delay-400 { animation-delay: 400ms; }
 
 .pause-on-hover:hover { animation-play-state: paused; }
+
+@media (max-width: 639px) {
+  .app-section-nav,
+  .email-template-nav {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none;
+  }
+  .app-section-nav::-webkit-scrollbar,
+  .email-template-nav::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+  .email-settings-page [data-dash-header] h1 {
+    font-size: 1.5rem;
+    line-height: 1.2;
+  }
+  .email-settings-page [data-dash-header] p {
+    font-size: 0.875rem;
+    line-height: 1.45;
+  }
+  .email-settings-page [data-dash-panel] {
+    padding: 1rem;
+    border-radius: 0.75rem;
+  }
+  .email-settings-page .email-logo-row {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+  .email-settings-page .email-logo-row > :last-child {
+    width: 100%;
+  }
+  .email-settings-page textarea {
+    min-height: 18rem;
+  }
+  .email-settings-page iframe {
+    min-height: 18rem;
+  }
+}
 
 /* Blog prose styles */
 .blog-prose {

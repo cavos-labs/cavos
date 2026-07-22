@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Icon } from '@/components/ui/Icon'
+import { EmailTemplateNavigation } from '@/components/EmailTemplateNavigation'
 import { createClient } from '@/lib/supabase/client'
 
 // ─── Default Template ────────────────────────────────────────────────────────
@@ -82,9 +83,9 @@ const PLACEHOLDERS: { key: string; label: string; description: string }[] = [
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
     return (
-        <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-black/30 mb-3">
+        <h3 className="mb-4 text-sm font-semibold text-black">
             {children}
-        </p>
+        </h3>
     )
 }
 
@@ -244,31 +245,26 @@ export default function MagicLinkEmailPage() {
     // ── Render ───────────────────────────────────────────────────────────────
 
     return (
-        <div className="flex flex-col gap-5 pb-4">
+        <div className="email-settings-page space-y-5 sm:space-y-6 animate-fadeIn max-w-5xl pb-4">
+            <EmailTemplateNavigation appId={appId} active="magic-link" />
 
             {/* ── Breadcrumb ──────────────────────────────────────────────── */}
-            <div className="flex items-center justify-between">
+            <div>
                 <Link
                     href={`/dashboard/apps/${appId}`}
-                    className="inline-flex items-center gap-1.5 text-sm text-black/40 hover:text-black/80 transition-colors group"
+                    className="inline-flex items-center text-sm text-black/60 hover:text-black transition-colors group"
                 >
-                    <Icon.ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-                    {app?.name || 'App'}
+                    <Icon.ArrowLeft className="w-4 h-4 mr-1 group-hover:-translate-x-0.5 transition-transform" />
+                    Back to {app?.name || 'App'}
                 </Link>
-
-                {/* Passwordless badge */}
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface border border-line text-[10px] font-semibold uppercase tracking-widest text-black/40">
-                    <Icon.Bolt className="w-2.5 h-2.5" />
-                    Passwordless
-                </div>
             </div>
 
             {/* ── Page header ─────────────────────────────────────────────── */}
             <div data-dash-header>
-                <h1 className="text-xl font-semibold tracking-tight text-ink mb-1">
-                    Magic Link Email
+                <h1 className="text-2xl font-semibold tracking-tight mb-2">
+                    Magic Link Email Settings
                 </h1>
-                <p className="text-sm text-black/40">
+                <p className="text-black/60">
                     Customize the sign-in email your users receive. Click any placeholder to insert it at the cursor.
                 </p>
             </div>
@@ -276,20 +272,16 @@ export default function MagicLinkEmailPage() {
             {/* ── Two-pane workspace ──────────────────────────────────────── */}
             <div
                 data-dash-panel
-                className="grid gap-4"
-                style={{
-                    gridTemplateColumns: '320px 1fr',
-                    height: 'calc(100vh - 290px)',
-                    minHeight: '520px',
-                }}
+                className="space-y-6 rounded-xl border border-black/10 bg-white p-6"
             >
                 {/* ── Left: Settings panel ──────────────────────────────── */}
-                <div className="flex flex-col gap-0 bg-white border border-line rounded-2xl overflow-hidden">
-                    <div className="overflow-y-auto flex-1 p-5 space-y-6">
+                <div className="bg-white">
+                    <div className="space-y-6">
 
                         {/* App info */}
                         <div>
-                            <SectionLabel>App info</SectionLabel>
+                            <SectionLabel>App Information</SectionLabel>
+                            <p className="mb-4 text-xs text-black/60">These values are used in the email template placeholders.</p>
                             <div className="space-y-4">
                                 <Input
                                     label="App Name"
@@ -301,12 +293,12 @@ export default function MagicLinkEmailPage() {
                                 {/* Logo */}
                                 <div>
                                     <label className="block text-sm font-medium text-black/80 mb-2">App Logo</label>
-                                    <div className="flex items-center gap-3">
+                                    <div className="email-logo-row flex items-center gap-3">
                                         {/* Preview box */}
                                         <div
                                             onClick={() => fileInputRef.current?.click()}
                                             className={`
-                                                relative w-14 h-14 rounded-xl border flex items-center justify-center cursor-pointer
+                                                relative w-24 h-24 rounded-2xl border flex items-center justify-center cursor-pointer
                                                 overflow-hidden transition-all group shrink-0
                                                 ${formData.logo_url
                                                     ? 'border-black/10 bg-white'
@@ -319,7 +311,7 @@ export default function MagicLinkEmailPage() {
                                                     <Image
                                                         src={formData.logo_url}
                                                         alt="Logo"
-                                                        width={56} height={56}
+                                                        width={96} height={96}
                                                         className="w-full h-full object-cover"
                                                     />
                                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -343,14 +335,18 @@ export default function MagicLinkEmailPage() {
                                                 onChange={e => setFormData({ ...formData, logo_url: e.target.value })}
                                                 className="w-full text-xs px-3 py-2 bg-surface border border-line rounded-lg focus:outline-none focus:border-black/30 text-black/70 placeholder:text-black/25"
                                             />
+                                            <div className="mt-2 flex gap-2">
                                             {formData.logo_url && (
                                                 <button
+                                                    type="button"
                                                     onClick={() => setFormData({ ...formData, logo_url: '' })}
-                                                    className="text-[10px] text-red-400 hover:text-red-600 mt-1 transition-colors"
+                                                    className="rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50"
                                                 >
-                                                    Remove
+                                                    Remove Logo
                                                 </button>
                                             )}
+                                            <button type="button" onClick={() => fileInputRef.current?.click()} className="rounded-lg border border-line px-3 py-2 text-xs font-semibold hover:bg-black/[0.03]">Upload Image</button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -362,11 +358,10 @@ export default function MagicLinkEmailPage() {
 
                         {/* Sender config */}
                         <div>
-                            <SectionLabel>Sender</SectionLabel>
+                            <SectionLabel>Email Configuration</SectionLabel>
                             <div className="space-y-3">
-                                <div className="flex items-center gap-2 px-3 py-2 bg-surface border border-line rounded-lg">
-                                    <Icon.Mail className="w-3 h-3 text-black/30 shrink-0" />
-                                    <span className="text-[11px] text-black/40 font-mono">noreply@cavos.xyz</span>
+                                <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">
+                                    <strong>Note:</strong> Emails are sent from <code className="rounded bg-blue-100 px-1 py-0.5">noreply@cavos.xyz</code>. Customize the sender name and reply-to address below.
                                 </div>
                                 <Input
                                     label="Sender Name"
@@ -389,7 +384,7 @@ export default function MagicLinkEmailPage() {
 
                         {/* Placeholder chips */}
                         <div>
-                            <SectionLabel>Placeholders</SectionLabel>
+                            <SectionLabel>Available placeholders</SectionLabel>
                             <p className="text-[11px] text-black/35 mb-3 leading-relaxed">
                                 Click to insert at cursor, or copy to clipboard.
                             </p>
@@ -423,11 +418,15 @@ export default function MagicLinkEmailPage() {
                     </div>
                 </div>
 
-                {/* ── Right: Editor / Preview ───────────────────────────── */}
-                <div className="flex flex-col rounded-2xl overflow-hidden border border-line bg-ink">
+                <div className="border-t border-black/10 pt-6">
+                    <h3 className="mb-1 text-sm font-semibold">Email Template</h3>
+                    <p className="mb-4 text-xs text-black/60">Edit the template below. Empty templates will use the Cavos default automatically.</p>
+                </div>
+                {/* ── Editor / Preview ──────────────────────────────────── */}
+                <div className="flex min-h-96 flex-col overflow-hidden rounded-lg border border-black/10 bg-white">
 
                     {/* Tab bar */}
-                    <div className="flex items-center border-b border-white/[0.06] shrink-0">
+                    <div className="flex items-center border-b border-black/10 shrink-0">
                         {(['code', 'preview'] as const).map(tab => (
                             <button
                                 key={tab}
@@ -435,8 +434,8 @@ export default function MagicLinkEmailPage() {
                                 className={`
                                     px-5 py-3 text-xs font-medium transition-colors capitalize
                                     ${activeTab === tab
-                                        ? 'text-white border-b border-white/40 -mb-px'
-                                        : 'text-white/30 hover:text-white/60'
+                                        ? 'text-black border-b border-black -mb-px'
+                                        : 'text-black/40 hover:text-black/70'
                                     }
                                 `}
                             >
@@ -446,13 +445,13 @@ export default function MagicLinkEmailPage() {
 
                         {/* Stats + reset */}
                         <div className="ml-auto flex items-center gap-3 pr-4">
-                            <span className="text-[10px] font-mono text-white/20">
+                            <span className="text-[10px] font-mono text-black/35">
                                 {lineCount}L · {charCount}ch
                             </span>
                             <button
                                 onClick={() => setFormData(prev => ({ ...prev, email_magic_link_template_html: DEFAULT_TEMPLATE }))}
                                 title="Reset to default"
-                                className="flex items-center gap-1 text-[10px] text-white/25 hover:text-white/50 transition-colors"
+                                className="flex items-center gap-1 text-[10px] text-black/40 hover:text-black/70 transition-colors"
                             >
                                 <Icon.Refresh className="w-3 h-3" />
                                 Reset
@@ -467,7 +466,7 @@ export default function MagicLinkEmailPage() {
                             value={formData.email_magic_link_template_html}
                             onChange={e => setFormData(prev => ({ ...prev, email_magic_link_template_html: e.target.value }))}
                             spellCheck={false}
-                            className="flex-1 w-full bg-transparent text-[#d4cfc8] font-mono text-xs leading-6 p-5 resize-none focus:outline-none"
+                            className="min-h-96 w-full flex-1 resize-none bg-white p-5 font-mono text-xs leading-6 text-black/75 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand/20"
                             style={{ caretColor: '#402AFF' }}
                             placeholder="Paste your HTML template here…"
                         />

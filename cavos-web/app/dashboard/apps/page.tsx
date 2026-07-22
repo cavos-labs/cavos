@@ -7,18 +7,21 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { useOrganization } from '@/lib/hooks/useOrganization'
 
 export default function AppsPage() {
     const router = useRouter()
     const [apps, setApps] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+    const { organizationId, loading: organizationLoading } = useOrganization()
 
-    useEffect(() => { fetchApps() }, [])
+    useEffect(() => { if (organizationId) fetchApps() }, [organizationId])
 
     const fetchApps = async () => {
         try {
-            const res = await fetch('/api/apps')
+            setLoading(true)
+            const res = await fetch(`/api/apps?organization_id=${organizationId}`)
             if (!res.ok) {
                 if (res.status === 401) { router.push('/login'); return }
                 throw new Error('Failed to fetch apps')
@@ -32,7 +35,7 @@ export default function AppsPage() {
         }
     }
 
-    if (loading) {
+    if (loading || organizationLoading) {
         return (
             <div className="flex items-center justify-center min-h-[50vh]">
                 <Icon.Spinner size={26} weight="bold" className="animate-spin text-black/25" />
@@ -49,7 +52,7 @@ export default function AppsPage() {
                 title="Applications"
                 subtitle="Manage your apps with embedded wallets."
                 actions={
-                    <Link href="/dashboard/apps/new">
+                    <Link href={`/dashboard/apps/new?organization_id=${organizationId}`}>
                         <Button icon={<Icon.Add size={15} weight="bold" />}>
                             New Application
                         </Button>
@@ -81,7 +84,7 @@ export default function AppsPage() {
                                 Create your first app to get an App ID and start integrating embedded wallets.
                             </p>
                         </div>
-                        <Link href="/dashboard/apps/new">
+                        <Link href={`/dashboard/apps/new?organization_id=${organizationId}`}>
                             <Button size="sm" className="bg-white/10 text-white hover:bg-white/16 border border-white/10 rounded-xl mt-1">
                                 Create Application
                             </Button>
@@ -129,7 +132,7 @@ export default function AppsPage() {
                     ))}
 
                     {/* Add new card */}
-                    <Link href="/dashboard/apps/new">
+                    <Link href={`/dashboard/apps/new?organization_id=${organizationId}`}>
                         <div className="group h-full min-h-[120px] bg-surface border border-dashed border-line-strong rounded-2xl p-6 hover:border-black/30 hover:bg-black/[0.03] transition-all flex items-center justify-center gap-2">
                             <Icon.Add size={16} weight="bold" className="text-black/35 group-hover:text-black/60 transition-colors" />
                             <span className="text-xs font-semibold text-black/40 group-hover:text-black/70 transition-colors">New Application</span>

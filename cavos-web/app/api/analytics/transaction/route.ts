@@ -1,8 +1,11 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import { ApiLogger } from '@/lib/api/logger';
+import { recordCavosEvent } from '@/lib/operations/events';
 
 export async function POST(request: Request) {
+    const logger = ApiLogger.createRequestLogger('/api/analytics/transaction', 'POST');
     try {
         const supabase = await createClient();
         const adminSupabase = createAdminClient();
@@ -66,7 +69,9 @@ export async function POST(request: Request) {
             );
         }
 
-        return NextResponse.json({ success: true, data });
+        await recordCavosEvent({ appId, walletId: wallet.id, eventType: 'transaction.recorded', status: 'success', requestId: logger.requestId, network });
+
+        return NextResponse.json({ success: true, data, request_id: logger.requestId });
     } catch (error) {
         console.error('Transaction analytics error:', error);
         return NextResponse.json(

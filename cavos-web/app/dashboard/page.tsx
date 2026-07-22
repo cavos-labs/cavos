@@ -1,283 +1,81 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
-import { PageHeader } from '@/components/ui/PageHeader'
-import { ActivityChart } from '@/components/ActivityChart'
+import { PageSkeleton } from '@/components/ui/Skeleton'
+
+type Overview = {
+  wallets: { total: number; new: number; previous: number }
+  events: { total: number; successes: number; failures: number; success_rate: number | null; latency_p50_ms: number | null; latency_p95_ms: number | null }
+  health: 'healthy' | 'degraded' | 'action_required'
+}
+
+const healthCopy = {
+  healthy: { label: 'Healthy', className: 'text-emerald-800 bg-emerald-50 border-emerald-200' },
+  degraded: { label: 'Degraded', className: 'text-amber-800 bg-amber-50 border-amber-200' },
+  action_required: { label: 'Action required', className: 'text-red-800 bg-red-50 border-red-200' },
+}
 
 export default function DashboardPage() {
-    const router = useRouter()
-    const [user, setUser] = useState<any>(null)
-    const [loading, setLoading] = useState(true)
-    const [organizations, setOrganizations] = useState<any[]>([])
-    const [apps, setApps] = useState<any[]>([])
-    const [stats, setStats] = useState<any[]>([])
-    const [loadingStats, setLoadingStats] = useState(true)
+  const [data, setData] = useState<Overview | null>(null)
+  const [apps, setApps] = useState<any[]>([])
+  const [range, setRange] = useState('7d')
+  const [appId, setAppId] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-    useEffect(() => {
-        const checkUser = async () => {
-            const supabase = createClient()
-            const { data: { user } } = await supabase.auth.getUser()
+  useEffect(() => { fetch('/api/apps').then(r => r.ok ? r.json() : null).then(d => setApps(d?.apps ?? [])) }, [])
+  useEffect(() => {
+    setLoading(true); setError('')
+    const query = new URLSearchParams({ range }); if (appId) query.set('app_id', appId)
+    fetch(`/api/operations/overview?${query}`).then(async r => { if (!r.ok) throw new Error(); setData(await r.json()) }).catch(() => setError('We could not load operational metrics. Try again.')).finally(() => setLoading(false))
+  }, [range, appId])
 
-            if (!user) {
-                router.push('/login')
-                return
-            }
+  const change = useMemo(() => {
+    if (!data?.wallets.previous) return null
+    return Math.round(((data.wallets.new - data.wallets.previous) / data.wallets.previous) * 100)
+  }, [data])
 
-            setUser(user)
-            await Promise.all([
-                fetchOrganizations(),
-                fetchApps(),
-                fetchStats()
-            ])
-            setLoading(false)
-        }
+  if (loading && !data) return <PageSkeleton />
+  const health = healthCopy[data?.health ?? 'healthy']
+  return <div className="space-y-6">
+    <PageHeader title="Overview" subtitle="Operational state across your Cavos integrations." actions={<Link href="/dashboard/apps/new"><Button size="sm" variant="primary" icon={<Icon.Add size={15} />}>New app</Button></Link>} />
 
-        checkUser()
-    }, [router])
+    <section aria-label="Dashboard filters" className="flex flex-wrap items-center gap-3 border-y border-line py-3">
+      <label className="text-xs font-semibold text-black/60" htmlFor="app-filter">App</label>
+      <select id="app-filter" value={appId} onChange={e => setAppId(e.target.value)} className="rounded-lg border border-line-strong bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-brand">
+        <option value="">All apps</option>{apps.map(app => <option key={app.id} value={app.id}>{app.name}</option>)}
+      </select>
+      <div className="ml-auto flex rounded-lg border border-line bg-surface p-0.5" aria-label="Date range">
+        {['24h','7d','30d','90d'].map(value => <button key={value} onClick={() => setRange(value)} aria-pressed={range === value} className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-[background-color,color,transform] duration-150 active:scale-[.97] focus-visible:outline-2 focus-visible:outline-brand ${range === value ? 'bg-white text-ink shadow-sm' : 'text-black/50 hover:text-black'}`}>{value}</button>)}
+      </div>
+    </section>
 
-    const fetchOrganizations = async () => {
-        try {
-            const res = await fetch('/api/organizations')
-            if (res.ok) {
-                const data = await res.json()
-                setOrganizations(data.organizations || [])
-            }
-        } catch (err) {
-            console.error('Failed to fetch organizations:', err)
-        }
-    }
+    {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>}
 
-    const fetchApps = async () => {
-        try {
-            const res = await fetch('/api/apps')
-            if (res.ok) {
-                const data = await res.json()
-                setApps(data.apps || [])
-            }
-        } catch (err) {
-            console.error('Failed to fetch apps:', err)
-        }
-    }
+    <section aria-label="Operational metrics" className="grid overflow-hidden rounded-xl border border-line bg-white sm:grid-cols-2 lg:grid-cols-4 sm:divide-x divide-line">
+      <Metric label="Total wallets" value={data?.wallets.total ?? '—'} note="Historical" />
+      <Metric label={`New wallets · ${range}`} value={data?.wallets.new ?? '—'} note={change === null ? 'No prior baseline' : `${change >= 0 ? '+' : ''}${change}% vs prior period`} />
+      <Metric label="Success rate" value={data?.events.success_rate == null ? '—' : `${Math.round(data.events.success_rate * 100)}%`} note={`${data?.events.total ?? 0} Cavos events`} />
+      <div className="p-5"><p className="text-xs font-medium text-black/55">Integration health</p><span className={`mt-4 inline-flex rounded-md border px-2.5 py-1.5 text-sm font-semibold ${health.className}`}>{health.label}</span><p className="mt-3 text-xs text-black/45">Based on explicit operational checks.</p></div>
+    </section>
 
-    const fetchStats = async () => {
-        try {
-            const res = await fetch('/api/analytics/stats')
-            if (res.ok) {
-                const data = await res.json()
-                setStats(data.stats || [])
-            }
-        } catch (err) {
-            console.error('Failed to fetch stats:', err)
-        } finally {
-            setLoadingStats(false)
-        }
-    }
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-[50vh]">
-                <div className="w-7 h-7 border-2 border-black/15 border-t-black/60 rounded-full animate-spin" />
-            </div>
-        )
-    }
-
-    const totalWallets = stats.reduce((acc, curr) => acc + curr.wallets, 0)
-    const isEmpty = organizations.length === 0 && apps.length === 0
-
-    return (
-        <div className="space-y-6 animate-fadeIn">
-
-            {/* ── Page header ── */}
-            <PageHeader
-                className="pb-5 border-b border-line"
-                title="Overview"
-                subtitle={<span className="font-mono text-[13px]">{user?.email}</span>}
-                actions={
-                    <Link href="/dashboard/apps/new">
-                        <Button variant="primary" size="sm" icon={<Icon.Add size={15} weight="bold" />}>
-                            New App
-                        </Button>
-                    </Link>
-                }
-            />
-
-            {/* ── Getting started banner (empty state) ── */}
-            {isEmpty && (
-                <div className="relative overflow-hidden rounded-xl bg-ink text-white p-7 border border-black/10">
-                    {/* Brand glow */}
-                    <div
-                        className="absolute top-0 right-0 w-72 h-72 pointer-events-none"
-                        style={{ background: 'radial-gradient(ellipse at top right, #402AFF26 0%, transparent 70%)' }}
-                    />
-                    <div className="relative space-y-4">
-                        <div className="flex items-center gap-2">
-                            <Icon.Bolt size={15} weight="fill" className="text-brand" />
-                            <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/35">Get Started</span>
-                        </div>
-                        <h3 className="text-xl font-bold">Ready to build?</h3>
-                        <p className="text-sm text-white/45 max-w-md leading-relaxed">
-                            Create an organization to group your apps and team members, then add your first application to get an App ID.
-                        </p>
-                        <div className="flex flex-wrap gap-3 pt-1">
-                            <Link href="/dashboard/organizations/new">
-                                <Button size="sm" className="bg-white/10 text-white hover:bg-white/16 border border-white/10 rounded-xl">
-                                    Create Organization
-                                </Button>
-                            </Link>
-                            <a href="https://docs.cavos.xyz" target="_blank" rel="noopener noreferrer">
-                                <Button variant="ghost" size="sm" className="text-white/40 hover:text-white hover:bg-white/[0.06] rounded-xl">
-                                    Read the docs →
-                                </Button>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* ── Stats strip ── */}
-            <div data-dash-stat className="grid grid-cols-1 sm:grid-cols-3 rounded-xl border border-line bg-white divide-y sm:divide-y-0 sm:divide-x divide-line overflow-hidden">
-                {[
-                    { icon: Icon.Org,      label: 'Organizations', value: organizations.length,  href: '/dashboard/organizations' },
-                    { icon: Icon.Apps,     label: 'Applications',  value: apps.length,            href: '/dashboard/apps' },
-                    { icon: Icon.Activity, label: 'Total Wallets', value: loadingStats ? null : totalWallets, href: null },
-                ].map((stat, i) => {
-                    const body = (
-                        <>
-                            <div className="flex items-center justify-between">
-                                <span className="flex items-center gap-2 text-[13px] font-medium text-black/55">
-                                    <stat.icon size={16} className="text-black/40" />
-                                    {stat.label}
-                                </span>
-                                {stat.href && (
-                                    <Icon.ChevronRight size={15} weight="bold" className="text-black/20 group-hover:text-black/45 group-hover:translate-x-0.5 transition-all" />
-                                )}
-                            </div>
-                            <span className="font-mono text-[32px] leading-none font-semibold tracking-tight text-ink">
-                                {stat.value === null ? '—' : stat.value}
-                            </span>
-                        </>
-                    )
-                    return stat.href ? (
-                        <Link key={i} href={stat.href} className="group flex flex-col gap-4 p-5 hover:bg-surface transition-colors">
-                            {body}
-                        </Link>
-                    ) : (
-                        <div key={i} className="group flex flex-col gap-4 p-5">{body}</div>
-                    )
-                })}
-            </div>
-
-            {/* ── Activity chart ── */}
-            <ActivityChart data={stats} loading={loadingStats} />
-
-            {/* ── Bottom row ── */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                {/* Recent apps (or manage card if empty) */}
-                <div data-dash-panel className="rounded-xl bg-white border border-line p-5">
-                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-line">
-                        <h3 className="text-[13px] font-bold text-ink flex items-center gap-2">
-                            Applications
-                            <span className="font-mono text-[11px] font-medium text-black/35">{apps.length}</span>
-                        </h3>
-                        <Link href="/dashboard/apps/new" className="inline-flex items-center gap-1 text-xs font-semibold text-black/45 hover:text-ink transition-colors">
-                            <Icon.Add size={14} weight="bold" /> New
-                        </Link>
-                    </div>
-
-                    {apps.length === 0 ? (
-                        <div className="py-4 space-y-3">
-                            <p className="text-sm text-black/40 leading-relaxed">No applications yet. Create one to get an App ID and start integrating.</p>
-                            <Link href="/dashboard/apps/new" className="inline-flex items-center gap-1 text-xs font-semibold text-black/40 hover:text-black transition-colors">
-                                Create first app <Icon.ArrowRight size={13} weight="bold" />
-                            </Link>
-                        </div>
-                    ) : (
-                        <div className="space-y-1">
-                            {apps.slice(0, 4).map((app: any) => (
-                                <Link key={app.id} href={`/dashboard/apps/${app.id}`}>
-                                    <div className="group flex items-center justify-between px-3 py-2.5 -mx-2 rounded-lg hover:bg-surface transition-colors">
-                                        <div className="flex items-center gap-2.5 min-w-0">
-                                            <Icon.Apps size={16} className="text-black/40 shrink-0" />
-                                            <div className="min-w-0">
-                                                <p className="text-[13px] font-medium text-ink truncate">{app.name}</p>
-                                                {app.organization && (
-                                                    <p className="text-[10px] text-black/35 truncate">{app.organization.name}</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <Icon.ChevronRight size={14} weight="bold" className="text-black/20 group-hover:text-black/50 shrink-0 transition-colors" />
-                                    </div>
-                                </Link>
-                            ))}
-                            {apps.length > 4 && (
-                                <Link href="/dashboard/apps" className="flex items-center gap-1 px-3 pt-2 text-xs font-semibold text-black/30 hover:text-black transition-colors">
-                                    +{apps.length - 4} more <Icon.ArrowRight size={13} weight="bold" />
-                                </Link>
-                            )}
-                        </div>
-                    )}
-                </div>
-
-                {/* Right column: orgs + resources */}
-                <div data-dash-panel className="space-y-4">
-                    {/* Organizations card */}
-                    <div className="rounded-xl bg-white border border-line p-5">
-                        <div className="flex items-center justify-between mb-4 pb-3 border-b border-line">
-                            <h3 className="text-[13px] font-bold text-ink flex items-center gap-2">
-                                Organizations
-                                <span className="font-mono text-[11px] font-medium text-black/35">{organizations.length}</span>
-                            </h3>
-                            <Link href="/dashboard/organizations/new" className="inline-flex items-center gap-1 text-xs font-semibold text-black/45 hover:text-ink transition-colors">
-                                <Icon.Add size={14} weight="bold" /> New
-                            </Link>
-                        </div>
-                        {organizations.length === 0 ? (
-                            <Link href="/dashboard/organizations/new" className="inline-flex items-center gap-1 text-xs font-semibold text-black/40 hover:text-black transition-colors">
-                                Create first organization <Icon.ArrowRight size={13} weight="bold" />
-                            </Link>
-                        ) : (
-                            <div className="space-y-1">
-                                {organizations.slice(0, 3).map((org: any) => (
-                                    <Link key={org.id} href={`/dashboard/organizations/${org.id}`}>
-                                        <div className="group flex items-center justify-between px-3 py-2.5 -mx-2 rounded-lg hover:bg-surface transition-colors">
-                                            <div className="flex items-center gap-2.5 min-w-0">
-                                                <Icon.Org size={16} className="text-black/40 shrink-0" />
-                                                <p className="text-[13px] font-medium text-ink truncate">{org.name}</p>
-                                            </div>
-                                            <Icon.ChevronRight size={14} weight="bold" className="text-black/20 group-hover:text-black/50 shrink-0 transition-colors" />
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Resources */}
-                    <div className="rounded-xl bg-surface/60 border border-line p-4 flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                            <Icon.Docs size={18} className="text-black/45 shrink-0" />
-                            <div>
-                                <p className="text-xs font-bold text-black/70">Documentation</p>
-                                <p className="text-[10px] text-black/40">Guides, SDK reference, API docs.</p>
-                            </div>
-                        </div>
-                        <a
-                            href="https://docs.cavos.xyz"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-black/40 hover:text-black transition-colors"
-                        >
-                            Open <Icon.ArrowRight size={13} weight="bold" />
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    )
+    <div className="grid gap-4 lg:grid-cols-[1.4fr_.6fr]">
+      <section className="rounded-xl border border-line bg-white p-5">
+        <div className="flex items-center justify-between border-b border-line pb-4"><div><h2 className="text-sm font-semibold">Operational performance</h2><p className="mt-1 text-xs text-black/50">Only activity processed by Cavos.</p></div><Link href="/dashboard/activity" className="text-xs font-semibold text-brand hover:underline">View activity</Link></div>
+        <dl className="mt-5 grid gap-5 sm:grid-cols-3">
+          <DataPoint label="Successful" value={data?.events.successes ?? 0} />
+          <DataPoint label="Failed" value={data?.events.failures ?? 0} />
+          <DataPoint label="Latency p95" value={data?.events.latency_p95_ms == null ? 'Not enough data' : `${data.events.latency_p95_ms} ms`} />
+        </dl>
+      </section>
+      <section className="rounded-xl border border-line bg-white p-5"><h2 className="text-sm font-semibold">Scope</h2><p className="mt-3 text-sm leading-6 text-black/55">Cavos reports wallet registration, devices, recovery, relay decisions and sponsorship. For balances and external activity, use the network explorer.</p></section>
+    </div>
+  </div>
 }
+
+function Metric({ label, value, note }: { label: string; value: string | number; note: string }) { return <div className="border-b border-line p-5 last:border-b-0 sm:border-b-0"><p className="text-xs font-medium text-black/55">{label}</p><p className="mt-4 font-mono text-3xl font-semibold tabular-nums">{value}</p><p className="mt-2 text-xs text-black/45">{note}</p></div> }
+function DataPoint({ label, value }: { label: string; value: string | number }) { return <div><dt className="text-xs text-black/45">{label}</dt><dd className="mt-1 font-mono text-lg font-semibold tabular-nums">{value}</dd></div> }

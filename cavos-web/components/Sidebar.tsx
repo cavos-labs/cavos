@@ -4,21 +4,27 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Icon } from '@/components/ui/Icon'
-import Image from 'next/image'
 import { useEffect, useState } from 'react'
+import { useOrganization } from '@/lib/hooks/useOrganization'
 
 const navigation = [
     { name: 'Overview',      href: '/dashboard',               icon: Icon.Overview },
-    { name: 'Organizations', href: '/dashboard/organizations', icon: Icon.Org },
     { name: 'Applications',  href: '/dashboard/apps',          icon: Icon.Apps },
-    { name: 'Paymasters',    href: '/dashboard/paymasters',    icon: Icon.Gas },
+    { name: 'Activity',      href: '/dashboard/activity',      icon: Icon.Activity },
+    { name: 'Gas & usage',   href: '/dashboard/paymasters',    icon: Icon.Gas },
+    { name: 'Webhooks',      href: '/dashboard/webhooks',      icon: Icon.Bolt },
+    { name: 'Team',          href: '/dashboard/team',          icon: Icon.Org },
+    { name: 'API keys',      href: '/dashboard/api-keys',      icon: Icon.Key },
     { name: 'Billing',       href: '/dashboard/billing',       icon: Icon.Billing },
+    { name: 'Audit log',     href: '/dashboard/audit-log',     icon: Icon.Docs },
+    { name: 'Settings',      href: '/dashboard/settings',      icon: Icon.Settings },
 ]
 
 export function Sidebar() {
     const pathname = usePathname()
     const router = useRouter()
     const [userEmail, setUserEmail] = useState<string | null>(null)
+    const { organizations, organizationId, setOrganizationId, loading: organizationsLoading } = useOrganization()
 
     useEffect(() => {
         const getUser = async () => {
@@ -40,16 +46,40 @@ export function Sidebar() {
         <div className="flex flex-col h-full bg-white border-r border-line">
 
             {/* Logo */}
-            <div className="h-16 flex items-center px-5 border-b border-line">
+            <div className="h-16 flex items-center px-4 border-b border-line">
                 <Link href="/dashboard" className="hover:opacity-75 transition-opacity">
-                    <Image
-                        src="/cavos-black.png"
-                        alt="Cavos"
-                        width={96}
-                        height={38}
-                        className="h-7 w-auto"
+                    <span
+                        role="img"
+                        aria-label="Cavos"
+                        className="block h-7 w-7 bg-brand"
+                        style={{
+                            WebkitMask: 'url(/cavos-black.png) center / contain no-repeat',
+                            mask: 'url(/cavos-black.png) center / contain no-repeat',
+                        }}
                     />
                 </Link>
+            </div>
+
+            <div className="border-b border-line px-3 py-3">
+                <label className="block">
+                    <span className="mb-1.5 block px-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-black/35">
+                        Organization
+                    </span>
+                    <div className="relative">
+                        <select
+                            aria-label="Current organization"
+                            value={organizationId}
+                            onChange={(event) => setOrganizationId(event.target.value)}
+                            disabled={organizationsLoading || organizations.length === 0}
+                            className="h-10 w-full appearance-none truncate rounded-lg border border-line bg-surface px-3 pr-8 text-sm font-semibold text-black/75 outline-none transition-colors hover:border-line-strong focus-visible:ring-2 focus-visible:ring-brand/25 disabled:opacity-50"
+                        >
+                            {organizations.map((organization) => (
+                                <option key={organization.id} value={organization.id}>{organization.name}</option>
+                            ))}
+                        </select>
+                        <Icon.ArrowDown size={13} aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-black/35" />
+                    </div>
+                </label>
             </div>
 
             {/* Navigation */}
