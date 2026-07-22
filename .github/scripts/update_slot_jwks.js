@@ -148,30 +148,35 @@ async function verifyRegistry(provider, registryAddress, providerKeys) {
   const verification = {};
 
   for (const [providerName, keys] of Object.entries(providerKeys)) {
-    const sampleKid = keys[0]?.kid;
-    if (!sampleKid) {
+    if (keys.length === 0) {
       verification[providerName] = { ok: false, reason: 'No keys fetched' };
       continue;
     }
 
-    try {
-      const response = await provider.callContract({
-        contractAddress: registryAddress,
-        entrypoint: 'get_key_if_valid',
-        calldata: [computeKidFelt(sampleKid)],
-      });
+    const checked = [];
+    const missing = [];
 
-      verification[providerName] = {
-        ok: Array.isArray(response) && response.some((value) => normalizeHex(value) !== '0x0'),
-        sampleKid,
-      };
-    } catch (error) {
-      verification[providerName] = {
-        ok: false,
-        sampleKid,
-        reason: error.message,
-      };
+    for (const key of keys) {
+      try {
+        const response = await provider.callContract({
+          contractAddress: registryAddress,
+          entrypoint: 'get_key_if_valid',
+          calldata: [computeKidFelt(key.kid)],
+        });
+        const ok = Array.isArray(response) && response.some((value) => normalizeHex(value) !== '0x0');
+        checked.push(key.kid);
+        if (!ok) missing.push(key.kid);
+      } catch (error) {
+        checked.push(key.kid);
+        missing.push(`${key.kid}: ${error.message}`);
+      }
     }
+
+    verification[providerName] = {
+      ok: missing.length === 0,
+      checked,
+      ...(missing.length > 0 ? { missing } : {}),
+    };
   }
 
   return verification;

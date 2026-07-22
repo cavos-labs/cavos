@@ -186,9 +186,9 @@ export async function bootstrapKatana(input: BootstrapInput): Promise<BootstrapR
       registryDeployed: registryStatus[t.registry],
       keysLoaded: calls.length,
       verified: {
-        google: await verifyKid(katana, t.registry, google[0]?.kid),
-        apple: await verifyKid(katana, t.registry, apple[0]?.kid),
-        cavos: await verifyKid(katana, t.registry, cavos[0]?.kid),
+        google: await verifyAllKids(katana, t.registry, google),
+        apple: await verifyAllKids(katana, t.registry, apple),
+        cavos: await verifyAllKids(katana, t.registry, cavos),
       },
     });
   }
@@ -308,6 +308,12 @@ async function verifyKid(katana: RpcProvider, registry: string, kid?: string): P
   } catch {
     return false;
   }
+}
+
+async function verifyAllKids(katana: RpcProvider, registry: string, keys: JWK[]): Promise<boolean> {
+  if (keys.length === 0) return false;
+  const results = await Promise.all(keys.map((key) => verifyKid(katana, registry, key.kid)));
+  return results.every(Boolean);
 }
 
 async function fetchJWKS(url: string): Promise<JWK[]> {
