@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { requireOrganizationAccess } from '@/lib/operations/access'
 
 type RouteContext = {
   params: Promise<{ id: string }>
@@ -9,22 +10,13 @@ type RouteContext = {
 export async function GET(request: Request, context: RouteContext) {
   try {
     const { id } = await context.params
-    const supabase = await createClient()
+    const access = await requireOrganizationAccess(id)
+    if (!access.ok) return NextResponse.json({ error: 'Forbidden' }, { status: access.status })
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: organization, error } = await supabase
+    const { data: organization, error } = await access.supabase
       .from('organizations')
       .select('*')
       .eq('id', id)
-      .eq('owner_id', user.id)
       .single()
 
     if (error) {
@@ -35,7 +27,7 @@ export async function GET(request: Request, context: RouteContext) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ organization })
+    return NextResponse.json({ organization, role: access.role })
   } catch (error) {
     console.error('Unexpected error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

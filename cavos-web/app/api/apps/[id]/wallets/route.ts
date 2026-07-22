@@ -20,7 +20,7 @@ export async function GET(request: Request, context: RouteContext) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        // Verify app ownership
+        // RLS limits the app and wallet rows to organizations visible to this member.
         const { data: app, error: appError } = await supabase
             .from('apps')
             .select(`
@@ -32,11 +32,6 @@ export async function GET(request: Request, context: RouteContext) {
 
         if (appError || !app) {
             return NextResponse.json({ error: 'App not found' }, { status: 404 })
-        }
-
-        const organization = app.organization as unknown as { owner_id: string }
-        if (organization.owner_id !== user.id) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
         }
 
         // Fetch wallets

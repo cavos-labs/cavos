@@ -19,7 +19,6 @@ export async function GET() {
     const { data: organizations, error } = await supabase
       .from('organizations')
       .select('*')
-      .eq('owner_id', user.id)
       .order('created_at', { ascending: false })
 
     if (error) {
