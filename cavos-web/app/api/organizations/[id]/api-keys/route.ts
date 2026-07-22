@@ -19,7 +19,7 @@ export async function GET(
     // RLS ensures only the org owner can see these
     const { data: keys, error } = await supabase
       .from('organization_api_keys')
-      .select('id, name, key_prefix, is_active, last_used_at, created_at')
+      .select('id, name, key_prefix, is_active, last_used_at, created_at, environment_id, scopes, expires_at, request_count, error_count')
       .eq('org_id', orgId)
       .order('created_at', { ascending: false })
 

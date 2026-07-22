@@ -6,6 +6,9 @@ import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
+import { EmailTemplateNavigation } from '@/components/EmailTemplateNavigation'
+import { Input } from '@/components/ui/Input'
+import Image from 'next/image'
 const DEFAULT_PASSWORD_RESET_TEMPLATE = `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -51,6 +54,7 @@ export default function PasswordResetEmailPage() {
     const appId = params.id as string
 
     const [app, setApp] = useState<{ name: string; logo_url: string | null } | null>(null)
+    const [formData, setFormData] = useState({ name: '', logo_url: '', email_from_name: '', email_reply_to: '' })
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
@@ -74,6 +78,12 @@ export default function PasswordResetEmailPage() {
             }
             const data = await res.json()
             setApp(data.app)
+            setFormData({
+                name: data.app.name ?? '',
+                logo_url: data.app.logo_url ?? '',
+                email_from_name: data.app.email_from_name ?? '',
+                email_reply_to: data.app.email_reply_to ?? '',
+            })
             setTemplate(data.app.email_password_reset_template_html ?? DEFAULT_PASSWORD_RESET_TEMPLATE)
         } catch (e) {
             setError('Failed to load application')
@@ -91,7 +101,7 @@ export default function PasswordResetEmailPage() {
             const res = await fetch(`/api/apps/${appId}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email_password_reset_template_html: toSave }),
+                body: JSON.stringify({ ...formData, email_password_reset_template_html: toSave }),
             })
             if (!res.ok) {
                 const data = await res.json()
@@ -110,10 +120,10 @@ export default function PasswordResetEmailPage() {
         const t = template || DEFAULT_PASSWORD_RESET_TEMPLATE
         return t
             .replace(/\{\{reset_link\}\}/g, 'https://cavos.xyz/apps/example-app-id/reset-password?oobCode=example')
-            .replace(/\{\{app_name\}\}/g, app?.name || 'Your App')
+            .replace(/\{\{app_name\}\}/g, formData.name || 'Your App')
             .replace(/\{\{user_email\}\}/g, 'user@example.com')
-            .replace(/\{\{app_logo\}\}/g, app?.logo_url || 'https://via.placeholder.com/64')
-    }, [template, app?.name, app?.logo_url])
+            .replace(/\{\{app_logo\}\}/g, formData.logo_url || 'https://via.placeholder.com/64')
+    }, [template, formData.name, formData.logo_url])
 
     if (loading) {
         return (
@@ -137,7 +147,8 @@ export default function PasswordResetEmailPage() {
     }
 
     return (
-        <div className="space-y-6 animate-fadeIn max-w-5xl">
+        <div className="email-settings-page space-y-5 sm:space-y-6 animate-fadeIn max-w-5xl">
+            <EmailTemplateNavigation appId={appId} active="password-reset" />
             <Link
                 href={`/dashboard/apps/${appId}`}
                 className="inline-flex items-center text-sm text-black/60 hover:text-black transition-colors"
@@ -147,7 +158,7 @@ export default function PasswordResetEmailPage() {
             </Link>
 
             <div data-dash-header>
-                <h1 className="text-2xl font-semibold tracking-tight mb-2">Password reset custom email</h1>
+                <h1 className="text-2xl font-semibold tracking-tight mb-2">Password Reset Email Settings</h1>
                 <p className="text-black/60">
                     Customize the email sent when users request a password reset (forgot password). App name and logo are shared from your app settings.
                 </p>
@@ -155,6 +166,36 @@ export default function PasswordResetEmailPage() {
 
             <Card data-dash-panel>
                 <div className="space-y-6">
+                    <section>
+                        <h3 className="mb-4 text-sm font-semibold">App Information</h3>
+                        <p className="mb-4 text-xs text-black/60">These values are used in the email template placeholders.</p>
+                        <div className="space-y-4">
+                            <Input label="App Name" placeholder="My Awesome App" value={formData.name} onChange={(event) => setFormData({ ...formData, name: event.target.value })} />
+                            <div>
+                                <label className="mb-2 block text-sm font-medium text-black/80">App Logo</label>
+                                <div className="email-logo-row flex items-center gap-6">
+                                    <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl border border-black/10 bg-black/5">
+                                        {formData.logo_url ? <Image src={formData.logo_url} alt="App Logo" fill className="object-cover" /> : <div className="flex h-full items-center justify-center"><Icon.Image className="h-8 w-8 text-black/20" /></div>}
+                                    </div>
+                                    <div className="min-w-0 flex-1 space-y-2">
+                                        <Input label="Or paste image URL" placeholder="https://yourdomain.com/logo.png" value={formData.logo_url} onChange={(event) => setFormData({ ...formData, logo_url: event.target.value })} />
+                                        {formData.logo_url && <Button type="button" variant="outline" size="sm" onClick={() => setFormData({ ...formData, logo_url: '' })} className="border-red-200 text-red-600 hover:bg-red-50">Remove Logo</Button>}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section className="border-t border-black/10 pt-6">
+                        <h3 className="mb-4 text-sm font-semibold">Email Configuration</h3>
+                        <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900"><strong>Note:</strong> Emails are sent from <code className="rounded bg-blue-100 px-1 py-0.5">noreply@cavos.xyz</code>. Customize the sender name and reply-to address below.</div>
+                        <div className="space-y-4">
+                            <Input label="Sender Name" placeholder={formData.name || 'Your App'} value={formData.email_from_name} onChange={(event) => setFormData({ ...formData, email_from_name: event.target.value })} />
+                            <Input label="Reply-To Email (Optional)" type="email" placeholder="support@yourdomain.com" value={formData.email_reply_to} onChange={(event) => setFormData({ ...formData, email_reply_to: event.target.value })} />
+                        </div>
+                    </section>
+
+                    <section className="border-t border-black/10 pt-6">
                     <div className="flex items-center justify-between">
                         <div>
                             <h3 className="text-sm font-semibold mb-1">Password reset email template</h3>
@@ -214,6 +255,7 @@ export default function PasswordResetEmailPage() {
                             </div>
                         )}
                     </div>
+                    </section>
 
                     {error && (
                         <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">{error}</div>
@@ -229,7 +271,7 @@ export default function PasswordResetEmailPage() {
                             Cancel
                         </Button>
                         <Button onClick={handleSave} loading={saving} disabled={saving} icon={<Icon.Lock className="w-4 h-4" />}>
-                            Save
+                            Save Settings
                         </Button>
                     </div>
                 </div>

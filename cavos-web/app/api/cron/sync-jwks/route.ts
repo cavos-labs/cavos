@@ -1,8 +1,8 @@
 /**
  * JWKS Sync Cron Endpoint
- * Runs every 6 hours via Vercel Cron to sync Google/Apple JWKS keys on-chain.
+ * Runs daily via Supabase Cron to sync Google/Apple JWKS keys on-chain.
  *
- * Schedule: 0 *\/6 * * * (every 6 hours)
+ * Schedule: 0 0 * * * (daily at 00:00 UTC)
  * Protected by CRON_SECRET header verification
  */
 
@@ -14,8 +14,8 @@ export const maxDuration = 60; // 60 seconds max execution time
 export const dynamic = 'force-dynamic'; // Disable caching
 
 export async function GET(request: NextRequest) {
-  // Verify Vercel Cron secret
-  // Vercel automatically sends: Authorization: Bearer <CRON_SECRET>
+  // Verify the shared scheduler secret.
+  // Supabase pg_net sends: Authorization: Bearer <CRON_SECRET>
   const authHeader = request.headers.get('authorization');
   const expectedAuth = `Bearer ${process.env.CRON_SECRET}`;
 

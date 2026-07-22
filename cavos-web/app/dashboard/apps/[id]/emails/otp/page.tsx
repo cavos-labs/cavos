@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Icon } from '@/components/ui/Icon'
+import { EmailTemplateNavigation } from '@/components/EmailTemplateNavigation'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { createClient } from '@/lib/supabase/client'
@@ -62,9 +63,9 @@ const PLACEHOLDERS = [
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-black/30 mb-3">
+    <h3 className="mb-4 text-sm font-semibold text-black">
       {children}
-    </p>
+    </h3>
   )
 }
 
@@ -234,37 +235,35 @@ export default function OtpEmailPage() {
   const charCount = formData.email_otp_template_html.length
 
   return (
-    <div className="flex flex-col gap-5 pb-4">
-      <div className="flex items-center justify-between">
-        <Link href={`/dashboard/apps/${appId}`} className="inline-flex items-center gap-1.5 text-sm text-black/40 hover:text-black/80 transition-colors group">
-          <Icon.ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-          {app?.name || 'App'}
+    <div className="email-settings-page space-y-5 sm:space-y-6 animate-fadeIn max-w-5xl pb-4">
+      <EmailTemplateNavigation appId={appId} active="otp" />
+      <div>
+        <Link href={`/dashboard/apps/${appId}`} className="inline-flex items-center text-sm text-black/60 hover:text-black transition-colors group">
+          <Icon.ArrowLeft className="w-4 h-4 mr-1 group-hover:-translate-x-0.5 transition-transform" />
+          Back to {app?.name || 'App'}
         </Link>
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface border border-line text-[10px] font-semibold uppercase tracking-widest text-black/40">
-          <Icon.Shield className="w-2.5 h-2.5" />
-          Email OTP
-        </div>
       </div>
 
       <div data-dash-header>
-        <h1 className="text-xl font-semibold tracking-tight text-ink mb-1">OTP Email</h1>
-        <p className="text-sm text-black/40">Customize the one-time code email sent by the OTP login flow.</p>
+        <h1 className="text-2xl font-semibold tracking-tight mb-2">OTP Email Settings</h1>
+        <p className="text-black/60">Customize the one-time code email sent by the OTP login flow.</p>
       </div>
 
-      <div data-dash-panel className="grid gap-4" style={{ gridTemplateColumns: '320px 1fr', height: 'calc(100vh - 290px)', minHeight: '520px' }}>
-        <div className="flex flex-col bg-white border border-line rounded-2xl overflow-hidden">
-          <div className="overflow-y-auto flex-1 p-5 space-y-6">
+      <div data-dash-panel className="space-y-6 rounded-xl border border-black/10 bg-white p-6">
+        <div className="bg-white">
+          <div className="space-y-6">
             <div>
-              <SectionLabel>App info</SectionLabel>
+              <SectionLabel>App Information</SectionLabel>
+              <p className="mb-4 text-xs text-black/60">These values are used in the email template placeholders.</p>
               <div className="space-y-4">
                 <Input label="App Name" placeholder="My App" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                 <div>
                   <label className="block text-sm font-medium text-black/80 mb-2">App Logo</label>
-                  <div className="flex items-center gap-3">
-                    <div onClick={() => fileInputRef.current?.click()} className="relative w-14 h-14 rounded-xl border flex items-center justify-center cursor-pointer overflow-hidden transition-all group shrink-0 border-dashed border-black/15 bg-surface hover:bg-black/[0.04]">
+                  <div className="email-logo-row flex items-center gap-3">
+                    <div onClick={() => fileInputRef.current?.click()} className="relative w-24 h-24 rounded-2xl border flex items-center justify-center cursor-pointer overflow-hidden transition-all group shrink-0 border-dashed border-black/15 bg-surface hover:bg-black/[0.04]">
                       {formData.logo_url ? (
                         <>
-                          <Image src={formData.logo_url} alt="Logo" width={56} height={56} className="w-full h-full object-cover" />
+                          <Image src={formData.logo_url} alt="Logo" width={96} height={96} className="w-full h-full object-cover" />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <Icon.Upload className="w-4 h-4 text-white" />
                           </div>
@@ -274,6 +273,10 @@ export default function OtpEmailPage() {
                     <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
                     <div className="flex-1 min-w-0">
                       <input type="url" placeholder="https://.../logo.png" value={formData.logo_url} onChange={e => setFormData({ ...formData, logo_url: e.target.value })} className="w-full text-xs px-3 py-2 bg-surface border border-line rounded-lg focus:outline-none focus:border-black/30 text-black/70 placeholder:text-black/25" />
+                      <div className="mt-2 flex gap-2">
+                        {formData.logo_url && <button type="button" onClick={() => setFormData({ ...formData, logo_url: '' })} className="rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50">Remove Logo</button>}
+                        <button type="button" onClick={() => fileInputRef.current?.click()} className="rounded-lg border border-line px-3 py-2 text-xs font-semibold hover:bg-black/[0.03]">Upload Image</button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -283,11 +286,10 @@ export default function OtpEmailPage() {
             <div className="border-t border-line" />
 
             <div>
-              <SectionLabel>Sender</SectionLabel>
+              <SectionLabel>Email Configuration</SectionLabel>
               <div className="space-y-3">
-                <div className="flex items-center gap-2 px-3 py-2 bg-surface border border-line rounded-lg">
-                  <Icon.Mail className="w-3 h-3 text-black/30 shrink-0" />
-                  <span className="text-[11px] text-black/40 font-mono">noreply@cavos.xyz</span>
+                <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">
+                  <strong>Note:</strong> Emails are sent from <code className="rounded bg-blue-100 px-1 py-0.5">noreply@cavos.xyz</code>. Customize the sender name and reply-to address below.
                 </div>
                 <Input label="Sender Name" placeholder={formData.name || 'Your App'} value={formData.email_from_name} onChange={e => setFormData({ ...formData, email_from_name: e.target.value })} />
                 <Input label="Reply-To (optional)" placeholder="support@yourdomain.com" type="email" value={formData.email_reply_to} onChange={e => setFormData({ ...formData, email_reply_to: e.target.value })} />
@@ -297,7 +299,7 @@ export default function OtpEmailPage() {
             <div className="border-t border-line" />
 
             <div>
-              <SectionLabel>Placeholders</SectionLabel>
+              <SectionLabel>Available placeholders</SectionLabel>
               <div className="space-y-1.5">
                 {PLACEHOLDERS.map(({ key, label, description }) => (
                   <div key={key} className="group flex items-center gap-2 px-3 py-2.5 rounded-xl border border-line bg-surface hover:bg-white hover:border-line-strong hover:shadow-sm transition-all cursor-pointer" onClick={() => insertPlaceholder(key)}>
@@ -315,16 +317,17 @@ export default function OtpEmailPage() {
           </div>
         </div>
 
-        <div className="flex flex-col rounded-2xl overflow-hidden border border-line bg-ink">
-          <div className="flex items-center border-b border-white/[0.06] shrink-0">
+        <div className="border-t border-black/10 pt-6"><h3 className="mb-1 text-sm font-semibold">Email Template</h3><p className="mb-4 text-xs text-black/60">Edit the template below. Empty templates will use the Cavos default automatically.</p></div>
+        <div className="flex min-h-96 flex-col overflow-hidden rounded-lg border border-black/10 bg-white">
+          <div className="flex items-center border-b border-black/10 shrink-0">
             {(['code', 'preview'] as const).map(tab => (
-              <button key={tab} onClick={() => setActiveTab(tab)} className={`px-5 py-3 text-xs font-medium transition-colors capitalize ${activeTab === tab ? 'text-white border-b border-white/40 -mb-px' : 'text-white/30 hover:text-white/60'}`}>
+              <button key={tab} onClick={() => setActiveTab(tab)} className={`px-5 py-3 text-xs font-medium transition-colors capitalize ${activeTab === tab ? 'text-black border-b border-black -mb-px' : 'text-black/40 hover:text-black/70'}`}>
                 {tab === 'code' ? 'HTML Editor' : 'Preview'}
               </button>
             ))}
             <div className="ml-auto flex items-center gap-3 pr-4">
-              <span className="text-[10px] font-mono text-white/20">{lineCount}L - {charCount}ch</span>
-              <button onClick={() => setFormData(prev => ({ ...prev, email_otp_template_html: DEFAULT_TEMPLATE }))} title="Reset to default" className="flex items-center gap-1 text-[10px] text-white/25 hover:text-white/50 transition-colors">
+              <span className="text-[10px] font-mono text-black/35">{lineCount}L - {charCount}ch</span>
+              <button onClick={() => setFormData(prev => ({ ...prev, email_otp_template_html: DEFAULT_TEMPLATE }))} title="Reset to default" className="flex items-center gap-1 text-[10px] text-black/40 hover:text-black/70 transition-colors">
                 <Icon.Refresh className="w-3 h-3" />
                 Reset
               </button>
@@ -332,7 +335,7 @@ export default function OtpEmailPage() {
           </div>
 
           {activeTab === 'code' ? (
-            <textarea ref={editorRef} value={formData.email_otp_template_html} onChange={e => setFormData(prev => ({ ...prev, email_otp_template_html: e.target.value }))} spellCheck={false} className="flex-1 w-full bg-transparent text-[#d4cfc8] font-mono text-xs leading-6 p-5 resize-none focus:outline-none" style={{ caretColor: '#402AFF' }} placeholder="Paste your HTML template here..." />
+            <textarea ref={editorRef} value={formData.email_otp_template_html} onChange={e => setFormData(prev => ({ ...prev, email_otp_template_html: e.target.value }))} spellCheck={false} className="min-h-96 w-full flex-1 resize-none bg-white p-5 font-mono text-xs leading-6 text-black/75 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand/20" style={{ caretColor: '#402AFF' }} placeholder="Paste your HTML template here..." />
           ) : (
             <iframe srcDoc={previewHtml} className="flex-1 w-full bg-white" title="Email Preview" sandbox="allow-same-origin" />
           )}

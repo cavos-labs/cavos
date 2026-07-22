@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Icon } from '@/components/ui/Icon'
+import { EmailTemplateNavigation } from '@/components/EmailTemplateNavigation'
 import { createClient } from '@/lib/supabase/client'
 
 const DEFAULT_TEMPLATE = `<!DOCTYPE html>
@@ -257,7 +258,8 @@ export default function AppEmailsPage() {
     }
 
     return (
-        <div className="space-y-6 animate-fadeIn max-w-5xl">
+        <div className="email-settings-page space-y-5 sm:space-y-6 animate-fadeIn max-w-5xl">
+            <EmailTemplateNavigation appId={appId} active="verification" />
             {/* Back Link */}
             <Link
                 href={`/dashboard/apps/${appId}`}
@@ -301,7 +303,7 @@ export default function AppEmailsPage() {
                                 <label className="block text-sm font-medium text-black/80 mb-2">
                                     App Logo
                                 </label>
-                                <div className="flex items-center gap-6">
+                                <div className="email-logo-row flex items-center gap-6">
                                     <div className="relative group">
                                         <div className={`
                                             w-24 h-24 rounded-2xl flex items-center justify-center overflow-hidden border border-black/10

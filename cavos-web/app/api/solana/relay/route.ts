@@ -24,10 +24,12 @@ import { getRelayerSigner } from '@/lib/solana/signer';
 import { resolveSolanaProgramAllowlist } from '@/lib/solana/programs';
 import { resolveOrgForApp } from '@/lib/billing/limits';
 import { debitSolanaGas, hasGas, shouldBlockGas } from '@/lib/solana/gas';
+import { recordCavosEvent, resolveEnvironment } from '@/lib/operations/events';
 
 interface RelayRequest {
   app_id: string;
   network: string;
+  environment?: 'development' | 'production';
   /** base64-encoded legacy Transaction with fee payer = relayer, no signatures. */
   transaction: string;
 }
@@ -92,6 +94,7 @@ export async function POST(request: Request) {
     const ip = clientIp(request);
     const rl = checkRateLimit(`solana-relay:${ip}`, 30, 60_000);
     if (!rl.allowed) {
+      // app_id is not parsed yet; rate-limit telemetry remains in server logs.
       return NextResponse.json(
         { error: 'rate_limited', message: 'Too many relay requests. Slow down.' },
         { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } },
@@ -110,6 +113,8 @@ export async function POST(request: Request) {
 
     const { valid } = await ApiMiddleware.verifyAppId(body.app_id, logger);
     if (!valid) return ApiResponse.unauthorized('Invalid App ID');
+    const environment = await resolveEnvironment(body.app_id, body.environment);
+    if (body.environment && !environment) return ApiResponse.badRequest('environment does not belong to app_id');
 
     // Deserialize the unsigned tx.
     let tx: Transaction;
@@ -133,6 +138,7 @@ export async function POST(request: Request) {
     const check = validateSponsoredTransaction(tx, signer.publicKey, allowedPrograms);
     if (!check.ok) {
       logger.warn('Relay rejected', { reason: check.reason, app_id: body.app_id });
+      await recordCavosEvent({ appId: body.app_id, environmentId: environment?.id, eventType: 'relay.rejected', status: 'failed', severity: 'warning', requestId: logger.requestId, network: body.network, errorCode: 'not_eligible', metadata: { reason: check.reason } });
       return ApiResponse.badRequest('Transaction not eligible for sponsorship', {
         reason: check.reason,
       });
@@ -149,6 +155,7 @@ export async function POST(request: Request) {
       if (!allowed) {
         if (shouldBlockGas(allowed)) {
           logger.warn('Relay blocked — org out of gas', { app_id: body.app_id, org_id: orgId });
+          await recordCavosEvent({ appId: body.app_id, environmentId: environment?.id, eventType: 'sponsorship.rejected', status: 'failed', severity: 'warning', requestId: logger.requestId, network: body.network, errorCode: 'insufficient_gas' });
           return ApiResponse.paymentRequired('insufficient_gas', {
             message: 'Deposit SOL to sponsor transactions.',
           });
@@ -196,7 +203,8 @@ export async function POST(request: Request) {
     }
 
     logger.info('Relayed Solana tx', { signature, network: body.network, app_id: body.app_id });
-    return ApiResponse.success({ signature });
+    await recordCavosEvent({ appId: body.app_id, environmentId: environment?.id, eventType: 'relay.submitted', status: 'success', requestId: logger.requestId, network: body.network, txReference: signature });
+    return ApiResponse.success({ signature, request_id: logger.requestId });
   } catch (error) {
     logger.error('Relay error', error);
     return ApiResponse.serverError('Failed to relay transaction');

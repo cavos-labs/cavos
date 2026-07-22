@@ -9,6 +9,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { ApiLogger } from '@/lib/api/logger';
 import { ApiResponse } from '@/lib/api/response';
 import { ApiMiddleware } from '@/lib/api/middleware';
+import { recordCavosEvent } from '@/lib/operations/events';
 
 interface ConfirmBody {
   tx_hash: string;
@@ -32,7 +33,7 @@ export async function POST(
 
     const { data: req, error: reqErr } = await adminSupabase
       .from('device_addition_requests')
-      .select('id, wallet_id, new_pub_x, new_pub_y, device_label, status, expires_at')
+      .select('id, wallet_id, app_id, environment_id, new_pub_x, new_pub_y, device_label, status, expires_at, wallets(network)')
       .eq('id', id)
       .single();
 
@@ -87,6 +88,7 @@ export async function POST(
     }
 
     logger.info('Device addition confirmed', { id });
+    await recordCavosEvent({ appId: req.app_id, environmentId: req.environment_id, walletId: req.wallet_id, eventType: 'device.addition_approved', status: 'success', requestId: logger.requestId, txReference: body.tx_hash, network: (req.wallets as { network?: string } | null)?.network });
     logger.complete(true);
     return ApiResponse.success({ success: true });
   } catch (error) {
