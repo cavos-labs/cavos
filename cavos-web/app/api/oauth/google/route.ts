@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
-import { validateAppRedirect } from '@/lib/oauth/redirects';
+import { validateAppRedirect, resolveAppIdForRedirect } from '@/lib/oauth/redirects';
 
 /**
  * Direct Google OAuth initiation for ZK Login
@@ -18,8 +18,11 @@ export async function GET(request: NextRequest) {
   try {
     const nonce = request.nextUrl.searchParams.get('nonce');
     const redirectUri = request.nextUrl.searchParams.get('redirect_uri');
-    const appId = request.nextUrl.searchParams.get('app_id');
+    let appId = request.nextUrl.searchParams.get('app_id');
     const state = request.nextUrl.searchParams.get('state');
+
+    // Back-compat: older SDK clients omit app_id. Recover it from the redirect_uri.
+    if (!appId && redirectUri) appId = await resolveAppIdForRedirect(redirectUri);
 
     // Validate required parameters
     if (!nonce) {
