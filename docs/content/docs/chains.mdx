@@ -1,6 +1,6 @@
 ---
 title: Chains
-description: Cavos is chain-agnostic by design. Starknet and Solana are available today; more chains slot in behind the same API.
+description: Cavos is chain-agnostic by design. Starknet, Solana, and Stellar share the same API.
 ---
 
 Cavos is built **chain-agnostic**. The model — an identity-derived address
@@ -16,10 +16,9 @@ regardless of chain; only the `chain` and `network` you pass change.
 | **Solana** | ✅ Available | `solana-devnet`, `solana-mainnet` |
 | **Stellar** | ✅ Available | `stellar-testnet`, `stellar-mainnet` |
 
-**All three chains are production-ready.** Starknet is proven on Sepolia; Solana
-ships a full device-account program, gasless relayer, and e2e coverage. Stellar
-runs a classic `G…` multisig account with the `CavosStellar` client and gasless
-relayer, live on testnet and mainnet. See [Stellar](/docs/stellar).
+All three chain adapters are shipped in the SDK. Release compatibility still
+requires the physical-device E2E matrix described in the React Native guide;
+the docs do not treat simulator/emulator results as hardware validation.
 
 ## Per-chain guides
 

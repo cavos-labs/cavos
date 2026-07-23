@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { validateAppRedirect } from '@/lib/oauth/redirects';
 
 /**
  * Direct Google OAuth callback for ZK Login
@@ -22,6 +23,7 @@ interface StatePayload {
   csrf: string;
   redirect_uri: string;
   nonce: string;
+  app_id: string;
 }
 
 interface GoogleTokenResponse {
@@ -85,7 +87,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { redirect_uri: finalRedirectUri, nonce: expectedNonce } = statePayload;
+    const { redirect_uri: finalRedirectUri, nonce: expectedNonce, app_id: appId } = statePayload;
 
     if (!finalRedirectUri) {
       return NextResponse.json(
@@ -93,6 +95,7 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
+    await validateAppRedirect(appId, finalRedirectUri);
 
     const googleClientId = process.env.GOOGLE_CLIENT_ID;
     const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'crypto';
 import * as jose from 'jose';
+import { validateAppRedirect } from '@/lib/oauth/redirects';
 
 /**
  * Direct Apple OAuth callback for ZK Login
@@ -31,6 +32,7 @@ interface StatePayload {
   csrf: string;
   redirect_uri: string;
   nonce: string;
+  app_id: string;
 }
 
 interface AppleTokenResponse {
@@ -125,7 +127,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { redirect_uri: finalRedirectUri, nonce: expectedNonce } = statePayload;
+    const { redirect_uri: finalRedirectUri, nonce: expectedNonce, app_id: appId } = statePayload;
 
     if (!finalRedirectUri) {
       return NextResponse.json(
@@ -133,6 +135,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+    await validateAppRedirect(appId, finalRedirectUri);
 
     const appleClientId = process.env.APPLE_CLIENT_ID;
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';

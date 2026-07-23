@@ -1,0 +1,172 @@
+---
+title: React Native
+description: Use @cavos/kit on iOS and Android with Expo Development Builds or bare React Native.
+---
+
+`@cavos/kit` includes native P-256 keys, passkeys, authentication, and all three
+chain adapters in the `@cavos/kit/react-native` entrypoint. It supports React
+Native's New Architecture, Expo Development Builds/EAS, and bare React Native.
+
+Expo Go is not supported: custom native modules require a development build.
+The minimum supported platforms are iOS 16 and Android 9 (API 28).
+
+## Install
+
+```bash
+npm install @cavos/kit expo expo-modules-core expo-web-browser expo-linking react-native-get-random-values
+npx expo prebuild
+npx expo run:ios       # or: npx expo run:android
+```
+
+`react-native-get-random-values` is a peer dependency and must be installed — it
+backs the CSPRNG the kit uses for key and transaction generation.
+
+For EAS, build a development client before starting Metro:
+
+```bash
+npx expo install expo-dev-client
+eas build --profile development
+npx expo start --dev-client
+```
+
+Bare React Native apps must install and configure Expo Modules, then run the
+normal iOS CocoaPods and Android autolinking steps. The package ships
+`CavosKit.podspec`, `android/`, and `expo-module.config.json` in the tarball.
+
+## Polyfills
+
+Importing `@cavos/kit/react-native` runs a small runtime shim that installs the
+globals the chain SDKs expect on Hermes, before any of them load:
+
+- `crypto.getRandomValues`, via `react-native-get-random-values`.
+- A `Buffer` global, plus a `Buffer.prototype.subarray` fix. Hermes' `subarray`
+  returns a plain `Uint8Array` instead of a `Buffer`, which breaks the base64
+  encoding path in `@stellar/js-xdr` and produces malformed transaction XDR.
+
+You get this for free as long as `@cavos/kit/react-native` is the first Cavos
+import that runs. If you import a chain entrypoint directly (e.g.
+`@cavos/kit/stellar`) in a React Native app, import the runtime once at your app
+entry so the shim still runs first:
+
+```ts title="index.js / App entry"
+import "@cavos/kit/react-native"; // installs the RN polyfills
+```
+
+<Callout type="warn">
+Symptoms of a missing shim: `crypto.getRandomValues must be defined` at signup,
+or the relayer rejecting a Stellar transaction with `Invalid transaction
+encoding`. Both mean the runtime did not load before signing — check your import
+order.
+</Callout>
+
+## Configure links and passkeys
+
+Add the config plugin to `app.json` or `app.config.ts`:
+
+```json
+{
+  "expo": {
+    "scheme": "myapp",
+    "plugins": [["@cavos/kit", {
+      "rpId": "auth.example.com",
+      "scheme": "myapp",
+      "associatedDomains": ["applinks:auth.example.com"],
+      "androidPathPrefix": "/auth"
+    }]]
+  }
+}
+```
+
+Register the exact same `redirectUri` in the Cavos dashboard under Callback
+URLs. For a universal link, publish:
+
+- `https://auth.example.com/.well-known/apple-app-site-association` with the iOS
+  app ID and associated domain.
+- `https://auth.example.com/.well-known/assetlinks.json` with the Android
+  package name and signing certificate fingerprint.
+
+`rpId` is required for native passkeys. It must be a domain associated with the
+application; it is not an email address or a user ID.
+
+## Provider setup
+
+The native provider keeps the same configuration shape as the web provider, with
+native-only `redirectUri`, `rpId`, and `minimumKeySecurity` fields:
+
+```tsx
+import { CavosProvider } from "@cavos/kit/react-native";
+
+export function Providers({ children }) {
+  return (
+    <CavosProvider config={{
+      appId: process.env.EXPO_PUBLIC_CAVOS_APP_ID!,
+      appSalt: "my-app",
+      chain: "stellar", // "starknet" | "solana" | "stellar"
+      network: "testnet",
+      redirectUri: "myapp://auth",
+      rpId: "auth.example.com",
+      minimumKeySecurity: "os-protected"
+    }}>
+      {children}
+    </CavosProvider>
+  );
+}
+```
+
+The provider exports `useCavos`, `CavosAuthModal`, `NativeCavosAuth`, and the
+native passkey and key classes. `NativeCavosAuth` supports Google, Apple, OTP,
+and magic links through the registered deep/universal link.
+
+## Keys and security levels
+
+`NativeDeviceSigner` uses Secure Enclave on iOS when available, and StrongBox →
+TEE → OS-protected Android Keystore on Android. `NativeDeviceUnwrapKey` is a
+separate P-256 ECDH key used by Stellar. The default policy is
+`minimumKeySecurity: "os-protected"`; use `"hardware"` to reject a software
+fallback.
+
+```ts
+import {
+  getNativeCapabilities,
+  deleteDeviceKeys,
+} from "@cavos/kit/react-native";
+
+const capabilities = await getNativeCapabilities();
+// { signingKey, ecdhKey, passkey, passkeyPrf }
+
+// logout() preserves keys for reconnection. Deletion is explicit:
+await deleteDeviceKeys(`${identity.userId}:${appSalt}`);
+```
+
+Simulators and emulators report `development`; hardware-backed guarantees must
+be tested on physical devices. No biometric prompt is shown for ordinary
+transaction signing.
+
+## Chain parity
+
+Use the same unified `Cavos.connect` model for Starknet, Solana, and Stellar.
+The chain-specific entrypoints are available when bundle size matters:
+
+```ts
+import { Cavos } from "@cavos/kit/react-native";
+
+const wallet = await Cavos.connect({
+  chain: "solana",
+  network: "testnet",
+  appId,
+  appSalt: "my-app",
+  identity,
+});
+```
+
+Starknet and Solana share passkey approval through one assertion with
+`approveDeviceEverywhere`. Stellar uses a separate PRF-based passkey factor;
+when Android's credential provider does not support PRF, the native UI directs
+the user to a recovery code or another authorized device.
+
+## Logout, reinstall, and recovery
+
+`logout()` clears only the persisted `Identity` and pending nonce. Keys remain in
+Secure Enclave/Keychain or Keystore so the user can reconnect. Reinstalling the
+app creates a new device key and requires passkey, device approval, or recovery.
+Recovery codes are generated and displayed once; store them outside the app.

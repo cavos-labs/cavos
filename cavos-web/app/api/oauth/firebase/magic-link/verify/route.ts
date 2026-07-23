@@ -8,6 +8,7 @@
  */
 
 import { NextRequest } from 'next/server';
+import { validateAppRedirect } from '@/lib/oauth/redirects';
 import { signFirebaseCustomJWT } from '@/lib/firebase-jwt';
 
 function htmlResponse(html: string): Response {
@@ -199,6 +200,7 @@ export async function GET(request: NextRequest) {
   // window.close() is blocked. The SDK's CavosContext handles ?auth_data= on load.
   if (redirect_uri) {
     try {
+      await validateAppRedirect(app_id, redirect_uri);
       const dest = new URL(redirect_uri);
       dest.searchParams.set('auth_data', JSON.stringify({ jwt, uid: localId, email: verifiedEmail }));
       return Response.redirect(dest.toString(), 302);
