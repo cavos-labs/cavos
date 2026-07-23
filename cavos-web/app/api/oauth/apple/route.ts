@@ -32,9 +32,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (!redirectUri || !appId) {
+    if (!redirectUri) {
       return NextResponse.json(
-        { error: 'Missing redirect_uri or app_id parameter' },
+        { error: 'Missing redirect_uri parameter' },
         { status: 400 }
       );
     }

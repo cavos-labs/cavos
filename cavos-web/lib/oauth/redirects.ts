@@ -17,22 +17,38 @@ export async function resolveAppIdForRedirect(redirectUri: string | null): Promi
   return data[0].id as string;
 }
 
-/** Exact-match OAuth redirect validation for web, universal links and app schemes. */
-export async function validateAppRedirect(appId: string | null, redirectUri: string | null): Promise<string> {
-  if (!appId || !redirectUri) throw new Error('Missing app_id or redirect_uri');
+/**
+ * OAuth redirect validation for web, universal links and app schemes.
+ *
+ * Backward-compatible posture: the exact-match callback allowlist is **opt-in**.
+ * - No `app_id` (older SDK clients) → basic URL sanity only, as before app_id
+ *   was threaded through the flow.
+ * - `app_id` present but the app has no `callback_urls` configured → allowed.
+ * - `app_id` present and `callback_urls` configured → enforce exact match.
+ *
+ * This lets apps that register callbacks in the console lock the flow down,
+ * without breaking every app that hasn't (all of them, today).
+ */
+export async function validateAppRedirect(appId: string | null | undefined, redirectUri: string | null): Promise<string> {
+  if (!redirectUri) throw new Error('Missing redirect_uri');
   let parsed: URL;
   try { parsed = new URL(redirectUri); }
   catch { throw new Error('Invalid redirect_uri'); }
   if (!parsed.protocol || parsed.username || parsed.password || parsed.hash) {
     throw new Error('Invalid redirect_uri');
   }
+  // No app to scope against → sanity-checked URL is enough (pre-app_id behavior).
+  if (!appId) return redirectUri;
+
   const { data: app, error } = await createAdminClient()
     .from('apps')
     .select('callback_urls,is_active')
     .eq('id', appId)
     .single();
   if (error || !app?.is_active) throw new Error('Invalid app_id');
-  if (!(app.callback_urls ?? []).includes(redirectUri)) {
+  const allowlist = app.callback_urls ?? [];
+  // Only enforce when the app has actually registered callbacks.
+  if (allowlist.length > 0 && !allowlist.includes(redirectUri)) {
     throw new Error('redirect_uri is not registered for this app');
   }
   return redirectUri;

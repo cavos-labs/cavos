@@ -23,7 +23,7 @@ interface StatePayload {
   csrf: string;
   redirect_uri: string;
   nonce: string;
-  app_id: string;
+  app_id?: string | null;
 }
 
 interface GoogleTokenResponse {
