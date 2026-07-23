@@ -25,6 +25,7 @@ interface ConnectOptions {
   auth?: AuthProvider;                  // pass `auth` OR `identity`
   identity?: Identity;
   appId?: string;                       // hosted registry + (Starknet) recovery / (Solana, Stellar) relayer
+  environment?: "development" | "production"; // Cavos console environment; defaults to production
   backendUrl?: string;                  // defaults to Cavos hosted services
   rpcUrl?: string;
   registry?: WalletRegistry;            // off-chain userId -> wallet map

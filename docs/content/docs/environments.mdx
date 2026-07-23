@@ -1,0 +1,83 @@
+---
+title: Environments
+description: Every Cavos app has a development and a production environment. Select one from the SDK with the `environment` option.
+---
+
+Every app in the Cavos console has two environments, created automatically the
+moment the app is created:
+
+- **`production`** — real traffic. This is the default the SDK uses when you
+  don't pass an `environment`.
+- **`development`** — building and testing, isolated from production.
+
+You keep **one `appId`** and switch environments with a single flag. There is no
+separate app to create.
+
+## What each environment isolates
+
+The two environments share the app's identity but keep their operational state
+apart:
+
+- **Sponsorship / gas pool** — each environment meters its own relayer balance
+  and low-balance alerts, so test traffic never drains your production gas.
+- **Allowed origins** — the domains/schemes permitted to call the app are set per
+  environment.
+- **API keys** — server credentials are issued per environment.
+- **Events & webhooks** — the event stream and webhook subscriptions are scoped
+  per environment, so your development integration doesn't fire production hooks.
+
+## Select it from the SDK
+
+Pass `environment` to `Cavos.connect` (or to the provider config). Omit it and the
+SDK uses `production`.
+
+```ts title="TypeScript"
+const wallet = await Cavos.connect({
+  chain: "stellar",
+  network: "testnet",
+  appId: process.env.CAVOS_APP_ID!,
+  appSalt: "my-app",
+  identity,
+  environment: __DEV__ ? "development" : "production",
+});
+```
+
+With the React or React Native provider, set it once on the config:
+
+```tsx title="Provider"
+<CavosProvider config={{
+  appId: process.env.EXPO_PUBLIC_CAVOS_APP_ID!,
+  appSalt: "my-app",
+  chain: "stellar",
+  network: "testnet",
+  environment: __DEV__ ? "development" : "production",
+}}>
+  {children}
+</CavosProvider>
+```
+
+<Callout type="info">
+`environment` (the Cavos console environment) is independent of `network`
+(testnet / mainnet). A `development` environment can point at mainnet, and
+`production` at testnet — they answer different questions: *whose gas and config*
+vs. *which chain*.
+</Callout>
+
+## Wallet addresses across environments
+
+Wallet derivation is deterministic from `userId` + `appSalt` and does not depend
+on `environment`. If you want a user's **development** wallet to be a different
+address than their **production** wallet, use a distinct `appSalt` per
+environment:
+
+```ts
+const appSalt = __DEV__ ? "my-app-dev" : "my-app";
+```
+
+Keep the same `appSalt` if you deliberately want one address whose console
+accounting differs by environment.
+
+<Callout type="warn">
+Treat `appSalt` as permanent: changing it changes every derived address. Decide
+your per-environment salts before onboarding real users.
+</Callout>

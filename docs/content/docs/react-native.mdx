@@ -13,10 +13,13 @@ The minimum supported platforms are iOS 16 and Android 9 (API 28).
 ## Install
 
 ```bash
-npm install @cavos/kit expo expo-modules-core expo-web-browser expo-linking
+npm install @cavos/kit expo expo-modules-core expo-web-browser expo-linking react-native-get-random-values
 npx expo prebuild
 npx expo run:ios       # or: npx expo run:android
 ```
+
+`react-native-get-random-values` is a peer dependency and must be installed — it
+backs the CSPRNG the kit uses for key and transaction generation.
 
 For EAS, build a development client before starting Metro:
 
@@ -29,6 +32,32 @@ npx expo start --dev-client
 Bare React Native apps must install and configure Expo Modules, then run the
 normal iOS CocoaPods and Android autolinking steps. The package ships
 `CavosKit.podspec`, `android/`, and `expo-module.config.json` in the tarball.
+
+## Polyfills
+
+Importing `@cavos/kit/react-native` runs a small runtime shim that installs the
+globals the chain SDKs expect on Hermes, before any of them load:
+
+- `crypto.getRandomValues`, via `react-native-get-random-values`.
+- A `Buffer` global, plus a `Buffer.prototype.subarray` fix. Hermes' `subarray`
+  returns a plain `Uint8Array` instead of a `Buffer`, which breaks the base64
+  encoding path in `@stellar/js-xdr` and produces malformed transaction XDR.
+
+You get this for free as long as `@cavos/kit/react-native` is the first Cavos
+import that runs. If you import a chain entrypoint directly (e.g.
+`@cavos/kit/stellar`) in a React Native app, import the runtime once at your app
+entry so the shim still runs first:
+
+```ts title="index.js / App entry"
+import "@cavos/kit/react-native"; // installs the RN polyfills
+```
+
+<Callout type="warn">
+Symptoms of a missing shim: `crypto.getRandomValues must be defined` at signup,
+or the relayer rejecting a Stellar transaction with `Invalid transaction
+encoding`. Both mean the runtime did not load before signing — check your import
+order.
+</Callout>
 
 ## Configure links and passkeys
 

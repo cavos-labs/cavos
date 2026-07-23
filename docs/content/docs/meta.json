@@ -6,6 +6,7 @@
     "quickstart",
     "---Core---",
     "auth",
+    "environments",
     "signing",
     "react",
     "react-native",
