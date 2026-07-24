@@ -17,6 +17,20 @@ import { canCreateWallet, resolveOrgForApp } from '@/lib/billing/limits';
 import { shouldBlock } from '@/lib/billing/enforce';
 import type { WalletSaveRequest, WalletGetRequest } from '@/lib/api/types';
 import { recordCavosEvent, resolveEnvironment } from '@/lib/operations/events';
+import { StrKey } from '@stellar/stellar-sdk';
+
+/**
+ * Stellar classic-G wallets are self-custodial: the `G…` address is a pure
+ * function of the passkey identity, so they carry neither an `encrypted_pk_blob`
+ * (there is no server-held key) nor a secp256r1 device signer. We still register
+ * them so they land in the `wallets` table and count toward billing. Guard the
+ * relaxed validation to genuine Stellar accounts: network must be `stellar-*` and
+ * the address must be a checksum-valid ed25519 public key.
+ */
+function isStellarSelfCustodial(network: unknown, address: unknown): boolean {
+    return typeof network === 'string' && network.startsWith('stellar-')
+        && typeof address === 'string' && StrKey.isValidEd25519PublicKey(address);
+}
 
 /**
  * GET - Retrieve wallet
@@ -130,7 +144,10 @@ export async function POST(request: Request) {
         // JWT/WebAuthn wallets; device-signer wallets send `devices` instead and
         // may omit the blob.
         const required: (keyof WalletSaveRequest)[] = ['app_id', 'user_social_id', 'network', 'address'];
-        if (!devices || !Array.isArray(devices) || devices.length === 0) {
+        // Stellar classic-G wallets are self-custodial (no server blob, no secp256r1
+        // device signer), so only those may omit `encrypted_pk_blob` without devices.
+        const stellarSelfCustodial = isStellarSelfCustodial(network, address);
+        if (!stellarSelfCustodial && (!devices || !Array.isArray(devices) || devices.length === 0)) {
             required.push('encrypted_pk_blob');
         }
         const validation = ApiValidator.validateRequired<WalletSaveRequest>(body, required);
