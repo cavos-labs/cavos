@@ -39,8 +39,8 @@ export async function GET(
     const appSalt = computeAppSalt(appId, baseSalt);
 
     // `allowed` reports the true gate state so SDKs / dashboards can surface an
-    // upgrade prompt. The actual 402 block lives in the wallet-creation routes
-    // (and respects BILLING_ENFORCE_MODE); validate is read-only.
+    // upgrade prompt. The actual 402 block lives in the wallet-creation routes;
+    // validate is read-only.
     const allowed = usage.limit === null || usage.count < usage.limit;
 
     return NextResponse.json({
