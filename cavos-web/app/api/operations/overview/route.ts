@@ -21,7 +21,7 @@ export async function GET(request: Request) {
   let walletsTotal = supabase.from('wallets').select('*', { count: 'exact', head: true })
   let walletsCurrent = supabase.from('wallets').select('*', { count: 'exact', head: true }).gte('created_at', since)
   let walletsPrevious = supabase.from('wallets').select('*', { count: 'exact', head: true }).gte('created_at', previousSince).lt('created_at', since)
-  let events = supabase.from('cavos_events').select('status,duration_ms,event_type,severity,created_at').gte('created_at', since)
+  let events = supabase.from('cavos_events').select('status,duration_ms,event_type,severity,network,error_code,tx_reference,created_at').gte('created_at', since)
   for (const [key, value] of [['app_id', appId], ['environment_id', environmentId], ['network', network]] as const) {
     if (value) {
       if (key !== 'network' || true) {
@@ -42,6 +42,24 @@ export async function GET(request: Request) {
   const critical = eventRows.some((event) => event.severity === 'critical' && event.status === 'failed')
   const failureRate = successes + failures ? failures / (successes + failures) : 0
 
+  const groupBy = (key: 'event_type' | 'network') => {
+    const map = new Map<string, { key: string; total: number; failures: number }>()
+    for (const event of eventRows) {
+      const value = (event[key] as string | null) ?? 'unknown'
+      const bucket = map.get(value) ?? { key: value, total: 0, failures: 0 }
+      bucket.total += 1
+      if (event.status === 'failed') bucket.failures += 1
+      map.set(value, bucket)
+    }
+    return [...map.values()].sort((a, b) => b.total - a.total)
+  }
+
+  const recentFailures = eventRows
+    .filter((event) => event.status === 'failed')
+    .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+    .slice(0, 6)
+    .map((event) => ({ event_type: event.event_type, network: event.network ?? null, error_code: event.error_code ?? null, tx_reference: event.tx_reference ?? null, created_at: event.created_at }))
+
   return NextResponse.json({
     request_id: requestId,
     range,
@@ -59,5 +77,8 @@ export async function GET(request: Request) {
       latency_p95_ms: percentile(.95),
     },
     health: critical || failureRate >= .2 ? 'action_required' : failureRate >= .05 ? 'degraded' : 'healthy',
+    by_type: groupBy('event_type'),
+    by_network: groupBy('network'),
+    recent_failures: recentFailures,
   })
 }

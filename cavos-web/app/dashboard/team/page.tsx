@@ -8,7 +8,7 @@ import { useOrganization } from '@/lib/hooks/useOrganization'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 
-type Member = { user_id: string; role: string; created_at: string }
+type Member = { user_id: string; role: string; created_at: string; email: string | null }
 type Invitation = { id: string; email: string; role: string; expires_at: string; accepted_at: string | null; created_at: string }
 
 export default function TeamPage() {
@@ -60,7 +60,7 @@ export default function TeamPage() {
     </section>
 
     <div className="grid gap-5 lg:grid-cols-2">
-      <TeamList title="Members" count={members.length}>{members.map(member => <Row key={member.user_id} primary={`${member.user_id.slice(0, 8)}••••${member.user_id.slice(-4)}`} secondary={`Joined ${new Date(member.created_at).toLocaleDateString()}`} role={member.role} />)}{!members.length && <Empty>No membership rows yet. The organization owner still has full access.</Empty>}</TeamList>
+      <TeamList title="Members" count={members.length}>{members.map(member => <Row key={member.user_id} primary={member.email ?? `${member.user_id.slice(0, 8)}••••${member.user_id.slice(-4)}`} secondary={`Joined ${new Date(member.created_at).toLocaleDateString()}`} role={member.role} />)}{!members.length && <Empty>No membership rows yet. The organization owner still has full access.</Empty>}</TeamList>
       <TeamList title="Pending invitations" count={invitations.filter(item => !item.accepted_at).length}>{invitations.filter(item => !item.accepted_at).map(invitation => <Row key={invitation.id} primary={invitation.email} secondary={`Expires ${new Date(invitation.expires_at).toLocaleDateString()}`} role={invitation.role} />)}{!invitations.some(item => !item.accepted_at) && <Empty>No pending invitations.</Empty>}</TeamList>
     </div>
   </div>
