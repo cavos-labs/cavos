@@ -197,6 +197,10 @@ export async function POST(request: Request) {
                         logger.warn('Wallet creation blocked — org at limit', {
                             app_id, org_id: orgId, count: gate.count, limit: gate.limit
                         });
+                        // Resolve the dangling `wallet.creation_requested` (pending) recorded
+                        // above with a terminal event, so blocked-by-limit attempts are visible
+                        // in Activity and never leave an unresolved pending row.
+                        await recordCavosEvent({ appId: app_id, environmentId: environment?.id, eventType: 'wallet.creation_blocked', status: 'failed', severity: 'warning', requestId: logger.requestId, network, errorCode: 'wallet_limit_reached', metadata: { count: gate.count, limit: gate.limit } });
                         logger.complete(false);
                         return ApiResponse.paymentRequired('wallet_limit_reached', {
                             count: gate.count,
