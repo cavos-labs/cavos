@@ -47,7 +47,11 @@ export async function recordCavosEvent(input: {
     const { data: app } = await admin.from('apps').select('organization_id').eq('id', input.appId).single()
     if (!app) return
     const environment = await resolveEnvironment(input.appId, input.environmentId)
-    const { data: event } = await admin.from('cavos_events').upsert({
+    // Plain insert: dedup is enforced by the partial unique index on (request_id, event_type)
+    // WHERE request_id IS NOT NULL. A retry with the same request_id raises 23505, which we
+    // treat as an already-recorded event. We cannot use upsert/onConflict here because Postgres
+    // will not match a partial unique index in an ON CONFLICT clause (fails with 42P10).
+    const { data: event, error } = await admin.from('cavos_events').insert({
       organization_id: app.organization_id,
       app_id: input.appId,
       environment_id: environment?.id ?? null,
@@ -61,7 +65,11 @@ export async function recordCavosEvent(input: {
       duration_ms: input.durationMs ?? null,
       error_code: input.errorCode?.slice(0, 100) ?? null,
       metadata: sanitizeEventMetadata(input.metadata),
-    }, { onConflict: 'request_id,event_type', ignoreDuplicates: true }).select().maybeSingle()
+    }).select().maybeSingle()
+    if (error) {
+      if (error.code === '23505') return // duplicate (request_id, event_type) retry — already recorded
+      throw error
+    }
     if (event?.environment_id) await dispatchEvent(event)
   } catch (error) {
     console.error('Operational event recording failed', error)
