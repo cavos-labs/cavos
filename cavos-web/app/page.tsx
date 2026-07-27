@@ -85,12 +85,14 @@ export default function LandingPage() {
                     {/* ── HERO ──────────────────────────────────── */}
                     <section className="relative md:flex-1 flex items-start md:items-center px-6 md:px-16 lg:px-24 pt-14 md:pt-20 pb-12 md:pb-20">
                         <div className="space-y-10 md:space-y-14">
-                            <div className="max-w-2xl">
-                                <h1 className="text-[clamp(2.25rem,4.5vw,4.75rem)] font-normal tracking-[-0.045em] leading-[0.98] text-balance">
-                                    <span className="block font-medium text-ink">Turn every sign-in</span>
-                                    <span className="block font-medium text-ink">into a wallet.</span>
-                                    <span className="mt-2 block text-ink/45">One SDK.</span>
-                                    <span className="block text-ink/45">Every chain.</span>
+                            <div className="max-w-4xl">
+                                <h1 className="text-[clamp(2.125rem,4.15vw,4rem)] font-normal tracking-[-0.045em] leading-[1.01]">
+                                    <span className="block font-medium text-ink text-balance">
+                                        Your next million users shouldn&apos;t need to understand crypto.
+                                    </span>
+                                    <span className="mt-3 block max-w-3xl text-ink/45 text-balance">
+                                        Let them sign in, pay, earn, and own as naturally as they use any other product—while Cavos handles the wallet infrastructure underneath.
+                                    </span>
                                 </h1>
                             </div>
 
