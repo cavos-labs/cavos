@@ -3,13 +3,16 @@ import Link from 'next/link';
 const SNIPPET = `import { Cavos } from "@cavos/kit";
 
 const cavos = await Cavos.connect({
-  network: "sepolia",
+  chain: "solana",
+  network: "testnet",
   identity: { userId, email },
   appSalt: "my-app",
-  paymasterApiKey,
+  appId,
 });
 
-await cavos.execute(calls); // gasless`;
+if (cavos.chain === "solana") {
+  await cavos.execute(amount, recipient); // gasless
+}`;
 
 const TOPICS: {
   label: string;
@@ -53,15 +56,15 @@ const TOPICS: {
 const VALUES: { term: string; desc: string }[] = [
   {
     term: 'No seed phrases',
-    desc: 'A non-extractable device key signs invisibly. The user never sees a private key.',
+    desc: 'Authority is created or unlocked locally through the selected chain adapter. The user never manages a seed phrase.',
   },
   {
     term: 'MPC-free',
-    desc: 'No key sharding, no signing servers. The key is whole and on the device.',
+    desc: 'No reconstructable server-side key shards and no Cavos signer that can move user funds.',
   },
   {
-    term: 'Verifiable on-chain',
-    desc: 'Signatures are checked by the account contract, not trusted from a backend.',
+    term: 'Chain-native',
+    desc: 'Each adapter uses the network’s real account, signature, execution, and fee model.',
   },
 ];
 
@@ -74,15 +77,15 @@ export default function HomePage() {
         <div className="relative mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-12 px-6 py-20 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16 lg:py-24">
           <div>
             <h1 className="text-balance text-[clamp(1.875rem,2.8vw,2.5rem)] font-normal leading-[1.15] tracking-[-0.02em] text-ink">
-              Device-native
+              Multichain, device-native
               <br />
               smart accounts.
             </h1>
 
             <p className="mt-6 max-w-md text-pretty text-[1.05rem] leading-relaxed text-muted">
-              Turn a login into a self-custodial smart-account wallet controlled
-              by a silent device key. No seed phrases, no MPC, gasless. Docs
-              built for agents — paste them into an LLM and build.
+              Build self-custodial smart accounts across blockchains with one
+              chain-configurable SDK. Starknet, Solana, and Stellar today; an
+              adapter model for every chain that comes next.
             </p>
 
             <div className="mt-9 flex flex-wrap items-center gap-3">

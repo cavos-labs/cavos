@@ -6,7 +6,8 @@ description: Add a new device to an existing wallet via approval from a register
 A wallet's address depends only on identity, so the **same user on a new device
 lands on the same wallet**. But that new device has its own key, which isn't yet
 an authorized signer on the account. Adding it requires approval from a device
-that already controls the wallet — the contract is the sole authority.
+that already controls the wallet. Chain-native account state—not the Cavos
+backend—is the authority.
 
 ## Detecting a new device
 
@@ -53,10 +54,10 @@ On Starknet mainnet, fall back to the hosted approval page (or
 their relayers and are not affected.
 </Callout>
 
-## Host your approval page (required)
+## Host a Starknet approval page
 
 <Callout type="warning">
-**Cavos does not host an approval page.** Each integrating app must build its own
+**For this Starknet flow, Cavos does not host an approval page.** Each integrating app must build its own
 `/approve-device` route and configure its origin in the dashboard. Approving a
 device signs an on-chain `add_signer` transaction paid for with **the app's own
 paymaster API key** — Cavos never sponsors gas for third-party apps.
@@ -84,12 +85,12 @@ request response), and its own `paymasterApiKey`.
 'use client';
 
 import { useEffect, useState } from 'react';
+import { HttpRecoveryClient } from '@cavos/kit';
 import {
   CavosProvider,
   useCavos,
-  HttpRecoveryClient,
   type CavosConfig,
-} from '@cavos/kit';
+} from '@cavos/kit/react';
 
 const BACKEND_URL = 'https://services.cavos.xyz';
 
@@ -131,11 +132,12 @@ export default function ApproveDevicePage() {
           newSigner: { x: BigInt(data.new_pub_x), y: BigInt(data.new_pub_y) },
         });
         setConfig({
+          chain: 'starknet',
           // 'mainnet' or 'testnet' — map from the wallet's network.
           network: data.network === 'mainnet' ? 'mainnet' : 'testnet',
           appSalt: data.app_salt,
           appId: data.app_id,
-          // YOUR paymaster key — never Cavos's.
+          // Client-visible: use only an app/environment-scoped sponsorship key.
           paymasterApiKey: process.env.NEXT_PUBLIC_CAVOS_PAYMASTER_API_KEY!,
           authBackendUrl: BACKEND_URL,
         });

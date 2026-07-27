@@ -1,73 +1,112 @@
 ---
 title: Recovery
-description: Passphrase-derived backup signer for recovering after losing every device.
+description: Recover a Cavos wallet without giving Cavos a master key, across Starknet, Solana, and Stellar.
 ---
 
-If a user loses **every** device, multi-device approval can't help — there's no
-existing signer to approve a new one. The fallback is a **passphrase-derived
-backup signer**: a second key the user controls, derived from a recovery code,
-registered on-chain as an ordinary signer. It is fully non-custodial — the code
-never leaves the device and Cavos never sees it.
+Recovery has one invariant across every Cavos adapter: **Cavos cannot reset the
+wallet or authorize a replacement device by itself**. The user must retain an
+existing enrolled device, a passkey factor, or a high-entropy recovery code.
 
-## Set up recovery (once)
+## Recovery capabilities
 
-After a successful `connect`, generate a recovery code, show it to the user to
-store somewhere safe, and register its derived signer:
+| Chain | Recovery code role | Restore path |
+|---|---|---|
+| **Starknet** | Derives a backup P-256 signer registered on the account | `Cavos.recover(...)` authorizes the fresh device |
+| **Solana** | Derives a backup signer registered by the device-account program | `CavosSolana.recover(...)` authorizes the fresh device |
+| **Stellar** | Derives a key-encryption factor that unwraps the account control key | Reconnect, then call `approveThisDeviceWithRecovery(code)` |
+
+The cryptography differs, but the code never needs to be stored by Cavos.
+
+## Set up once
+
+Generate a code on a ready device, show it once, and ask the user to store it
+offline:
 
 ```ts title="TypeScript"
 import { generateRecoveryCode } from "@cavos/kit";
 
-const code = generateRecoveryCode();   // high-entropy; display ONCE for the user to save
-await cavos.setupRecovery(code);       // registers the backup signer on-chain (idempotent)
+const code = generateRecoveryCode();
+await wallet.setupRecovery(code);
+
+// Display `code` once. Never send it to analytics, logs, or your backend.
 ```
 
-`setupRecovery` derives a deterministic secp256r1 keypair from the code
-(PBKDF2 + HKDF) and registers **only its public key** via `add_signer`. The code
-itself stays on the device. It is idempotent — calling it again with the same code
-is a no-op.
+`setupRecovery` is adapter-specific and idempotent for the same factor. Gate it
+on `wallet.status === "ready"`.
 
 <Callout type="warn">
-The recovery code is the only way to recover after total device loss. If the user
-loses it **and** all devices, the wallet cannot be recovered. Cavos cannot reset
-it — that is what non-custodial means.
+Anyone with the recovery code may be able to restore wallet authority. Treat it
+like a private key: never log it, never email it in plaintext, and never persist
+it in application storage.
 </Callout>
 
-## Recover on a new device
-
-When the user has lost their devices, they enter the recovery code on a fresh
-device. `Cavos.recover` re-derives the backup signer, uses it to authorize the new
-device's key on-chain, and returns a ready wallet:
+## Restore Starknet
 
 ```ts title="TypeScript"
 import { Cavos } from "@cavos/kit";
 
-const cavos = await Cavos.recover({
-  code,                                // the recovery code the user saved
+const wallet = await Cavos.recover({
+  code,
   identity: { userId: user.id, email: user.email },
   network: "testnet",
   appSalt: "my-app",
   appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
-  paymasterApiKey: process.env.CAVOS_PAYMASTER_API_KEY!,
+  paymasterApiKey, // obtain through your trusted sponsorship integration
 });
-
-// The new device is now an authorized signer; cavos is ready to use.
-await cavos.execute(calls);
 ```
 
-## How it stays non-custodial
+The derived backup signer authorizes the new local device signer. Cavos
+coordinates submission but cannot manufacture that authorization.
 
-| | |
-|---|---|
-| **Code derivation** | The recovery code → keypair derivation runs entirely on the device. Cavos never receives the code or the private key. |
-| **On-chain authority** | Recovery works by the backup signer (a key the user holds) signing `add_signer` for the new device. The contract validates it like any other signer. |
-| **No backend key** | The Cavos backend holds no key material and has no privileged contract role. It cannot add a signer under any circumstances. |
+## Restore Solana
 
-This is the best recovery model available without re-introducing custody. The two
-fallbacks compose:
+```ts title="TypeScript"
+import { CavosSolana } from "@cavos/kit";
 
-1. **Multiple devices** ([multi-device](/docs/multi-device)) — approve a new device
-   from an existing one. Best UX; encourage it at onboarding.
-2. **Passphrase backup** (this page) — recover from a saved code when all devices
-   are gone.
+const wallet = await CavosSolana.recover({
+  code,
+  identity: { userId: user.id, email: user.email },
+  network: "solana-devnet",
+  appSalt: "my-app",
+  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+});
+```
 
-See [Concepts](/docs/concepts) for the full security model.
+The recovery signer authorizes a new P-256 device key in the deterministic
+device-account PDA.
+
+## Restore Stellar
+
+```ts title="TypeScript"
+import { Cavos } from "@cavos/kit";
+
+const wallet = await Cavos.connect({
+  chain: "stellar",
+  network: "testnet",
+  identity: { userId: user.id, email: user.email },
+  appSalt: "my-app",
+  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+});
+
+if (
+  wallet.chain === "stellar" &&
+  wallet.status === "needs-device-approval"
+) {
+  await wallet.approveThisDeviceWithRecovery(code);
+}
+```
+
+The recovery factor unwraps the existing Stellar control key locally. That key
+then enrolls the fresh device's envelope slot.
+
+## Product guidance
+
+- Encourage a second device or synced passkey before relying on a recovery code.
+- Verify recovery on physical iOS and Android devices before production release.
+- Do not claim social or administrator recovery unless a reviewed adapter
+  actually implements it.
+- If the user loses every device and every recovery factor, Cavos cannot restore
+  access. That limitation is part of the non-custodial model.
+
+See [Multi-device](/docs/multi-device), [Passkeys](/docs/passkeys), and the
+selected [chain guide](/docs/chains).

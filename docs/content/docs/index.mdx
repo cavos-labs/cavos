@@ -1,63 +1,77 @@
 ---
-title: Overview
-description: What @cavos/kit is and the mental model behind device-native smart accounts.
+title: Every-chain wallet infrastructure
+description: Build device-native, self-custodial embedded wallets with one SDK and chain-native adapters.
 ---
 
-`@cavos/kit` gives your users a **self-custodial smart account** that they
-control with a **silent device key** — no seed phrase, no MPC, no browser
-extension, no popups. A login (OAuth or email) only derives the wallet address;
-the actual signing happens invisibly with a non-extractable secp256r1 (P-256) key
-that lives on the device.
+`@cavos/kit` gives applications one wallet integration across chains without
+flattening their differences. Users authenticate with a familiar identity and
+control a deterministic wallet through device-native key material—no seed
+phrase, MPC cluster, or browser extension.
 
-The model is **chain-agnostic** — the same API works across high-performance
-chains. **Starknet, Solana, and Stellar are available today.** See
-[Chains](/docs/chains).
+**Starknet, Solana, and Stellar are available today.** Cavos is designed to
+reach every chain through adapters that preserve the same product contract while
+using each network's native account, signing, execution, and fee model.
 
 ```ts title="TypeScript"
 import { Cavos } from "@cavos/kit";
 
-const cavos = await Cavos.connect({
-  chain: "starknet",                   // "starknet" | "solana" | "stellar"
+const wallet = await Cavos.connect({
+  chain: "solana", // "starknet" | "solana" | "stellar"
   network: "testnet",
   identity: { userId: user.id, email: user.email },
   appSalt: "my-app",
   appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
-  paymasterApiKey: process.env.CAVOS_PAYMASTER_API_KEY!,
 });
 
-if (cavos.status === "ready") {
-  await cavos.execute(calls); // gasless; signed silently by the device key
+if (wallet.chain === "solana" && wallet.status === "ready") {
+  await wallet.execute(1_000_000n, recipient);
 }
 ```
 
-## Mental model
+## The stable product contract
 
 | Piece | Role |
-|-------|------|
-| **Identity** | A stable `userId` (from your login) + an `appSalt`. Together they derive the wallet address — device-independent. |
-| **Device signer** | A non-extractable secp256r1 key on the device (WebCrypto in browsers, Secure Enclave/Keychain on iOS, Keystore on Android). Signs `sha256(tx_hash)` with no UI. |
-| **Account contract** | The chain-specific Cavos account for the target chain. It validates device signatures on-chain and is the sole authority over its signers. |
-| **Chain adapter** | The per-chain layer (address derivation, signature encoding, deploy calls). `StarknetAdapter`, `SolanaAdapter`, and `StellarAdapter` today. See [Chains](/docs/chains). |
-| **Paymaster** | Sponsors deploy + execute so transactions are gasless for the user. |
+|---|---|
+| **Identity** | A stable `userId` plus an app-specific salt anchors the wallet independently of the current device. |
+| **Device-native authority** | Keys are created and used locally. Starknet and Solana authorize P-256 device signers; Stellar locally unwraps its active ed25519 control key with enrolled device factors. |
+| **Chain adapter** | Implements address derivation, signing, execution, recovery, and sponsorship for one network family. |
+| **Unified SDK** | `Cavos.connect({ chain, network })` returns a discriminated wallet union so shared onboarding stays stable and chain-native methods remain typed. |
+| **Sponsorship** | A paymaster, relayer, fee payer, or fee-bump service removes the need for users to acquire gas when that adapter supports it. |
 
-## What makes it different
+## What remains chain-native
 
-- **No seed phrases.** The user never sees or manages a private key.
-- **MPC-free.** No key sharding, no signing servers. The key is whole and on the device.
-- **Verifiable.** Signatures are checked on-chain by the account contract, not by a backend.
-- **Deterministic address.** Same identity → same wallet address, every time, before deployment.
-- **Gasless.** Deploy and execution are sponsored through the Cavos paymaster.
-- **Multi-device + passkey 2FA + passphrase recovery.** Three non-custodial ways to never lose access.
+Execution is intentionally not reduced to a misleading universal transaction
+format:
+
+- **Starknet:** Cairo `DeviceAccount`, arbitrary multicalls, Starknet paymaster.
+- **Solana:** device-account PDA, native P-256 verification, transfer or
+  allowlisted CPI execution, sponsoring relayer.
+- **Stellar:** classic `G…` account, locally unwrapped control key, XLM payments,
+  Soroban invocation, optional fee-bump sponsorship.
+
+Narrow on `wallet.chain` before calling chain-native methods. See
+[Chains](/docs/chains) for the capability matrix.
+
+## Security properties
+
+- **Self-custodial:** Cavos does not hold a signing key that can move user funds.
+- **MPC-free:** there are no reconstructable server-side key shards.
+- **Device-native:** authority is created or unlocked locally on an enrolled
+  device.
+- **Deterministic identity:** the same stable identity and app salt resolve to
+  the same wallet for that adapter.
+- **Recoverable:** each adapter exposes non-custodial device approval and
+  recovery appropriate to its account model.
 
 ## Where to next
 
 <Cards>
-  <Card title="Quickstart" href="/docs/quickstart" description="From install to a gasless transaction in one page." />
-  <Card title="Starknet" href="/docs/starknet" description="Cairo DeviceAccount, silent signing, Cavos paymaster." />
-  <Card title="Solana" href="/docs/solana" description="Device-account PDA, native secp256r1 precompile, Cavos relayer." />
-  <Card title="Authentication" href="/docs/auth" description="Hosted login (Google / Apple / OTP) or bring your own identity." />
-  <Card title="React Native" href="/docs/react-native" description="Expo Development Builds and bare React Native on iOS and Android." />
-  <Card title="Recovery" href="/docs/recovery" description="Multi-device and passphrase backup — non-custodial by design." />
-  <Card title="Passkeys" href="/docs/passkeys" description="A second factor for approving new devices — set up right after signup." />
-  <Card title="For agents" href="/docs/for-agents" description="Feed this whole site to an LLM and let it build." />
+  <Card title="Quickstart" href="/docs/quickstart" description="Install, choose an adapter, and execute a sponsored transaction." />
+  <Card title="Chains" href="/docs/chains" description="Current availability and the adapter contract for future chains." />
+  <Card title="Starknet" href="/docs/starknet" description="Cairo DeviceAccount and paymaster execution." />
+  <Card title="Solana" href="/docs/solana" description="Device-account PDA and sponsoring relayer." />
+  <Card title="Stellar" href="/docs/stellar" description="Classic account, local control-key unlock, and Soroban calls." />
+  <Card title="React" href="/docs/react" description="Provider, hooks, modal, and chain switching." />
+  <Card title="React Native" href="/docs/react-native" description="Secure Enclave, Android Keystore, and native passkeys." />
+  <Card title="For agents" href="/docs/for-agents" description="Machine-readable docs and implementation rules for coding agents." />
 </Cards>

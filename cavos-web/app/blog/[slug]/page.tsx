@@ -18,9 +18,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = getPostBySlug(slug);
   if (!post) return {};
+  const isLegacyArchitecture = slug === 'v1-1-9-sdk-security';
 
   return {
-    title: `${post.meta.title} | Cavos Blog`,
+    title: `${post.meta.title} — Blog`,
     description: post.meta.excerpt,
     alternates: { canonical: `https://cavos.xyz/blog/${slug}` },
     openGraph: {
@@ -31,6 +32,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       publishedTime: post.meta.date,
       images: ['/og-image.png'],
     },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.meta.title,
+      description: post.meta.excerpt,
+      images: ['/og-image.png'],
+    },
+    robots: isLegacyArchitecture
+      ? { index: false, follow: true }
+      : { index: true, follow: true },
   };
 }
 

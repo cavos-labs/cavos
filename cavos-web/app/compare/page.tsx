@@ -1,318 +1,210 @@
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import Script from 'next/script'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
-import Script from 'next/script'
-import Link from 'next/link'
 
-export const metadata = {
-    title: "Cavos vs Privy vs Dynamic — Embedded Wallet Comparison",
-    description: "Compare Cavos vs Privy, Dynamic, and Passkey Wallets across architecture, AI agent support, mobile UX, and key sovereignty. Cavos is the only MPC-free embedded wallet with on-chain RSA-2048 verification on Starknet.",
+export const metadata: Metadata = {
+    title: 'Cavos vs Embedded Wallet Providers',
+    description: 'Compare Cavos with hosted embedded wallets and wallet extensions across custody, chain support, signing, gas sponsorship, recovery, and developer experience.',
     alternates: {
-        canonical: "https://cavos.xyz/compare",
+        canonical: 'https://cavos.xyz/compare',
     },
     openGraph: {
-        title: "Cavos vs Privy vs Dynamic — Embedded Wallet Comparison",
-        description: "Compare Cavos vs Privy, Dynamic, and Passkey Wallets. On-chain RSA-2048 verification, zero MPC shards, native AI agent signing.",
-        url: "https://cavos.xyz/compare",
-        images: ["/og-image.png"],
+        title: 'Cavos vs Embedded Wallet Providers',
+        description: 'A clear comparison of device-native Cavos smart accounts, hosted embedded wallets, and traditional wallet extensions.',
+        url: 'https://cavos.xyz/compare',
+        type: 'website',
+        images: ['/og-image.png'],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Cavos vs Embedded Wallet Providers',
+        description: 'Compare custody, chain support, signing, sponsorship, recovery, and developer experience.',
+        images: ['/og-image.png'],
     },
 }
 
-export default function ComparePage() {
-    const comparison = [
-        {
-            feature: "Core Architecture",
-            cavos: "On-chain RSA-2048 Verification",
-            privy: "MPC Shards (Off-chain)",
-            passkey: "Session Key Controllers",
-            benefit: "Cavos uses Montgomery Reduction in Cairo to verify JWTs directly on the protocol layer."
-        },
-        {
-            feature: "Signing Logic",
-            cavos: "Truly Verifiable On-chain",
-            privy: "Provider-managed Shards",
-            passkey: "Browser-based Auth Hooks",
-            benefit: "Anyone can verify the authorization proof on-chain. MPC relies on provider backend."
-        },
-        {
-            feature: "AI Agent Signer",
-            cavos: "Native Headless / Master-less support",
-            privy: "Requires key injection",
-            passkey: "Primarily human-centric",
-            benefit: "Cavos session tokens allow autonomous agents to sign safely without storing private keys."
-        },
-        {
-            feature: "Mobile Experience",
-            cavos: "Native React Native SDK (Passkeys)",
-            privy: "Browser / WebView dependent",
-            passkey: "Web app wrapper",
-            benefit: "Cavos provides a seamless mobile onboarding without external browser popups."
-        },
-        {
-            feature: "Gasless / Sponsorship",
-            cavos: "Native AVNU Paymaster integration",
-            privy: "Custom relayer setup",
-            passkey: "Integrated paymaster",
-            benefit: "Transactions are sponsored by default. Users never need to hold ETH to start."
-        },
-        {
-            feature: "Account Recovery",
-            cavos: "OAuth Identity (Google/Apple)",
-            privy: "Shard-based recovery",
-            passkey: "Passkey / Social recovery",
-            benefit: "Your identity IS your wallet. No seed phrases, no shards, no vendor lock-in."
-        },
-        {
-            feature: "Implementation",
-            cavos: "npx skills add → ~15 min setup",
-            privy: "Dashboard + API config",
-            passkey: "Contract-level integration",
-            benefit: "Get from zero to invisible wallet in 15 minutes with developer-first tooling."
-        },
-        {
-            feature: "Sovereignty Mode",
-            cavos: "100% Non-Custodial (No shards stored)",
-            privy: "Provider-held key fragments",
-            passkey: "Self-custodial controller",
-            benefit: "Cavos stores ZERO fragments of your keys. Only the Account Contract has authority."
-        },
-        {
-            feature: "Production Usage",
-            cavos: "10+ dApps • 81+ wallets (growing)",
-            privy: "Strong cross-chain adoption",
-            passkey: "Dominant in onchain gaming",
-            benefit: "Cavos is the chosen infrastructure for high-growth consumer applications."
-        },
-        {
-            feature: "Performance",
-            cavos: "Direct L2 settlement",
-            privy: "Bridge / backend latency",
-            passkey: "Optimized L2 settlement",
-            benefit: "Minimized latency using session tokens authorized directly on-chain."
-        }
-    ]
+const COMPARISON = [
+    {
+        feature: 'Signing authority',
+        cavos: 'A non-exportable device signer controlled by the user',
+        hosted: 'Provider-specific key management or MPC model',
+        extension: 'A key managed in a separate wallet application',
+    },
+    {
+        feature: 'Chain strategy',
+        cavos: 'One SDK with chain-native adapters',
+        hosted: 'Network coverage and account model vary by provider',
+        extension: 'Coverage depends on the wallet and installed networks',
+    },
+    {
+        feature: 'Current Cavos coverage',
+        cavos: 'Starknet, Solana, and Stellar',
+        hosted: 'Varies by provider',
+        extension: 'Varies by wallet',
+    },
+    {
+        feature: 'User experience',
+        cavos: 'Embedded directly in the product; no wallet extension',
+        hosted: 'Embedded directly in the product',
+        extension: 'Users install, open, and approve in another application',
+    },
+    {
+        feature: 'Gas sponsorship',
+        cavos: 'Chain-specific paymaster and relayer integrations',
+        hosted: 'Varies by provider and network',
+        extension: 'Usually funded by the user or a separate paymaster',
+    },
+    {
+        feature: 'Recovery',
+        cavos: 'Device authorization and non-custodial recovery factors',
+        hosted: 'Provider-defined recovery',
+        extension: 'Seed phrase, passkey, or wallet-specific recovery',
+    },
+]
 
+const FAQ = [
+    {
+        question: 'What makes Cavos different from hosted embedded wallets?',
+        answer: 'Cavos makes the user’s device the signing authority. The device key is non-exportable, Cavos does not reconstruct it with MPC, and each chain adapter uses the chain’s native account and transaction model.',
+    },
+    {
+        question: 'Which blockchains does Cavos support?',
+        answer: 'Cavos currently ships adapters for Starknet, Solana, and Stellar. The SDK is designed around a chain-adapter interface so additional blockchains can be added without changing the product-level integration model.',
+    },
+    {
+        question: 'Does Cavos use MPC?',
+        answer: 'No. Cavos does not split or reconstruct a master key with MPC. Signing authority stays with device-bound keys or the chain-specific non-custodial control model documented for each adapter.',
+    },
+    {
+        question: 'Can one application use Cavos across multiple chains?',
+        answer: 'Yes. Applications use the same Cavos.connect entry point and select a chain and network. The returned wallet is a typed, chain-specific object so native transaction behavior stays explicit.',
+    },
+]
+
+export default function ComparePage() {
     const jsonLd = {
-        "@context": "https://schema.org",
-        "@graph": [
+        '@context': 'https://schema.org',
+        '@graph': [
             {
-                "@type": "FAQPage",
-                "@id": "https://cavos.xyz/compare#faq",
-                "mainEntity": [
-                    ...comparison.map(row => ({
-                        "@type": "Question",
-                        "name": `How does Cavos compare to Privy and Dynamic on ${row.feature}?`,
-                        "acceptedAnswer": {
-                            "@type": "Answer",
-                            "text": `Cavos: ${row.cavos}. Privy/Dynamic: ${row.privy}. Passkey Wallets: ${row.passkey}. ${row.benefit}`
-                        }
-                    })),
-                    {
-                        "@type": "Question",
-                        "name": "What is the difference between Cavos and Privy?",
-                        "acceptedAnswer": {
-                            "@type": "Answer",
-                            "text": "Cavos and Privy are both embedded wallet SDKs, but differ architecturally. Privy uses MPC (Multi-Party Computation) shards stored on provider servers to sign transactions. Cavos is MPC-free — it performs RSA-2048 JWT verification directly on-chain in Cairo via Garaga, so no key fragments are ever stored off-chain. Cavos is Starknet-native and supports AI agent signing with session keys."
-                        }
-                    },
-                    {
-                        "@type": "Question",
-                        "name": "What is the difference between Cavos and Dynamic?",
-                        "acceptedAnswer": {
-                            "@type": "Answer",
-                            "text": "Dynamic is a multi-chain embedded wallet platform that supports MPC-based key management across EVM chains. Cavos is a Starknet-native embedded wallet with on-chain RSA verification and zero MPC shards. Cavos is purpose-built for account abstraction on Starknet, offering native Cairo smart accounts, AVNU paymaster integration, and headless AI agent signing."
-                        }
-                    },
-                    {
-                        "@type": "Question",
-                        "name": "Is Cavos self-custodial?",
-                        "acceptedAnswer": {
-                            "@type": "Answer",
-                            "text": "Yes. Cavos is fully self-custodial. No key fragments or MPC shards are ever stored by Cavos. Each user's wallet is a self-custodial smart account (SRC-6) on Starknet. The account is controlled by the user's OAuth identity (Google or Apple), verified on-chain via RSA-2048 using the Garaga library."
-                        }
-                    },
-                    {
-                        "@type": "Question",
-                        "name": "Does Cavos support AI agents?",
-                        "acceptedAnswer": {
-                            "@type": "Answer",
-                            "text": "Yes. Cavos natively supports AI agent signers through session keys. Session tokens are authorized for specific contracts and spending limits on-chain, allowing AI agents (such as Eliza-based frameworks) to operate autonomously without storing long-lived private keys. This makes Cavos the standard for autonomous on-chain applications."
-                        }
-                    }
-                ]
+                '@type': 'WebPage',
+                '@id': 'https://cavos.xyz/compare#webpage',
+                url: 'https://cavos.xyz/compare',
+                name: 'Cavos vs Embedded Wallet Providers',
+                description: 'Comparison of multichain embedded wallet approaches across custody, signing, sponsorship, recovery, and developer experience.',
+                isPartOf: { '@id': 'https://cavos.xyz/#website' },
             },
             {
-                "@type": "WebPage",
-                "@id": "https://cavos.xyz/compare",
-                "url": "https://cavos.xyz/compare",
-                "name": "Cavos vs Privy vs Dynamic — Embedded Wallet Comparison",
-                "description": "Technical comparison of Cavos vs Privy, Dynamic, and Passkey Wallets for embedded wallet infrastructure on Starknet.",
-                "isPartOf": { "@id": "https://cavos.xyz/#website" }
-            }
-        ]
+                '@type': 'FAQPage',
+                '@id': 'https://cavos.xyz/compare#faq',
+                mainEntity: FAQ.map((item) => ({
+                    '@type': 'Question',
+                    name: item.question,
+                    acceptedAnswer: {
+                        '@type': 'Answer',
+                        text: item.answer,
+                    },
+                })),
+            },
+        ],
     }
 
     return (
-        <main className="bg-white min-h-screen text-black font-sans antialiased">
+        <main className="min-h-screen bg-white font-sans text-ink antialiased">
             <Script
                 id="compare-json-ld"
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
             <Header />
-            <div className="max-w-6xl mx-auto px-6 py-32">
-                <header className="mb-20 text-center">
-                    <h1 className="text-5xl md:text-8xl font-bold tracking-tighter mb-6 text-black">
-                        The Sovereignty Matrix
+
+            <div className="mx-auto max-w-6xl px-6 pb-24 pt-32 md:px-8">
+                <header className="max-w-3xl">
+                    <p className="font-mono text-xs uppercase tracking-[0.18em] text-brand">Architecture comparison</p>
+                    <h1 className="mt-5 text-balance text-[clamp(2.5rem,6vw,5rem)] font-medium leading-[0.98] tracking-[-0.045em]">
+                        Choose the wallet model, not just the login modal.
                     </h1>
-                    <p className="text-xl text-gray-500 max-w-3xl mx-auto">
-                        Choosing a wallet infrastructure is a decision about trust.
-                        Cavos is the only <strong>verifiable, MPC-free</strong> infrastructure built natively for on-chain account abstraction.
+                    <p className="mt-7 max-w-2xl text-lg leading-relaxed text-muted">
+                        Cavos is device-native and chain-agnostic: one product integration, with an
+                        explicit adapter for each blockchain. Compare that model with hosted key
+                        networks and traditional wallet extensions.
                     </p>
                 </header>
 
-                <div className="relative group">
-                    {/* Mobile scroll hint */}
-                    <div className="md:hidden flex items-center justify-center gap-2 mb-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest animate-pulse">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-                        Scroll to compare
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                    </div>
-
-                    <div className="overflow-x-auto shadow-2xl rounded-3xl border border-gray-100">
-                        <table className="w-full border-collapse bg-white min-w-[800px]">
-                            <thead>
-                                <tr className="bg-black text-white">
-                                    <th className="p-8 text-left uppercase text-[10px] tracking-[0.3em] font-bold">Vector</th>
-                                    <th className="p-8 text-left font-extrabold text-lg border-x border-white/10 italic text-white">Cavos</th>
-                                    <th className="p-8 text-left text-gray-400 font-medium text-sm">Privy / Dynamic</th>
-                                    <th className="p-8 text-left text-gray-400 font-medium text-sm">Passkey Wallets</th>
+                <section className="mt-16 overflow-x-auto rounded-2xl border border-line">
+                    <table className="w-full min-w-[860px] border-collapse text-left">
+                        <thead className="bg-ink text-white">
+                            <tr>
+                                <th className="px-6 py-5 text-xs font-semibold uppercase tracking-wider">Capability</th>
+                                <th className="border-l border-white/10 px-6 py-5 text-sm font-semibold">Cavos</th>
+                                <th className="border-l border-white/10 px-6 py-5 text-sm font-semibold">Hosted embedded wallets</th>
+                                <th className="border-l border-white/10 px-6 py-5 text-sm font-semibold">Wallet extensions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {COMPARISON.map((row) => (
+                                <tr key={row.feature} className="border-t border-line first:border-t-0">
+                                    <th scope="row" className="w-[18%] px-6 py-5 text-sm font-semibold">{row.feature}</th>
+                                    <td className="w-[28%] border-l border-line bg-brand/[0.035] px-6 py-5 text-sm leading-relaxed">{row.cavos}</td>
+                                    <td className="w-[27%] border-l border-line px-6 py-5 text-sm leading-relaxed text-muted">{row.hosted}</td>
+                                    <td className="w-[27%] border-l border-line px-6 py-5 text-sm leading-relaxed text-muted">{row.extension}</td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {comparison.map((row, i) => (
-                                    <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/80 transition-all">
-                                        <td className="p-8 font-bold text-gray-400 text-xs uppercase tracking-widest">{row.feature}</td>
-                                        <td className="p-8 font-bold text-black bg-blue-50/5 border-x border-gray-100">
-                                            <div className="flex flex-col gap-2">
-                                                <span className="flex items-center gap-2">
-                                                    <span className="w-1.5 h-1.5 bg-black rounded-full"></span>
-                                                    {row.cavos}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="p-8 text-gray-500 text-sm">{row.privy}</td>
-                                        <td className="p-8 text-gray-500 text-sm">{row.passkey}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                            ))}
+                        </tbody>
+                    </table>
+                </section>
 
-                <p className="mt-8 text-center text-[10px] font-bold text-gray-300 uppercase tracking-[0.2em]">
-                    Cavos SDK can be integrated via <a href="https://github.com/cavos-labs/cavos-skills" target="_blank" className="text-black underline decoration-gray-200 hover:decoration-black transition-all">npx skills add cavos-labs/cavos-skills</a>
-                </p>
+                <section className="mt-24">
+                    <h2 className="text-3xl font-medium tracking-[-0.03em]">Why the adapter model matters</h2>
+                    <div className="mt-8 grid gap-px overflow-hidden rounded-2xl border border-line bg-line md:grid-cols-3">
+                        {[
+                            ['One integration surface', 'Authentication, wallet state, recovery, and sponsorship share a consistent product-level API.'],
+                            ['Native where it counts', 'Address derivation, signatures, execution, and fees remain explicit and correct for each blockchain.'],
+                            ['Built beyond three chains', 'New adapters can join the same interface without pretending every blockchain has the same account model.'],
+                        ].map(([title, body]) => (
+                            <article key={title} className="bg-white p-7">
+                                <h3 className="text-lg font-semibold">{title}</h3>
+                                <p className="mt-3 text-sm leading-relaxed text-muted">{body}</p>
+                            </article>
+                        ))}
+                    </div>
+                </section>
 
-                <div className="mt-32 space-y-16">
-                    <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-center mb-12 text-black">Featured Integration</h2>
-                    <div className="max-w-4xl mx-auto p-12 rounded-[3rem] bg-gray-50 border border-gray-100 space-y-8">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                            <div>
-                                <h3 className="text-4xl font-bold italic mb-2 text-black">Cofiblocks</h3>
-                                <a href="https://app.cofiblocks.com" target="_blank" className="text-primary font-medium hover:underline tracking-tight text-lg">app.cofiblocks.com</a>
-                            </div>
-                            <div className="px-6 py-2 bg-black text-white text-[10px] font-bold uppercase tracking-[0.2em] rounded-full w-fit">
-                                Live on Mainnet
-                            </div>
-                        </div>
-                        <p className="text-2xl text-gray-600 leading-tight font-serif italic">
-                            "Cavos enables us to onboard coffee farmers directly without the friction of traditional wallets. They get the benefits of decentralization and middleman-free sales, while the blockchain remains invisible."
-                        </p>
-                        <div className="pt-6 border-t border-gray-200 flex flex-wrap gap-8 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">
-                            <span className="flex items-center gap-2 text-black"><span className="w-2 h-2 bg-green-500 rounded-full"></span> Middleman-Free</span>
-                            <span className="flex items-center gap-2 text-black"><span className="w-2 h-2 bg-green-500 rounded-full"></span> Seamless Onboarding</span>
-                            <span className="flex items-center gap-2 text-black"><span className="w-2 h-2 bg-green-500 rounded-full"></span> Real World Impact</span>
-                        </div>
+                <section className="mt-24">
+                    <h2 className="text-3xl font-medium tracking-[-0.03em]">Frequently asked</h2>
+                    <div className="mt-8 grid gap-x-12 gap-y-10 md:grid-cols-2">
+                        {FAQ.map((item) => (
+                            <article key={item.question}>
+                                <h3 className="font-semibold">{item.question}</h3>
+                                <p className="mt-3 text-sm leading-relaxed text-muted">{item.answer}</p>
+                            </article>
+                        ))}
                     </div>
-                </div>
+                </section>
 
-                <div className="mt-32 space-y-16">
-                    <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-center mb-12 text-black">Why Cavos Wins</h2>
-                    <div className="grid md:grid-cols-2 gap-12 text-black">
-                        <div className="space-y-4">
-                            <h3 className="text-2xl font-bold">Verifiable Sovereignty</h3>
-                            <p className="text-gray-600">
-                                Traditional embedded wallets rely on MPC "black boxes"—centralized clusters holding fragments of your keys.
-                                Cavos is the only infrastructure that performs <strong>RSA-2048 verification directly on-chain</strong> in Cairo.
-                                Your identity is validated by the protocol, not a provider.
-                            </p>
-                        </div>
-                        <div className="space-y-4">
-                            <h3 className="text-2xl font-bold">Zero-Trust AI Signers</h3>
-                            <p className="text-gray-600">
-                                AI agents need signers that can operate autonomously without exposing long-lived private keys. 
-                                Cavos session tokens are authorized for specific contracts and spending limits on-chain, 
-                                making it the standard for the next generation of autonomous onchain apps.
-                            </p>
-                        </div>
-                        <div className="space-y-4">
-                            <h3 className="text-2xl font-bold">Protocol-Native DX</h3>
-                            <p className="text-gray-600">
-                                While others build cross-chain abstractions that add latency, Cavos is 100% protocol-native.
-                                From integrated AVNU paymasters to sub-account naming via named wallets,
-                                every feature is optimized for the native AA ecosystem.
-                            </p>
-                        </div>
-                        <div className="space-y-4">
-                            <h3 className="text-2xl font-bold">Invisible UX, Total Control</h3>
-                            <p className="text-gray-600">
-                                Get your users into your app in under 30 seconds. No browser popups, no seed phrases, no extensions. 
-                                Just a seamless Web2 login that results in a fully self-custodial account
-                                that works across every device.
-                            </p>
-                        </div>
+                <section className="mt-24 flex flex-col items-start justify-between gap-6 rounded-2xl bg-ink px-8 py-10 text-white md:flex-row md:items-center">
+                    <div>
+                        <h2 className="text-2xl font-medium">Build the first wallet on your target chain.</h2>
+                        <p className="mt-2 text-sm text-white/60">Start with the unified SDK, then follow the native guide for each adapter.</p>
                     </div>
-                </div>
-
-                <div className="mt-40 text-center space-y-8">
-                    <div className="bg-black text-white p-12 rounded-[3rem] shadow-2xl inline-block max-w-2xl border border-white/5">
-                        <h2 className="text-3xl md:text-4xl font-bold mb-6">Integrate Cavos in 15 minutes</h2>
-                        <p className="text-gray-400 mb-10 text-lg">
-                            Ready to ship the ultimate onboarding experience? 
-                            Use our developer toolset to get started.
-                        </p>
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                            <Link href="https://docs.cavos.xyz" target="_blank" className="w-full sm:w-auto px-10 py-5 bg-white text-black rounded-2xl font-bold text-lg hover:bg-gray-100 transition-all">
-                                View Documentation
-                            </Link>
-                            <Link href="https://github.com/cavos-labs/cavos-skills" target="_blank" className="w-full sm:w-auto px-10 py-5 bg-gray-900 text-white rounded-2xl font-bold text-lg hover:bg-gray-800 transition-all border border-white/10">
-                                Explore Skills
-                            </Link>
-                        </div>
+                    <div className="flex flex-wrap gap-3">
+                        <a
+                            href="https://docs.cavos.xyz/docs/quickstart"
+                            className="rounded-md bg-white px-5 py-3 text-sm font-semibold text-ink"
+                        >
+                            Read the quickstart
+                        </a>
+                        <Link
+                            href="/register"
+                            className="rounded-md border border-white/20 px-5 py-3 text-sm font-semibold text-white"
+                        >
+                            Create an account
+                        </Link>
                     </div>
-                </div>
-
-                <div className="mt-32 grid md:grid-cols-3 gap-12 border-t border-gray-100 pt-20">
-                    <div className="p-8 rounded-[2rem] bg-gray-50 border border-gray-100">
-                        <h2 className="text-xl font-bold mb-4">Zero Shard Policy</h2>
-                        <p className="text-sm text-gray-600 leading-relaxed">
-                            Unlike MPC providers, we never store fragments of your key. RSA verification happens directly in Cairo. No off-chain cluster involved.
-                        </p>
-                    </div>
-                    <div className="p-8 rounded-[2rem] bg-gray-50 border border-gray-100">
-                        <h2 className="text-xl font-bold mb-4">Master-less Agents</h2>
-                        <p className="text-sm text-gray-600 leading-relaxed">
-                            Authorized sessions allow AI agents to operate autonomously with on-chain guardrails. Perfect for Eliza-based frameworks.
-                        </p>
-                    </div>
-                    <div className="p-8 rounded-[2rem] bg-gray-50 border border-gray-100">
-                        <h2 className="text-xl font-bold mb-4">Gasless Onboarding</h2>
-                        <p className="text-sm text-gray-600 leading-relaxed">
-                            Fully integrated with AVNU Paymaster to ensure your users never hit an "Insufficient Gas" error. Seamless from day zero.
-                        </p>
-                    </div>
-                </div>
+                </section>
             </div>
+
             <Footer />
         </main>
     )

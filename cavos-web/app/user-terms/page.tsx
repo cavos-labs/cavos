@@ -4,8 +4,9 @@ import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 
 export const metadata: Metadata = {
-    title: 'End-User Terms of Service — Cavos',
+    title: 'End-User Terms of Service',
     description: 'Terms of service for end users of applications powered by the Cavos SDK.',
+    alternates: { canonical: 'https://cavos.xyz/user-terms' },
 }
 
 const LAST_UPDATED = 'March 16, 2026'

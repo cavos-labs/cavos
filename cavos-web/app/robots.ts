@@ -7,27 +7,27 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: ['GPTBot', 'ChatGPT-User', 'OAI-SearchBot'],
         allow: '/',
-        disallow: ['/api/', '/dashboard/'],
+        disallow: ['/api/'],
       },
       {
         userAgent: 'PerplexityBot',
         allow: '/',
-        disallow: ['/api/', '/dashboard/'],
+        disallow: ['/api/'],
       },
       {
         userAgent: ['ClaudeBot', 'anthropic-ai'],
         allow: '/',
-        disallow: ['/api/', '/dashboard/'],
+        disallow: ['/api/'],
       },
       {
         userAgent: 'Google-Extended',
         allow: '/',
-        disallow: ['/api/', '/dashboard/'],
+        disallow: ['/api/'],
       },
       {
         userAgent: 'Bingbot',
         allow: '/',
-        disallow: ['/api/', '/dashboard/'],
+        disallow: ['/api/'],
       },
       // Block Common Crawl training data scraper (not a search bot)
       {
@@ -38,7 +38,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/dashboard/'],
+        disallow: ['/api/'],
       },
     ],
     sitemap: 'https://cavos.xyz/sitemap.xml',

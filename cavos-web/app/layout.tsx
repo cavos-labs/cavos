@@ -11,27 +11,29 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "Cavos | Invisible Crypto Infrastructure",
+    default: "Multichain Embedded Wallet Infrastructure | Cavos",
     template: "%s | Cavos"
   },
-  description: "Cavos is a verifiable, MPC-free embedded wallet SDK for Starknet. Turn Google or Apple OAuth logins into self-custodial smart accounts with on-chain RSA-2048 verification — no seed phrases, no browser extensions, no MPC shards.",
+  description: "Build device-native, self-custodial smart accounts across high-performance blockchains with one SDK. No seed phrases, MPC, or wallet extensions.",
   keywords: [
     "embedded wallet",
+    "multichain embedded wallet",
+    "chain agnostic wallet infrastructure",
     "account abstraction",
-    "OAuth wallet",
+    "device-native wallet",
+    "device signer",
     "self-custodial wallet",
     "MPC-free wallet",
     "Web3 onboarding",
-    "crypto infrastructure",
-    "AI agent signer",
+    "wallet infrastructure",
     "Starknet wallet",
+    "Solana embedded wallet",
+    "Stellar embedded wallet",
     "gasless transactions",
-    "session keys",
     "smart accounts",
-    "social login Web3",
-    "on-chain RSA verification",
-    "Cairo smart contracts",
-    "invisible wallet",
+    "P-256 wallet",
+    "secp256r1 wallet",
+    "verifiable self-custody",
     "Privy alternative",
     "Dynamic alternative",
     "embedded crypto wallet SDK"
@@ -41,9 +43,12 @@ export const metadata: Metadata = {
   creator: "Cavos Labs",
   publisher: "Cavos Labs",
   metadataBase: new URL("https://cavos.xyz"),
+  alternates: {
+    canonical: "https://cavos.xyz",
+  },
   openGraph: {
-    title: "Cavos | Invisible Crypto Infrastructure",
-    description: "Verifiable, MPC-free embedded wallets for Starknet. Turn OAuth identities into self-custodial smart accounts with on-chain RSA-2048 verification.",
+    title: "Multichain Embedded Wallet Infrastructure | Cavos",
+    description: "Device-native, self-custodial smart accounts across high-performance blockchains. One SDK, no seed phrases, no MPC.",
     url: "https://cavos.xyz",
     siteName: "Cavos",
     images: [
@@ -51,7 +56,7 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Cavos — MPC-free embedded wallets with on-chain RSA verification for Starknet",
+        alt: "Cavos — device-native multichain embedded wallet infrastructure",
       },
     ],
     locale: "en_US",
@@ -59,8 +64,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cavos | Invisible Crypto Infrastructure",
-    description: "Verifiable, MPC-free embedded wallets. OAuth logins → self-custodial Starknet smart accounts. No seed phrases, no MPC shards.",
+    title: "Multichain Embedded Wallet Infrastructure | Cavos",
+    description: "Device-native, self-custodial smart accounts across high-performance blockchains. One SDK, no seed phrases, no MPC.",
     creator: "@cavosxyz",
     images: ["/og-image.png"],
   },
@@ -89,7 +94,7 @@ const globalJsonLd = {
         "@type": "ImageObject",
         "url": "https://cavos.xyz/CavosLogo.png"
       },
-      "description": "Cavos Labs builds invisible crypto infrastructure — verifiable, MPC-free embedded wallets for Starknet.",
+      "description": "Cavos Labs builds device-native, verifiable smart-account infrastructure for every blockchain.",
       "sameAs": [
         "https://twitter.com/cavosxyz",
         "https://github.com/cavos-labs"
@@ -105,7 +110,7 @@ const globalJsonLd = {
       "@id": "https://cavos.xyz/#website",
       "url": "https://cavos.xyz",
       "name": "Cavos",
-      "description": "Invisible crypto infrastructure — verifiable, MPC-free embedded wallets for Starknet",
+      "description": "Multichain embedded wallet infrastructure for device-native, verifiable smart accounts.",
       "publisher": { "@id": "https://cavos.xyz/#organization" }
     }
   ]

@@ -1,76 +1,85 @@
 ---
 title: Concepts
-description: The non-custodial security model, determinism, and networks.
+description: The every-chain architecture, non-custodial invariant, deterministic identity, and adapter boundaries.
 ---
 
-## Non-custodial by construction
+## Every-chain, not one account model everywhere
 
-Cavos is non-custodial because **authority lives in the account contract, not the
-backend**. The Cairo `DeviceAccount` gates `add_signer` / `remove_signer` so they
-only succeed when called by the account itself — which only happens inside a
-transaction whose signature was validated against an existing, authorized device
-signer.
+Cavos standardizes the integration contract, not the blockchain. Every adapter
+must provide stable identity, local user authority, typed execution,
+non-custodial recovery, and a documented sponsorship path. The implementation
+remains native to the selected network.
 
-Consequences:
+`StarknetAdapter`, `SolanaAdapter`, and `StellarAdapter` are available today.
+Future chains are roadmap adapters until their code, security review, and
+end-to-end validation are complete.
 
-- The Cavos backend holds **no key material** and has **no privileged role** on
-  any account. A full backend compromise cannot add a signer to any wallet.
-- Every signer change is authorized by a key the **user** holds (a device key or a
-  passphrase-derived backup key), verified on-chain.
-- Backend services (registry, recovery relay) only **move messages** — they
-  request, notify, and relay. They never sign.
+## Non-custodial invariant
 
-This is the single invariant to remember: **the contract is the sole authority
-over its signers.**
+The Cavos backend must not possess authority that can move user funds or enroll
+itself as a signer.
 
-## Deterministic addresses
+- **Starknet:** the Cairo account authorizes P-256 device signers.
+- **Solana:** the device-account program authorizes P-256 keys whose signatures
+  were verified by the native precompile.
+- **Stellar:** the classic account authorizes an ed25519 control key that is
+  encrypted on-chain and unwrapped locally.
 
-The wallet address is `f(identity, appSalt)` via `deriveAddressSeed` (Poseidon) →
-counterfactual contract address. It depends only on identity and salt, **never on
-the device key**, so:
+Registries and recovery services coordinate public state or messages. Paymasters
+and relayers fund or submit transactions. None of those roles is a substitute
+for user authorization.
 
-- The same user always lands on the same wallet.
-- You can compute the address before the account is deployed.
-- A new device on an existing account is recognized, not forked into a second
-  wallet.
+## Deterministic identity
 
-Each chain registers the first device according to its native account model:
-Starknet uses a one-time `initialize`, Solana uses the deterministic device
-account PDA, and Stellar uses a classic `G…` multisig whose control key is sealed
-in on-chain data. The address remains device-independent.
+The shared input is a stable `userId` plus an app-specific `appSalt`. Each
+adapter maps that input into its native deterministic address model:
 
-## Silent signing trade-off
+| Chain | Address model |
+|---|---|
+| Starknet | Poseidon seed and counterfactual Cairo account address |
+| Solana | SHA-256 seed and device-account PDA |
+| Stellar | SHA-256 seed and deterministic classic master account |
 
-Device keys sign silently — no per-signature user-verification prompt. The key is
-non-extractable and device-bound, so it is non-custodial and on-chain verified.
-This is the embedded-wallet model used by Privy and Turnkey: maximum UX, no
-friction per transaction.
+The address does not depend on whichever device connects first. A returning
+identity on a new device resolves the existing wallet and enters device approval
+instead of silently creating a second wallet.
 
-The user-verification step lives on **device management**, not signing. An
-optional [passkey](/docs/passkeys) acts as a second factor for approving *new*
-devices; it never gates individual transactions. Together with
-[multi-device](/docs/multi-device) and [recovery](/docs/recovery), that covers
-device loss without compromising the silent-signing UX.
+## Device-native authority
 
-## Networks & constants
+“Device-native” describes where sensitive authority is created or unlocked, not
+one universal curve:
+
+- Starknet and Solana use non-extractable P-256 device signers directly.
+- Stellar uses a device-bound P-256 unwrap key to recover the active ed25519
+  control key locally.
+
+On mobile, Cavos prefers hardware-backed key storage and reports the actual
+capabilities of the device. Hardware claims must be validated on physical
+devices, not inferred from a simulator.
+
+## Network environments
+
+The shared API accepts `network: "testnet" | "mainnet"` and the selected adapter
+resolves the concrete network:
 
 ```ts title="TypeScript"
-import { STARKNET_NETWORKS, DEVICE_ACCOUNT_CLASS_HASH } from "@cavos/kit";
-
-STARKNET_NETWORKS.sepolia;            // RPC + chain config
-DEVICE_ACCOUNT_CLASS_HASH.sepolia;    // deployed DeviceAccount class hash
+const wallet = await Cavos.connect({
+  chain: "stellar",
+  network: "testnet", // stellar-testnet
+  identity,
+  appSalt: "my-app",
+  appId,
+});
 ```
 
-`Cavos.connect` takes `network: "testnet" | "mainnet"` and resolves it to the
-chain's concrete network (Starknet testnet → `sepolia`). The `STARKNET_NETWORKS` /
-`DEVICE_ACCOUNT_CLASS_HASH` maps are still keyed by the concrete Starknet network
-(`sepolia`, `mainnet`); the kit ships the current class-hash values.
+Chain packages also export concrete network constants for advanced use. See the
+individual [chain guides](/docs/chains).
 
-## Multi-chain by design
+## Typed native execution
 
-The kit is structured around a `ChainAdapter` interface, with `StarknetAdapter`,
-`SolanaAdapter`, and `StellarAdapter` implemented today. New chains slot in behind the same `Cavos.connect`
-API surface, so application code written against `Cavos.connect` stays stable as
-chains are added. Each chain keeps its native `execute` signature (narrow the
-returned wallet on `wallet.chain`); see [Chains](/docs/chains) for the per-chain
-guides.
+`Cavos.connect` returns `Cavos | CavosSolana | CavosStellar`. Narrow on
+`wallet.chain` before execution. This keeps onboarding portable without hiding
+important differences in calls, units, replay protection, or confirmation.
+
+That same rule applies to every future adapter: extend the discriminated union,
+document capabilities, and preserve native semantics.

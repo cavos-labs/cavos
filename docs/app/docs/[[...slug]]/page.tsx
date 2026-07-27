@@ -56,11 +56,20 @@ export async function generateMetadata(props: PageProps<'/docs/[[...slug]]'>): P
   return {
     title: page.data.title,
     description: page.data.description,
+    alternates: {
+      canonical: `https://docs.cavos.xyz${page.url}`,
+    },
     openGraph: {
+      title: `${page.data.title} | Cavos Docs`,
+      description: page.data.description,
+      url: `https://docs.cavos.xyz${page.url}`,
+      type: 'article',
       images: '/og-docs.png',
     },
     twitter: {
       card: 'summary_large_image',
+      title: `${page.data.title} | Cavos Docs`,
+      description: page.data.description,
       images: '/og-docs.png',
     },
   };
