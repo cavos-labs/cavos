@@ -11,20 +11,20 @@ import Script from 'next/script'
 
 export const metadata = {
     title: "Multichain Embedded Wallet Infrastructure | Cavos",
-    description: "Build device-native, self-custodial smart accounts across high-performance blockchains with one SDK. No seed phrases, MPC, or wallet extensions.",
+    description: "Turn every sign-in into a self-custodial wallet. One SDK for seamless onboarding and sponsored transactions across chains.",
     alternates: {
         canonical: "https://cavos.xyz",
     },
     openGraph: {
         title: "Multichain Embedded Wallet Infrastructure | Cavos",
-        description: "One SDK for device-native smart accounts across Starknet, Solana, Stellar, and the chains that come next.",
+        description: "Turn every sign-in into a self-custodial wallet. One SDK for seamless onboarding and sponsored transactions across chains.",
         url: "https://cavos.xyz",
         images: ["/og-image.png"],
     },
     twitter: {
         card: "summary_large_image",
         title: "Multichain Embedded Wallet Infrastructure | Cavos",
-        description: "One SDK for device-native smart accounts across Starknet, Solana, Stellar, and the chains that come next.",
+        description: "Turn every sign-in into a self-custodial wallet. One SDK for seamless onboarding and sponsored transactions across chains.",
         images: ["/og-image.png"],
     },
 }
@@ -52,7 +52,7 @@ export default function LandingPage() {
                 "featureList": [
                     "Device-native P-256 signers",
                     "Deterministic smart-account addresses",
-                    "Verifiable self-custody without MPC",
+                    "Device-controlled self-custody",
                     "Gas sponsorship and relayers",
                     "Starknet, Solana, and Stellar adapters",
                     "React and React Native SDKs",
@@ -85,25 +85,25 @@ export default function LandingPage() {
                     {/* ── HERO ──────────────────────────────────── */}
                     <section className="relative md:flex-1 flex items-start md:items-center px-6 md:px-16 lg:px-24 pt-14 md:pt-20 pb-12 md:pb-20">
                         <div className="space-y-10 md:space-y-14">
-                            <h1 className="text-[clamp(1.75rem,2.3vw,2.375rem)] font-normal tracking-[-0.02em] leading-[1.3] text-ink">
-                                <span className="font-medium">One embedded wallet layer for every chain.</span><br />
-                                Device-native signing, verifiable self-custody, gasless UX.<br />
-                                No extensions. No seed phrases. No MPC.
-                            </h1>
+                            <div className="max-w-2xl">
+                                <h1 className="text-[clamp(2.25rem,4.5vw,4.75rem)] font-medium tracking-[-0.045em] leading-[0.98] text-ink text-balance">
+                                    Turn every sign-in into a wallet.
+                                </h1>
+                            </div>
 
                             <div data-hero className="flex flex-wrap items-center gap-3">
                                 <Link
                                     href="/register"
                                     className="inline-flex items-center justify-center px-7 py-3 bg-brand text-white rounded-md font-semibold text-sm hover:bg-brand-hover transition-colors active:scale-[0.98]"
                                 >
-                                    Start building
+                                    Build your first wallet
                                 </Link>
                                 <a
                                     href="https://docs.cavos.xyz"
                                     target="_blank"
                                     className="inline-flex items-center justify-center px-7 py-3 bg-white text-ink rounded-md font-semibold text-sm border border-line-strong hover:border-ink/40 transition-colors"
                                 >
-                                    Read the docs
+                                    Explore the docs
                                 </a>
                             </div>
                         </div>
