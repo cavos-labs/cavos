@@ -86,22 +86,25 @@ export default function LandingPage() {
                     <section className="relative md:flex-1 flex items-start md:items-center px-6 md:px-16 lg:px-24 pt-14 md:pt-20 pb-12 md:pb-20">
                         <div className="space-y-10 md:space-y-14">
                             <div className="max-w-2xl">
-                                <h1 className="text-[clamp(2.25rem,4.5vw,4.75rem)] font-medium tracking-[-0.045em] leading-[0.98] text-ink text-balance">
-                                    Turn every sign-in into a wallet.
+                                <h1 className="text-[clamp(2.25rem,4.5vw,4.75rem)] font-normal tracking-[-0.045em] leading-[0.98] text-balance">
+                                    <span className="block font-medium text-ink">Turn every sign-in</span>
+                                    <span className="block font-medium text-ink">into a wallet.</span>
+                                    <span className="mt-2 block text-ink/45">One SDK.</span>
+                                    <span className="block text-ink/45">Every chain.</span>
                                 </h1>
                             </div>
 
-                            <div data-hero className="flex flex-wrap items-center gap-3">
+                            <div data-hero className="grid w-full max-w-sm grid-cols-1 gap-3 sm:flex sm:max-w-none sm:items-center">
                                 <Link
                                     href="/register"
-                                    className="inline-flex items-center justify-center px-7 py-3 bg-brand text-white rounded-md font-semibold text-sm hover:bg-brand-hover transition-colors active:scale-[0.98]"
+                                    className="inline-flex h-14 w-full items-center justify-center rounded-md bg-brand px-7 text-sm font-semibold text-white transition-colors hover:bg-brand-hover active:scale-[0.98] sm:h-auto sm:w-auto sm:py-3"
                                 >
                                     Build your first wallet
                                 </Link>
                                 <a
                                     href="https://docs.cavos.xyz"
                                     target="_blank"
-                                    className="inline-flex items-center justify-center px-7 py-3 bg-white text-ink rounded-md font-semibold text-sm border border-line-strong hover:border-ink/40 transition-colors"
+                                    className="inline-flex h-14 w-full items-center justify-center rounded-md border border-line-strong bg-white px-7 text-sm font-semibold text-ink transition-colors hover:border-ink/40 sm:h-auto sm:w-auto sm:py-3"
                                 >
                                     Explore the docs
                                 </a>
