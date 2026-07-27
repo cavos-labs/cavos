@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     default: "Multichain Embedded Wallet Infrastructure | Cavos",
     template: "%s | Cavos"
   },
-  description: "Build device-native, self-custodial smart accounts across high-performance blockchains with one SDK. No seed phrases, MPC, or wallet extensions.",
+  description: "Turn every sign-in into a self-custodial wallet. One SDK for seamless onboarding and sponsored transactions across chains.",
   keywords: [
     "embedded wallet",
     "multichain embedded wallet",
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Multichain Embedded Wallet Infrastructure | Cavos",
-    description: "Device-native, self-custodial smart accounts across high-performance blockchains. One SDK, no seed phrases, no MPC.",
+    description: "Turn every sign-in into a self-custodial wallet. One SDK for seamless onboarding and sponsored transactions across chains.",
     url: "https://cavos.xyz",
     siteName: "Cavos",
     images: [
@@ -65,7 +65,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Multichain Embedded Wallet Infrastructure | Cavos",
-    description: "Device-native, self-custodial smart accounts across high-performance blockchains. One SDK, no seed phrases, no MPC.",
+    description: "Turn every sign-in into a self-custodial wallet. One SDK for seamless onboarding and sponsored transactions across chains.",
     creator: "@cavosxyz",
     images: ["/og-image.png"],
   },
