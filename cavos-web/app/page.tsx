@@ -83,14 +83,14 @@ export default function LandingPage() {
                 <div className="flex flex-col pt-[4.5rem] md:min-h-screen">
 
                     {/* ── HERO ──────────────────────────────────── */}
-                    <section className="relative md:flex-1 flex items-start md:items-center px-6 md:px-16 lg:px-24 pt-14 md:pt-20 pb-12 md:pb-20">
+                    <section className="relative md:flex-1 flex items-start md:items-center px-6 md:px-16 lg:px-24 pt-20 pb-12 md:pt-20 md:pb-20">
                         <div className="space-y-10 md:space-y-14">
                             <div className="max-w-5xl">
-                                <h1 className="text-[1.875rem] font-normal tracking-[-0.04em] leading-[1.04] sm:text-[clamp(2.125rem,3.1vw,3rem)]">
+                                <h1 className="text-[clamp(1.625rem,2.6vw,2.375rem)] font-medium leading-[1.14] tracking-[-0.03em]">
                                     <span className="block text-ink text-balance">
                                         Your next million users shouldn&apos;t need to understand crypto.
                                     </span>
-                                    <span className="mt-3 block max-w-4xl text-[0.9em] leading-[1.08] tracking-[-0.03em] text-ink/45 text-balance">
+                                    <span className="mt-2 hidden max-w-4xl text-ink/45 text-balance sm:block">
                                         Let them sign in, pay, earn, and own as naturally as they use any other product—while Cavos handles the wallet infrastructure underneath.
                                     </span>
                                 </h1>
