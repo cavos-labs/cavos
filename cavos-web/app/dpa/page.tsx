@@ -6,6 +6,7 @@ import { Footer } from '@/components/Footer'
 export const metadata: Metadata = {
     title: 'Data Processing Agreement',
     description: 'Cavos Labs Data Processing Agreement (DPA) — GDPR Art. 28 compliant agreement for developers integrating the Cavos SDK.',
+    alternates: { canonical: 'https://cavos.xyz/dpa' },
 }
 
 const DPA_VERSION = '1.0'

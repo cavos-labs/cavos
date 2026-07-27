@@ -119,8 +119,8 @@ Decimals per chain: Solana 9, Stellar 7, Starknet fee token 18.
 
 ## Security after sign-in
 
-These are chain-agnostic wrappers on `useCavos()` — they work identically on all
-three chains. They are the same primitives documented in
+These are shared wrappers on `useCavos()` for the three current adapters. Their
+cryptographic implementation remains chain-specific. They are the same primitives documented in
 [Passkeys](/docs/passkeys) and [Recovery](/docs/recovery), surfaced through the
 React hook.
 
@@ -169,7 +169,8 @@ See [Multi-device](/docs/multi-device) for the full device-approval flow.
 
 Beyond sending transactions, a wallet needs to **sign data off-chain** (prove
 ownership without moving funds) and **sign transactions without submitting**
-(hand them to your own relayer). Both are available on every chain.
+(hand them to your own relayer). Both are available on every current adapter;
+future adapters must document and implement them before they are advertised.
 
 ### `signMessage` — off-chain signature
 

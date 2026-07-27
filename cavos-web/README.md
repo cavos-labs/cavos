@@ -1,180 +1,66 @@
-# Cavos Web
+# Cavos developer platform
 
-**Invisible, MPC-free embedded wallets for Starknet.**
+The public website, developer dashboard, and hosted API for Cavos' every-chain
+embedded wallet infrastructure.
 
-Cavos is the premier verifiable infrastructure for sovereign humans and AI agents. It replaces black-box MPC shards with on-chain RSA-2048 verification, providing true self-custody via OAuth identities (Google, Apple).
+Cavos gives applications a stable integration surface while each blockchain
+keeps its native account, signing, execution, and sponsorship model. Starknet,
+Solana, and Stellar are available today. New adapters are only presented as
+available after implementation, security review, and end-to-end validation.
 
-- **Verifiable**: RSA signatures verified directly in Cairo.
-- **MPC-free**: No key shards, no centralized clusters.
-- **Agent-Ready**: Headless signing with granular on-chain policies.
+## Product surfaces
 
-## 🏗️ Architecture
+- Marketing pages and technical comparison content.
+- Developer authentication, organizations, apps, and environments.
+- API keys, callback URLs, chain configuration, and Solana program allowlists.
+- Hosted end-user authentication and wallet registry services.
+- Starknet paymaster and Solana/Stellar relayer endpoints.
+- Usage, billing, webhooks, and operational controls.
+- Blog and links to the public documentation at
+  [docs.cavos.xyz](https://docs.cavos.xyz).
 
-### Autenticación
+## Stack
 
-- **Supabase Auth**: Para developers (email + password)
-  - Registro de usuarios
-  - Creación de organizaciones
-  - Gestión de apps
+- Next.js 16 and React 19
+- TypeScript and Tailwind CSS v4
+- Supabase for developer identity and product data
+- Auth0/hosted OAuth compatibility for end-user authentication
+- Onvo for subscriptions
+- `@cavos/kit` for the current wallet model
 
-- **Auth0**: Para end users (Google + Apple)
-  - Creación de wallets
-  - Autenticación en apps de terceros
-
-### Base de Datos (Supabase)
-
-```
-auth.users (Supabase)
-├── public.profiles
-├── public.organizations
-└── public.apps
-```
-
-## 🚀 Setup
-
-### 1. Instalar dependencias
+## Local setup
 
 ```bash
 npm install
-```
-
-### 2. Configurar variables de entorno
-
-Copia `.env.local.example` a `.env.local` y configura:
-
-```env
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=tu_url_de_supabase
-NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key
-SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key
-
-# Auth0 (para wallets de usuarios finales)
-AUTH0_SECRET=tu_auth0_secret
-AUTH0_BASE_URL=http://localhost:3000
-AUTH0_ISSUER_BASE_URL=tu_dominio_auth0
-AUTH0_CLIENT_ID=tu_client_id
-AUTH0_CLIENT_SECRET=tu_client_secret
-```
-
-### 3. Ejecutar migraciones de Supabase
-
-En tu proyecto de Supabase, ejecuta:
-
-```sql
--- Copia y pega el contenido de:
--- supabase/migrations/20250119_initial_schema.sql
-```
-
-O usando Supabase CLI:
-
-```bash
-supabase db push
-```
-
-### 4. Iniciar el servidor de desarrollo
-
-```bash
+cp .env.example .env.local
 npm run dev
 ```
 
-Visita [http://localhost:3000](http://localhost:3000)
+Open [http://localhost:3000](http://localhost:3000).
 
-## 📁 Estructura del Proyecto
+The tracked `.env.example` documents variable names with empty placeholders.
+Never put real production credentials in that file or commit a populated `.env.local`.
+Database changes live under `supabase/migrations/`.
 
-```
-cavos-web/
-├── app/
-│   ├── (auth)/          # Rutas de autenticación
-│   │   ├── login/
-│   │   └── signup/
-│   ├── (dashboard)/     # Dashboard de developers
-│   │   ├── organizations/
-│   │   └── apps/
-│   ├── api/
-│   │   ├── auth/        # Auth endpoints
-│   │   ├── organizations/ # CRUD de organizations
-│   │   └── apps/        # CRUD de apps
-│   ├── fonts/           # Fuentes locales
-│   ├── globals.css      # Estilos globales
-│   └── layout.tsx       # Root layout
-├── lib/
-│   ├── fonts.ts         # Configuración de fuentes
-│   └── supabase/
-│       ├── client.ts    # Cliente de Supabase (browser)
-│       ├── server.ts    # Cliente de Supabase (server)
-│       └── types.ts     # Tipos de DB
-├── supabase/
-│   └── migrations/      # Migraciones SQL
-└── middleware.ts        # Auth middleware
+## Validate
+
+```bash
+npm run lint
+npm run build
 ```
 
-## 🔑 API Endpoints
+## Repository boundaries
 
-### Authentication
+This application is part of the nested `cavos/` git repository. The public docs
+site is a sibling at `../docs/`. The SDK source lives outside this repository at
+`../../kit/` and is consumed through a packed local tarball during workspace
+development.
 
-- `POST /api/auth/signup` - Registro de developer
-- `POST /api/auth/login` - Login de developer
-- `POST /api/auth/logout` - Logout
-- `GET /api/auth/me` - Usuario actual
+## Product language
 
-### Organizations
+Use **every-chain** or **multichain infrastructure** for the product direction,
+then name the adapters available today: **Starknet, Solana, and Stellar**. Do not
+describe roadmap chains as shipped, and do not use the legacy JWT/RSA
+architecture to explain new integrations.
 
-- `GET /api/organizations` - Listar organizaciones
-- `POST /api/organizations` - Crear organización
-- `GET /api/organizations/[id]` - Obtener organización
-- `PATCH /api/organizations/[id]` - Actualizar organización
-- `DELETE /api/organizations/[id]` - Eliminar organización
-
-### Apps
-
-- `GET /api/apps?organization_id=xxx` - Listar apps
-- `POST /api/apps` - Crear app
-- `GET /api/apps/[id]` - Obtener app
-- `PATCH /api/apps/[id]` - Actualizar app
-- `DELETE /api/apps/[id]` - Eliminar app
-
-## 🎨 Branding
-
-El proyecto usa el sistema de diseño de `cavos-wallet-provider`:
-
-- **Colores**:
-  - Primary: `#EAE5DC` (Warm Beige)
-  - Background: `#000000` (Black)
-  - Secondary BG: `#0A0A08` (Dark Brown/Black)
-  - Tertiary BG: `#1E1E1E` (Dark Gray)
-
-- **Fuentes**:
-  - Headings: Romagothic Bold
-  - Body: Inter
-
-## 🔒 Seguridad
-
-- Row Level Security (RLS) habilitado en todas las tablas
-- Los usuarios solo pueden ver/modificar sus propios recursos
-- Las sesiones se manejan con cookies HTTPOnly via Supabase Auth
-- Auth0 client secrets se deben encriptar antes de almacenar (TODO)
-
-## 📝 TODO
-
-- [ ] Implementar encriptación de Auth0 client secrets
-- [ ] Crear páginas de UI para login/signup
-- [ ] Crear dashboard de organizations
-- [ ] Crear dashboard de apps
-- [ ] Integración completa de Auth0 para end users
-- [ ] Landing page
-- [ ] Documentación de API
-
-## 🛠️ Tecnologías
-
-- **Framework**: Next.js 16 (App Router)
-- **Database & Auth**: Supabase
-- **Social Auth**: Auth0
-- **Styling**: Tailwind CSS v4
-- **Type Safety**: TypeScript
-- **Animations**: Framer Motion
-- **Icons**: Lucide React
-- **State**: Jotai
-
-## 📄 Licencia
-
-Privado - Cavos 2025
+Private software. Copyright Cavos.

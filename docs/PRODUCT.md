@@ -4,9 +4,9 @@
 **product** (primary) — a developer documentation site for `@cavos/kit`. The reading/reference experience serves the content; the home page leans brand. Design serves comprehension and trust.
 
 ## Users & Purpose
-- **Who:** developers (and AI agents) integrating Cavos device-native smart accounts on Starknet.
+- **Who:** developers (and AI agents) integrating Cavos' every-chain wallet layer. Starknet, Solana, and Stellar are available today; additional adapters follow the same integration contract.
 - **Context:** scanning for an API, copying a snippet, or feeding the whole site to an LLM. Often split-screen with an editor.
-- **Job:** go from "what is this" → working integration fast. Trust the security claims (non-custodial, MPC-free).
+- **Job:** go from "what is this" → a working chain-native integration fast, while understanding which capabilities and sponsorship model apply to the selected chain. Trust the security claims (non-custodial, MPC-free).
 - **Primary task per page:** read prose + copy a code block.
 
 ## Brand & Personality

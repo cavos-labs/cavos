@@ -4,17 +4,23 @@ import { HeroOrb } from '@/components/HeroOrb'
 import { ContactSalesForm } from '@/components/ContactSalesForm'
 
 export const metadata = {
-    title: 'Contact Sales — Cavos',
+    title: 'Contact Multichain Wallet Infrastructure Sales',
     description:
-        'Talk to the Cavos team about embedded wallets, gasless transactions, and account abstraction for your product.',
+        'Talk to Cavos about device-native embedded wallets, multichain smart accounts, gas sponsorship, recovery, and production integrations.',
     alternates: {
         canonical: 'https://cavos.xyz/contact-sales',
     },
     openGraph: {
-        title: 'Contact Sales — Cavos',
+        title: 'Contact Multichain Wallet Infrastructure Sales | Cavos',
         description:
-            'Talk to the Cavos team about embedded wallets, gasless transactions, and account abstraction for your product.',
+            'Plan a device-native wallet integration across Starknet, Solana, Stellar, or the next chain in your roadmap.',
         url: 'https://cavos.xyz/contact-sales',
+        images: ['/og-image.png'],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Contact Multichain Wallet Infrastructure Sales | Cavos',
+        description: 'Plan a device-native wallet integration across Starknet, Solana, Stellar, or the next chain in your roadmap.',
         images: ['/og-image.png'],
     },
 }

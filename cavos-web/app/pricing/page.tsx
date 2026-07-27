@@ -52,15 +52,21 @@ function IcoShield() {
 }
 
 export const metadata = {
-    title: "Pricing — Cavos | Embedded Wallet SDK for Starknet",
-    description: "Simple, wallet-based pricing for the Cavos embedded wallet SDK. Free up to 1,000 wallets, Pro at $99/mo for unlimited wallets, and Custom plans with volume pricing and dedicated support.",
+    title: "Multichain Embedded Wallet Pricing",
+    description: "Simple wallet-based pricing for Cavos multichain embedded wallets. Start free for up to 1,000 wallets or choose Pro for unlimited wallets.",
     alternates: {
         canonical: "https://cavos.xyz/pricing",
     },
     openGraph: {
-        title: "Cavos Pricing — Free, Pro & Custom",
-        description: "Free up to 1,000 wallets. Pro at $99/mo for unlimited wallets. Custom plans with volume pricing and dedicated support.",
+        title: "Multichain Embedded Wallet Pricing | Cavos",
+        description: "One wallet-based price across apps, networks, and supported chains. Start free for up to 1,000 wallets.",
         url: "https://cavos.xyz/pricing",
+        images: ["/og-image.png"],
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: "Multichain Embedded Wallet Pricing | Cavos",
+        description: "One wallet-based price across apps, networks, and supported chains. Start free for up to 1,000 wallets.",
         images: ["/og-image.png"],
     },
 }
@@ -72,9 +78,9 @@ const USAGE_TIERS: { label: string; range: string; price: string; unit?: string 
 ]
 
 const DEV_INCLUDES = [
-    'Embedded wallets',
-    'Session keys & gasless paymaster',
-    'All core SDK features',
+    'Device-native embedded wallets',
+    'Starknet, Solana & Stellar adapters',
+    'Gas sponsorship integrations',
 ]
 
 const CUSTOM_FEATURES = [
@@ -93,24 +99,24 @@ const FEATURE_GROUPS: { title: string; Art: () => React.ReactElement; items: str
     {
         title: 'Gasless transactions',
         Art: IcoGas,
-        items: ['Built-in gas sponsorship', 'On-chain STRK Gas Tank', 'Sponsor any transaction', 'Per-organization gas balances'],
+        items: ['Chain-specific sponsorship', 'Per-network gas balances', 'Relayer policies', 'Operational activity'],
     },
     {
         title: 'Developer experience',
         Art: IcoCode,
-        items: ['React & React Native SDKs', '~15-minute integration', 'Dashboard & usage analytics'],
+        items: ['Unified TypeScript API', 'React & React Native', 'Dashboard & usage analytics'],
     },
     {
         title: 'Security & recovery',
         Art: IcoShield,
-        items: ['Programmable session keys', 'Device-signer accounts', 'OAuth-based recovery', '100% non-custodial'],
+        items: ['Device-bound signers', 'Multi-device authorization', 'Non-custodial recovery', 'No MPC key reconstruction'],
     },
 ]
 
 const FAQ: { q: string; a: string }[] = [
     {
         q: 'What counts as a wallet?',
-        a: 'Every smart account your users create through Cavos — across all of your apps and every network — counts as one wallet. Both the React SDK and the device-signer kit count identically.',
+        a: 'Every smart account your users create through Cavos counts as one wallet, regardless of app, network, or supported chain.',
     },
     {
         q: 'What happens when I hit the free limit?',
@@ -118,7 +124,7 @@ const FAQ: { q: string; a: string }[] = [
     },
     {
         q: 'Is gas sponsorship included?',
-        a: 'Gas sponsorship is funded separately through your on-chain Gas Tank (Paymasters), where you deposit STRK to cover your users’ transactions. It is independent of your plan — Free and Pro both support it.',
+        a: 'Gas sponsorship is available on every plan and funded separately. Funding and metering follow each chain’s model, including Starknet gas tanks and Solana or Stellar relayer balances.',
     },
     {
         q: 'Can I cancel anytime?',
@@ -141,7 +147,7 @@ export default function PricingPage() {
             {
                 "@type": "Product",
                 "name": "Cavos Embedded Wallet SDK",
-                "description": "Embedded wallet SDK for Starknet with wallet-based pricing.",
+                "description": "Device-native multichain embedded wallet SDK with wallet-based pricing.",
                 "offers": [
                     { "@type": "Offer", "name": "Free", "price": "0", "priceCurrency": "USD", "description": "Up to 1,000 wallets." },
                     { "@type": "Offer", "name": "Pro", "price": "99", "priceCurrency": "USD", "description": "Unlimited wallets, billed monthly." },
@@ -216,7 +222,7 @@ export default function PricingPage() {
                         </div>
 
                         <Link
-                            href="/login"
+                            href="/register"
                             className="mt-7 inline-flex items-center justify-center h-11 px-6 rounded-full bg-brand text-white text-[15px] font-medium hover:bg-brand-hover transition-colors duration-200 active:scale-[0.99]"
                         >
                             Get started
@@ -261,7 +267,7 @@ export default function PricingPage() {
                 </section>
 
                 <p className="mt-7 text-center text-[13px] text-muted">
-                    All plans include the full SDK, embedded wallets, and gasless paymaster support.
+                    Every plan includes the full SDK and every available chain adapter. Sponsorship is funded separately per chain.
                 </p>
 
                 {/* ── Features out of the box ── */}
@@ -312,7 +318,7 @@ export default function PricingPage() {
                     </div>
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
                         <Link
-                            href="/login"
+                            href="/register"
                             className="inline-flex items-center justify-center h-11 px-6 rounded-md bg-brand text-white text-sm font-semibold hover:bg-brand-hover transition-all active:scale-[0.98]"
                         >
                             Get started free

@@ -16,12 +16,11 @@ a stable `userId`:
 
 ```ts title="TypeScript"
 const cavos = await Cavos.connect({
-  chain: "starknet",
+  chain: "solana",
   network: "testnet",
   appSalt: "my-app",
   identity: { userId: user.id, email: user.email },
   appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
-  paymasterApiKey: process.env.CAVOS_PAYMASTER_API_KEY!,
 });
 ```
 
@@ -60,12 +59,11 @@ const identity = await auth.handleCallback(window.location.search);
 
 // 3. Connect with the resolved identity
 const cavos = await Cavos.connect({
-  chain: "starknet",
+  chain: "solana",
   network: "testnet",
   appSalt: "my-app",
   identity,
   appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
-  paymasterApiKey: process.env.CAVOS_PAYMASTER_API_KEY!,
 });
 ```
 
@@ -76,12 +74,11 @@ await auth.sendOtp(email);
 const identity = await auth.verifyOtp(email, code);
 
 const cavos = await Cavos.connect({
-  chain: "starknet",
+  chain: "solana",
   network: "testnet",
   appSalt: "my-app",
   identity,
   appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
-  paymasterApiKey: process.env.CAVOS_PAYMASTER_API_KEY!,
 });
 ```
 
@@ -117,19 +114,17 @@ application-private storage. It never stores device private keys or OAuth
 tokens. Register every mobile scheme or universal link exactly in the Cavos
 dashboard; unregistered redirects are rejected by the backend.
 
-## How the address is derived
+## How identity becomes an address
 
-Internally, `connect` calls `deriveAddressSeed({ userId, appSalt })` (a Poseidon
-hash) to get a stable `address_seed`, then the Starknet adapter computes the
-counterfactual contract address from that seed. The address depends **only** on
-identity + salt — never on the device key — so the same user always lands on the
-same wallet, and you can compute it before deployment.
+Identity is the shared input; derivation is adapter-specific:
 
-```ts title="TypeScript"
-import { deriveAddressSeed, StarknetAdapter, DEVICE_ACCOUNT_CLASS_HASH } from "@cavos/kit";
+| Chain | Deterministic model |
+|---|---|
+| **Starknet** | Poseidon-derived seed → counterfactual Cairo account address. |
+| **Solana** | SHA-256-derived seed → device-account PDA. |
+| **Stellar** | SHA-256-derived seed → deterministic classic master account, then local control-key enrollment. |
 
-const addressSeed = deriveAddressSeed({ userId: user.id, appSalt: "my-app" });
-const address = new StarknetAdapter({
-  classHash: DEVICE_ACCOUNT_CLASS_HASH.sepolia,
-}).computeAddress({ addressSeed });
-```
+In each case the wallet is anchored to the stable identity and `appSalt`, not
+to whichever device happens to connect first. Use the public derivation helper
+for the selected adapter only when you need to compute an address without
+calling `Cavos.connect`.

@@ -4,8 +4,9 @@ import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 
 export const metadata: Metadata = {
-    title: 'End-User Privacy Policy — Cavos',
+    title: 'End-User Privacy Policy',
     description: 'Privacy policy for end users of applications powered by the Cavos SDK — what data is collected, where it is stored, and your rights.',
+    alternates: { canonical: 'https://cavos.xyz/user-privacy' },
 }
 
 const LAST_UPDATED = 'March 16, 2026'

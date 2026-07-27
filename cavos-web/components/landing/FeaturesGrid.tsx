@@ -63,7 +63,7 @@ function MockupAccount() {
 
                 {/* input → output, side by side on one surface */}
                 <div className="flex items-stretch gap-4 md:gap-6">
-                    {/* INPUT — OAuth identity */}
+                    {/* INPUT — stable application identity */}
                     <div className="min-w-0 flex-1">
                         <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink/40">identity</p>
                         <div className={`${row} mt-2.5 gap-2`}>
@@ -94,7 +94,7 @@ function MockupAccount() {
 
                 {/* attribute footer */}
                 <div className={`${row} mt-6 gap-1.5 border-t border-line pt-4`}>
-                    {['self-custodial', 'SRC-6', 'gas abstracted'].map((c) => (
+                    {['device-native', 'multi-chain', 'gas abstracted'].map((c) => (
                         <span key={c} className="rounded border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink/50">{c}</span>
                     ))}
                 </div>
@@ -129,8 +129,8 @@ function MockupGas() {
     )
 }
 
-/* 3 · Session keys */
-function MockupSessionKeys() {
+/* 3 · Device signers */
+function MockupDeviceSigners() {
     return (
         <div className="relative h-[250px]">
             <div className="absolute -bottom-4 left-7 right-7 rounded-xl border border-line bg-white p-4 shadow-[0_18px_40px_-26px_rgba(10,10,15,0.3)] md:left-9 md:right-9">
@@ -139,13 +139,13 @@ function MockupSessionKeys() {
                         <svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden><path d="M160 16a80 80 0 0 0-78 99L21 176a8 8 0 0 0-5 8v40a8 8 0 0 0 8 8h40a8 8 0 0 0 8-8v-16h16a8 8 0 0 0 8-8v-16h16a8 8 0 0 0 6-3l16-19A80 80 0 1 0 160 16Zm20 76a20 20 0 1 1 20-20 20 20 0 0 1-20 20Z" /></svg>
                     </span>
                     <div className="leading-tight">
-                        <p className="text-[12.5px] font-medium text-ink">Session key</p>
-                        <p className="font-mono text-[10px] text-ink/40">agent · 0x91c…2e</p>
+                        <p className="text-[12.5px] font-medium text-ink">Device signer</p>
+                        <p className="font-mono text-[10px] text-ink/40">P-256 · hardware-bound</p>
                     </div>
                     <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-surface px-2.5 py-0.5 text-[10px] font-semibold text-ink/70 ring-1 ring-line"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />Active</span>
                 </div>
                 <div className="mt-3 space-y-1.5">
-                    {[['Spend limit', '250 USDC / day'], ['Allowed contracts', '3 whitelisted'], ['Expires', 'in 24h']].map(([k, v]) => (
+                    {[['Key storage', 'Non-exportable'], ['Authorization', 'On-chain'], ['Recovery', 'Multi-device']].map(([k, v]) => (
                         <div key={k} className="flex items-center justify-between rounded-lg bg-surface px-3 py-1.5 text-[11.5px] ring-1 ring-line">
                             <span className="text-ink/45">{k}</span>
                             <span className="font-medium text-ink">{v}</span>
@@ -157,7 +157,7 @@ function MockupSessionKeys() {
     )
 }
 
-/* 4 · Non-custodial — passkey authorization sheet, monochrome */
+/* 4 · Non-custodial — device authorization sheet, monochrome */
 function MockupVerify() {
     return (
         <div className="relative h-[250px]">
@@ -175,8 +175,8 @@ function MockupVerify() {
                             <path d="M9 15s1.1 1.4 3 1.4 3-1.4 3-1.4" />
                         </svg>
                     </span>
-                    <p className="mt-3 text-[12.5px] font-medium text-ink">Approve on your device</p>
-                    <p className="mt-0.5 text-[10.5px] text-ink/45">Keys stay with the user</p>
+                    <p className="mt-3 text-[12.5px] font-medium text-ink">Signed on the user&apos;s device</p>
+                    <p className="mt-0.5 text-[10.5px] text-ink/45">The key never leaves secure storage</p>
                 </div>
                 <div className="flex items-center gap-2 border-t border-line bg-surface px-4 py-3">
                     <svg width="13" height="13" viewBox="0 0 256 256" fill="currentColor" className="shrink-0 text-ink/55" aria-hidden><path d="M208 80h-24V56a56 56 0 0 0-112 0v24H48a16 16 0 0 0-16 16v112a16 16 0 0 0 16 16h160a16 16 0 0 0 16-16V96a16 16 0 0 0-16-16ZM88 56a40 40 0 0 1 80 0v24H88Zm48 132v12a8 8 0 0 1-16 0v-12a20 20 0 1 1 16 0Z" /></svg>
@@ -199,9 +199,9 @@ function MockupSdk() {
                     <span className="ml-2 text-[10px] font-medium text-white/35">App.tsx</span>
                 </div>
                 <pre className="overflow-hidden p-4 font-mono text-[11px] leading-relaxed">
-<span className="text-[#8B86FF]">import</span><span className="text-white/80"> {'{ CavosProvider }'} </span><span className="text-[#8B86FF]">from</span><span className="text-[#6EE7B7]"> &apos;cavos&apos;</span>{'\n'}
+<span className="text-[#8B86FF]">import</span><span className="text-white/80"> {'{ CavosProvider }'} </span><span className="text-[#8B86FF]">from</span><span className="text-[#6EE7B7]"> &apos;@cavos/kit/react&apos;</span>{'\n'}
 {'\n'}
-<span className="text-white/40">{'<'}</span><span className="text-[#A8A4FF]">CavosProvider</span><span className="text-[#FBBF77]"> appId</span><span className="text-white/40">=</span><span className="text-[#6EE7B7]">{'{id}'}</span><span className="text-white/40">{'>'}</span>{'\n'}
+<span className="text-white/40">{'<'}</span><span className="text-[#A8A4FF]">CavosProvider</span><span className="text-[#FBBF77]"> config</span><span className="text-white/40">=</span><span className="text-[#6EE7B7]">{'{{ chain, network, appId }}'}</span><span className="text-white/40">{'>'}</span>{'\n'}
 <span className="text-white/40">{'  <'}</span><span className="text-[#A8A4FF]">App</span><span className="text-white/40"> {'/>'}</span>{'\n'}
 <span className="text-white/40">{'</'}</span><span className="text-[#A8A4FF]">CavosProvider</span><span className="text-white/40">{'>'}</span>
                 </pre>
@@ -220,10 +220,10 @@ export function FeaturesGrid() {
         <section className="px-6 py-20 md:px-16 md:py-28 lg:px-24">
             <div data-reveal className="max-w-[46rem]">
                 <h2 className="text-[clamp(1.625rem,2.6vw,2.375rem)] font-medium leading-[1.14] tracking-[-0.03em] text-ink">
-                    Everything to embed self-custody.{' '}
+                    One wallet layer for every chain.{' '}
                     <span className="text-muted">
-                        Social login, gas abstraction, and programmable security — built to work
-                        individually or together.
+                        Device-native signing, chain-specific execution, and gas abstraction
+                        behind one product integration.
                     </span>
                 </h2>
             </div>
@@ -238,8 +238,8 @@ export function FeaturesGrid() {
                 <div className="grid divide-y divide-line border-b border-line lg:grid-cols-3 lg:divide-x lg:divide-y-0">
                     <Cell
                         className="lg:col-span-2"
-                        title="Smart accounts from a social login"
-                        body="Users sign in with Google or Apple and get a self-custodial smart account, deployed automatically. No extensions, no seed phrases."
+                        title="Smart accounts from your existing identity"
+                        body="Bring a stable user identity and create a deterministic, self-custodial account without extensions or seed phrases."
                     >
                         <MockupAccount />
                     </Cell>
@@ -253,10 +253,10 @@ export function FeaturesGrid() {
                 {/* Row 2 — three */}
                 <div className="grid divide-y divide-line lg:grid-cols-3 lg:divide-x lg:divide-y-0">
                     <Cell
-                        title="Programmable session keys"
-                        body="Scoped keys with spend limits, allowlists, and expiries — the foundation for AI agents and automation."
+                        title="Device-native signing"
+                        body="Non-exportable device keys authorize chain-native accounts without MPC key reconstruction or routine signing popups."
                     >
-                        <MockupSessionKeys />
+                        <MockupDeviceSigners />
                     </Cell>
                     <Cell
                         title="Non-custodial by design"
@@ -265,8 +265,8 @@ export function FeaturesGrid() {
                         <MockupVerify />
                     </Cell>
                     <Cell
-                        title="One SDK, every platform"
-                        body="Ship the same embedded wallet across web and mobile with the React and React Native SDKs."
+                        title="One SDK, every chain and platform"
+                        body="Use one integration model across Starknet, Solana, Stellar, web, iOS, and Android, then add new chain adapters as they ship."
                     >
                         <MockupSdk />
                     </Cell>

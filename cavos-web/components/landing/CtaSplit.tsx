@@ -21,15 +21,15 @@ export function CtaSplit() {
             <div className="flex flex-col justify-between gap-10 px-6 py-16 md:px-16 md:py-20 lg:px-24">
                 <div className="max-w-[34ch]">
                     <h2 className="text-[clamp(1.5rem,2.4vw,2.125rem)] font-medium leading-[1.15] tracking-[-0.03em] text-ink">
-                        Embed your first wallet today.
+                        Embed your first multichain wallet today.
                     </h2>
                     <p className="mt-4 text-[15px] leading-relaxed text-muted">
-                        Drop in the SDK and your users get a self-custodial smart account from a Google or Apple login. Free for your first 1,000 wallets.
+                        Pick a chain, connect a stable user identity, and give users a device-native smart account. Free for your first 1,000 wallets.
                     </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                     <Link
-                        href="/login"
+                        href="/register"
                         className="group inline-flex items-center gap-1.5 rounded-md bg-brand px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-hover active:scale-[0.98]"
                     >
                         Get started

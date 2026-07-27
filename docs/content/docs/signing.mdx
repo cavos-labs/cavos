@@ -1,109 +1,108 @@
 ---
-title: Signing & gasless
-description: How silent device signing and gasless execution work in @cavos/kit.
+title: Signing & sponsorship
+description: How device-native authority and gas sponsorship differ across Cavos chain adapters.
 ---
 
-The defining feature of `@cavos/kit` is **silent signing**: the device key signs
-transactions with no prompt, no biometric, no popup. This page explains the
-mechanism and the gasless execution path.
+Cavos keeps the user experience consistent—local authority, no seed phrase, no
+routine signing popup—while preserving each chain's actual cryptography and fee
+model.
 
-## The silent device key
+## Capability matrix
 
-On the web, the device signer is a **non-extractable secp256r1 (P-256) key** held
-in IndexedDB via WebCrypto. "Non-extractable" means the private key is never
-visible to JavaScript — it can sign, but it can't be read or copied out.
+| Chain | Transaction authority | On-chain verification | Sponsorship |
+|---|---|---|---|
+| **Starknet** | Non-extractable P-256 device key | Cairo `DeviceAccount` recovers and authorizes the signer | Paymaster-sponsored deployment and execution |
+| **Solana** | Non-extractable P-256 device key | Native secp256r1 precompile bound to the Cavos program instruction | Relayer co-signs as fee payer |
+| **Stellar** | Random ed25519 control key unwrapped locally by an enrolled device factor | Native classic-account signature and Soroban authorization | Sponsored reserves and optional fee-bump submission |
+
+The backend can transport, sponsor, or submit a transaction. It does not hold
+the user authority required to move funds.
+
+## Local keys
+
+On the web, Cavos uses non-extractable WebCrypto keys stored through IndexedDB.
+Native applications use Secure Enclave/Keychain or Android Keystore when the
+device supports them. “Non-extractable” means application code can ask the key
+to perform an operation but cannot export the private material.
 
 ```ts title="TypeScript"
 import { WebCryptoSigner } from "@cavos/kit";
 
-// Created/loaded automatically by Cavos.connect, keyed by the wallet address.
 const signer = await WebCryptoSigner.loadOrCreate({ keyId: address });
-const pubkey = await signer.getPublicKey();
+const publicKey = await signer.getPublicKey();
 ```
 
-`Cavos.connect` handles this for you — you rarely touch the signer directly.
+`Cavos.connect` provisions the appropriate key or unwrap factor automatically.
+Most applications should not instantiate low-level signers directly.
 
-## How a signature is built
+## Starknet
 
-When you call `cavos.execute(calls)`:
+For a Starknet invoke:
 
-1. starknet.js computes the v3 transaction hash.
-2. The device key signs `sha256(tx_hash)` — WebCrypto's ECDSA hashes the message
-   internally, so there is no user interaction.
-3. The signature is serialized as **5 felts**: `[r_low, r_high, s_low, s_high, y_parity]`.
-4. On-chain, `DeviceAccount.__validate__` recomputes `sha256(tx_hash)`, normalizes
-   high-`s`, recovers the secp256r1 signer, and checks it is authorized.
+1. starknet.js computes the transaction hash.
+2. The device signs `sha256(tx_hash)` with P-256.
+3. Cavos serializes the signature as
+   `[r_low, r_high, s_low, s_high, y_parity]`.
+4. The Cairo account recovers the signer and checks that it is authorized.
 
-This 5-felt encoding is byte-compatible with the contract and covered by a
-cross-checked test in the account-contracts repo.
+Sponsored execution is routed through the Starknet paymaster. The current web
+SDK receives its API key in browser code, so that value is client-visible and
+must be narrowly scoped by app, environment, origin, rate, and spend. Never use
+an operator, admin, or treasury credential there. The dedicated
+[Starknet guide](/docs/starknet) contains the chain-specific flow and
+self-funded fallback.
 
-## Gasless execution
+## Solana
 
-`cavos.execute` routes through the **Cavos paymaster** (SNIP-9
-`execute_from_outside`), so the user pays no gas. You supply the paymaster API key
-at connect time:
+Each guarded action pairs two instructions:
+
+1. Solana's native secp256r1 precompile verifies the device signature over a
+   domain-separated action.
+2. The Cavos device-account program binds that verified public key and message
+   to the requested transfer, signer change, or CPI set.
+
+The relayer may co-sign as fee payer because fee payment does not grant authority
+over the device account. Sponsored arbitrary CPIs are restricted by the app's
+program allowlist. See [Solana](/docs/solana).
+
+## Stellar
+
+Stellar uses its native ed25519 account model. The deterministic master key is
+made powerless after creation and a random control key becomes the active
+signer. That control seed is encrypted in the account's data entries and
+unwrapped locally using an enrolled device, passkey PRF, or recovery factor.
+
+For Soroban, `invokeContract` simulates the call and re-signs the account's
+authorization entries with the local control key. A fee-bump relayer can pay the
+outer fee without becoming an account signer. See [Stellar](/docs/stellar).
+
+## Signing without submission
+
+All current adapters expose typed sign-without-submit paths, but the returned
+payload is chain-specific. Narrow on the wallet:
 
 ```ts title="TypeScript"
-const cavos = await Cavos.connect({
-  chain: "starknet",
-  network: "testnet",
-  appSalt: "my-app",
-  identity,
-  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
-  paymasterApiKey: process.env.CAVOS_PAYMASTER_API_KEY!, // sponsors deploy + execute
-});
-
-const { transactionHash } = await cavos.execute([
-  { contractAddress, entrypoint, calldata },
-]);
+if (wallet.chain === "starknet") {
+  const signed = await wallet.signTransaction(calls);
+} else if (wallet.chain === "solana") {
+  const signed = await wallet.signTransaction(amount, destination);
+} else if (wallet.chain === "stellar") {
+  const signed = await wallet.signTransaction(amount, destination);
+}
 ```
 
-Both **account deployment** (on first connect) and **every execution** are
-sponsored — the user never needs ETH or STRK to start.
-
-## Using a plain starknet.js Account (advanced)
-
-`StarknetDeviceSigner` is a drop-in starknet.js `SignerInterface`, so you can plug
-the device key into a standard `Account` and your own paymaster flow:
-
-```ts title="TypeScript"
-import { Account, RpcProvider } from "starknet";
-import { StarknetDeviceSigner, WebCryptoSigner } from "@cavos/kit";
-
-const provider = new RpcProvider({ nodeUrl: "https://api.cartridge.gg/x/starknet/sepolia" });
-const signer = await WebCryptoSigner.loadOrCreate({ keyId: address });
-const account = new Account({
-  provider,
-  address,
-  signer: new StarknetDeviceSigner(signer),
-  cairoVersion: "1",
-});
-```
-
-<Callout type="warn">
-**Gas estimation gotcha (self-funded path).** secp256r1 validation is heavy
-(~27M L2 gas). Default fee estimation uses `SKIP_VALIDATE`, which under-bounds and
-causes "Out of gas". Estimate with validation on and pass those bounds:
-
-```ts title="TypeScript"
-const fee = await account.estimateInvokeFee(calls, { skipValidate: false });
-await account.execute(calls, { resourceBounds: fee.resourceBounds });
-```
-
-The Cavos paymaster path handles this for you — this only matters when you submit
-transactions yourself.
-</Callout>
+These payloads bind to chain state such as a nonce or sequence number and should
+be treated as short-lived, single-use artifacts.
 
 ## Security trade-off
 
-Because signing is silent, there is **no per-signature user-verification gate**
-— every approved call goes through with no prompt. This is the standard
-embedded-wallet trade-off (Privy / Turnkey model): maximum UX, no friction per
-transaction. The key is still non-custodial, device-bound, and verified on-chain.
+Silent signing removes a per-transaction biometric prompt. That improves
+embedded-wallet conversion but means application authorization and device
+security matter. Cavos places explicit user verification on device enrollment
+and recovery rather than every routine transaction. Use [Passkeys](/docs/passkeys),
+[Multi-device](/docs/multi-device), spending policy where available, and clear
+in-app transaction confirmation for high-risk actions.
 
-That gate is intentionally *not* on signing. Instead, Cavos puts the
-user-verification step on **device management**: an optional [passkey](/docs/passkeys)
-acts as a second factor for approving *new devices*, not for approving each
-transaction. Combined with [multi-device](/docs/multi-device) and
-[recovery](/docs/recovery), that covers device loss without breaking the
-silent-signing UX.
+Every future chain adapter must document its authority, replay protection,
+transaction binding, recovery, and sponsor capabilities before it joins the
+availability matrix.

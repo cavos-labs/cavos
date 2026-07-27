@@ -17,27 +17,51 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Cavos Docs — device-native smart accounts',
+    default: 'Cavos Docs — multichain embedded wallets',
     template: '%s | Cavos Docs',
   },
   description:
-    'Documentation for @cavos/kit — device-native, verifiable smart accounts on Starknet. MPC-free, gasless, no seed phrases. Built for agents: send these docs to an LLM and ship.',
+    'Build device-native, verifiable smart accounts across blockchains with @cavos/kit. Guides for Starknet, Solana, Stellar, React, and React Native.',
   metadataBase: new URL('https://docs.cavos.xyz'),
+  alternates: {
+    canonical: 'https://docs.cavos.xyz',
+  },
+  keywords: [
+    '@cavos/kit',
+    'multichain embedded wallet SDK',
+    'device-native smart accounts',
+    'self-custodial wallet SDK',
+    'Starknet wallet SDK',
+    'Solana embedded wallet',
+    'Stellar wallet SDK',
+    'gasless transactions',
+  ],
   openGraph: {
-    title: 'Cavos Docs — device-native smart accounts',
+    title: 'Cavos Docs — multichain embedded wallets',
     description:
-      'Documentation for @cavos/kit — device-native, verifiable smart accounts. MPC-free, gasless, no seed phrases.',
+      'Integrate device-native smart accounts across Starknet, Solana, Stellar, and the chains that come next.',
     url: 'https://docs.cavos.xyz',
     siteName: 'Cavos Docs',
     type: 'website',
-    images: [{ url: '/og-docs.png', width: 1200, height: 675, alt: 'Cavos Docs' }],
+    images: [{ url: '/og-docs.png', width: 1200, height: 675, alt: 'Cavos multichain embedded wallet documentation' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Cavos Docs — device-native smart accounts',
+    title: 'Cavos Docs — multichain embedded wallets',
     description:
-      'Documentation for @cavos/kit — device-native, verifiable smart accounts. MPC-free, gasless, no seed phrases.',
+      'Integrate device-native smart accounts across Starknet, Solana, Stellar, and the chains that come next.',
     images: ['/og-docs.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
   },
 };
 

@@ -10,10 +10,22 @@ import { LandingMotion } from '@/components/LandingMotion'
 import Script from 'next/script'
 
 export const metadata = {
-    title: "Cavos | Invisible Crypto Infrastructure",
-    description: "Cavos is a verifiable, MPC-free embedded wallet SDK for Starknet. Turn Google or Apple OAuth logins into self-custodial smart accounts with on-chain RSA-2048 verification — no seed phrases, no browser extensions, no MPC shards.",
+    title: "Multichain Embedded Wallet Infrastructure | Cavos",
+    description: "Build device-native, self-custodial smart accounts across high-performance blockchains with one SDK. No seed phrases, MPC, or wallet extensions.",
     alternates: {
         canonical: "https://cavos.xyz",
+    },
+    openGraph: {
+        title: "Multichain Embedded Wallet Infrastructure | Cavos",
+        description: "One SDK for device-native smart accounts across Starknet, Solana, Stellar, and the chains that come next.",
+        url: "https://cavos.xyz",
+        images: ["/og-image.png"],
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: "Multichain Embedded Wallet Infrastructure | Cavos",
+        description: "One SDK for device-native smart accounts across Starknet, Solana, Stellar, and the chains that come next.",
+        images: ["/og-image.png"],
     },
 }
 
@@ -28,7 +40,8 @@ export default function LandingPage() {
                 "url": "https://cavos.xyz",
                 "operatingSystem": "Web, iOS, Android",
                 "applicationCategory": "DeveloperApplication",
-                "description": "Cavos is a verifiable, MPC-free embedded wallet SDK for Starknet. Smart accounts are created automatically when users sign in with Google or Apple. No seed phrases, no browser extensions, no MPC shards. Powered by on-chain RSA-2048 verification via Garaga.",
+                "applicationSubCategory": "Multichain embedded wallet infrastructure",
+                "description": "Cavos is a device-native embedded wallet SDK for building verifiable, self-custodial smart accounts across blockchains. Starknet, Solana, and Stellar adapters are available today, with an architecture designed for every chain.",
                 "offers": {
                     "@type": "Offer",
                     "price": "0",
@@ -37,56 +50,15 @@ export default function LandingPage() {
                 },
                 "author": { "@id": "https://cavos.xyz/#organization" },
                 "featureList": [
-                    "OAuth wallet creation via Google and Apple login",
-                    "On-chain RSA-2048 JWT verification via Garaga",
-                    "Gas abstraction with AVNU Paymaster integration",
-                    "Session keys with programmable spending policies",
-                    "Native account abstraction on Starknet",
-                    "MPC-free — zero key shards stored",
-                    "Self-custodial smart accounts (SRC-6)",
-                    "AI agent signer support with headless sessions",
-                    "React and React Native SDKs"
+                    "Device-native P-256 signers",
+                    "Deterministic smart-account addresses",
+                    "Verifiable self-custody without MPC",
+                    "Gas sponsorship and relayers",
+                    "Starknet, Solana, and Stellar adapters",
+                    "React and React Native SDKs",
+                    "Multi-device authorization and recovery"
                 ],
-                "screenshot": "https://cavos.xyz/og-image.png",
-                "aggregateRating": {
-                    "@type": "AggregateRating",
-                    "ratingValue": "5",
-                    "reviewCount": "10",
-                    "bestRating": "5"
-                }
-            },
-            {
-                "@type": "HowTo",
-                "@id": "https://cavos.xyz/#howto",
-                "name": "How to integrate Cavos embedded wallets into your app",
-                "description": "Integrate self-custodial smart accounts with OAuth login in four steps using the Cavos SDK.",
-                "totalTime": "PT15M",
-                "step": [
-                    {
-                        "@type": "HowToStep",
-                        "position": 1,
-                        "name": "Authenticate",
-                        "text": "Users log in via OAuth (Google or Apple) or email. Cavos verifies the JWT on-chain using RSA-2048 via Garaga."
-                    },
-                    {
-                        "@type": "HowToStep",
-                        "position": 2,
-                        "name": "Provision Account",
-                        "text": "Cavos automatically deploys a self-custodial smart account (SRC-6) on Starknet tied to the user's OAuth identity."
-                    },
-                    {
-                        "@type": "HowToStep",
-                        "position": 3,
-                        "name": "Execute Transactions",
-                        "text": "Transactions run through your backend or client. Gas is sponsored via AVNU Paymaster — users never need tokens to start."
-                    },
-                    {
-                        "@type": "HowToStep",
-                        "position": 4,
-                        "name": "Scale",
-                        "text": "Manage accounts, policies, and session keys via API. Define granular spending rules and integrate with any Starknet protocol."
-                    }
-                ]
+                "screenshot": "https://cavos.xyz/og-image.png"
             }
         ]
     }
@@ -114,17 +86,17 @@ export default function LandingPage() {
                     <section className="relative md:flex-1 flex items-start md:items-center px-6 md:px-16 lg:px-24 pt-14 md:pt-20 pb-12 md:pb-20">
                         <div className="space-y-10 md:space-y-14">
                             <h1 className="text-[clamp(1.75rem,2.3vw,2.375rem)] font-normal tracking-[-0.02em] leading-[1.3] text-ink">
-                                <span className="font-medium">Smart accounts embedded directly into your product.</span><br />
-                                Social login, gas abstraction, programmable security.<br />
-                                No extensions. No seed phrases.
+                                <span className="font-medium">One embedded wallet layer for every chain.</span><br />
+                                Device-native signing, verifiable self-custody, gasless UX.<br />
+                                No extensions. No seed phrases. No MPC.
                             </h1>
 
                             <div data-hero className="flex flex-wrap items-center gap-3">
                                 <Link
-                                    href="/login"
+                                    href="/register"
                                     className="inline-flex items-center justify-center px-7 py-3 bg-brand text-white rounded-md font-semibold text-sm hover:bg-brand-hover transition-colors active:scale-[0.98]"
                                 >
-                                    Get Started
+                                    Start building
                                 </Link>
                                 <a
                                     href="https://docs.cavos.xyz"

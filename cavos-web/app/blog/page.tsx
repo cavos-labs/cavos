@@ -5,14 +5,20 @@ import { getAllPosts, formatDate, CATEGORY_COLORS, PostCategory } from '@/lib/bl
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Changelog | Cavos',
-  description: 'Release notes, security updates, deep dives, and announcements from the Cavos team.',
+  title: 'Changelog',
+  description: 'Release notes, security updates, and technical deep dives on Cavos multichain embedded wallet infrastructure.',
   alternates: { canonical: 'https://cavos.xyz/blog' },
   openGraph: {
     title: 'Changelog | Cavos',
-    description: 'Release notes, security updates, deep dives, and announcements from the Cavos team.',
+    description: 'Release notes, security updates, and technical deep dives on Cavos multichain embedded wallet infrastructure.',
     url: 'https://cavos.xyz/blog',
     type: 'website',
+    images: ['/og-image.png'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Changelog | Cavos',
+    description: 'Release notes, security updates, and technical deep dives on Cavos multichain embedded wallet infrastructure.',
     images: ['/og-image.png'],
   },
 };

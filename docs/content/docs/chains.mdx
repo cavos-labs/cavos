@@ -1,20 +1,21 @@
 ---
 title: Chains
-description: Cavos is chain-agnostic by design. Starknet, Solana, and Stellar share the same API.
+description: Cavos is built for every chain. Starknet, Solana, and Stellar are available today.
 ---
 
-Cavos is built **chain-agnostic**. The model — an identity-derived address
-controlled by a silent device key, verified on-chain — isn't specific to any one
-network. Your application code targets the same `Cavos.connect` entry point
-regardless of chain; only the `chain` and `network` you pass change.
+Cavos is built for **every chain**, with a native adapter boundary instead of a
+lowest-common-denominator transaction format. Your application keeps the same
+identity and connection model while each adapter implements its network's
+address, authority, execution, recovery, and sponsorship rules.
 
 ## Status
 
-| Chain | Status | Networks |
-|-------|--------|----------|
-| **Starknet** | ✅ Available | `sepolia`, `mainnet` |
-| **Solana** | ✅ Available | `solana-devnet`, `solana-mainnet` |
-| **Stellar** | ✅ Available | `stellar-testnet`, `stellar-mainnet` |
+| Chain | SDK status | Networks |
+|---|---|---|
+| **Starknet** | Available | `sepolia`, `mainnet` |
+| **Solana** | Available | `solana-devnet`, `solana-mainnet` |
+| **Stellar** | Available | `stellar-testnet`, `stellar-mainnet` |
+| **Additional chains** | Design-partner and adapter roadmap | Published after implementation and validation |
 
 All three chain adapters are shipped in the SDK. Release compatibility still
 requires the physical-device E2E matrix described in the React Native guide;
@@ -33,12 +34,13 @@ details:
 
 ## How the abstraction works
 
-Two layers keep Cavos portable:
+Three layers keep Cavos portable:
 
-- **The device signer is the constant.** A non-extractable secp256r1 (P-256) key
-  on the device is the user's authority on every chain. Identity → `address_seed`
-  derivation is the same everywhere.
-- **A `ChainAdapter` per chain** handles the chain-specific parts: deterministic
+- **The product contract is the constant.** Stable identity, local authority,
+  self-custody, recovery, and optional sponsorship are required of every adapter.
+- **Device-native keys stay local.** Their exact role can vary: direct P-256
+  authorization on Starknet/Solana, or local envelope unlock for Stellar.
+- **A `ChainAdapter` per chain** handles chain-specific deterministic
   address computation, signature encoding, and the deploy / add-signer / remove-signer
   calls. `StarknetAdapter`, `SolanaAdapter`, and `StellarAdapter` ship today.
 
@@ -53,7 +55,7 @@ Curves differ across ecosystems, and each adapter resolves that:
   ECDH device key, a WebAuthn PRF passkey, or a recovery code) and signs
   transactions. Self-custodial, no backend key.
 
-## Writing chain-agnostic code
+## Writing every-chain application code
 
 Target the unified `Cavos.connect` with `{ chain, network }`, and narrow the
 returned wallet on `wallet.chain` before calling chain-native methods:
@@ -61,7 +63,7 @@ returned wallet on `wallet.chain` before calling chain-native methods:
 ```ts title="TypeScript"
 import { Cavos } from "@cavos/kit";
 
-// One entry point; chain + network are the only chain-specific inputs.
+// One entry point; the selected adapter may require additional options.
 const wallet = await Cavos.connect({
   chain: "starknet",          // "starknet" | "solana" | "stellar"
   network: "testnet",         // resolves to sepolia / solana-devnet / stellar-testnet
@@ -69,7 +71,7 @@ const wallet = await Cavos.connect({
   appSalt: "my-app",
   appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
   // Starknet-only:
-  paymasterApiKey: process.env.CAVOS_PAYMASTER_API_KEY!,
+  paymasterApiKey: process.env.NEXT_PUBLIC_CAVOS_PAYMASTER_API_KEY!,
 });
 
 // execute() keeps each chain's native signature — narrow on `chain`:
@@ -82,6 +84,6 @@ if (wallet.chain === "starknet") {
 }
 ```
 
-When a new chain lands, you pass its `chain` + `network` values — the rest of
-your integration (login, signing) stays identical. See
-[Concepts → multi-chain by design](/docs/concepts) for the architecture rationale.
+When a new adapter ships, the SDK adds its typed `chain` and `network` values.
+Identity and onboarding remain stable; execution stays chain-native. See
+[Concepts](/docs/concepts) for the architecture rationale.

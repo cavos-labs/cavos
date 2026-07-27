@@ -3,7 +3,7 @@ title: Starknet
 description: Use @cavos/kit on Starknet — silent device signing, gasless execution, and the Cairo DeviceAccount.
 ---
 
-Starknet is the first implemented chain in `@cavos/kit`. A deterministic address
+Starknet is one of the current adapters in Cavos' every-chain architecture. A deterministic address
 derived from the user's identity is controlled by a silent secp256r1 (P-256)
 device key, validated on-chain by the Cairo `DeviceAccount` account contract.
 Deploy and execution are sponsored by the Cavos paymaster, so the user pays no
@@ -27,7 +27,7 @@ const wallet = await Cavos.connect({
     email: user.email,
   },
   appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
-  paymasterApiKey: process.env.CAVOS_PAYMASTER_API_KEY!, // sponsors deploy + execute
+  paymasterApiKey: process.env.NEXT_PUBLIC_CAVOS_PAYMASTER_API_KEY!, // app-scoped, client-visible
 });
 
 console.log(wallet.address);            // deterministic; deployed on first connect
