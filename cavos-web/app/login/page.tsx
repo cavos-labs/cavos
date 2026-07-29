@@ -155,18 +155,18 @@ export default function LoginPage() {
                                 {loading ? 'Signing in...' : 'Sign In'}
                             </button>
                         </form>
-                    </div>
 
-                    <div className="mt-6 text-center">
-                        <p className="text-black/60 text-sm">
-                            Don&apos;t have an account?{' '}
-                            <Link
-                                href={`/register?${new URLSearchParams({ email, next: nextPath }).toString()}`}
-                                className="text-brand font-semibold hover:underline underline-offset-2"
-                            >
-                                Create one
-                            </Link>
-                        </p>
+                        <div className="mt-6 border-t border-line pt-5 text-center">
+                            <p className="text-black/60 text-sm">
+                                Don&apos;t have an account?{' '}
+                                <Link
+                                    href={`/register?${new URLSearchParams({ email, next: nextPath }).toString()}`}
+                                    className="text-brand font-semibold hover:underline underline-offset-2"
+                                >
+                                    Create one
+                                </Link>
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
