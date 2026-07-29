@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Header } from '@/components/Header'
 import { Icon } from '@/components/ui/Icon'
+import { createClient } from '@/lib/supabase/client'
 
 export default function RegisterPage() {
     const router = useRouter()
@@ -16,19 +17,29 @@ export default function RegisterPage() {
     const [success, setSuccess] = useState(false)
     const [dpaAccepted, setDpaAccepted] = useState(false)
     const [nextPath, setNextPath] = useState('/dashboard')
+    const [passkeyRequested, setPasskeyRequested] = useState(false)
+    const [passkeySupported, setPasskeySupported] = useState(false)
 
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search)
-        const requestedNext = params.get('next')
-        const invitedEmail = params.get('email')
-        if (requestedNext?.startsWith('/') && !requestedNext.startsWith('//')) setNextPath(requestedNext)
-        if (invitedEmail) setEmail(invitedEmail)
+        const timeoutId = window.setTimeout(() => {
+            const params = new URLSearchParams(window.location.search)
+            const requestedNext = params.get('next')
+            const invitedEmail = params.get('email')
+            if (requestedNext?.startsWith('/') && !requestedNext.startsWith('//')) setNextPath(requestedNext)
+            if (invitedEmail) setEmail(invitedEmail)
+            setPasskeySupported('PublicKeyCredential' in window)
+        }, 0)
+
+        return () => window.clearTimeout(timeoutId)
     }, [])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError('')
         setLoading(true)
+        const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null
+        const createPasskey = submitter?.value === 'passkey'
+        setPasskeyRequested(createPasskey)
 
         // Client-side validation
         if (password.length < 8) {
@@ -47,7 +58,14 @@ export default function RegisterPage() {
             const res = await fetch('/api/auth/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password, full_name: fullName, dpa_accepted: true, next: nextPath }),
+                body: JSON.stringify({
+                    email,
+                    password,
+                    full_name: fullName,
+                    dpa_accepted: true,
+                    next: nextPath,
+                    create_passkey: createPasskey,
+                }),
             })
 
             const data = await res.json()
@@ -60,13 +78,22 @@ export default function RegisterPage() {
             }
 
             if (data.session) {
+                if (createPasskey) {
+                    const supabase = createClient()
+                    const { error: passkeyError } = await supabase.auth.registerPasskey()
+                    if (passkeyError) {
+                        setError(`Your account was created, but the passkey could not be added: ${passkeyError.message}`)
+                        setLoading(false)
+                        return
+                    }
+                }
                 router.push(nextPath)
                 router.refresh()
                 return
             }
 
             setSuccess(true)
-        } catch (err) {
+        } catch {
             setError('An unexpected error occurred')
             setLoading(false)
         }
@@ -97,10 +124,16 @@ export default function RegisterPage() {
                                 </div>
                                 <h3 className="text-xl font-semibold text-black mb-2">Check your email</h3>
                                 <p className="text-black/60 mb-6">
-                                    We've sent a confirmation link to <span className="font-medium text-black">{email}</span>. Please verify your email to continue.
+                                    We&apos;ve sent a confirmation link to <span className="font-medium text-black">{email}</span>. Please verify your email to continue
+                                    {passkeyRequested ? ' and create your passkey' : ''}.
                                 </p>
                                 <Link
-                                    href={`/login?${new URLSearchParams({ email, next: nextPath }).toString()}`}
+                                    href={`/login?${new URLSearchParams({
+                                        email,
+                                        next: passkeyRequested
+                                            ? `/setup-passkey?next=${encodeURIComponent(nextPath)}`
+                                            : nextPath,
+                                    }).toString()}`}
                                     className="inline-block w-full px-8 py-3.5 bg-brand text-white rounded-xl font-semibold hover:bg-brand-hover transition-all"
                                 >
                                     Go to Login
@@ -195,12 +228,39 @@ export default function RegisterPage() {
 
                                     <button
                                         type="submit"
+                                        name="signupMethod"
+                                        value="password"
                                         disabled={loading || !dpaAccepted}
                                         className="w-full px-8 py-3.5 bg-brand text-white rounded-xl font-semibold hover:bg-brand-hover active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
                                     >
                                         {loading && <Icon.Spinner size={16} weight="bold" className="animate-spin" />}
                                         {loading ? 'Creating account...' : 'Create Account'}
                                     </button>
+
+                                    {passkeySupported && (
+                                        <>
+                                            <div className="flex items-center gap-3 text-xs text-black/35">
+                                                <span className="h-px flex-1 bg-line" />
+                                                <span>or</span>
+                                                <span className="h-px flex-1 bg-line" />
+                                            </div>
+                                            <button
+                                                type="submit"
+                                                name="signupMethod"
+                                                value="passkey"
+                                                disabled={loading || !dpaAccepted}
+                                                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-line-strong bg-white px-8 py-3.5 font-semibold text-black transition-colors hover:bg-black/[0.03] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                {loading && passkeyRequested
+                                                    ? <Icon.Spinner size={16} weight="bold" className="animate-spin" />
+                                                    : <Icon.Key size={17} />}
+                                                {loading && passkeyRequested ? 'Creating account...' : 'Create account with passkey'}
+                                            </button>
+                                            <p className="text-center text-xs leading-relaxed text-black/45">
+                                                After verifying your email, use Touch ID, Face ID, Windows Hello, or a security key.
+                                            </p>
+                                        </>
+                                    )}
                                 </form>
                             </>
                         )}

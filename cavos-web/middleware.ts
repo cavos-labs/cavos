@@ -39,6 +39,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  if (!user && request.nextUrl.pathname.startsWith('/setup-passkey')) {
+    const url = request.nextUrl.clone()
+    const destination = `${request.nextUrl.pathname}${request.nextUrl.search}`
+    url.pathname = '/login'
+    url.search = new URLSearchParams({ next: destination }).toString()
+    return NextResponse.redirect(url)
+  }
+
   // Redirect authenticated users away from auth pages
   if (user && (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register'))) {
     const url = request.nextUrl.clone()
