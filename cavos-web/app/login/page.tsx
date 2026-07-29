@@ -46,7 +46,7 @@ export default function LoginPage() {
 
             router.push(nextPath)
             router.refresh()
-        } catch (err) {
+        } catch {
             setError('An unexpected error occurred')
             setLoading(false)
         }
@@ -155,6 +155,18 @@ export default function LoginPage() {
                                 {loading ? 'Signing in...' : 'Sign In'}
                             </button>
                         </form>
+                    </div>
+
+                    <div className="mt-6 text-center">
+                        <p className="text-black/60 text-sm">
+                            Don&apos;t have an account?{' '}
+                            <Link
+                                href={`/register?${new URLSearchParams({ email, next: nextPath }).toString()}`}
+                                className="text-brand font-semibold hover:underline underline-offset-2"
+                            >
+                                Create one
+                            </Link>
+                        </p>
                     </div>
                 </div>
             </div>
