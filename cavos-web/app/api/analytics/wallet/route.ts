@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { checkRateLimit, clientIp } from '@/lib/api/rateLimit';
 import { canCreateWallet, resolveOrgForApp } from '@/lib/billing/limits';
 import { shouldBlock } from '@/lib/billing/enforce';
+import { resolveEnvironment } from '@/lib/operations/events';
 
 /**
  * POST /api/analytics/wallet  (used by the frozen @cavos/react SDK)
@@ -33,6 +34,7 @@ export async function POST(request: Request) {
         const adminSupabase = createAdminClient();
         const body = await request.json();
         const { address, appId, network } = body;
+        const requestedEnvironment = body.environment_id ?? body.environment;
 
         if (!address || !appId || !network) {
             return NextResponse.json(
@@ -55,6 +57,20 @@ export async function POST(request: Request) {
             );
         }
 
+        const environment = await resolveEnvironment(appId, requestedEnvironment);
+        if (requestedEnvironment && !environment) {
+            return NextResponse.json(
+                { error: 'environment does not belong to appId' },
+                { status: 400 }
+            );
+        }
+        if (!environment) {
+            return NextResponse.json(
+                { error: 'Production environment is not configured for this app' },
+                { status: 500 }
+            );
+        }
+
         // ── Billing gate ────────────────────────────────────────────────────
         // Only creation of NEW wallets is gated. Pre-check existence by the
         // react conflict key `(address, network, app_id)` so re-upserts of an
@@ -66,6 +82,7 @@ export async function POST(request: Request) {
             .eq('address', address)
             .eq('network', network)
             .eq('app_id', appId)
+            .eq('environment_id', environment.id)
             .limit(1)
             .maybeSingle();
 
@@ -100,6 +117,7 @@ export async function POST(request: Request) {
                 {
                     address,
                     app_id: appId,
+                    environment_id: environment.id,
                     network,
                     updated_at: new Date().toISOString(),
                 },
