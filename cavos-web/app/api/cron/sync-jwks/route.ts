@@ -33,9 +33,12 @@ export async function GET(request: NextRequest) {
   try {
     const results = await syncAllNetworks();
     const duration = Date.now() - startTime;
+    const hasErrors =
+      results.sepolia.errors.length > 0 ||
+      results.mainnet.errors.length > 0;
 
     const response = {
-      success: true,
+      success: !hasErrors,
       timestamp: new Date().toISOString(),
       durationMs: duration,
       results: {
@@ -53,14 +56,15 @@ export async function GET(request: NextRequest) {
     };
 
     console.log('JWKS sync completed:', JSON.stringify(response, null, 2));
-    return NextResponse.json(response);
-  } catch (error: any) {
+    return NextResponse.json(response, { status: hasErrors ? 500 : 200 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
     console.error('JWKS sync failed:', error);
     return NextResponse.json(
       {
         success: false,
         timestamp: new Date().toISOString(),
-        error: error.message,
+        error: message,
       },
       { status: 500 }
     );
