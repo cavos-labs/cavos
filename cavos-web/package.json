@@ -17,7 +17,7 @@
     "@phosphor-icons/react": "^2.1.10",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
-    "@reclaimprotocol/zk-fetch": "^0.8.0",
+    "@reclaimprotocol/zk-fetch": "^1.1.0",
     "@solana/web3.js": "^1.98.4",
     "@stellar/stellar-sdk": "^16.0.1",
     "@supabase/ssr": "^0.7.0",
@@ -58,5 +58,10 @@
     "eslint-config-next": "^16.0.7",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "@peculiar/asn1-ecc": "^2.8.0",
+    "@peculiar/asn1-rsa": "^2.8.0",
+    "@peculiar/asn1-x509": "^2.8.0"
   }
 }

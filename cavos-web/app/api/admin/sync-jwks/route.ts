@@ -43,9 +43,10 @@ export async function POST(request: NextRequest) {
       ? await syncJWKSSlot({ force })
       : await syncJWKS(network, { force });
     const duration = Date.now() - startTime;
+    const hasErrors = results.errors.length > 0;
 
     const response = {
-      success: true,
+      success: !hasErrors,
       network,
       force,
       timestamp: new Date().toISOString(),
@@ -58,8 +59,9 @@ export async function POST(request: NextRequest) {
     };
 
     console.log(`Manual JWKS sync completed for ${network}:`, JSON.stringify(response, null, 2));
-    return NextResponse.json(response);
-  } catch (error: any) {
+    return NextResponse.json(response, { status: hasErrors ? 500 : 200 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
     console.error(`Manual JWKS sync failed for ${network}:`, error);
     return NextResponse.json(
       {
@@ -67,7 +69,7 @@ export async function POST(request: NextRequest) {
         network,
         force,
         timestamp: new Date().toISOString(),
-        error: error.message,
+        error: message,
       },
       { status: 500 }
     );
