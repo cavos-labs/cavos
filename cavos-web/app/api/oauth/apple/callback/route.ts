@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
     const expectedNonceHash = hashNonce(expectedNonce);
     const nonceMatches = payload.nonce === expectedNonce || payload.nonce === expectedNonceHash;
 
-    if (!nonceMatches && payload.nonce) {
+    if (!nonceMatches) {
       console.error('[OAUTH-APPLE-CALLBACK] Nonce mismatch:', {
         expectedRaw: expectedNonce,
         expectedHash: expectedNonceHash,
@@ -230,11 +230,6 @@ export async function POST(request: NextRequest) {
         },
         { status: 400 }
       );
-    }
-
-    // If no nonce in payload, log warning but continue (some Apple flows don't include it)
-    if (!payload.nonce) {
-      console.warn('[OAUTH-APPLE-CALLBACK] No nonce in id_token, skipping verification');
     }
 
     // Verify issuer

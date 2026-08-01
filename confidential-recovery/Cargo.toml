@@ -1,0 +1,32 @@
+[package]
+name = "cavos-confidential-recovery"
+version = "0.1.0"
+edition = "2021"
+license = "BUSL-1.1"
+publish = false
+
+[dependencies]
+aes-gcm = "0.10"
+anyhow = "1"
+base64 = "0.22"
+ecdsa = "0.16"
+hkdf = "0.12"
+jsonwebtoken = { version = "9", default-features = false, features = ["use_pem"] }
+p256 = { version = "0.13", features = ["ecdh", "ecdsa", "pem", "pkcs8"] }
+rand_core = { version = "0.6", features = ["getrandom"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+subtle = "2"
+tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "time", "io-util"] }
+url = "2"
+uuid = { version = "1", features = ["serde", "v4"] }
+zeroize = { version = "1", features = ["derive"] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "z"
+panic = "abort"
+strip = true

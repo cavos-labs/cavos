@@ -3,9 +3,11 @@ title: Recovery
 description: Recover a Cavos wallet without giving Cavos a master key, across Starknet, Solana, and Stellar.
 ---
 
-Recovery has one invariant across every Cavos adapter: **Cavos cannot reset the
-wallet or authorize a replacement device by itself**. The user must retain an
-existing enrolled device, a passkey factor, or a high-entropy recovery code.
+By default, Cavos cannot reset a wallet or authorize a replacement device by
+itself. A developer may also enable **hardware-isolated social recovery** for
+one provider—Google, Apple, or email magic link—per environment. That optional
+mode adds a restricted recovery authority isolated inside Google Confidential
+Space; it is not trustless recovery.
 
 ## Recovery capabilities
 
@@ -14,6 +16,76 @@ existing enrolled device, a passkey factor, or a high-entropy recovery code.
 | **Starknet** | Derives a backup P-256 signer registered on the account | `Cavos.recover(...)` authorizes the fresh device |
 | **Solana** | Derives a backup signer registered by the device-account program | `CavosSolana.recover(...)` authorizes the fresh device |
 | **Stellar** | Derives a key-encryption factor that unwraps the account control key | Reconnect, then call `approveThisDeviceWithRecovery(code)` |
+
+## Hardware-isolated social recovery
+
+Enable the feature in **Dashboard → App → Environments** and select exactly one
+provider. Users are never offered a three-provider recovery selector: the
+developer's environment policy determines the only login method shown.
+
+The React provider performs enrollment after a fresh login and recovery when
+the same identity logs in from an unregistered device:
+
+```tsx title="app/provider.tsx"
+<CavosProvider
+  config={{
+    appId,
+    environment: "production",
+    chain: "starknet", // also "solana" or "stellar"
+    network: "mainnet",
+    appSalt: "my-app",
+    paymasterApiKey,
+    socialRecoveryAttestation: {
+      audience: "https://cavos.xyz/api/recovery/social/attestation",
+      imageDigest: "sha256:…",
+      projectNumber: "1234567890",
+      serviceAccount: "cavos-confidential-recovery@project.iam.gserviceaccount.com",
+    },
+    // Only while migrating Starknet accounts deployed before this feature:
+    socialRecoveryStarknetClassHash: "0x…",
+  }}
+  modal={{ appName: "My App" }}
+>
+  {children}
+</CavosProvider>
+```
+
+Pin those four attestation values from the Cavos deployment information you
+trust. The SDK does not learn them from the recovery API it is attesting.
+
+The fresh ID token is kept only in memory. Its SHA-256 fingerprint reserves
+exactly one recovery session, and the API stores only a second hash of that
+fingerprint to reject replay. After verifying Google's signed attestation, the
+browser encrypts the token directly to an ephemeral enclave channel key bound
+into the attestation nonce; AES-GCM also authenticates the recovery
+`session_id`. The Cavos control plane relays ciphertext and cannot read the
+token or recovery key.
+
+Inside the enclave, Cavos verifies the provider signature, issuer, audience,
+expiry, token fingerprint, configured provider, and the enrolled subject. The
+authentication must be no more than five minutes old. Google and Apple tokens
+must contain the login nonce; email requires a verified, recent Firebase email
+token, which the built-in UI obtains through its magic-link flow. OTP and
+Cavos-signed compatibility tokens are not accepted for social recovery.
+
+### Chain enforcement
+
+| Chain | Enforced recovery capability |
+|---|---|
+| **Starknet** | A separate P-256 authority may only schedule one exact `add_signer`; nonce, expiry, timelock, cancellation, and finalization are contract-enforced. Existing accounts opt in through their normal device-authorized `upgrade` and enrollment calls. |
+| **Solana** | A separate recovery PDA stores the P-256 authority and policy. The native P-256 precompile plus program state enforce the exact signer, nonce, expiry, timelock, cancellation, and finalization. |
+| **Stellar** | The enclave seals only the random DEK and ECIES-wraps it to the new device. It never receives the Ed25519 control seed. Stellar classic cannot enforce the enclave's scope or timelock on-chain, so this adapter has a broader TEE/KMS trust assumption. |
+
+For non-zero timelocks, the SDK stores only the public `readyAt` timestamp,
+resumes after a refresh, and permissionlessly finalizes the already-committed
+signer when the on-chain delay expires. It never persists the social token.
+
+<Callout type="warn">
+Describe this as **hardware-isolated, non-custodial recovery**, not “trustless
+recovery.” Cavos employees do not hold an accessible signing key, but the
+measured enclave, Google Cloud attestation/KMS, the approved image-upgrade
+policy, and—on email—your Firebase identity project remain in the trust model.
+</Callout>
 
 The cryptography differs, but the code never needs to be stored by Cavos.
 
@@ -103,10 +175,11 @@ then enrolls the fresh device's envelope slot.
 
 - Encourage a second device or synced passkey before relying on a recovery code.
 - Verify recovery on physical iOS and Android devices before production release.
-- Do not claim social or administrator recovery unless a reviewed adapter
-  actually implements it.
-- If the user loses every device and every recovery factor, Cavos cannot restore
-  access. That limitation is part of the non-custodial model.
+- If enabling social recovery, pin attestation measurements in the application,
+  review image-digest changes like key rotations, and keep a second recovery
+  factor for operational resilience.
+- Without enrolled social recovery, if the user loses every device and every
+  recovery factor, Cavos cannot restore access.
 
 See [Multi-device](/docs/multi-device), [Passkeys](/docs/passkeys), and the
 selected [chain guide](/docs/chains).

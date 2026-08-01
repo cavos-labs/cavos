@@ -37,7 +37,11 @@ BEGIN
     PERFORM vault.update_secret(cron_secret_id, p_cron_secret, 'cavos_cron_secret', 'Bearer secret for Cavos cron endpoints');
   END IF;
 
-  PERFORM cron.unschedule(jobid) FROM cron.job WHERE jobname IN ('cavos-webhook-retries', 'cavos-sync-jwks');
+  PERFORM cron.unschedule(jobid) FROM cron.job WHERE jobname IN (
+    'cavos-webhook-retries',
+    'cavos-sync-jwks',
+    'cavos-social-recovery-cleanup'
+  );
 
   PERFORM cron.schedule(
     'cavos-webhook-retries',
@@ -59,6 +63,20 @@ BEGIN
     $job$
       SELECT net.http_get(
         url := (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'cavos_app_url') || '/api/cron/sync-jwks',
+        headers := jsonb_build_object(
+          'Authorization', 'Bearer ' || (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'cavos_cron_secret')
+        ),
+        timeout_milliseconds := 60000
+      );
+    $job$
+  );
+
+  PERFORM cron.schedule(
+    'cavos-social-recovery-cleanup',
+    '*/5 * * * *',
+    $job$
+      SELECT net.http_get(
+        url := (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'cavos_app_url') || '/api/cron/social-recovery-cleanup',
         headers := jsonb_build_object(
           'Authorization', 'Bearer ' || (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'cavos_cron_secret')
         ),
