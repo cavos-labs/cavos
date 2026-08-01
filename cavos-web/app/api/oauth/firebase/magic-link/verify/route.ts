@@ -2,14 +2,14 @@
  * Magic Link — Verify Route
  *
  * Called when the user clicks the magic link in their email.
- * Verifies the oobCode with Firebase, signs a custom JWT with the stored nonce,
- * then returns an HTML page that writes the result to localStorage and closes
- * the tab — identical behaviour to CavosSDK.handlePopupCallback().
+ * Verifies the oobCode with Firebase and returns Firebase's own Google-signed
+ * ID token. Social recovery verifies that token inside Confidential Space
+ * against securetoken.google.com; minting a Cavos-signed replacement here would
+ * put a second recovery authority outside the enclave.
  */
 
 import { NextRequest } from 'next/server';
 import { validateAppRedirect } from '@/lib/oauth/redirects';
-import { signFirebaseCustomJWT } from '@/lib/firebase-jwt';
 
 function htmlResponse(html: string): Response {
   return new Response(html, {
@@ -147,6 +147,7 @@ export async function GET(request: NextRequest) {
 
   let localId: string;
   let verifiedEmail: string;
+  let jwt: string;
 
   try {
     const res = await fetch(verifyUrl, {
@@ -172,29 +173,17 @@ export async function GET(request: NextRequest) {
     const data = await res.json();
     localId       = data.localId;
     verifiedEmail = data.email ?? email;
+    jwt           = data.idToken;
+    if (!jwt) {
+      console.error('[MagicLink] Firebase response omitted idToken');
+      return htmlResponse(errorHtml('Could not complete sign-in.'));
+    }
   } catch (err) {
     console.error('[MagicLink] Firebase REST call failed:', err);
     return htmlResponse(errorHtml('Could not verify the link.'));
   }
 
-  // Sign our custom JWT — identical format to the email/password flow
-  const now = Math.floor(Date.now() / 1000);
-  let jwt: string;
-
-  try {
-    jwt = await signFirebaseCustomJWT({
-      sub:   localId,
-      email: verifiedEmail,
-      nonce,
-      iat:   now,
-      exp:   now + 3600,
-    });
-  } catch (err) {
-    console.error('[MagicLink] JWT signing failed:', err);
-    return htmlResponse(errorHtml('Could not complete sign-in.'));
-  }
-
-  console.log(`[MagicLink] Verified and signed JWT for ${verifiedEmail} (uid: ${localId})`);
+  console.log(`[MagicLink] Verified Firebase ID token for ${verifiedEmail} (uid: ${localId})`);
 
   // Redirect back to the app with auth_data in the URL — works on mobile where
   // window.close() is blocked. The SDK's CavosContext handles ?auth_data= on load.
