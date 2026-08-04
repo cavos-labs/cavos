@@ -253,11 +253,17 @@ async function generateReclaimProof(
   targetKid?: string,
   targetN?: string,
 ): Promise<ReclaimProof> {
-  // zk-fetch 1.x pulls in ESM-only TLS modules. Keep this as an import so
-  // Next can bundle the mixed CJS/ESM dependency graph for the server runtime.
-  const { ReclaimClient } = await import('@reclaimprotocol/zk-fetch');
-
-  const client = new ReclaimClient(RECLAIM_APP_ID, RECLAIM_APP_SECRET);
+  // Keep Reclaim's crypto stack outside the Turbopack module transform. It is
+  // ESM-native and relies on Node crypto plus package-relative proof assets.
+  const nativeImport = new Function('specifier', 'return import(specifier)') as (
+    specifier: string,
+  ) => Promise<Record<string, any>>;
+  const [{ setCryptoImplementation }, { webcryptoCrypto }] = await Promise.all([
+    nativeImport('@reclaimprotocol/tls'),
+    nativeImport('@reclaimprotocol/tls/webcrypto'),
+  ]);
+  setCryptoImplementation(webcryptoCrypto);
+  const { createClaimOnAttestor, logger } = await nativeImport('@reclaimprotocol/attestor-core');
 
   // Use exact-value regexes when the caller specifies which key to prove.
   // base64url and hex characters are regex-safe (no special chars to escape).
@@ -268,18 +274,41 @@ async function generateReclaimProof(
     ? `"n":\\s*"(?<n>${targetN})"`
     : `"n":\\s*"(?<n>[^"]+)"`;
 
-  const rawProof = await client.zkFetch(
-    jwksUrl,
-    { method: 'GET' },
-    {
+  const attestorUrl = await getReclaimAttestorUrl();
+  const claim = await createClaimOnAttestor({
+    name: 'http',
+    params: {
+      method: 'GET',
+      url: jwksUrl,
       responseMatches: [
         { type: 'regex', value: kidRegex },
         { type: 'regex', value: nRegex },
       ],
+      responseRedactions: [],
+      body: '',
     },
-  );
+    secretParams: {
+      cookieStr: '',
+      headers: {},
+    },
+    zkEngine: 'snarkjs',
+    ownerPrivateKey: RECLAIM_APP_SECRET,
+    logger: logger.child({ service: 'jwks-sync', applicationId: RECLAIM_APP_ID }),
+    client: { url: attestorUrl },
+  });
 
-  if (!rawProof) throw new Error(`zkFetch returned null for ${jwksUrl}`);
+  if (claim.error) {
+    throw new Error(`Failed to create claim on attestor: ${claim.error.message}`);
+  }
+  if (!claim.claim || !claim.signatures?.claimSignature) {
+    throw new Error(`Reclaim returned an incomplete proof for ${jwksUrl}`);
+  }
+
+  const rawProof = {
+    claimData: claim.claim,
+    identifier: claim.claim.identifier,
+    signatures: ['0x' + Buffer.from(claim.signatures.claimSignature).toString('hex')],
+  };
 
   // zkFetch proof shape (confirmed from live proofs):
   //   rawProof.claimData.{ provider, parameters, context, owner, timestampS, identifier, epoch }
@@ -309,6 +338,21 @@ async function generateReclaimProof(
       }),
     },
   };
+}
+
+async function getReclaimAttestorUrl(): Promise<string> {
+  const fallback = 'wss://attestor.reclaimprotocol.org/ws';
+  try {
+    const response = await fetch(
+      'https://api.reclaimprotocol.org/api/feature-flags/get?featureFlagNames=zkFetchAttestorURL',
+      { headers: { 'Content-Type': 'application/json' } },
+    );
+    if (!response.ok) return fallback;
+    const flags = await response.json() as Array<{ name?: string; value?: string }>;
+    return flags.find((flag) => flag.name === 'zkFetchAttestorURL')?.value || fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 /**
