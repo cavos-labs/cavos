@@ -10,21 +10,30 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  sync:
-    name: Sync JWKS keys
+  sync-mainnet:
+    name: Sync mainnet JWKS keys
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
 
     steps:
-      - uses: actions/checkout@v4
-
       - name: Call JWKS sync endpoint
         env:
           SYNC_JWKS_URL: ${{ secrets.SYNC_JWKS_URL }}
           ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
         run: |
-          curl -fLsS --max-time 120 -X POST "$SYNC_JWKS_URL" \
-            -H "x-admin-key: $ADMIN_API_KEY"
+          status=$(curl -LsS --max-time 120 -o response.json -w "%{http_code}" \
+            -X POST "$SYNC_JWKS_URL" \
+            -H "x-admin-key: $ADMIN_API_KEY")
+          cat response.json
+          test "$status" -ge 200 -a "$status" -lt 300
+
+  sync-slot:
+    name: Sync Slot JWKS keys
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -41,7 +50,9 @@ jobs:
         run: node .github/scripts/update_slot_jwks.js
 
       - name: Upload slot JWKS summary
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: slot-jwks-update-summary
           path: slot-jwks-update-summary.json
+          if-no-files-found: warn

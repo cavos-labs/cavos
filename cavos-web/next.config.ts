@@ -6,13 +6,10 @@ const nextConfig: NextConfig = {
     '*': ['./circuits/**'],
   },
   serverExternalPackages: [
-    'snarkjs', 
-    'poseidon-lite', 
-    'koffi', 
-    '@reclaimprotocol/zk-fetch',
-    '@reclaimprotocol/attestor-core',
-    're2',
+    'snarkjs',
+    'poseidon-lite',
     'koffi',
+    're2',
   ],
   async rewrites() {
     return [

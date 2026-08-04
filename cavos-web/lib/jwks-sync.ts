@@ -253,8 +253,9 @@ async function generateReclaimProof(
   targetKid?: string,
   targetN?: string,
 ): Promise<ReclaimProof> {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { ReclaimClient } = require('@reclaimprotocol/zk-fetch');
+  // zk-fetch 1.x pulls in ESM-only TLS modules. Keep this as an import so
+  // Next can bundle the mixed CJS/ESM dependency graph for the server runtime.
+  const { ReclaimClient } = await import('@reclaimprotocol/zk-fetch');
 
   const client = new ReclaimClient(RECLAIM_APP_ID, RECLAIM_APP_SECRET);
 
