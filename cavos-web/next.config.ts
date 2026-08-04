@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
     'snarkjs',
     'poseidon-lite',
     'koffi',
+    '@reclaimprotocol/attestor-core',
     're2',
   ],
   async rewrites() {

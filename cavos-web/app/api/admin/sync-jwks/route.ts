@@ -10,7 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { syncJWKS, syncJWKSSlot } from '@/lib/jwks-sync';
 
 // Vercel serverless config
-export const maxDuration = 60; // 60 seconds max execution time
+export const maxDuration = 300; // Proof generation and mainnet confirmations can take several minutes.
 export const dynamic = 'force-dynamic'; // Disable caching
 
 export async function POST(request: NextRequest) {

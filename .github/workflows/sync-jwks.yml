@@ -13,7 +13,7 @@ jobs:
   sync-mainnet:
     name: Sync mainnet JWKS keys
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
 
     steps:
       - name: Call JWKS sync endpoint
@@ -21,7 +21,7 @@ jobs:
           SYNC_JWKS_URL: ${{ secrets.SYNC_JWKS_URL }}
           ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
         run: |
-          status=$(curl -LsS --max-time 120 -o response.json -w "%{http_code}" \
+          status=$(curl -LsS --max-time 540 -o response.json -w "%{http_code}" \
             -X POST "$SYNC_JWKS_URL" \
             -H "x-admin-key: $ADMIN_API_KEY")
           cat response.json
