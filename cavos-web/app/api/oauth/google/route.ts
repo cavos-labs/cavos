@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
 import { validateAppRedirect, resolveAppIdForRedirect } from '@/lib/oauth/redirects';
+import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier';
 
 /**
  * Direct Google OAuth initiation for ZK Login
@@ -37,6 +38,13 @@ export async function GET(request: NextRequest) {
         { error: 'Missing redirect_uri parameter' },
         { status: 400 }
       );
+    }
+    // Dashboard-facing IDs are environment public IDs (`cav_…`), while the
+    // OAuth callback and database relations use the internal app UUID.
+    if (appId) {
+      const resolved = await resolveAppIdentifier(appId);
+      if (!resolved) throw new Error('Invalid app_id');
+      appId = resolved.appId;
     }
     await validateAppRedirect(appId, redirectUri);
 
