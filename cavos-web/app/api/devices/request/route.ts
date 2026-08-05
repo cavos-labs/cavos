@@ -14,7 +14,7 @@ import { ApiResponse } from '@/lib/api/response';
 import { ApiMiddleware } from '@/lib/api/middleware';
 import { sendDeviceApprovalEmail } from '@/lib/email/device-approval';
 import { computeAppSalt } from '@/lib/crypto/appSalt';
-import { recordCavosEvent, resolveEnvironment } from '@/lib/operations/events';
+import { recordCavosEvent } from '@/lib/operations/events';
 
 interface DeviceAdditionRequestBody {
   app_id: string;
@@ -109,23 +109,29 @@ export async function POST(request: Request) {
       });
     }
 
-    // Verify app ID.
-    const { valid, app } = await ApiMiddleware.verifyAppId(app_id, logger);
-    if (!valid) {
+    const requestedEnvironment = environment_id ?? environmentKind;
+    // Verify and canonicalize the SDK-facing environment/app ID.
+    const { valid, app, resolved } = await ApiMiddleware.verifyAppId(
+      app_id,
+      logger,
+      requestedEnvironment,
+    );
+    if (!valid || !app || !resolved) {
       return ApiResponse.unauthorized('Invalid App ID');
     }
+    const canonicalAppId = app.id;
 
     const adminSupabase = createAdminClient();
-    const requestedEnvironment = environment_id ?? environmentKind;
-    const environment = await resolveEnvironment(app_id, requestedEnvironment);
-    if (requestedEnvironment && !environment) return ApiResponse.badRequest('environment does not belong to app_id');
+    const environment = resolved.environmentId
+      ? { id: resolved.environmentId, app_id: canonicalAppId, kind: resolved.environmentKind }
+      : null;
     if (!environment) return ApiResponse.serverError('Production environment is not configured for this app');
 
     // Find the wallet row this request refers to (scoped to the app).
     const { data: wallet, error: walletErr } = await adminSupabase
       .from('wallets')
       .select('id, user_social_id, network')
-      .eq('app_id', app_id)
+      .eq('app_id', canonicalAppId)
       .eq('environment_id', environment!.id)
       .eq('address', wallet_address)
       .single();
@@ -143,7 +149,7 @@ export async function POST(request: Request) {
     const { data: appRow } = await adminSupabase
       .from('apps')
       .select('device_approval_url, website_url')
-      .eq('id', app_id)
+      .eq('id', canonicalAppId)
       .single();
 
     // device_approval_url is the recommended destination; website_url is a
@@ -184,7 +190,7 @@ export async function POST(request: Request) {
       const { data: reqRow, error: reqErr } = await adminSupabase
         .from('device_addition_requests')
         .insert({
-          app_id,
+          app_id: canonicalAppId,
           environment_id: environment?.id ?? null,
           wallet_id: wallet.id,
           new_pub_x,
@@ -210,7 +216,7 @@ export async function POST(request: Request) {
     const ownerEmail = email ?? null;
     if (ownerEmail) {
       try {
-        await sendDeviceApprovalEmail(ownerEmail, fullApproveLink, device_label ?? '', app_id);
+        await sendDeviceApprovalEmail(ownerEmail, fullApproveLink, device_label ?? '', canonicalAppId);
       } catch (e) {
         // Non-fatal: the request is created; owner can still approve via a direct link / dashboard.
         logger.warn('Approval email failed', e);
@@ -220,7 +226,7 @@ export async function POST(request: Request) {
     }
 
     logger.info('Device addition request ready', { request_id: requestId, reused: !!reused });
-    await recordCavosEvent({ appId: app_id, environmentId: environment?.id, walletId: wallet.id, eventType: 'device.addition_requested', status: 'success', requestId: logger.requestId, network: wallet.network, metadata: { reused: !!reused, has_label: Boolean(device_label) } });
+    await recordCavosEvent({ appId: canonicalAppId, environmentId: environment?.id, walletId: wallet.id, eventType: 'device.addition_requested', status: 'success', requestId: logger.requestId, network: wallet.network, metadata: { reused: !!reused, has_label: Boolean(device_label) } });
     logger.complete(true);
     return ApiResponse.success({
       request_id: requestId,

@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { dispatchEvent } from './webhooks'
+import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier'
 
 const BLOCKED_KEYS = /email|secret|token|password|encrypted|private|pub_[xy]|blob/i
 
@@ -14,18 +15,13 @@ export function sanitizeEventMetadata(input: Record<string, unknown> = {}) {
 }
 
 export async function resolveEnvironment(appId: string, supplied?: string | null) {
-  const admin = createAdminClient()
-  if (supplied) {
-    if (supplied === 'development' || supplied === 'production') {
-      const { data } = await admin.from('app_environments').select('id, app_id, kind').eq('app_id', appId).eq('kind', supplied).maybeSingle()
-      return data
-    }
-    const { data } = await admin.from('app_environments').select('id, app_id, kind').or(`id.eq.${supplied},public_id.eq.${supplied}`).maybeSingle()
-    if (data?.app_id === appId) return data
-    return null
+  const resolved = await resolveAppIdentifier(appId, supplied)
+  if (!resolved?.environmentId) return null
+  return {
+    id: resolved.environmentId,
+    app_id: resolved.appId,
+    kind: resolved.environmentKind,
   }
-  const { data } = await admin.from('app_environments').select('id, app_id, kind').eq('app_id', appId).eq('kind', 'production').maybeSingle()
-  return data
 }
 
 export async function recordCavosEvent(input: {
@@ -44,17 +40,18 @@ export async function recordCavosEvent(input: {
 }) {
   try {
     const admin = createAdminClient()
-    const { data: app } = await admin.from('apps').select('organization_id').eq('id', input.appId).single()
+    const resolved = await resolveAppIdentifier(input.appId, input.environmentId)
+    if (!resolved) return
+    const { data: app } = await admin.from('apps').select('organization_id').eq('id', resolved.appId).single()
     if (!app) return
-    const environment = await resolveEnvironment(input.appId, input.environmentId)
     // Plain insert: dedup is enforced by the partial unique index on (request_id, event_type)
     // WHERE request_id IS NOT NULL. A retry with the same request_id raises 23505, which we
     // treat as an already-recorded event. We cannot use upsert/onConflict here because Postgres
     // will not match a partial unique index in an ON CONFLICT clause (fails with 42P10).
     const { data: event, error } = await admin.from('cavos_events').insert({
       organization_id: app.organization_id,
-      app_id: input.appId,
-      environment_id: environment?.id ?? null,
+      app_id: resolved.appId,
+      environment_id: resolved.environmentId,
       wallet_id: input.walletId ?? null,
       event_type: input.eventType,
       status: input.status,

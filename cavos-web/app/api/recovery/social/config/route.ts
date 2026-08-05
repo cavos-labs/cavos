@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { resolveEnvironment } from '@/lib/operations/events'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier'
 
 export async function GET(request: Request) {
   const url = new URL(request.url)
@@ -8,16 +8,16 @@ export async function GET(request: Request) {
   const environmentHint =
     url.searchParams.get('environment_id') || url.searchParams.get('environment') || undefined
   if (!appId) return NextResponse.json({ error: 'app_id_required' }, { status: 400 })
-  const environment = await resolveEnvironment(appId, environmentHint)
-  if (!environment) return NextResponse.json({ error: 'environment_not_found' }, { status: 404 })
+  const resolved = await resolveAppIdentifier(appId, environmentHint)
+  if (!resolved?.environmentId) return NextResponse.json({ error: 'environment_not_found' }, { status: 404 })
   const admin = createAdminClient()
   const { data } = await admin
     .from('app_environments')
     .select(
       'id, social_recovery_enabled, social_recovery_provider, social_recovery_delay_seconds',
     )
-    .eq('id', environment.id)
-    .eq('app_id', appId)
+    .eq('id', resolved.environmentId)
+    .eq('app_id', resolved.appId)
     .single()
   if (!data) return NextResponse.json({ error: 'environment_not_found' }, { status: 404 })
   return NextResponse.json({

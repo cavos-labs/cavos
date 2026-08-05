@@ -11,6 +11,7 @@ import { auth } from '@/lib/firebase-admin';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendOtpEmail } from '@/lib/email/otp';
 import crypto from 'crypto';
+import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier';
 
 const OTP_EXPIRES_MINUTES = 10;
 
@@ -35,25 +36,21 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const email = typeof body.email === 'string' ? normalizeEmail(body.email) : '';
     const nonce = typeof body.nonce === 'string' ? body.nonce : '';
-    const app_id = typeof body.app_id === 'string' ? body.app_id : '';
+    const appIdentifier = typeof body.app_id === 'string' ? body.app_id : '';
 
-    if (!email || !nonce || !app_id) {
+    if (!email || !nonce || !appIdentifier) {
       return NextResponse.json(
         { error: 'Missing email, nonce, or app_id' },
         { status: 400 }
       );
     }
 
-    const adminSupabase = createAdminClient();
-    const { data: app, error: appError } = await adminSupabase
-      .from('apps')
-      .select('id')
-      .eq('id', app_id)
-      .single();
-
-    if (appError || !app) {
+    const resolvedApp = await resolveAppIdentifier(appIdentifier);
+    if (!resolvedApp) {
       return NextResponse.json({ error: 'Invalid app_id' }, { status: 400 });
     }
+    const app_id = resolvedApp.appId;
+    const adminSupabase = createAdminClient();
 
     const { data: existingOtp } = await adminSupabase
       .from('email_otp_codes')
