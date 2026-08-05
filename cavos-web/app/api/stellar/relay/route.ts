@@ -32,6 +32,7 @@ import { getRelayerSigner } from '@/lib/stellar/signer';
 import { resolveOrgForApp } from '@/lib/billing/limits';
 import { debitStellarGas, hasGas } from '@/lib/stellar/gas';
 import { recordCavosEvent, resolveEnvironment } from '@/lib/operations/events';
+import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier';
 
 type RelayKind = 'create' | 'fee-bump' | 'sponsored-data';
 
@@ -88,9 +89,23 @@ export async function POST(request: Request) {
       return ApiResponse.badRequest('Invalid kind', { kind: body.kind });
     }
 
-    const { valid } = await ApiMiddleware.verifyAppId(body.app_id, logger);
-    if (!valid) return ApiResponse.unauthorized('Invalid App ID');
-    const environment = await resolveEnvironment(body.app_id, body.environment);
+    const resolvedApp = await resolveAppIdentifier(body.app_id);
+    if (!resolvedApp) return ApiResponse.unauthorized('Invalid App ID');
+    const appId = resolvedApp.appId;
+    if (
+      body.environment &&
+      resolvedApp.environmentKind &&
+      body.environment !== resolvedApp.environmentKind
+    ) {
+      return ApiResponse.badRequest('environment does not belong to app_id');
+    }
+    const environment = resolvedApp.environmentId
+      ? {
+          id: resolvedApp.environmentId,
+          app_id: appId,
+          kind: resolvedApp.environmentKind,
+        }
+      : await resolveEnvironment(appId, body.environment);
     if (body.environment && !environment) return ApiResponse.badRequest('environment does not belong to app_id');
 
     const signer = await getRelayerSigner(body.network);
@@ -119,17 +134,17 @@ export async function POST(request: Request) {
           : validateClassicFeeBump(tx as FeeBumpTransaction, signer.publicKey());
     if (!check.ok) {
       logger.warn('Classic relay rejected', { reason: check.reason, app_id: body.app_id, kind: body.kind });
-      await recordCavosEvent({ appId: body.app_id, environmentId: environment?.id, eventType: 'relay.rejected', status: 'failed', severity: 'warning', requestId: logger.requestId, network: body.network, errorCode: 'not_eligible', metadata: { reason: check.reason, kind: body.kind } });
+      await recordCavosEvent({ appId, environmentId: environment?.id, eventType: 'relay.rejected', status: 'failed', severity: 'warning', requestId: logger.requestId, network: body.network, errorCode: 'not_eligible', metadata: { reason: check.reason, kind: body.kind } });
       return ApiResponse.badRequest('Transaction not eligible for sponsorship', { reason: check.reason });
     }
 
     // Gas gate (mainnet only) — testnet is free; mainnet meters the org's prepaid
     // XLM balance and blocks an org that is out of gas.
     const metered = body.network === 'stellar-mainnet';
-    const orgId = metered ? await resolveOrgForApp(body.app_id) : null;
+    const orgId = metered ? await resolveOrgForApp(appId) : null;
     if (orgId && !(await hasGas(orgId))) {
       logger.warn('Classic relay blocked — org out of gas', { app_id: body.app_id, org_id: orgId });
-      await recordCavosEvent({ appId: body.app_id, environmentId: environment?.id, eventType: 'sponsorship.rejected', status: 'failed', severity: 'warning', requestId: logger.requestId, network: body.network, errorCode: 'insufficient_gas' });
+      await recordCavosEvent({ appId, environmentId: environment?.id, eventType: 'sponsorship.rejected', status: 'failed', severity: 'warning', requestId: logger.requestId, network: body.network, errorCode: 'insufficient_gas' });
       return ApiResponse.paymentRequired('insufficient_gas', {
         message: 'Deposit XLM to sponsor transactions.',
       });
@@ -162,7 +177,7 @@ export async function POST(request: Request) {
         logger.warn('Gas debit failed (tx already landed)', { hash });
       }
     }
-    await recordCavosEvent({ appId: body.app_id, environmentId: environment?.id, eventType: 'relay.submitted', status: 'success', requestId: logger.requestId, network: body.network, txReference: hash, metadata: { kind: body.kind } });
+    await recordCavosEvent({ appId, environmentId: environment?.id, eventType: 'relay.submitted', status: 'success', requestId: logger.requestId, network: body.network, txReference: hash, metadata: { kind: body.kind } });
     return ApiResponse.success({ hash, request_id: logger.requestId });
   } catch (error) {
     logger.error('Stellar classic relay POST failed', error);
