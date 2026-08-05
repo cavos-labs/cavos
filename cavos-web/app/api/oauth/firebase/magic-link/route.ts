@@ -8,9 +8,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/firebase-admin';
-import { createAdminClient } from '@/lib/supabase/admin';
 import { sendMagicLinkEmail } from '@/lib/email/magic-link';
 import { validateAppRedirect } from '@/lib/oauth/redirects';
+import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier';
 
 // In-memory rate limiter: 1 request per email+app_id per 60s
 const rateLimitMap = new Map<string, number>();
@@ -40,22 +40,15 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    if (redirect_uri) await validateAppRedirect(app_id, redirect_uri);
-
-    // Validate app exists
-    const adminSupabase = createAdminClient();
-    const { data: app, error: appError } = await adminSupabase
-      .from('apps')
-      .select('id')
-      .eq('id', app_id)
-      .single();
-
-    if (appError || !app) {
+    const resolvedApp = await resolveAppIdentifier(app_id);
+    if (!resolvedApp) {
       return NextResponse.json({ error: 'Invalid app_id' }, { status: 400 });
     }
+    const canonicalAppId = resolvedApp.appId;
+    if (redirect_uri) await validateAppRedirect(canonicalAppId, redirect_uri);
 
     // Rate limit
-    const rateLimitKey = `magic-link:${email}:${app_id}`;
+    const rateLimitKey = `magic-link:${email}:${canonicalAppId}`;
     const { allowed, waitSeconds } = checkRateLimit(rateLimitKey);
 
     if (!allowed) {
@@ -103,13 +96,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Build our branded magic link — nonce travels in the URL (it's a hash, not a secret)
-    const verifyParams: Record<string, string> = { email, oobCode, nonce, app_id };
+    const verifyParams: Record<string, string> = { email, oobCode, nonce, app_id: canonicalAppId };
     if (redirect_uri) verifyParams.redirect_uri = redirect_uri;
     const magicLink = `${baseUrl}/api/oauth/firebase/magic-link/verify?${new URLSearchParams(verifyParams)}`;
 
-    await sendMagicLinkEmail(email, magicLink, app_id);
+    await sendMagicLinkEmail(email, magicLink, canonicalAppId);
 
-    console.log(`[MagicLink] Link sent to ${email} (uid: ${uid}) for app ${app_id}`);
+    console.log(`[MagicLink] Link sent to ${email} (uid: ${uid}) for app ${canonicalAppId}`);
 
     return NextResponse.json({ status: 'sent', email });
   } catch (error: any) {

@@ -18,6 +18,7 @@ export interface ResolvedAppIdentifier {
  */
 export async function resolveAppIdentifier(
   identifier: string,
+  environmentHint?: string | null,
 ): Promise<ResolvedAppIdentifier | null> {
   const admin = createAdminClient()
 
@@ -30,12 +31,22 @@ export async function resolveAppIdentifier(
 
     if (appError || !app?.is_active) return null
 
-    const { data: environment } = await admin
+    const { data: environments, error: environmentsError } = await admin
       .from('app_environments')
-      .select('id,kind,is_active')
+      .select('id,public_id,kind,is_active')
       .eq('app_id', app.id)
-      .eq('kind', 'production')
-      .maybeSingle()
+    if (environmentsError) return null
+
+    const environment = environmentHint
+      ? environments?.find(
+          (candidate) =>
+            candidate.id === environmentHint ||
+            candidate.public_id === environmentHint ||
+            candidate.kind === environmentHint,
+        )
+      : environments?.find((candidate) => candidate.kind === 'production')
+
+    if (environmentHint && (!environment || !environment.is_active)) return null
 
     return {
       appId: app.id,
@@ -51,6 +62,14 @@ export async function resolveAppIdentifier(
     .maybeSingle()
 
   if (environmentError || !environment?.is_active) return null
+  if (
+    environmentHint &&
+    environmentHint !== environment.id &&
+    environmentHint !== identifier &&
+    environmentHint !== environment.kind
+  ) {
+    return null
+  }
 
   const { data: app, error: appError } = await admin
     .from('apps')

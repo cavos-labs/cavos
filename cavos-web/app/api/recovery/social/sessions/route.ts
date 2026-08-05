@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { resolveEnvironment } from '@/lib/operations/events'
 import { createRecoveryVm } from '@/lib/recovery/social/google-compute'
 import { randomToken, tokenHash } from '@/lib/recovery/social/security'
 import { providerPolicy } from '@/lib/recovery/social/config'
 import type { SocialRecoveryAction } from '@/lib/recovery/social/types'
+import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier'
 
 interface StartBody {
   app_id?: string
@@ -38,13 +38,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'invalid_auth_challenge' }, { status: 400 })
   }
 
-  const environment = await resolveEnvironment(
+  const resolvedApp = await resolveAppIdentifier(
     body.app_id,
     body.environment_id || body.environment,
   )
-  if (!environment) {
+  if (!resolvedApp?.environmentId) {
     return NextResponse.json({ error: 'environment_not_found' }, { status: 404 })
   }
+  const appId = resolvedApp.appId
+  const environment = { id: resolvedApp.environmentId }
   const admin = createAdminClient()
   const authChallengeHash = tokenHash(body.auth_challenge)
   const { data: replayedChallenge } = await admin
@@ -61,7 +63,7 @@ export async function POST(request: Request) {
       'id, social_recovery_enabled, social_recovery_provider, social_recovery_delay_seconds',
     )
     .eq('id', environment.id)
-    .eq('app_id', body.app_id)
+    .eq('app_id', appId)
     .single()
   if (!environmentPolicy?.social_recovery_enabled || !environmentPolicy.social_recovery_provider) {
     return NextResponse.json({ error: 'social_recovery_disabled' }, { status: 403 })
@@ -70,7 +72,7 @@ export async function POST(request: Request) {
   const { data: wallet } = await admin
     .from('wallets')
     .select('id, address, network')
-    .eq('app_id', body.app_id)
+    .eq('app_id', appId)
     .eq('environment_id', environment.id)
     .eq('address', body.wallet_address)
     .maybeSingle()
@@ -96,7 +98,7 @@ export async function POST(request: Request) {
       action: 'enroll',
       provider: enrollment.provider,
       policy: {
-        app_id: body.app_id,
+        app_id: appId,
         environment_id: environment.id,
         ...providerPolicy(enrollment.provider),
       },
@@ -132,7 +134,7 @@ export async function POST(request: Request) {
   const { error: insertError } = await admin.from('social_recovery_sessions').insert({
     id: sessionId,
     wallet_id: wallet.id,
-    app_id: body.app_id,
+    app_id: appId,
     environment_id: environment.id,
     action: body.action,
     provider: environmentPolicy.social_recovery_provider,
@@ -177,7 +179,7 @@ export async function POST(request: Request) {
       action: body.action,
       provider: environmentPolicy.social_recovery_provider,
       policy: {
-        app_id: body.app_id,
+        app_id: appId,
         environment_id: environment.id,
         ...providerPolicy(environmentPolicy.social_recovery_provider),
       },

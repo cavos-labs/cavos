@@ -15,6 +15,7 @@
  */
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier'
 
 export const FREE_WALLET_LIMIT = 1000
 export const WARN_THRESHOLD = 0.8   // soft warning at 80% of limit
@@ -55,11 +56,13 @@ export interface ValidateUsage {
  * (the caller should 404/401 before reaching the gate, but we stay defensive).
  */
 export async function resolveOrgForApp(appId: string): Promise<string | null> {
+  const resolved = await resolveAppIdentifier(appId)
+  if (!resolved) return null
   const supabase = createAdminClient()
   const { data } = await supabase
     .from('apps')
     .select('organization_id')
-    .eq('id', appId)
+    .eq('id', resolved.appId)
     .single()
   return data?.organization_id ?? null
 }

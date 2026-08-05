@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { signFirebaseCustomJWT } from '@/lib/firebase-jwt';
 import crypto from 'crypto';
+import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier';
 
 const MAX_ATTEMPTS = 5;
 
@@ -30,9 +31,9 @@ export async function POST(request: NextRequest) {
     const email = typeof body.email === 'string' ? normalizeEmail(body.email) : '';
     const code = typeof body.code === 'string' ? body.code.trim() : '';
     const nonce = typeof body.nonce === 'string' ? body.nonce : '';
-    const app_id = typeof body.app_id === 'string' ? body.app_id : '';
+    const appIdentifier = typeof body.app_id === 'string' ? body.app_id : '';
 
-    if (!email || !code || !nonce || !app_id) {
+    if (!email || !code || !nonce || !appIdentifier) {
       return NextResponse.json(
         { error: 'Missing email, code, nonce, or app_id' },
         { status: 400 }
@@ -43,6 +44,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'invalid_code' }, { status: 400 });
     }
 
+    const resolvedApp = await resolveAppIdentifier(appIdentifier);
+    if (!resolvedApp) {
+      return NextResponse.json({ error: 'Invalid app_id' }, { status: 400 });
+    }
+    const app_id = resolvedApp.appId;
     const adminSupabase = createAdminClient();
     const { data: otp, error: otpError } = await adminSupabase
       .from('email_otp_codes')
