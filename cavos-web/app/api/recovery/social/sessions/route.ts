@@ -6,6 +6,8 @@ import { providerPolicy } from '@/lib/recovery/social/config'
 import type { SocialRecoveryAction } from '@/lib/recovery/social/types'
 import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier'
 
+export const maxDuration = 60
+
 interface StartBody {
   app_id?: string
   environment_id?: string

@@ -35,10 +35,19 @@ export function providerPolicy(provider: SocialRecoveryProvider): ProviderPolicy
 }
 
 export function gcpRecoveryConfig() {
+  const zones = (
+    process.env.GCP_RECOVERY_ZONES ||
+    process.env.GCP_RECOVERY_ZONE ||
+    'us-central1-a,us-central1-b,us-central1-c,us-central1-f'
+  )
+    .split(',')
+    .map((zone) => zone.trim())
+    .filter(Boolean)
   return {
     projectId: required('GCP_RECOVERY_PROJECT_ID'),
     projectNumber: required('GCP_RECOVERY_PROJECT_NUMBER'),
-    zone: process.env.GCP_RECOVERY_ZONE || 'us-central1-a',
+    zone: zones[0],
+    zones: [...new Set(zones)],
     machineType: process.env.GCP_RECOVERY_MACHINE_TYPE || 'n2d-highcpu-2',
     workloadServiceAccount: required('GCP_RECOVERY_WORKLOAD_SERVICE_ACCOUNT'),
     workloadImage: required('GCP_RECOVERY_WORKLOAD_IMAGE'),
