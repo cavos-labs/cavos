@@ -89,7 +89,10 @@ export async function POST(request: Request) {
       return ApiResponse.badRequest('Invalid kind', { kind: body.kind });
     }
 
-    const resolvedApp = await resolveAppIdentifier(body.app_id);
+    // UUID app identifiers are otherwise resolved to their production
+    // environment by default. Pass the caller's environment hint so a
+    // development relay request is scoped to the matching app environment.
+    const resolvedApp = await resolveAppIdentifier(body.app_id, body.environment);
     if (!resolvedApp) return ApiResponse.unauthorized('Invalid App ID');
     const appId = resolvedApp.appId;
     if (
