@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { after, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createRecoveryVm } from '@/lib/recovery/social/google-compute'
 import { randomToken, tokenHash } from '@/lib/recovery/social/security'
@@ -6,7 +6,7 @@ import { providerPolicy } from '@/lib/recovery/social/config'
 import type { SocialRecoveryAction } from '@/lib/recovery/social/types'
 import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier'
 
-export const maxDuration = 60
+export const maxDuration = 300
 
 interface StartBody {
   app_id?: string
@@ -163,16 +163,21 @@ export async function POST(request: Request) {
     )
   }
 
-  try {
-    await createRecoveryVm({ sessionId, bootstrapToken, instanceName })
-  } catch (error) {
-    await admin
-      .from('social_recovery_sessions')
-      .update({ status: 'failed', error_code: 'vm_create_failed' })
-      .eq('id', sessionId)
-    console.error('[social-recovery] VM create failed', error)
-    return NextResponse.json({ error: 'confidential_vm_unavailable' }, { status: 503 })
-  }
+  // Compute insert operations can take longer than an HTTP request, especially
+  // when capacity fallback has to try multiple zones. Keep provisioning alive
+  // after returning the session so the browser can start polling immediately.
+  after(async () => {
+    try {
+      await createRecoveryVm({ sessionId, bootstrapToken, instanceName })
+    } catch (error) {
+      await admin
+        .from('social_recovery_sessions')
+        .update({ status: 'failed', error_code: 'vm_create_failed' })
+        .eq('id', sessionId)
+        .eq('status', 'starting')
+      console.error('[social-recovery] VM create failed', error)
+    }
+  })
 
   return NextResponse.json(
     {
