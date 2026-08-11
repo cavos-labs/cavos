@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { getRecoveryVm } from '@/lib/recovery/social/google-compute'
+import { getRecoveryVms } from '@/lib/recovery/social/google-compute'
 import { verifyWorkloadAttestation } from '@/lib/recovery/social/attestation'
 import {
   bearer,
@@ -70,31 +70,49 @@ export async function POST(request: Request) {
   }
 
   try {
-    const vm = await getRecoveryVm(session.vm_instance_name)
-    const claims = await verifyWorkloadAttestation({
-      token: body.attestation_token,
-      expectedNonce,
-      expectedInstanceId: vm.id,
-      expectedInstanceName: session.vm_instance_name,
-    })
+    const vms = await getRecoveryVms(session.vm_instance_name)
+    let verified:
+      | { vm: (typeof vms)[number]; claims: Awaited<ReturnType<typeof verifyWorkloadAttestation>> }
+      | undefined
+    let verificationError: unknown
+    for (const vm of vms) {
+      try {
+        const claims = await verifyWorkloadAttestation({
+          token: body.attestation_token,
+          expectedNonce,
+          expectedInstanceId: vm.id,
+          expectedInstanceName: session.vm_instance_name,
+        })
+        verified = { vm, claims }
+        break
+      } catch (error) {
+        verificationError = error
+      }
+    }
+    if (!verified) throw verificationError || new Error('attested VM not found')
     const workloadToken = randomToken()
-    const { error } = await admin
+    const { data: claimed, error } = await admin
       .from('social_recovery_sessions')
       .update({
         status: 'ready',
         workload_token_hash: tokenHash(workloadToken),
-        vm_instance_id: vm.id,
+        vm_instance_id: verified.vm.id,
         ephemeral_public_key: body.ephemeral_public_key_b64,
         attestation_nonce: expectedNonce,
         // The token contains no user credential or recovery secret. Retaining
         // it lets the SDK independently verify the enclave instead of trusting
         // this parsed representation.
-        attestation_claims: { ...claims, token: body.attestation_token },
+        attestation_claims: { ...verified.claims, token: body.attestation_token },
         ready_at: new Date().toISOString(),
       })
       .eq('id', session.id)
       .eq('status', 'starting')
+      .select('id')
+      .maybeSingle()
     if (error) throw error
+    if (!claimed) {
+      return NextResponse.json({ error: 'registration_already_claimed' }, { status: 409 })
+    }
     return NextResponse.json({ workload_token: workloadToken })
   } catch (error) {
     console.error('[social-recovery] workload attestation rejected', error)
