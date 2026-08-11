@@ -80,6 +80,50 @@ For non-zero timelocks, the SDK stores only the public `readyAt` timestamp,
 resumes after a refresh, and permissionlessly finalizes the already-committed
 signer when the on-chain delay expires. It never persists the social token.
 
+### Warming the enclave ahead of time
+
+Starting an enclave is the slowest part of enrollment and recovery, and it used
+to happen after the user had already signed in — with the user waiting. The SDK
+now reserves a worker **before** the login completes, so the cold start overlaps
+with the OAuth round trip instead of following it.
+
+`<CavosProvider>` does this for you. It fires a reservation alongside the login
+call and the OAuth callback, deduplicates concurrent attempts, and persists the
+reservation so a redirect flow reuses it. You do not need to call anything:
+
+```tsx title="app/provider.tsx"
+// Nothing to add — the provider prewarms whenever socialRecoveryAttestation
+// is configured. login(), sendOtp(), sendMagicLink() and the OAuth callback
+// each start or reuse a reservation.
+```
+
+Outside React, reserve the worker yourself and hand it to the client:
+
+```ts title="TypeScript"
+import { SocialRecoveryClient } from "@cavos/kit";
+
+const client = new SocialRecoveryClient({
+  appId,
+  environment: "production",
+  attestation, // the same pinned AttestationPolicy
+});
+
+// Call as early as you know recovery is likely — before the user authenticates.
+const prewarm = await client.prewarm();
+// { prewarmId, claimToken, expiresAt }
+```
+
+A reservation is claimed atomically by the next `enroll` or `recover`, and is
+useful exactly once. A reservation that has expired is replaced transparently on
+the next call.
+
+<Callout type="info">
+The reservation is created **before** the user authenticates, so it deliberately
+carries no identity, token, or wallet data — only an id, a single-use claim
+token, and an expiry. Prewarming is an optimization: if it fails, the SDK logs a
+warning and enrollment or recovery proceeds from a cold start.
+</Callout>
+
 <Callout type="warn">
 Describe this as **hardware-isolated, non-custodial recovery**, not “trustless
 recovery.” Cavos employees do not hold an accessible signing key, but the

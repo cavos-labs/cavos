@@ -86,7 +86,7 @@ socialRecoveryReadyAt }`. Gate any transaction on `walletStatus.isReady`.
 | `sendOtp(email)` | Send an email OTP code. |
 | `verifyOtp(email, code)` | Verify an OTP / complete a magic link and deploy the wallet. |
 | `sendMagicLink(email)` | Send a passwordless magic-link email. |
-| `handleCallback(authData)` | Resolve identity from an OAuth callback (`?auth_data=…`) and deploy. |
+| `handleCallback(authData, redirectUri?)` | Resolve identity from an OAuth callback (`?cavos_auth_code=…`) and deploy. Pass the callback URL as `redirectUri` if it differs from the current one. |
 
 ### Transactions
 

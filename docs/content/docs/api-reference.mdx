@@ -30,6 +30,7 @@ interface ConnectOptions {
   rpcUrl?: string;
   registry?: WalletRegistry;            // off-chain userId -> wallet map
   recovery?: RecoveryClient;            // device-approval relay (Starknet)
+  legacyDeviceApproval?: boolean;       // opt back into the pre-passkey approval flow
   createSigner?: (keyId: string) => Promise<DeviceSigner>; // native / tests
   // --- Starknet-only ---
   paymasterApiKey?: string;             // sponsors deploy + execute (required on Starknet)
@@ -43,6 +44,7 @@ interface ConnectOptions {
   stellarRelayer?: StellarRelayer;      // gasless sponsorship (defaults to hosted when appId set)
   stellarSourceKeypair?: StellarKeypair;// self-funded source/fee-payer (advanced)
   stellarDeviceKey?: DeviceUnwrapKey;   // this device's ECDH unwrap key (defaults to persisted WebCrypto)
+  createStellarDeviceKey?: (keyId: string) => Promise<DeviceUnwrapKey>; // native / tests
 }
 
 type CavosWallet = Cavos | CavosSolana | CavosStellar; // narrow on `wallet.chain`
@@ -73,7 +75,7 @@ counterpart is `CavosSolana` — see [Solana](/docs/solana).
 | `cavos.approveThisDeviceWithPasskey({ passkey, submit? }): Promise<{ transactionHash }>` | From a `needs-device-approval` browser, use a synced passkey to authorize this device. |
 | `cavos.passkeyLeafForThisDevice(): Promise<{ leaf, nonce }>` | This device's passkey leaf + on-chain nonce (for batched / multi-chain approval). |
 | `cavos.submitPasskeyApproval(assertion, leaves, leafIndex, nonce, submit?): Promise<{ transactionHash }>` | Submit `add_signer_via_passkey` with a shared assertion. Low-level; prefer `approveThisDeviceWithPasskey`. |
-| `cavos.setupRecovery(code): Promise<{ transactionHash } \| undefined>` | Register a passphrase-derived backup signer. Idempotent. (Starknet only.) |
+| `cavos.setupRecovery(code): Promise<{ transactionHash } \| undefined>` | Register a passphrase-derived backup signer. Idempotent. `CavosSolana` and `CavosStellar` expose the same method with their own factor — see [Recovery](/docs/recovery). |
 
 ### `Cavos.recover(options): Promise<Cavos>`
 
@@ -118,7 +120,23 @@ interface RecoveryOptions {
 | `InMemoryWalletRegistry`, `HttpWalletRegistry` | Registry implementations. |
 | `BackupSigner` | Passphrase-derived signer (`DeviceSigner`). |
 | `generateRecoveryCode()` | New high-entropy recovery code. |
-| `deriveBackupKey(code)` | Deterministic keypair from a recovery code.
+| `deriveBackupKey(code)` | Deterministic keypair from a recovery code. |
+
+### Hardware-isolated social recovery
+
+Optional, opt-in per environment. See [Recovery](/docs/recovery) for the trust
+model — this is hardware-isolated, non-custodial recovery, not trustless recovery.
+
+| Export | Description |
+|--------|-------------|
+| `SocialRecoveryClient` | Client for the Confidential Space recovery service. `prewarm()` reserves a warm enclave worker, `enroll({ walletAddress, credential, stellarDek? })`, `recover({ walletAddress, credential, authorizations?, stellarRecipientPublicKey? })`, `confirmEnrollment(sessionId, txHash)`. |
+| `SocialRecoveryClientOptions` | `{ appId, attestation, environment?, backendUrl?, prewarm? }`. Pass a reservation from a previous `prewarm()` to reuse it. |
+| `SocialRecoveryPrewarm` | `{ prewarmId, claimToken, expiresAt }` — a single-use reservation for an empty, already-attested worker. Carries no identity or wallet data. |
+| `AttestationPolicy` | The four values you pin yourself: `audience`, `imageDigest`, `projectNumber`, `serviceAccount`. Never learned from the API being attested. |
+| `enrollHardwareIsolatedRecovery`, `recoverHardwareIsolatedDevice` | Chain-aware coordinators wrapping enroll/recover, including timelock finalization. |
+| `CoordinatedRecoveryResult` | Result of a coordinated recovery, including a `readyAt` when a timelock applies. |
+| `SocialRecoveryCredential`, `createSocialRecoveryCredential` | The in-memory social credential handed to the enclave. Never persisted. |
+| `SocialRecoveryProvider`, `SocialRecoveryAction`, `SocialRecoveryResult` | `"google" \| "apple" \| "email"`, `"enroll" \| "recover"`, and the session outcome. |
 
 ## Passkeys
 
@@ -149,21 +167,6 @@ mainnet, fall back to [multi-device](/docs/multi-device) / [recovery](/docs/reco
 | `DeviceSigner`, `DevicePublicKey`, `DeviceSignature` | Signer types (shared across chains). |
 
 ## Chain adapters & constants
-
-## React Native exports
-
-| Export | Description |
-|--------|-------------|
-| `CavosProvider`, `useCavos`, `CavosAuthModal` | React Native context, hook, and native auth UI. |
-| `NativeCavosAuth` | Google, Apple, OTP, and magic-link auth through mobile callbacks. |
-| `NativeDeviceSigner` | Secure Enclave/Keychain or Android Keystore P-256 signer. |
-| `NativeDeviceUnwrapKey` | Separate P-256 ECDH key for Stellar envelopes. |
-| `NativePasskeySigner`, `NativePasskeyPrf` | AuthenticationServices/Credential Manager passkey adapters. |
-| `getNativeCapabilities()` | Reports signing, ECDH, passkey, and PRF support. |
-| `deleteDeviceKeys(keyId)` | Explicitly removes native device keys; `logout()` preserves them. |
-| `approveDeviceEverywhere` | Shared Starknet/Solana passkey approval helper. |
-
-See [React Native](/docs/react-native) for installation and native configuration.
 
 ### Starknet
 
@@ -216,6 +219,21 @@ testnet and mainnet.
 | `SignedTransaction`, `StarknetSignedTransaction`, `StellarSignedTransaction`, `SolanaSignedTransaction` | Sign-without-submit result, chain-specific (narrow on `chain`). |
 | `SignatureCurve` | `"secp256r1" \| "ed25519"` — which curve a `MessageSignature` was produced with. |
 | `CAVOS_MESSAGE_PREFIX`, `prefixedMessageBytes(message)` | The off-chain message prefix scheme (`"Cavos Signed Message:\n<len>\n"`). |
+
+## React Native exports (`@cavos/kit/react-native`)
+
+| Export | Description |
+|--------|-------------|
+| `CavosProvider`, `useCavos`, `CavosAuthModal` | React Native context, hook, and native auth UI. |
+| `NativeCavosAuth` | Google, Apple, OTP, and magic-link auth through mobile callbacks. |
+| `NativeDeviceSigner` | Secure Enclave/Keychain or Android Keystore P-256 signer. |
+| `NativeDeviceUnwrapKey` | Separate P-256 ECDH key for Stellar envelopes. |
+| `NativePasskeySigner`, `NativePasskeyPrf` | AuthenticationServices/Credential Manager passkey adapters. |
+| `getNativeCapabilities()` | Reports signing, ECDH, passkey, and PRF support. |
+| `deleteDeviceKeys(keyId)` | Explicitly removes native device keys; `logout()` preserves them. |
+| `approveDeviceEverywhere` | Shared Starknet/Solana passkey approval helper. |
+
+See [React Native](/docs/react-native) for installation and native configuration.
 
 ## React (`@cavos/kit/react`)
 
