@@ -15,7 +15,7 @@ import { ApiMiddleware } from '@/lib/api/middleware';
 import { checkRateLimit, clientIp } from '@/lib/api/rateLimit';
 import { canCreateWallet, resolveOrgForApp } from '@/lib/billing/limits';
 import { shouldBlock } from '@/lib/billing/enforce';
-import type { WalletSaveRequest, WalletGetRequest } from '@/lib/api/types';
+import type { WalletSaveRequest } from '@/lib/api/types';
 import { recordCavosEvent } from '@/lib/operations/events';
 import { StrKey } from '@stellar/stellar-sdk';
 
@@ -76,17 +76,24 @@ export async function GET(request: Request) {
             .eq('user_social_id', user_social_id)
             .eq('network', network);
         if (environment?.id) walletQuery = walletQuery.eq('environment_id', environment.id);
-        const { data, error } = await walletQuery.single();
+        // Multiple deterministic wallets may exist for the same social identity
+        // after an integrator intentionally rotates appSalt. Legacy lookup callers
+        // receive the most recently registered address; current chain adapters
+        // derive their address locally and use this endpoint only for bookkeeping.
+        const { data, error } = await walletQuery
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
         if (error) {
-            if (error.code === 'PGRST116') {
-                logger.info('Wallet not found');
-                logger.complete(true);
-                return ApiResponse.success({ found: false });
-            }
             logger.error('Database error', error);
             logger.complete(false);
             return ApiResponse.serverError('Failed to fetch wallet');
+        }
+        if (!data) {
+            logger.info('Wallet not found');
+            logger.complete(true);
+            return ApiResponse.success({ found: false });
         }
 
         logger.info('Wallet retrieved successfully');
@@ -177,8 +184,8 @@ export async function POST(request: Request) {
 
         // ── Billing gate ────────────────────────────────────────────────────
         // Only the creation of NEW wallets is gated. Existing wallets are always
-        // readable/signable. So we pre-check existence by the kit conflict key
-        // `(app_id, user_social_id, network)` and skip the gate on re-save.
+        // readable/signable. Include the deterministic address in the lookup:
+        // rotating appSalt creates a distinct wallet even for the same identity.
         // Resolves app_id → org internally; both SDKs already send app_id, so
         // this needs no SDK change. See lib/billing/limits.ts.
         const adminSupabase = createAdminClient();
@@ -189,6 +196,7 @@ export async function POST(request: Request) {
             .eq('environment_id', environment!.id)
             .eq('user_social_id', user_social_id)
             .eq('network', network)
+            .eq('address', address)
             .limit(1)
             .maybeSingle();
 
@@ -238,7 +246,7 @@ export async function POST(request: Request) {
         // Save wallet. (`email` was removed from the wallets table in the PII
         // cleanup migration; email-verification is tracked via email_verified*.)
         logger.debug('Saving wallet', { user_social_id, network, address });
-        const walletData: Record<string, any> = {
+        const walletData: Record<string, string | boolean | null> = {
             app_id: canonicalAppId,
             user_social_id,
             network,
@@ -256,7 +264,7 @@ export async function POST(request: Request) {
             .upsert(
                 walletData,
                 {
-                    onConflict: 'app_id,environment_id,user_social_id,network',
+                    onConflict: 'app_id,environment_id,user_social_id,network,address',
                     ignoreDuplicates: false
                 }
             )
