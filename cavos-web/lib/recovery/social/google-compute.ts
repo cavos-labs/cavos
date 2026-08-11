@@ -90,9 +90,8 @@ export async function createRecoveryVm(params: {
   const attempts = cfg.zones.map((zone) =>
     createInstanceInZone({ cfg, token, zone, metadata, ...params }).then(() => zone),
   )
-  let winner: string
   try {
-    winner = await Promise.any(attempts)
+    await Promise.any(attempts)
   } catch {
     const settled = await Promise.allSettled(attempts)
     const failures = settled.map((result, index) =>
@@ -103,17 +102,11 @@ export async function createRecoveryVm(params: {
     throw new Error(`Compute capacity unavailable in every configured zone: ${failures.join('; ')}`)
   }
 
-  // Let every insert operation settle, then remove successful hedges before
-  // Confidential Space finishes booting. The shared zonal name remains valid
-  // for attestation, while only the fastest successful VM stays alive.
-  const settled = await Promise.allSettled(attempts)
-  await Promise.allSettled(
-    settled.flatMap((result) =>
-      result.status === 'fulfilled' && result.value !== winner
-        ? [deleteRecoveryVmInZone(cfg.projectId, token, result.value, params.instanceName)]
-        : [],
-    ),
-  )
+  // Do not choose the winning hedge from Compute insert latency. A VM in a
+  // different zone may boot and attest first. The registration route records
+  // that attested instance id and removes every other hedge. Waiting for all
+  // inserts here also lets the caller run a second cleanup for late inserts.
+  await Promise.allSettled(attempts)
 }
 
 export async function getRecoveryVms(instanceName: string): Promise<Array<{
@@ -135,6 +128,34 @@ export async function deleteRecoveryVm(instanceName: string): Promise<void> {
     instances.map((instance) =>
       deleteRecoveryVmInZone(cfg.projectId, token, instance.zone, instanceName),
     ),
+  )
+}
+
+export async function deleteRecoveryVmHedges(
+  instanceName: string,
+  keepInstanceId: string,
+): Promise<void> {
+  const cfg = gcpRecoveryConfig()
+  const token = await accessToken(cfg.projectNumber)
+  const instances = await findRecoveryVms(cfg.projectId, token, instanceName)
+  await Promise.all(
+    instances
+      .filter((instance) => instance.id !== keepInstanceId)
+      .map((instance) =>
+        deleteRecoveryVmInZone(cfg.projectId, token, instance.zone, instanceName),
+      ),
+  )
+}
+
+export async function recoveryVmIsRunning(
+  instanceName: string,
+  instanceId: string,
+): Promise<boolean> {
+  const cfg = gcpRecoveryConfig()
+  const token = await accessToken(cfg.projectNumber)
+  const instances = await findRecoveryVms(cfg.projectId, token, instanceName)
+  return instances.some(
+    (instance) => instance.id === instanceId && instance.status === 'RUNNING',
   )
 }
 
