@@ -1,6 +1,9 @@
 import { after, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createRecoveryVm } from '@/lib/recovery/social/google-compute'
+import {
+  createRecoveryVm,
+  deleteRecoveryVmHedges,
+} from '@/lib/recovery/social/google-compute'
 import { randomToken, tokenHash, tokenMatches } from '@/lib/recovery/social/security'
 import { providerPolicy } from '@/lib/recovery/social/config'
 import { ensureRecoveryPool } from '@/lib/recovery/social/pool'
@@ -313,6 +316,19 @@ export async function POST(request: Request) {
   after(async () => {
     try {
       await createRecoveryVm({ sessionId, bootstrapToken, instanceName })
+      try {
+        const { data: session, error: sessionError } = await admin
+          .from('social_recovery_sessions')
+          .select('vm_instance_id')
+          .eq('id', sessionId)
+          .maybeSingle()
+        if (sessionError) throw sessionError
+        if (session?.vm_instance_id) {
+          await deleteRecoveryVmHedges(instanceName, session.vm_instance_id)
+        }
+      } catch (error) {
+        console.error('[social-recovery] post-provision hedge cleanup failed', error)
+      }
     } catch (error) {
       await admin
         .from('social_recovery_sessions')

@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { getRecoveryVms } from '@/lib/recovery/social/google-compute'
+import {
+  deleteRecoveryVmHedges,
+  getRecoveryVms,
+} from '@/lib/recovery/social/google-compute'
 import { verifyWorkloadAttestation } from '@/lib/recovery/social/attestation'
 import {
   bearer,
@@ -112,6 +115,13 @@ export async function POST(request: Request) {
     if (error) throw error
     if (!claimed) {
       return NextResponse.json({ error: 'registration_already_claimed' }, { status: 409 })
+    }
+    try {
+      await deleteRecoveryVmHedges(session.vm_instance_name, verified.vm.id)
+    } catch (error) {
+      // Registration is already committed. A later post-provision cleanup and
+      // scheduled cleanup both retry removal of non-attested hedges.
+      console.error('[social-recovery] workload hedge cleanup failed', error)
     }
     return NextResponse.json({ workload_token: workloadToken })
   } catch (error) {

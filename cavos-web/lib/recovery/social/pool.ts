@@ -1,5 +1,10 @@
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createRecoveryVm } from './google-compute'
+import {
+  createRecoveryVm,
+  deleteRecoveryVm,
+  deleteRecoveryVmHedges,
+  recoveryVmIsRunning,
+} from './google-compute'
 import { randomToken, tokenHash } from './security'
 
 const POOL_LIFETIME_MS = 50 * 60_000
@@ -17,6 +22,57 @@ export interface PoolMaintenanceResult {
   target: number
   created: string[]
   failed: string[]
+  reconciled: string[]
+}
+
+async function reconcileReadyWorkers(): Promise<string[]> {
+  const admin = createAdminClient()
+  const { data: workers, error } = await admin
+    .from('social_recovery_sessions')
+    .select('id, vm_instance_name, vm_instance_id')
+    .eq('status', 'ready')
+    .eq('pool_slot', true)
+    .is('wallet_id', null)
+    .limit(4)
+  if (error) throw new Error(`warm-pool reconciliation failed: ${error.message}`)
+
+  const reconciled: string[] = []
+  for (const worker of workers || []) {
+    let running = false
+    try {
+      running = Boolean(
+        worker.vm_instance_id &&
+          (await recoveryVmIsRunning(worker.vm_instance_name, worker.vm_instance_id)),
+      )
+    } catch (error) {
+      // A transient Compute API failure must not evict a healthy worker.
+      console.error('[social-recovery] warm-pool health check failed', worker.id, error)
+      continue
+    }
+    if (running) continue
+
+    const { data: failed, error: updateError } = await admin
+      .from('social_recovery_sessions')
+      .update({ status: 'failed', error_code: 'pool_vm_unavailable' })
+      .eq('id', worker.id)
+      .eq('status', 'ready')
+      .eq('pool_slot', true)
+      .is('wallet_id', null)
+      .select('id')
+      .maybeSingle()
+    if (updateError) {
+      throw new Error(`warm-pool reconciliation update failed: ${updateError.message}`)
+    }
+    if (!failed) continue
+
+    reconciled.push(worker.id)
+    try {
+      await deleteRecoveryVm(worker.vm_instance_name)
+    } catch (error) {
+      console.error('[social-recovery] unhealthy warm-pool VM cleanup failed', worker.id, error)
+    }
+  }
+  return reconciled
 }
 
 /**
@@ -27,6 +83,7 @@ export interface PoolMaintenanceResult {
 export async function ensureRecoveryPool(): Promise<PoolMaintenanceResult> {
   const admin = createAdminClient()
   const target = targetSize()
+  const reconciled = await reconcileReadyWorkers()
   const reservations: Array<{
     id: string
     bootstrapToken: string
@@ -62,6 +119,22 @@ export async function ensureRecoveryPool(): Promise<PoolMaintenanceResult> {
           jobTimeoutSeconds: POOL_JOB_TIMEOUT_SECONDS,
           poolWorker: true,
         })
+        try {
+          const { data: session, error: sessionError } = await admin
+            .from('social_recovery_sessions')
+            .select('vm_instance_id')
+            .eq('id', reservation.id)
+            .maybeSingle()
+          if (sessionError) throw sessionError
+          if (session?.vm_instance_id) {
+            await deleteRecoveryVmHedges(
+              reservation.instanceName,
+              session.vm_instance_id,
+            )
+          }
+        } catch (error) {
+          console.error('[social-recovery] post-provision hedge cleanup failed', error)
+        }
         created.push(reservation.id)
       } catch (error) {
         failed.push(reservation.id)
@@ -74,5 +147,5 @@ export async function ensureRecoveryPool(): Promise<PoolMaintenanceResult> {
       }
     }),
   )
-  return { target, created, failed }
+  return { target, created, failed, reconciled }
 }
