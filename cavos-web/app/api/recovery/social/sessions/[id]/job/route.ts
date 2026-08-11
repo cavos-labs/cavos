@@ -32,10 +32,13 @@ export async function POST(
   const admin = createAdminClient()
   const { data: session } = await admin
     .from('social_recovery_sessions')
-    .select('status, expires_at')
+    .select('wallet_id, action, status, expires_at')
     .eq('id', id)
     .maybeSingle()
   if (!session) return NextResponse.json({ error: 'session_not_found' }, { status: 404 })
+  if (!session.wallet_id || !session.action) {
+    return NextResponse.json({ error: 'prewarm_not_claimed' }, { status: 409 })
+  }
   if (session.status !== 'ready') {
     return NextResponse.json({ error: 'session_not_ready' }, { status: 409 })
   }

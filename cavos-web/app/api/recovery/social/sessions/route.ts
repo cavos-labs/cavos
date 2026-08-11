@@ -1,7 +1,7 @@
 import { after, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createRecoveryVm } from '@/lib/recovery/social/google-compute'
-import { randomToken, tokenHash } from '@/lib/recovery/social/security'
+import { randomToken, tokenHash, tokenMatches } from '@/lib/recovery/social/security'
 import { providerPolicy } from '@/lib/recovery/social/config'
 import type { SocialRecoveryAction } from '@/lib/recovery/social/types'
 import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier'
@@ -16,6 +16,9 @@ interface StartBody {
   action?: SocialRecoveryAction
   /** Base64url SHA-256 of the fresh provider ID token; never the token itself. */
   auth_challenge?: string
+  /** Short-lived capability returned before OAuth. It contains no user data. */
+  prewarm_id?: string
+  prewarm_token?: string
 }
 
 export async function POST(request: Request) {
@@ -128,6 +131,75 @@ export async function POST(request: Request) {
     .gte('created_at', hourAgo)
   if ((walletStarts || 0) >= 5) {
     return NextResponse.json({ error: 'recovery_rate_limited' }, { status: 429 })
+  }
+
+  // Claim an already-attested worker that started while the browser was inside
+  // OAuth. The UUID alone is not authority: the browser must present the
+  // independently generated claim token, and app/environment/provider are
+  // fixed before the VM boots. The all-fields update changes a prewarm into a
+  // normal session atomically, preserving the session-bound attestation nonce.
+  if (body.prewarm_id && body.prewarm_token) {
+    const { data: prewarm } = await admin
+      .from('social_recovery_sessions')
+      .select(
+        'id, app_id, environment_id, provider, status, prewarm_token_hash, expires_at',
+      )
+      .eq('id', body.prewarm_id)
+      .is('wallet_id', null)
+      .maybeSingle()
+    if (
+      prewarm &&
+      prewarm.app_id === appId &&
+      prewarm.environment_id === environment.id &&
+      prewarm.provider === environmentPolicy.social_recovery_provider &&
+      ['starting', 'ready'].includes(prewarm.status) &&
+      new Date(prewarm.expires_at).getTime() > Date.now() &&
+      tokenMatches(body.prewarm_token, prewarm.prewarm_token_hash)
+    ) {
+      const { data: claimed, error: claimError } = await admin
+        .from('social_recovery_sessions')
+        .update({
+          wallet_id: wallet.id,
+          action: body.action,
+          auth_challenge_hash: authChallengeHash,
+          prewarm_token_hash: null,
+          prewarm_request_hash: null,
+          claimed_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 15 * 60_000).toISOString(),
+        })
+        .eq('id', prewarm.id)
+        .eq('prewarm_token_hash', prewarm.prewarm_token_hash)
+        .is('wallet_id', null)
+        .in('status', ['starting', 'ready'])
+        .select('id, status')
+        .maybeSingle()
+      if (claimError) {
+        const conflict = claimError.code === '23505'
+        return NextResponse.json(
+          { error: conflict ? 'recovery_already_in_progress' : 'prewarm_claim_failed' },
+          { status: conflict ? 409 : 500 },
+        )
+      }
+      if (claimed) {
+        return NextResponse.json(
+          {
+            session_id: claimed.id,
+            status: claimed.status,
+            action: body.action,
+            provider: environmentPolicy.social_recovery_provider,
+            policy: {
+              app_id: appId,
+              environment_id: environment.id,
+              ...providerPolicy(environmentPolicy.social_recovery_provider),
+            },
+            delay_seconds: environmentPolicy.social_recovery_delay_seconds,
+            expires_at: new Date(Date.now() + 15 * 60_000).toISOString(),
+            prewarm_claimed: true,
+          },
+          { status: claimed.status === 'ready' ? 200 : 202 },
+        )
+      }
+    }
   }
 
   const sessionId = crypto.randomUUID()

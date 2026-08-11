@@ -81,50 +81,60 @@ export async function createRecoveryVm(params: {
     { key: 'tee-env-CAVOS_KMS_KEY_NAME', value: cfg.kmsKeyName },
     { key: 'tee-env-CAVOS_WIF_AUDIENCE', value: cfg.wifAudience },
   ]
-  const failures: string[] = []
-  for (const zone of cfg.zones) {
-    try {
-      await createInstanceInZone({ cfg, token, zone, metadata, ...params })
-      return
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      failures.push(`${zone}: ${message}`)
-      if (!isCapacityFailure(message)) throw error
-    }
+  const attempts = cfg.zones.map((zone) =>
+    createInstanceInZone({ cfg, token, zone, metadata, ...params }).then(() => zone),
+  )
+  let winner: string
+  try {
+    winner = await Promise.any(attempts)
+  } catch {
+    const settled = await Promise.allSettled(attempts)
+    const failures = settled.map((result, index) =>
+      `${cfg.zones[index]}: ${
+        result.status === 'rejected' ? String(result.reason) : 'unexpected success'
+      }`,
+    )
+    throw new Error(`Compute capacity unavailable in every configured zone: ${failures.join('; ')}`)
   }
-  throw new Error(`Compute capacity unavailable in every configured zone: ${failures.join('; ')}`)
+
+  // Let every insert operation settle, then remove successful hedges before
+  // Confidential Space finishes booting. The shared zonal name remains valid
+  // for attestation, while only the fastest successful VM stays alive.
+  const settled = await Promise.allSettled(attempts)
+  await Promise.allSettled(
+    settled.flatMap((result) =>
+      result.status === 'fulfilled' && result.value !== winner
+        ? [deleteRecoveryVmInZone(cfg.projectId, token, result.value, params.instanceName)]
+        : [],
+    ),
+  )
 }
 
-export async function getRecoveryVm(instanceName: string): Promise<{
+export async function getRecoveryVms(instanceName: string): Promise<Array<{
   id: string
   status: string
-}> {
+}>> {
   const cfg = gcpRecoveryConfig()
   const token = await accessToken(cfg.projectNumber)
-  const instance = await findRecoveryVm(cfg.projectId, token, instanceName)
-  if (!instance) throw new Error('Compute instance get failed (404)')
-  return { id: String(instance.id), status: instance.status }
+  const instances = await findRecoveryVms(cfg.projectId, token, instanceName)
+  if (instances.length === 0) throw new Error('Compute instance get failed (404)')
+  return instances.map((instance) => ({ id: String(instance.id), status: instance.status }))
 }
 
 export async function deleteRecoveryVm(instanceName: string): Promise<void> {
   const cfg = gcpRecoveryConfig()
   const token = await accessToken(cfg.projectNumber)
-  const instance = await findRecoveryVm(cfg.projectId, token, instanceName)
-  if (!instance) return
-  const response = await fetch(
-    `https://compute.googleapis.com/compute/v1/projects/${encodeURIComponent(cfg.projectId)}/zones/${encodeURIComponent(instance.zone)}/instances/${encodeURIComponent(instanceName)}`,
-    {
-      method: 'DELETE',
-      headers: { authorization: `Bearer ${token}` },
-    },
+  const instances = await findRecoveryVms(cfg.projectId, token, instanceName)
+  await Promise.all(
+    instances.map((instance) =>
+      deleteRecoveryVmInZone(cfg.projectId, token, instance.zone, instanceName),
+    ),
   )
-  if (!response.ok && response.status !== 404) {
-    throw new Error(`Compute instance delete failed (${response.status}): ${await response.text()}`)
-  }
 }
 
 interface RecoveryConfig {
   projectId: string
+  zones: string[]
   machineType: string
   workloadServiceAccount: string
 }
@@ -163,6 +173,8 @@ async function createInstanceInZone(params: {
         automaticRestart: false,
         onHostMaintenance: 'MIGRATE',
         provisioningModel: 'STANDARD',
+        maxRunDuration: { seconds: '300' },
+        instanceTerminationAction: 'STOP',
       },
       shieldedInstanceConfig: {
         enableSecureBoot: true,
@@ -240,15 +252,26 @@ async function waitForZoneOperation(
   throw new Error(`Compute instance create timed out in ${zone}`)
 }
 
-function isCapacityFailure(message: string): boolean {
-  return /ZONE_RESOURCE_POOL_EXHAUSTED|RESOURCE_POOL_EXHAUSTED|resource_availability/i.test(message)
+async function deleteRecoveryVmInZone(
+  projectId: string,
+  token: string,
+  zone: string,
+  instanceName: string,
+): Promise<void> {
+  const response = await fetch(
+    `https://compute.googleapis.com/compute/v1/projects/${encodeURIComponent(projectId)}/zones/${encodeURIComponent(zone)}/instances/${encodeURIComponent(instanceName)}`,
+    { method: 'DELETE', headers: { authorization: `Bearer ${token}` } },
+  )
+  if (!response.ok && response.status !== 404) {
+    throw new Error(`Compute instance delete failed (${response.status}): ${await response.text()}`)
+  }
 }
 
-async function findRecoveryVm(
+async function findRecoveryVms(
   projectId: string,
   token: string,
   instanceName: string,
-): Promise<{ id: string; status: string; zone: string } | null> {
+): Promise<Array<{ id: string; status: string; zone: string }>> {
   const response = await fetch(
     `https://compute.googleapis.com/compute/v1/projects/${encodeURIComponent(projectId)}/aggregated/instances?filter=${encodeURIComponent(`name = ${instanceName}`)}`,
     { headers: { authorization: `Bearer ${token}` }, cache: 'no-store' },
@@ -259,14 +282,15 @@ async function findRecoveryVm(
   const body = (await response.json()) as {
     items?: Record<string, { instances?: Array<{ id: string; name: string; status: string; zone?: string }> }>
   }
+  const matches: Array<{ id: string; status: string; zone: string }> = []
   for (const [scope, group] of Object.entries(body.items || {})) {
     const instance = group.instances?.find((candidate) => candidate.name === instanceName)
     if (!instance) continue
-    return {
+    matches.push({
       id: String(instance.id),
       status: instance.status,
       zone: (instance.zone || scope).split('/').at(-1) || scope,
-    }
+    })
   }
-  return null
+  return matches
 }
