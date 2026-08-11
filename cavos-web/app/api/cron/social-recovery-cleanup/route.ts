@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { deleteRecoveryVm } from '@/lib/recovery/social/google-compute'
+import { ensureRecoveryPool } from '@/lib/recovery/social/pool'
 
 export async function GET(request: Request) {
   const auth = request.headers.get('authorization')
@@ -40,5 +41,11 @@ export async function GET(request: Request) {
     }
   }
   // Keep the audit/session row; a repeated DELETE is safe and returns 404.
-  return NextResponse.json({ inspected: stale?.length || 0, deleted, failed })
+  let pool
+  try {
+    pool = await ensureRecoveryPool()
+  } catch (poolError) {
+    console.error('[social-recovery] warm-pool refill during cleanup failed', poolError)
+  }
+  return NextResponse.json({ inspected: stale?.length || 0, deleted, failed, pool })
 }

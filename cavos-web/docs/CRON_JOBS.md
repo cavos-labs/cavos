@@ -22,6 +22,8 @@ Jobs:
 - `cavos-sync-jwks`: daily at midnight UTC.
 - `cavos-social-recovery-cleanup`: every five minutes; expires abandoned
   sessions and deletes their ephemeral Confidential Space VMs.
+- `cavos-social-recovery-warm-pool`: every minute; keeps empty, one-shot
+  Confidential Space workers attested and ready before OAuth.
 - `rollup-prune-operational-events`: daily at 02:20 UTC, entirely inside Postgres.
 
 Inspect recent HTTP calls through `net._http_response` and schedules through `cron.job`.

@@ -4,7 +4,10 @@ mod launcher;
 mod oidc;
 mod protocol;
 
-use std::{env, time::Duration};
+use std::{
+    env,
+    time::{Duration, Instant},
+};
 
 use anyhow::{bail, Context, Result};
 use p256::{ecdsa::SigningKey, SecretKey};
@@ -22,6 +25,7 @@ struct Config {
     attestation_audience: String,
     kms_key_name: String,
     wif_audience: String,
+    job_timeout: Duration,
 }
 
 impl Config {
@@ -33,6 +37,10 @@ impl Config {
             attestation_audience: required("CAVOS_ATTESTATION_AUDIENCE")?,
             kms_key_name: required("CAVOS_KMS_KEY_NAME")?,
             wif_audience: required("CAVOS_WIF_AUDIENCE")?,
+            job_timeout: Duration::from_secs(optional_u64(
+                "CAVOS_RECOVERY_JOB_TIMEOUT_SECONDS",
+                360,
+            )?),
         })
     }
 }
@@ -48,17 +56,17 @@ async fn main() {
 
 async fn run() -> Result<()> {
     let config = Config::from_env()?;
-    let http = Client::builder()
-        .timeout(Duration::from_secs(30))
-        .build()?;
+    let http = Client::builder().timeout(Duration::from_secs(30)).build()?;
     let channel = crypto::ChannelKey::generate();
     let attestation_nonce = channel.attestation_nonce(&config.session_id);
     let nonce_b64 = crypto::b64(attestation_nonce);
-    let attestation = launcher::attestation_token(
-        &config.attestation_audience,
-        vec![nonce_b64.as_str()],
-    )
-    .await?;
+    let attestation =
+        launcher::attestation_token(&config.attestation_audience, vec![nonce_b64.as_str()]).await?;
+    // Mark the worker ready only after the measured workload has already
+    // obtained its short-lived KMS authority. This moves STS/attestation out
+    // of the post-login critical path.
+    let kms = kms::KmsClient::new(config.kms_key_name.clone(), config.wif_audience.clone());
+    kms.warm_up().await.context("KMS warm-up failed")?;
 
     let registration = WorkloadRegistration {
         session_id: config.session_id.clone(),
@@ -66,7 +74,10 @@ async fn run() -> Result<()> {
         attestation_token: attestation,
         attestation_nonce_b64: nonce_b64,
     };
-    let register_url = endpoint(&config.control_plane_url, "/api/recovery/social/workload/register");
+    let register_url = endpoint(
+        &config.control_plane_url,
+        "/api/recovery/social/workload/register",
+    );
     let response = http
         .post(register_url)
         .bearer_auth(&config.bootstrap_token)
@@ -84,15 +95,15 @@ async fn run() -> Result<()> {
             .workload_token,
     );
 
-    let (encrypted_job, auth_challenge_hash) =
-        poll_job(&http, &config, &workload_token).await?;
+    let (encrypted_job, auth_challenge_hash) = poll_job(&http, &config, &workload_token).await?;
     let plaintext = decrypt_job(&channel, &config.session_id, encrypted_job)?;
-    let job: WorkloadJob =
-        serde_json::from_slice(&plaintext).context("invalid recovery job")?;
-    let kms = kms::KmsClient::new(config.kms_key_name, config.wif_audience);
+    let job: WorkloadJob = serde_json::from_slice(&plaintext).context("invalid recovery job")?;
     let result = process_job(&http, &kms, job, &auth_challenge_hash).await?;
 
-    let complete_url = endpoint(&config.control_plane_url, "/api/recovery/social/workload/complete");
+    let complete_url = endpoint(
+        &config.control_plane_url,
+        "/api/recovery/social/workload/complete",
+    );
     let response = http
         .post(complete_url)
         .bearer_auth(workload_token.as_str())
@@ -107,30 +118,54 @@ async fn run() -> Result<()> {
     Ok(())
 }
 
-async fn poll_job(
-    http: &Client,
-    config: &Config,
-    token: &str,
-) -> Result<(EncryptedJob, String)> {
-    let url = endpoint(&config.control_plane_url, "/api/recovery/social/workload/job");
-    for _ in 0..180 {
-        let response = http
+async fn poll_job(http: &Client, config: &Config, token: &str) -> Result<(EncryptedJob, String)> {
+    let url = endpoint(
+        &config.control_plane_url,
+        "/api/recovery/social/workload/job",
+    );
+    let deadline = Instant::now() + config.job_timeout;
+    while Instant::now() < deadline {
+        let response = match http
             .get(&url)
             .bearer_auth(token)
             .header("x-cavos-recovery-session", &config.session_id)
             .send()
-            .await?;
-        if !response.status().is_success() {
+            .await
+        {
+            Ok(response) => response,
+            Err(_) => {
+                tokio::time::sleep(Duration::from_secs(1)).await;
+                continue;
+            }
+        };
+        if response.status().as_u16() == 401 || response.status().as_u16() == 410 {
             bail!("workload job poll rejected: {}", response.status());
         }
-        let response = response.json::<JobResponse>().await?;
+        if !response.status().is_success() {
+            tokio::time::sleep(Duration::from_secs(1)).await;
+            continue;
+        }
+        let response = match response.json::<JobResponse>().await {
+            Ok(response) => response,
+            Err(_) => {
+                tokio::time::sleep(Duration::from_secs(1)).await;
+                continue;
+            }
+        };
         if let Some(job) = response.job {
             let challenge_hash = response
                 .auth_challenge_hash
                 .context("recovery job omitted auth challenge")?;
             return Ok((job, challenge_hash));
         }
-        tokio::time::sleep(Duration::from_secs(2)).await;
+        // Idle pool workers poll cheaply. Once reserved before OAuth, switch to
+        // a tight poll so encrypted job delivery adds at most 200 ms.
+        tokio::time::sleep(if response.active {
+            Duration::from_millis(200)
+        } else {
+            Duration::from_secs(1)
+        })
+        .await;
     }
     bail!("recovery job timed out")
 }
@@ -164,8 +199,7 @@ async fn process_job(
                 bail!("credential provider does not match policy");
             }
             let claims =
-                oidc::verify_id_token(http, &credential, &policy, auth_challenge_hash)
-                    .await?;
+                oidc::verify_id_token(http, &credential, &policy, auth_challenge_hash).await?;
             let identity = crypto::identity_commitment(&policy, &claims.sub);
             let policy_digest = crypto::policy_hash(&policy);
             let recovery_key = crypto::generate_recovery_key();
@@ -207,13 +241,9 @@ async fn process_job(
             if record.version != 1 || credential.provider != record.policy.provider {
                 bail!("sealed recovery policy mismatch");
             }
-            let claims = oidc::verify_id_token(
-                http,
-                &credential,
-                &record.policy,
-                auth_challenge_hash,
-            )
-            .await?;
+            let claims =
+                oidc::verify_id_token(http, &credential, &record.policy, auth_challenge_hash)
+                    .await?;
             let identity = crypto::identity_commitment(&record.policy, &claims.sub);
             if crypto::hex(&identity) != record.identity_commitment_hex {
                 bail!("social identity does not match enrolled identity");
@@ -226,17 +256,15 @@ async fn process_job(
             for authorization in &authorizations {
                 signed.push(crypto::sign_authorization(&signing_key, authorization)?);
             }
-            let stellar_device_wrap_b64 = match (
-                record.stellar_dek_b64,
-                stellar_recipient_pubkey_b64,
-            ) {
-                (Some(dek), Some(recipient)) => Some(crypto::b64(crypto::stellar_wrap(
-                    &crypto::unb64(&dek)?,
-                    &crypto::unb64(&recipient)?,
-                )?)),
-                (None, None) => None,
-                _ => bail!("Stellar recovery inputs are incomplete"),
-            };
+            let stellar_device_wrap_b64 =
+                match (record.stellar_dek_b64, stellar_recipient_pubkey_b64) {
+                    (Some(dek), Some(recipient)) => Some(crypto::b64(crypto::stellar_wrap(
+                        &crypto::unb64(&dek)?,
+                        &crypto::unb64(&recipient)?,
+                    )?)),
+                    (None, None) => None,
+                    _ => bail!("Stellar recovery inputs are incomplete"),
+                };
             Ok(WorkloadResult::Recovered {
                 identity_commitment_hex: crypto::hex(&identity),
                 authorizations: signed,
@@ -248,6 +276,16 @@ async fn process_job(
 
 fn required(name: &str) -> Result<String> {
     env::var(name).with_context(|| format!("required environment variable {name} is missing"))
+}
+
+fn optional_u64(name: &str, default: u64) -> Result<u64> {
+    match env::var(name) {
+        Ok(value) => value
+            .parse::<u64>()
+            .with_context(|| format!("environment variable {name} must be an integer")),
+        Err(env::VarError::NotPresent) => Ok(default),
+        Err(error) => Err(error).with_context(|| format!("could not read {name}")),
+    }
 }
 
 fn endpoint(base: &str, path: &str) -> String {

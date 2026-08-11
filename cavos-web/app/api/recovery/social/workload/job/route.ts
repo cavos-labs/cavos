@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   const admin = createAdminClient()
   const { data: session } = await admin
     .from('social_recovery_sessions')
-    .select('status, workload_token_hash, auth_challenge_hash, encrypted_job, expires_at')
+    .select('status, pool_slot, workload_token_hash, auth_challenge_hash, encrypted_job, expires_at')
     .eq('id', sessionId)
     .maybeSingle()
   if (!session || !tokenMatches(token, session.workload_token_hash)) {
@@ -20,7 +20,9 @@ export async function GET(request: Request) {
   if (new Date(session.expires_at).getTime() <= Date.now()) {
     return NextResponse.json({ error: 'session_expired' }, { status: 410 })
   }
-  if (session.status === 'ready') return NextResponse.json({ job: null })
+  if (session.status === 'ready') {
+    return NextResponse.json({ job: null, active: !session.pool_slot })
+  }
   if (session.status !== 'processing' || !session.encrypted_job) {
     return NextResponse.json({ error: 'session_not_processable' }, { status: 409 })
   }

@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { createRecoveryVm } from '@/lib/recovery/social/google-compute'
 import { randomToken, tokenHash, tokenMatches } from '@/lib/recovery/social/security'
 import { providerPolicy } from '@/lib/recovery/social/config'
+import { ensureRecoveryPool } from '@/lib/recovery/social/pool'
 import type { SocialRecoveryAction } from '@/lib/recovery/social/types'
 import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier'
 
@@ -198,6 +199,77 @@ export async function POST(request: Request) {
           },
           { status: claimed.status === 'ready' ? 200 : 202 },
         )
+      }
+    }
+  }
+
+  // Direct SDK consumers may start a recovery without explicitly calling
+  // prewarm(). Claim a ready global worker here as a second fast path.
+  const implicitClaimToken = randomToken()
+  const implicitExpiresAt = new Date(Date.now() + 15 * 60_000).toISOString()
+  const { data: poolRows, error: poolClaimError } = await admin.rpc(
+    'claim_social_recovery_pool_slot',
+    {
+      p_app_id: appId,
+      p_environment_id: environment.id,
+      p_provider: environmentPolicy.social_recovery_provider,
+      p_delay_seconds: environmentPolicy.social_recovery_delay_seconds,
+      p_claim_token_hash: tokenHash(implicitClaimToken),
+      p_request_hash: tokenHash(`session:${wallet.id}`),
+      p_expires_at: implicitExpiresAt,
+    },
+  )
+  if (poolClaimError) {
+    console.error('[social-recovery] implicit warm-pool claim failed', poolClaimError)
+  } else {
+    const pool = Array.isArray(poolRows) ? poolRows[0] : poolRows
+    if (pool?.id) {
+      const { data: claimed, error: claimError } = await admin
+        .from('social_recovery_sessions')
+        .update({
+          wallet_id: wallet.id,
+          action: body.action,
+          auth_challenge_hash: authChallengeHash,
+          prewarm_token_hash: null,
+          prewarm_request_hash: null,
+          claimed_at: new Date().toISOString(),
+          expires_at: implicitExpiresAt,
+        })
+        .eq('id', pool.id)
+        .eq('prewarm_token_hash', tokenHash(implicitClaimToken))
+        .is('wallet_id', null)
+        .eq('status', 'ready')
+        .select('id, status')
+        .maybeSingle()
+      if (claimError) {
+        const conflict = claimError.code === '23505'
+        return NextResponse.json(
+          { error: conflict ? 'recovery_already_in_progress' : 'warm_pool_claim_failed' },
+          { status: conflict ? 409 : 500 },
+        )
+      }
+      if (claimed) {
+        after(async () => {
+          try {
+            await ensureRecoveryPool()
+          } catch (error) {
+            console.error('[social-recovery] warm-pool refill failed', error)
+          }
+        })
+        return NextResponse.json({
+          session_id: claimed.id,
+          status: claimed.status,
+          action: body.action,
+          provider: environmentPolicy.social_recovery_provider,
+          policy: {
+            app_id: appId,
+            environment_id: environment.id,
+            ...providerPolicy(environmentPolicy.social_recovery_provider),
+          },
+          delay_seconds: environmentPolicy.social_recovery_delay_seconds,
+          expires_at: implicitExpiresAt,
+          warm_pool_claimed: true,
+        })
       }
     }
   }
