@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
 import { validateAppRedirect, resolveAppIdForRedirect } from '@/lib/oauth/redirects';
 import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier';
+import { signOAuthState } from '@/lib/oauth/state';
 
 /**
  * Direct Apple OAuth initiation for ZK Login
@@ -17,10 +18,12 @@ import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier';
 
 export async function GET(request: NextRequest) {
   try {
+    const callbackMode = request.nextUrl.searchParams.get('cavos_callback_mode') === 'code'
+      ? 'code'
+      : 'legacy';
     const nonce = request.nextUrl.searchParams.get('nonce');
     const redirectUri = request.nextUrl.searchParams.get('redirect_uri');
     let appId = request.nextUrl.searchParams.get('app_id');
-    const state = request.nextUrl.searchParams.get('state');
 
     // Back-compat: older SDK clients omit app_id. Recover it from the redirect_uri.
     if (!appId && redirectUri) appId = await resolveAppIdForRedirect(redirectUri);
@@ -46,7 +49,8 @@ export async function GET(request: NextRequest) {
       if (!resolved) throw new Error('Invalid app_id');
       appId = resolved.appId;
     }
-    await validateAppRedirect(appId, redirectUri);
+    if (callbackMode === 'code' && !appId) throw new Error('Secure OAuth requires app_id');
+    await validateAppRedirect(appId, redirectUri, callbackMode === 'code');
 
     const appleClientId = process.env.APPLE_CLIENT_ID;
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
@@ -59,7 +63,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Generate CSRF state if not provided
-    const csrfState = state || randomBytes(16).toString('hex');
+    const csrfState = randomBytes(16).toString('hex');
 
     // Build callback URL
     const callbackUrl = `${baseUrl}/api/oauth/apple/callback`;
@@ -80,13 +84,14 @@ export async function GET(request: NextRequest) {
     url.searchParams.set('nonce', nonce);
 
     // Encode final_redirect_uri and nonce in state for callback to use
-    const statePayload = JSON.stringify({
+    const statePayload = signOAuthState({
       csrf: csrfState,
       redirect_uri: redirectUri,
       nonce: nonce, // Original nonce for verification
       app_id: appId,
+      callback_mode: callbackMode,
     });
-    url.searchParams.set('state', Buffer.from(statePayload).toString('base64url'));
+    url.searchParams.set('state', statePayload);
 
     // Return the URL for the client to redirect to
     return NextResponse.json({ url: url.toString() });

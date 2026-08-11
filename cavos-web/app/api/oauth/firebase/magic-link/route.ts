@@ -11,6 +11,7 @@ import { auth } from '@/lib/firebase-admin';
 import { sendMagicLinkEmail } from '@/lib/email/magic-link';
 import { validateAppRedirect } from '@/lib/oauth/redirects';
 import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier';
+import { signOAuthState } from '@/lib/oauth/state';
 
 // In-memory rate limiter: 1 request per email+app_id per 60s
 const rateLimitMap = new Map<string, number>();
@@ -32,6 +33,7 @@ function checkRateLimit(key: string): { allowed: boolean; waitSeconds: number } 
 
 export async function POST(request: NextRequest) {
   try {
+    const callbackMode = request.nextUrl.pathname.includes('/v2/') ? 'code' : 'legacy';
     const { email, nonce, app_id, redirect_uri } = await request.json();
 
     if (!email || !nonce || !app_id) {
@@ -45,7 +47,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid app_id' }, { status: 400 });
     }
     const canonicalAppId = resolvedApp.appId;
-    if (redirect_uri) await validateAppRedirect(canonicalAppId, redirect_uri);
+    if (redirect_uri) await validateAppRedirect(canonicalAppId, redirect_uri, callbackMode === 'code');
 
     // Rate limit
     const rateLimitKey = `magic-link:${email}:${canonicalAppId}`;
@@ -98,6 +100,13 @@ export async function POST(request: NextRequest) {
     // Build our branded magic link — nonce travels in the URL (it's a hash, not a secret)
     const verifyParams: Record<string, string> = { email, oobCode, nonce, app_id: canonicalAppId };
     if (redirect_uri) verifyParams.redirect_uri = redirect_uri;
+    verifyParams.callback_state = signOAuthState({
+      email,
+      nonce,
+      app_id: canonicalAppId,
+      redirect_uri: redirect_uri ?? null,
+      callback_mode: callbackMode,
+    });
     const magicLink = `${baseUrl}/api/oauth/firebase/magic-link/verify?${new URLSearchParams(verifyParams)}`;
 
     await sendMagicLinkEmail(email, magicLink, canonicalAppId);

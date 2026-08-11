@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateAppRedirect } from '@/lib/oauth/redirects';
+import { issueOAuthCallbackCode } from '@/lib/oauth/callback-codes';
+import { verifyOAuthState } from '@/lib/oauth/state';
 
 /**
  * Direct Google OAuth callback for ZK Login
@@ -24,25 +26,16 @@ interface StatePayload {
   redirect_uri: string;
   nonce: string;
   app_id?: string | null;
+  issued_at?: number;
+  callback_mode?: 'legacy' | 'code';
 }
 
 interface GoogleTokenResponse {
   access_token: string;
   expires_in: number;
-  refresh_token?: string;
   scope: string;
   token_type: string;
   id_token: string;
-}
-
-interface GoogleUserInfo {
-  sub: string;
-  email: string;
-  email_verified: boolean;
-  name?: string;
-  given_name?: string;
-  family_name?: string;
-  picture?: string;
 }
 
 export async function GET(request: NextRequest) {
@@ -78,8 +71,7 @@ export async function GET(request: NextRequest) {
     // Decode state payload
     let statePayload: StatePayload;
     try {
-      const decoded = Buffer.from(stateParam, 'base64url').toString('utf-8');
-      statePayload = JSON.parse(decoded);
+      statePayload = verifyOAuthState<StatePayload>(stateParam);
     } catch (e) {
       return NextResponse.json(
         { error: 'Invalid state parameter' },
@@ -88,6 +80,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { redirect_uri: finalRedirectUri, nonce: expectedNonce, app_id: appId } = statePayload;
+    const callbackMode = statePayload.callback_mode === 'code' ? 'code' : 'legacy';
 
     if (!finalRedirectUri) {
       return NextResponse.json(
@@ -95,7 +88,8 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
-    await validateAppRedirect(appId, finalRedirectUri);
+    if (callbackMode === 'code' && !appId) throw new Error('Secure OAuth requires app_id');
+    await validateAppRedirect(appId, finalRedirectUri, callbackMode === 'code');
 
     const googleClientId = process.env.GOOGLE_CLIENT_ID;
     const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -175,64 +169,28 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get user info (optional, but useful for display)
-    const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-      headers: {
-        Authorization: `Bearer ${tokens.access_token}`,
-      },
-    });
-
-    let userInfo: GoogleUserInfo | null = null;
-    if (userInfoResponse.ok) {
-      userInfo = await userInfoResponse.json();
-    }
-
-    // Prepare response data
-    // IMPORTANT: We return the raw id_token (JWT) because the ZK circuit needs it
-    const responseData = {
-      // The raw JWT - this is what the ZK circuit will process
-      jwt: tokens.id_token,
-
-      // Parsed claims for convenience (client can also decode the JWT)
-      claims: {
-        iss: payload.iss,
-        sub: payload.sub, // This is used to derive address_seed
-        email: payload.email,
-        email_verified: payload.email_verified,
-        nonce: payload.nonce, // The nonce we embedded
-        iat: payload.iat,
-        exp: payload.exp,
-      },
-
-      // User info for display
-      user: userInfo
-        ? {
-          id: userInfo.sub,
-          email: userInfo.email,
-          name: userInfo.name,
-          picture: userInfo.picture,
-        }
-        : {
-          id: payload.sub,
-          email: payload.email,
-          name: payload.name,
-          picture: payload.picture,
-        },
-
-      // Token metadata
-      expires_in: tokens.expires_in,
-
-      // Refresh token (if available) for silent re-authentication
-      refresh_token: tokens.refresh_token,
-    };
-
-    // Redirect to final URI with auth data
+    // Store the JWT encrypted for two minutes and redirect with only a random,
+    // one-time authorization code. Provider refresh/access tokens are discarded.
     const redirectUrl = new URL(finalRedirectUri);
-    redirectUrl.searchParams.set('auth_data', JSON.stringify(responseData));
+    if (callbackMode === 'code' && appId) {
+      const callbackCode = await issueOAuthCallbackCode({
+        appId,
+        redirectUri: finalRedirectUri,
+        payload: { jwt: tokens.id_token },
+      });
+      redirectUrl.searchParams.set('cavos_auth_code', callbackCode);
+    } else {
+      // v1 compatibility for already-deployed SDKs. No access or refresh token
+      // is included; only the JWT shape old clients already require.
+      redirectUrl.searchParams.set('auth_data', JSON.stringify({ jwt: tokens.id_token }));
+    }
 
     console.log('[OAUTH-GOOGLE-CALLBACK] Success for user:', payload.sub);
 
-    return NextResponse.redirect(redirectUrl.toString());
+    const response = NextResponse.redirect(redirectUrl.toString());
+    response.headers.set('Cache-Control', 'no-store');
+    response.headers.set('Referrer-Policy', 'no-referrer');
+    return response;
   } catch (error: any) {
     console.error('[OAUTH-GOOGLE-CALLBACK] Error:', error);
     return NextResponse.json(

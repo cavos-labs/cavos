@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'crypto';
 import * as jose from 'jose';
 import { validateAppRedirect } from '@/lib/oauth/redirects';
+import { issueOAuthCallbackCode } from '@/lib/oauth/callback-codes';
+import { verifyOAuthState } from '@/lib/oauth/state';
 
 /**
  * Direct Apple OAuth callback for ZK Login
@@ -33,13 +35,14 @@ interface StatePayload {
   redirect_uri: string;
   nonce: string;
   app_id?: string | null;
+  issued_at?: number;
+  callback_mode?: 'legacy' | 'code';
 }
 
 interface AppleTokenResponse {
   access_token: string;
   token_type: string;
   expires_in: number;
-  refresh_token?: string;
   id_token: string;
 }
 
@@ -118,8 +121,7 @@ export async function POST(request: NextRequest) {
     // Decode state payload
     let statePayload: StatePayload;
     try {
-      const decoded = Buffer.from(stateParam, 'base64url').toString('utf-8');
-      statePayload = JSON.parse(decoded);
+      statePayload = verifyOAuthState<StatePayload>(stateParam);
     } catch (e) {
       return NextResponse.json(
         { error: 'Invalid state parameter' },
@@ -128,6 +130,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { redirect_uri: finalRedirectUri, nonce: expectedNonce, app_id: appId } = statePayload;
+    const callbackMode = statePayload.callback_mode === 'code' ? 'code' : 'legacy';
 
     if (!finalRedirectUri) {
       return NextResponse.json(
@@ -135,7 +138,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    await validateAppRedirect(appId, finalRedirectUri);
+    if (callbackMode === 'code' && !appId) throw new Error('Secure OAuth requires app_id');
+    await validateAppRedirect(appId, finalRedirectUri, callbackMode === 'code');
 
     const appleClientId = process.env.APPLE_CLIENT_ID;
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
@@ -248,68 +252,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Parse user data if provided (only on first sign-in)
-    let userName: string | undefined;
-    let userEmail = payload.email;
-    if (userDataStr) {
-      try {
-        const userData = JSON.parse(userDataStr);
-        if (userData.name) {
-          userName = [userData.name.firstName, userData.name.lastName].filter(Boolean).join(' ');
-        }
-        if (userData.email) {
-          userEmail = userData.email;
-        }
-      } catch (e) {
-        // Ignore user data parsing errors
-      }
-    }
-
-    // Prepare response data
-    // IMPORTANT: We return the raw id_token (JWT) because the ZK circuit needs it
-    // Note: For Apple, the ZK circuit needs to be configured for Apple's issuer
-    const responseData = {
-      // The raw JWT - this is what the ZK circuit will process
-      jwt: finalIdToken,
-
-      // Parsed claims for convenience
-      claims: {
-        iss: payload.iss,
-        sub: payload.sub, // This is used to derive address_seed
-        email: userEmail,
-        email_verified: payload.email_verified,
-        nonce: payload.nonce, // Note: This is SHA256(original_nonce)
-        nonce_original: expectedNonce, // Original nonce for reference
-        iat: payload.iat,
-        exp: payload.exp,
-      },
-
-      // User info for display
-      user: {
-        id: payload.sub,
-        email: userEmail,
-        name: userName,
-        picture: undefined, // Apple doesn't provide profile pictures
-      },
-
-      // Token metadata
-      expires_in: tokens.expires_in,
-
-      // Refresh token (if available)
-      refresh_token: tokens.refresh_token,
-
-      // Provider info (useful for the ZK circuit to know which issuer to verify)
-      provider: 'apple',
-    };
-
     // Redirect to final URI with auth data
     // IMPORTANT: We return an HTML page with JavaScript redirect instead of HTTP 302
     // because Apple uses form_post which sends POST to this callback.
     // Using NextResponse.redirect() would preserve the POST method to the client app,
-    // causing Next.js to fail parsing the URL with auth_data.
+    // causing Next.js to preserve the POST method at the client app.
     // JavaScript redirect converts POST -> GET automatically.
     const redirectUrl = new URL(finalRedirectUri);
-    redirectUrl.searchParams.set('auth_data', JSON.stringify(responseData));
+    if (callbackMode === 'code' && appId) {
+      const callbackCode = await issueOAuthCallbackCode({
+        appId,
+        redirectUri: finalRedirectUri,
+        payload: { jwt: finalIdToken },
+      });
+      redirectUrl.searchParams.set('cavos_auth_code', callbackCode);
+    } else {
+      redirectUrl.searchParams.set('auth_data', JSON.stringify({ jwt: finalIdToken }));
+    }
 
     console.log('[OAUTH-APPLE-CALLBACK] Success for user:', payload.sub);
 
@@ -334,6 +293,8 @@ export async function POST(request: NextRequest) {
       status: 200,
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-store',
+        'Referrer-Policy': 'no-referrer',
       },
     });
   } catch (error: any) {

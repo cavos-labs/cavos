@@ -29,7 +29,11 @@ export async function resolveAppIdForRedirect(redirectUri: string | null): Promi
  * This lets apps that register callbacks in the console lock the flow down,
  * without breaking every app that hasn't (all of them, today).
  */
-export async function validateAppRedirect(appId: string | null | undefined, redirectUri: string | null): Promise<string> {
+export async function validateAppRedirect(
+  appId: string | null | undefined,
+  redirectUri: string | null,
+  requireRegistered = false,
+): Promise<string> {
   if (!redirectUri) throw new Error('Missing redirect_uri');
   let parsed: URL;
   try { parsed = new URL(redirectUri); }
@@ -38,7 +42,10 @@ export async function validateAppRedirect(appId: string | null | undefined, redi
     throw new Error('Invalid redirect_uri');
   }
   // No app to scope against → sanity-checked URL is enough (pre-app_id behavior).
-  if (!appId) return redirectUri;
+  if (!appId) {
+    if (requireRegistered) throw new Error('Missing app_id');
+    return redirectUri;
+  }
 
   const { data: app, error } = await createAdminClient()
     .from('apps')
@@ -48,7 +55,7 @@ export async function validateAppRedirect(appId: string | null | undefined, redi
   if (error || !app?.is_active) throw new Error('Invalid app_id');
   const allowlist = app.callback_urls ?? [];
   // Only enforce when the app has actually registered callbacks.
-  if (allowlist.length > 0 && !allowlist.includes(redirectUri)) {
+  if ((requireRegistered && allowlist.length === 0) || (allowlist.length > 0 && !allowlist.includes(redirectUri))) {
     throw new Error('redirect_uri is not registered for this app');
   }
   return redirectUri;
