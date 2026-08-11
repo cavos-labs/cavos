@@ -1,8 +1,14 @@
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
+
 use anyhow::{bail, Context, Result};
 use base64::{engine::general_purpose::STANDARD, Engine};
 use reqwest::Client;
 use serde::Deserialize;
 use serde_json::json;
+use tokio::sync::Mutex;
 
 use crate::launcher;
 
@@ -11,11 +17,18 @@ pub struct KmsClient {
     http: Client,
     key_name: String,
     wif_audience: String,
+    cached_token: Arc<Mutex<Option<CachedToken>>>,
+}
+
+struct CachedToken {
+    value: String,
+    expires_at: Instant,
 }
 
 #[derive(Deserialize)]
 struct StsResponse {
     access_token: String,
+    expires_in: u64,
 }
 
 #[derive(Deserialize)]
@@ -34,10 +47,17 @@ impl KmsClient {
             http: Client::new(),
             key_name,
             wif_audience,
+            cached_token: Arc::new(Mutex::new(None)),
         }
     }
 
     async fn access_token(&self) -> Result<String> {
+        let mut cached = self.cached_token.lock().await;
+        if let Some(token) = cached.as_ref() {
+            if token.expires_at > Instant::now() + Duration::from_secs(60) {
+                return Ok(token.value.clone());
+            }
+        }
         let attestation = launcher::attestation_token("https://sts.googleapis.com", vec![]).await?;
         let response = self
             .http
@@ -56,7 +76,17 @@ impl KmsClient {
         if !response.status().is_success() {
             bail!("STS token exchange rejected: {}", response.text().await?);
         }
-        Ok(response.json::<StsResponse>().await?.access_token)
+        let exchanged = response.json::<StsResponse>().await?;
+        let value = exchanged.access_token;
+        *cached = Some(CachedToken {
+            value: value.clone(),
+            expires_at: Instant::now() + Duration::from_secs(exchanged.expires_in),
+        });
+        Ok(value)
+    }
+
+    pub async fn warm_up(&self) -> Result<()> {
+        self.access_token().await.map(|_| ())
     }
 
     pub async fn encrypt(&self, plaintext: &[u8]) -> Result<Vec<u8>> {

@@ -1,8 +1,9 @@
-import { NextResponse } from 'next/server'
+import { after, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { deleteRecoveryVm } from '@/lib/recovery/social/google-compute'
 import { bearer, tokenMatches } from '@/lib/recovery/social/security'
 import type { WorkloadResult } from '@/lib/recovery/social/types'
+import { ensureRecoveryPool } from '@/lib/recovery/social/pool'
 
 export async function POST(request: Request) {
   const token = bearer(request)
@@ -127,5 +128,12 @@ export async function POST(request: Request) {
     // retry VM deletion; do not force the workload to repeat KMS/signing.
     console.error('[social-recovery] VM cleanup failed', error)
   }
+  after(async () => {
+    try {
+      await ensureRecoveryPool()
+    } catch (error) {
+      console.error('[social-recovery] warm-pool refill after completion failed', error)
+    }
+  })
   return NextResponse.json({ accepted: true })
 }

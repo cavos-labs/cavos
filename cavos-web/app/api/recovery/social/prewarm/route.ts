@@ -1,7 +1,7 @@
 import { after, NextResponse } from 'next/server'
 import { checkRateLimit, clientIp } from '@/lib/api/rateLimit'
 import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier'
-import { createRecoveryVm } from '@/lib/recovery/social/google-compute'
+import { ensureRecoveryPool } from '@/lib/recovery/social/pool'
 import { randomToken, tokenHash } from '@/lib/recovery/social/security'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -80,55 +80,53 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'prewarm_rate_limited' }, { status: 429 })
   }
 
-  const prewarmId = crypto.randomUUID()
   const claimToken = randomToken()
-  const bootstrapToken = randomToken()
-  const instanceName = `cavos-rec-${prewarmId.replaceAll('-', '').slice(0, 24)}`
   const expiresAt = new Date(Date.now() + PREWARM_TTL_MS).toISOString()
-  const { error: insertError } = await admin.from('social_recovery_sessions').insert({
-    id: prewarmId,
-    wallet_id: null,
-    app_id: resolvedApp.appId,
-    environment_id: resolvedApp.environmentId,
-    action: null,
-    provider: policy.social_recovery_provider,
-    delay_seconds: policy.social_recovery_delay_seconds,
-    auth_challenge_hash: null,
-    bootstrap_token_hash: tokenHash(bootstrapToken),
-    prewarm_token_hash: tokenHash(claimToken),
-    prewarm_request_hash: requestHash,
-    vm_instance_name: instanceName,
-    expires_at: expiresAt,
+  const { data, error: claimError } = await admin.rpc('claim_social_recovery_pool_slot', {
+    p_app_id: resolvedApp.appId,
+    p_environment_id: resolvedApp.environmentId,
+    p_provider: policy.social_recovery_provider,
+    p_delay_seconds: policy.social_recovery_delay_seconds,
+    p_claim_token_hash: tokenHash(claimToken),
+    p_request_hash: requestHash,
+    p_expires_at: expiresAt,
   })
-  if (insertError) {
-    console.error('[social-recovery] prewarm session insert failed', insertError)
-    return NextResponse.json({ error: 'prewarm_create_failed' }, { status: 500 })
+  if (claimError) {
+    console.error('[social-recovery] warm-pool claim failed', claimError)
+    return NextResponse.json({ error: 'prewarm_claim_failed' }, { status: 500 })
+  }
+  const claimed = Array.isArray(data) ? data[0] : data
+
+  // A missing slot never blocks login. Start/retry pool maintenance now; the
+  // SDK will continue through the explicit cold fallback for this request.
+  if (!claimed?.id) {
+    after(async () => {
+      try {
+        await ensureRecoveryPool()
+      } catch (error) {
+        console.error('[social-recovery] warm-pool refill failed', error)
+      }
+    })
+    return NextResponse.json({ error: 'warm_pool_unavailable' }, { status: 503 })
   }
 
+  // Refill immediately after reserving the one-shot worker. Provisioning is
+  // off the login path and the claimed enclave stays dedicated to this browser.
   after(async () => {
     try {
-      await createRecoveryVm({
-        sessionId: prewarmId,
-        bootstrapToken,
-        instanceName,
-      })
+      await ensureRecoveryPool()
     } catch (error) {
-      await admin
-        .from('social_recovery_sessions')
-        .update({ status: 'failed', error_code: 'vm_create_failed' })
-        .eq('id', prewarmId)
-        .eq('status', 'starting')
-      console.error('[social-recovery] prewarm VM create failed', error)
+      console.error('[social-recovery] warm-pool refill failed', error)
     }
   })
 
   return NextResponse.json(
     {
-      prewarm_id: prewarmId,
+      prewarm_id: claimed.id,
       claim_token: claimToken,
-      status: 'starting',
-      expires_at: expiresAt,
+      status: 'ready',
+      expires_at: claimed.expires_at || expiresAt,
     },
-    { status: 202 },
+    { status: 200 },
   )
 }

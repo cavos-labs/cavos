@@ -139,6 +139,8 @@ pub struct RegistrationResponse {
 pub struct JobResponse {
     pub job: Option<EncryptedJob>,
     pub auth_challenge_hash: Option<String>,
+    #[serde(default)]
+    pub active: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -19,6 +19,13 @@ same session ID. The workload:
    Stellar DEK to the new device;
 5. exits, after which the control plane deletes the ephemeral VM.
 
+Production keeps a small platform-wide pool of empty, one-shot workloads. A
+worker is attested and obtains short-lived KMS authority before it is marked
+ready, but it receives no app, wallet, identity, provider token, encrypted job,
+or recovery secret until a browser reserves it. The worker still handles only
+one session and is destroyed after completion; its replacement boots outside
+the user's login path.
+
 ## Build and test
 
 ```bash

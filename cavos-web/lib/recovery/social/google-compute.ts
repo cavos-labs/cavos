@@ -67,6 +67,9 @@ export async function createRecoveryVm(params: {
   sessionId: string
   bootstrapToken: string
   instanceName: string
+  maxRunSeconds?: number
+  jobTimeoutSeconds?: number
+  poolWorker?: boolean
 }): Promise<void> {
   const cfg = gcpRecoveryConfig()
   const token = await accessToken(cfg.projectNumber)
@@ -80,6 +83,9 @@ export async function createRecoveryVm(params: {
     { key: 'tee-env-CAVOS_ATTESTATION_AUDIENCE', value: cfg.attestationAudience },
     { key: 'tee-env-CAVOS_KMS_KEY_NAME', value: cfg.kmsKeyName },
     { key: 'tee-env-CAVOS_WIF_AUDIENCE', value: cfg.wifAudience },
+    ...(params.jobTimeoutSeconds
+      ? [{ key: 'tee-env-CAVOS_RECOVERY_JOB_TIMEOUT_SECONDS', value: String(params.jobTimeoutSeconds) }]
+      : []),
   ]
   const attempts = cfg.zones.map((zone) =>
     createInstanceInZone({ cfg, token, zone, metadata, ...params }).then(() => zone),
@@ -153,6 +159,9 @@ async function createInstanceInZone(params: {
   sessionId: string
   bootstrapToken: string
   instanceName: string
+  maxRunSeconds?: number
+  jobTimeoutSeconds?: number
+  poolWorker?: boolean
 }): Promise<void> {
   const { cfg, token, zone } = params
   const url = `https://compute.googleapis.com/compute/v1/projects/${encodeURIComponent(cfg.projectId)}/zones/${encodeURIComponent(zone)}/instances`
@@ -173,7 +182,7 @@ async function createInstanceInZone(params: {
         automaticRestart: false,
         onHostMaintenance: 'MIGRATE',
         provisioningModel: 'STANDARD',
-        maxRunDuration: { seconds: '300' },
+        maxRunDuration: { seconds: String(params.maxRunSeconds || 300) },
         instanceTerminationAction: 'STOP',
       },
       shieldedInstanceConfig: {
@@ -210,6 +219,7 @@ async function createInstanceInZone(params: {
       labels: {
         'cavos-purpose': 'social-recovery',
         'cavos-session': params.sessionId.replaceAll('-', '').slice(0, 32),
+        'cavos-pool': params.poolWorker ? 'warm' : 'request',
       },
       deletionProtection: false,
     }),
