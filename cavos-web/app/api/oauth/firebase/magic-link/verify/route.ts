@@ -10,6 +10,8 @@
 
 import { NextRequest } from 'next/server';
 import { validateAppRedirect } from '@/lib/oauth/redirects';
+import { issueOAuthCallbackCode } from '@/lib/oauth/callback-codes';
+import { verifyOAuthState } from '@/lib/oauth/state';
 
 function htmlResponse(html: string): Response {
   return new Response(html, {
@@ -132,11 +134,33 @@ function errorHtml(message: string): string {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const email        = searchParams.get('email');
+  let email          = searchParams.get('email');
   const oobCode      = searchParams.get('oobCode');
-  const nonce        = searchParams.get('nonce');
-  const app_id       = searchParams.get('app_id');
-  const redirect_uri = searchParams.get('redirect_uri');
+  let nonce          = searchParams.get('nonce');
+  let app_id         = searchParams.get('app_id');
+  let redirect_uri   = searchParams.get('redirect_uri');
+  let callbackMode: 'legacy' | 'code' = 'legacy';
+  const callbackState = searchParams.get('callback_state');
+
+  if (callbackState) {
+    try {
+      const state = verifyOAuthState<{
+        email: string;
+        nonce: string;
+        app_id: string;
+        redirect_uri?: string | null;
+        callback_mode?: 'legacy' | 'code';
+        issued_at?: number;
+      }>(callbackState, 60 * 60_000);
+      email = state.email;
+      nonce = state.nonce;
+      app_id = state.app_id;
+      redirect_uri = state.redirect_uri ?? null;
+      callbackMode = state.callback_mode === 'code' ? 'code' : 'legacy';
+    } catch {
+      return htmlResponse(errorHtml('Invalid or expired link.'));
+    }
+  }
 
   if (!email || !oobCode || !nonce || !app_id) {
     return htmlResponse(errorHtml('Invalid or incomplete link.'));
@@ -185,14 +209,29 @@ export async function GET(request: NextRequest) {
 
   console.log(`[MagicLink] Verified Firebase ID token for ${verifiedEmail} (uid: ${localId})`);
 
-  // Redirect back to the app with auth_data in the URL — works on mobile where
-  // window.close() is blocked. The SDK's CavosContext handles ?auth_data= on load.
+  // Redirect with a short-lived one-time code — never the Firebase JWT.
   if (redirect_uri) {
     try {
-      await validateAppRedirect(app_id, redirect_uri);
+      await validateAppRedirect(app_id, redirect_uri, callbackMode === 'code');
       const dest = new URL(redirect_uri);
-      dest.searchParams.set('auth_data', JSON.stringify({ jwt, uid: localId, email: verifiedEmail }));
-      return Response.redirect(dest.toString(), 302);
+      if (callbackMode === 'code') {
+        const callbackCode = await issueOAuthCallbackCode({
+          appId: app_id,
+          redirectUri: redirect_uri,
+          payload: { jwt },
+        });
+        dest.searchParams.set('cavos_auth_code', callbackCode);
+      } else {
+        dest.searchParams.set('auth_data', JSON.stringify({ jwt }));
+      }
+      return new Response(null, {
+        status: 302,
+        headers: {
+          Location: dest.toString(),
+          'Cache-Control': 'no-store',
+          'Referrer-Policy': 'no-referrer',
+        },
+      });
     } catch {
       // Fall through to HTML response if redirect_uri is malformed
     }
