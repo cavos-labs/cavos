@@ -1,0 +1,294 @@
+---
+title: Hardware-isolated recovery
+description: Let users recover a Cavos wallet by signing in again — verified inside an attested enclave, without giving Cavos a key that can move funds.
+---
+
+A recovery code works, but it asks the user to keep a secret safe forever, and
+most will not. **Hardware-isolated recovery** lets them recover the way they
+expect to: by signing in again with Google, Apple, or an email link.
+
+The obvious way to build that would be for Cavos to hold a key and hand it over
+once a login checks out. That would make Cavos custodial and every Cavos
+employee a target. Instead the check runs inside a **Google Confidential Space
+enclave** — a VM whose exact software is measured by hardware and attested by
+Google — holding a key that the chain itself restricts to a single, delayed,
+cancellable action.
+
+<Callout type="warn">
+Call this **hardware-isolated, non-custodial** recovery, never *trustless*
+recovery. No Cavos employee holds a key that can move funds, but the measured
+enclave, Google Cloud's attestation and KMS, the approved image-upgrade policy,
+and — for the email provider — your Firebase identity project all remain inside
+the trust model. Section [Why this is still self-custodial](#why-this-is-still-self-custodial)
+is explicit about both halves.
+</Callout>
+
+## How it works
+
+The feature has two moments: **enrolment**, once, on a device the user already
+controls, and **recovery**, later, on a device that has nothing.
+
+### Enrolment
+
+1. The user signs in. The provider's `id_token` stays **in memory only** — it is
+   never persisted, logged, or sent to Cavos in the clear.
+2. The SDK asks Google for the enclave's **attestation**: a signed statement
+   describing exactly which image is running. It checks that statement against
+   [measurements pinned in the SDK](#the-attestation-pin) and aborts if anything
+   differs.
+3. Satisfied, the browser encrypts the token **directly to an ephemeral key
+   belonging to that enclave**, bound into the attestation itself. The Cavos
+   control plane relays ciphertext it cannot read.
+4. Inside, the enclave verifies the token, generates a recovery keypair, and
+   seals the private half so only an enclave running the same measured image can
+   ever open it. It returns only the public key.
+5. That public key is registered on-chain as a **restricted recovery authority**
+   — see [What the chain enforces](#what-the-chain-enforces).
+
+### Recovery
+
+The user signs in on the new device and the same channel is established. The
+enclave verifies the token, opens its sealed key, and signs **one** message: an
+authorization for this specific new device. The chain does the rest.
+
+The result is worth stating plainly: an attacker who fully compromises the Cavos
+backend gets ciphertext they cannot decrypt and an on-chain authority they cannot
+use. An attacker who somehow ran code inside the enclave still could not act
+outside the single delayed action the contract permits.
+
+## What the enclave verifies
+
+Inside, before it will sign anything, Cavos checks the provider signature,
+issuer, audience, token fingerprint, configured provider, and the enrolled
+subject — the recovery only proceeds for the identity that enrolled.
+
+The authentication must be **no more than five minutes old**. Google and Apple
+tokens must carry an OIDC `nonce`, which marks a token as minted for an
+interactive sign-in; what binds a token to *this* session is its SHA-256
+fingerprint, committed when the session opens and compared in constant time. The
+API stores only a second hash of that fingerprint, so a token can be used once
+and replays are rejected. Email requires a verified, recent Firebase email token
+obtained through the magic-link flow. OTP and Cavos-signed compatibility tokens
+are never accepted.
+
+## What the chain enforces
+
+The enclave's authority is not "a key that can sign for the wallet". It is a key
+the account contract will listen to for exactly one purpose.
+
+| Chain | Enforced recovery capability |
+|---|---|
+| **Starknet** | A separate P-256 authority may only schedule one exact `add_signer`; nonce, expiry, timelock, cancellation, and finalization are contract-enforced. Existing accounts opt in through their normal device-authorized `upgrade` and enrollment calls. |
+| **Solana** | A separate recovery PDA stores the P-256 authority and policy. The native P-256 precompile plus program state enforce the exact signer, nonce, expiry, timelock, cancellation, and finalization. |
+| **Stellar** | The enclave seals only the random DEK and ECIES-wraps it to the new device. It never receives the Ed25519 control seed. Stellar classic cannot enforce the enclave's scope or timelock on-chain, so this adapter carries a broader TEE/KMS trust assumption. |
+
+A non-zero timelock turns recovery into something the real owner can veto: the
+signer is committed on-chain but inert until the delay passes, and any other
+device can cancel it. The SDK stores only the public `readyAt` timestamp,
+resumes after a refresh, and permissionlessly finalizes when the delay expires.
+It never persists the social token.
+
+## Why this is still self-custodial
+
+"Someone else can restore my wallet" sounds like the opposite of self-custody,
+so it is worth being precise about what the enclave can and cannot do. Four
+things hold, and each is enforced by something other than a Cavos promise.
+
+**Nobody can read the recovery key — not even the people who run it.** The
+private half is sealed by Google Cloud KMS so that it only opens inside an
+enclave whose measured image matches the one that sealed it. There is no console,
+no debugger, no support tool that reveals it: Confidential Space boots with
+debugging disabled, and the SDK refuses any attestation reporting otherwise. A
+Cavos employee asked to hand over a user's key has nothing to hand over.
+
+**The key cannot move money.** This is the part that carries most of the weight.
+The enclave's key is not a wallet signer. It is registered on the account in a
+separate, restricted role whose only permitted action is to schedule the addition
+of one specific new signer. It cannot transfer, approve, call a contract, or
+authorize anything else, because the account contract will not accept those
+instructions from that role — see [What the chain
+enforces](#what-the-chain-enforces). Compare that with a custodial provider,
+where the recovery key *is* the spending key and restraint is a matter of policy.
+
+**Nothing is added to your account without your device authorizing it.** The
+recovery authority is registered during enrolment by a transaction your own
+device signs. Cavos cannot insert itself into an account after the fact; an
+account that never enrolled has no recovery authority at all, and no amount of
+control over the backend creates one.
+
+**The real owner can veto a recovery.** With a non-zero timelock the scheduled
+signer is inert until the delay passes and any existing device can cancel it. So
+even in the worst case — a valid recovery for an identity that is not really the
+owner — the owner has a window to stop it, on-chain, without asking Cavos.
+
+Put together: the account contract remains the sole authority over who can sign,
+the enclave holds a narrow permission granted by the user, and the Cavos control
+plane only relays ciphertext it cannot read. That is what makes this
+self-custodial — not the fact that a TEE is involved.
+
+### What you are still trusting
+
+Self-custodial is not the same as trustless, and the difference is not a
+formality:
+
+- **The measured enclave image.** You are trusting that this specific code does
+  what it claims. Pin the digest and review changes to it the way you would
+  review a key rotation.
+- **Google Cloud.** Attestation and KMS are what make the measurement meaningful
+  and the sealed key openable.
+- **The image-upgrade policy.** A new digest is a new trust decision.
+- **Your Firebase project**, if you use the email provider.
+- **Stellar classic** cannot enforce scope or timelock on-chain, so that adapter
+  leans harder on the enclave than the other two. On Starknet and Solana the
+  contract is the backstop; on Stellar the enclave largely is.
+
+The honest summary: on Starknet and Solana, breaking this needs a compromised
+enclave image **and** the timelock to expire without the owner noticing. On
+Stellar, it needs the enclave. In no case does it need only Cavos.
+
+Keep a second factor regardless. Encourage a passkey or a second device, and
+treat social recovery as one path among several rather than the only one.
+
+## Turning it on
+
+Enable it in **Dashboard → App → Environments** and select exactly one provider.
+Users never see a three-provider recovery picker: the environment policy decides
+the single login method shown.
+
+```tsx title="app/provider.tsx"
+<CavosProvider
+  config={{
+    appId,
+    environment: "production",
+    chain: "starknet", // also "solana" or "stellar"
+    network: "mainnet",
+    appSalt: "my-app",
+    paymasterApiKey,
+    socialRecovery: true,
+  }}
+  modal={{ appName: "My App" }}
+>
+  {children}
+</CavosProvider>
+```
+
+That is the whole integration. `<CavosProvider>` enrols a ready wallet after a
+fresh login and recovers an unregistered device, both automatically. Watch
+progress on `walletStatus.isSocialRecovering` and `socialRecoveryReadyAt`.
+
+## The attestation pin
+
+`socialRecovery: true` verifies the enclave against measurements **pinned in the
+package you installed** (`DEFAULT_SOCIAL_RECOVERY_ATTESTATION`). The Starknet
+class used to upgrade accounts deployed before the feature defaults the same way.
+
+Those measurements are the answer to "which code am I trusting with my users'
+recovery?", and they must not come from the service being checked. If
+`cavos.xyz` told the client which image digest to expect, anyone who compromised
+`cavos.xyz` would answer with their own — and the attestation would prove
+nothing. Verifying against values supplied by the thing under verification is
+not verification.
+
+Shipping them in a versioned, immutable package keeps the pin outside that
+control plane while taking it off your hands: you can audit the constant, and
+you choose when to adopt a new one by upgrading. The attestation itself is signed
+by Google, so authenticity is anchored outside Cavos either way — the pin only
+fixes *which workload* you are willing to talk to.
+
+Pin your own policy when you run your own enclave:
+
+```ts title="TypeScript"
+socialRecovery: {
+  audience: "https://example.com/api/recovery/social/attestation",
+  imageDigest: ["sha256:…", "sha256:…"], // list to overlap a rollout
+  projectNumber: "…",
+  serviceAccount: "…@….iam.gserviceaccount.com",
+}
+```
+
+`imageDigest` accepts a list because the digest measures the exact enclave image
+and changes whenever that image is rebuilt. Publishing the incoming and outgoing
+digest together lets a redeploy overlap instead of cutting off apps mid-rollout.
+The attested digest must still match one of them exactly — an empty list accepts
+nothing.
+
+<Callout type="info">
+Apps that set `socialRecoveryAttestation` before this existed keep working
+unchanged: an explicit policy always wins over the shipped defaults, so an app
+that pinned its own measurements is never silently repointed.
+</Callout>
+
+## With your own auth
+
+Social recovery works when you authenticate users yourself — Clerk, Auth0,
+Firebase, your own backend — as long as a real Google or Apple sign-in happens
+somewhere underneath. **Your users never sign in twice:** you pass the provider
+token your login already obtained.
+
+Register your OAuth client ID once in **Dashboard → App → Environments → Your
+OAuth client ID**. The enclave then accepts tokens minted for your client
+instead of only Cavos's.
+
+```tsx title="app/secure-account.tsx"
+const { submitSocialRecoveryToken, walletStatus } = useCavos();
+
+// Enrols when this device is ready and recovers when it is not — the wallet's
+// state decides, so the same call serves both screens.
+async function useRecovery() {
+  const idToken = await getGoogleIdTokenFromYourAuth();
+  submitSocialRecoveryToken(idToken);
+}
+```
+
+Two requirements, both easy to miss:
+
+- **Pass the provider's raw `id_token`**, not your own session JWT. The token has
+  to be verifiable against Google's or Apple's keys, and your session token is
+  signed by you. Passing the wrong one fails immediately with a message saying
+  so. Clerk, Auth0 and Firebase all expose the underlying token, usually behind
+  an explicit call.
+- **Pass a fresh one.** The enclave requires the authentication to be under five
+  minutes old. This falls out naturally — enrolment follows a login, recovery
+  happens as the user signs in on the new device — but a token cached from an
+  earlier session is rejected.
+
+<Callout type="info">
+Changing the registered client ID never affects wallets already enrolled. The
+enclave enforces the policy sealed at enrolment, so the setting only applies to
+enrolments made after it changes.
+</Callout>
+
+The email provider still uses the Cavos Firebase project: its audience is the
+project id and its issuer embeds it, so it is not a per-app value.
+
+## Enclave warm-up
+
+**There is nothing to call.** Starting an enclave is the slowest part of
+enrolment and recovery, and it used to run after the user had already signed in —
+with the user watching a spinner. `<CavosProvider>` now reserves a worker while
+the user is still authenticating, so that cold start overlaps the login round
+trip instead of following it.
+
+The provider fires the reservation from `login()`, `sendOtp()`, `sendMagicLink()`
+and the OAuth callback, deduplicates concurrent attempts, and persists it so a
+redirect flow reuses the same reservation. It is an optimization: if it fails,
+the SDK logs a warning and recovery proceeds from a cold start.
+
+The reservation is created *before* the user authenticates, so it deliberately
+carries nothing about them — only an id, a single-use claim token, and an expiry.
+The next enrolment or recovery claims it atomically, and an expired one is
+replaced transparently.
+
+<Callout type="info">
+Only if you are **not** using `<CavosProvider>` — a non-React host driving
+`SocialRecoveryClient` yourself — call `client.prewarm()` when you learn a login
+is starting. It cannot be folded into `enroll`/`recover`: those are the exact
+calls the warm-up exists to make fast, so it has to happen earlier, and only the
+caller knows when.
+</Callout>
+
+## Related
+
+- [Recovery codes](/docs/recovery) — the self-custodial baseline, no enclave involved.
+- [Multi-device](/docs/multi-device) — approving a new device from an existing one.
+- [Passkeys](/docs/passkeys) — a synced passkey as the approval factor.
