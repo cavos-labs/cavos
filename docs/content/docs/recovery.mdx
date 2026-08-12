@@ -50,8 +50,18 @@ the same identity logs in from an unregistered device:
 </CavosProvider>
 ```
 
-Pin those four attestation values from the Cavos deployment information you
-trust. The SDK does not learn them from the recovery API it is attesting.
+Those four values are what the SDK checks the enclave against before it will
+send anything, and they exist in your code for one reason: **the SDK must not
+learn them from the service it is verifying.** If `cavos.xyz` told the client
+which image digest to expect, anyone who compromised `cavos.xyz` would simply
+answer with their own — and the attestation would prove nothing. Verifying
+against values supplied by the thing under verification is not verification.
+
+So treat them like a pinned certificate, not like configuration: take them from
+Cavos deployment information you trust, and review a change to `imageDigest`
+the way you would review a key rotation. It measures the exact enclave image
+that will handle your users' recovery, and it changes whenever that image is
+rebuilt.
 
 The fresh ID token is kept only in memory. Its SHA-256 fingerprint reserves
 exactly one recovery session, and the API stores only a second hash of that
@@ -80,48 +90,31 @@ For non-zero timelocks, the SDK stores only the public `readyAt` timestamp,
 resumes after a refresh, and permissionlessly finalizes the already-committed
 signer when the on-chain delay expires. It never persists the social token.
 
-### Warming the enclave ahead of time
+### Enclave warm-up (automatic)
 
-Starting an enclave is the slowest part of enrollment and recovery, and it used
-to happen after the user had already signed in — with the user waiting. The SDK
-now reserves a worker **before** the login completes, so the cold start overlaps
-with the OAuth round trip instead of following it.
+**There is nothing to call.** Starting an enclave is the slowest part of
+enrollment and recovery, and it used to run after the user had already signed
+in — with the user watching a spinner. `<CavosProvider>` now reserves a worker
+while the user is still authenticating, so that cold start overlaps the login
+round trip instead of following it.
 
-`<CavosProvider>` does this for you. It fires a reservation alongside the login
-call and the OAuth callback, deduplicates concurrent attempts, and persists the
-reservation so a redirect flow reuses it. You do not need to call anything:
+The provider fires the reservation from `login()`, `sendOtp()`,
+`sendMagicLink()` and the OAuth callback, deduplicates concurrent attempts, and
+persists it so a redirect flow reuses the same reservation. It is an
+optimization: if it fails, the SDK logs a warning and recovery proceeds from a
+cold start.
 
-```tsx title="app/provider.tsx"
-// Nothing to add — the provider prewarms whenever socialRecoveryAttestation
-// is configured. login(), sendOtp(), sendMagicLink() and the OAuth callback
-// each start or reuse a reservation.
-```
-
-Outside React, reserve the worker yourself and hand it to the client:
-
-```ts title="TypeScript"
-import { SocialRecoveryClient } from "@cavos/kit";
-
-const client = new SocialRecoveryClient({
-  appId,
-  environment: "production",
-  attestation, // the same pinned AttestationPolicy
-});
-
-// Call as early as you know recovery is likely — before the user authenticates.
-const prewarm = await client.prewarm();
-// { prewarmId, claimToken, expiresAt }
-```
-
-A reservation is claimed atomically by the next `enroll` or `recover`, and is
-useful exactly once. A reservation that has expired is replaced transparently on
-the next call.
+The reservation is created *before* the user authenticates, so it deliberately
+carries nothing about them — only an id, a single-use claim token, and an
+expiry. The next `enroll` or `recover` claims it atomically, and an expired one
+is replaced transparently.
 
 <Callout type="info">
-The reservation is created **before** the user authenticates, so it deliberately
-carries no identity, token, or wallet data — only an id, a single-use claim
-token, and an expiry. Prewarming is an optimization: if it fails, the SDK logs a
-warning and enrollment or recovery proceeds from a cold start.
+Only if you are **not** using `<CavosProvider>` — a non-React host driving
+`SocialRecoveryClient` yourself — call `client.prewarm()` at the moment you
+learn a login is starting. It cannot be folded into `enroll`/`recover`: those
+are the exact calls the warm-up exists to make fast, so it has to happen
+earlier, and only the caller knows when that is.
 </Callout>
 
 <Callout type="warn">
