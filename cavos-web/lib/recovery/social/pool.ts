@@ -11,11 +11,22 @@ const POOL_LIFETIME_MS = 50 * 60_000
 const POOL_VM_RUNTIME_SECONDS = 60 * 60
 const POOL_JOB_TIMEOUT_SECONDS = 55 * 60
 
+/**
+ * How many warm workers to keep. **Zero by default**, so an environment that is
+ * not serving users runs no Confidential VMs at all.
+ *
+ * Warm workers only buy latency: with the pool empty, enrolment and recovery
+ * still work, from a cold start. Paying for an idle VM around the clock to save
+ * a few seconds is worth it once real users are recovering wallets and not
+ * before, so switching it on is a deliberate act.
+ *
+ * Anything outside 0–4 falls back to 0 rather than to a value that spends money.
+ */
 function targetSize(): number {
-  const configured = Number(process.env.SOCIAL_RECOVERY_WARM_POOL_SIZE || '1')
-  return Number.isInteger(configured) && configured >= 1 && configured <= 4
+  const configured = Number(process.env.SOCIAL_RECOVERY_WARM_POOL_SIZE ?? '0')
+  return Number.isInteger(configured) && configured >= 0 && configured <= 4
     ? configured
-    : 1
+    : 0
 }
 
 export interface PoolMaintenanceResult {
