@@ -176,16 +176,6 @@ That is the whole integration. `<CavosProvider>` enrols a ready wallet after a
 fresh login and recovers an unregistered device, both automatically. Watch
 progress on `walletStatus.isSocialRecovering` and `socialRecoveryReadyAt`.
 
-<Callout type="warn">
-**Starknet mainnet needs one more value.** Accounts deployed before this feature
-are upgraded to a class that declares the social-recovery entrypoints, and that
-class is currently declared on **Sepolia only** — mainnet still runs the prior
-class. The SDK therefore defaults `socialRecoveryStarknetClassHash` on testnet
-and leaves it unset on mainnet, rather than pointing a real account at a class
-that does not exist on its chain. Pass it explicitly on mainnet once the class
-is declared. Accounts deployed *after* the feature need nothing.
-</Callout>
-
 ## The attestation pin
 
 `socialRecovery: true` verifies the enclave against measurements **pinned in the

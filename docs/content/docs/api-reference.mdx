@@ -134,7 +134,6 @@ model — this is hardware-isolated, non-custodial recovery, not trustless recov
 | `SocialRecoveryPrewarm` | `{ prewarmId, claimToken, expiresAt }` — a single-use reservation for an empty, already-attested worker. Carries no identity or wallet data. |
 | `AttestationPolicy` | Which enclave you accept: `audience`, `imageDigest` (a digest or a list, to overlap a rollout), `projectNumber`, `serviceAccount`. Never learned from the API being attested. |
 | `DEFAULT_SOCIAL_RECOVERY_ATTESTATION` | The policy for the enclave Cavos operates, pinned in this package. What `socialRecovery: true` uses. |
-| `DEFAULT_SOCIAL_RECOVERY_STARKNET_CLASS_HASH` | DeviceAccount class declaring the social-recovery entrypoints, used to upgrade pre-feature Starknet accounts. |
 | `isAcceptedImageDigest(attested, expected)` | Whether an attested image digest matches the pinned policy. Exact match; fails closed on a missing digest or an empty list. |
 | `enrollHardwareIsolatedRecovery`, `recoverHardwareIsolatedDevice` | Chain-aware coordinators wrapping enroll/recover, including timelock finalization. |
 | `CoordinatedRecoveryResult` | Result of a coordinated recovery, including a `readyAt` when a timelock applies. |
