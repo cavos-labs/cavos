@@ -75,7 +75,7 @@ counterpart is `CavosSolana` — see [Solana](/docs/solana).
 | `cavos.approveThisDeviceWithPasskey({ passkey, submit? }): Promise<{ transactionHash }>` | From a `needs-device-approval` browser, use a synced passkey to authorize this device. |
 | `cavos.passkeyLeafForThisDevice(): Promise<{ leaf, nonce }>` | This device's passkey leaf + on-chain nonce (for batched / multi-chain approval). |
 | `cavos.submitPasskeyApproval(assertion, leaves, leafIndex, nonce, submit?): Promise<{ transactionHash }>` | Submit `add_signer_via_passkey` with a shared assertion. Low-level; prefer `approveThisDeviceWithPasskey`. |
-| `cavos.setupRecovery(code): Promise<{ transactionHash } \| undefined>` | Register a passphrase-derived backup signer. Idempotent. `CavosSolana` and `CavosStellar` expose the same method with their own factor — see [Recovery](/docs/recovery). |
+| `cavos.setupRecovery(code): Promise<{ transactionHash } \| undefined>` | Register a passphrase-derived backup signer. Idempotent. `CavosSolana` and `CavosStellar` expose the same method with their own factor — see [Recovery codes](/docs/recovery-codes). |
 
 ### `Cavos.recover(options): Promise<Cavos>`
 

@@ -25,9 +25,20 @@ apart:
 - **API keys** — server credentials are issued per environment.
 - **Events & webhooks** — the event stream and webhook subscriptions are scoped
   per environment, so your development integration doesn't fire production hooks.
-- **Social recovery** — enable or disable hardware-isolated recovery, choose
-  exactly one of Google, Apple, or email magic link, and set the on-chain
-  timelock independently for development and production.
+- **Social recovery** — enable or disable [hardware-isolated
+  recovery](/docs/hardware-isolated-recovery), choose exactly one of Google,
+  Apple, or email magic link, set the on-chain timelock, and register your own
+  OAuth client ID if you authenticate users yourself. All independent per
+  environment, so you can rehearse recovery in development against a different
+  provider than production uses.
+
+<Callout type="info">
+**Callback URLs are per app, not per environment.** A URL you add so a tunnel
+works in development is accepted in production too, because OAuth validates the
+redirect against the app's list before an environment is in play. Remove
+throwaway tunnel and preview domains once you are done with them. See
+[Authentication](/docs/auth#oauth-google--apple).
+</Callout>
 
 ## Select it from the SDK
 

@@ -176,11 +176,20 @@ That is the whole integration. `<CavosProvider>` enrols a ready wallet after a
 fresh login and recovers an unregistered device, both automatically. Watch
 progress on `walletStatus.isSocialRecovering` and `socialRecoveryReadyAt`.
 
+<Callout type="warn">
+**Starknet mainnet needs one more value.** Accounts deployed before this feature
+are upgraded to a class that declares the social-recovery entrypoints, and that
+class is currently declared on **Sepolia only** — mainnet still runs the prior
+class. The SDK therefore defaults `socialRecoveryStarknetClassHash` on testnet
+and leaves it unset on mainnet, rather than pointing a real account at a class
+that does not exist on its chain. Pass it explicitly on mainnet once the class
+is declared. Accounts deployed *after* the feature need nothing.
+</Callout>
+
 ## The attestation pin
 
 `socialRecovery: true` verifies the enclave against measurements **pinned in the
-package you installed** (`DEFAULT_SOCIAL_RECOVERY_ATTESTATION`). The Starknet
-class used to upgrade accounts deployed before the feature defaults the same way.
+package you installed** (`DEFAULT_SOCIAL_RECOVERY_ATTESTATION`).
 
 Those measurements are the answer to "which code am I trusting with my users'
 recovery?", and they must not come from the service being checked. If
@@ -289,6 +298,6 @@ caller knows when.
 
 ## Related
 
-- [Recovery codes](/docs/recovery) — the self-custodial baseline, no enclave involved.
+- [Recovery codes](/docs/recovery-codes) — the self-custodial baseline, no enclave involved.
 - [Multi-device](/docs/multi-device) — approving a new device from an existing one.
 - [Passkeys](/docs/passkeys) — a synced passkey as the approval factor.

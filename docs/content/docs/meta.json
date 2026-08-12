@@ -14,6 +14,7 @@
     "---Recovery---",
     "multi-device",
     "recovery",
+    "recovery-codes",
     "hardware-isolated-recovery",
     "passkeys",
     "---Chains---",
@@ -24,6 +25,7 @@
     "---Reference---",
     "concepts",
     "api-reference",
+    "troubleshooting",
     "for-agents"
   ]
 }
