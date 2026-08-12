@@ -24,12 +24,12 @@ Signing stays silent, as described in [Signing & gasless](/docs/signing).
 
 Without a passkey, adding a new device requires **either** an already-registered
 device (the [multi-device](/docs/multi-device) approval flow) **or** the recovery
-passphrase ([recovery](/docs/recovery)). Both can fail the user at the worst
+recovery code ([recovery codes](/docs/recovery-codes)). Both can fail the user at the worst
 moment: the other device isn't nearby, or the code was lost.
 
 A passkey removes that dependency. Because it syncs across the user's devices
 through the OS, a single WebAuthn prompt from **any** browser can authorize the
-new device's key on-chain — no second device hunt, no passphrase. It is the
+new device's key on-chain — no second device hunt, no recovery code. It is the
 lowest-friction path to "log in on my new phone."
 
 ## Control when it's asked (React SDK)
@@ -58,7 +58,7 @@ import { CavosProvider } from '@cavos/kit/react';
 | `secureStep` | Behavior after a new account is created |
 | --- | --- |
 | `'optional'` *(default)* | Shows the "Secure your account" screen with a **Skip for now** button. Low friction — the user can defer passkey setup and still finish onboarding. |
-| `'required'` | Shows the screen **without** Skip. The user must set up a passkey (or save a [recovery passphrase](/docs/recovery)) before they can continue. Use this for high-value apps where a second factor is mandatory. |
+| `'required'` | Shows the screen **without** Skip. The user must set up a passkey (or save a [recovery code](/docs/recovery-codes)) before they can continue. Use this for high-value apps where a second factor is mandatory. |
 | `'off'` | Skips the screen entirely — onboarding ends the moment the wallet is ready. Choose this when you want to drive the 2FA prompt yourself later in the journey (e.g. a "Secure your account" banner on the dashboard), instead of interrupting signup. |
 
 ### Picking the right moment
@@ -77,7 +77,7 @@ feels natural, not disruptive:
   high while the prompt keeps the option visible.
 - **`'required'` — ask now, no skipping.** Best for custody-like UX, treasuries,
   or any context where losing device access is unacceptable. Pair it with the
-  recovery passphrase fallback (the screen offers both) so the user always has a
+  recovery-code fallback (the screen offers both) so the user always has a
   path forward even without a platform authenticator.
 
 <Callout type="info">
@@ -219,7 +219,7 @@ Combine it with the other two fallbacks for the strongest setup:
 1. **Passkey** (this page) — self-serve approval on any new device.
 2. **Multiple devices** ([multi-device](/docs/multi-device)) — approve from an
    existing, logged-in device.
-3. **Passphrase backup** ([recovery](/docs/recovery)) — the last resort when all
+3. **Recovery code** ([recovery codes](/docs/recovery-codes)) — the last resort when all
    devices and the passkey are gone.
 
 See [Concepts → non-custodial model](/docs/concepts) for the full security

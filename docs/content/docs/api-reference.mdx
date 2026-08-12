@@ -67,7 +67,7 @@ counterpart is `CavosSolana` — see [Solana](/docs/solana).
 | `cavos.identity: Identity` | The authenticated identity. |
 | `cavos.publicKey: DevicePublicKey` | This device's public key. |
 | `cavos.execute(calls): Promise<{ transactionHash }>` | Sign + submit calls, gasless. Requires `status === "ready"`. |
-| `cavos.signMessage(message): Promise<MessageSignature>` | Sign an arbitrary message off-chain with the device key (secp256r1). Uniform return across chains. See [After sign-in](/docs/post-login). |
+| `cavos.signMessage(message): Promise<MessageSignature>` | Sign an arbitrary message off-chain with the device key (secp256r1). Uniform return across chains. See [Wallet actions](/docs/wallet-actions). |
 | `cavos.signTransaction(calls): Promise<StarknetSignedTransaction>` | Build + sign a multicall WITHOUT submitting. Single-use (binds to nonce + resource bounds). |
 | `cavos.addSigner(pubkey): Promise<{ transactionHash }>` | Authorize another device's key on-chain. |
 | `cavos.enrollPasskey(passkey, params): Promise<{ publicKey, transactionHash? }>` | Create a passkey + register it as an approver. Gasless, idempotent. See [Passkeys](/docs/passkeys). |
@@ -75,7 +75,7 @@ counterpart is `CavosSolana` — see [Solana](/docs/solana).
 | `cavos.approveThisDeviceWithPasskey({ passkey, submit? }): Promise<{ transactionHash }>` | From a `needs-device-approval` browser, use a synced passkey to authorize this device. |
 | `cavos.passkeyLeafForThisDevice(): Promise<{ leaf, nonce }>` | This device's passkey leaf + on-chain nonce (for batched / multi-chain approval). |
 | `cavos.submitPasskeyApproval(assertion, leaves, leafIndex, nonce, submit?): Promise<{ transactionHash }>` | Submit `add_signer_via_passkey` with a shared assertion. Low-level; prefer `approveThisDeviceWithPasskey`. |
-| `cavos.setupRecovery(code): Promise<{ transactionHash } \| undefined>` | Register a passphrase-derived backup signer. Idempotent. `CavosSolana` and `CavosStellar` expose the same method with their own factor — see [Recovery](/docs/recovery). |
+| `cavos.setupRecovery(code): Promise<{ transactionHash } \| undefined>` | Register a passphrase-derived backup signer. Idempotent. `CavosSolana` and `CavosStellar` expose the same method with their own factor — see [Recovery codes](/docs/recovery-codes). |
 
 ### `Cavos.recover(options): Promise<Cavos>`
 
@@ -124,7 +124,7 @@ interface RecoveryOptions {
 
 ### Hardware-isolated social recovery
 
-Optional, opt-in per environment. See [Recovery](/docs/recovery) for the trust
+Optional, opt-in per environment. See [Hardware-isolated recovery](/docs/hardware-isolated-recovery) for the trust
 model — this is hardware-isolated, non-custodial recovery, not trustless recovery.
 
 | Export | Description |
@@ -134,7 +134,6 @@ model — this is hardware-isolated, non-custodial recovery, not trustless recov
 | `SocialRecoveryPrewarm` | `{ prewarmId, claimToken, expiresAt }` — a single-use reservation for an empty, already-attested worker. Carries no identity or wallet data. |
 | `AttestationPolicy` | Which enclave you accept: `audience`, `imageDigest` (a digest or a list, to overlap a rollout), `projectNumber`, `serviceAccount`. Never learned from the API being attested. |
 | `DEFAULT_SOCIAL_RECOVERY_ATTESTATION` | The policy for the enclave Cavos operates, pinned in this package. What `socialRecovery: true` uses. |
-| `DEFAULT_SOCIAL_RECOVERY_STARKNET_CLASS_HASH` | DeviceAccount class declaring the social-recovery entrypoints, used to upgrade pre-feature Starknet accounts. |
 | `isAcceptedImageDigest(attested, expected)` | Whether an attested image digest matches the pinned policy. Exact match; fails closed on a missing digest or an empty list. |
 | `enrollHardwareIsolatedRecovery`, `recoverHardwareIsolatedDevice` | Chain-aware coordinators wrapping enroll/recover, including timelock finalization. |
 | `CoordinatedRecoveryResult` | Result of a coordinated recovery, including a `readyAt` when a timelock applies. |
@@ -218,7 +217,7 @@ testnet and mainnet.
 |--------|-------------|
 | `ChainAdapter`, `ChainCall`, `ComputeAddressParams` | Multi-chain interface types. |
 | `Chain` (`"starknet" \| "solana" \| "stellar"`), `NetworkEnv` (`"testnet" \| "mainnet"`), `CavosWallet` | Unified connect types. |
-| `MessageSignature` | `{ signature: Uint8Array; publicKey: string; curve: "secp256r1" \| "ed25519" }` — off-chain message signature. See [After sign-in](/docs/post-login). |
+| `MessageSignature` | `{ signature: Uint8Array; publicKey: string; curve: "secp256r1" \| "ed25519" }` — off-chain message signature. See [Wallet actions](/docs/wallet-actions). |
 | `SignedTransaction`, `StarknetSignedTransaction`, `StellarSignedTransaction`, `SolanaSignedTransaction` | Sign-without-submit result, chain-specific (narrow on `chain`). |
 | `SignatureCurve` | `"secp256r1" \| "ed25519"` — which curve a `MessageSignature` was produced with. |
 | `CAVOS_MESSAGE_PREFIX`, `prefixedMessageBytes(message)` | The off-chain message prefix scheme (`"Cavos Signed Message:\n<len>\n"`). |

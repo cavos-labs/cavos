@@ -1,0 +1,117 @@
+---
+title: Recovery codes
+description: The self-custodial recovery baseline — a code the user stores, which restores wallet authority on Starknet, Solana, and Stellar.
+---
+
+Cavos cannot reset a wallet or authorize a replacement device by itself. The
+baseline recovery path costs nothing and involves no server: a high-entropy
+**recovery code**, generated on a device the user already controls, which
+derives a backup authority the account recognizes.
+
+The trade-off is the one every code-based scheme has — the user has to keep it.
+For recovery that works by signing in again instead, see
+[Hardware-isolated recovery](/docs/hardware-isolated-recovery).
+
+## Recovery capabilities
+
+| Chain | Recovery code role | Restore path |
+|---|---|---|
+| **Starknet** | Derives a backup P-256 signer registered on the account | `Cavos.recover(...)` authorizes the fresh device |
+| **Solana** | Derives a backup signer registered by the device-account program | `CavosSolana.recover(...)` authorizes the fresh device |
+| **Stellar** | Derives a key-encryption factor that unwraps the account control key | Reconnect, then call `approveThisDeviceWithRecovery(code)` |
+
+## Set up once
+
+Generate a code on a ready device, show it once, and ask the user to store it
+offline:
+
+```ts title="TypeScript"
+import { generateRecoveryCode } from "@cavos/kit";
+
+const code = generateRecoveryCode();
+await wallet.setupRecovery(code);
+
+// Display `code` once. Never send it to analytics, logs, or your backend.
+```
+
+`setupRecovery` is adapter-specific and idempotent for the same factor. Gate it
+on `wallet.status === "ready"`.
+
+<Callout type="warn">
+Anyone with the recovery code may be able to restore wallet authority. Treat it
+like a private key: never log it, never email it in plaintext, and never persist
+it in application storage.
+</Callout>
+
+## Restore Starknet
+
+```ts title="TypeScript"
+import { Cavos } from "@cavos/kit";
+
+const wallet = await Cavos.recover({
+  code,
+  identity: { userId: user.id, email: user.email },
+  network: "testnet",
+  appSalt: "my-app",
+  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+  paymasterApiKey, // obtain through your trusted sponsorship integration
+});
+```
+
+The derived backup signer authorizes the new local device signer. Cavos
+coordinates submission but cannot manufacture that authorization.
+
+## Restore Solana
+
+```ts title="TypeScript"
+import { CavosSolana } from "@cavos/kit";
+
+const wallet = await CavosSolana.recover({
+  code,
+  identity: { userId: user.id, email: user.email },
+  network: "solana-devnet",
+  appSalt: "my-app",
+  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+});
+```
+
+The recovery signer authorizes a new P-256 device key in the deterministic
+device-account PDA.
+
+## Restore Stellar
+
+```ts title="TypeScript"
+import { Cavos } from "@cavos/kit";
+
+const wallet = await Cavos.connect({
+  chain: "stellar",
+  network: "testnet",
+  identity: { userId: user.id, email: user.email },
+  appSalt: "my-app",
+  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+});
+
+if (
+  wallet.chain === "stellar" &&
+  wallet.status === "needs-device-approval"
+) {
+  await wallet.approveThisDeviceWithRecovery(code);
+}
+```
+
+The recovery factor unwraps the existing Stellar control key locally. That key
+then enrolls the fresh device's envelope slot.
+
+## Product guidance
+
+- Encourage a second device or synced passkey before relying on a recovery code.
+- Verify recovery on physical iOS and Android devices before production release.
+- Treat the code as one factor among several, not the plan. Most users will not
+  keep it, which is the problem [hardware-isolated
+  recovery](/docs/hardware-isolated-recovery) exists to solve.
+- If the user loses every device and every recovery factor, and social recovery
+  was never enrolled, Cavos cannot restore access. That is the cost of the
+  guarantee, not a gap in it.
+
+See [Multi-device](/docs/multi-device), [Passkeys](/docs/passkeys), and the
+selected [chain guide](/docs/chains).

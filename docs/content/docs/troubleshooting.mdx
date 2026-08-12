@@ -1,0 +1,129 @@
+---
+title: Troubleshooting
+description: Symptoms you are likely to hit integrating @cavos/kit, what actually causes them, and how to confirm it.
+---
+
+Organized by what you see, not by what is wrong — the cause is usually somewhere
+other than where the symptom appears.
+
+## Users suddenly have new, empty wallets
+
+**Almost always `appSalt` changed.** Addresses derive from `{ userId, appSalt }`,
+so editing the salt — even reformatting it — points every existing user at a
+different wallet. Nothing errors: the app works perfectly, on the wrong accounts.
+
+In development `<CavosProvider>` detects this and logs
+`[app-salt-changed]` naming both values. Restore the previous string and the
+wallets come back; the funds were never anywhere else.
+
+The same applies to `userId`. If your auth changes what it reports — an email
+where it used to be a primary key, a provider migration that renumbers users —
+those users get new wallets. Derive from something immutable.
+
+## `redirect_uri is not registered for this app`
+
+Returned when the URL your app started OAuth from is not on the app's registered
+list — **including when the app has no URLs registered at all.** An empty list
+rejects rather than allows, because the callback carries a one-time code and
+honouring an unregistered URI would hand that code to whoever asked.
+
+Add the exact URL in **Dashboard → App → Callback URLs**: scheme, host and path
+must match, with no trailing slash and no wildcards. Tunnel and preview domains
+each count as a separate origin, and a fresh tunnel URL means a fresh
+registration. See [Authentication](/docs/auth#oauth-google--apple).
+
+## `paymasterApiKey` is required for Starknet connections
+
+Starknet sponsors both the account deploy and every transaction through the
+paymaster, so the key is required rather than optional. Solana and Stellar use a
+relayer activated by `appId` instead — a paymaster key there is ignored, and the
+development config check flags it as `[unused-paymaster-key]` so it does not sit
+in your bundle for nothing.
+
+## Transactions fail with the wallet apparently connected
+
+Check `walletStatus.isReady`, not `isAuthenticated`. A user can be signed in on a
+device the account has not authorized yet — the normal state on a second browser
+— and `execute` will fail until the device is approved. Route
+`walletStatus.needsDeviceApproval` to a passkey prompt or
+[multi-device](/docs/multi-device) approval.
+
+## Nothing happens when social recovery should run
+
+Three causes, in the order worth checking:
+
+1. **Not enabled for the environment.** `socialRecovery: true` is the client
+   half; the environment must also have it enabled in the dashboard, with one
+   provider selected. It is off by default.
+2. **No `appId`.** The enclave session is scoped to the app; without it the
+   feature cannot start. Flagged as `[social-recovery-without-app-id]`.
+3. **Your own auth, with no provider token supplied.** If you authenticate users
+   yourself, enrolment and recovery do not happen automatically — the SDK never
+   sees a provider token. Call `submitSocialRecoveryToken(idToken)` yourself. See
+   [With your own auth](/docs/hardware-isolated-recovery#with-your-own-auth).
+
+## `id_token issuer … cannot be used for social recovery`
+
+You passed your own session JWT rather than the provider's `id_token`. The
+enclave verifies against Google's or Apple's published keys, and a token your
+auth signed cannot be verified against them — so it is rejected before it is
+sent anywhere.
+
+Clerk, Auth0 and Firebase all expose the underlying provider token, usually
+behind an explicit call rather than as the default session object.
+
+## `social authentication is too old; sign in again`
+
+The enclave requires the authentication to be under five minutes old, so a
+recovery cannot be driven by a token retrieved from an old session. Pass one
+straight from a sign-in. If your auth caches tokens, ask it for a fresh one
+rather than reusing what it has.
+
+## Errors log as `{}`
+
+A host whose console JSON-serializes its arguments — notably Capacitor's native
+bridge — prints an `Error` as `{}`, because `message` and `stack` are
+non-enumerable. The value is not lost, just unprinted: read the message off the
+error you caught, or off the status field for background work
+(`walletStatus`-level errors and `authError`).
+
+## Passkey approval fails on Starknet mainnet
+
+Not yet available there: the mainnet account class has not been re-declared with
+the `add_signer_via_passkey` surface. Use it on Sepolia, or on Solana and
+Stellar, which route approval through the relayer. On Starknet mainnet fall back
+to [multi-device](/docs/multi-device) or [recovery
+codes](/docs/recovery-codes). See [Passkeys](/docs/passkeys).
+
+## Hydration or `window is not defined` errors
+
+The React bindings are client-only — `@cavos/kit/react` is marked
+`'use client'`. In Next.js App Router, the file that renders `<CavosProvider>`
+needs `'use client'` at the top, and so does any component calling `useCavos()`.
+
+Wallet state is not available during server rendering by design: the device key
+lives in the browser. Gate on `isLoading` for the first paint rather than
+expecting an address to be present immediately.
+
+## A user is stuck mid-recovery with a timelock
+
+Expected, and not stuck. A non-zero timelock commits the new signer on-chain but
+keeps it inert until the delay passes — that window is what lets a real owner
+cancel an unwanted recovery. The SDK persists the public `readyAt`, resumes
+after a refresh, and finalizes automatically when the delay expires. Surface
+`walletStatus.socialRecoveryReadyAt` so the user knows when to come back.
+
+## Still stuck
+
+Run the config checks and read what they say — they cover the mistakes above
+that are visible from configuration alone:
+
+```ts title="TypeScript"
+import { validateCavosConfig, formatConfigProblems } from "@cavos/kit/react";
+
+console.log(formatConfigProblems(validateCavosConfig(config)));
+```
+
+`<CavosProvider>` already runs these in development. Calling them yourself is
+useful in a setup screen or in CI, where a misconfigured environment is cheaper
+to catch than in a user's first login.
