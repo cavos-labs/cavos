@@ -35,14 +35,7 @@ the same identity logs in from an unregistered device:
     network: "mainnet",
     appSalt: "my-app",
     paymasterApiKey,
-    socialRecoveryAttestation: {
-      audience: "https://cavos.xyz/api/recovery/social/attestation",
-      imageDigest: "sha256:…",
-      projectNumber: "1234567890",
-      serviceAccount: "cavos-confidential-recovery@project.iam.gserviceaccount.com",
-    },
-    // Only while migrating Starknet accounts deployed before this feature:
-    socialRecoveryStarknetClassHash: "0x…",
+    socialRecovery: true,
   }}
   modal={{ appName: "My App" }}
 >
@@ -50,8 +43,48 @@ the same identity logs in from an unregistered device:
 </CavosProvider>
 ```
 
-Pin those four attestation values from the Cavos deployment information you
-trust. The SDK does not learn them from the recovery API it is attesting.
+`socialRecovery: true` verifies the enclave against measurements **pinned in
+the package you installed** (`DEFAULT_SOCIAL_RECOVERY_ATTESTATION`). The
+Starknet upgrade class used to migrate accounts deployed before the feature is
+defaulted the same way.
+
+### Why the measurements ship in the SDK
+
+The SDK checks the enclave's attestation before it sends anything, and the
+policy it checks against must not come from the service being checked. If
+`cavos.xyz` told the client which image digest to expect, anyone who
+compromised `cavos.xyz` would answer with their own — and the attestation would
+prove nothing. Verifying against values supplied by the thing under
+verification is not verification.
+
+Shipping them in a versioned, immutable package keeps the pin outside that
+control plane while taking it off your hands. You can audit the constant, and
+you choose when to adopt a new one by upgrading. The attestation itself is
+signed by Google, so authenticity is anchored outside Cavos either way; the
+policy only fixes *which workload* you are willing to talk to.
+
+Pin your own policy when you run your own enclave:
+
+```ts title="TypeScript"
+socialRecovery: {
+  audience: "https://example.com/api/recovery/social/attestation",
+  imageDigest: ["sha256:…", "sha256:…"], // list to overlap a rollout
+  projectNumber: "…",
+  serviceAccount: "…@….iam.gserviceaccount.com",
+}
+```
+
+`imageDigest` accepts a list because the digest measures the exact enclave
+image and changes whenever that image is rebuilt. Publishing the incoming and
+outgoing digest together lets a redeploy overlap instead of cutting off apps
+mid-rollout. The attested digest must still match one of them exactly — an
+empty list accepts nothing.
+
+<Callout type="info">
+Apps that set `socialRecoveryAttestation` before this existed keep working
+unchanged: an explicit policy always wins over the shipped defaults, so an app
+that pinned its own measurements is never silently repointed.
+</Callout>
 
 The fresh ID token is kept only in memory. Its SHA-256 fingerprint reserves
 exactly one recovery session, and the API stores only a second hash of that
@@ -64,9 +97,12 @@ token or recovery key.
 Inside the enclave, Cavos verifies the provider signature, issuer, audience,
 expiry, token fingerprint, configured provider, and the enrolled subject. The
 authentication must be no more than five minutes old. Google and Apple tokens
-must contain the login nonce; email requires a verified, recent Firebase email
-token, which the built-in UI obtains through its magic-link flow. OTP and
-Cavos-signed compatibility tokens are not accepted for social recovery.
+must carry an OIDC `nonce`, which marks the token as minted for an interactive
+sign-in — what binds a token to *this* recovery session is its fingerprint,
+committed when the session opens and compared in constant time. Email requires a
+verified, recent Firebase email token, which the built-in UI obtains through its
+magic-link flow. OTP and Cavos-signed compatibility tokens are not accepted for
+social recovery.
 
 ### Chain enforcement
 
@@ -79,6 +115,76 @@ Cavos-signed compatibility tokens are not accepted for social recovery.
 For non-zero timelocks, the SDK stores only the public `readyAt` timestamp,
 resumes after a refresh, and permissionlessly finalizes the already-committed
 signer when the on-chain delay expires. It never persists the social token.
+
+### With your own auth
+
+Social recovery works when you authenticate users yourself — Clerk, Auth0,
+Firebase, your own backend — as long as a real Google or Apple sign-in happens
+somewhere underneath. **Your users never sign in twice:** you pass the provider
+token your login already obtained.
+
+Register your OAuth client ID once in **Dashboard → App → Environments →
+Your OAuth client ID**. The enclave then accepts tokens minted for your client
+instead of only Cavos's.
+
+```tsx title="app/secure-account.tsx"
+const { submitSocialRecoveryToken, walletStatus } = useCavos();
+
+// Enrols when this device is ready and recovers when it is not — the wallet's
+// state decides, so the same call serves both screens.
+async function useRecovery() {
+  const idToken = await getGoogleIdTokenFromYourAuth();
+  submitSocialRecoveryToken(idToken);
+}
+```
+
+Two requirements, both easy to miss:
+
+- **Pass the provider's raw `id_token`**, not your own session JWT. The token
+  has to be verifiable against Google's or Apple's keys, and your session token
+  is signed by you. Passing the wrong one fails immediately with a message
+  saying so. Clerk, Auth0 and Firebase all expose the underlying token, usually
+  behind an explicit call.
+- **Pass a fresh one.** The enclave requires the authentication to be under five
+  minutes old. This falls out naturally — enrolment follows a login, and
+  recovery happens as the user signs in on the new device — but a token cached
+  from an earlier session will be rejected.
+
+<Callout type="info">
+Changing the registered client ID never affects wallets already enrolled. The
+enclave enforces the policy sealed at enrolment, so the setting only applies to
+enrolments made after it changes.
+</Callout>
+
+The email provider still uses the Cavos Firebase project: its audience is the
+project id and its issuer embeds it, so it is not a per-app value.
+
+### Enclave warm-up (automatic)
+
+**There is nothing to call.** Starting an enclave is the slowest part of
+enrollment and recovery, and it used to run after the user had already signed
+in — with the user watching a spinner. `<CavosProvider>` now reserves a worker
+while the user is still authenticating, so that cold start overlaps the login
+round trip instead of following it.
+
+The provider fires the reservation from `login()`, `sendOtp()`,
+`sendMagicLink()` and the OAuth callback, deduplicates concurrent attempts, and
+persists it so a redirect flow reuses the same reservation. It is an
+optimization: if it fails, the SDK logs a warning and recovery proceeds from a
+cold start.
+
+The reservation is created *before* the user authenticates, so it deliberately
+carries nothing about them — only an id, a single-use claim token, and an
+expiry. The next `enroll` or `recover` claims it atomically, and an expired one
+is replaced transparently.
+
+<Callout type="info">
+Only if you are **not** using `<CavosProvider>` — a non-React host driving
+`SocialRecoveryClient` yourself — call `client.prewarm()` at the moment you
+learn a login is starting. It cannot be folded into `enroll`/`recover`: those
+are the exact calls the warm-up exists to make fast, so it has to happen
+earlier, and only the caller knows when that is.
+</Callout>
 
 <Callout type="warn">
 Describe this as **hardware-isolated, non-custodial recovery**, not “trustless

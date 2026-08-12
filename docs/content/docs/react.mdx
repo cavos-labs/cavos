@@ -23,12 +23,7 @@ export function Providers({ children }) {
         chain: "solana",        // "starknet" | "solana" | "stellar"
         network: "testnet",     // resolves to the chain's devnet/sepolia
         appSalt: "my-app",
-        socialRecoveryAttestation: {
-          audience: process.env.NEXT_PUBLIC_CAVOS_RECOVERY_AUDIENCE,
-          imageDigest: process.env.NEXT_PUBLIC_CAVOS_RECOVERY_IMAGE_DIGEST,
-          projectNumber: process.env.NEXT_PUBLIC_CAVOS_RECOVERY_PROJECT_NUMBER,
-          serviceAccount: process.env.NEXT_PUBLIC_CAVOS_RECOVERY_SERVICE_ACCOUNT,
-        },
+        socialRecovery: true,   // optional — see Recovery
       }}
       modal={{
         appName: "My App",
@@ -45,6 +40,20 @@ The provider manages **exactly one chain**. Behind the scenes it resolves the
 identity, deploys the device-signer account gaslessly on first use, and keeps
 the wallet handle ready for sponsored transactions. See
 [Chains](/docs/chains) for the chain model.
+
+### Props
+
+| Prop | Description |
+|------|-------------|
+| `config` | The chain, network, `appSalt` and credentials. Exactly one chain. |
+| `modal` | Login modal appearance and providers. Omit to render no modal. |
+| `identity` | **Bring your own auth.** Pass your signed-in user and Cavos login turns off. `null` while your auth loads or after sign-out. See [Authentication](/docs/auth#in-react). |
+
+In development the provider checks the config when it mounts and reports
+problems in the console — a missing `appSalt`, a paymaster key on a chain that
+ignores it, and in particular an `appSalt` that changed since this browser last
+connected, which silently moves every existing user to a new, empty wallet. Run
+the same checks yourself with `validateCavosConfig(config)`.
 
 ## `useCavos()`
 
@@ -86,7 +95,7 @@ socialRecoveryReadyAt }`. Gate any transaction on `walletStatus.isReady`.
 | `sendOtp(email)` | Send an email OTP code. |
 | `verifyOtp(email, code)` | Verify an OTP / complete a magic link and deploy the wallet. |
 | `sendMagicLink(email)` | Send a passwordless magic-link email. |
-| `handleCallback(authData)` | Resolve identity from an OAuth callback (`?auth_data=…`) and deploy. |
+| `handleCallback(authData, redirectUri?)` | Resolve identity from an OAuth callback (`?cavos_auth_code=…`) and deploy. Pass the callback URL as `redirectUri` if it differs from the current one. |
 
 ### Transactions
 
@@ -111,6 +120,7 @@ the args differ per chain. See [After sign-in](/docs/post-login).
 | `enrollPasskeyDefault()` | Enroll a synced passkey as an approver (2FA for new devices). Requires a ready device. |
 | `approveDeviceWithPasskey()` | From a `needs-device-approval` browser, prompt the synced passkey to authorize this device. |
 | `setupRecovery()` | Register a backup signer derived from a generated recovery code. **Resolves with the code** — show it to the user once. |
+| `submitSocialRecoveryToken(idToken)` | Drive social recovery with a provider `id_token` your own login obtained. Enrols when the device is ready, recovers when it is not. See [Recovery](/docs/recovery#with-your-own-auth). |
 | `recover(code)` | Recover access after losing every device. Brings the provider to a ready state. |
 | `resendDeviceApproval()` | Re-request the device-approval email for the current pending request. |
 

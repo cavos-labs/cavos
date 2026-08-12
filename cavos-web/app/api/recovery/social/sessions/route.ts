@@ -69,7 +69,7 @@ export async function POST(request: Request) {
   const { data: environmentPolicy } = await admin
     .from('app_environments')
     .select(
-      'id, social_recovery_enabled, social_recovery_provider, social_recovery_delay_seconds',
+      'id, social_recovery_enabled, social_recovery_provider, social_recovery_delay_seconds, social_recovery_audience',
     )
     .eq('id', environment.id)
     .eq('app_id', appId)
@@ -109,7 +109,7 @@ export async function POST(request: Request) {
       policy: {
         app_id: appId,
         environment_id: environment.id,
-        ...providerPolicy(enrollment.provider),
+        ...providerPolicy(enrollment.provider, environmentPolicy?.social_recovery_audience),
       },
       delay_seconds: enrollment.delay_seconds,
       resume_result: {
@@ -194,7 +194,10 @@ export async function POST(request: Request) {
             policy: {
               app_id: appId,
               environment_id: environment.id,
-              ...providerPolicy(environmentPolicy.social_recovery_provider),
+              ...providerPolicy(
+                environmentPolicy.social_recovery_provider,
+                environmentPolicy.social_recovery_audience,
+              ),
             },
             delay_seconds: environmentPolicy.social_recovery_delay_seconds,
             expires_at: new Date(Date.now() + 15 * 60_000).toISOString(),
@@ -267,7 +270,10 @@ export async function POST(request: Request) {
           policy: {
             app_id: appId,
             environment_id: environment.id,
-            ...providerPolicy(environmentPolicy.social_recovery_provider),
+            ...providerPolicy(
+                environmentPolicy.social_recovery_provider,
+                environmentPolicy.social_recovery_audience,
+              ),
           },
           delay_seconds: environmentPolicy.social_recovery_delay_seconds,
           expires_at: implicitExpiresAt,
@@ -348,7 +354,10 @@ export async function POST(request: Request) {
       policy: {
         app_id: appId,
         environment_id: environment.id,
-        ...providerPolicy(environmentPolicy.social_recovery_provider),
+        ...providerPolicy(
+                environmentPolicy.social_recovery_provider,
+                environmentPolicy.social_recovery_audience,
+              ),
       },
       delay_seconds: environmentPolicy.social_recovery_delay_seconds,
       expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),

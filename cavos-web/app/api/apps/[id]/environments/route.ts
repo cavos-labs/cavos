@@ -8,7 +8,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   if (!access) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   const { data, error } = await access.supabase
     .from('app_environments')
-    .select('id,public_id,kind,is_active,allowed_origins,low_balance_threshold_usd,social_recovery_enabled,social_recovery_provider,social_recovery_delay_seconds,created_at,updated_at')
+    .select('id,public_id,kind,is_active,allowed_origins,low_balance_threshold_usd,social_recovery_enabled,social_recovery_provider,social_recovery_delay_seconds,social_recovery_audience,created_at,updated_at')
     .eq('app_id', id)
     .order('kind', { ascending: false })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -23,7 +23,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!body.environment_id) return NextResponse.json({ error: 'environment_id is required' }, { status: 400 })
   const { data: currentEnvironment } = await access.supabase
     .from('app_environments')
-    .select('id,social_recovery_enabled,social_recovery_provider,social_recovery_delay_seconds')
+    .select('id,social_recovery_enabled,social_recovery_provider,social_recovery_delay_seconds,social_recovery_audience')
     .eq('id', body.environment_id)
     .eq('app_id', id)
     .maybeSingle()
@@ -54,6 +54,22 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return NextResponse.json({ error: 'Recovery delay must be between 0 and 2592000 seconds' }, { status: 400 })
     }
     updates.social_recovery_delay_seconds = delay
+  }
+  if (body.social_recovery_audience !== undefined) {
+    // The audience decides whose id_tokens the enclave will accept, so it is
+    // stored per environment and only ever set by the app owner here — never
+    // taken from a recovery request. An empty value falls back to the Cavos
+    // client. Wallets already enrolled are unaffected: the enclave enforces the
+    // policy sealed at enrolment.
+    const raw = body.social_recovery_audience
+    if (raw !== null && typeof raw !== 'string') {
+      return NextResponse.json({ error: 'Invalid OAuth client ID' }, { status: 400 })
+    }
+    const audience = typeof raw === 'string' ? raw.trim() : null
+    if (audience && audience.length > 255) {
+      return NextResponse.json({ error: 'OAuth client ID is too long' }, { status: 400 })
+    }
+    updates.social_recovery_audience = audience || null
   }
   if (
     (updates.social_recovery_enabled ?? currentEnvironment.social_recovery_enabled) === true &&

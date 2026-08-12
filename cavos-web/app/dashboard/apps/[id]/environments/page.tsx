@@ -17,6 +17,7 @@ interface Environment {
   social_recovery_enabled: boolean
   social_recovery_provider: Provider | null
   social_recovery_delay_seconds: number
+  social_recovery_audience: string | null
 }
 
 export default function EnvironmentsPage() {
@@ -62,6 +63,7 @@ export default function EnvironmentsPage() {
           social_recovery_enabled: environment.social_recovery_enabled,
           social_recovery_provider: environment.social_recovery_provider,
           social_recovery_delay_seconds: environment.social_recovery_delay_seconds,
+          social_recovery_audience: environment.social_recovery_audience?.trim() || null,
         }),
       })
       const body = await response.json()
@@ -187,6 +189,29 @@ export default function EnvironmentsPage() {
                       className="mt-2 w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm"
                     />
                   </label>
+                  {env.social_recovery_provider !== 'email' && (
+                    <label className="text-xs font-semibold sm:col-span-2">
+                      Your OAuth client ID
+                      <input
+                        type="text"
+                        spellCheck={false}
+                        placeholder="Leave empty to use the Cavos client"
+                        value={env.social_recovery_audience ?? ''}
+                        onChange={(event) =>
+                          updateLocal(env.id, {
+                            social_recovery_audience: event.target.value,
+                          })
+                        }
+                        className="mt-2 w-full rounded-lg border border-line bg-white px-3 py-2.5 font-mono text-sm"
+                      />
+                      <p className="mt-2 text-xs font-normal text-muted">
+                        Set this only if you sign users in with your own Google or Apple
+                        client (Clerk, Auth0, your own backend). Recovery will then accept
+                        the id_token you already hold, so the user never signs in twice.
+                        Wallets already enrolled keep the client they enrolled with.
+                      </p>
+                    </label>
+                  )}
                 </div>
               )}
 
