@@ -78,21 +78,10 @@ outer fee without becoming an account signer. See [Stellar](/docs/stellar).
 
 ## Signing without submission
 
-All current adapters expose typed sign-without-submit paths, but the returned
-payload is chain-specific. Narrow on the wallet:
-
-```ts title="TypeScript"
-if (wallet.chain === "starknet") {
-  const signed = await wallet.signTransaction(calls);
-} else if (wallet.chain === "solana") {
-  const signed = await wallet.signTransaction(amount, destination);
-} else if (wallet.chain === "stellar") {
-  const signed = await wallet.signTransaction(amount, destination);
-}
-```
-
-These payloads bind to chain state such as a nonce or sequence number and should
-be treated as short-lived, single-use artifacts.
+Every adapter can sign a transaction without submitting it — useful when your
+own relayer does the submitting. The payload is chain-specific, so narrow on
+`wallet.chain` first. See [Wallet actions](/docs/wallet-actions#sign-messages--transactions)
+for the call, the per-chain payloads, and how a backend verifies a signature.
 
 ## Security trade-off
 

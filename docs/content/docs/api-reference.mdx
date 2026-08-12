@@ -67,7 +67,7 @@ counterpart is `CavosSolana` — see [Solana](/docs/solana).
 | `cavos.identity: Identity` | The authenticated identity. |
 | `cavos.publicKey: DevicePublicKey` | This device's public key. |
 | `cavos.execute(calls): Promise<{ transactionHash }>` | Sign + submit calls, gasless. Requires `status === "ready"`. |
-| `cavos.signMessage(message): Promise<MessageSignature>` | Sign an arbitrary message off-chain with the device key (secp256r1). Uniform return across chains. See [After sign-in](/docs/post-login). |
+| `cavos.signMessage(message): Promise<MessageSignature>` | Sign an arbitrary message off-chain with the device key (secp256r1). Uniform return across chains. See [Wallet actions](/docs/wallet-actions). |
 | `cavos.signTransaction(calls): Promise<StarknetSignedTransaction>` | Build + sign a multicall WITHOUT submitting. Single-use (binds to nonce + resource bounds). |
 | `cavos.addSigner(pubkey): Promise<{ transactionHash }>` | Authorize another device's key on-chain. |
 | `cavos.enrollPasskey(passkey, params): Promise<{ publicKey, transactionHash? }>` | Create a passkey + register it as an approver. Gasless, idempotent. See [Passkeys](/docs/passkeys). |
@@ -218,7 +218,7 @@ testnet and mainnet.
 |--------|-------------|
 | `ChainAdapter`, `ChainCall`, `ComputeAddressParams` | Multi-chain interface types. |
 | `Chain` (`"starknet" \| "solana" \| "stellar"`), `NetworkEnv` (`"testnet" \| "mainnet"`), `CavosWallet` | Unified connect types. |
-| `MessageSignature` | `{ signature: Uint8Array; publicKey: string; curve: "secp256r1" \| "ed25519" }` — off-chain message signature. See [After sign-in](/docs/post-login). |
+| `MessageSignature` | `{ signature: Uint8Array; publicKey: string; curve: "secp256r1" \| "ed25519" }` — off-chain message signature. See [Wallet actions](/docs/wallet-actions). |
 | `SignedTransaction`, `StarknetSignedTransaction`, `StellarSignedTransaction`, `SolanaSignedTransaction` | Sign-without-submit result, chain-specific (narrow on `chain`). |
 | `SignatureCurve` | `"secp256r1" \| "ed25519"` — which curve a `MessageSignature` was produced with. |
 | `CAVOS_MESSAGE_PREFIX`, `prefixedMessageBytes(message)` | The off-chain message prefix scheme (`"Cavos Signed Message:\n<len>\n"`). |
