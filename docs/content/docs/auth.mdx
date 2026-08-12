@@ -30,6 +30,39 @@ address changes and the user gets a different wallet. Use an immutable primary
 key, not an email that can change.
 </Callout>
 
+### In React
+
+Pass the same identity to `<CavosProvider>` and you get the full React surface —
+wallet status, device approval, passkeys, recovery — driven by your own auth.
+Cavos login turns off: the modal is not mounted and `login()` throws.
+
+```tsx title="app/providers.tsx"
+export function Providers({ children }) {
+  const { user, isLoading } = useMyAuth();   // Clerk, Auth0, your own
+
+  return (
+    <CavosProvider
+      config={config}
+      identity={isLoading || !user ? null : { userId: user.id, email: user.email }}
+    >
+      {children}
+    </CavosProvider>
+  );
+}
+```
+
+Pass `null` while your auth is loading and once the user signs out. The provider
+follows you: it connects when an identity appears, clears its state when it goes
+away, and swaps wallets when the user changes.
+
+The identity is **never persisted**. Your auth is the source of truth on every
+mount, so a Cavos session cannot outlive the session that authorized it — unlike
+Cavos hosted auth, which remembers its own logins so a reload can reconnect
+silently.
+
+Social recovery also works from your own auth; see
+[Recovery](/docs/recovery#with-your-own-auth).
+
 ## Option B — Cavos hosted auth (`CavosAuth`)
 
 `CavosAuth` provides Google, Apple, and email OTP / magic-link login that resolves

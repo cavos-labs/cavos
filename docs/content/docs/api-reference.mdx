@@ -105,7 +105,7 @@ interface RecoveryOptions {
 
 | Export | Description |
 |--------|-------------|
-| `CavosAuth` | Hosted login: `getGoogleOAuthUrl`, `getAppleOAuthUrl`, `handleCallback`, `sendOtp`, `verifyOtp`, `sendMagicLink`, `authenticate`. |
+| `CavosAuth` | Hosted login: `getGoogleOAuthUrl`, `getAppleOAuthUrl`, `handleCallback`, `sendOtp`, `verifyOtp`, `sendMagicLink`, `authenticate`. Also `useExternalSocialRecoveryToken(idToken)` to drive social recovery from your own login — rejects anything not issued by a provider the enclave accepts. |
 | `StaticIdentity` | Wrap a `{ userId, email }` you already have as an `AuthProvider`. |
 | `AuthProvider`, `Identity` | Types for the auth contract. |
 | `deriveAddressSeed(input)` | Poseidon hash of `{ userId, appSalt }` → `address_seed`. |
@@ -245,7 +245,10 @@ React bindings shipped in the same package under the `/react` subpath. See
 
 | Export | Description |
 |--------|-------------|
-| `CavosProvider` | Wrap your app once; manages one chain's wallet + mounts the auth modal. Props: `config: CavosConfig`, `modal?: CavosModalConfig`, `children`. |
+| `CavosProvider` | Wrap your app once; manages one chain's wallet + mounts the auth modal. Props: `config: CavosConfig`, `modal?: CavosModalConfig`, `identity?: Identity \| null` (bring your own auth — disables Cavos login), `children`. |
+| `validateCavosConfig(config)` | Config problems as `CavosConfigProblem[]` (`code`, `level`, `message`). Run in the provider automatically in development; exported for your own setup screen or CI. |
+| `checkAppSaltDrift(config, storage?)` | Reports an `appSalt` that changed since this browser last connected — addresses derive from it, so a change silently moves users to new wallets. Silent on a first run. |
+| `formatConfigProblems(problems)` | Render problems as console-ready lines. |
 | `useCavos()` | Primary hook — full wallet surface: state (`address`, `wallet`, `chain`, `walletStatus`, `user`, `isAuthenticated`), login, `execute` (Starknet), device/recovery wrappers, `logout`. |
 | `useCavosAuth()` | Thin subset for components that only open the modal and read auth state (`openModal`, `closeModal`, `isAuthenticated`, `address`, `user`, `walletStatus`, `logout`). |
 | `CavosAuthModal` | Customizable login modal. Renders as a bottom sheet automatically on mobile (`max-width: 640px`). |
