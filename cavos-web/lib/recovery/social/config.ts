@@ -7,12 +7,31 @@ export interface ProviderPolicy {
   jwks_uri: string
 }
 
-export function providerPolicy(provider: SocialRecoveryProvider): ProviderPolicy {
+/**
+ * Build the policy the enclave verifies an id_token against.
+ *
+ * `audienceOverride` is the app's own OAuth client ID, letting apps that run
+ * their own authentication use the token they already hold instead of sending
+ * the user through a second sign-in. It must come from the app's stored
+ * configuration, never from the request: the value decides whose tokens are
+ * accepted, so a compromised frontend must not be able to choose it.
+ *
+ * Google and Apple sign the token either way, so this widens which client the
+ * token was minted for — not who can mint one. The enclave seals this policy at
+ * enrolment and enforces the sealed copy on every later recovery, so changing
+ * the setting never retroactively opens an already-enrolled wallet.
+ */
+export function providerPolicy(
+  provider: SocialRecoveryProvider,
+  audienceOverride?: string | null,
+): ProviderPolicy {
+  const audience = (value: string) => audienceOverride?.trim() || value
+
   if (provider === 'google') {
     return {
       provider,
       issuer: 'https://accounts.google.com',
-      audience: required('GOOGLE_CLIENT_ID'),
+      audience: audience(required('GOOGLE_CLIENT_ID')),
       jwks_uri: 'https://www.googleapis.com/oauth2/v3/certs',
     }
   }
@@ -20,7 +39,7 @@ export function providerPolicy(provider: SocialRecoveryProvider): ProviderPolicy
     return {
       provider,
       issuer: 'https://appleid.apple.com',
-      audience: required('APPLE_CLIENT_ID'),
+      audience: audience(required('APPLE_CLIENT_ID')),
       jwks_uri: 'https://appleid.apple.com/auth/keys',
     }
   }
