@@ -23,7 +23,13 @@ Jobs:
 - `cavos-social-recovery-cleanup`: every five minutes; expires abandoned
   sessions and deletes their ephemeral Confidential Space VMs.
 - `cavos-social-recovery-warm-pool`: every minute; keeps empty, one-shot
-  Confidential Space workers attested and ready before OAuth.
+  Confidential Space workers attested and ready before OAuth. **Off unless
+  `SOCIAL_RECOVERY_WARM_POOL_SIZE` is set** (0–4, default 0) — an idle
+  Confidential VM costs money around the clock, and warm workers only buy
+  latency: with the pool empty, enrolment and recovery still work from a cold
+  start. Turn it on when real users are recovering wallets. The job stays
+  scheduled either way; with a target of 0 it creates nothing and still reaps
+  workers whose VM has gone away.
 - `rollup-prune-operational-events`: daily at 02:20 UTC, entirely inside Postgres.
 
 Inspect recent HTTP calls through `net._http_response` and schedules through `cron.job`.
