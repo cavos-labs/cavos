@@ -35,14 +35,7 @@ the same identity logs in from an unregistered device:
     network: "mainnet",
     appSalt: "my-app",
     paymasterApiKey,
-    socialRecoveryAttestation: {
-      audience: "https://cavos.xyz/api/recovery/social/attestation",
-      imageDigest: "sha256:…",
-      projectNumber: "1234567890",
-      serviceAccount: "cavos-confidential-recovery@project.iam.gserviceaccount.com",
-    },
-    // Only while migrating Starknet accounts deployed before this feature:
-    socialRecoveryStarknetClassHash: "0x…",
+    socialRecovery: true,
   }}
   modal={{ appName: "My App" }}
 >
@@ -50,18 +43,48 @@ the same identity logs in from an unregistered device:
 </CavosProvider>
 ```
 
-Those four values are what the SDK checks the enclave against before it will
-send anything, and they exist in your code for one reason: **the SDK must not
-learn them from the service it is verifying.** If `cavos.xyz` told the client
-which image digest to expect, anyone who compromised `cavos.xyz` would simply
-answer with their own — and the attestation would prove nothing. Verifying
-against values supplied by the thing under verification is not verification.
+`socialRecovery: true` verifies the enclave against measurements **pinned in
+the package you installed** (`DEFAULT_SOCIAL_RECOVERY_ATTESTATION`). The
+Starknet upgrade class used to migrate accounts deployed before the feature is
+defaulted the same way.
 
-So treat them like a pinned certificate, not like configuration: take them from
-Cavos deployment information you trust, and review a change to `imageDigest`
-the way you would review a key rotation. It measures the exact enclave image
-that will handle your users' recovery, and it changes whenever that image is
-rebuilt.
+### Why the measurements ship in the SDK
+
+The SDK checks the enclave's attestation before it sends anything, and the
+policy it checks against must not come from the service being checked. If
+`cavos.xyz` told the client which image digest to expect, anyone who
+compromised `cavos.xyz` would answer with their own — and the attestation would
+prove nothing. Verifying against values supplied by the thing under
+verification is not verification.
+
+Shipping them in a versioned, immutable package keeps the pin outside that
+control plane while taking it off your hands. You can audit the constant, and
+you choose when to adopt a new one by upgrading. The attestation itself is
+signed by Google, so authenticity is anchored outside Cavos either way; the
+policy only fixes *which workload* you are willing to talk to.
+
+Pin your own policy when you run your own enclave:
+
+```ts title="TypeScript"
+socialRecovery: {
+  audience: "https://example.com/api/recovery/social/attestation",
+  imageDigest: ["sha256:…", "sha256:…"], // list to overlap a rollout
+  projectNumber: "…",
+  serviceAccount: "…@….iam.gserviceaccount.com",
+}
+```
+
+`imageDigest` accepts a list because the digest measures the exact enclave
+image and changes whenever that image is rebuilt. Publishing the incoming and
+outgoing digest together lets a redeploy overlap instead of cutting off apps
+mid-rollout. The attested digest must still match one of them exactly — an
+empty list accepts nothing.
+
+<Callout type="info">
+Apps that set `socialRecoveryAttestation` before this existed keep working
+unchanged: an explicit policy always wins over the shipped defaults, so an app
+that pinned its own measurements is never silently repointed.
+</Callout>
 
 The fresh ID token is kept only in memory. Its SHA-256 fingerprint reserves
 exactly one recovery session, and the API stores only a second hash of that
