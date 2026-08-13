@@ -349,7 +349,7 @@ export default function OtpEmailPage() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => router.push(`/dashboard/apps/${appId}`)}>Cancel</Button>
-          <button onClick={handleSave} disabled={saving || uploading} className="inline-flex items-center gap-2 h-9 px-4 rounded-xl text-sm font-semibold bg-ink text-white hover:bg-black/80 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+          <button onClick={handleSave} disabled={saving || uploading} className="inline-flex items-center gap-2 h-9 px-4 rounded-xl text-sm font-semibold bg-brand text-white hover:bg-brand-hover active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
             {saving ? <><Icon.Spinner className="w-3.5 h-3.5 animate-spin" /> Saving...</> : <><Icon.Mail className="w-3.5 h-3.5" /> Save Settings</>}
           </button>
         </div>

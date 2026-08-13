@@ -135,7 +135,7 @@ function MockupDeviceSigners() {
         <div className="relative h-[250px]">
             <div className="absolute -bottom-4 left-7 right-7 rounded-xl border border-line bg-white p-4 shadow-[0_18px_40px_-26px_rgba(10,10,15,0.3)] md:left-9 md:right-9">
                 <div className="flex items-center gap-2">
-                    <span className="grid h-7 w-7 place-items-center rounded-md bg-ink text-white">
+                    <span className="grid h-7 w-7 place-items-center rounded-md bg-brand text-white">
                         <svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden><path d="M160 16a80 80 0 0 0-78 99L21 176a8 8 0 0 0-5 8v40a8 8 0 0 0 8 8h40a8 8 0 0 0 8-8v-16h16a8 8 0 0 0 8-8v-16h16a8 8 0 0 0 6-3l16-19A80 80 0 1 0 160 16Zm20 76a20 20 0 1 1 20-20 20 20 0 0 1-20 20Z" /></svg>
                     </span>
                     <div className="leading-tight">
@@ -168,7 +168,7 @@ function MockupVerify() {
                 </div>
                 <div className="flex flex-col items-center px-4 pb-4 pt-5">
                     {/* Face ID glyph — thin strokes on an ink tile */}
-                    <span className="grid h-14 w-14 place-items-center rounded-2xl bg-ink text-white">
+                    <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand text-white">
                         <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                             <path d="M4 8V6.5A2.5 2.5 0 0 1 6.5 4H8M16 4h1.5A2.5 2.5 0 0 1 20 6.5V8M20 16v1.5a2.5 2.5 0 0 1-2.5 2.5H16M8 20H6.5A2.5 2.5 0 0 1 4 17.5V16" />
                             <path d="M9 9.5v1M15 9.5v1M12 9.5v3l-1 1" />
@@ -191,7 +191,7 @@ function MockupVerify() {
 function MockupSdk() {
     return (
         <div className="relative h-[250px]">
-            <div className="absolute -bottom-4 left-7 right-7 overflow-hidden rounded-xl bg-ink shadow-[0_18px_40px_-24px_rgba(10,10,15,0.5)] md:left-9 md:right-9">
+            <div className="absolute -bottom-4 left-7 right-7 overflow-hidden rounded-xl bg-brand shadow-[0_18px_40px_-24px_rgba(64,42,255,0.45)] md:left-9 md:right-9">
                 <div className="flex items-center gap-1.5 border-b border-white/10 px-3.5 py-2.5">
                     <span className="h-2 w-2 rounded-full bg-white/20" />
                     <span className="h-2 w-2 rounded-full bg-white/20" />

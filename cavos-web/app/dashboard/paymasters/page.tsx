@@ -295,7 +295,7 @@ export default function PaymastersPage() {
                         <div className="space-y-2 max-w-xs">
                             <div className="h-1.5 bg-black/[0.06] rounded-full overflow-hidden">
                                 <div
-                                    className="h-full bg-ink rounded-full transition-all"
+                                    className="h-full bg-brand rounded-full transition-all"
                                     style={{ width: `${consumedPct}%` }}
                                 />
                             </div>
@@ -311,7 +311,7 @@ export default function PaymastersPage() {
 
                     <button
                         onClick={() => setShowDepositForm(!showDepositForm)}
-                        className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-ink text-white text-sm font-semibold rounded-xl hover:bg-ink/90 transition-all active:scale-[0.97]"
+                        className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand-hover transition-all active:scale-[0.97]"
                     >
                         <Icon.ArrowDown size={15} weight="bold" />
                         Deposit STRK
@@ -340,7 +340,7 @@ export default function PaymastersPage() {
                     href="https://propulsion.starknet.org/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="shrink-0 w-full md:w-auto flex items-center justify-center md:justify-start gap-2 px-4 py-2.5 md:py-2 border border-ink/80 rounded-xl text-ink text-xs font-semibold transition-all hover:bg-ink hover:text-white active:scale-[0.97]"
+                    className="shrink-0 w-full md:w-auto flex items-center justify-center md:justify-start gap-2 px-4 py-2.5 md:py-2 border border-brand/80 rounded-xl text-ink text-xs font-semibold transition-all hover:bg-brand hover:text-white active:scale-[0.97]"
                 >
                     Apply Now
                     <Icon.External size={15} weight="bold" />

@@ -196,7 +196,7 @@ export default function BillingPage() {
                         <button
                             type="button"
                             disabled
-                            className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-ink/40 text-white text-sm font-semibold rounded-xl cursor-not-allowed"
+                            className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-brand/40 text-white text-sm font-semibold rounded-xl cursor-not-allowed"
                         >
                             <Icon.Bolt size={15} weight="fill" />
                             Upgrade to Pro — Coming soon
@@ -236,7 +236,7 @@ export default function BillingPage() {
                         <>
                             <div className="h-1.5 bg-black/[0.06] rounded-full overflow-hidden">
                                 <div
-                                    className={`h-full rounded-full transition-all ${plan.warning ? 'bg-amber-500' : 'bg-ink'}`}
+                                    className={`h-full rounded-full transition-all ${plan.warning ? 'bg-amber-500' : 'bg-brand'}`}
                                     style={{ width: `${usagePct}%` }}
                                 />
                             </div>
@@ -320,7 +320,7 @@ export default function BillingPage() {
                         type="button"
                         onClick={handleUpgrade}
                         disabled={checkoutStatus === 'submitting'}
-                        className="w-full inline-flex items-center justify-center gap-2 h-11 px-5 bg-ink text-white text-sm font-semibold rounded-xl hover:bg-ink/90 transition-all active:scale-[0.98] disabled:opacity-50"
+                        className="w-full inline-flex items-center justify-center gap-2 h-11 px-5 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand-hover transition-all active:scale-[0.98] disabled:opacity-50"
                     >
                         {checkoutStatus === 'submitting'
                             ? <><Icon.Spinner size={15} weight="bold" className="animate-spin" /> Processing…</>
@@ -383,7 +383,7 @@ function PlansComparison({ tier, onUpgrade }: { tier: PlanUsage['tier']; onUpgra
                             <div className="flex items-center justify-between gap-2 min-h-[22px]">
                                 <h3 className="text-sm font-bold tracking-tight text-ink">{t.name}</h3>
                                 {isPro && (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-ink text-white text-[9px] font-bold uppercase tracking-[0.12em]">
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-brand text-white text-[9px] font-bold uppercase tracking-[0.12em]">
                                         Popular
                                     </span>
                                 )}
@@ -415,14 +415,14 @@ function PlansComparison({ tier, onUpgrade }: { tier: PlanUsage['tier']; onUpgra
                                 ) : t.id === 'pro' ? (
                                     <button
                                         disabled
-                                        className="w-full h-10 inline-flex items-center justify-center gap-1.5 bg-ink/40 text-white text-sm font-semibold rounded-xl cursor-not-allowed"
+                                        className="w-full h-10 inline-flex items-center justify-center gap-1.5 bg-brand/40 text-white text-sm font-semibold rounded-xl cursor-not-allowed"
                                     >
                                         <Icon.Bolt size={14} weight="fill" /> Coming soon
                                     </button>
                                 ) : t.id === 'custom' ? (
                                     <a
                                         href="/contact-sales"
-                                        className="w-full h-10 inline-flex items-center justify-center gap-1.5 border border-ink/80 text-ink text-sm font-semibold rounded-xl hover:bg-ink hover:text-white transition-all active:scale-[0.98]"
+                                        className="w-full h-10 inline-flex items-center justify-center gap-1.5 border border-brand/80 text-ink text-sm font-semibold rounded-xl hover:bg-brand hover:text-white transition-all active:scale-[0.98]"
                                     >
                                         Contact sales <Icon.ArrowRight size={14} weight="bold" />
                                     </a>

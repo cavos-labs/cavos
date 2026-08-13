@@ -111,7 +111,7 @@ export default async function ComparisonPage({
 
                 <section className="mt-16 overflow-x-auto rounded-2xl border border-line">
                     <table className="w-full min-w-[720px] border-collapse text-left">
-                        <thead className="bg-ink text-white">
+                        <thead className="bg-brand text-white">
                             <tr>
                                 <th className="px-6 py-5 text-xs font-semibold uppercase tracking-wider">Capability</th>
                                 <th className="border-l border-white/10 px-6 py-5 text-sm font-semibold">Cavos</th>
@@ -182,7 +182,7 @@ export default async function ComparisonPage({
                     </div>
                 </section>
 
-                <section className="mt-20 flex flex-col items-start justify-between gap-6 rounded-2xl bg-ink px-8 py-10 text-white md:flex-row md:items-center">
+                <section className="mt-20 flex flex-col items-start justify-between gap-6 rounded-2xl bg-brand px-8 py-10 text-white md:flex-row md:items-center">
                     <div>
                         <h2 className="text-2xl font-medium">Evaluate it against your own requirements.</h2>
                         <p className="mt-2 text-sm text-white/60">

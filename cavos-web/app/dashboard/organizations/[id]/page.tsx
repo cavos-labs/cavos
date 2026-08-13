@@ -179,7 +179,7 @@ export default function OrganizationDetailPage() {
             </Link>
 
             {/* ── Org Header ──────────────────────────────── */}
-            <div data-dash-header className="bg-ink rounded-2xl p-6 text-white relative overflow-hidden">
+            <div data-dash-header className="bg-brand rounded-2xl p-6 text-white relative overflow-hidden">
                 <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 60% 80% at 0% 50%, #402AFF14 0%, transparent 60%)' }} />
 
                 <div className="relative flex flex-col sm:flex-row sm:items-start justify-between gap-5">
@@ -234,7 +234,7 @@ export default function OrganizationDetailPage() {
                     </div>
                     <Link
                         href={`/dashboard/apps/new?org=${organizationId}`}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-ink text-white text-xs font-semibold rounded-lg hover:bg-black/80 transition-all active:scale-95"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-brand text-white text-xs font-semibold rounded-lg hover:bg-brand-hover transition-all active:scale-95"
                     >
                         <Icon.Add className="w-3.5 h-3.5" />
                         New App
@@ -291,7 +291,7 @@ export default function OrganizationDetailPage() {
                     </div>
                     <button
                         onClick={() => setShowCreateKeyModal(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-ink text-white text-xs font-semibold rounded-lg hover:bg-black/80 transition-all active:scale-95"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-brand text-white text-xs font-semibold rounded-lg hover:bg-brand-hover transition-all active:scale-95"
                     >
                         <Icon.Add className="w-3.5 h-3.5" />
                         Generate
@@ -403,7 +403,7 @@ export default function OrganizationDetailPage() {
                                 <button
                                     onClick={handleCreateKey}
                                     disabled={creatingKey || !newKeyName.trim()}
-                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-ink text-white text-sm font-semibold rounded-xl hover:bg-black/80 disabled:opacity-50 transition-all"
+                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand-hover disabled:opacity-50 transition-all"
                                 >
                                     {creatingKey ? <Icon.Spinner className="w-4 h-4 animate-spin" /> : <Icon.Key className="w-4 h-4" />}
                                     Generate
@@ -458,7 +458,7 @@ export default function OrganizationDetailPage() {
 
                             <button
                                 onClick={() => setRevealedKey(null)}
-                                className="w-full mt-5 px-4 py-2.5 bg-ink text-white text-sm font-semibold rounded-xl hover:bg-black/80 transition-all"
+                                className="w-full mt-5 px-4 py-2.5 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand-hover transition-all"
                             >
                                 I&apos;ve saved it, close
                             </button>

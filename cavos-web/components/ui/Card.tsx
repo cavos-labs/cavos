@@ -11,7 +11,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
       default:  'bg-white border border-line rounded-2xl shadow-sm',
       accent:   'bg-surface border border-line rounded-2xl',
       featured: 'bg-white border border-line-strong rounded-2xl shadow-md shadow-black/5',
-      dark:     'bg-ink border border-white/[0.08] rounded-2xl text-white',
+      dark:     'bg-brand border border-white/[0.08] rounded-2xl text-white',
     };
 
     return (

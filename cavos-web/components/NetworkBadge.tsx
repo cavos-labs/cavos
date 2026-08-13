@@ -12,7 +12,7 @@ export function NetworkBadge({ network }: { network: string }) {
 
   if (isMainnet) {
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-ink text-white">
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-brand text-white">
         <span className="w-1.5 h-1.5 rounded-full bg-black/20" />
         {label}
       </span>

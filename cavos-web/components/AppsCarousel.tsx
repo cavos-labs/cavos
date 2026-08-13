@@ -48,7 +48,7 @@ export async function AppsCarousel() {
                                 )}
 
                                 {/* Tooltip */}
-                                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-ink text-white text-xs px-2 py-1 rounded pointer-events-none">
+                                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-brand text-white text-xs px-2 py-1 rounded pointer-events-none">
                                     {app.name}
                                 </div>
                             </div>

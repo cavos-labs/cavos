@@ -51,7 +51,7 @@ export function DpaConsentModal() {
                 <div className="bg-white rounded-2xl border border-line shadow-2xl w-full max-w-md">
 
                     {/* Header */}
-                    <div className="bg-ink rounded-t-2xl px-6 py-5">
+                    <div className="bg-brand rounded-t-2xl px-6 py-5">
                         <div className="flex items-center gap-2.5 mb-2">
                             <div className="w-7 h-7 rounded-lg bg-white/[0.07] border border-white/[0.1] flex items-center justify-center shrink-0">
                                 <svg className="w-3.5 h-3.5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -91,7 +91,7 @@ export function DpaConsentModal() {
                         <button
                             onClick={handleAccept}
                             disabled={accepting}
-                            className="w-full py-3 bg-ink text-white text-sm font-semibold rounded-xl hover:bg-black/80 disabled:opacity-60 transition-all"
+                            className="w-full py-3 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand-hover disabled:opacity-60 transition-all"
                         >
                             {accepting ? 'Saving...' : 'Accept and continue'}
                         </button>
