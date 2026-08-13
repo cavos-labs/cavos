@@ -173,7 +173,13 @@ export async function POST(request: Request) {
     const connection = connectionFor(body.network);
     // Set a fresh blockhash and sign as fee payer (the only required signature —
     // device-account ixs are authorized by the precompile, not Solana signers).
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+    // `finalized`, not `confirmed`: the default endpoint is load-balanced across
+    // nodes, so a just-confirmed blockhash from one node is unknown to the node
+    // that runs preflight a moment later — which fails as "Blockhash not found"
+    // before the transaction is ever broadcast. A finalized blockhash is ~32
+    // slots (~13s) old and known everywhere. It costs some of the validity
+    // window (~60s -> ~47s), which the polling confirm below absorbs.
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('finalized');
     tx.recentBlockhash = blockhash;
     tx.feePayer = signer.publicKey;
     await signer.signTransaction(tx);
