@@ -31,7 +31,7 @@ export default function BlogIndexPage() {
       <Header />
 
       {/* Dark hero — matches landing page */}
-      <section className="relative bg-[#0A0908] pt-[4.5rem] overflow-hidden">
+      <section className="relative bg-brand pt-[4.5rem] overflow-hidden">
         {/* Radial glow */}
         <div
           className="absolute inset-0 pointer-events-none"
@@ -51,9 +51,6 @@ export default function BlogIndexPage() {
         />
 
         <div className="relative max-w-[1400px] mx-auto px-6 md:px-12 py-20 md:py-28">
-          <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-white/30 mb-5">
-            Cavos
-          </p>
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <h1
               className="text-[clamp(3rem,8vw,5.5rem)] font-[family-name:var(--font-geist)] font-bold text-white leading-[0.9] tracking-tighter"

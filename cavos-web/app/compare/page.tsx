@@ -3,6 +3,7 @@ import Link from 'next/link'
 import Script from 'next/script'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import { COMPETITORS } from '@/lib/compare-data'
 
 export const metadata: Metadata = {
     title: 'Cavos vs Embedded Wallet Providers',
@@ -121,8 +122,7 @@ export default function ComparePage() {
 
             <div className="mx-auto max-w-6xl px-6 pb-24 pt-32 md:px-8">
                 <header className="max-w-3xl">
-                    <p className="font-mono text-xs uppercase tracking-[0.18em] text-brand">Architecture comparison</p>
-                    <h1 className="mt-5 text-balance text-[clamp(2.5rem,6vw,5rem)] font-medium leading-[0.98] tracking-[-0.045em]">
+                    <h1 className="text-balance text-[clamp(2.5rem,6vw,5rem)] font-medium leading-[0.98] tracking-[-0.045em]">
                         Choose the wallet model, not just the login modal.
                     </h1>
                     <p className="mt-7 max-w-2xl text-lg leading-relaxed text-muted">
@@ -134,7 +134,7 @@ export default function ComparePage() {
 
                 <section className="mt-16 overflow-x-auto rounded-2xl border border-line">
                     <table className="w-full min-w-[860px] border-collapse text-left">
-                        <thead className="bg-ink text-white">
+                        <thead className="bg-brand text-white">
                             <tr>
                                 <th className="px-6 py-5 text-xs font-semibold uppercase tracking-wider">Capability</th>
                                 <th className="border-l border-white/10 px-6 py-5 text-sm font-semibold">Cavos</th>
@@ -172,6 +172,29 @@ export default function ComparePage() {
                 </section>
 
                 <section className="mt-24">
+                    <h2 className="text-3xl font-medium tracking-[-0.03em]">Compare with a specific provider</h2>
+                    <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted">
+                        Each page covers custody, chain support, signing authority, sponsorship, and
+                        recovery — including the cases where the other provider is the better choice.
+                    </p>
+                    <div className="mt-8 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
+                        {COMPETITORS.map((c) => (
+                            <Link
+                                key={c.slug}
+                                href={`/compare/${c.slug}`}
+                                className="group bg-white p-7 transition-colors hover:bg-brand/[0.03]"
+                            >
+                                <h3 className="text-lg font-semibold">
+                                    Cavos vs {c.name}
+                                    <span aria-hidden="true" className="ml-1 inline-block transition-transform group-hover:translate-x-0.5">→</span>
+                                </h3>
+                                <p className="mt-3 text-sm leading-relaxed text-muted">{c.summary}</p>
+                            </Link>
+                        ))}
+                    </div>
+                </section>
+
+                <section className="mt-24">
                     <h2 className="text-3xl font-medium tracking-[-0.03em]">Frequently asked</h2>
                     <div className="mt-8 grid gap-x-12 gap-y-10 md:grid-cols-2">
                         {FAQ.map((item) => (
@@ -183,7 +206,7 @@ export default function ComparePage() {
                     </div>
                 </section>
 
-                <section className="mt-24 flex flex-col items-start justify-between gap-6 rounded-2xl bg-ink px-8 py-10 text-white md:flex-row md:items-center">
+                <section className="mt-24 flex flex-col items-start justify-between gap-6 rounded-2xl bg-brand px-8 py-10 text-white md:flex-row md:items-center">
                     <div>
                         <h2 className="text-2xl font-medium">Build the first wallet on your target chain.</h2>
                         <p className="mt-2 text-sm text-white/60">Start with the unified SDK, then follow the native guide for each adapter.</p>

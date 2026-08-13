@@ -21,8 +21,38 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
   const MDX = page.data.body;
   const markdownUrl = getPageMarkdownUrl(page).url;
 
+  const pageUrl = `https://docs.cavos.xyz${page.url}`;
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'TechArticle',
+        '@id': `${pageUrl}#article`,
+        headline: page.data.title,
+        description: page.data.description,
+        url: pageUrl,
+        inLanguage: 'en',
+        isPartOf: { '@id': 'https://docs.cavos.xyz/#website' },
+        about: { '@id': 'https://docs.cavos.xyz/#software' },
+        publisher: { '@id': 'https://cavos.xyz/#organization' },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': `${pageUrl}#breadcrumb`,
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Docs', item: 'https://docs.cavos.xyz/docs' },
+          { '@type': 'ListItem', position: 2, name: page.data.title, item: pageUrl },
+        ],
+      },
+    ],
+  };
+
   return (
     <DocsPage toc={page.data.toc} full={page.data.full}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription className="mb-0">{page.data.description}</DocsDescription>
       <div className="flex flex-row gap-2 items-center border-b pb-6">

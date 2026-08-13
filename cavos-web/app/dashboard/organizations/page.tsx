@@ -65,7 +65,7 @@ export default function OrganizationsPage() {
 
             {/* Empty state */}
             {organizations.length === 0 ? (
-                <div data-dash-panel className="relative overflow-hidden rounded-2xl bg-ink text-white p-8 border border-black/10">
+                <div data-dash-panel className="relative overflow-hidden rounded-2xl bg-brand text-white p-8 border border-black/10">
                     <div
                         className="absolute top-0 right-0 w-64 h-64 pointer-events-none"
                         style={{ background: 'radial-gradient(ellipse at top right, #402AFF1F 0%, transparent 65%)' }}

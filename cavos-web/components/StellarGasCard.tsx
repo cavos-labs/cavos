@@ -196,7 +196,7 @@ export function StellarGasCard({ orgId }: { orgId: string }) {
 
             <div className="space-y-2 max-w-xs">
               <div className="h-1.5 bg-black/[0.06] rounded-full overflow-hidden">
-                <div className="h-full bg-ink rounded-full transition-all" style={{ width: `${consumedPct}%` }} />
+                <div className="h-full bg-brand rounded-full transition-all" style={{ width: `${consumedPct}%` }} />
               </div>
               <div className="flex items-center gap-5 text-[10px] font-semibold text-black/40">
                 <span>Deposited: {fmt(deposited)} XLM</span>
@@ -210,7 +210,7 @@ export function StellarGasCard({ orgId }: { orgId: string }) {
 
           <button
             onClick={() => setShowDepositForm((v) => !v)}
-            className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-ink text-white text-sm font-semibold rounded-xl hover:bg-ink/90 transition-all active:scale-[0.97]"
+            className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand-hover transition-all active:scale-[0.97]"
           >
             <Icon.ArrowDown size={15} weight="bold" />
             Deposit XLM

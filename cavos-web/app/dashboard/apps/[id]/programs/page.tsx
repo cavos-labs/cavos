@@ -113,7 +113,7 @@ export default function ProgramsPage() {
       <div>
         <h1 className="text-2xl font-bold text-black">Allowed Solana Programs</h1>
         <p className="text-black/60 mt-1">
-          Programs your wallets may call via sponsored <code className="text-sm bg-black/5 px-1.5 py-0.5 rounded">execute</code>.
+          Programs your wallets may call via sponsored <code className="text-sm bg-brand/5 px-1.5 py-0.5 rounded">execute</code>.
           The relayer always allows the safe set (System, SPL Token, Token-2022, Associated Token);
           add any additional programs your app needs.
         </p>
@@ -132,7 +132,7 @@ export default function ProgramsPage() {
                   onClick={() => (added ? removeProgram(p.id) : addProgram(p.id))}
                   className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                     added
-                      ? 'bg-black text-white border-black'
+                      ? 'bg-brand text-white border-brand'
                       : 'bg-white text-black/70 border-black/15 hover:border-black/40'
                   }`}
                   title={p.id}
@@ -175,7 +175,7 @@ export default function ProgramsPage() {
               {allowed.map((id) => (
                 <li
                   key={id}
-                  className="flex items-center justify-between gap-3 bg-black/[0.02] border border-black/10 rounded-lg px-3 py-2"
+                  className="flex items-center justify-between gap-3 bg-brand/[0.02] border border-black/10 rounded-lg px-3 py-2"
                 >
                   <code className="text-sm text-black/80 truncate">{id}</code>
                   <button

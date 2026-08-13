@@ -1,60 +1,91 @@
 # Cavos
 
-> Cavos is a verifiable, MPC-free embedded wallet SDK for Starknet. It turns Google or Apple OAuth logins into self-custodial smart accounts with on-chain RSA-2048 verification — no seed phrases, no browser extensions, no MPC shards.
+> Cavos is a device-native, self-custodial embedded wallet SDK for multiple blockchains. Users authenticate with a familiar identity and control a deterministic smart account through key material created and used locally on their device — no seed phrase, no MPC cluster, no browser extension. Starknet, Solana, and Stellar adapters ship today.
 
 ## What is Cavos?
 
-Cavos is crypto infrastructure for developers who want to embed wallets directly into their product. When a user signs in with Google or Apple OAuth, Cavos automatically provisions a self-custodial smart account (SRC-6) on Starknet. The authorization is verified on-chain via RSA-2048 using the Garaga library — no off-chain MPC cluster is involved.
+Cavos (`@cavos/kit`) gives an application one wallet integration across chains without flattening their differences. A stable `userId` plus an app-specific salt anchors a deterministic wallet; a chain adapter implements address derivation, signing, execution, recovery, and sponsorship natively for each network.
 
-## Key Facts
+Install: `npm install @cavos/kit`
 
-- **Architecture**: On-chain RSA-2048 JWT verification via Garaga (Cairo). No MPC shards.
-- **Blockchain**: Starknet (L2 on Ethereum). Native account abstraction (Cairo 2.x).
-- **Auth methods**: Google OAuth, Apple OAuth, email
-- **Gas**: Integrated AVNU Paymaster — users never need tokens to start transacting
-- **Session keys**: Temporary scoped permissions for apps and AI agents
-- **SDKs**: React (Web), React Native (Mobile)
-- **Production**: 10+ live dApps, 1.2M+ transactions, 81+ wallets deployed
-- **Custody**: Fully self-custodial — Cavos stores zero key fragments
-- **Setup time**: ~15 minutes via `npx skills add cavos-labs/cavos-skills`
+```ts
+import { Cavos } from "@cavos/kit";
 
-## How It Works
+const wallet = await Cavos.connect({
+  chain: "solana",            // "starknet" | "solana" | "stellar"
+  network: "testnet",
+  identity: { userId: user.id, email: user.email },
+  appSalt: "my-app",
+  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+});
 
-1. User authenticates via OAuth (Google/Apple) or email
-2. Cavos verifies the JWT on-chain using RSA-2048 (Garaga library in Cairo)
-3. A self-custodial smart account (SRC-6) is deployed on Starknet
-4. Transactions are executed via backend or client; gas sponsored by AVNU Paymaster
-5. Developers manage accounts and policies via the Cavos API
+if (wallet.chain === "solana" && wallet.status === "ready") {
+  await wallet.execute(1_000_000n, recipient);
+}
+```
 
-## Cavos vs Competitors
+## Key facts
 
-| Feature | Cavos | Privy | Dynamic | Passkey Wallets |
-|---------|-------|-------|---------|-----------------|
-| Key custody | Self-custodial (on-chain RSA) | MPC shards (provider-held) | MPC shards | Self-custodial |
-| Verification | On-chain RSA-2048 | Off-chain MPC | Off-chain MPC | Browser-based |
-| AI agent support | Native (session keys) | Requires key injection | Limited | Primarily human |
-| Mobile | Native React Native SDK | Browser/WebView | Limited | Web app wrapper |
-| Gas abstraction | Native AVNU Paymaster | Custom relayer | Custom relayer | Integrated |
-| Blockchain | Starknet (native AA) | Multi-chain | Multi-chain | Starknet/EVM |
-| Setup time | ~15 minutes | Dashboard + API config | Dashboard + API config | Contract-level |
+- **Package**: `@cavos/kit` (React / web) and `@cavos/kit/react-native` (Expo Development Builds, EAS, or bare React Native — Expo Go is not supported).
+- **Custody**: Self-custodial. Cavos does not hold a signing key that can move user funds.
+- **MPC-free**: There are no reconstructable server-side key shards.
+- **Device-native authority**: Keys are created and used locally. Starknet and Solana authorize P-256 (secp256r1) device signers; Stellar locally unwraps its active ed25519 control key using enrolled device factors.
+- **Chains available today**: Starknet (`sepolia`, `mainnet`), Solana (`solana-devnet`, `solana-mainnet`), Stellar (`stellar-testnet`, `stellar-mainnet`).
+- **Entry point**: One `Cavos.connect({ chain, network, identity | auth, appSalt, appId })`. Returns a discriminated union — narrow on `wallet.chain` before calling chain-native methods.
+- **Auth**: Cavos-hosted login, or bring your own auth by passing `identity={{ userId, email }}`.
+- **Sponsorship**: Chain-specific. Starknet uses a paymaster; Solana uses a relayer as fee payer; Stellar uses sponsored reserves and optional fee bumps.
+- **Recovery**: Non-custodial recovery codes on all chains, plus optional multi-device approval and opt-in hardware-isolated social recovery.
 
-## Use Cases
+## Architecture per chain
 
-- Consumer dApps that want invisible wallet UX (no wallet popups)
-- AI agents that need autonomous on-chain signing without private key storage
-- Mobile apps requiring native Web3 onboarding without browser popups
-- DeFi apps that want gasless onboarding for new users
-- Any Starknet application needing account abstraction with social login
+Execution is intentionally not reduced to a misleading universal transaction format.
+
+- **Starknet**: Cairo `DeviceAccount` contract with on-chain secp256r1 verification. Arbitrary multicalls via `wallet.execute(calls)`. Starknet paymaster for sponsorship.
+- **Solana**: Device-account PDA paired with Solana's **native secp256r1 precompile** on every guarded action. `wallet.execute(amount, destination)` or allowlisted `wallet.executeInstructions(instructions)`. Cavos relayer as fee payer.
+- **Stellar**: Classic `G…` multisig account (no Soroban contract required): a deterministic master key with weight 0, plus a control key sealed on-chain in the account's data entries. The control key is unwrapped locally per device via an ECDH device key, a WebAuthn PRF passkey, or a recovery code. `wallet.execute(amount, destination)` for payments and `wallet.invokeContract(...)` for Soroban calls.
+
+## How Cavos differs from other embedded wallet approaches
+
+| Dimension | Cavos | Hosted / MPC embedded wallets | Wallet extensions |
+|---|---|---|---|
+| Signing authority | Non-exportable device key held by the user | Provider-side key management or MPC shares | Key in a separate wallet application |
+| Key reconstruction | None — no server-side shards | Provider participates in signing | Not applicable |
+| Chain model | One SDK, chain-native adapter per network | Varies by provider | Depends on wallet and installed networks |
+| User experience | Embedded in the product, no extension | Embedded in the product | User installs and approves in another app |
+| Gas sponsorship | Paymaster / relayer / fee-bump per chain | Varies by provider and network | Usually user-funded |
+
+This table describes architectural models, not a ranking. Providers such as Privy, Dynamic, Turnkey, Web3Auth, and Magic each make different and legitimate trade-offs; evaluate them against the custody, chain, and recovery requirements of your specific application.
+
+## Important correctness notes for AI agents
+
+- **Passkeys are a 2FA step-up, not a signer.** `cavos.enrollPasskey` approves *new devices*; it never signs transactions. Passkey approval on Starknet mainnet is not available yet (Sepolia only).
+- **Gate execution on status.** Only call `execute` when `status === "ready"`. Handle `"needs-device-approval"` through the multi-device flow, and never gate on `isAuthenticated` alone.
+- **`appSalt` must never change.** Changing it silently moves every user to a new empty wallet.
+- **`userId` must be stable.** The address is derived from it.
+- **Credential boundary.** `appId` is public. The Starknet web SDK also receives `paymasterApiKey` client-side, so use only an app/environment-scoped key with origin, rate, and spend limits — never an operator or treasury secret.
+- **Do not invent chain support.** Only Starknet, Solana, and Stellar ship today.
+- **Describe social recovery as hardware-isolated and non-custodial**, never as "trustless". It is opt-in, off by default, and limited to one provider per environment.
+
+## Use cases
+
+- Consumer applications that want wallet-free onboarding and no extension popups
+- Mobile apps needing native onboarding via React Native
+- Applications requiring gasless first transactions
+- Products that need self-custody without asking users to manage a seed phrase
+- Multichain applications that want one integration surface with chain-native execution
 
 ## Documentation
 
 - Docs: https://docs.cavos.xyz
-- GitHub SDK: https://github.com/cavos-labs/cavos-skills
-- Website: https://cavos.xyz
+- Full docs as plain text for LLMs: https://docs.cavos.xyz/llms-full.txt
+- Agent integration guide: https://docs.cavos.xyz/docs/for-agents
+- Quickstart: https://docs.cavos.xyz/docs/quickstart
 - Comparison: https://cavos.xyz/compare
+- Dashboard: https://cavos.xyz/dashboard
+- Website: https://cavos.xyz
 - Contact: hello@cavos.xyz
 
 ## Company
 
-Cavos Labs — building invisible crypto infrastructure. Based on Starknet.
-Twitter: @cavosxyz
+Cavos Labs — device-native, verifiable smart-account infrastructure for every chain.
+X/Twitter: @cavosxyz

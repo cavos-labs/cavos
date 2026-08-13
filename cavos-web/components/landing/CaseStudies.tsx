@@ -249,7 +249,7 @@ function StoryModal({ study, onClose }: { study: Study; onClose: () => void }) {
         <div
             ref={backdropRef}
             onClick={requestClose}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm md:p-6"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-brand/40 p-4 backdrop-blur-sm md:p-6"
             role="dialog"
             aria-modal="true"
             aria-label={`${study.name} case study`}
@@ -257,7 +257,7 @@ function StoryModal({ study, onClose }: { study: Study; onClose: () => void }) {
             <div
                 ref={panelRef}
                 onClick={(e) => e.stopPropagation()}
-                className="relative grid max-h-[88vh] w-full max-w-[860px] grid-cols-1 overflow-hidden rounded-2xl bg-white shadow-[0_40px_100px_-30px_rgba(10,10,15,0.5)] md:grid-cols-[300px_1fr]"
+                className="relative grid max-h-[88vh] w-full max-w-[860px] grid-cols-1 overflow-hidden rounded-2xl bg-white shadow-[0_40px_100px_-30px_rgba(64,42,255,0.45)] md:grid-cols-[300px_1fr]"
             >
                 {/* brand rail */}
                 <div className="relative hidden min-h-full md:block">

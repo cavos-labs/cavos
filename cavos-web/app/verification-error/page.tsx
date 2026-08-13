@@ -35,7 +35,7 @@ function VerificationErrorContent() {
           </p>
           <button
             onClick={() => window.close()}
-            className="w-full px-8 py-3.5 bg-black text-white rounded-full font-medium hover:bg-black/90 transition-all"
+            className="w-full px-8 py-3.5 bg-brand text-white rounded-full font-medium hover:bg-brand-hover transition-all"
           >
             Close Window
           </button>

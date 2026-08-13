@@ -514,7 +514,7 @@ export default function MagicLinkEmailPage() {
                         disabled={saving || uploading}
                         className="
                             inline-flex items-center gap-2 h-9 px-4 rounded-xl text-sm font-semibold
-                            bg-ink text-white hover:bg-black/80 active:scale-95
+                            bg-brand text-white hover:bg-brand-hover active:scale-95
                             disabled:opacity-50 disabled:cursor-not-allowed transition-all
                         "
                     >

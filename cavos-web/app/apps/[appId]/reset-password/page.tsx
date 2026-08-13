@@ -107,7 +107,7 @@ function AppResetPasswordContent() {
             </div>
             <h1 className="text-2xl font-semibold mb-2">Password updated</h1>
             <p className="text-black/60 mb-6">You can now sign in with your new password.</p>
-            <button onClick={() => window.close()} className="w-full px-8 py-3.5 bg-black text-white rounded-full font-medium hover:bg-black/90 transition-all">
+            <button onClick={() => window.close()} className="w-full px-8 py-3.5 bg-brand text-white rounded-full font-medium hover:bg-brand-hover transition-all">
               Close
             </button>
           </div>
@@ -132,7 +132,7 @@ function AppResetPasswordContent() {
                     <Image src={branding.logo_url} alt={appName} fill className="object-cover" />
                   </div>
                 ) : (
-                  <div className="w-14 h-14 rounded-xl bg-black/5 flex items-center justify-center mx-auto mb-3 text-black/40 font-semibold text-lg">
+                  <div className="w-14 h-14 rounded-xl bg-brand/5 flex items-center justify-center mx-auto mb-3 text-black/40 font-semibold text-lg">
                     {appName.slice(0, 1)}
                   </div>
                 )}

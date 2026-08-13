@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next'
 import { getAllPosts } from '@/lib/blog'
+import { COMPETITORS } from '@/lib/compare-data'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://cavos.xyz'
@@ -55,6 +56,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ]
 
+  const comparePages: MetadataRoute.Sitemap = COMPETITORS.map((c) => ({
+    url: `${baseUrl}/compare/${c.slug}`,
+    changeFrequency: 'monthly' as const,
+    priority: 0.8,
+  }))
+
   const blogPages: MetadataRoute.Sitemap = posts.map((post) => ({
     url: `${baseUrl}/blog/${post.slug}`,
     lastModified: post.date,
@@ -62,5 +69,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }))
 
-  return [...staticPages, ...blogPages]
+  return [...staticPages, ...comparePages, ...blogPages]
 }

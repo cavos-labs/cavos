@@ -377,7 +377,7 @@ export function MegaMenu({ label, left, right, footer, onNavigate, onOpenChange 
                                 >
                                     {asLink(
                                         footer.href,
-                                        'group flex items-center justify-between gap-3 px-6 py-4 border-t border-line transition-colors hover:bg-ink/[0.02] outline-none',
+                                        'group flex items-center justify-between gap-3 px-6 py-4 border-t border-line transition-colors hover:bg-brand/[0.02] outline-none',
                                         <>
                                             <span className="flex flex-col">
                                                 <span className="text-[13.5px] font-semibold text-ink transition-colors group-hover:text-brand">

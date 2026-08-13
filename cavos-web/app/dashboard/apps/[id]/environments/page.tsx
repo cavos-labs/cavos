@@ -219,7 +219,7 @@ export default function EnvironmentsPage() {
                 <button
                   onClick={() => saveRecovery(env)}
                   disabled={saving === env.id}
-                  className="rounded-lg bg-black px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
+                  className="rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
                 >
                   {saving === env.id ? 'Saving…' : 'Save recovery policy'}
                 </button>

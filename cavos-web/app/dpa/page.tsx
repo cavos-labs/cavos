@@ -195,7 +195,7 @@ export default function DpaPage() {
                 </div>
 
                 {/* Acceptance note */}
-                <div className="mt-6 bg-[#0A0908] rounded-2xl p-5 flex items-start gap-3">
+                <div className="mt-6 bg-brand rounded-2xl p-5 flex items-start gap-3">
                     <svg className="w-4 h-4 text-[#EAE5DC] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z" />
                     </svg>
