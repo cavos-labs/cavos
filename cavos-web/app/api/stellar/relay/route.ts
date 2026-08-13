@@ -54,7 +54,23 @@ export async function GET(request: Request) {
       return ApiResponse.badRequest('Unsupported Stellar network', { network: n });
     }
     const signer = await getRelayerSigner(n);
-    return ApiResponse.success({ fee_payer: signer.publicKey() });
+    // Also hand back the relayer's current sequence. Sponsored writes are
+    // sourced by the relayer, so the SDK needs its sequence to build them — and
+    // reading it from the client's own Horizon means reading a possibly stale
+    // view of an account the server owns, which submits as `tx_bad_seq`. Served
+    // from the same Horizon that will accept the submission, it is at least
+    // consistent with the submitting node.
+    let sequence: string | undefined;
+    try {
+      sequence = (await horizonServerFor(n).loadAccount(signer.publicKey())).sequenceNumber();
+    } catch (e) {
+      // Non-fatal: the SDK falls back to reading it itself.
+      console.warn('Stellar relay GET — sequence lookup failed', e);
+    }
+    return ApiResponse.success({
+      fee_payer: signer.publicKey(),
+      ...(sequence ? { sequence } : {}),
+    });
   } catch (error) {
     console.error('Stellar classic relay GET — fee-payer lookup failed', error);
     return ApiResponse.serverError(

@@ -233,6 +233,50 @@ export function validateSponsoredData(tx: Transaction, relayerPublicKey: string)
     return { ok: false, reason: 'sponsored account must be a classic G address (not the relayer)' };
   }
   for (const op of ops.slice(1, -1)) {
+    // Device revocation rotates the account's control key in the SAME
+    // transaction that erases the revoked device's envelope entries — erasing
+    // the wrap alone revokes nothing, since the evicted device may have cached
+    // the control seed. That needs two setOptions ops (add the new weight-1
+    // signer, then drop the old one), so they are allowed here alongside the
+    // data writes.
+    //
+    // Only signer edits sourced by the sponsored account pass. Thresholds and
+    // master weight must stay untouched: this validator's job is to bound what
+    // the relayer will sponsor, and a transaction that could lower thresholds
+    // or revive the master key is not something we pay to put on chain.
+    if (op.type === 'setOptions') {
+      const so = op as Operation.SetOptions;
+      if (so.source !== account) {
+        return { ok: false, reason: 'setOptions must be sourced by the sponsored account' };
+      }
+      if (!so.signer) {
+        return { ok: false, reason: 'setOptions is only allowed to change a signer' };
+      }
+      // `== null` on purpose: the SDK leaves unset setOptions fields as `null`,
+      // not `undefined`, so a strict `!== undefined` check would read every
+      // absent field as present and reject the very transactions the SDK builds.
+      const touchesAnythingElse = [
+        so.masterWeight,
+        so.lowThreshold,
+        so.medThreshold,
+        so.highThreshold,
+        so.homeDomain,
+        so.inflationDest,
+        so.clearFlags,
+        so.setFlags,
+      ].some((field) => field != null);
+      if (touchesAnythingElse) {
+        return { ok: false, reason: 'setOptions may only change a signer in a sponsored data write' };
+      }
+      const signer = so.signer as { ed25519PublicKey?: string; weight?: number };
+      if (!signer.ed25519PublicKey) {
+        return { ok: false, reason: 'only ed25519 signers may be changed' };
+      }
+      if (signer.ed25519PublicKey === relayerPublicKey) {
+        return { ok: false, reason: 'the relayer may not be added or removed as a signer' };
+      }
+      continue;
+    }
     if (op.type !== 'manageData') {
       return { ok: false, reason: `operation ${op.type} is not allowed in a sponsored data write` };
     }
