@@ -95,10 +95,7 @@ export default async function ComparisonPage({
 
             <div className="mx-auto max-w-6xl px-6 pb-24 pt-32 md:px-8">
                 <header className="max-w-3xl">
-                    <p className="font-mono text-xs uppercase tracking-[0.18em] text-brand">
-                        <Link href="/compare" className="hover:underline">Comparison</Link>
-                    </p>
-                    <h1 className="mt-5 text-balance text-[clamp(2.5rem,6vw,4.5rem)] font-medium leading-[0.98] tracking-[-0.045em]">
+                    <h1 className="text-balance text-[clamp(2.5rem,6vw,4.5rem)] font-medium leading-[0.98] tracking-[-0.045em]">
                         Cavos vs {competitor.name}
                     </h1>
                     <p className="mt-7 max-w-2xl text-lg leading-relaxed text-muted">

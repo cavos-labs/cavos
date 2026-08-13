@@ -54,7 +54,7 @@ export default async function BlogPostPage({ params }: Props) {
       <Header />
 
       {/* Dark hero */}
-      <section className="relative bg-[#0A0908] pt-[4.5rem] overflow-hidden">
+      <section className="relative bg-brand pt-[4.5rem] overflow-hidden">
         <div
           className="absolute inset-0 pointer-events-none"
           style={{

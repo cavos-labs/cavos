@@ -122,8 +122,7 @@ export default function ComparePage() {
 
             <div className="mx-auto max-w-6xl px-6 pb-24 pt-32 md:px-8">
                 <header className="max-w-3xl">
-                    <p className="font-mono text-xs uppercase tracking-[0.18em] text-brand">Architecture comparison</p>
-                    <h1 className="mt-5 text-balance text-[clamp(2.5rem,6vw,5rem)] font-medium leading-[0.98] tracking-[-0.045em]">
+                    <h1 className="text-balance text-[clamp(2.5rem,6vw,5rem)] font-medium leading-[0.98] tracking-[-0.045em]">
                         Choose the wallet model, not just the login modal.
                     </h1>
                     <p className="mt-7 max-w-2xl text-lg leading-relaxed text-muted">
