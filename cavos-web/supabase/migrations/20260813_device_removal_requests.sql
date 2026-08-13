@@ -24,6 +24,13 @@ CREATE TABLE IF NOT EXISTS public.device_removal_requests (
 CREATE INDEX IF NOT EXISTS idx_device_removal_requests_wallet ON public.device_removal_requests(wallet_id);
 CREATE INDEX IF NOT EXISTS idx_device_removal_requests_status ON public.device_removal_requests(status);
 
+-- RLS on, with NO policies: deny-all for `anon` and `authenticated`. Every read
+-- and write goes through a server route using the service-role client, which
+-- bypasses RLS — so nothing legitimate needs a policy, and a leaked anon key
+-- cannot enumerate which devices exist on which wallets. Add a policy only if a
+-- client ever needs to read this table directly.
+ALTER TABLE public.device_removal_requests ENABLE ROW LEVEL SECURITY;
+
 -- App-level override for the "device added" notification email, same pattern as
 -- `email_device_approval_template_html`.
 ALTER TABLE public.apps
