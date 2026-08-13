@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
     'poseidon-lite',
     'koffi',
     '@reclaimprotocol/attestor-core',
+    // jwks-sync imports these through `new Function('specifier', 'return import(specifier)')`,
+    // which the bundler cannot trace. Without them the serverless bundle omits the packages
+    // and every register_key fails with "Cannot find package '@reclaimprotocol/tls'".
+    '@reclaimprotocol/tls',
+    '@reclaimprotocol/zk-symmetric-crypto',
     're2',
   ],
   async rewrites() {
