@@ -3,6 +3,7 @@ import Link from 'next/link'
 import Script from 'next/script'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import { COMPETITORS } from '@/lib/compare-data'
 
 export const metadata: Metadata = {
     title: 'Cavos vs Embedded Wallet Providers',
@@ -167,6 +168,29 @@ export default function ComparePage() {
                                 <h3 className="text-lg font-semibold">{title}</h3>
                                 <p className="mt-3 text-sm leading-relaxed text-muted">{body}</p>
                             </article>
+                        ))}
+                    </div>
+                </section>
+
+                <section className="mt-24">
+                    <h2 className="text-3xl font-medium tracking-[-0.03em]">Compare with a specific provider</h2>
+                    <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted">
+                        Each page covers custody, chain support, signing authority, sponsorship, and
+                        recovery — including the cases where the other provider is the better choice.
+                    </p>
+                    <div className="mt-8 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
+                        {COMPETITORS.map((c) => (
+                            <Link
+                                key={c.slug}
+                                href={`/compare/${c.slug}`}
+                                className="group bg-white p-7 transition-colors hover:bg-brand/[0.03]"
+                            >
+                                <h3 className="text-lg font-semibold">
+                                    Cavos vs {c.name}
+                                    <span aria-hidden="true" className="ml-1 inline-block transition-transform group-hover:translate-x-0.5">→</span>
+                                </h3>
+                                <p className="mt-3 text-sm leading-relaxed text-muted">{c.summary}</p>
+                            </Link>
                         ))}
                     </div>
                 </section>

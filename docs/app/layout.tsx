@@ -65,6 +65,46 @@ export const metadata: Metadata = {
   },
 };
 
+const siteJsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': 'https://cavos.xyz/#organization',
+      name: 'Cavos Labs',
+      url: 'https://cavos.xyz',
+      description:
+        'Cavos Labs builds device-native, verifiable smart-account infrastructure for every blockchain.',
+      sameAs: ['https://x.com/cavosxyz', 'https://github.com/cavos-labs'],
+    },
+    {
+      '@type': 'WebSite',
+      '@id': 'https://docs.cavos.xyz/#website',
+      name: 'Cavos Docs',
+      url: 'https://docs.cavos.xyz',
+      publisher: { '@id': 'https://cavos.xyz/#organization' },
+      inLanguage: 'en',
+    },
+    {
+      '@type': 'SoftwareApplication',
+      '@id': 'https://docs.cavos.xyz/#software',
+      name: '@cavos/kit',
+      applicationCategory: 'DeveloperApplication',
+      operatingSystem: 'Web, iOS, Android',
+      description:
+        'Device-native, self-custodial embedded wallet SDK with chain-native adapters for Starknet, Solana, and Stellar.',
+      url: 'https://docs.cavos.xyz',
+      publisher: { '@id': 'https://cavos.xyz/#organization' },
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'USD',
+        description: 'Free tier available.',
+      },
+    },
+  ],
+};
+
 export default function Layout({ children }: LayoutProps<'/'>) {
   return (
     <html
@@ -72,6 +112,18 @@ export default function Layout({ children }: LayoutProps<'/'>) {
       className={`${geist.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
+        />
+        <link
+          rel="alternate"
+          type="text/plain"
+          href="/llms-full.txt"
+          title="LLMs-full.txt — complete Cavos docs as plain text"
+        />
+      </head>
       <body className="flex flex-col min-h-screen font-sans antialiased">
         <RootProvider
           theme={{
