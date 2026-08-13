@@ -34,9 +34,23 @@ jobs:
           test "$status" -ge 200 -a "$status" -lt 300
 
   sync-slot:
-    name: Sync Slot JWKS keys
+    name: Sync Slot JWKS keys (${{ matrix.instance.name }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
+
+    # One run per Katana instance. Both are Slot chains despite the names — an
+    # instance left out of this matrix never gets a rotated kid and fails roughly
+    # half of all first logins, which is how katana.mainnet drifted to 5 of 10
+    # valid kids while katana.testnet stayed at 10.
+    strategy:
+      # An instance being down must not hide the state of the other.
+      fail-fast: false
+      matrix:
+        instance:
+          - name: testnet
+            rpcUrl: https://katana.testnet.jokersofneon.com
+          - name: mainnet
+            rpcUrl: https://katana.mainnet.jokersofneon.com
 
     steps:
       - uses: actions/checkout@v4
@@ -53,12 +67,15 @@ jobs:
         run: npm ci
 
       - name: Refresh slot JWKS on Katana
+        env:
+          SLOT_RPC_URL: ${{ matrix.instance.rpcUrl }}
+          SLOT_OUTPUT_FILE: slot-jwks-update-summary-${{ matrix.instance.name }}.json
         run: node .github/scripts/update_slot_jwks.js
 
       - name: Upload slot JWKS summary
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: slot-jwks-update-summary
-          path: slot-jwks-update-summary.json
+          name: slot-jwks-update-summary-${{ matrix.instance.name }}
+          path: slot-jwks-update-summary-${{ matrix.instance.name }}.json
           if-no-files-found: warn
