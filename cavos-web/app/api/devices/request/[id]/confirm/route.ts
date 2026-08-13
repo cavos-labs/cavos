@@ -10,9 +10,13 @@ import { ApiLogger } from '@/lib/api/logger';
 import { ApiResponse } from '@/lib/api/response';
 import { ApiMiddleware } from '@/lib/api/middleware';
 import { recordCavosEvent } from '@/lib/operations/events';
+import { notifyDeviceAdded } from '@/lib/devices/removal';
 
 interface ConfirmBody {
   tx_hash: string;
+  /** Owner email for the "a new device was added" notice (the SDK has it from
+   *  login; the wallet row stores no email). Omit to skip the notification. */
+  email?: string;
 }
 
 export async function POST(
@@ -85,6 +89,23 @@ export async function POST(
     if (devErr) {
       logger.error('Failed to register device', devErr);
       // Non-fatal: the on-chain add_signer already succeeded; the row is a mirror.
+    }
+
+    // Notify the owner that a device now has access, with a link to revoke it.
+    // Strictly best-effort: the add_signer is already on-chain, so a Resend
+    // outage must not turn a successful approval into a failed request.
+    try {
+      await notifyDeviceAdded({
+        appId: req.app_id,
+        environmentId: req.environment_id,
+        walletId: req.wallet_id,
+        pubX: req.new_pub_x,
+        pubY: req.new_pub_y,
+        deviceLabel: req.device_label ?? null,
+        email: body.email ?? null,
+      });
+    } catch (e) {
+      logger.warn('Device-added notification failed', { error: String(e) });
     }
 
     logger.info('Device addition confirmed', { id });
