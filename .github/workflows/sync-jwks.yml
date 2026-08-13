@@ -10,8 +10,14 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Mainnet/sepolia sync is manual-only for now: no product runs on the primary
+  # networks, so a stale registry there is acceptable and an hourly red run is not.
+  # Re-enabling it means removing this `if` — and fixing the serverless bundle
+  # first, since every run since 2026-07 failed with
+  # "Cannot find package '@reclaimprotocol/tls'".
   sync-mainnet:
     name: Sync mainnet JWKS keys
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 

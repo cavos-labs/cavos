@@ -253,17 +253,18 @@ async function generateReclaimProof(
   targetKid?: string,
   targetN?: string,
 ): Promise<ReclaimProof> {
-  // Keep Reclaim's crypto stack outside the Turbopack module transform. It is
-  // ESM-native and relies on Node crypto plus package-relative proof assets.
-  const nativeImport = new Function('specifier', 'return import(specifier)') as (
-    specifier: string,
-  ) => Promise<Record<string, any>>;
+  // Reclaim's crypto stack is ESM-native and relies on Node crypto plus
+  // package-relative proof assets, so it must stay out of the module transform.
+  // That is what `serverExternalPackages` in next.config.ts is for; hiding these
+  // specifiers from the bundler as well only makes them untraceable, which kept
+  // them out of the serverless bundle entirely ("Cannot find package
+  // '@reclaimprotocol/tls'"). Plain dynamic imports stay traceable and get copied.
   const [{ setCryptoImplementation }, { webcryptoCrypto }] = await Promise.all([
-    nativeImport('@reclaimprotocol/tls'),
-    nativeImport('@reclaimprotocol/tls/webcrypto'),
+    import('@reclaimprotocol/tls'),
+    import('@reclaimprotocol/tls/webcrypto'),
   ]);
   setCryptoImplementation(webcryptoCrypto);
-  const { createClaimOnAttestor, logger } = await nativeImport('@reclaimprotocol/attestor-core');
+  const { createClaimOnAttestor, logger } = await import('@reclaimprotocol/attestor-core');
 
   // Use exact-value regexes when the caller specifies which key to prove.
   // base64url and hex characters are regex-safe (no special chars to escape).
