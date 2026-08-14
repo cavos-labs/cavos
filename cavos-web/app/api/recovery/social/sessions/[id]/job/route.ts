@@ -48,7 +48,9 @@ export async function POST(
   const admin = createAdminClient()
   const { data: session } = await admin
     .from('social_recovery_sessions')
-    .select('wallet_id, action, status, expires_at, auth_challenge_hash')
+    .select(
+      'wallet_id, app_id, environment_id, action, provider, delay_seconds, status, expires_at, auth_challenge_hash',
+    )
     .eq('id', id)
     .maybeSingle()
   if (!session) return NextResponse.json({ error: 'session_not_found' }, { status: 404 })
@@ -79,6 +81,13 @@ export async function POST(
       job: body as Required<EncryptedJob>,
       authChallengeHash: session.auth_challenge_hash,
     })
+    // A successful enrolment has to be persisted here. The enclave's output is
+    // the only copy of the sealed record, and losing it means the wallet can
+    // never be recovered — so this runs before the session is marked complete.
+    if (session.action === 'enroll') {
+      await persistEnrollment(admin, session, result)
+    }
+
     await admin
       .from('social_recovery_sessions')
       .update({ status: 'completed', result, completed_at: new Date().toISOString() })
@@ -95,4 +104,74 @@ export async function POST(
     console.error('[social-recovery] enclave job failed', error)
     return NextResponse.json({ error: 'enclave_job_failed' }, { status: 502 })
   }
+}
+
+interface SessionRow {
+  wallet_id: string
+  app_id: string
+  environment_id: string
+  provider: string
+  delay_seconds: number
+}
+
+/**
+ * Store the recovery authority the enclave just generated.
+ *
+ * This used to live in the `workload/complete` callback, which existed because
+ * a Confidential Space VM had to phone home when it finished. There is no
+ * callback any more — the enclave answers inline — so the persistence moved
+ * here with it.
+ *
+ * It throws rather than warning: `sealed_record` is the only copy of the
+ * material that can recover this wallet, and a session that reports success
+ * without it would leave the user believing they are enrolled when they are
+ * not.
+ */
+async function persistEnrollment(
+  admin: ReturnType<typeof createAdminClient>,
+  session: SessionRow,
+  result: Record<string, unknown>,
+): Promise<void> {
+  const required = [
+    'sealed_record_b64',
+    'identity_commitment_hex',
+    'policy_hash_hex',
+    'recovery_pubkey_compressed_b64',
+    'recovery_x_hex',
+    'recovery_y_hex',
+  ] as const
+  for (const field of required) {
+    if (!result[field]) throw new Error(`enclave enrolment result is missing ${field}`)
+  }
+
+  const { data: wallet } = await admin
+    .from('wallets')
+    .select('network')
+    .eq('id', session.wallet_id)
+    .single()
+  if (!wallet) throw new Error('enrolment wallet is missing')
+
+  const { error } = await admin.from('social_recovery_enrollments').upsert(
+    {
+      wallet_id: session.wallet_id,
+      app_id: session.app_id,
+      environment_id: session.environment_id,
+      provider: session.provider,
+      delay_seconds: session.delay_seconds,
+      identity_commitment: result.identity_commitment_hex,
+      policy_hash: result.policy_hash_hex,
+      recovery_pubkey_compressed: result.recovery_pubkey_compressed_b64,
+      recovery_pub_x: result.recovery_x_hex,
+      recovery_pub_y: result.recovery_y_hex,
+      sealed_record: result.sealed_record_b64,
+      // Stellar classic cannot install a restricted authority on-chain, so its
+      // sealed DEK record is complete the moment the enclave returns.
+      // Starknet and Solana stay pending until the device confirms the
+      // enrolment transaction.
+      onchain_status: String(wallet.network).startsWith('stellar-') ? 'active' : 'pending',
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'wallet_id' },
+  )
+  if (error) throw new Error(`enrolment persistence failed: ${error.message}`)
 }
