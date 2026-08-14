@@ -9,15 +9,15 @@ expect to: by signing in again with Google, Apple, or an email link.
 
 The obvious way to build that would be for Cavos to hold a key and hand it over
 once a login checks out. That would make Cavos custodial and every Cavos
-employee a target. Instead the check runs inside a **Google Confidential Space
-enclave** — a VM whose exact software is measured by hardware and attested by
-Google — holding a key that the chain itself restricts to a single, delayed,
+employee a target. Instead the check runs inside an **AWS Nitro Enclave** — an
+isolated environment whose exact software is measured by hardware and attested
+by AWS — holding a key that the chain itself restricts to a single, delayed,
 cancellable action.
 
 <Callout type="warn">
 Call this **hardware-isolated, non-custodial** recovery, never *trustless*
 recovery. No Cavos employee holds a key that can move funds, but the measured
-enclave, Google Cloud's attestation and KMS, the approved image-upgrade policy,
+enclave, AWS's attestation and KMS, the approved image-upgrade policy,
 and — for the email provider — your Firebase identity project all remain inside
 the trust model. Section [Why this is still self-custodial](#why-this-is-still-self-custodial)
 is explicit about both halves.
@@ -32,13 +32,16 @@ controls, and **recovery**, later, on a device that has nothing.
 
 1. The user signs in. The provider's `id_token` stays **in memory only** — it is
    never persisted, logged, or sent to Cavos in the clear.
-2. The SDK asks Google for the enclave's **attestation**: a signed statement
-   describing exactly which image is running. It checks that statement against
-   [measurements pinned in the SDK](#the-attestation-pin) and aborts if anything
-   differs.
+2. The SDK asks for the enclave's **attestation document**: a statement signed by
+   the AWS Nitro Attestation PKI describing exactly which image is running. It
+   verifies the signature against [the AWS root certificate pinned in the
+   SDK](#the-attestation-pin), checks the measurement against the ones this
+   release accepts, and aborts if anything differs.
 3. Satisfied, the browser encrypts the token **directly to an ephemeral key
-   belonging to that enclave**, bound into the attestation itself. The Cavos
-   control plane relays ciphertext it cannot read.
+   belonging to that enclave**. The key is read from *inside* the signed
+   document rather than from the response that carried it, so there is nothing
+   to cross-check: substituting a key would mean forging an AWS signature. The
+   Cavos control plane relays ciphertext it cannot read.
 4. Inside, the enclave verifies the token, generates a recovery keypair, and
    seals the private half so only an enclave running the same measured image can
    ever open it. It returns only the public key.
@@ -95,10 +98,11 @@ so it is worth being precise about what the enclave can and cannot do. Four
 things hold, and each is enforced by something other than a Cavos promise.
 
 **Nobody can read the recovery key — not even the people who run it.** The
-private half is sealed by Google Cloud KMS so that it only opens inside an
+private half is sealed under a key AWS KMS releases only to an
 enclave whose measured image matches the one that sealed it. There is no console,
-no debugger, no support tool that reveals it: Confidential Space boots with
-debugging disabled, and the SDK refuses any attestation reporting otherwise. A
+no debugger, no support tool that reveals it: an enclave started in debug mode
+reports zeroed measurements, which no pinned policy accepts, and KMS refuses to
+release the key to it. A
 Cavos employee asked to hand over a user's key has nothing to hand over.
 
 **The key cannot move money.** This is the part that carries most of the weight.
@@ -134,7 +138,7 @@ formality:
 - **The measured enclave image.** You are trusting that this specific code does
   what it claims. Pin the digest and review changes to it the way you would
   review a key rotation.
-- **Google Cloud.** Attestation and KMS are what make the measurement meaningful
+- **AWS.** Attestation and KMS are what make the measurement meaningful
   and the sealed key openable.
 - **The image-upgrade policy.** A new digest is a new trust decision.
 - **Your Firebase project**, if you use the email provider.
@@ -191,25 +195,36 @@ not verification.
 Shipping them in a versioned, immutable package keeps the pin outside that
 control plane while taking it off your hands: you can audit the constant, and
 you choose when to adopt a new one by upgrading. The attestation itself is signed
-by Google, so authenticity is anchored outside Cavos either way — the pin only
+by AWS, so authenticity is anchored outside Cavos either way — the pin only
 fixes *which workload* you are willing to talk to.
 
 Pin your own policy when you run your own enclave:
 
 ```ts title="TypeScript"
 socialRecovery: {
-  audience: "https://example.com/api/recovery/social/attestation",
-  imageDigest: ["sha256:…", "sha256:…"], // list to overlap a rollout
-  projectNumber: "…",
-  serviceAccount: "…@….iam.gserviceaccount.com",
+  pcr0: ["f2f81237…", "24ce0009…"], // list to overlap a rollout
 }
 ```
 
-`imageDigest` accepts a list because the digest measures the exact enclave image
-and changes whenever that image is rebuilt. Publishing the incoming and outgoing
-digest together lets a redeploy overlap instead of cutting off apps mid-rollout.
-The attested digest must still match one of them exactly — an empty list accepts
-nothing.
+`pcr0` is the SHA-384 measurement of the enclave image, the value
+`nitro-cli build-enclave` reports. It accepts a list because the measurement
+changes whenever the image is rebuilt: publishing the incoming and outgoing
+value together lets a redeploy overlap instead of cutting off apps mid-rollout.
+The attested measurement must still match one of them exactly — an empty list
+accepts nothing, which is the safe direction.
+
+The enclave build is reproducible, so this is a claim you can check rather than
+one you have to take on faith. Rebuild the published source and confirm you get
+the same measurement:
+
+```bash title="Terminal"
+git clone https://github.com/cavos-labs/cavos-recovery
+cd cavos-recovery/enclave
+./scripts/build-enclave.sh --expect f2f81237…
+```
+
+Two independent builds of the same source produce the same `PCR0`; if they did
+not, a published measurement would prove nothing about the published code.
 
 <Callout type="info">
 Apps that set `socialRecoveryAttestation` before this existed keep working
@@ -260,31 +275,27 @@ enrolments made after it changes.
 The email provider still uses the Cavos Firebase project: its audience is the
 project id and its issuer embeds it, so it is not a per-app value.
 
-## Enclave warm-up
+## How long it takes
 
-**There is nothing to call.** Starting an enclave is the slowest part of
-enrolment and recovery, and it used to run after the user had already signed in —
-with the user watching a spinner. `<CavosProvider>` now reserves a worker while
-the user is still authenticating, so that cold start overlaps the login round
-trip instead of following it.
+**There is nothing to call and nothing to warm up.** The enclave is a long-lived
+service, so enrolment and recovery are two synchronous requests.
 
-The provider fires the reservation from `login()`, `sendOtp()`, `sendMagicLink()`
-and the OAuth callback, deduplicates concurrent attempts, and persists it so a
-redirect flow reuses the same reservation. It is an optimization: if it fails,
-the SDK logs a warning and recovery proceeds from a cold start.
-
-The reservation is created *before* the user authenticates, so it deliberately
-carries nothing about them — only an id, a single-use claim token, and an expiry.
-The next enrolment or recovery claims it atomically, and an expired one is
-replaced transparently.
+In practice the enclave accounts for **1–2 seconds**. The rest of what a user
+waits for is the on-chain transaction that installs the recovery authority or
+the new device signer, which is chain and congestion dependent.
 
 <Callout type="info">
-Only if you are **not** using `<CavosProvider>` — a non-React host driving
-`SocialRecoveryClient` yourself — call `client.prewarm()` when you learn a login
-is starting. It cannot be folded into `enroll`/`recover`: those are the exact
-calls the warm-up exists to make fast, so it has to happen earlier, and only the
-caller knows when.
+Adding a device is a single transaction when the environment's recovery delay is
+zero. With a delay configured it stays two — schedule now, finalize after
+`readyAt` — because that gap is the entire point of the timelock. The contract
+computes the deadline from its own clock, so nothing client-side can shorten it.
 </Callout>
+
+Earlier releases ran this on Google Confidential Space, which booted a
+confidential VM per session. That cost 49–134 seconds of boot for the same
+~2 seconds of work, and failed outright when a zone had no capacity. If you are
+reading older integration notes that mention prewarming, `prewarm()`, or a warm
+pool, they describe that design; none of it exists now.
 
 ## Related
 
