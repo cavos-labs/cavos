@@ -1,16 +1,21 @@
-import { after, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import {
-  createRecoveryVm,
-  deleteRecoveryVmHedges,
-} from '@/lib/recovery/social/google-compute'
-import { randomToken, tokenHash, tokenMatches } from '@/lib/recovery/social/security'
+import { tokenHash } from '@/lib/recovery/social/security'
 import { providerPolicy } from '@/lib/recovery/social/config'
-import { ensureRecoveryPool } from '@/lib/recovery/social/pool'
+import { openSession } from '@/lib/recovery/social/enclave'
 import type { SocialRecoveryAction } from '@/lib/recovery/social/types'
 import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier'
 
-export const maxDuration = 300
+/**
+ * Start a recovery session.
+ *
+ * The enclave is always running, so this returns a ready, attested session in a
+ * single round trip. The previous implementation booted a Confidential Space VM
+ * here and answered `202 starting`, leaving the browser to poll for 49–134
+ * seconds — and to fail outright about nine percent of the time when no zone
+ * had capacity. There is no prewarm and no warm pool any more because there is
+ * nothing left to warm.
+ */
 
 interface StartBody {
   app_id?: string
@@ -20,9 +25,6 @@ interface StartBody {
   action?: SocialRecoveryAction
   /** Base64url SHA-256 of the fresh provider ID token; never the token itself. */
   auth_challenge?: string
-  /** Short-lived capability returned before OAuth. It contains no user data. */
-  prewarm_id?: string
-  prewarm_token?: string
 }
 
 export async function POST(request: Request) {
@@ -58,14 +60,21 @@ export async function POST(request: Request) {
   const environment = { id: resolvedApp.environmentId }
   const admin = createAdminClient()
   const authChallengeHash = tokenHash(body.auth_challenge)
+
+  // One ID token, one session. The uniqueness index is partial over live
+  // statuses, so a session that failed or expired releases its challenge and
+  // the browser can retry with the same credential instead of sending the user
+  // back through the provider.
   const { data: replayedChallenge } = await admin
     .from('social_recovery_sessions')
     .select('id')
     .eq('auth_challenge_hash', authChallengeHash)
+    .in('status', ['ready', 'completed'])
     .maybeSingle()
   if (replayedChallenge) {
     return NextResponse.json({ error: 'auth_credential_replayed' }, { status: 409 })
   }
+
   const { data: environmentPolicy } = await admin
     .from('app_environments')
     .select(
@@ -87,6 +96,15 @@ export async function POST(request: Request) {
     .maybeSingle()
   if (!wallet) return NextResponse.json({ error: 'wallet_not_found' }, { status: 404 })
 
+  const policy = {
+    app_id: appId,
+    environment_id: environment.id,
+    ...providerPolicy(
+      environmentPolicy.social_recovery_provider,
+      environmentPolicy.social_recovery_audience,
+    ),
+  }
+
   const { data: enrollment } = await admin
     .from('social_recovery_enrollments')
     .select(
@@ -94,23 +112,20 @@ export async function POST(request: Request) {
     )
     .eq('wallet_id', wallet.id)
     .maybeSingle()
+
   if (body.action === 'enroll' && enrollment?.onchain_status === 'active') {
     return NextResponse.json({ error: 'already_enrolled' }, { status: 409 })
   }
   if (body.action === 'enroll' && enrollment?.onchain_status === 'pending') {
-    // A TEE session may have completed before the browser submitted/confirmed
-    // the on-chain transaction. Reuse that exact authority; generating a new
-    // key could strand a one-shot account if the original tx later lands.
+    // The enclave finished a previous attempt before the browser submitted the
+    // on-chain transaction. Reuse that exact authority: minting a new one could
+    // strand the account if the original transaction later lands.
     return NextResponse.json({
       session_id: enrollment.id,
       status: 'completed',
       action: 'enroll',
       provider: enrollment.provider,
-      policy: {
-        app_id: appId,
-        environment_id: environment.id,
-        ...providerPolicy(enrollment.provider, environmentPolicy?.social_recovery_audience),
-      },
+      policy,
       delay_seconds: enrollment.delay_seconds,
       resume_result: {
         result: 'enrolled',
@@ -125,167 +140,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'not_enrolled' }, { status: 409 })
   }
 
-  // Each request boots a billable VM. Keep abuse bounded even if an attacker
-  // knows the public app id.
+  // Abuse control. The enclave costs nothing per request now, but a public app
+  // id should still not be able to drive unbounded work.
   const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
   const { count: walletStarts } = await admin
     .from('social_recovery_sessions')
     .select('id', { count: 'exact', head: true })
     .eq('wallet_id', wallet.id)
     .gte('created_at', hourAgo)
-  if ((walletStarts || 0) >= 5) {
+  if ((walletStarts || 0) >= 10) {
     return NextResponse.json({ error: 'recovery_rate_limited' }, { status: 429 })
   }
 
-  // Claim an already-attested worker that started while the browser was inside
-  // OAuth. The UUID alone is not authority: the browser must present the
-  // independently generated claim token, and app/environment/provider are
-  // fixed before the VM boots. The all-fields update changes a prewarm into a
-  // normal session atomically, preserving the session-bound attestation nonce.
-  if (body.prewarm_id && body.prewarm_token) {
-    const { data: prewarm } = await admin
-      .from('social_recovery_sessions')
-      .select(
-        'id, app_id, environment_id, provider, status, prewarm_token_hash, expires_at',
-      )
-      .eq('id', body.prewarm_id)
-      .is('wallet_id', null)
-      .maybeSingle()
-    if (
-      prewarm &&
-      prewarm.app_id === appId &&
-      prewarm.environment_id === environment.id &&
-      prewarm.provider === environmentPolicy.social_recovery_provider &&
-      ['starting', 'ready'].includes(prewarm.status) &&
-      new Date(prewarm.expires_at).getTime() > Date.now() &&
-      tokenMatches(body.prewarm_token, prewarm.prewarm_token_hash)
-    ) {
-      const { data: claimed, error: claimError } = await admin
-        .from('social_recovery_sessions')
-        .update({
-          wallet_id: wallet.id,
-          action: body.action,
-          auth_challenge_hash: authChallengeHash,
-          prewarm_token_hash: null,
-          prewarm_request_hash: null,
-          claimed_at: new Date().toISOString(),
-          expires_at: new Date(Date.now() + 15 * 60_000).toISOString(),
-        })
-        .eq('id', prewarm.id)
-        .eq('prewarm_token_hash', prewarm.prewarm_token_hash)
-        .is('wallet_id', null)
-        .in('status', ['starting', 'ready'])
-        .select('id, status')
-        .maybeSingle()
-      if (claimError) {
-        const conflict = claimError.code === '23505'
-        return NextResponse.json(
-          { error: conflict ? 'recovery_already_in_progress' : 'prewarm_claim_failed' },
-          { status: conflict ? 409 : 500 },
-        )
-      }
-      if (claimed) {
-        return NextResponse.json(
-          {
-            session_id: claimed.id,
-            status: claimed.status,
-            action: body.action,
-            provider: environmentPolicy.social_recovery_provider,
-            policy: {
-              app_id: appId,
-              environment_id: environment.id,
-              ...providerPolicy(
-                environmentPolicy.social_recovery_provider,
-                environmentPolicy.social_recovery_audience,
-              ),
-            },
-            delay_seconds: environmentPolicy.social_recovery_delay_seconds,
-            expires_at: new Date(Date.now() + 15 * 60_000).toISOString(),
-            prewarm_claimed: true,
-          },
-          { status: claimed.status === 'ready' ? 200 : 202 },
-        )
-      }
-    }
-  }
-
-  // Direct SDK consumers may start a recovery without explicitly calling
-  // prewarm(). Claim a ready global worker here as a second fast path.
-  const implicitClaimToken = randomToken()
-  const implicitExpiresAt = new Date(Date.now() + 15 * 60_000).toISOString()
-  const { data: poolRows, error: poolClaimError } = await admin.rpc(
-    'claim_social_recovery_pool_slot',
-    {
-      p_app_id: appId,
-      p_environment_id: environment.id,
-      p_provider: environmentPolicy.social_recovery_provider,
-      p_delay_seconds: environmentPolicy.social_recovery_delay_seconds,
-      p_claim_token_hash: tokenHash(implicitClaimToken),
-      p_request_hash: tokenHash(`session:${wallet.id}`),
-      p_expires_at: implicitExpiresAt,
-    },
-  )
-  if (poolClaimError) {
-    console.error('[social-recovery] implicit warm-pool claim failed', poolClaimError)
-  } else {
-    const pool = Array.isArray(poolRows) ? poolRows[0] : poolRows
-    if (pool?.id) {
-      const { data: claimed, error: claimError } = await admin
-        .from('social_recovery_sessions')
-        .update({
-          wallet_id: wallet.id,
-          action: body.action,
-          auth_challenge_hash: authChallengeHash,
-          prewarm_token_hash: null,
-          prewarm_request_hash: null,
-          claimed_at: new Date().toISOString(),
-          expires_at: implicitExpiresAt,
-        })
-        .eq('id', pool.id)
-        .eq('prewarm_token_hash', tokenHash(implicitClaimToken))
-        .is('wallet_id', null)
-        .eq('status', 'ready')
-        .select('id, status')
-        .maybeSingle()
-      if (claimError) {
-        const conflict = claimError.code === '23505'
-        return NextResponse.json(
-          { error: conflict ? 'recovery_already_in_progress' : 'warm_pool_claim_failed' },
-          { status: conflict ? 409 : 500 },
-        )
-      }
-      if (claimed) {
-        after(async () => {
-          try {
-            await ensureRecoveryPool()
-          } catch (error) {
-            console.error('[social-recovery] warm-pool refill failed', error)
-          }
-        })
-        return NextResponse.json({
-          session_id: claimed.id,
-          status: claimed.status,
-          action: body.action,
-          provider: environmentPolicy.social_recovery_provider,
-          policy: {
-            app_id: appId,
-            environment_id: environment.id,
-            ...providerPolicy(
-                environmentPolicy.social_recovery_provider,
-                environmentPolicy.social_recovery_audience,
-              ),
-          },
-          delay_seconds: environmentPolicy.social_recovery_delay_seconds,
-          expires_at: implicitExpiresAt,
-          warm_pool_claimed: true,
-        })
-      }
-    }
-  }
-
   const sessionId = crypto.randomUUID()
-  const bootstrapToken = randomToken()
-  const instanceName = `cavos-rec-${sessionId.replaceAll('-', '').slice(0, 24)}`
+  const expiresAt = new Date(Date.now() + 10 * 60_000).toISOString()
   const { error: insertError } = await admin.from('social_recovery_sessions').insert({
     id: sessionId,
     wallet_id: wallet.id,
@@ -295,73 +163,52 @@ export async function POST(request: Request) {
     provider: environmentPolicy.social_recovery_provider,
     delay_seconds: environmentPolicy.social_recovery_delay_seconds,
     auth_challenge_hash: authChallengeHash,
-    bootstrap_token_hash: tokenHash(bootstrapToken),
-    vm_instance_name: instanceName,
+    status: 'ready',
+    expires_at: expiresAt,
   })
   if (insertError) {
     const conflict = insertError.code === '23505'
-    if (conflict) {
-      const { data: replayed } = await admin
-        .from('social_recovery_sessions')
-        .select('id')
-        .eq('auth_challenge_hash', authChallengeHash)
-        .maybeSingle()
-      if (replayed) {
-        return NextResponse.json({ error: 'auth_credential_replayed' }, { status: 409 })
-      }
-    }
     return NextResponse.json(
-      { error: conflict ? 'recovery_already_in_progress' : 'session_create_failed' },
+      { error: conflict ? 'auth_credential_replayed' : 'session_create_failed' },
       { status: conflict ? 409 : 500 },
     )
   }
 
-  // Compute insert operations can take longer than an HTTP request, especially
-  // when capacity fallback has to try multiple zones. Keep provisioning alive
-  // after returning the session so the browser can start polling immediately.
-  after(async () => {
-    try {
-      await createRecoveryVm({ sessionId, bootstrapToken, instanceName })
-      try {
-        const { data: session, error: sessionError } = await admin
-          .from('social_recovery_sessions')
-          .select('vm_instance_id')
-          .eq('id', sessionId)
-          .maybeSingle()
-        if (sessionError) throw sessionError
-        if (session?.vm_instance_id) {
-          await deleteRecoveryVmHedges(instanceName, session.vm_instance_id)
-        }
-      } catch (error) {
-        console.error('[social-recovery] post-provision hedge cleanup failed', error)
-      }
-    } catch (error) {
-      await admin
-        .from('social_recovery_sessions')
-        .update({ status: 'failed', error_code: 'vm_create_failed' })
-        .eq('id', sessionId)
-        .eq('status', 'starting')
-      console.error('[social-recovery] VM create failed', error)
-    }
-  })
+  let opened
+  try {
+    opened = await openSession(sessionId)
+  } catch (error) {
+    // Mark the row terminal so the challenge is released and the browser can
+    // retry immediately with the same credential.
+    await admin
+      .from('social_recovery_sessions')
+      .update({ status: 'failed', error_code: 'enclave_unavailable' })
+      .eq('id', sessionId)
+    console.error('[social-recovery] enclave openSession failed', error)
+    return NextResponse.json({ error: 'enclave_unavailable' }, { status: 503 })
+  }
 
-  return NextResponse.json(
-    {
-      session_id: sessionId,
-      status: 'starting',
-      action: body.action,
-      provider: environmentPolicy.social_recovery_provider,
-      policy: {
-        app_id: appId,
-        environment_id: environment.id,
-        ...providerPolicy(
-                environmentPolicy.social_recovery_provider,
-                environmentPolicy.social_recovery_audience,
-              ),
-      },
-      delay_seconds: environmentPolicy.social_recovery_delay_seconds,
-      expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-    },
-    { status: 202 },
-  )
+  const sealedRecord =
+    body.action === 'recover'
+      ? (
+          await admin
+            .from('social_recovery_enrollments')
+            .select('sealed_record')
+            .eq('wallet_id', wallet.id)
+            .maybeSingle()
+        ).data?.sealed_record
+      : undefined
+
+  return NextResponse.json({
+    session_id: sessionId,
+    status: 'ready',
+    action: body.action,
+    provider: environmentPolicy.social_recovery_provider,
+    policy,
+    delay_seconds: environmentPolicy.social_recovery_delay_seconds,
+    expires_at: expiresAt,
+    ephemeral_public_key_b64: opened.ephemeral_public_key_b64,
+    attestation_document_b64: opened.attestation_document_b64,
+    ...(sealedRecord ? { sealed_record_b64: sealedRecord } : {}),
+  })
 }

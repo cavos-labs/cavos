@@ -134,7 +134,7 @@ export default function EnvironmentsPage() {
                   <h3 className="text-sm font-semibold">Hardware-isolated social recovery</h3>
                   <p className="mt-1 text-xs leading-5 text-black/50">
                     Select one identity provider for this environment. Recovery credentials and
-                    keys are processed only inside an attested Google Confidential Space workload.
+                    keys are processed only inside an attested AWS Nitro Enclave.
                   </p>
                 </div>
                 <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold">

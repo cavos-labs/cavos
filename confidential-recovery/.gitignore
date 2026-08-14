@@ -4,3 +4,12 @@
 /terraform/*.tfstate.*
 /terraform/tfplan
 /terraform/*.tfplan
+
+# Enclave build output (the EIF is large and rebuilt from source).
+build/
+
+# Terraform state holds resource ids and the SSM placeholder, not secrets,
+# but it should not be committed.
+infra/.terraform/
+infra/*.tfstate*
+infra/tfplan
