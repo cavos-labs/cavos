@@ -10,14 +10,18 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className = '', variant = 'primary', size = 'md', loading, icon, children, disabled, ...props }, ref) => {
-    const baseStyles = 'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed';
+    // Press feedback comes from the global [data-pressable] rule: a single
+    // 0.97 scale that transitions, applied on pointer-down. Per-variant
+    // `active:scale-*` is deliberately absent so every control presses the
+    // same amount — 0.95 reads as a lurch on a 32px button.
+    const baseStyles = 'inline-flex items-center justify-center rounded-lg font-medium transition-[background-color,border-color,color,opacity] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed';
 
     const variants = {
-      primary: 'bg-brand text-white hover:bg-brand-hover active:scale-95',
-      secondary: 'bg-black/[0.05] text-ink hover:bg-black/[0.08] active:scale-95',
+      primary: 'bg-brand text-white hover:bg-brand-hover',
+      secondary: 'bg-black/[0.05] text-ink hover:bg-black/[0.08]',
       ghost: 'bg-transparent text-muted hover:text-ink hover:bg-black/5',
-      danger: 'bg-red-600 text-white hover:bg-red-700 active:scale-95',
-      outline: 'border border-line-strong text-ink hover:border-ink/40 hover:bg-black/5 active:scale-95'
+      danger: 'bg-red-600 text-white hover:bg-red-700',
+      outline: 'border border-line-strong text-ink hover:border-ink/40 hover:bg-black/5'
     };
 
     const sizes = {
@@ -29,6 +33,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         ref={ref}
+        data-pressable
         className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
         disabled={disabled || loading}
         {...props}

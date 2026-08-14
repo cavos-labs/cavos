@@ -167,10 +167,13 @@ const ILLUSTRATIONS: Record<Art, React.ReactNode> = {
     ),
 }
 
+// Enter and exit along the same path. Leaving by a slightly different one
+// (y:-6/scale .99) read as two unrelated animations rather than one panel
+// retracing its own steps.
 const PANEL_VARIANTS = {
     hidden: { opacity: 0, y: -8, scale: 0.985 },
     visible: { opacity: 1, y: 0, scale: 1 },
-    exit: { opacity: 0, y: -6, scale: 0.99 },
+    exit: { opacity: 0, y: -8, scale: 0.985 },
 }
 
 const EASE = [0.16, 1, 0.3, 1] as const
@@ -247,7 +250,7 @@ export function MegaMenu({ label, left, right, footer, onNavigate, onOpenChange 
                 key={item.title}
                 initial={reduce ? false : { opacity: 0, x: -6 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: 0.06 + index * 0.04, ease: EASE }}
+                transition={{ duration: 0.22, delay: 0.03 + index * 0.025, ease: EASE }}
             >
                 {asLink(item.href, cls, inner)}
             </motion.div>
@@ -296,7 +299,7 @@ export function MegaMenu({ label, left, right, footer, onNavigate, onOpenChange 
                 key={item.title}
                 initial={reduce ? false : { opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.32, delay: 0.12 + index * 0.06, ease: EASE }}
+                transition={{ duration: 0.24, delay: 0.05 + index * 0.035, ease: EASE }}
             >
                 {disabled ? <div className={wrapCls} aria-disabled>{inner}</div> : asLink(item.href!, wrapCls, inner)}
             </motion.div>
@@ -373,7 +376,7 @@ export function MegaMenu({ label, left, right, footer, onNavigate, onOpenChange 
                                 <motion.div
                                     initial={reduce ? false : { opacity: 0 }}
                                     animate={{ opacity: 1 }}
-                                    transition={{ duration: 0.3, delay: 0.2, ease: EASE }}
+                                    transition={{ duration: 0.22, delay: 0.09, ease: EASE }}
                                 >
                                     {asLink(
                                         footer.href,
