@@ -1,8 +1,16 @@
 import { NextResponse } from 'next/server'
-import { verifyRecoveryControlPlaneAccess } from '@/lib/recovery/social/google-compute'
+import { pingEnclave } from '@/lib/recovery/social/enclave'
 
 export const dynamic = 'force-dynamic'
 
+/**
+ * Is social recovery actually able to serve?
+ *
+ * This used to verify that the control plane could reach the GCE Compute API to
+ * boot a VM. There is no VM to boot now, so the question that matters is
+ * whether the long-lived enclave is up — which the relay answers by reaching
+ * through to it rather than reporting on itself.
+ */
 export async function GET(request: Request) {
   const adminKey = request.headers.get('x-admin-key')
   if (!adminKey || adminKey !== process.env.ADMIN_API_KEY) {
@@ -11,19 +19,20 @@ export async function GET(request: Request) {
 
   const startedAt = Date.now()
   try {
-    await verifyRecoveryControlPlaneAccess()
+    await pingEnclave()
     return NextResponse.json({
       ok: true,
-      dependency: 'gcp-confidential-recovery-control-plane',
+      dependency: 'nitro-recovery-enclave',
       duration_ms: Date.now() - startedAt,
       checked_at: new Date().toISOString(),
     })
   } catch (error) {
-    console.error('[social-recovery] control-plane health check failed', error)
+    console.error('[social-recovery] enclave health check failed', error)
     return NextResponse.json(
       {
         ok: false,
-        dependency: 'gcp-confidential-recovery-control-plane',
+        dependency: 'nitro-recovery-enclave',
+        duration_ms: Date.now() - startedAt,
         checked_at: new Date().toISOString(),
       },
       { status: 503 },

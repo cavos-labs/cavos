@@ -117,7 +117,7 @@ export const COMPETITORS: Competitor[] = [
         ],
         faq: [
             { question: 'Is Turnkey a competitor or a building block?', answer: 'Mostly a building block. Teams frequently use Turnkey to build something similar to what Cavos ships as a product. The decision is usually build-versus-buy rather than a feature comparison.' },
-            { question: 'Does Cavos ever use enclaves?', answer: 'Only for opt-in hardware-isolated social recovery, which runs in Google Confidential Space with pinned attestation measurements and can schedule at most one bounded add-signer operation. It is off by default and is not a general server-side signing capability.' },
+            { question: 'Does Cavos ever use enclaves?', answer: 'Only for opt-in hardware-isolated social recovery, which runs in an AWS Nitro Enclave with pinned attestation measurements and can schedule at most one bounded add-signer operation. It is off by default and is not a general server-side signing capability.' },
         ],
     },
     {

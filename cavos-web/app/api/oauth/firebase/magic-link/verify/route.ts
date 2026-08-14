@@ -3,7 +3,7 @@
  *
  * Called when the user clicks the magic link in their email.
  * Verifies the oobCode with Firebase and returns Firebase's own Google-signed
- * ID token. Social recovery verifies that token inside Confidential Space
+ * ID token. Social recovery verifies that token inside the Nitro enclave
  * against securetoken.google.com; minting a Cavos-signed replacement here would
  * put a second recovery authority outside the enclave.
  */
