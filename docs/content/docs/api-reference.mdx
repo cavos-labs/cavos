@@ -129,10 +129,9 @@ model — this is hardware-isolated, non-custodial recovery, not trustless recov
 
 | Export | Description |
 |--------|-------------|
-| `SocialRecoveryClient` | Client for the Confidential Space recovery service. `prewarm()` reserves a warm enclave worker, `enroll({ walletAddress, credential, stellarDek? })`, `recover({ walletAddress, credential, authorizations?, stellarRecipientPublicKey? })`, `confirmEnrollment(sessionId, txHash)`. |
-| `SocialRecoveryClientOptions` | `{ appId, attestation, environment?, backendUrl?, prewarm? }`. Pass a reservation from a previous `prewarm()` to reuse it. |
-| `SocialRecoveryPrewarm` | `{ prewarmId, claimToken, expiresAt }` — a single-use reservation for an empty, already-attested worker. Carries no identity or wallet data. |
-| `AttestationPolicy` | Which enclave you accept: `audience`, `imageDigest` (a digest or a list, to overlap a rollout), `projectNumber`, `serviceAccount`. Never learned from the API being attested. |
+| `SocialRecoveryClient` | Client for the recovery enclave. `enroll({ walletAddress, credential, stellarDek? })`, `recover({ walletAddress, credential, authorizations?, stellarRecipientPublicKey? })`, `confirmEnrollment(sessionId, txHash)`. Two synchronous round trips; there is nothing to warm up. |
+| `SocialRecoveryClientOptions` | `{ appId, attestation, environment?, backendUrl? }`. |
+| `AttestationPolicy` | Which enclave you accept: `{ pcr0 }`, the SHA-384 measurement of the enclave image (a value or a list, to overlap a rollout). Never learned from the API being attested. |
 | `DEFAULT_SOCIAL_RECOVERY_ATTESTATION` | The policy for the enclave Cavos operates, pinned in this package. What `socialRecovery: true` uses. |
 | `isAcceptedImageDigest(attested, expected)` | Whether an attested image digest matches the pinned policy. Exact match; fails closed on a missing digest or an empty list. |
 | `enrollHardwareIsolatedRecovery`, `recoverHardwareIsolatedDevice` | Chain-aware coordinators wrapping enroll/recover, including timelock finalization. |
@@ -250,6 +249,9 @@ React bindings shipped in the same package under the `/react` subpath. See
 | `formatConfigProblems(problems)` | Render problems as console-ready lines. |
 | `useCavos()` | Primary hook — full wallet surface: state (`address`, `wallet`, `chain`, `walletStatus`, `user`, `isAuthenticated`), login, `execute` (Starknet), device/recovery wrappers, `logout`. |
 | `useCavosAuth()` | Thin subset for components that only open the modal and read auth state (`openModal`, `closeModal`, `isAuthenticated`, `address`, `user`, `walletStatus`, `logout`). |
+| `ApproveDevicePage`, `RevokeDevicePage` | The two device-lifecycle pages, ready to mount. Props: `configs: CavosConfig[]` (every chain your app supports — the request's own chain is selected), `backendUrl?`, `paramName?`, `className?`, and `children?` as a render prop to replace the default markup. |
+| `DeviceFlowState` | What the render prop receives: `{ status, request, error, isSelf, signIn, submit }`. `status` is `loading \| error \| needs-signin \| ready \| submitting \| done`. |
+| `configForNetwork(network, configs)` | Picks the config for a wallet's chain. Used internally by the pages; exported for hosts that mount the provider themselves. Throws rather than returning a config for the wrong chain. |
 | `CavosAuthModal` | Customizable login modal. Renders as a bottom sheet automatically on mobile (`max-width: 640px`). |
 | `CavosConfig`, `CavosModalConfig`, `CavosAuthModalProps`, `CavosProviderProps`, `CavosContextValue`, `UserInfo`, `WalletStatus` | Type-only exports for the React layer. |
 

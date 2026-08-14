@@ -104,7 +104,14 @@ resource "google_kms_crypto_key" "recovery" {
   key_ring        = google_kms_key_ring.recovery.id
   rotation_period = "7776000s"
   lifecycle {
-    prevent_destroy = true
+    # Was `prevent_destroy = true`, and it earned its place: this key sealed
+    # every recovery record, so losing it meant losing every enrolled wallet.
+    #
+    # Turned off deliberately for the teardown. Social recovery moved to an AWS
+    # Nitro enclave with its own KMS key, the thirteen records this key sealed
+    # were test data and were deleted with the migration, and nothing reads it
+    # any more.
+    prevent_destroy = false
   }
 }
 
