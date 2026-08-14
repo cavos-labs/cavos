@@ -30,14 +30,16 @@ export function LandingMotion() {
                 // ── Hero entrance — orchestrated, plays on load ──
                 const heroItems = gsap.utils.toArray<HTMLElement>('[data-hero]')
                 if (heroItems.length) {
-                    gsap.set(heroItems, { opacity: 0, y: 24 })
+                    // Shorter travel, shorter duration. The old 24px/0.9s
+                    // entrance made the first thing a visitor sees something
+                    // they have to wait out.
+                    gsap.set(heroItems, { opacity: 0, y: 12 })
                     gsap.to(heroItems, {
                         opacity: 1,
                         y: 0,
-                        duration: 0.9,
+                        duration: 0.5,
                         ease,
-                        stagger: 0.09,
-                        delay: 0.05,
+                        stagger: 0.06,
                     })
                 }
 
@@ -45,13 +47,13 @@ export function LandingMotion() {
                 gsap.utils.toArray<HTMLElement>('[data-reveal]').forEach((el) => {
                     const group = el.hasAttribute('data-reveal-group')
                     const targets = group ? Array.from(el.children) : el
-                    gsap.set(targets, { opacity: 0, y: 28 })
+                    gsap.set(targets, { opacity: 0, y: 12 })
                     gsap.to(targets, {
                         opacity: 1,
                         y: 0,
-                        duration: 0.7,
+                        duration: 0.45,
                         ease,
-                        stagger: group ? 0.08 : 0,
+                        stagger: group ? 0.06 : 0,
                         scrollTrigger: {
                             trigger: el,
                             start: 'top 85%',

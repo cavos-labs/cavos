@@ -20,6 +20,10 @@
   --radius-xl: 0.5rem;     /* 8px  — cards, panels */
   --radius-2xl: 0.625rem;  /* 10px — large cards */
   --radius-3xl: 0.875rem;  /* 14px */
+
+  /* Easing for non-gestural transitions. Anything a finger can grab uses a
+     spring from lib/motion.ts instead — a fixed curve can't be interrupted. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 html,
@@ -28,9 +32,25 @@ body {
   background: #FFFFFF;
   color: #0A0A0F;
   font-family: var(--font-geist), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.005em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Optical tracking ──────────────────────────────────────
+   Tracking is size-specific: letters read too far apart as type grows, and
+   too tight as it shrinks. One global value is wrong somewhere, so each step
+   of the scale gets its own. Lives in @layer base so an explicit
+   `tracking-*` utility still wins wherever a designer overrides it. */
+@layer base {
+  .text-7xl, .text-8xl, .text-9xl { letter-spacing: -0.035em; line-height: 1.02; }
+  .text-5xl, .text-6xl            { letter-spacing: -0.03em;  line-height: 1.05; }
+  .text-3xl, .text-4xl            { letter-spacing: -0.024em; line-height: 1.12; }
+  .text-xl,  .text-2xl            { letter-spacing: -0.016em; }
+  .text-base, .text-lg            { letter-spacing: -0.008em; }
+  .text-sm                        { letter-spacing: -0.004em; }
+  .text-xs                        { letter-spacing: 0; }
+  .text-\[10px\], .text-\[11px\]  { letter-spacing: 0.005em; }
 }
 
 ::selection {
@@ -80,14 +100,72 @@ button:hover {
   outline-offset: 2px;
 }
 
-button:active:not(:disabled),
-[role="button"]:active:not([aria-disabled="true"]) {
+/* ── Press feedback ────────────────────────────────────────
+   Feedback lands on pointer-down, not on release, and it transitions rather
+   than snapping. Driven through a custom property so it composes with any
+   transform the element already carries instead of overwriting it. */
+[data-pressable] {
+  --press: 1;
+  transform: scale(var(--press));
+  transition: transform 100ms ease-out;
+}
+[data-pressable]:active:not(:disabled):not([aria-disabled="true"]) {
+  --press: 0.97;
+}
+
+button:active:not(:disabled):not([data-pressable]),
+[role="button"]:active:not([aria-disabled="true"]):not([data-pressable]) {
   transform: scale(0.98);
+  transition: transform 100ms ease-out;
 }
 
 button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+/* ── Materials ─────────────────────────────────────────────
+   Translucent layers that float over content instead of consuming a strip of
+   it. Weight encodes hierarchy: chrome is the lightest (nav/toolbars), sheet
+   is thicker (it's a bigger surface, so it reads heavier), scrim is the only
+   one that blocks. Never stack two light materials — legibility collapses. */
+.material-chrome {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(10, 10, 15, 0.06);
+}
+
+/* Same material as chrome, but for a floating pill that isn't welded to the
+   viewport edge — so it gets an all-round bright edge instead of a bottom rule. */
+.material-chrome-floating {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 8px 24px -12px rgba(10, 10, 15, 0.18);
+}
+
+.material-sheet {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  box-shadow: 0 24px 64px -16px rgba(10, 10, 15, 0.22);
+  /* Bright top edge — light catching the material */
+  border-top: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.material-scrim {
+  background: rgba(10, 10, 15, 0.42);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Scroll edge effect — fade content where it meets floating chrome, instead
+   of drawing a hard 1px divider that's there even when nothing overlaps. */
+.scroll-edge {
+  mask-image: linear-gradient(to bottom, transparent 0, black 1.25rem);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 1.25rem);
 }
 
 /* Animations */
@@ -126,11 +204,44 @@ button:disabled {
   .animate-fadeIn,
   .animate-fadeUp,
   .animate-float,
-  .animate-scroll {
+  .animate-scroll,
+  .animate-pulse {
     animation: none !important;
   }
   .js-reveal { opacity: 1 !important; transform: none !important; }
   * { scroll-behavior: auto !important; }
+  /* Reduced motion isn't no feedback — it's non-vestibular feedback. Press
+     still responds, it just doesn't move. */
+  [data-pressable] { transform: none; transition: opacity 100ms ease-out; }
+  [data-pressable]:active:not(:disabled) { opacity: 0.7; }
+}
+
+/* Frostier, not see-through. */
+@media (prefers-reduced-transparency: reduce) {
+  .material-chrome,
+  .material-chrome-floating,
+  .material-sheet {
+    background: #FFFFFF;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .material-scrim {
+    background: rgba(10, 10, 15, 0.7);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* Near-solid surfaces with a defined, contrasting border. */
+@media (prefers-contrast: more) {
+  .material-chrome,
+  .material-chrome-floating,
+  .material-sheet {
+    background: #FFFFFF;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-color: #0A0A0F;
+  }
 }
 
 .delay-100 { animation-delay: 100ms; }

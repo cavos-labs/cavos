@@ -5,6 +5,7 @@ import { Sidebar } from '@/components/Sidebar'
 import { DpaConsentModal } from '@/components/DpaConsentModal'
 import { DashboardMotion } from '@/components/DashboardMotion'
 import { DashboardTopBar } from '@/components/DashboardTopBar'
+import { Sheet } from '@/components/ui/Sheet'
 import { Icon } from '@/components/ui/Icon'
 import Link from 'next/link'
 
@@ -18,7 +19,7 @@ export default function DashboardLayout({
     return (
         <div className="min-h-screen bg-[#FFFFFF] lg:flex">
             {/* Mobile Header */}
-            <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-white border-b border-black/10 z-40 flex items-center justify-between px-4">
+            <div className="material-chrome lg:hidden fixed top-0 left-0 right-0 h-14 z-40 flex items-center justify-between px-4">
                 <Link href="/dashboard" className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30">
                     <span
                         role="img"
@@ -29,6 +30,8 @@ export default function DashboardLayout({
                 </Link>
                 <button
                     onClick={() => setSidebarOpen(!sidebarOpen)}
+                    data-pressable
+                    aria-expanded={sidebarOpen}
                     className="p-2 text-black/60 hover:text-black transition-colors"
                     aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
                 >
@@ -36,21 +39,23 @@ export default function DashboardLayout({
                 </button>
             </div>
 
-            {/* Sidebar */}
-            <div className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:h-screen lg:border-r border-black/10
-        ${sidebarOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full'}
-      `}>
+            {/* Desktop sidebar — permanent, no transition to interrupt */}
+            <div className="hidden lg:block lg:static lg:h-screen w-64 bg-white lg:border-r border-black/10">
                 <Sidebar />
             </div>
 
-            {/* Overlay for mobile sidebar */}
-            {sidebarOpen && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-                    onClick={() => setSidebarOpen(false)}
-                />
-            )}
+            {/* Mobile sidebar — grab it, drag it, flick it away */}
+            <Sheet
+                open={sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
+                side="left"
+                size={256}
+                label="Dashboard navigation"
+                scrimClassName="lg:hidden"
+                className="material-sheet fixed inset-y-0 left-0 z-50 w-64 touch-pan-y lg:hidden"
+            >
+                <Sidebar />
+            </Sheet>
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col min-h-screen lg:h-screen overflow-hidden bg-surface/40">

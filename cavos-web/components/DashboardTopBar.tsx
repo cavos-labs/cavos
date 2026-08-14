@@ -3,7 +3,9 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Icon } from '@/components/ui/Icon'
+import { FADE, SPRING_DEFAULT } from '@/lib/motion'
 
 /**
  * Persistent desktop top bar for the dashboard — functional search on the left,
@@ -48,6 +50,7 @@ export function DashboardTopBar() {
     const [activeIdx, setActiveIdx] = useState(0)
     const [entities, setEntities] = useState<SearchResult[]>([])
     const [loaded, setLoaded] = useState(false)
+    const reduced = useReducedMotion()
 
     const inputRef = useRef<HTMLInputElement>(null)
     const containerRef = useRef<HTMLDivElement>(null)
@@ -168,7 +171,7 @@ export function DashboardTopBar() {
     }
 
     return (
-        <header className="hidden lg:flex h-16 shrink-0 items-center gap-4 border-b border-line bg-white/80 backdrop-blur-sm px-8 sticky top-0 z-20">
+        <header className="material-chrome hidden lg:flex h-16 shrink-0 items-center gap-4 px-8 sticky top-0 z-20">
             {/* Search */}
             <div ref={containerRef} className="relative flex-1 max-w-md">
                 <div className="group relative">
@@ -187,18 +190,26 @@ export function DashboardTopBar() {
                         role="combobox"
                         aria-expanded={open}
                         aria-controls="topbar-search-results"
-                        className="w-full h-9 pl-9 pr-12 rounded-lg bg-surface border border-line text-sm text-ink placeholder:text-black/35 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 focus:bg-white transition-all"
+                        className="w-full h-9 pl-9 pr-12 rounded-lg bg-surface border border-line text-sm text-ink placeholder:text-black/35 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 focus:bg-white transition-[background-color,border-color,box-shadow] duration-150"
                     />
                     <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 hidden xl:flex items-center gap-0.5 font-mono text-[10px] font-medium text-black/35 bg-white border border-line rounded px-1.5 py-0.5 pointer-events-none">
                         ⌘K
                     </kbd>
                 </div>
 
+                <AnimatePresence>
                 {open && (
-                    <div
+                    <motion.div
                         id="topbar-search-results"
                         role="listbox"
-                        className="absolute top-full left-0 right-0 mt-2 rounded-lg border border-line bg-white shadow-lg shadow-black/[0.08] overflow-hidden py-1.5 animate-fadeIn"
+                        // Scales out of the field it belongs to, not from its own
+                        // centre — the panel and the input read as one object.
+                        style={{ transformOrigin: 'top center' }}
+                        initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: -4 }}
+                        animate={reduced ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
+                        exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: -4 }}
+                        transition={reduced ? FADE : SPRING_DEFAULT}
+                        className="absolute top-full left-0 right-0 mt-2 rounded-lg border border-line bg-white shadow-lg shadow-black/[0.08] overflow-hidden py-1.5"
                     >
                         {results.length === 0 ? (
                             <p className="px-3 py-6 text-center text-xs text-black/40">
@@ -233,8 +244,9 @@ export function DashboardTopBar() {
                                 )
                             })
                         )}
-                    </div>
+                    </motion.div>
                 )}
+                </AnimatePresence>
             </div>
 
             <div className="flex-1" />
@@ -263,7 +275,8 @@ export function DashboardTopBar() {
                 <Link
                     href="/dashboard/apps/new"
                     title="New application"
-                    className="w-9 h-9 flex items-center justify-center rounded-lg bg-brand text-white hover:bg-brand-hover active:scale-95 transition-all"
+                    data-pressable
+                    className="w-9 h-9 flex items-center justify-center rounded-lg bg-brand text-white hover:bg-brand-hover transition-colors duration-150"
                 >
                     <Icon.Add size={19} weight="bold" />
                 </Link>

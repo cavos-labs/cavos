@@ -5,7 +5,10 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { motion, useReducedMotion } from 'framer-motion'
 import { MegaMenu, type MegaMenuProps } from '@/components/MegaMenu'
+import { Sheet } from '@/components/ui/Sheet'
+import { FADE, SPRING_DEFAULT } from '@/lib/motion'
 
 const DEVELOPER_MENU: Omit<MegaMenuProps, 'onOpenChange'> = {
     label: 'Developer',
@@ -54,6 +57,10 @@ export function Header() {
     const [hovered, setHovered] = useState(false)
     const [devOpen, setDevOpen] = useState(false)
     const [resOpen, setResOpen] = useState(false)
+    const reduced = useReducedMotion()
+    // Full-bleed panel: measured once on mount so the drag maths has a real
+    // dimension to rubber-band and project against.
+    const [menuWidth, setMenuWidth] = useState(400)
     const anyMenuOpen = devOpen || resOpen
     const isLanding = pathname === '/'
     // Focused pages (e.g. contact sales) show only the logo + a single account
@@ -62,6 +69,13 @@ export function Header() {
     // No chrome at rest on any page. Hover or scroll brings the solid bar in
     // (Stripe-style); the border only ever appears on those states.
     const transparent = !scrolled && !hovered
+
+    useEffect(() => {
+        const measure = () => setMenuWidth(window.innerWidth)
+        measure()
+        window.addEventListener('resize', measure)
+        return () => window.removeEventListener('resize', measure)
+    }, [])
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -103,18 +117,20 @@ export function Header() {
 
     return (
         <>
-            <header
+            {/* Hide/reveal is a spring, not a 300ms curve: reversing your
+                scroll mid-hide catches the bar where it is and brings it back,
+                instead of making you wait out an animation you already changed
+                your mind about. */}
+            <motion.header
                 onMouseEnter={() => setHovered(true)}
                 onMouseLeave={() => setHovered(false)}
-                className={`fixed top-0 left-0 right-0 z-50 px-6 md:px-8 transition-all duration-300 ${
-                    hidden && !isMenuOpen ? '-translate-y-full' : 'translate-y-0'
-                }`}>
+                animate={{ y: hidden && !isMenuOpen ? '-100%' : '0%' }}
+                transition={reduced ? FADE : SPRING_DEFAULT}
+                className="fixed top-0 left-0 right-0 z-50 px-6 md:px-8">
                 <div className={`max-w-[1232px] mx-auto my-2 px-4 md:px-5 h-14 flex items-center justify-between gap-6 transition-all duration-300 ${
                     anyMenuOpen ? 'rounded-t-xl rounded-b-none' : 'rounded-xl'
                 } ${
-                    transparent
-                        ? 'bg-transparent'
-                        : 'bg-white/95 backdrop-blur-md shadow-sm'
+                    transparent ? 'bg-transparent' : 'material-chrome-floating'
                 }`}>
 
                   <div className="flex items-center gap-10">
@@ -150,14 +166,15 @@ export function Header() {
                             <>
                                 <Link
                                     href="/login"
-                                    className={`${minimal ? 'inline-flex' : 'hidden md:inline-flex'} items-center px-4 py-2 text-sm font-semibold text-ink bg-white rounded-md border border-line-strong hover:border-ink/40 transition-all`}
+                                    className={`${minimal ? 'inline-flex' : 'hidden md:inline-flex'} items-center px-4 py-2 text-sm font-semibold text-ink bg-white rounded-md border border-line-strong hover:border-ink/40 transition-colors duration-150`}
                                 >
                                     Sign In
                                 </Link>
                                 {!minimal && (
                                 <Link
                                     href="/contact-sales"
-                                    className="hidden md:inline-flex items-center px-4 py-2 text-sm font-semibold rounded-md bg-brand text-white hover:bg-brand-hover transition-all active:scale-[0.97]"
+                                    data-pressable
+                                    className="hidden md:inline-flex items-center px-4 py-2 text-sm font-semibold rounded-md bg-brand text-white hover:bg-brand-hover transition-colors duration-150"
                                 >
                                     Contact Sales
                                 </Link>
@@ -166,7 +183,8 @@ export function Header() {
                         ) : (
                             <Link
                                 href="/dashboard"
-                                className={`${minimal ? 'inline-flex' : 'hidden md:inline-flex'} items-center px-4 py-2 text-sm font-semibold rounded-md bg-brand text-white hover:bg-brand-hover transition-all active:scale-[0.97]`}
+                                data-pressable
+                                className={`${minimal ? 'inline-flex' : 'hidden md:inline-flex'} items-center px-4 py-2 text-sm font-semibold rounded-md bg-brand text-white hover:bg-brand-hover transition-colors duration-150`}
                             >
                                 Dashboard
                             </Link>
@@ -175,6 +193,8 @@ export function Header() {
                         {/* Hamburger */}
                         <button
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
+                            data-pressable
+                            aria-expanded={isMenuOpen}
                             className={`${minimal ? 'hidden' : 'md:hidden'} ml-1 w-9 h-9 flex items-center justify-center transition-colors ${transparent ? 'text-white mix-blend-difference' : 'text-ink/70 hover:text-ink'}`}
                             aria-label="Toggle menu"
                         >
@@ -187,20 +207,19 @@ export function Header() {
                         </button>
                     </div>
                 </div>
-            </header>
+            </motion.header>
 
-            {/* Mobile overlay */}
-            {isMenuOpen && (
-                <div
-                    className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm md:hidden"
-                    onClick={() => setIsMenuOpen(false)}
-                />
-            )}
-
-            {/* Mobile slide-in menu — full screen */}
-            <div className={`fixed inset-0 h-full w-full bg-white z-50 transform transition-transform duration-300 ease-in-out md:hidden ${
-                isMenuOpen ? 'translate-x-0' : 'translate-x-full'
-            }`}>
+            {/* Mobile menu — enters from the right and leaves to the right, and
+                can be dragged or flicked away in that same direction. */}
+            <Sheet
+                open={isMenuOpen}
+                onClose={() => setIsMenuOpen(false)}
+                side="right"
+                size={menuWidth}
+                label="Menu"
+                scrimClassName="md:hidden"
+                className="fixed inset-0 h-full w-full bg-white z-50 md:hidden touch-pan-y"
+            >
                 <div className="flex flex-col h-full">
                     <div className="flex items-center justify-between px-6 h-[4.5rem] border-b border-black/[0.06]">
                         <Image src="/cavos-black.png" alt="Cavos" width={90} height={36} className="h-8 w-auto" />
@@ -243,7 +262,7 @@ export function Header() {
                         )}
                     </nav>
                 </div>
-            </div>
+            </Sheet>
         </>
     )
 }
