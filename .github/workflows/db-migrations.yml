@@ -1,0 +1,173 @@
+name: Database migrations
+
+# Two jobs, deliberately split by trigger.
+#
+# On a pull request the workflow only *reads* production: it lists which
+# migrations the remote has recorded and prints the SQL that would run. That is
+# the part worth having on every change — it turns "this should be fine" into a
+# diff a reviewer can read, and it surfaces drift between this directory and the
+# live database on every PR rather than the day someone needs it.
+#
+# Applying is separate, manual to approve, and gated behind an environment.
+# Code rolls back with a redeploy; a migration does not. `20260815` alone drops
+# a constraint and rewrites a column, and there is no button for that at 3am.
+
+on:
+  pull_request:
+    paths:
+      - "cavos-web/supabase/migrations/**"
+  push:
+    branches: [main]
+    paths:
+      - "cavos-web/supabase/migrations/**"
+  workflow_dispatch:
+
+concurrency:
+  # Never let two pushes race the same database.
+  group: db-migrations
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    name: Plan (read-only)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The backfill check diffs against the base branch, and the default
+          # shallow clone has no ref to diff against — `origin/main` is simply
+          # absent, and git fails with "bad revision".
+          fetch-depth: 0
+
+      # Installed from npm rather than through supabase/setup-cli, which
+      # resolves the release through the unauthenticated GitHub API and shares a
+      # rate limit with every other runner on the same address — it failed with
+      # "rate limit exceeded" on a run whose only difference from a passing one
+      # was the time of day. The version is pinned so that a CLI release cannot
+      # change how a migration is applied to production without a commit saying so.
+      - name: Install the Supabase CLI
+        run: npm install -g supabase@2.114.0
+
+      - name: Link the project
+        working-directory: cavos-web
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+
+      - name: Compare local migrations with the remote history
+        working-directory: cavos-web
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          echo "::group::Migration history (local vs remote)"
+          supabase migration list
+          echo "::endgroup::"
+
+      - name: Show what applying would run
+        working-directory: cavos-web
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          echo "::group::Pending SQL"
+          supabase db push --dry-run
+          echo "::endgroup::"
+
+      - name: Warn on a non-idempotent backfill
+        working-directory: cavos-web
+        run: |
+          # UPDATE and DELETE in a migration are the statements that cannot be
+          # replayed safely and cannot be undone. This does not fail the build —
+          # they are sometimes exactly right, as in the 20260815 backfill — but a
+          # reviewer should have to look at them on purpose.
+          git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+          files=$(git diff --name-only FETCH_HEAD...HEAD -- 'cavos-web/supabase/migrations/*.sql')
+          [ -z "$files" ] && exit 0
+          if grep -lniE '^\s*(update|delete from)\b' $files; then
+            echo "::warning::A migration rewrites existing rows. Confirm it is safe to run exactly once, and that no row it touches is out of scope."
+          fi
+
+      - name: Require unique migration versions
+        working-directory: cavos-web/supabase/migrations
+        run: |
+          # Supabase keys `schema_migrations` on the numeric prefix, so two files
+          # sharing one are the same version as far as the remote is concerned
+          # and only one of them can ever be recorded. This repository's files
+          # use an 8-digit date rather than the 14-digit timestamp the CLI
+          # generates, so any two migrations written on the same day collide.
+          duplicates=$(ls *.sql | cut -d_ -f1 | sort | uniq -d)
+          if [ -n "$duplicates" ]; then
+            echo "Duplicate migration versions:"
+            for version in $duplicates; do echo "  $version: $(ls ${version}_*.sql | tr '\n' ' ')"; done
+            echo "::error::Migration versions must be unique. Rename these to full YYYYMMDDHHmmss timestamps, keeping their relative order."
+            exit 1
+          fi
+
+  apply:
+    name: Apply to production
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Add required reviewers to this environment in repository settings. Without
+    # them this job applies on merge with nobody in the loop, which is the whole
+    # thing the split above exists to avoid.
+    environment: supabase-production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Installed from npm rather than through supabase/setup-cli, which
+      # resolves the release through the unauthenticated GitHub API and shares a
+      # rate limit with every other runner on the same address — it failed with
+      # "rate limit exceeded" on a run whose only difference from a passing one
+      # was the time of day. The version is pinned so that a CLI release cannot
+      # change how a migration is applied to production without a commit saying so.
+      - name: Install the Supabase CLI
+        run: npm install -g supabase@2.114.0
+
+      - name: Link the project
+        working-directory: cavos-web
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_REF }}"
+
+      - name: Refuse to run against an unbaselined history
+        working-directory: cavos-web
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          # These migrations predate any automation, and there is no evidence
+          # they were ever applied through the CLI. If the remote has recorded
+          # none of them, `db push` would replay the schema from 2025 against a
+          # live database. Stop instead, and let a human baseline it with
+          # `supabase migration repair --status applied <version>`.
+          supabase migration list > history.txt
+          cat history.txt
+          applied=$(awk -F'|' 'NF>2 && $2 ~ /[0-9]/ {gsub(/ /,"",$2); if ($2 != "") c++} END {print c+0}' history.txt)
+          echo "Remote has recorded $applied migration(s)."
+          if [ "$applied" -lt 2 ]; then
+            echo "::error::The remote migration history is empty or near-empty, so this repository has never been baselined against it. Applying now would replay every migration from the beginning. Run 'supabase migration repair --status applied <version>' for the migrations already live, then re-run."
+            exit 1
+          fi
+
+      - name: Apply pending migrations
+        working-directory: cavos-web
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase db push
+
+      - name: Report the resulting history
+        if: always()
+        working-directory: cavos-web
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase migration list

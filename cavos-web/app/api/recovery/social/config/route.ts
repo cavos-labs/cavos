@@ -22,7 +22,17 @@ export async function GET(request: Request) {
   if (!data) return NextResponse.json({ error: 'environment_not_found' }, { status: 404 })
   return NextResponse.json({
     enabled: data.social_recovery_enabled,
+    // Every provider the enclave can verify is available once recovery is on;
+    // which one a wallet uses is decided by the credential at enrolment, not
+    // here. `provider` is kept for SDK versions that read a single value —
+    // they send no provider of their own, and the session falls back to it.
+    providers: PROVIDERS,
     provider: data.social_recovery_provider,
     delay_seconds: data.social_recovery_delay_seconds,
+    // The configured audiences are deliberately absent. They are not secret,
+    // but the client has no use for them — the policy is assembled server-side
+    // precisely so a frontend cannot influence whose tokens are accepted.
   })
 }
+
+const PROVIDERS = ['google', 'apple', 'email'] as const
