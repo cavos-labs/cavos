@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { tokenHash } from '@/lib/recovery/social/security'
-import { providerPolicy } from '@/lib/recovery/social/config'
+import {
+  isSocialRecoveryProvider,
+  providerAudiences,
+  providerPolicy,
+} from '@/lib/recovery/social/config'
 import { openSession } from '@/lib/recovery/social/enclave'
 import type { SocialRecoveryAction } from '@/lib/recovery/social/types'
 import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier'
@@ -23,6 +27,18 @@ interface StartBody {
   environment?: 'development' | 'production'
   wallet_address?: string
   action?: SocialRecoveryAction
+  /**
+   * Which provider signed the credential this session is for, read by the SDK
+   * from the token's `iss`. Optional: SDK versions predating multi-provider
+   * support do not send it, and fall back to the environment's legacy setting.
+   *
+   * Taking it from the request is safe. It selects a policy; it does not relax
+   * one. The audience still comes from stored configuration, and the enclave
+   * binds issuer, audience and subject into the identity commitment and refuses
+   * a recovery whose credential provider differs from the sealed record — so a
+   * false claim can only act as an identity it can already prove.
+   */
+  provider?: string
   /** Base64url SHA-256 of the fresh provider ID token; never the token itself. */
   auth_challenge?: string
 }
@@ -78,13 +94,30 @@ export async function POST(request: Request) {
   const { data: environmentPolicy } = await admin
     .from('app_environments')
     .select(
-      'id, social_recovery_enabled, social_recovery_provider, social_recovery_delay_seconds, social_recovery_audience',
+      'id, social_recovery_enabled, social_recovery_provider, social_recovery_delay_seconds, social_recovery_audiences',
     )
     .eq('id', environment.id)
     .eq('app_id', appId)
     .single()
-  if (!environmentPolicy?.social_recovery_enabled || !environmentPolicy.social_recovery_provider) {
+  if (!environmentPolicy?.social_recovery_enabled) {
     return NextResponse.json({ error: 'social_recovery_disabled' }, { status: 403 })
+  }
+
+  // The provider is a property of the credential. Older SDKs do not send one,
+  // so the environment's legacy setting stands in — that is the only remaining
+  // use for that column. An environment with neither is misconfigured rather
+  // than disabled, and says so.
+  const provider = body.provider ?? environmentPolicy.social_recovery_provider
+  if (!isSocialRecoveryProvider(provider)) {
+    return NextResponse.json(
+      {
+        error: body.provider ? 'unsupported_provider' : 'provider_not_determined',
+        detail: body.provider
+          ? `Social recovery supports google, apple and email; got "${body.provider}".`
+          : 'This SDK version does not send an identity provider and the environment has no fallback configured. Upgrade @cavos/kit, or set a fallback provider on the environment.',
+      },
+      { status: 400 },
+    )
   }
 
   const { data: wallet } = await admin
@@ -99,10 +132,7 @@ export async function POST(request: Request) {
   const policy = {
     app_id: appId,
     environment_id: environment.id,
-    ...providerPolicy(
-      environmentPolicy.social_recovery_provider,
-      environmentPolicy.social_recovery_audience,
-    ),
+    ...providerPolicy(provider, providerAudiences(environmentPolicy.social_recovery_audiences)),
   }
 
   const { data: enrollment } = await admin
@@ -138,6 +168,24 @@ export async function POST(request: Request) {
   }
   if (body.action === 'recover' && enrollment?.onchain_status !== 'active') {
     return NextResponse.json({ error: 'not_enrolled' }, { status: 409 })
+  }
+  // A wallet is recoverable only through the provider it enrolled with: the
+  // enclave binds issuer and subject into the identity commitment, and the same
+  // person's Google and Apple identities are different subjects under different
+  // issuers. Catching it here is only about the error. Sent on, the enclave
+  // refuses it as `request_failed` and says nothing about why — deliberately,
+  // so the untrusted relay learns nothing about a credential — which leaves the
+  // user staring at a failure with no way to discover they simply used the
+  // wrong button.
+  if (body.action === 'recover' && enrollment && enrollment.provider !== provider) {
+    return NextResponse.json(
+      {
+        error: 'provider_mismatch',
+        detail: `This wallet's recovery was set up with ${enrollment.provider}. Sign in with ${enrollment.provider} to recover it.`,
+        enrolled_provider: enrollment.provider,
+      },
+      { status: 409 },
+    )
   }
 
   // Abuse control. The enclave costs nothing per request now, but a public app

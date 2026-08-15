@@ -17,8 +17,15 @@ interface Environment {
   social_recovery_enabled: boolean
   social_recovery_provider: Provider | null
   social_recovery_delay_seconds: number
-  social_recovery_audience: string | null
+  social_recovery_audiences: Partial<Record<Provider, string>> | null
 }
+
+/** Every provider is available once recovery is on; these only set whose client. */
+const PROVIDER_FIELDS: { provider: Provider; label: string; hint: string }[] = [
+  { provider: 'google', label: 'Google client ID', hint: 'OAuth client ID' },
+  { provider: 'apple', label: 'Apple client ID', hint: 'Services ID' },
+  { provider: 'email', label: 'Firebase project ID', hint: 'Project ID, not a client ID' },
+]
 
 export default function EnvironmentsPage() {
   const { id } = useParams<{ id: string }>()
@@ -61,9 +68,8 @@ export default function EnvironmentsPage() {
         body: JSON.stringify({
           environment_id: environment.id,
           social_recovery_enabled: environment.social_recovery_enabled,
-          social_recovery_provider: environment.social_recovery_provider,
           social_recovery_delay_seconds: environment.social_recovery_delay_seconds,
-          social_recovery_audience: environment.social_recovery_audience?.trim() || null,
+          social_recovery_audiences: environment.social_recovery_audiences ?? {},
         }),
       })
       const body = await response.json()
@@ -133,8 +139,9 @@ export default function EnvironmentsPage() {
                 <div className="max-w-xl">
                   <h3 className="text-sm font-semibold">Hardware-isolated social recovery</h3>
                   <p className="mt-1 text-xs leading-5 text-black/50">
-                    Select one identity provider for this environment. Recovery credentials and
-                    keys are processed only inside an attested AWS Nitro Enclave.
+                    Google, Apple and email are all accepted; each wallet recovers through the
+                    provider its owner signed in with. Recovery credentials and keys are
+                    processed only inside an attested AWS Nitro Enclave.
                   </p>
                 </div>
                 <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold">
@@ -156,24 +163,8 @@ export default function EnvironmentsPage() {
               </div>
 
               {env.social_recovery_enabled && (
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  <label className="text-xs font-semibold">
-                    Provider
-                    <select
-                      value={env.social_recovery_provider ?? 'google'}
-                      onChange={(event) =>
-                        updateLocal(env.id, {
-                          social_recovery_provider: event.target.value as Provider,
-                        })
-                      }
-                      className="mt-2 w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm"
-                    >
-                      <option value="google">Google</option>
-                      <option value="apple">Apple</option>
-                      <option value="email">Email magic link</option>
-                    </select>
-                  </label>
-                  <label className="text-xs font-semibold">
+                <div className="mt-4 space-y-4">
+                  <label className="block max-w-xs text-xs font-semibold">
                     Timelock (seconds)
                     <input
                       type="number"
@@ -188,30 +179,45 @@ export default function EnvironmentsPage() {
                       }
                       className="mt-2 w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm"
                     />
+                    <p className="mt-2 text-xs font-normal text-muted">
+                      How long a recovery waits on-chain before it takes effect. This is the
+                      window in which a user can notice and cancel a recovery they did not
+                      start, so zero leaves them none.
+                    </p>
                   </label>
-                  {env.social_recovery_provider !== 'email' && (
-                    <label className="text-xs font-semibold sm:col-span-2">
-                      Your OAuth client ID
-                      <input
-                        type="text"
-                        spellCheck={false}
-                        placeholder="Leave empty to use the Cavos client"
-                        value={env.social_recovery_audience ?? ''}
-                        onChange={(event) =>
-                          updateLocal(env.id, {
-                            social_recovery_audience: event.target.value,
-                          })
-                        }
-                        className="mt-2 w-full rounded-lg border border-line bg-white px-3 py-2.5 font-mono text-sm"
-                      />
-                      <p className="mt-2 text-xs font-normal text-muted">
-                        Set this only if you sign users in with your own Google or Apple
-                        client (Clerk, Auth0, your own backend). Recovery will then accept
-                        the id_token you already hold, so the user never signs in twice.
-                        Wallets already enrolled keep the client they enrolled with.
-                      </p>
-                    </label>
-                  )}
+
+                  <div className="rounded-lg border border-line p-4">
+                    <p className="text-xs font-semibold">Bring your own auth</p>
+                    <p className="mt-2 text-xs text-muted">
+                      Leave these empty and recovery uses Cavos&apos;s own clients. Fill one in
+                      if you sign users in yourself (Clerk, Auth0, your own backend) and
+                      recovery will accept the id_token you already hold, so the user never
+                      signs in twice. Wallets already enrolled keep the client they enrolled
+                      with.
+                    </p>
+                    <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                      {PROVIDER_FIELDS.map((field) => (
+                        <label key={field.provider} className="text-xs font-semibold">
+                          {field.label}
+                          <input
+                            type="text"
+                            spellCheck={false}
+                            placeholder={field.hint}
+                            value={env.social_recovery_audiences?.[field.provider] ?? ''}
+                            onChange={(event) =>
+                              updateLocal(env.id, {
+                                social_recovery_audiences: {
+                                  ...(env.social_recovery_audiences ?? {}),
+                                  [field.provider]: event.target.value,
+                                },
+                              })
+                            }
+                            className="mt-2 w-full rounded-lg border border-line bg-white px-3 py-2.5 font-mono text-xs"
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
 

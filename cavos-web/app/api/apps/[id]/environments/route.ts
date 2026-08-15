@@ -8,7 +8,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   if (!access) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   const { data, error } = await access.supabase
     .from('app_environments')
-    .select('id,public_id,kind,is_active,allowed_origins,low_balance_threshold_usd,social_recovery_enabled,social_recovery_provider,social_recovery_delay_seconds,social_recovery_audience,created_at,updated_at')
+    .select('id,public_id,kind,is_active,allowed_origins,low_balance_threshold_usd,social_recovery_enabled,social_recovery_provider,social_recovery_delay_seconds,social_recovery_audiences,created_at,updated_at')
     .eq('app_id', id)
     .order('kind', { ascending: false })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -23,7 +23,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!body.environment_id) return NextResponse.json({ error: 'environment_id is required' }, { status: 400 })
   const { data: currentEnvironment } = await access.supabase
     .from('app_environments')
-    .select('id,social_recovery_enabled,social_recovery_provider,social_recovery_delay_seconds,social_recovery_audience')
+    .select('id,social_recovery_enabled,social_recovery_provider,social_recovery_delay_seconds,social_recovery_audiences')
     .eq('id', body.environment_id)
     .eq('app_id', id)
     .maybeSingle()
@@ -55,51 +55,53 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
     updates.social_recovery_delay_seconds = delay
   }
-  if (body.social_recovery_audience !== undefined) {
-    // The audience decides whose id_tokens the enclave will accept, so it is
-    // stored per environment and only ever set by the app owner here — never
-    // taken from a recovery request. An empty value falls back to the Cavos
-    // client. Wallets already enrolled are unaffected: the enclave enforces the
-    // policy sealed at enrolment.
-    const raw = body.social_recovery_audience
-    if (raw !== null && typeof raw !== 'string') {
-      return NextResponse.json({ error: 'Invalid OAuth client ID' }, { status: 400 })
+  if (body.social_recovery_audiences !== undefined) {
+    // Which client's id_tokens the enclave will accept, per provider. It is
+    // stored here and only ever set by the app owner — never taken from a
+    // recovery request, because it is what stops a token minted for someone
+    // else's app from recovering a wallet in this one. An absent entry falls
+    // back to Cavos's own client.
+    //
+    // Wallets already enrolled are unaffected either way: the enclave enforces
+    // the policy sealed at enrolment, not whatever this says later.
+    const raw = body.social_recovery_audiences
+    if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+      return NextResponse.json({ error: 'Invalid recovery client configuration' }, { status: 400 })
     }
-    const audience = typeof raw === 'string' ? raw.trim() : null
-    if (audience && audience.length > 255) {
-      return NextResponse.json({ error: 'OAuth client ID is too long' }, { status: 400 })
+    const audiences: Record<string, string> = {}
+    for (const [provider, value] of Object.entries(raw as Record<string, unknown>)) {
+      if (!['google', 'apple', 'email'].includes(provider)) {
+        return NextResponse.json({ error: `Unknown provider "${provider}"` }, { status: 400 })
+      }
+      if (value === null || value === '') continue
+      if (typeof value !== 'string') {
+        return NextResponse.json({ error: `Invalid client ID for ${provider}` }, { status: 400 })
+      }
+      const trimmed = value.trim()
+      if (!trimmed) continue
+      if (trimmed.length > 255) {
+        return NextResponse.json({ error: `Client ID for ${provider} is too long` }, { status: 400 })
+      }
+      audiences[provider] = trimmed
     }
-    updates.social_recovery_audience = audience || null
-  }
-  if (
-    (updates.social_recovery_enabled ?? currentEnvironment.social_recovery_enabled) === true &&
-    !['google', 'apple', 'email'].includes(
-      String(updates.social_recovery_provider ?? currentEnvironment.social_recovery_provider ?? ''),
-    )
-  ) {
-    return NextResponse.json(
-      { error: 'Exactly one social recovery provider is required when enabled' },
-      { status: 400 },
-    )
+    updates.social_recovery_audiences = audiences
   }
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'No supported fields provided' }, { status: 400 })
   }
 
-  const nextProvider =
-    updates.social_recovery_provider === undefined
-      ? currentEnvironment.social_recovery_provider
-      : updates.social_recovery_provider
   const nextDelay =
     updates.social_recovery_delay_seconds === undefined
       ? currentEnvironment.social_recovery_delay_seconds
       : updates.social_recovery_delay_seconds
-  const policyChanged =
-    nextProvider !== currentEnvironment.social_recovery_provider ||
-    nextDelay !== currentEnvironment.social_recovery_delay_seconds
+  // Only the timelock is guarded now. The provider used to be an environment-
+  // wide setting and changing it retargeted every future enrolment, so it was
+  // held still while records existed; it is now a property of each credential
+  // and each wallet keeps the one it sealed, so there is nothing to strand.
+  const policyChanged = nextDelay !== currentEnvironment.social_recovery_delay_seconds
   if (policyChanged) {
-    // The provider and timelock are sealed into the enclave record and enrolled
-    // on-chain. Mutating either in place would strand already-enrolled wallets.
+    // The timelock is sealed into the enclave record and enrolled on-chain.
+    // Mutating it in place would strand already-enrolled wallets.
     const admin = createAdminClient()
     const { count, error: countError } = await admin
       .from('social_recovery_enrollments')
@@ -113,7 +115,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return NextResponse.json(
         {
           error:
-            'Provider and timelock cannot change while recovery enrollments exist. Disable recovery or create a new environment policy; enrolled wallets keep their current policy.',
+            'The timelock cannot change while recovery enrollments exist. Disable recovery or create a new environment, and enrolled wallets keep the timelock they enrolled with.',
         },
         { status: 409 },
       )
