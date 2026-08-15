@@ -36,6 +36,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The backfill check diffs against the base branch, and the default
+          # shallow clone has no ref to diff against — `origin/main` is simply
+          # absent, and git fails with "bad revision".
+          fetch-depth: 0
 
       - uses: supabase/setup-cli@v1
         with:
@@ -75,10 +80,27 @@ jobs:
           # replayed safely and cannot be undone. This does not fail the build —
           # they are sometimes exactly right, as in the 20260815 backfill — but a
           # reviewer should have to look at them on purpose.
-          files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- 'cavos-web/supabase/migrations/*.sql')
+          git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+          files=$(git diff --name-only FETCH_HEAD...HEAD -- 'cavos-web/supabase/migrations/*.sql')
           [ -z "$files" ] && exit 0
           if grep -lniE '^\s*(update|delete from)\b' $files; then
             echo "::warning::A migration rewrites existing rows. Confirm it is safe to run exactly once, and that no row it touches is out of scope."
+          fi
+
+      - name: Require unique migration versions
+        working-directory: cavos-web/supabase/migrations
+        run: |
+          # Supabase keys `schema_migrations` on the numeric prefix, so two files
+          # sharing one are the same version as far as the remote is concerned
+          # and only one of them can ever be recorded. This repository's files
+          # use an 8-digit date rather than the 14-digit timestamp the CLI
+          # generates, so any two migrations written on the same day collide.
+          duplicates=$(ls *.sql | cut -d_ -f1 | sort | uniq -d)
+          if [ -n "$duplicates" ]; then
+            echo "Duplicate migration versions:"
+            for version in $duplicates; do echo "  $version: $(ls ${version}_*.sql | tr '\n' ' ')"; done
+            echo "::error::Migration versions must be unique. Rename these to full YYYYMMDDHHmmss timestamps, keeping their relative order."
+            exit 1
           fi
 
   apply:
