@@ -119,7 +119,24 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       )
     }
   }
-  const { data, error } = await access.supabase.from('app_environments').update(updates).eq('id', body.environment_id).eq('app_id', id).select().single()
+  // The write goes through the admin client because `app_environments` carries
+  // RLS with a read policy and no write policy ("Members read app
+  // environments" is the only one). Under the member-scoped client the UPDATE
+  // matches zero rows and PostgREST answers `.single()` with "Cannot coerce the
+  // result to a single JSON object" — a save that silently does nothing and
+  // reports a parsing error.
+  //
+  // Authorisation is not weakened by this: `organizationForApp` has already
+  // established membership, the role check above restricts writes to
+  // owner/admin/developer, and the filters below keep the update inside the one
+  // environment of the one app named in the path.
+  const { data, error } = await createAdminClient()
+    .from('app_environments')
+    .update(updates)
+    .eq('id', body.environment_id)
+    .eq('app_id', id)
+    .select()
+    .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ environment: data })
 }
