@@ -42,9 +42,14 @@ jobs:
           # absent, and git fails with "bad revision".
           fetch-depth: 0
 
-      - uses: supabase/setup-cli@v1
-        with:
-          version: latest
+      # Installed from npm rather than through supabase/setup-cli, which
+      # resolves the release through the unauthenticated GitHub API and shares a
+      # rate limit with every other runner on the same address — it failed with
+      # "rate limit exceeded" on a run whose only difference from a passing one
+      # was the time of day. The version is pinned so that a CLI release cannot
+      # change how a migration is applied to production without a commit saying so.
+      - name: Install the Supabase CLI
+        run: npm install -g supabase@2.114.0
 
       - name: Link the project
         working-directory: cavos-web
@@ -116,9 +121,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: supabase/setup-cli@v1
-        with:
-          version: latest
+      # Installed from npm rather than through supabase/setup-cli, which
+      # resolves the release through the unauthenticated GitHub API and shares a
+      # rate limit with every other runner on the same address — it failed with
+      # "rate limit exceeded" on a run whose only difference from a passing one
+      # was the time of day. The version is pinned so that a CLI release cannot
+      # change how a migration is applied to production without a commit saying so.
+      - name: Install the Supabase CLI
+        run: npm install -g supabase@2.114.0
 
       - name: Link the project
         working-directory: cavos-web
