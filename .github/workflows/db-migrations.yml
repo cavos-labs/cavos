@@ -92,6 +92,24 @@ jobs:
             echo "::warning::A migration rewrites existing rows. Confirm it is safe to run exactly once, and that no row it touches is out of scope."
           fi
 
+      - name: Run the migrations against a real Postgres
+        working-directory: cavos-web
+        run: |
+          # `db push --dry-run` prints what would run without running it, so a
+          # statement Postgres rejects outright still reaches production and
+          # fails there. That is not hypothetical: a CHECK containing a subquery
+          # passed every check above and died on apply with "cannot use subquery
+          # in check constraint", after the two statements before it had already
+          # gone through.
+          #
+          # Replaying the whole directory into a throwaway database is the only
+          # step here that actually executes the SQL.
+          # `db start` brings up Postgres alone — none of the studio, realtime or
+          # storage containers the full stack would start and this does not need.
+          supabase db start
+          supabase db reset
+          supabase stop --no-backup
+
       - name: Require unique migration versions
         working-directory: cavos-web/supabase/migrations
         run: |

@@ -37,17 +37,30 @@ WHERE social_recovery_audience IS NOT NULL
   AND social_recovery_audiences = '{}'::jsonb;
 
 -- Only the three providers the enclave knows how to verify, and only strings.
+--
+-- A CHECK cannot contain a subquery, so the two halves are expressed
+-- differently. Removing the permitted keys and requiring nothing to remain is a
+-- plain operator and says "no other keys" exactly. Checking that every value is
+-- a string does need to walk the object, which is what the function is for —
+-- CHECK accepts an immutable function where it will not accept a SELECT.
+CREATE OR REPLACE FUNCTION public.jsonb_values_are_strings(value JSONB)
+RETURNS BOOLEAN
+LANGUAGE sql
+IMMUTABLE
+PARALLEL SAFE
+AS $$
+  SELECT NOT EXISTS (
+    SELECT 1 FROM jsonb_each(value) AS entry WHERE jsonb_typeof(entry.value) <> 'string'
+  );
+$$;
+
 ALTER TABLE public.app_environments
   DROP CONSTRAINT IF EXISTS app_environments_social_recovery_audiences;
 ALTER TABLE public.app_environments
   ADD CONSTRAINT app_environments_social_recovery_audiences CHECK (
     jsonb_typeof(social_recovery_audiences) = 'object'
-    AND NOT EXISTS (
-      SELECT 1
-      FROM jsonb_each(social_recovery_audiences) AS entry(key, value)
-      WHERE entry.key NOT IN ('google', 'apple', 'email')
-         OR jsonb_typeof(entry.value) <> 'string'
-    )
+    AND social_recovery_audiences - ARRAY['google', 'apple', 'email'] = '{}'::jsonb
+    AND public.jsonb_values_are_strings(social_recovery_audiences)
   );
 
 -- Enabling recovery no longer requires naming a provider: enabling it now means
