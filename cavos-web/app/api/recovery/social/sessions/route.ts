@@ -208,7 +208,10 @@ export async function POST(request: Request) {
     app_id: appId,
     environment_id: environment.id,
     action: body.action,
-    provider: environmentPolicy.social_recovery_provider,
+    // The provider this session is actually for, not the environment's legacy
+    // fallback. Recording the fallback here would make the session row disagree
+    // with the policy the enclave was handed.
+    provider,
     delay_seconds: environmentPolicy.social_recovery_delay_seconds,
     auth_challenge_hash: authChallengeHash,
     status: 'ready',
@@ -251,7 +254,13 @@ export async function POST(request: Request) {
     session_id: sessionId,
     status: 'ready',
     action: body.action,
-    provider: environmentPolicy.social_recovery_provider,
+    // The SDK builds the job's credential from this field, and the enclave
+    // refuses a job whose credential provider differs from its policy — the
+    // first thing it checks, before it even fetches the JWKS. Returning the
+    // environment's legacy fallback here meant a user who signed in with Apple
+    // got an Apple policy alongside a credential labelled google, and the
+    // enclave rejected it as `request_failed` with nothing to say about why.
+    provider,
     policy,
     delay_seconds: environmentPolicy.social_recovery_delay_seconds,
     expires_at: expiresAt,
