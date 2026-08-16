@@ -166,8 +166,29 @@ export async function POST(request: Request) {
       },
     })
   }
+  // Two different situations used to answer the same way, and the SDK retried
+  // both for five minutes: a wallet mid-enrolment on another device, where
+  // waiting is exactly right, and a wallet that never enrolled at all, where
+  // waiting can only ever time out. The row tells them apart.
+  if (body.action === 'recover' && enrollment?.onchain_status === 'pending') {
+    return NextResponse.json(
+      {
+        error: 'enrollment_pending',
+        detail: 'This wallet is being enrolled right now. Retry shortly.',
+      },
+      { status: 409 },
+    )
+  }
   if (body.action === 'recover' && enrollment?.onchain_status !== 'active') {
-    return NextResponse.json({ error: 'not_enrolled' }, { status: 409 })
+    return NextResponse.json(
+      {
+        error: 'not_enrolled',
+        detail:
+          'This wallet has no recovery authority on-chain, so there is nothing to recover with. ' +
+          'Sign in on a device that already controls the wallet to set it up.',
+      },
+      { status: 409 },
+    )
   }
   // A wallet is recoverable only through the provider it enrolled with: the
   // enclave binds issuer and subject into the identity commitment, and the same
