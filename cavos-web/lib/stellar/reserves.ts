@@ -44,7 +44,7 @@ export function stroopsFromXlm(amount: string | number): number {
  */
 export function estimateReservedStroops(
   tx: Transaction | FeeBumpTransaction,
-  kind: 'create' | 'fee-bump' | 'sponsored-data',
+  kind: 'create' | 'fee-bump' | 'sponsored-data' | 'trustline',
   baseReserveStroops: number = DEFAULT_BASE_RESERVE_STROOPS,
 ): number {
   if (kind === 'fee-bump') return 0;
@@ -84,6 +84,20 @@ export function reservedDeltaStroops(
   baseReserveStroops: number = DEFAULT_BASE_RESERVE_STROOPS,
 ): number {
   const delta = numSponsoringAfter - numSponsoringBefore;
+  return Math.max(0, delta) * baseReserveStroops;
+}
+
+/**
+ * The mirror of `reservedDeltaStroops`: what the sponsor stopped sponsoring.
+ * Closing a trustline drops `num_sponsoring`, and without this the XLM would
+ * stay locked in the ledger long after the network released it.
+ */
+export function releasedDeltaStroops(
+  numSponsoringBefore: number,
+  numSponsoringAfter: number,
+  baseReserveStroops: number = DEFAULT_BASE_RESERVE_STROOPS,
+): number {
+  const delta = numSponsoringBefore - numSponsoringAfter;
   return Math.max(0, delta) * baseReserveStroops;
 }
 

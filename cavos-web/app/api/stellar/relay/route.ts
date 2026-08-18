@@ -21,10 +21,18 @@ import {
   parseAnyTransaction,
   validateClassicCreate,
   validateClassicFeeBump,
+  validateClassicTrustline,
   validateSponsoredData,
 } from '@/lib/stellar/relayer';
+import type { ValidationResult } from '@/lib/stellar/relayer';
+import { listOrgTrustlines } from '@/lib/stellar/trustlines';
 import { resolveOrgForApp } from '@/lib/billing/limits';
-import { debitStellarGas, hasGas, lockStellarReserves } from '@/lib/stellar/gas';
+import {
+  debitStellarGas,
+  hasGas,
+  lockStellarReserves,
+  releaseStellarReserves,
+} from '@/lib/stellar/gas';
 import {
   ensureTestnetFunded,
   getOrgSponsorSigner,
@@ -35,12 +43,13 @@ import {
   FEE_BUFFER_STROOPS,
   estimateReservedStroops,
   fetchBaseReserveStroops,
+  releasedDeltaStroops,
   reservedDeltaStroops,
 } from '@/lib/stellar/reserves';
 import { recordCavosEvent, resolveEnvironment } from '@/lib/operations/events';
 import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier';
 
-type RelayKind = 'create' | 'fee-bump' | 'sponsored-data';
+type RelayKind = 'create' | 'fee-bump' | 'sponsored-data' | 'trustline';
 
 interface ClassicRelayRequest {
   app_id: string;
@@ -115,7 +124,12 @@ export async function POST(request: Request) {
     if (!isSupportedStellarNetwork(body.network)) {
       return ApiResponse.badRequest('Unsupported Stellar network', { network: body.network });
     }
-    if (body.kind !== 'create' && body.kind !== 'fee-bump' && body.kind !== 'sponsored-data') {
+    if (
+      body.kind !== 'create' &&
+      body.kind !== 'fee-bump' &&
+      body.kind !== 'sponsored-data' &&
+      body.kind !== 'trustline'
+    ) {
       return ApiResponse.badRequest('Invalid kind', { kind: body.kind });
     }
 
@@ -165,12 +179,28 @@ export async function POST(request: Request) {
     if (body.kind !== 'fee-bump' && isFeeBump) {
       return ApiResponse.badRequest(`kind=${body.kind} requires a plain transaction`);
     }
-    const check =
-      body.kind === 'create'
-        ? validateClassicCreate(tx as Transaction, signer.publicKey())
-        : body.kind === 'sponsored-data'
-          ? validateSponsoredData(tx as Transaction, signer.publicKey())
-          : validateClassicFeeBump(tx as FeeBumpTransaction, signer.publicKey());
+    let check: ValidationResult;
+    switch (body.kind) {
+      case 'create':
+        check = validateClassicCreate(tx as Transaction, signer.publicKey());
+        break;
+      case 'sponsored-data':
+        check = validateSponsoredData(tx as Transaction, signer.publicKey());
+        break;
+      case 'trustline':
+        // The org's configured assets are the only thing standing between an
+        // open `changeTrust` and its sponsor pot, so they are fetched per
+        // request rather than cached.
+        check = validateClassicTrustline(
+          tx as Transaction,
+          signer.publicKey(),
+          await listOrgTrustlines(orgId, body.network),
+        );
+        break;
+      case 'fee-bump':
+        check = validateClassicFeeBump(tx as FeeBumpTransaction, signer.publicKey());
+        break;
+    }
     if (!check.ok) {
       logger.warn('Classic relay rejected', { reason: check.reason, app_id: body.app_id, kind: body.kind });
       await recordCavosEvent({ appId, environmentId: environment?.id, eventType: 'relay.rejected', status: 'failed', severity: 'warning', requestId: logger.requestId, network: body.network, errorCode: 'not_eligible', metadata: { reason: check.reason, kind: body.kind } });
@@ -216,13 +246,18 @@ export async function POST(request: Request) {
     if (metered) {
       try {
         const after = await loadSponsorAccount(body.network, signer.publicKey());
-        const reserved = reservedDeltaStroops(sponsoringBefore, numSponsoringOf(after), baseReserve);
+        const sponsoringAfter = numSponsoringOf(after);
+        const reserved = reservedDeltaStroops(sponsoringBefore, sponsoringAfter, baseReserve);
         if (reserved > 0) {
           const locked = await lockStellarReserves(orgId, reserved);
           if (!locked) {
             logger.warn('Reserve lock failed after submit', { hash, reserved, org_id: orgId });
           }
         }
+        // Closing a trustline hands a reserve back; without this it would stay
+        // locked in the ledger for good.
+        const released = releasedDeltaStroops(sponsoringBefore, sponsoringAfter, baseReserve);
+        if (released > 0) await releaseStellarReserves(orgId, released);
         if (feeCharged > 0) await debitStellarGas(orgId, feeCharged);
       } catch {
         logger.warn('Gas debit failed (tx already landed)', { hash });
