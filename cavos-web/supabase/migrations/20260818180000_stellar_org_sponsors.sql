@@ -33,6 +33,7 @@ CREATE INDEX IF NOT EXISTS idx_org_stellar_sponsors_public
 
 ALTER TABLE public.org_stellar_sponsors ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Org owners can view stellar sponsors" ON public.org_stellar_sponsors;
 CREATE POLICY "Org owners can view stellar sponsors"
   ON public.org_stellar_sponsors FOR SELECT
   USING (
@@ -43,6 +44,7 @@ CREATE POLICY "Org owners can view stellar sponsors"
     )
   );
 
+DROP POLICY IF EXISTS "Service role manages stellar sponsors" ON public.org_stellar_sponsors;
 CREATE POLICY "Service role manages stellar sponsors"
   ON public.org_stellar_sponsors FOR ALL
   TO service_role
@@ -152,6 +154,7 @@ CREATE INDEX IF NOT EXISTS idx_stellar_gas_withdrawals_org
 
 ALTER TABLE public.stellar_gas_withdrawals ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Org owners can view stellar gas withdrawals" ON public.stellar_gas_withdrawals;
 CREATE POLICY "Org owners can view stellar gas withdrawals"
   ON public.stellar_gas_withdrawals FOR SELECT
   USING (
@@ -162,6 +165,7 @@ CREATE POLICY "Org owners can view stellar gas withdrawals"
     )
   );
 
+DROP POLICY IF EXISTS "Service role manages stellar gas withdrawals" ON public.stellar_gas_withdrawals;
 CREATE POLICY "Service role manages stellar gas withdrawals"
   ON public.stellar_gas_withdrawals FOR ALL
   TO service_role

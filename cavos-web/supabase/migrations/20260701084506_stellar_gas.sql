@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS public.org_stellar_gas (
 
 ALTER TABLE public.org_stellar_gas ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Org owners can view stellar gas" ON public.org_stellar_gas;
 CREATE POLICY "Org owners can view stellar gas"
   ON public.org_stellar_gas FOR SELECT
   USING (
@@ -31,6 +32,7 @@ CREATE POLICY "Org owners can view stellar gas"
     )
   );
 
+DROP POLICY IF EXISTS "Service role manages stellar gas" ON public.org_stellar_gas;
 CREATE POLICY "Service role manages stellar gas"
   ON public.org_stellar_gas FOR ALL
   TO service_role
@@ -51,6 +53,7 @@ CREATE INDEX IF NOT EXISTS idx_stellar_gas_deposits_org ON public.stellar_gas_de
 
 ALTER TABLE public.stellar_gas_deposits ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Org owners can view stellar gas deposits" ON public.stellar_gas_deposits;
 CREATE POLICY "Org owners can view stellar gas deposits"
   ON public.stellar_gas_deposits FOR SELECT
   USING (
@@ -61,6 +64,7 @@ CREATE POLICY "Org owners can view stellar gas deposits"
     )
   );
 
+DROP POLICY IF EXISTS "Service role manages stellar gas deposits" ON public.stellar_gas_deposits;
 CREATE POLICY "Service role manages stellar gas deposits"
   ON public.stellar_gas_deposits FOR ALL
   TO service_role
