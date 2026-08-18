@@ -14,6 +14,7 @@
  *     never a source of any inner op, so it can't move user funds.
  */
 import {
+  Asset,
   Horizon,
   Operation,
   TransactionBuilder,
@@ -196,27 +197,44 @@ export function validateClassicFeeBump(
   return { ok: true };
 }
 
-/** Max ops in a sponsored data write (begin + a few `cv:` entries + end). */
-const CLASSIC_DATA_MAX_OPS = 12;
+/** Max ops in a sponsored write (begin + a handful of account ops + end). */
+const CLASSIC_SPONSORED_MAX_OPS = 12;
+
+/** A classic asset the relayer is willing to sponsor a trustline for. */
+export interface StellarAsset {
+  code: string;
+  issuer: string;
+}
+
+/** An operation as it comes off a parsed classic transaction. Taken from
+ *  `Transaction` itself so the discriminated union stays in sync with the SDK. */
+type ClassicOperation = Transaction['operations'][number];
+
+/** The account-owned operations inside a `begin…end` sponsorship envelope. */
+interface SponsoredEnvelope {
+  /** The one account whose new subentries the relayer is sponsoring. */
+  account: string;
+  /** Everything between the begin and end ops. */
+  inner: readonly ClassicOperation[];
+}
 
 /**
- * Gate a sponsored data write (adding a passkey/recovery factor or a device
- * slot): the relayer sponsors the reserve of the new subentries. Enforces:
- *  - source is the relayer (it pays fee + sponsors reserves);
- *  - a `beginSponsoringFutureReserves` (relayer-sourced) whose sponsoredId is the
- *    ONE account, and a matching `endSponsoringFutureReserves`;
- *  - every other op is a `manageData` under the `cv:` namespace, sourced by that
- *    account — never a payment, setOptions, createAccount, etc.
- * The account can therefore only gain `cv:` data entries; the relayer can neither
- * be drained nor made to sponsor anything but this account's envelope.
+ * Check the shape shared by every sponsored write, independent of what the
+ * account is allowed to write: the relayer sources and pays, exactly one account
+ * is sponsored, and the envelope is properly closed. What may sit *inside*
+ * differs per kind and is left to the caller — this establishes only that
+ * whatever is inside belongs to that one account.
  */
-export function validateSponsoredData(tx: Transaction, relayerPublicKey: string): ValidationResult {
+function parseSponsoredEnvelope(
+  tx: Transaction,
+  relayerPublicKey: string,
+): { ok: true; envelope: SponsoredEnvelope } | { ok: false; reason: string } {
   if (tx.source !== relayerPublicKey) {
     return { ok: false, reason: 'transaction source must be the Cavos relayer' };
   }
   const ops = tx.operations;
-  if (ops.length < 3 || ops.length > CLASSIC_DATA_MAX_OPS) {
-    return { ok: false, reason: `sponsored-data must have 3..${CLASSIC_DATA_MAX_OPS} operations` };
+  if (ops.length < 3 || ops.length > CLASSIC_SPONSORED_MAX_OPS) {
+    return { ok: false, reason: `a sponsored write must have 3..${CLASSIC_SPONSORED_MAX_OPS} operations` };
   }
   if (ops[0].type !== 'beginSponsoringFutureReserves') {
     return { ok: false, reason: 'first op must be beginSponsoringFutureReserves' };
@@ -232,7 +250,25 @@ export function validateSponsoredData(tx: Transaction, relayerPublicKey: string)
   if (!account || !account.startsWith('G') || account === relayerPublicKey) {
     return { ok: false, reason: 'sponsored account must be a classic G address (not the relayer)' };
   }
-  for (const op of ops.slice(1, -1)) {
+  const end = ops[ops.length - 1] as Operation.EndSponsoringFutureReserves;
+  if (end.source !== account) {
+    return { ok: false, reason: 'endSponsoring must be sourced by the sponsored account' };
+  }
+  return { ok: true, envelope: { account, inner: ops.slice(1, -1) } };
+}
+
+/**
+ * Gate a sponsored data write (adding a passkey/recovery factor or a device
+ * slot): the relayer sponsors the reserve of the new subentries. Inside the
+ * envelope the account may only gain `cv:` data entries and rotate its own
+ * signers — never a payment, a createAccount, or a trustline.
+ */
+export function validateSponsoredData(tx: Transaction, relayerPublicKey: string): ValidationResult {
+  const parsed = parseSponsoredEnvelope(tx, relayerPublicKey);
+  if (!parsed.ok) return { ok: false, reason: parsed.reason };
+  const { account, inner } = parsed.envelope;
+
+  for (const op of inner) {
     // Device revocation rotates the account's control key in the SAME
     // transaction that erases the revoked device's envelope entries — erasing
     // the wrap alone revokes nothing, since the evicted device may have cached
@@ -288,9 +324,52 @@ export function validateSponsoredData(tx: Transaction, relayerPublicKey: string)
       return { ok: false, reason: `data key ${md.name} is outside the cv: namespace` };
     }
   }
-  const end = ops[ops.length - 1] as Operation.EndSponsoringFutureReserves;
-  if (end.source !== account) {
-    return { ok: false, reason: 'endSponsoring must be sourced by the sponsored account' };
+  return { ok: true };
+}
+
+/**
+ * Gate a sponsored trustline write. A trustline is a subentry, so the org's pot
+ * pays a base reserve for every one opened — which makes an ungated `changeTrust`
+ * a way to drain that pot one asset at a time. `allowed` is the org's dashboard
+ * configuration and it is the whole defence: an asset that is not on it is not
+ * sponsored, and without the relayer's signature the transaction has neither a
+ * fee payer nor a sponsor.
+ *
+ * Closing a trustline (limit 0) releases a reserve instead of consuming one, so
+ * it needs no entry on the list — an org that drops an asset must still be able
+ * to let its accounts close the trustlines they already carry.
+ */
+export function validateClassicTrustline(
+  tx: Transaction,
+  relayerPublicKey: string,
+  allowed: readonly StellarAsset[],
+): ValidationResult {
+  const parsed = parseSponsoredEnvelope(tx, relayerPublicKey);
+  if (!parsed.ok) return { ok: false, reason: parsed.reason };
+  const { account, inner } = parsed.envelope;
+
+  for (const op of inner) {
+    if (op.type !== 'changeTrust') {
+      return { ok: false, reason: `operation ${op.type} is not allowed in a trustline write` };
+    }
+    const ct = op as Operation.ChangeTrust;
+    if (ct.source !== account) {
+      return { ok: false, reason: 'changeTrust must be sourced by the sponsored account' };
+    }
+    // Liquidity-pool shares are a different beast — two trustlines plus a pool
+    // entry — and nothing in the kit asks for them, so they stay out.
+    if (!(ct.line instanceof Asset)) {
+      return { ok: false, reason: 'only classic assets may be trusted' };
+    }
+    if (ct.line.isNative()) {
+      return { ok: false, reason: 'XLM needs no trustline' };
+    }
+    if (Number(ct.limit) === 0) continue;
+    const code = ct.line.getCode();
+    const issuer = ct.line.getIssuer();
+    if (!allowed.some((a) => a.code === code && a.issuer === issuer)) {
+      return { ok: false, reason: `asset ${code} is not configured for this app` };
+    }
   }
   return { ok: true };
 }
