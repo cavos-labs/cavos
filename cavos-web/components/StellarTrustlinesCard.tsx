@@ -10,17 +10,26 @@ interface Asset {
   issuer: string;
 }
 
+type Network = 'stellar-mainnet' | 'stellar-testnet';
+
+const NETWORKS: { key: Network; label: string }[] = [
+  { key: 'stellar-mainnet', label: 'Mainnet' },
+  { key: 'stellar-testnet', label: 'Testnet' },
+];
+
 /** Base reserve locked per trustline, in XLM. Protocol default since v18. */
 const RESERVE_PER_TRUSTLINE = 0.5;
 
 /**
- * The assets this org's sponsor will pay a trustline reserve for.
+ * The assets this app's wallets may hold.
  *
  * The list is the relay's allowlist, not a description of what wallets hold: an
  * asset here is one the relay agrees to sponsor, and removing it stops new
- * trustlines being sponsored without touching the ones already open.
+ * trustlines being sponsored without touching the ones already open. The reserve
+ * is paid by the org that owns the app.
  */
-export function StellarTrustlinesCard({ orgId }: { orgId: string }) {
+export function StellarTrustlinesCard({ appId }: { appId: string }) {
+  const [network, setNetwork] = useState<Network>('stellar-mainnet');
   const [assets, setAssets] = useState<Asset[]>([]);
   const [max, setMax] = useState(10);
   const [code, setCode] = useState('');
@@ -32,9 +41,7 @@ export function StellarTrustlinesCard({ orgId }: { orgId: string }) {
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch(
-        `/api/stellar/trustlines?org_id=${orgId}&network=stellar-mainnet`,
-      );
+      const res = await fetch(`/api/stellar/trustlines?app_id=${appId}&network=${network}`);
       const data = await res.json();
       if (res.ok) {
         setAssets(data.assets ?? []);
@@ -43,9 +50,9 @@ export function StellarTrustlinesCard({ orgId }: { orgId: string }) {
     } finally {
       setLoading(false);
     }
-  }, [orgId]);
+  }, [appId, network]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { setLoading(true); void load(); }, [load]);
 
   const mutate = async (method: 'POST' | 'DELETE', asset: Asset) => {
     setBusy(true);
@@ -55,8 +62,8 @@ export function StellarTrustlinesCard({ orgId }: { orgId: string }) {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          org_id: orgId,
-          network: 'stellar-mainnet',
+          app_id: appId,
+          network,
           code: asset.code,
           issuer: asset.issuer,
         }),
@@ -92,11 +99,11 @@ export function StellarTrustlinesCard({ orgId }: { orgId: string }) {
             </span>
           </div>
           <p className="text-sm text-black/50 max-w-lg">
-            Assets your wallets can hold. Each one locks{' '}
+            Assets this app&apos;s wallets can hold. Each one locks{' '}
             <span className="font-semibold text-ink tabular-nums">{RESERVE_PER_TRUSTLINE} XLM</span>{' '}
-            per wallet from your pot — currently{' '}
+            per wallet from your organization&apos;s gas pot — currently{' '}
             <span className="font-semibold text-ink tabular-nums">{perWallet} XLM</span> on top of
-            the 3.5 XLM a wallet already costs.
+            the ~3.5 XLM a wallet already costs.
           </p>
         </div>
         <button
@@ -106,6 +113,20 @@ export function StellarTrustlinesCard({ orgId }: { orgId: string }) {
         >
           Add asset
         </button>
+      </div>
+
+      <div className="inline-flex rounded-lg border border-line p-0.5">
+        {NETWORKS.map((n) => (
+          <button
+            key={n.key}
+            onClick={() => { setNetwork(n.key); setMsg(null); setShowForm(false); }}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+              network === n.key ? 'bg-ink text-white' : 'text-black/45 hover:text-ink'
+            }`}
+          >
+            {n.label}
+          </button>
+        ))}
       </div>
 
       {msg && (
@@ -144,7 +165,7 @@ export function StellarTrustlinesCard({ orgId }: { orgId: string }) {
         <p className="text-sm text-black/40">Loading…</p>
       ) : assets.length === 0 ? (
         <p className="text-sm text-black/40">
-          No assets configured. Wallets can hold XLM only.
+          No assets configured. Wallets on this network can hold XLM only.
         </p>
       ) : (
         <ul className="divide-y divide-line">

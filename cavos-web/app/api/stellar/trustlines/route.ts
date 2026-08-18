@@ -1,41 +1,44 @@
 /**
- * GET    /api/stellar/trustlines?org_id=&network=   → the org's allowlist
- * POST   /api/stellar/trustlines  { org_id, network?, code, issuer }
- * DELETE /api/stellar/trustlines  { org_id, network?, code, issuer }
+ * GET    /api/stellar/trustlines?app_id=&network=   → the app's allowlist
+ * POST   /api/stellar/trustlines  { app_id, network?, code, issuer }
+ * DELETE /api/stellar/trustlines  { app_id, network?, code, issuer }
  *
- * The assets an org's sponsor will pay a trustline reserve for. Org owners only;
- * the relay reads the same rows through the service role.
+ * The assets an app's wallets may hold, and so the ones its org's sponsor will
+ * pay a trustline reserve for. Owners of the app's org only; the relay reads the
+ * same rows through the service role.
  */
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isSupportedStellarNetwork } from '@/lib/stellar/relayer';
 import {
-  MAX_TRUSTLINES_PER_ORG,
-  listOrgTrustlines,
+  MAX_TRUSTLINES_PER_APP,
+  listAppTrustlines,
   parseAsset,
 } from '@/lib/stellar/trustlines';
 
-/** Authenticate, and confirm the caller owns the org they named. */
-async function requireOwnedOrg(orgId: unknown) {
-  if (typeof orgId !== 'string' || !orgId) {
-    return { error: NextResponse.json({ error: 'org_id is required' }, { status: 400 }) };
+/** Authenticate, and confirm the caller owns the org the app belongs to. */
+async function requireOwnedApp(appId: unknown) {
+  if (typeof appId !== 'string' || !appId) {
+    return { error: NextResponse.json({ error: 'app_id is required' }, { status: 400 }) };
   }
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
     return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
   }
-  const { data: org, error: orgError } = await supabase
-    .from('organizations')
-    .select('id')
-    .eq('id', orgId)
-    .eq('owner_id', user.id)
-    .single();
-  if (orgError || !org) {
-    return { error: NextResponse.json({ error: 'Organization not found or unauthorized' }, { status: 403 }) };
+  // `apps` is joined to `organizations` so ownership is checked in one round
+  // trip; RLS on `apps` alone would not prove who owns the org.
+  const { data: app, error: appError } = await supabase
+    .from('apps')
+    .select('id, organizations!inner(owner_id)')
+    .eq('id', appId)
+    .eq('organizations.owner_id', user.id)
+    .maybeSingle();
+  if (appError || !app) {
+    return { error: NextResponse.json({ error: 'App not found or unauthorized' }, { status: 403 }) };
   }
-  return { orgId };
+  return { appId };
 }
 
 function resolveNetwork(value: unknown) {
@@ -45,15 +48,15 @@ function resolveNetwork(value: unknown) {
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const owned = await requireOwnedOrg(url.searchParams.get('org_id'));
+  const owned = await requireOwnedApp(url.searchParams.get('app_id'));
   if ('error' in owned) return owned.error;
 
   const network = resolveNetwork(url.searchParams.get('network'));
   if (!network) return NextResponse.json({ error: 'Unsupported network' }, { status: 400 });
 
   try {
-    const assets = await listOrgTrustlines(owned.orgId, network);
-    return NextResponse.json({ network, max: MAX_TRUSTLINES_PER_ORG, assets });
+    const assets = await listAppTrustlines(owned.appId, network);
+    return NextResponse.json({ network, max: MAX_TRUSTLINES_PER_APP, assets });
   } catch (error) {
     console.error('Stellar trustlines GET failed', error);
     return NextResponse.json({ error: 'Failed to read trustlines' }, { status: 500 });
@@ -64,7 +67,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
 
-  const owned = await requireOwnedOrg(body.org_id);
+  const owned = await requireOwnedApp(body.app_id);
   if ('error' in owned) return owned.error;
 
   const network = resolveNetwork(body.network);
@@ -74,17 +77,17 @@ export async function POST(request: Request) {
   if (!parsed.ok) return NextResponse.json({ error: parsed.reason }, { status: 400 });
 
   try {
-    const existing = await listOrgTrustlines(owned.orgId, network);
-    if (existing.length >= MAX_TRUSTLINES_PER_ORG) {
+    const existing = await listAppTrustlines(owned.appId, network);
+    if (existing.length >= MAX_TRUSTLINES_PER_APP) {
       return NextResponse.json(
-        { error: `At most ${MAX_TRUSTLINES_PER_ORG} assets per network` },
+        { error: `At most ${MAX_TRUSTLINES_PER_APP} assets per network` },
         { status: 400 },
       );
     }
 
     const admin = createAdminClient();
-    const { error } = await admin.from('org_stellar_trustlines').insert({
-      org_id: owned.orgId,
+    const { error } = await admin.from('app_stellar_trustlines').insert({
+      app_id: owned.appId,
       network,
       asset_code: parsed.asset.code,
       asset_issuer: parsed.asset.issuer,
@@ -94,7 +97,7 @@ export async function POST(request: Request) {
       console.error('Stellar trustlines POST failed', error);
       return NextResponse.json({ error: 'Failed to add asset' }, { status: 500 });
     }
-    return NextResponse.json({ network, assets: await listOrgTrustlines(owned.orgId, network) });
+    return NextResponse.json({ network, assets: await listAppTrustlines(owned.appId, network) });
   } catch (error) {
     console.error('Stellar trustlines POST failed', error);
     return NextResponse.json({ error: 'Failed to add asset' }, { status: 500 });
@@ -105,7 +108,7 @@ export async function DELETE(request: Request) {
   const body = await request.json().catch(() => null);
   if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
 
-  const owned = await requireOwnedOrg(body.org_id);
+  const owned = await requireOwnedApp(body.app_id);
   if ('error' in owned) return owned.error;
 
   const network = resolveNetwork(body.network);
@@ -117,9 +120,9 @@ export async function DELETE(request: Request) {
   try {
     const admin = createAdminClient();
     const { error } = await admin
-      .from('org_stellar_trustlines')
+      .from('app_stellar_trustlines')
       .delete()
-      .eq('org_id', owned.orgId)
+      .eq('app_id', owned.appId)
       .eq('network', network)
       .eq('asset_code', parsed.asset.code)
       .eq('asset_issuer', parsed.asset.issuer);
@@ -129,7 +132,7 @@ export async function DELETE(request: Request) {
     }
     // Wallets that already carry the trustline keep it — closing one needs the
     // account's own signature. Delisting only stops new ones being sponsored.
-    return NextResponse.json({ network, assets: await listOrgTrustlines(owned.orgId, network) });
+    return NextResponse.json({ network, assets: await listAppTrustlines(owned.appId, network) });
   } catch (error) {
     console.error('Stellar trustlines DELETE failed', error);
     return NextResponse.json({ error: 'Failed to remove asset' }, { status: 500 });
