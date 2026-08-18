@@ -200,12 +200,6 @@ export function validateClassicFeeBump(
 /** Max ops in a sponsored write (begin + a handful of account ops + end). */
 const CLASSIC_SPONSORED_MAX_OPS = 12;
 
-/** A classic asset the relayer is willing to sponsor a trustline for. */
-export interface StellarAsset {
-  code: string;
-  issuer: string;
-}
-
 /** An operation as it comes off a parsed classic transaction. Taken from
  *  `Transaction` itself so the discriminated union stays in sync with the SDK. */
 type ClassicOperation = Transaction['operations'][number];
@@ -328,21 +322,21 @@ export function validateSponsoredData(tx: Transaction, relayerPublicKey: string)
 }
 
 /**
- * Gate a sponsored trustline write. A trustline is a subentry, so the org's pot
- * pays a base reserve for every one opened — which makes an ungated `changeTrust`
- * a way to drain that pot one asset at a time. `allowed` is the org's dashboard
- * configuration and it is the whole defence: an asset that is not on it is not
- * sponsored, and without the relayer's signature the transaction has neither a
- * fee payer nor a sponsor.
+ * Gate a sponsored trustline write: the relayer sponsors the reserve of the new
+ * trustline, and the account's control key authorises it.
  *
- * Closing a trustline (limit 0) releases a reserve instead of consuming one, so
- * it needs no entry on the list — an org that drops an asset must still be able
- * to let its accounts close the trustlines they already carry.
+ * There is deliberately no per-asset allowlist. A trustline costs the org's pot
+ * one base reserve, but creating an account costs it seven, and that path is
+ * open to anyone holding the app's public id. Gating the cheaper operation while
+ * the dearer one stands open buys nothing; what bounds this pot is the gas
+ * meter, the rate limit, and whatever guards the create path grows.
+ *
+ * The account is still the only thing that can be sponsored here, and the only
+ * thing that can source the write — the relayer pays, it does not decide.
  */
 export function validateClassicTrustline(
   tx: Transaction,
   relayerPublicKey: string,
-  allowed: readonly StellarAsset[],
 ): ValidationResult {
   const parsed = parseSponsoredEnvelope(tx, relayerPublicKey);
   if (!parsed.ok) return { ok: false, reason: parsed.reason };
@@ -363,12 +357,6 @@ export function validateClassicTrustline(
     }
     if (ct.line.isNative()) {
       return { ok: false, reason: 'XLM needs no trustline' };
-    }
-    if (Number(ct.limit) === 0) continue;
-    const code = ct.line.getCode();
-    const issuer = ct.line.getIssuer();
-    if (!allowed.some((a) => a.code === code && a.issuer === issuer)) {
-      return { ok: false, reason: `asset ${code} is not configured for this app` };
     }
   }
   return { ok: true };

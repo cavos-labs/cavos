@@ -14,7 +14,6 @@ import {
   validateClassicFeeBump,
   validateClassicTrustline,
   validateSponsoredData,
-  type StellarAsset,
 } from './relayer';
 
 const NETWORK = 'stellar-testnet' as const;
@@ -25,7 +24,7 @@ const ACCOUNT = Keypair.fromRawEd25519Seed(Buffer.alloc(32, 2)).publicKey();
 const OUTSIDER = Keypair.fromRawEd25519Seed(Buffer.alloc(32, 3)).publicKey();
 const ISSUER = Keypair.fromRawEd25519Seed(Buffer.alloc(32, 4)).publicKey();
 
-const USDC: StellarAsset = { code: 'USDC', issuer: ISSUER };
+const USDC = { code: 'USDC', issuer: ISSUER };
 
 /** Build a relayer-sourced transaction out of the given operations. */
 function build(ops: ReturnType<typeof Operation.manageData>[], source = RELAYER) {
@@ -40,38 +39,37 @@ function build(ops: ReturnType<typeof Operation.manageData>[], source = RELAYER)
 const begin = (sponsoredId = ACCOUNT) =>
   Operation.beginSponsoringFutureReserves({ sponsoredId, source: RELAYER });
 const end = (source = ACCOUNT) => Operation.endSponsoringFutureReserves({ source });
-const trust = (asset: StellarAsset, limit?: string, source = ACCOUNT) =>
+const trust = (asset: { code: string; issuer: string }, limit?: string, source = ACCOUNT) =>
   Operation.changeTrust({ asset: new Asset(asset.code, asset.issuer), limit, source });
 
 describe('validateClassicTrustline', () => {
-  it('sponsors an asset on the org allowlist', () => {
+  it('sponsors a trustline the account authorises', () => {
     const tx = build([begin(), trust(USDC), end()]);
-    assert.deepEqual(validateClassicTrustline(tx, RELAYER, [USDC]), { ok: true });
+    assert.deepEqual(validateClassicTrustline(tx, RELAYER), { ok: true });
   });
 
-  it('refuses an asset the org has not configured', () => {
-    const tx = build([begin(), trust(USDC), end()]);
-    const res = validateClassicTrustline(tx, RELAYER, []);
-    assert.equal(res.ok, false);
-    assert.match(res.reason!, /not configured/);
+  it('sponsors any classic asset — there is no per-asset allowlist', () => {
+    const tx = build([begin(), trust({ code: 'EURC', issuer: OUTSIDER }), end()]);
+    assert.deepEqual(validateClassicTrustline(tx, RELAYER), { ok: true });
   });
 
-  it('refuses the right issuer with the wrong code, and vice versa', () => {
-    const wrongCode = build([begin(), trust({ code: 'EURC', issuer: ISSUER }), end()]);
-    assert.equal(validateClassicTrustline(wrongCode, RELAYER, [USDC]).ok, false);
-
-    const wrongIssuer = build([begin(), trust({ code: 'USDC', issuer: OUTSIDER }), end()]);
-    assert.equal(validateClassicTrustline(wrongIssuer, RELAYER, [USDC]).ok, false);
-  });
-
-  it('allows closing any trustline, listed or not', () => {
+  it('allows closing a trustline', () => {
     const tx = build([begin(), trust(USDC, '0'), end()]);
-    assert.deepEqual(validateClassicTrustline(tx, RELAYER, []), { ok: true });
+    assert.deepEqual(validateClassicTrustline(tx, RELAYER), { ok: true });
+  });
+
+  it('refuses XLM, which needs no trustline', () => {
+    const tx = build([
+      begin(),
+      Operation.changeTrust({ asset: Asset.native(), source: ACCOUNT }),
+      end(),
+    ]);
+    assert.equal(validateClassicTrustline(tx, RELAYER).ok, false);
   });
 
   it('refuses a trustline sourced by anyone but the sponsored account', () => {
     const tx = build([begin(), trust(USDC, undefined, OUTSIDER), end()]);
-    const res = validateClassicTrustline(tx, RELAYER, [USDC]);
+    const res = validateClassicTrustline(tx, RELAYER);
     assert.equal(res.ok, false);
     assert.match(res.reason!, /sourced by the sponsored account/);
   });
@@ -87,7 +85,7 @@ describe('validateClassicTrustline', () => {
       }),
       end(),
     ]);
-    const res = validateClassicTrustline(tx, RELAYER, [USDC]);
+    const res = validateClassicTrustline(tx, RELAYER);
     assert.equal(res.ok, false);
     assert.match(res.reason!, /payment is not allowed/);
   });
@@ -99,24 +97,24 @@ describe('validateClassicTrustline', () => {
       Operation.manageData({ name: 'cv:ct/0', value: 'x', source: ACCOUNT }),
       end(),
     ]);
-    assert.equal(validateClassicTrustline(tx, RELAYER, [USDC]).ok, false);
+    assert.equal(validateClassicTrustline(tx, RELAYER).ok, false);
   });
 
   it('refuses a transaction the relayer does not source', () => {
     const tx = build([begin(), trust(USDC), end()], OUTSIDER);
-    const res = validateClassicTrustline(tx, RELAYER, [USDC]);
+    const res = validateClassicTrustline(tx, RELAYER);
     assert.equal(res.ok, false);
     assert.match(res.reason!, /source must be the Cavos relayer/);
   });
 
   it('refuses sponsoring the relayer itself', () => {
     const tx = build([begin(RELAYER), trust(USDC, undefined, RELAYER), end(RELAYER)]);
-    assert.equal(validateClassicTrustline(tx, RELAYER, [USDC]).ok, false);
+    assert.equal(validateClassicTrustline(tx, RELAYER).ok, false);
   });
 
   it('refuses an unterminated envelope', () => {
     const tx = build([begin(), trust(USDC), trust(USDC)]);
-    const res = validateClassicTrustline(tx, RELAYER, [USDC]);
+    const res = validateClassicTrustline(tx, RELAYER);
     assert.equal(res.ok, false);
     assert.match(res.reason!, /endSponsoringFutureReserves/);
   });
