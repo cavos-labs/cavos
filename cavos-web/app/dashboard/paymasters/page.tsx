@@ -8,7 +8,6 @@ import { Icon } from '@/components/ui/Icon';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SolanaGasCard } from '@/components/SolanaGasCard';
 import { StellarGasCard } from '@/components/StellarGasCard';
-import { StellarTrustlinesCard } from '@/components/StellarTrustlinesCard';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { connect, disconnect } from 'starknetkit';
@@ -273,12 +272,7 @@ export default function PaymastersPage() {
             {selectedChain === 'solana' && orgId && <SolanaGasCard orgId={orgId} />}
 
             {/* ── Stellar gas (prepaid off-chain balance) ── */}
-            {selectedChain === 'stellar' && orgId && (
-              <div className="space-y-6">
-                <StellarGasCard orgId={orgId} />
-                <StellarTrustlinesCard orgId={orgId} />
-              </div>
-            )}
+            {selectedChain === 'stellar' && orgId && <StellarGasCard orgId={orgId} />}
 
             {/* ── Starknet gas tank ── */}
             {selectedChain === 'starknet' && (

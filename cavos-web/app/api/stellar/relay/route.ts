@@ -25,7 +25,7 @@ import {
   validateSponsoredData,
 } from '@/lib/stellar/relayer';
 import type { ValidationResult } from '@/lib/stellar/relayer';
-import { listOrgTrustlines } from '@/lib/stellar/trustlines';
+import { listAppTrustlines } from '@/lib/stellar/trustlines';
 import { resolveOrgForApp } from '@/lib/billing/limits';
 import {
   debitStellarGas,
@@ -188,13 +188,13 @@ export async function POST(request: Request) {
         check = validateSponsoredData(tx as Transaction, signer.publicKey());
         break;
       case 'trustline':
-        // The org's configured assets are the only thing standing between an
-        // open `changeTrust` and its sponsor pot, so they are fetched per
+        // The app's configured assets are the only thing standing between an
+        // open `changeTrust` and its org's sponsor pot, so they are fetched per
         // request rather than cached.
         check = validateClassicTrustline(
           tx as Transaction,
           signer.publicKey(),
-          await listOrgTrustlines(orgId, body.network),
+          await listAppTrustlines(appId, body.network),
         );
         break;
       case 'fee-bump':
