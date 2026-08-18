@@ -32,33 +32,50 @@ export interface StellarRelayerSigner {
  * whitelist in `validateSponsoredTransaction` bounds the blast radius.
  *
  * Env (per network, falling back to the unsuffixed name):
- *   STELLAR_RELAYER_SECRET[_MAINNET|_TESTNET]   the S... StrKey secret seed;
- *                                 its G-address IS the on-chain source.
+ *   STELLAR_RELAYER_SECRET[_MAINNET|_TESTNET]   the S... StrKey secret seed.
+ *   Org sponsors are derived from this seed (SEP-0005); the raw G-address is
+ *   only the legacy shared account.
  */
 export class LocalStellarSigner implements StellarRelayerSigner {
-  private constructor(private readonly keypair: Keypair) {}
+  constructor(private readonly keypair: Keypair) {}
 
   publicKey(): string {
     return this.keypair.publicKey();
   }
 
   static fromEnv(network?: StellarNetwork): LocalStellarSigner | undefined {
-    const perNetworkVar =
-      network === 'stellar-mainnet' ? 'STELLAR_RELAYER_SECRET_MAINNET' :
-      network === 'stellar-testnet' ? 'STELLAR_RELAYER_SECRET_TESTNET' :
-      undefined;
-    const secret =
-      (perNetworkVar && process.env[perNetworkVar]) ||
-      process.env.STELLAR_RELAYER_SECRET;
+    const secret = relayerSecretFor(network);
     if (!secret) return undefined;
-    return new LocalStellarSigner(Keypair.fromSecret(secret.trim()));
+    return new LocalStellarSigner(Keypair.fromSecret(secret));
   }
 
   async signTransaction(tx: Transaction | FeeBumpTransaction): Promise<void> {
-    // Attach the source/fee-payer DecoratedSignature in place (device auth
-    // inside the tx is untouched). Works for both plain and fee-bump envelopes.
     tx.sign(this.keypair);
   }
+}
+
+function relayerSecretFor(network?: StellarNetwork): string | undefined {
+  const perNetworkVar =
+    network === 'stellar-mainnet' ? 'STELLAR_RELAYER_SECRET_MAINNET' :
+    network === 'stellar-testnet' ? 'STELLAR_RELAYER_SECRET_TESTNET' :
+    undefined;
+  const secret =
+    (perNetworkVar && process.env[perNetworkVar]) ||
+    process.env.STELLAR_RELAYER_SECRET;
+  return secret?.trim() || undefined;
+}
+
+/** Raw 32-byte ed25519 seed of the network's relayer secret. Used as the
+ *  SLIP-0010 master for per-org sponsor derivation. */
+export function masterSeedFor(network: StellarNetwork): Buffer {
+  const secret = relayerSecretFor(network);
+  if (!secret) {
+    throw new Error(
+      `No Stellar relayer secret configured for ${network} — set ` +
+        'STELLAR_RELAYER_SECRET_MAINNET / _TESTNET (or STELLAR_RELAYER_SECRET).',
+    );
+  }
+  return Buffer.from(Keypair.fromSecret(secret).rawSecretKey());
 }
 
 /** Resolve the relayer signer for a network (local Ed25519, secret from env). */

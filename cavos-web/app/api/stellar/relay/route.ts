@@ -1,18 +1,13 @@
 /**
  * Classic-Stellar (`G…`) sponsoring relayer.
  *
- * GET  /api/stellar/relay  → { fee_payer } (the relayer G-account the SDK
- *                                    sets as source / fee payer / reserve sponsor).
- * POST /api/stellar/relay  → validate + co-sign + submit a classic-G
- *                                    account transaction. `kind` selects the gate:
- *                                      - "create":   sponsored account creation
- *                                                    (relayer = source + sponsor);
- *                                      - "fee-bump": a control-signed inner tx
- *                                                    wrapped in a relayer fee-bump.
+ * GET  /api/stellar/relay?network=&app_id=  → { fee_payer, sequence }
+ *      fee_payer is THAT org's sponsor G-account, not a shared pot.
+ * POST /api/stellar/relay  → validate + co-sign + submit. Reserves and fees
+ *      debit that org's available balance only.
  *
- * The relayer is a fee payer + reserve sponsor, never a custodian — the control
- * key (envelope-encrypted in the account's own data entries) is the sole signer
- * of value-moving transactions. See lib/stellar/relayer.ts for the two gates.
+ * The relayer is a fee payer + reserve sponsor, never a custodian of user
+ * funds. See lib/stellar/relayer.ts for the two gates.
  */
 import { NextResponse } from 'next/server';
 import { ApiLogger } from '@/lib/api/logger';
@@ -28,9 +23,20 @@ import {
   validateClassicFeeBump,
   validateSponsoredData,
 } from '@/lib/stellar/relayer';
-import { getRelayerSigner } from '@/lib/stellar/signer';
 import { resolveOrgForApp } from '@/lib/billing/limits';
-import { debitStellarGas, hasGas } from '@/lib/stellar/gas';
+import { debitStellarGas, hasGas, lockStellarReserves } from '@/lib/stellar/gas';
+import {
+  ensureTestnetFunded,
+  getOrgSponsorSigner,
+  loadSponsorAccount,
+  numSponsoringOf,
+} from '@/lib/stellar/sponsor';
+import {
+  FEE_BUFFER_STROOPS,
+  estimateReservedStroops,
+  fetchBaseReserveStroops,
+  reservedDeltaStroops,
+} from '@/lib/stellar/reserves';
 import { recordCavosEvent, resolveEnvironment } from '@/lib/operations/events';
 import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier';
 
@@ -46,25 +52,33 @@ interface ClassicRelayRequest {
   transaction: string;
 }
 
-/** GET — expose the relayer source/fee-payer/sponsor G-account. */
+/** GET — this org's sponsor G-account + current sequence. */
 export async function GET(request: Request) {
   try {
-    const n = new URL(request.url).searchParams.get('network') ?? '';
+    const url = new URL(request.url);
+    const n = url.searchParams.get('network') ?? '';
+    const appIdParam = url.searchParams.get('app_id') ?? '';
     if (!isSupportedStellarNetwork(n)) {
       return ApiResponse.badRequest('Unsupported Stellar network', { network: n });
     }
-    const signer = await getRelayerSigner(n);
-    // Also hand back the relayer's current sequence. Sponsored writes are
-    // sourced by the relayer, so the SDK needs its sequence to build them — and
-    // reading it from the client's own Horizon means reading a possibly stale
-    // view of an account the server owns, which submits as `tx_bad_seq`. Served
-    // from the same Horizon that will accept the submission, it is at least
-    // consistent with the submitting node.
+    if (!appIdParam) {
+      return ApiResponse.badRequest('app_id is required', { required: ['app_id', 'network'] });
+    }
+    const resolvedApp = await resolveAppIdentifier(appIdParam);
+    if (!resolvedApp) return ApiResponse.unauthorized('Invalid App ID');
+    const orgId = await resolveOrgForApp(resolvedApp.appId);
+    if (!orgId) return ApiResponse.unauthorized('Invalid App ID');
+
+    const { signer } = await getOrgSponsorSigner(orgId, n);
+    if (n === 'stellar-testnet') {
+      try { await ensureTestnetFunded(signer.publicKey()); } catch (e) {
+        console.warn('Stellar relay GET — friendbot failed', e);
+      }
+    }
     let sequence: string | undefined;
     try {
       sequence = (await horizonServerFor(n).loadAccount(signer.publicKey())).sequenceNumber();
     } catch (e) {
-      // Non-fatal: the SDK falls back to reading it itself.
       console.warn('Stellar relay GET — sequence lookup failed', e);
     }
     return ApiResponse.success({
@@ -127,7 +141,15 @@ export async function POST(request: Request) {
       : await resolveEnvironment(appId, body.environment);
     if (body.environment && !environment) return ApiResponse.badRequest('environment does not belong to app_id');
 
-    const signer = await getRelayerSigner(body.network);
+    const orgId = await resolveOrgForApp(appId);
+    if (!orgId) return ApiResponse.unauthorized('Invalid App ID');
+
+    const { signer } = await getOrgSponsorSigner(orgId, body.network);
+    if (body.network === 'stellar-testnet') {
+      try { await ensureTestnetFunded(signer.publicKey()); } catch (e) {
+        console.warn('Stellar relay POST — friendbot failed', e);
+      }
+    }
 
     let tx: Transaction | FeeBumpTransaction;
     try {
@@ -136,8 +158,6 @@ export async function POST(request: Request) {
       return ApiResponse.badRequest('Invalid transaction encoding');
     }
 
-    // Security gate — pick the validator for the declared kind. A fee-bump must be
-    // a FeeBumpTransaction; create + sponsored-data are plain Transactions.
     const isFeeBump = 'innerTransaction' in tx;
     if (body.kind === 'fee-bump' && !isFeeBump) {
       return ApiResponse.badRequest('kind=fee-bump requires a fee-bump transaction');
@@ -157,23 +177,27 @@ export async function POST(request: Request) {
       return ApiResponse.badRequest('Transaction not eligible for sponsorship', { reason: check.reason });
     }
 
-    // Gas gate (mainnet only) — testnet is free; mainnet meters the org's prepaid
-    // XLM balance and blocks an org that is out of gas.
+    const server = horizonServerFor(body.network);
     const metered = body.network === 'stellar-mainnet';
-    const orgId = metered ? await resolveOrgForApp(appId) : null;
-    if (orgId && !(await hasGas(orgId))) {
-      logger.warn('Classic relay blocked — org out of gas', { app_id: body.app_id, org_id: orgId });
-      await recordCavosEvent({ appId, environmentId: environment?.id, eventType: 'sponsorship.rejected', status: 'failed', severity: 'warning', requestId: logger.requestId, network: body.network, errorCode: 'insufficient_gas' });
-      return ApiResponse.paymentRequired('insufficient_gas', {
-        message: 'Deposit XLM to sponsor transactions.',
-      });
+    const baseReserve = await fetchBaseReserveStroops(server);
+    const reserveEstimate = estimateReservedStroops(tx, body.kind, baseReserve);
+
+    if (metered) {
+      const need = reserveEstimate + FEE_BUFFER_STROOPS;
+      if (!(await hasGas(orgId, need))) {
+        logger.warn('Classic relay blocked — org out of gas', { app_id: body.app_id, org_id: orgId, need });
+        await recordCavosEvent({ appId, environmentId: environment?.id, eventType: 'sponsorship.rejected', status: 'failed', severity: 'warning', requestId: logger.requestId, network: body.network, errorCode: 'insufficient_gas' });
+        return ApiResponse.paymentRequired('insufficient_gas', {
+          message: 'Deposit XLM to sponsor transactions.',
+        });
+      }
     }
 
-    // The control signature (create: master; fee-bump: control key) already
-    // authorizes the account ops; the relayer signature only pays fees + sponsors.
+    const before = await loadSponsorAccount(body.network, signer.publicKey());
+    const sponsoringBefore = numSponsoringOf(before);
+
     await signer.signTransaction(tx);
 
-    const server = horizonServerFor(body.network);
     let hash: string;
     let feeCharged = 0;
     try {
@@ -189,9 +213,17 @@ export async function POST(request: Request) {
       });
     }
 
-    if (orgId && feeCharged > 0) {
+    if (metered) {
       try {
-        await debitStellarGas(orgId, feeCharged);
+        const after = await loadSponsorAccount(body.network, signer.publicKey());
+        const reserved = reservedDeltaStroops(sponsoringBefore, numSponsoringOf(after), baseReserve);
+        if (reserved > 0) {
+          const locked = await lockStellarReserves(orgId, reserved);
+          if (!locked) {
+            logger.warn('Reserve lock failed after submit', { hash, reserved, org_id: orgId });
+          }
+        }
+        if (feeCharged > 0) await debitStellarGas(orgId, feeCharged);
       } catch {
         logger.warn('Gas debit failed (tx already landed)', { hash });
       }
