@@ -1,11 +1,13 @@
 /**
  * GET /api/stellar/gas/balance?org_id=<uuid>
- * Dashboard read of an org's prepaid Stellar gas balance + deposit instructions.
+ * Dashboard read of an org's prepaid Stellar gas + its own deposit address.
  */
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
-import { getStellarGas, depositMemoHex, STROOPS_PER_XLM } from '@/lib/stellar/gas';
-import { getRelayerSigner } from '@/lib/stellar/signer';
+import { getStellarGas, STROOPS_PER_XLM } from '@/lib/stellar/gas';
+import { accountCounts, ensureOrgSponsor, loadSponsorAccount } from '@/lib/stellar/sponsor';
+import { accountMinBalanceStroops, fetchBaseReserveStroops } from '@/lib/stellar/reserves';
+import { horizonServerFor } from '@/lib/stellar/relayer';
 
 export async function GET(request: Request) {
   try {
@@ -20,7 +22,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'org_id is required' }, { status: 400 });
     }
 
-    // Ownership check.
     const { data: org, error: orgError } = await supabase
       .from('organizations')
       .select('id')
@@ -33,25 +34,41 @@ export async function GET(request: Request) {
 
     const gas = await getStellarGas(orgId);
 
-    // Deposit instructions: send XLM to the relayer G-account with this hash memo
-    // so the deposit is attributed to this org and cannot be claimed by anyone else.
     let depositAddress: string | null = null;
+    let withdrawableStroops = gas.balance_stroops;
     try {
-      // Deposits fund the mainnet prepaid balance → mainnet relayer address.
-      depositAddress = (await getRelayerSigner('stellar-mainnet')).publicKey();
+      const sponsor = await ensureOrgSponsor(orgId, 'stellar-mainnet');
+      depositAddress = sponsor.publicKey;
+      const account = await loadSponsorAccount('stellar-mainnet', sponsor.publicKey);
+      if (account) {
+        const base = await fetchBaseReserveStroops(horizonServerFor('stellar-mainnet'));
+        const counts = accountCounts(account);
+        const min = accountMinBalanceStroops(counts.subentries, counts.sponsoring, counts.sponsored, base);
+        const native = account.balances.find((b) => b.asset_type === 'native');
+        const onChain = native ? Math.round(Number(native.balance) * STROOPS_PER_XLM) : 0;
+        const spendable = Math.max(0, onChain - min);
+        withdrawableStroops = Math.min(gas.balance_stroops, spendable);
+      } else {
+        withdrawableStroops = 0;
+      }
     } catch {
-      /* relayer not configured in this env */
+      /* relayer secret not configured */
     }
 
     return NextResponse.json({
       balance_stroops: gas.balance_stroops,
+      reserved_stroops: gas.reserved_stroops,
+      withdrawn_stroops: gas.withdrawn_stroops,
       total_deposited_stroops: gas.total_deposited_stroops,
       total_consumed_stroops: gas.total_consumed_stroops,
+      withdrawable_stroops: withdrawableStroops,
       balance_xlm: gas.balance_stroops / STROOPS_PER_XLM,
+      reserved_xlm: gas.reserved_stroops / STROOPS_PER_XLM,
+      withdrawn_xlm: gas.withdrawn_stroops / STROOPS_PER_XLM,
       total_deposited_xlm: gas.total_deposited_stroops / STROOPS_PER_XLM,
       total_consumed_xlm: gas.total_consumed_stroops / STROOPS_PER_XLM,
+      withdrawable_xlm: withdrawableStroops / STROOPS_PER_XLM,
       deposit_address: depositAddress,
-      deposit_memo_hash: depositMemoHex(orgId),
     });
   } catch (error) {
     console.error('Stellar gas balance error:', error);

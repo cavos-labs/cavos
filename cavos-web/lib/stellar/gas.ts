@@ -1,7 +1,7 @@
 /**
  * Stellar per-org gas metering. Off-chain stroops ledger (org_stellar_gas):
- * deposits credit an org, relayed transactions debit the real `feeCharged`. See
- * supabase/migrations/20260701_stellar_gas.sql.
+ * deposits credit an org, fees debit `feeCharged`, and sponsored reserves move
+ * available → reserved. See supabase/migrations/20260818180000_stellar_org_sponsors.sql.
  *
  * Only meaningful on mainnet; testnet is always free/unmetered. On mainnet an org
  * with no balance is always blocked (402) — the relayer never sponsors unpaid
@@ -37,13 +37,18 @@ export function depositMemoBase64(orgId: string): string {
 }
 
 export interface StellarGas {
+  /** Spendable / withdrawable. Does not include reserved. */
   balance_stroops: number;
+  reserved_stroops: number;
+  withdrawn_stroops: number;
   total_deposited_stroops: number;
   total_consumed_stroops: number;
 }
 
 const ZERO: StellarGas = {
   balance_stroops: 0,
+  reserved_stroops: 0,
+  withdrawn_stroops: 0,
   total_deposited_stroops: 0,
   total_consumed_stroops: 0,
 };
@@ -53,12 +58,16 @@ export async function getStellarGas(orgId: string): Promise<StellarGas> {
   const admin = createAdminClient();
   const { data } = await admin
     .from('org_stellar_gas')
-    .select('balance_stroops, total_deposited_stroops, total_consumed_stroops')
+    .select(
+      'balance_stroops, reserved_stroops, withdrawn_stroops, total_deposited_stroops, total_consumed_stroops',
+    )
     .eq('org_id', orgId)
     .single();
   if (!data) return { ...ZERO };
   return {
     balance_stroops: Number(data.balance_stroops),
+    reserved_stroops: Number(data.reserved_stroops ?? 0),
+    withdrawn_stroops: Number(data.withdrawn_stroops ?? 0),
     total_deposited_stroops: Number(data.total_deposited_stroops),
     total_consumed_stroops: Number(data.total_consumed_stroops),
   };
@@ -94,8 +103,43 @@ export async function debitStellarGas(orgId: string, amountStroops: number): Pro
   if (error) throw error;
 }
 
-/** Whether the org has enough balance to be sponsored right now. */
-export async function hasGas(orgId: string): Promise<boolean> {
+/** Whether the org can cover `needStroops` from available (not reserved). */
+export async function hasGas(orgId: string, needStroops: number = MIN_GAS_STROOPS): Promise<boolean> {
   const gas = await getStellarGas(orgId);
-  return gas.balance_stroops >= MIN_GAS_STROOPS;
+  return gas.balance_stroops >= needStroops;
+}
+
+/** Move available → reserved. Returns false if the org cannot cover it. */
+export async function lockStellarReserves(orgId: string, amountStroops: number): Promise<boolean> {
+  if (amountStroops <= 0) return true;
+  const admin = createAdminClient();
+  const { data, error } = await admin.rpc('lock_stellar_reserves', {
+    p_org_id: orgId,
+    p_amount_stroops: amountStroops,
+  });
+  if (error) throw error;
+  return data === true;
+}
+
+/** reserved → available after sponsorship is revoked. */
+export async function releaseStellarReserves(orgId: string, amountStroops: number): Promise<void> {
+  if (amountStroops <= 0) return;
+  const admin = createAdminClient();
+  const { error } = await admin.rpc('release_stellar_reserves', {
+    p_org_id: orgId,
+    p_amount_stroops: amountStroops,
+  });
+  if (error) throw error;
+}
+
+/** Debit available for a withdrawal. Returns false if it would overdraw. */
+export async function withdrawStellarGas(orgId: string, amountStroops: number): Promise<boolean> {
+  if (amountStroops <= 0) return false;
+  const admin = createAdminClient();
+  const { data, error } = await admin.rpc('withdraw_stellar_gas', {
+    p_org_id: orgId,
+    p_amount_stroops: amountStroops,
+  });
+  if (error) throw error;
+  return data === true;
 }

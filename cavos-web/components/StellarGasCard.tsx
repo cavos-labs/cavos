@@ -5,7 +5,6 @@ import {
   Asset,
   BASE_FEE,
   Horizon,
-  Memo,
   Operation,
   TransactionBuilder,
 } from '@stellar/stellar-sdk';
@@ -19,10 +18,12 @@ const MAINNET_HORIZON = 'https://horizon.stellar.org';
 
 interface StellarGas {
   balance_xlm: number;
+  reserved_xlm: number;
+  withdrawn_xlm: number;
   total_deposited_xlm: number;
   total_consumed_xlm: number;
+  withdrawable_xlm: number;
   deposit_address: string | null;
-  deposit_memo_hash: string;
 }
 
 interface StellarDeposit {
@@ -36,9 +37,8 @@ interface StellarDeposit {
 const STROOPS_PER_XLM = 10_000_000;
 
 /**
- * Per-org Stellar gas balance + deposit flow. Like the Solana ledger, Stellar gas
- * is a prepaid off-chain balance: send XLM to the Cavos relayer G-account carrying
- * the org's hash memo, then the tx hash is registered to credit the org.
+ * Per-org Stellar gas. Each org has its own sponsor G-account. Available is
+ * withdrawable; locked covers sponsored user-wallet reserves.
  *
  * Primary path connects any Stellar wallet via Stellar Wallets Kit (Freighter,
  * xBull, Albedo, Rabet, Lobstr, Hana) and builds the payment + memo automatically.
@@ -56,7 +56,11 @@ export function StellarGasCard({ orgId }: { orgId: string }) {
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [showDepositForm, setShowDepositForm] = useState(false);
+  const [showWithdrawForm, setShowWithdrawForm] = useState(false);
   const [showManual, setShowManual] = useState(false);
+  const [withdrawDest, setWithdrawDest] = useState('');
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [withdrawing, setWithdrawing] = useState(false);
 
   const refresh = useCallback(async () => {
     const res = await fetch(`/api/stellar/gas/balance?org_id=${orgId}`);
@@ -145,16 +149,27 @@ export function StellarGasCard({ orgId }: { orgId: string }) {
 
       const server = new Horizon.Server(MAINNET_HORIZON);
       const account = await server.loadAccount(address);
+      let destExists = true;
+      try {
+        await server.loadAccount(gas.deposit_address);
+      } catch {
+        destExists = false;
+      }
+      const op = destExists
+        ? Operation.payment({
+            destination: gas.deposit_address,
+            asset: Asset.native(),
+            amount: xlm.toFixed(7),
+          })
+        : Operation.createAccount({
+            destination: gas.deposit_address,
+            startingBalance: xlm.toFixed(7),
+          });
       const tx = new TransactionBuilder(account, {
         fee: BASE_FEE,
         networkPassphrase: MAINNET_PASSPHRASE,
       })
-        .addOperation(Operation.payment({
-          destination: gas.deposit_address,
-          asset: Asset.native(),
-          amount: xlm.toFixed(7),
-        }))
-        .addMemo(Memo.hash(gas.deposit_memo_hash))
+        .addOperation(op)
         .setTimeout(180)
         .build();
 
@@ -173,6 +188,37 @@ export function StellarGasCard({ orgId }: { orgId: string }) {
     }
   };
 
+  const withdraw = async () => {
+    const xlm = parseFloat(withdrawAmount);
+    if (!withdrawDest || !xlm || xlm <= 0) return;
+    setWithdrawing(true);
+    setMsg(null);
+    try {
+      const res = await fetch('/api/stellar/gas/withdraw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          org_id: orgId,
+          destination: withdrawDest,
+          amount_xlm: xlm,
+          network: 'stellar-mainnet',
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMsg({ kind: 'ok', text: `Sent ${data.withdrawal.amount_xlm} XLM` });
+        setWithdrawAmount('');
+        await refresh();
+      } else {
+        setMsg({ kind: 'err', text: data.error ?? 'Withdraw failed' });
+      }
+    } catch {
+      setMsg({ kind: 'err', text: 'Network error' });
+    } finally {
+      setWithdrawing(false);
+    }
+  };
+
   const fmt = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 6 });
   const deposited = gas?.total_deposited_xlm ?? 0;
   const consumed = gas?.total_consumed_xlm ?? 0;
@@ -186,7 +232,7 @@ export function StellarGasCard({ orgId }: { orgId: string }) {
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <Icon.Gas size={15} weight="fill" className="text-ink/55" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-black/40">Available Balance</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-black/40">Available</span>
             </div>
 
             <div className="flex items-baseline gap-2">
@@ -198,23 +244,29 @@ export function StellarGasCard({ orgId }: { orgId: string }) {
               <div className="h-1.5 bg-black/[0.06] rounded-full overflow-hidden">
                 <div className="h-full bg-brand rounded-full transition-all" style={{ width: `${consumedPct}%` }} />
               </div>
-              <div className="flex items-center gap-5 text-[10px] font-semibold text-black/40">
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[10px] font-semibold text-black/40">
+                <span>Locked: {fmt(gas?.reserved_xlm ?? 0)} XLM</span>
                 <span>Deposited: {fmt(deposited)} XLM</span>
-                <span className="flex items-center gap-1">
-                  <Icon.TrendDown size={12} weight="bold" />
-                  Consumed: {fmt(consumed)} XLM
-                </span>
+                <span>Withdrawable: {fmt(gas?.withdrawable_xlm ?? 0)} XLM</span>
               </div>
             </div>
           </div>
 
-          <button
-            onClick={() => setShowDepositForm((v) => !v)}
-            className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand-hover transition-all active:scale-[0.97]"
-          >
-            <Icon.ArrowDown size={15} weight="bold" />
-            Deposit XLM
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => { setShowWithdrawForm((v) => !v); setShowDepositForm(false); }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 border border-line text-ink text-sm font-semibold rounded-xl hover:bg-surface transition-all active:scale-[0.97]"
+            >
+              Withdraw
+            </button>
+            <button
+              onClick={() => { setShowDepositForm((v) => !v); setShowWithdrawForm(false); }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand-hover transition-all active:scale-[0.97]"
+            >
+              <Icon.ArrowDown size={15} weight="bold" />
+              Deposit XLM
+            </button>
+          </div>
         </div>
       </section>
 
@@ -232,8 +284,8 @@ export function StellarGasCard({ orgId }: { orgId: string }) {
           </div>
 
           <p className="text-sm text-black/55">
-            Connect a Stellar wallet (Freighter, xBull, Albedo, Lobstr…) and deposit —
-            the payment and org memo are built for you.
+            Connect a Stellar wallet (Freighter, xBull, Albedo, Lobstr…) and deposit
+            to this organization&apos;s sponsor account.
           </p>
 
           {/* Deposits need the mainnet relayer address to send to. */}
@@ -309,7 +361,6 @@ export function StellarGasCard({ orgId }: { orgId: string }) {
                   <div className="space-y-2">
                     {[
                       { label: 'Address', value: gas.deposit_address },
-                      { label: 'Memo (hash, hex)', value: gas.deposit_memo_hash },
                     ].map((f) => (
                       <button
                         key={f.label}
@@ -338,6 +389,59 @@ export function StellarGasCard({ orgId }: { orgId: string }) {
               </>
             )}
           </div>
+        </div>
+      )}
+
+      {showWithdrawForm && (
+        <div className="rounded-2xl bg-white border border-line p-6 space-y-5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-bold">Withdraw XLM</h3>
+            <button
+              onClick={() => { setShowWithdrawForm(false); setMsg(null); setWithdrawAmount(''); setWithdrawDest(''); }}
+              className="w-7 h-7 flex items-center justify-center text-black/30 hover:text-black transition-colors rounded-lg hover:bg-black/5"
+            >
+              <Icon.Close size={16} weight="bold" />
+            </button>
+          </div>
+          <p className="text-sm text-black/55">
+            Only unlocked XLM can leave. Reserved XLM stays locked while it sponsors user wallets.
+            Withdrawable: {fmt(gas?.withdrawable_xlm ?? 0)} XLM.
+          </p>
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-[0.15em] text-black/40 block">Destination (G…)</label>
+            <Input
+              placeholder="G…"
+              value={withdrawDest}
+              onChange={(e) => setWithdrawDest(e.target.value.trim())}
+              disabled={withdrawing}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold uppercase tracking-[0.15em] text-black/40 block">Amount (XLM)</label>
+            <Input
+              type="number"
+              placeholder="1"
+              value={withdrawAmount}
+              onChange={(e) => setWithdrawAmount(e.target.value)}
+              min="0"
+              step="0.1"
+              disabled={withdrawing}
+            />
+          </div>
+          {msg && (
+            <p className={`text-xs font-medium ${msg.kind === 'ok' ? 'text-emerald-600' : 'text-red-600'}`}>
+              {msg.text}
+            </p>
+          )}
+          <Button
+            variant="primary"
+            onClick={withdraw}
+            loading={withdrawing}
+            disabled={!withdrawDest || !withdrawAmount || parseFloat(withdrawAmount) <= 0 || withdrawing}
+            className="w-full rounded-xl"
+          >
+            Withdraw
+          </Button>
         </div>
       )}
 

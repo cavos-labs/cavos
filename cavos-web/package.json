@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:stellar-gas": "npx tsx --test lib/stellar/hd.test.ts lib/stellar/reserves.test.ts"
   },
   "dependencies": {
     "@auth0/nextjs-auth0": "^4.13.0",

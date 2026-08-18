@@ -1,8 +1,9 @@
 /**
  * POST /api/stellar/gas/deposit  { org_id, tx_hash, network }
- * Register an on-chain XLM deposit to the Cavos relayer G-account and credit the
- * org. The deposit tx MUST carry a native MEMO_TEXT `cavos:gas:<org_id>` so it can
- * only be attributed to (and claimed by) the org that owns it.
+ *
+ * Credit an org for XLM that landed on *its* sponsor G-account (createAccount
+ * or payment). Legacy deposits to the shared relayer with the org hash memo
+ * are still accepted so in-flight transfers are not lost.
  */
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
@@ -12,6 +13,7 @@ import {
 } from '@/lib/stellar/relayer';
 import { getRelayerSigner } from '@/lib/stellar/signer';
 import { creditStellarGas, depositMemoBase64, STROOPS_PER_XLM } from '@/lib/stellar/gas';
+import { ensureOrgSponsor } from '@/lib/stellar/sponsor';
 
 export async function POST(request: Request) {
   try {
@@ -21,7 +23,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { org_id, tx_hash, network = 'stellar-testnet' } = await request.json();
+    const { org_id, tx_hash, network = 'stellar-mainnet' } = await request.json();
     if (!org_id || !tx_hash) {
       return NextResponse.json({ error: 'org_id and tx_hash are required' }, { status: 400 });
     }
@@ -29,7 +31,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unsupported network' }, { status: 400 });
     }
 
-    // Ownership check.
     const { data: org, error: orgError } = await supabase
       .from('organizations')
       .select('id')
@@ -40,10 +41,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Organization not found or unauthorized' }, { status: 403 });
     }
 
-    const relayerAddress = (await getRelayerSigner('stellar-mainnet')).publicKey();
-    const server = horizonServerFor(network);
+    const sponsor = await ensureOrgSponsor(org_id, network);
+    let legacyAddress: string | null = null;
+    try {
+      legacyAddress = (await getRelayerSigner(network)).publicKey();
+    } catch {
+      /* no shared key configured — org address is enough */
+    }
 
-    // Fetch the deposit tx from Horizon (memo + typed payment operations).
+    const server = horizonServerFor(network);
     let tx;
     try {
       tx = await server.transactions().transaction(tx_hash).call();
@@ -54,32 +60,44 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Transaction did not succeed' }, { status: 400 });
     }
 
-    // Require the org hash memo — this is what attributes the deposit to the org.
-    // Horizon serializes a hash memo as base64.
-    const wantMemo = depositMemoBase64(org_id);
-    if (tx.memo_type !== 'hash' || tx.memo !== wantMemo) {
-      return NextResponse.json(
-        { error: 'Deposit must include the org hash memo shown in the dashboard' },
-        { status: 400 },
-      );
+    const ops = await server.operations().forTransaction(tx_hash).limit(200).call();
+    let toOrg = 0;
+    let toLegacy = 0;
+    for (const op of ops.records as Array<{
+      type: string;
+      asset_type?: string;
+      to?: string;
+      account?: string;
+      amount?: string;
+      starting_balance?: string;
+    }>) {
+      if (op.type === 'payment' && op.asset_type === 'native') {
+        const stroops = Math.round(Number(op.amount) * STROOPS_PER_XLM);
+        if (op.to === sponsor.publicKey) toOrg += stroops;
+        else if (legacyAddress && op.to === legacyAddress) toLegacy += stroops;
+      }
+      if (op.type === 'create_account') {
+        const stroops = Math.round(Number(op.starting_balance) * STROOPS_PER_XLM);
+        if (op.account === sponsor.publicKey) toOrg += stroops;
+        else if (legacyAddress && op.account === legacyAddress) toLegacy += stroops;
+      }
     }
 
-    // Sum native XLM payments to the relayer address.
-    const ops = await server.operations().forTransaction(tx_hash).limit(200).call();
-    let depositedStroops = 0;
-    for (const op of ops.records as any[]) {
-      if (
-        op.type === 'payment' &&
-        op.asset_type === 'native' &&
-        op.to === relayerAddress
-      ) {
-        depositedStroops += Math.round(Number(op.amount) * STROOPS_PER_XLM);
+    let depositedStroops = toOrg;
+    if (depositedStroops <= 0 && toLegacy > 0) {
+      const wantMemo = depositMemoBase64(org_id);
+      if (tx.memo_type !== 'hash' || tx.memo !== wantMemo) {
+        return NextResponse.json(
+          { error: 'Legacy shared-address deposits must include the org hash memo' },
+          { status: 400 },
+        );
       }
+      depositedStroops = toLegacy;
     }
 
     if (depositedStroops <= 0) {
       return NextResponse.json(
-        { error: 'No XLM payment to the Cavos deposit address found' },
+        { error: 'No XLM payment to this organization\'s sponsor address found' },
         { status: 400 },
       );
     }
@@ -103,10 +121,15 @@ export async function POST(request: Request) {
   }
 }
 
-/** GET — deposit instructions (mainnet deposit address). */
-export async function GET() {
+/** GET — this org's deposit address. Requires org_id. */
+export async function GET(request: Request) {
   try {
-    return NextResponse.json({ deposit_address: (await getRelayerSigner('stellar-mainnet')).publicKey() });
+    const orgId = new URL(request.url).searchParams.get('org_id');
+    if (!orgId) {
+      return NextResponse.json({ error: 'org_id is required' }, { status: 400 });
+    }
+    const sponsor = await ensureOrgSponsor(orgId, 'stellar-mainnet');
+    return NextResponse.json({ deposit_address: sponsor.publicKey });
   } catch {
     return NextResponse.json({ error: 'relayer not configured' }, { status: 500 });
   }
