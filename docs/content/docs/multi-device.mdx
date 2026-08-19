@@ -114,6 +114,30 @@ are the parts to get right.
 </Callout>
 
 
+## Build a device manager
+
+The two pages cover the email-link flows. For an in-app "your devices" screen,
+read and revoke directly from `useCavos()`:
+
+```tsx title="Devices.tsx"
+const { listDevices, removeSigner } = useCavos();
+
+const devices = await listDevices();            // [{ x, y }] — authorized device keys
+await removeSigner(devices[1]);                 // sponsored remove_signer
+```
+
+`removeSigner` must run from a device that is already authorized and cannot
+revoke itself — the same rule the revocation page surfaces as `isSelf`.
+
+<Callout type="info">
+**Stellar works differently.** Its devices are envelope slots, not on-chain
+signer pubkeys, so `listDevices()` / `removeSigner()` on the hook throw there.
+Call `wallet.listDevices()` (slot ids) and `wallet.removeDevice({ slotId, … })`
+after narrowing on `wallet.chain === "stellar"`, and read
+[Stellar → Manage devices](/docs/stellar#manage-devices) first: revocation there
+rotates the control key and evicts **every** other device.
+</Callout>
+
 ## The non-custodial guarantee
 
 The backend can **request, notify, and relay** a device addition — it can never
