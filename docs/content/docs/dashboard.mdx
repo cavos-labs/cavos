@@ -1,0 +1,183 @@
+---
+title: Dashboard
+description: The Cavos console — organizations and roles, apps, sponsorship, API keys, webhooks, and the audit log.
+---
+
+Everything the SDK needs at runtime comes from one place: an app in the
+[Cavos console](https://cavos.xyz/dashboard). This page describes what lives
+there, so you know where a value in your config came from and where to look when
+something is rejected.
+
+## Organizations and apps
+
+An **organization** owns billing, team members, API keys, and the gas balance.
+Inside it you create **apps**; each app has a `development` and a `production`
+[environment](/docs/environments) from the moment it exists.
+
+Org-level sections: **Applications**, **Activity**, **Gas & usage**,
+**Webhooks**, **Team**, **API keys**, **Billing**, **Audit log**, **Settings**.
+
+Each app then has its own tabs:
+
+| Tab | What it is for |
+|---|---|
+| **Overview** | Health, recent traffic, and the app's `appId`. |
+| **Wallets** | Every wallet derived under this app, with its devices and transactions. |
+| **Devices & recovery** | Pending device-approval requests, enrolled factors, recovery state. |
+| **Activity** | The event stream (also the source of webhooks). |
+| **Sponsorship** | Gas funding and the relay decisions made for this app. |
+| **Authentication** | Providers, OAuth client IDs, callback URLs, social-recovery config. |
+| **Emails** | Templates for magic link, OTP, device approval, and password reset. |
+| **Programs** | The Solana program allowlist (see below). |
+| **Environments** | Per-environment origins, keys, and social recovery. |
+| **Settings** | Name, logo, and the `device_approval_url` the emails link to. |
+
+<Callout type="info">
+`appSalt` is **not** a dashboard value — it lives in your code and derives every
+address. Changing it moves every user to a new, empty wallet. See
+[Troubleshooting](/docs/troubleshooting#users-suddenly-have-new-empty-wallets).
+</Callout>
+
+## Team roles
+
+Invitations are sent by email and accepted at `/dashboard/invitations/accept`.
+Roles: **owner**, **admin**, **developer**, **support**, **billing**, **viewer**.
+
+Two thresholds matter in practice:
+
+- **API keys** — create, rotate, revoke: `owner` or `admin`.
+- **Webhook endpoints** — create: `owner`, `admin`, or `developer`.
+
+Reading the console (apps, wallets, activity) is open to every member of the
+organization.
+
+## API keys
+
+Server-side credentials, issued **per environment** with `read` and/or `write`
+scopes. A key is shown **once** at creation — only its hash is stored — and can
+be rotated or given an expiry.
+
+```bash title="Terminal"
+curl https://cavos.xyz/api/v1/apps \
+  -H "Authorization: Bearer cav_..." \
+  -H "Content-Type: application/json" \
+  -d '{"name":"My App","organization_id":"..."}'
+```
+
+<Callout type="warn">
+An API key (`cav_…`) is an **operator credential**: it acts on your organization
+from a server. It is not the same thing as the `appId` or the Starknet
+`paymasterApiKey`, both of which are app-scoped and client-visible by design.
+Never ship a `cav_…` key to a browser or a mobile bundle.
+</Callout>
+
+## Sponsorship and gas
+
+Gas is metered **per environment**, so test traffic never drains production. The
+Starknet gas tank is an on-chain balance read per organization; Solana and
+Stellar relayers are funded through the same **Gas & usage** section.
+
+When the balance runs out, sponsored operations are rejected rather than
+silently charged to the user — `relay.rejected` and `gas.balance_low` are
+webhook events for exactly this reason.
+
+## Solana program allowlist
+
+The relayer signs as fee payer, so it decides what it is willing to sponsor. A
+safe set is always allowed: **System**, **SPL Token**, **Token-2022**, and
+**Associated Token**. Anything else your wallets call through
+[`executeInstructions`](/docs/solana#execute-arbitrary-program-calls) must be
+added on the app's **Programs** tab — the tab offers the common ones (Jupiter,
+Meteora, Raydium CLMM, Marinade, Stake, Memo) as presets and accepts any program
+id.
+
+A call to a program that is not allowlisted is refused by the relayer at submit
+time, not on-chain.
+
+## Webhooks
+
+Signed operational events, delivered to one HTTPS endpoint, scoped to a single
+app **environment**. Event types:
+
+| Event | Fires when |
+|---|---|
+| `wallet.created` | A wallet was derived and deployed. |
+| `wallet.creation_failed` | Deployment failed. |
+| `device.addition_requested` | A new device asked to be authorized. |
+| `device.addition_approved` | The owner approved it. |
+| `relay.rejected` | The relayer refused to sponsor an operation. |
+| `gas.balance_low` | The environment's gas balance crossed its threshold. |
+
+Creating an endpoint returns a `whsec_…` signing secret **once**, and
+immediately delivers a `ping` event so you can confirm the route works.
+
+### Payload
+
+```json title="POST your-endpoint"
+{
+  "version": "2026-07-21",
+  "delivery_id": "…",
+  "event": {
+    "id": "…",
+    "type": "wallet.created",
+    "status": "success",
+    "severity": "info",
+    "network": "solana-devnet",
+    "request_id": "…",
+    "tx_reference": "…",
+    "created_at": "2026-08-19T12:00:00.000Z",
+    "metadata": {}
+  }
+}
+```
+
+Headers: `X-Cavos-Delivery` (the delivery id) and `X-Cavos-Signature-256`
+(`sha256=` + an HMAC-SHA256 of the **raw request body** with your signing
+secret).
+
+### Verify the signature
+
+```ts title="app/api/cavos/route.ts"
+import { createHmac, timingSafeEqual } from "node:crypto";
+
+export async function POST(request: Request) {
+  const raw = await request.text();               // the raw body, not the parsed JSON
+  const expected =
+    "sha256=" + createHmac("sha256", process.env.CAVOS_WEBHOOK_SECRET!).update(raw).digest("hex");
+  const received = request.headers.get("X-Cavos-Signature-256") ?? "";
+
+  const a = Buffer.from(expected), b = Buffer.from(received);
+  if (a.length !== b.length || !timingSafeEqual(a, b)) {
+    return new Response("bad signature", { status: 401 });
+  }
+
+  const { event } = JSON.parse(raw);
+  // …handle event.type
+  return new Response("ok");
+}
+```
+
+<Callout type="warn">
+Sign over the **raw** body. Re-serializing the parsed JSON changes the bytes and
+the HMAC will never match.
+</Callout>
+
+### Delivery, retries, and disabling
+
+Each attempt has an **8-second timeout**; any non-2xx response counts as a
+failure. Failed deliveries retry up to **5 attempts** at roughly 15s, 1min,
+10min, and 1h. After **10 consecutive failures** the endpoint is deactivated —
+recreate it once your receiver is healthy.
+
+Deliveries are visible per endpoint in the console, with status, response code,
+and duration.
+
+## Audit log
+
+Administrative actions on the organization are recorded with the actor, the
+resource, and the result — API key creation and rotation, team invitations and
+joins, webhook creation, social-recovery enroll/cancel, and reveals of a
+wallet's external id.
+
+This is the org's own accountability record. It is separate from **Activity**,
+which is the runtime event stream your users generate.

@@ -119,6 +119,20 @@ await wallet.addTrustline({ code: "USDC", issuer: "GA...ISSUER" });
 const bal = await wallet.tokenBalance({ code: "USDC", issuer: "GA...ISSUER" }); // "0" if none
 ```
 
+When your backend (or a platform's REST API) builds the transaction and hands
+you an **unsigned XDR**, use `signXdr` instead. It mirrors a classic wallet's
+`signTransaction(unsignedXdr) → signedXdr`, so a Cavos account drops into any
+flow that already expects one — it does **not** submit:
+
+```ts title="TypeScript"
+const signedXdr = await wallet.signXdr(unsignedXdr); // your backend submits it
+```
+
+It handles both auth models: Soroban auth entries naming **this** account are
+re-signed (`authorizeEntry`), source-account auth and classic transactions are
+satisfied by the envelope signature. Entries authorizing other addresses are
+left untouched.
+
 ### Trustless Work escrows
 
 `@cavos/kit` ships a first-class wrapper for [Trustless Work](https://www.trustlesswork.com/)
@@ -284,6 +298,39 @@ if (wallet.chain === "stellar" && wallet.status === "needs-device-approval") {
 Recovery is self-custodial: the code never leaves the device and only its
 DEK-wrap is stored on-chain. Cavos never sees the code. See
 [Recovery codes](/docs/recovery-codes) for the model.
+
+## Manage devices
+
+A "device" on classic Stellar is an ECIES **wrap of the DEK** in the account's
+data entries, not an on-chain signer. List the slots and revoke one:
+
+```ts title="TypeScript"
+const slots = await wallet.listDevices();      // slot ids; this device is deviceKey.slotId()
+
+await wallet.removeDevice({
+  slotId,                                      // never this device's own slot
+  passkeyPrfOutput: await prf.getSecret(),     // carry the passkey factor over
+  recoveryCode,                                // carry the recovery factor over
+});
+```
+
+<Callout type="warn">
+**Revocation on Stellar evicts every other device, not just the revoked one.**
+A wrap is ECIES to each device's public key, which is never stored on-chain, so
+the other wraps cannot be recreated. `removeDevice` rotates in one transaction:
+it deletes every `cv:` entry, writes a fresh DEK-sealed control seed with a wrap
+for **this** device only, and swaps in a new weight-1 control signer (zeroing
+the old one). Every other device must be approved again.
+
+The passkey and recovery factors are KEK-derived, so they survive **only if the
+user presents them in this call**. Prompt for the passkey first — otherwise the
+user loses their synced anchor and this device becomes the only way in.
+</Callout>
+
+This is what makes revocation actually revoke: the evicted device may already
+have cached the control seed, so erasing its wrap alone would change nothing.
+Rotating the control key is the only honest eviction. On Starknet and Solana,
+where devices are real on-chain signers, `removeSigner(pubkey)` is surgical.
 
 ## Gasless vs self-funded
 
