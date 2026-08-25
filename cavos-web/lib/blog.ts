@@ -2,7 +2,14 @@ import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 
-const BLOG_DIR = path.join(process.cwd(), 'content/blog');
+const BLOG_DIR_CANDIDATES = [
+  path.join(process.cwd(), 'content/blog'),
+  path.join(process.cwd(), 'cavos-web/content/blog'),
+];
+
+const BLOG_DIR =
+  BLOG_DIR_CANDIDATES.find((dir) => fs.existsSync(dir)) ??
+  BLOG_DIR_CANDIDATES[0];
 
 export type PostCategory = 'Release' | 'Security' | 'Deep Dive' | 'Announcement';
 
