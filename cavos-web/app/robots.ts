@@ -41,6 +41,9 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/api/'],
       },
     ],
-    sitemap: 'https://cavos.xyz/sitemap.xml',
+    sitemap: [
+      'https://cavos.xyz/sitemap.xml',
+      'https://docs.cavos.xyz/sitemap.xml',
+    ],
   }
 }
