@@ -13,7 +13,6 @@ import { ApiLogger } from '@/lib/api/logger';
 import { ApiResponse } from '@/lib/api/response';
 import { ApiMiddleware } from '@/lib/api/middleware';
 import { sendDeviceApprovalEmail } from '@/lib/email/device-approval';
-import { computeAppSalt } from '@/lib/crypto/appSalt';
 import { recordCavosEvent } from '@/lib/operations/events';
 
 interface DeviceAdditionRequestBody {
@@ -58,13 +57,9 @@ export async function GET(request: Request) {
       data.status === 'expired' ||
       new Date(data.expires_at).getTime() < Date.now();
 
-    // Resolve the per-app salt so the app's OWN approval page (the route the
-    // integrating app builds at its device_approval_url) can rebuild the SAME
-    // identity context (appSalt) the wallet was created under. Without it, the
-    // approving page would derive a different wallet address + device key and
-    // never recognize the owner as a signer.
-    const baseSalt = process.env.CAVOS_BASE_SALT || '0x0';
-    const appSalt = computeAppSalt(data.app_id, baseSalt);
+    // NOTE: app_salt is no longer served on this unauthenticated route.
+    // The integrating app's approval page must use the appSalt it already has
+    // configured in the kit client.
     const walletNetwork = (data.wallets as { address: string; network: string }[] | null)?.[0]?.network ?? null;
 
     logger.complete(true);
@@ -74,7 +69,6 @@ export async function GET(request: Request) {
       app_id: data.app_id,
       wallet_address: (data.wallets as { address: string; network: string }[] | null)?.[0]?.address ?? null,
       network: walletNetwork,
-      app_salt: appSalt,
       new_pub_x: data.new_pub_x,
       new_pub_y: data.new_pub_y,
       device_label: data.device_label,

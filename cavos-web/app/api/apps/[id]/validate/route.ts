@@ -1,4 +1,3 @@
-import { computeAppSalt } from '@/lib/crypto/appSalt';
 import { orgUsage, resolveOrgForApp } from '@/lib/billing/limits';
 import { NextResponse } from 'next/server';
 
@@ -15,7 +14,9 @@ import { NextResponse } from 'next/server';
  *   - wallet_count  — wallets under this org, all apps + networks
  *   - wallet_limit  — null = unlimited
  *   - warning       — 'approaching_limit' at ≥80% on a capped plan, else null
- *   - app_salt      — per-app salt for wallet address derivation
+ *
+ * NOTE: app_salt is no longer served on this unauthenticated route. Integrators
+ * must use the appSalt they configured in the kit client.
  */
 export async function GET(
     request: Request,
@@ -34,10 +35,6 @@ export async function GET(
 
     const usage = await orgUsage(orgId);
 
-    // Compute per-app salt for wallet address derivation.
-    const baseSalt = process.env.CAVOS_BASE_SALT || '0x0';
-    const appSalt = computeAppSalt(appId, baseSalt);
-
     // `allowed` reports the true gate state so SDKs / dashboards can surface an
     // upgrade prompt. The actual 402 block lives in the wallet-creation routes;
     // validate is read-only.
@@ -50,6 +47,5 @@ export async function GET(
         wallet_count: usage.count,
         wallet_limit: usage.limit,
         warning: usage.warning,
-        app_salt: appSalt
     });
 }
