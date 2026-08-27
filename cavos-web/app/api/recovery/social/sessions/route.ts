@@ -9,6 +9,7 @@ import {
 import { openSession } from '@/lib/recovery/social/enclave'
 import type { SocialRecoveryAction } from '@/lib/recovery/social/types'
 import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier'
+import { verifyUserToken, isSubject } from '@/lib/api/verifyUserToken'
 
 /**
  * Start a recovery session.
@@ -120,14 +121,19 @@ export async function POST(request: Request) {
     )
   }
 
+  // The address is client-supplied, so bind it to the caller: it must be this
+  // user's registry row for this app/environment, not merely a known address.
   const { data: wallet } = await admin
     .from('wallets')
-    .select('id, address, network')
+    .select('id, address, network, user_social_id')
     .eq('app_id', appId)
     .eq('environment_id', environment.id)
     .eq('address', body.wallet_address)
     .maybeSingle()
   if (!wallet) return NextResponse.json({ error: 'wallet_not_found' }, { status: 404 })
+  if (!isSubject(await verifyUserToken(request), wallet.user_social_id)) {
+    return NextResponse.json({ error: 'invalid_user_token' }, { status: 401 })
+  }
 
   const policy = {
     app_id: appId,
