@@ -70,6 +70,8 @@ counterpart is `CavosSolana` — see [Solana](/docs/solana).
 | `cavos.signMessage(message): Promise<MessageSignature>` | Sign an arbitrary message off-chain with the device key (secp256r1). Uniform return across chains. See [Wallet actions](/docs/wallet-actions). |
 | `cavos.signTransaction(calls): Promise<StarknetSignedTransaction>` | Build + sign a multicall WITHOUT submitting. Single-use (binds to nonce + resource bounds). |
 | `cavos.addSigner(pubkey): Promise<{ transactionHash }>` | Authorize another device's key on-chain. |
+| `cavos.removeSigner(pubkey): Promise<{ transactionHash }>` | Revoke a device key on-chain. Must be called from an authorized device, and cannot revoke itself. |
+| `cavos.upgrade(classHash): Promise<{ transactionHash }>` | Migrate the account to a newer declared `DeviceAccount` class. |
 | `cavos.enrollPasskey(passkey, params): Promise<{ publicKey, transactionHash? }>` | Create a passkey + register it as an approver. Gasless, idempotent. See [Passkeys](/docs/passkeys). |
 | `cavos.addApprover(pubkey): Promise<{ transactionHash? }>` | Register an already-enrolled passkey pubkey as an approver (idempotent). Use to share one passkey across chains. |
 | `cavos.approveThisDeviceWithPasskey({ passkey, submit? }): Promise<{ transactionHash }>` | From a `needs-device-approval` browser, use a synced passkey to authorize this device. |
@@ -130,10 +132,9 @@ model — this is hardware-isolated, non-custodial recovery, not trustless recov
 | Export | Description |
 |--------|-------------|
 | `SocialRecoveryClient` | Client for the recovery enclave. `enroll({ walletAddress, credential, stellarDek? })`, `recover({ walletAddress, credential, authorizations?, stellarRecipientPublicKey? })`, `confirmEnrollment(sessionId, txHash)`. Two synchronous round trips; there is nothing to warm up. |
-| `SocialRecoveryClientOptions` | `{ appId, attestation, environment?, backendUrl? }`. |
-| `AttestationPolicy` | Which enclave you accept: `{ pcr0 }`, the SHA-384 measurement of the enclave image (a value or a list, to overlap a rollout). Never learned from the API being attested. |
+| `SocialRecoveryClientOptions` | `{ baseUrl, appId, attestation, environment? }`. |
+| `AttestationPolicy` | Which enclave you accept: `{ pcr0 }`, the SHA-384 measurement of the enclave image — a single value or a list, so a rollout can publish the new measurement alongside the deployed one. Never learned from the API being attested. |
 | `DEFAULT_SOCIAL_RECOVERY_ATTESTATION` | The policy for the enclave Cavos operates, pinned in this package. What `socialRecovery: true` uses. |
-| `isAcceptedImageDigest(attested, expected)` | Whether an attested image digest matches the pinned policy. Exact match; fails closed on a missing digest or an empty list. |
 | `enrollHardwareIsolatedRecovery`, `recoverHardwareIsolatedDevice` | Chain-aware coordinators wrapping enroll/recover, including timelock finalization. |
 | `CoordinatedRecoveryResult` | Result of a coordinated recovery, including a `readyAt` when a timelock applies. |
 | `SocialRecoveryCredential`, `createSocialRecoveryCredential` | The in-memory social credential handed to the enclave. Never persisted. |
@@ -182,11 +183,11 @@ mainnet, fall back to [multi-device](/docs/multi-device) / [recovery](/docs/reco
 
 | Export | Description |
 |--------|-------------|
-| `CavosSolana` | High-level Solana client — the analogue of `Cavos`. `connect`, `execute(amount, destination)` (SOL transfer), `executeInstructions(instructions)` (arbitrary CPI), `signMessage(message)` (off-chain, P-256), `signTransaction(amount, destination)` (device precompile signature, relayer-bound), `addSigner`, `setupRecovery`, static `recover`. Returned by `Cavos.connect({ chain: "solana" })`. |
+| `CavosSolana` | High-level Solana client — the analogue of `Cavos`. `connect`, `execute(amount, destination)` (SOL transfer), `executeInstructions(instructions)` (arbitrary CPI), `signMessage(message)` (off-chain, P-256), `signTransaction(amount, destination)` (device precompile signature, relayer-bound), `addSigner`, `removeSigner`, `setupRecovery`, static `recover`. Returned by `Cavos.connect({ chain: "solana" })`. |
 | `InstructionData`, `InstructionAccount` | Serializable instruction shape for `executeInstructions` (mirrors the on-chain Borsh layout). |
 | `SolanaRelayer`, `SolanaRelayerOptions` | Cavos gasless sponsoring relayer (co-signs as fee payer). Activated by `appId`. |
 | `SolanaAdapter`, `SolanaAdapterOptions` | Low-level adapter: PDA derivation, the `[secp256r1 precompile, program]` instruction builders, signature encoding. |
-| `compressedPubkey`, `encodeLowSSignature`, `buildSecp256r1Instruction`, `anchorDiscriminator` | Low-level Solana helpers. |
+| `serializeInstructions`, `compressedPubkey`, `encodeLowSSignature`, `buildSecp256r1Instruction`, `anchorDiscriminator` | Low-level Solana helpers (`serializeInstructions` produces the canonical Borsh bytes an `executeInstructions` signature commits to). |
 | `SOLANA_NETWORKS`, `SolanaNetwork` | Network configs (`solana-devnet`, `solana-mainnet`, `solana-localnet`). |
 | `DEVICE_ACCOUNT_PROGRAM_ID`, `SECP256R1_PROGRAM_ID` | Cavos device-account program id + native secp256r1 precompile id. |
 | `deriveAddressSeedSolana` | SHA-256 `address_seed` from `{ userId, appSalt }` (Solana variant of `deriveAddressSeed`). |
@@ -198,11 +199,12 @@ testnet and mainnet.
 
 | Export | Description |
 |--------|-------------|
-| `CavosStellar` | High-level Stellar client — the analogue of `Cavos`. `connect`, `execute(amount, destination)` (native XLM transfer, stroops), `signMessage(message)` (off-chain, **ed25519** control key), `signTransaction(amount, destination)` (signed inner XDR, not submitted), `balance()` (XLM, stroops), `enrollPasskey(prfOutput)` (add a WebAuthn-PRF passkey unlock factor), `setupRecovery(code)` (add a recovery-code unlock factor), `approveThisDeviceWithPasskey(prfOutput)`, `approveThisDeviceWithRecovery(code)`, `hasPasskey`, `isReady`, `controlAddress`. Returned by `Cavos.connect({ chain: "stellar" })`. |
+| `CavosStellar` | High-level Stellar client — the analogue of `Cavos`. `connect`, `execute(amount, destination)` (native XLM transfer, stroops), `signMessage(message)` (off-chain, **ed25519** control key), `signTransaction(amount, destination)` (signed inner XDR, not submitted), `balance()` (XLM, stroops), `enrollPasskey(prfOutput)` (add a WebAuthn-PRF passkey unlock factor), `setupRecovery(code)` (add a recovery-code unlock factor), `approveThisDeviceWithPasskey(prfOutput)`, `approveThisDeviceWithRecovery(code)`, `hasPasskey`, `isReady`, `controlAddress`. Soroban + assets: `invokeContract({ contractId, method, args })`, `signXdr(unsignedXdr)` (wallet-adapter seam — sign an externally-built XDR without submitting), `addTrustline(asset)`, `tokenBalance(asset)`. Device management: `listDevices()` (envelope slot ids), `removeDevice({ slotId, passkeyPrfOutput?, recoveryCode? })` (rotates the control key — see [Stellar](/docs/stellar#manage-devices)). Returned by `Cavos.connect({ chain: "stellar" })`. |
 | `StellarAdapter`, `StellarAdapterOptions` | Low-level adapter over Horizon: deterministic master-key derivation, account creation/payment/data-entry transaction builders, fee-bump wrapping, submit. |
 | `StellarRelayer`, `StellarRelayerOptions`, `StellarRelayKind` | Cavos gasless sponsoring relayer (signs/submits/fee-bumps via a relayer source). Activated by `appId`. |
 | `ConnectStellarOptions`, `StellarConnectStatus` | Option/status types for `CavosStellar.connect`. |
-| `STELLAR_NETWORKS`, `StellarNetwork`, `HORIZON_URL`, `XLM_DECIMALS` | Network configs + Horizon endpoints (`stellar-testnet`, `stellar-mainnet`). |
+| `STELLAR_NETWORKS`, `StellarNetwork`, `HORIZON_URL`, `SOROBAN_RPC_URL`, `XLM_DECIMALS` | Network configs, Horizon endpoints, and the Soroban RPC endpoints used for contract invocation (`stellar-testnet`, `stellar-mainnet`). |
+| `TrustlessWorkEscrow`, `deployEscrow`, `buildEscrowScVal` | Typed wrapper for [Trustless Work](https://trustlesswork.com) escrows, driven by a Cavos `G…` account as a `require_auth` role signer. Types: `EscrowInput`, `MilestoneInput`, `EscrowState`. See [Stellar](/docs/stellar#trustless-work-escrows). |
 | `DeviceUnwrapKey`, `LocalDeviceUnwrapKey`, `WebCryptoDeviceUnwrapKey`, `WebCryptoUnwrapKeyOptions`, `deviceSlotId` | This device's ECDH key that unwraps the account's control-key envelope (defaults to a persisted WebCrypto key in the browser). |
 | `PasskeyPrf`, `PasskeyPrfOptions`, `PasskeyPrfEnrollParams` | WebAuthn **PRF** helper: a synced passkey derives a stable secret that unlocks the control key (Stellar's passkey factor is a PRF secret, not an on-chain assertion). |
 | `deriveStellarAddress`, `deriveStellarMasterKeypair`, `generateControlKey` | Deterministic master-address/keypair derivation + control-key generation. |
@@ -226,11 +228,13 @@ testnet and mainnet.
 | Export | Description |
 |--------|-------------|
 | `CavosProvider`, `useCavos`, `CavosAuthModal` | React Native context, hook, and native auth UI. |
-| `NativeCavosAuth` | Google, Apple, OTP, and magic-link auth through mobile callbacks. |
+| `Cavos` | The native connect entry point (`Cavos.connect(options)` with `NativeConnectOptions`), wired to the platform signer and passkey adapters. |
+| `NativeCavosAuth`, `NativeCavosAuthError` | Google, Apple, OTP, and magic-link auth through mobile callbacks, plus the typed error (`NativeCavosAuthErrorCode`) they reject with. |
 | `NativeDeviceSigner` | Secure Enclave/Keychain or Android Keystore P-256 signer. |
 | `NativeDeviceUnwrapKey` | Separate P-256 ECDH key for Stellar envelopes. |
 | `NativePasskeySigner`, `NativePasskeyPrf` | AuthenticationServices/Credential Manager passkey adapters. |
-| `getNativeCapabilities()` | Reports signing, ECDH, passkey, and PRF support. |
+| `getNativeCapabilities()` | Reports signing, ECDH, passkey, and PRF support (`NativeCapabilities`, `NativeSecurityLevel`). |
+| `getCavosNativeModule()` | The underlying Expo native module, for capability checks you drive yourself. |
 | `deleteDeviceKeys(keyId)` | Explicitly removes native device keys; `logout()` preserves them. |
 | `approveDeviceEverywhere` | Shared Starknet/Solana passkey approval helper. |
 
@@ -247,10 +251,11 @@ React bindings shipped in the same package under the `/react` subpath. See
 | `validateCavosConfig(config)` | Config problems as `CavosConfigProblem[]` (`code`, `level`, `message`). Run in the provider automatically in development; exported for your own setup screen or CI. |
 | `checkAppSaltDrift(config, storage?)` | Reports an `appSalt` that changed since this browser last connected — addresses derive from it, so a change silently moves users to new wallets. Silent on a first run. |
 | `formatConfigProblems(problems)` | Render problems as console-ready lines. |
-| `useCavos()` | Primary hook — full wallet surface: state (`address`, `wallet`, `chain`, `walletStatus`, `user`, `isAuthenticated`), login, `execute` (Starknet), device/recovery wrappers, `logout`. |
+| `useCavos()` | Primary hook — full wallet surface: state (`address`, `wallet`, `chain`, `walletStatus`, `user`, `isAuthenticated`), login, `execute` (Starknet), `signMessage`, device management (`addSigner`, `removeSigner`, `listDevices`), recovery wrappers, `logout`. |
 | `useCavosAuth()` | Thin subset for components that only open the modal and read auth state (`openModal`, `closeModal`, `isAuthenticated`, `address`, `user`, `walletStatus`, `logout`). |
 | `ApproveDevicePage`, `RevokeDevicePage` | The two device-lifecycle pages, ready to mount. Props: `configs: CavosConfig[]` (every chain your app supports — the request's own chain is selected), `backendUrl?`, `paramName?`, `className?`, and `children?` as a render prop to replace the default markup. |
 | `DeviceFlowState` | What the render prop receives: `{ status, request, error, isSelf, signIn, submit }`. `status` is `loading \| error \| needs-signin \| ready \| submitting \| done`. |
+| `chainForNetwork(network)` | Maps a request's concrete network (`sepolia`, `solana-devnet`, `stellar-mainnet`, …) back to its `Chain`. |
 | `configForNetwork(network, configs)` | Picks the config for a wallet's chain. Used internally by the pages; exported for hosts that mount the provider themselves. Throws rather than returning a config for the wrong chain. |
 | `CavosAuthModal` | Customizable login modal. Renders as a bottom sheet automatically on mobile (`max-width: 640px`). |
 | `CavosConfig`, `CavosModalConfig`, `CavosAuthModalProps`, `CavosProviderProps`, `CavosContextValue`, `UserInfo`, `WalletStatus` | Type-only exports for the React layer. |
@@ -271,3 +276,4 @@ React bindings shipped in the same package under the `/react` subpath. See
 |--------|-------------|
 | `signatureToFelts`, `recoverYParity` | secp256r1 signature ↔ 5-felt Starknet encoding. |
 | `u256ToFelts`, `bytesToBigInt`, `bytesToHex`, `hexToBytes`, `bigIntTo32Bytes` | Encoding helpers. |
+| `base64urlEncode`, `webauthnDigest`, `recoverCandidatePublicKeys`, `batchChallenge`, `lowS` | WebAuthn helpers: base64url encoding, the digest a passkey assertion signs, public-key recovery from an assertion, the batched challenge used to approve several chains with one prompt, and low-S normalization. |

@@ -17,6 +17,8 @@ import { canCreateWallet, resolveOrgForApp } from '@/lib/billing/limits';
 import { shouldBlock } from '@/lib/billing/enforce';
 import type { WalletSaveRequest } from '@/lib/api/types';
 import { recordCavosEvent } from '@/lib/operations/events';
+import { verifyUserToken, isSubject } from '@/lib/api/verifyUserToken';
+import { insertWalletRow } from '@/lib/api/walletRow';
 import { StrKey } from '@stellar/stellar-sdk';
 
 /**
@@ -62,6 +64,12 @@ export async function GET(request: Request) {
         }
         const canonicalAppId = app.id;
 
+        // The registry names the user's wallet, so only that user may read it.
+        if (!isSubject(await verifyUserToken(request), user_social_id)) {
+            await recordCavosEvent({ appId: canonicalAppId, eventType: 'api.authentication_failed', status: 'failed', severity: 'warning', requestId: logger.requestId, errorCode: 'invalid_user_token' });
+            return ApiResponse.unauthorized('Invalid user token');
+        }
+
         // Fetch wallet (+ its authorized device signers via wallet_devices).
         logger.debug('Fetching wallet', { user_social_id, network });
         const adminSupabase = createAdminClient();
@@ -76,14 +84,9 @@ export async function GET(request: Request) {
             .eq('user_social_id', user_social_id)
             .eq('network', network);
         if (environment?.id) walletQuery = walletQuery.eq('environment_id', environment.id);
-        // Multiple deterministic wallets may exist for the same social identity
-        // after an integrator intentionally rotates appSalt. Legacy lookup callers
-        // receive the most recently registered address; current chain adapters
-        // derive their address locally and use this endpoint only for bookkeeping.
-        const { data, error } = await walletQuery
-            .order('updated_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
+        // Exactly one row per (app, environment, user, network) — this is the
+        // address, not a bookkeeping echo of something the client derived.
+        const { data, error } = await walletQuery.maybeSingle();
 
         if (error) {
             logger.error('Database error', error);
@@ -176,6 +179,13 @@ export async function POST(request: Request) {
             return ApiResponse.unauthorized('Invalid App ID');
         }
         const canonicalAppId = app.id;
+
+        // Only the end user may claim their own registry row.
+        if (!isSubject(await verifyUserToken(request), user_social_id)) {
+            await recordCavosEvent({ appId: canonicalAppId, eventType: 'api.authentication_failed', status: 'failed', severity: 'warning', requestId: logger.requestId, errorCode: 'invalid_user_token' });
+            return ApiResponse.unauthorized('Invalid user token');
+        }
+
         const environment = resolved.environmentId
             ? { id: resolved.environmentId, app_id: canonicalAppId, kind: resolved.environmentKind }
             : null;
@@ -184,10 +194,8 @@ export async function POST(request: Request) {
 
         // ── Billing gate ────────────────────────────────────────────────────
         // Only the creation of NEW wallets is gated. Existing wallets are always
-        // readable/signable. Include the deterministic address in the lookup:
-        // rotating appSalt creates a distinct wallet even for the same identity.
-        // Resolves app_id → org internally; both SDKs already send app_id, so
-        // this needs no SDK change. See lib/billing/limits.ts.
+        // readable/signable. Resolves app_id → org internally; both SDKs already
+        // send app_id, so this needs no SDK change. See lib/billing/limits.ts.
         const adminSupabase = createAdminClient();
         const { data: existingWallet } = await adminSupabase
             .from('wallets')
@@ -196,8 +204,6 @@ export async function POST(request: Request) {
             .eq('environment_id', environment!.id)
             .eq('user_social_id', user_social_id)
             .eq('network', network)
-            .eq('address', address)
-            .limit(1)
             .maybeSingle();
 
         if (!existingWallet) {
@@ -259,24 +265,27 @@ export async function POST(request: Request) {
             walletData.email_verified = true;
             walletData.email_verified_at = new Date().toISOString();
         }
-        const { data, error } = await adminSupabase
-            .from('wallets')
-            .upsert(
-                walletData,
-                {
-                    onConflict: 'app_id,environment_id,user_social_id,network,address',
-                    ignoreDuplicates: false
-                }
-            )
-            .select()
-            .single();
+        const result = await insertWalletRow(
+            adminSupabase,
+            { app_id: canonicalAppId, environment_id: environment.id, user_social_id, network },
+            walletData,
+        );
 
-        if (error) {
+        if (result.status === 'error') {
             await recordCavosEvent({ appId: canonicalAppId, environmentId: environment?.id, eventType: 'wallet.creation_failed', status: 'failed', requestId: logger.requestId, network, errorCode: 'database_write_failed' });
-            logger.error('Database error', error);
+            logger.error('Database error', result.error);
             logger.complete(false);
             return ApiResponse.serverError('Failed to save wallet');
         }
+
+        // Another device got here first. The address is already named; this
+        // caller must adopt it and go through device approval instead.
+        if (result.status === 'exists' && result.row.address !== address) {
+            logger.warn('Wallet address already claimed', { user_social_id, network });
+            logger.complete(true);
+            return ApiResponse.conflict('address_already_registered', { address: result.row.address });
+        }
+        const data = result.row;
 
         // Store the authorized device signer(s) for device-signer wallets.
         if (devices && Array.isArray(devices) && devices.length > 0) {
@@ -292,7 +301,7 @@ export async function POST(request: Request) {
         }
 
         logger.info('Wallet saved successfully');
-        await recordCavosEvent({ appId: canonicalAppId, environmentId: environment?.id, walletId: data.id, eventType: existingWallet ? 'wallet.updated' : 'wallet.created', status: 'success', requestId: logger.requestId, network, metadata: { device_count: devices?.length ?? 0 } });
+        await recordCavosEvent({ appId: canonicalAppId, environmentId: environment?.id, walletId: data.id, eventType: result.status === 'created' ? 'wallet.created' : 'wallet.updated', status: 'success', requestId: logger.requestId, network, metadata: { device_count: devices?.length ?? 0 } });
         logger.complete(true);
         return ApiResponse.success({
             success: true,

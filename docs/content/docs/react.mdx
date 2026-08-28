@@ -85,7 +85,26 @@ function Wallet() {
 
 `WalletStatus`: `{ isDeploying, isReady, needsDeviceApproval, awaitingApproval,
 pendingRequestId, hasPasskey, isNewAccount, isSocialRecovering,
-socialRecoveryReadyAt }`. Gate any transaction on `walletStatus.isReady`.
+socialRecoveryReadyAt, recovery }`. Gate any transaction on
+`walletStatus.isReady`.
+
+`walletStatus.recovery` is the one flag most apps actually read:
+`{ protected: boolean; methods: ("passkey" | "social")[] }` — can this user get
+back in from a device they do not have yet? The other flags describe work in
+flight; this describes the standing guarantee.
+
+```tsx
+const { walletStatus } = useCavos();
+if (walletStatus.isReady && !walletStatus.recovery.protected) {
+  // Nudge: "Add a passkey so you can sign in on a new device."
+}
+```
+
+<Callout type="info">
+`recovery.protected` starts `false` and flips once the lookup that fills it
+returns. Read it as "not known to be protected" during the first moments of a
+connect, not as "known to be unprotected" — don't show a scary warning on frame one.
+</Callout>
 
 ### Login
 
@@ -117,6 +136,9 @@ the args differ per chain. See [Wallet actions](/docs/wallet-actions).
 | Method | Description |
 |--------|-------------|
 | `addSigner(pubkey)` | Authorize another device signer (gasless `add_signer`). |
+| `removeSigner(pubkey)` | Revoke a device signer (gasless `remove_signer`) — the "this wasn't me" escape hatch. Must run from a device that is already authorized, and cannot revoke itself. On **Stellar** use `wallet.removeDevice(...)` instead: devices there are envelope slots, not signer pubkeys. |
+| `listDevices()` | Device signer pubkeys currently authorized on this wallet, for a management UI. Starknet/Solana only — on Stellar call `wallet.listDevices()` for the envelope slot ids. |
+| `enrollPasskey(passkey, params)` | Low-level passkey enrollment when you drive WebAuthn yourself. Most apps want `enrollPasskeyDefault()`. |
 | `enrollPasskeyDefault()` | Enroll a synced passkey as an approver (2FA for new devices). Requires a ready device. |
 | `approveDeviceWithPasskey()` | From a `needs-device-approval` browser, prompt the synced passkey to authorize this device. |
 | `setupRecovery()` | Register a backup signer derived from a generated recovery code. **Resolves with the code** — show it to the user once. |
@@ -234,6 +256,33 @@ slides up from the bottom with rounded top corners and a grab handle, overlaying
 the page with a blurred backdrop. This is fully automatic; there is no prop to
 toggle. On desktop the modal renders centered. The `inline` mode disables the
 overlay/sheet entirely (the card is embedded in your layout).
+
+## Device approval & revocation pages
+
+Every integrating app needs two routes: one where a user approves a new device,
+and one where they revoke a device they don't recognise (the links in the
+device-added email). Both ship ready to mount:
+
+```tsx title="app/approve-device/page.tsx"
+import { ApproveDevicePage } from "@cavos/kit/react";
+
+const configs = [
+  { chain: "starknet", network: "testnet", appSalt: "my-app", appId, paymasterApiKey },
+  { chain: "solana", network: "testnet", appSalt: "my-app", appId },
+];
+
+export default function Page() {
+  return <ApproveDevicePage configs={configs} />;
+}
+```
+
+Pass **every chain your app supports** — the request carries its own network and
+the page selects the matching config (`configForNetwork` / `chainForNetwork` do
+this, and are exported if you mount the provider yourself). Mounting the wrong
+chain's provider fails in a way that reads like the device is gone.
+
+`RevokeDevicePage` is the same flow with the opposite verb. Pass a function as
+`children` to keep your own markup — see [Multi-device](/docs/multi-device#bringing-your-own-ui).
 
 ## Multi-chain in React
 
