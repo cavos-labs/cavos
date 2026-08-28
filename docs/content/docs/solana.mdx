@@ -3,29 +3,31 @@ title: Solana
 description: Use @cavos/kit on Solana — device-bound accounts authorized by the native secp256r1 precompile, gasless via the Cavos relayer.
 ---
 
-Solana is one of the current adapters in Cavos' every-chain architecture. As on Starknet, a
-deterministic address derived from the user's identity is controlled by a
-silent secp256r1 (P-256) device key. The difference is how that key is verified
-on-chain: instead of an account contract recovering the secp256r1 signer, every
-guarded action is a **two-instruction bundle** that pairs Solana's **native
-secp256r1 signature-verify precompile** with the Cavos device-account program
-instruction.
+Solana is one of the current adapters in Cavos' every-chain architecture. As on
+Starknet, a deterministic address derived from the user's identity is controlled
+by a silent secp256r1 (P-256) device key. The difference is how that key is
+verified on-chain: instead of an account contract recovering the secp256r1
+signer, every guarded action is a **two-instruction bundle** that pairs Solana's
+**native secp256r1 signature-verify precompile** with the Cavos device-account
+program instruction.
 
-Gas is sponsored by the Cavos relayer (co-signs as fee payer), so the
-integrator needs no fee-payer keypair and the user holds no SOL.
+Gas is sponsored by the Cavos relayer (co-signs as fee payer), so the integrator
+needs no fee-payer keypair and the user holds no SOL.
 
 ## Connect
 
-Use the same unified `Cavos.connect`, passing `chain: "solana"`. An `appId` is
-what activates gasless sponsorship — no `paymasterApiKey` is used on Solana.
+Use the unified `Cavos.connect`, passing `chains: ["solana"]`. An `appId`
+activates gasless sponsorship — no `paymasterApiKey` is used on Solana. **Connect
+never deploys**. The account is created lazily on the first `execute`.
 
 ```ts title="TypeScript"
 import { Cavos } from "@cavos/kit";
 
-const wallet = await Cavos.connect({
-  chain: "solana",                      // selects the Solana path
+const session = await Cavos.connect({
+  chains: ["solana"],
+  defaultChain: "solana",
   network: "testnet",                   // "testnet" (devnet) | "mainnet"
-  appSalt: "my-app",                    // namespaces addresses to your app
+  appSalt: "my-app",                    // device-key namespace
   identity: {                           // from your login (see Authentication)
     userId: user.id,
     email: user.email,
@@ -33,28 +35,42 @@ const wallet = await Cavos.connect({
   appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID, // activates the gasless relayer
 });
 
+const wallet = session.wallet("solana");
 console.log(wallet.address);            // deterministic device-account PDA
+console.log(wallet.status);             // "undeployed" | "ready" | "needs-device-approval"
 ```
 
 `network: "testnet"` resolves to `solana-devnet`; `"mainnet"` resolves to
-`solana-mainnet`. The returned `wallet` is a discriminated union, so narrow on
-`wallet.chain` before calling chain-native methods.
+`solana-mainnet`. The returned `wallet` is discriminated by `wallet.chain`.
 
 <Callout type="warn">
 **Pass your own RPC on mainnet.** Without `rpcUrl`, the kit falls back to the
 public `api.mainnet-beta.solana.com` endpoint, which is rate-limited and unfit
 for production. Provide a real provider (Helius / Triton / QuickNode) via
-`rpcUrl` in production.
+`rpcUrl` or `rpcUrls.solana` in production.
+</Callout>
+
+## Status values
+
+| Status | Meaning | Can execute? |
+|--------|---------|--------------|
+| `undeployed` | Address derived, no on-chain PDA yet | Yes — first execute initializes + runs atomically |
+| `ready` | Account deployed and this device authorized | Yes |
+| `needs-device-approval` | Account deployed but this device not authorized | No — route to device approval |
+
+<Callout type="info">
+**Lazy deploy**: An `undeployed` wallet can sign messages and execute. The
+first `execute` or `executeInstructions` initializes the device-account PDA and
+runs the user's operation. After that, status becomes `ready`.
 </Callout>
 
 ## Execute a transfer
 
 On Solana, `execute(amount, destination)` moves `amount` **lamports** out of the
-device account to `destination`. It is signed silently by the device key and
-sponsored by the relayer.
+device account to `destination`. Both `undeployed` and `ready` wallets can execute.
 
 ```ts title="TypeScript"
-if (wallet.chain === "solana" && wallet.status === "ready") {
+if (wallet.chain === "solana" && wallet.status !== "needs-device-approval") {
   const signature = await wallet.execute(
     1_000_000n,                          // 0.001 SOL, in lamports
     recipientPublicKey,                  // base58 address
@@ -63,8 +79,11 @@ if (wallet.chain === "solana" && wallet.status === "ready") {
 }
 ```
 
+When the account is `undeployed`, this call initializes the account first, then
+executes the transfer.
+
 The `amount` is a `bigint` of lamports (`1 SOL = 1_000_000_000 lamports`). The
-returned value is the Solana **transaction signature**, not a Starknet felt.
+returned value is the Solana **transaction signature**.
 
 ## Execute arbitrary program calls
 
@@ -88,7 +107,7 @@ const instructions: InstructionData[] = [{
   data: ix.data,
 }];
 
-if (wallet.chain === "solana" && wallet.status === "ready") {
+if (wallet.chain === "solana" && wallet.status !== "needs-device-approval") {
   const signature = await wallet.executeInstructions(instructions);
 }
 ```
@@ -110,6 +129,18 @@ If `status` is `"needs-device-approval"`, this device is new to an existing
 wallet. Approve it from an already-registered device with `wallet.addSigner`
 — the same model as [Multi-device](/docs/multi-device) on Starknet.
 </Callout>
+
+## Sign messages
+
+Sign arbitrary messages off-chain with the device key. Works on both
+`undeployed` and `ready` wallets:
+
+```ts title="TypeScript"
+const sig = await wallet.signMessage("Hello, Cavos!");
+// sig.signature: Uint8Array
+// sig.publicKey: "..." (33-byte compressed P-256 as hex)
+// sig.curve: "secp256r1"
+```
 
 ## How signing works
 
@@ -141,8 +172,8 @@ advanced flows where you bring your own payer.
 
 ## Address derivation
 
-On Solana the identity seed is a **SHA-256** 32-byte `address_seed`
-(`deriveAddressSeedSolana`), and the account is a deterministic **PDA**:
+On Solana the identity seed is a **SHA-256** 32-byte `address_seed`, and the
+account is a deterministic **PDA**:
 
 ```
 [cavos-account, addressSeed, deviceKeyX]
@@ -176,9 +207,12 @@ import { generateRecoveryCode } from "@cavos/kit";
 
 // On a registered device — run once, have the user store the code:
 const code = generateRecoveryCode();
-await wallet.setupRecovery(code);            // registers the backup signer (idempotent)
+await wallet.setupRecovery(code);            // registers the backup signer (pending if undeployed)
 // → show `code` to the user once; the kit never persists it.
 ```
+
+For `undeployed` wallets, `setupRecovery` stores the backup signer pending. It
+gets included when the account is initialized.
 
 ```ts title="TypeScript"
 // After losing every device — enter the stored code:
@@ -200,12 +234,15 @@ backup key. See [Recovery codes](/docs/recovery-codes) for the model.
 
 ## What's available
 
-- ✅ Silent secp256r1 device signer, auto-initialized device-account PDA.
+- ✅ Silent secp256r1 device signer, deterministic device-account PDA.
+- ✅ Lazy deploy — first execute initializes the account atomically.
 - ✅ Gasless execute + initialize via the Cavos relayer.
+- ✅ Sign messages off-chain while undeployed.
 - ✅ **Arbitrary program calls** via `executeInstructions` (SPL transfers, swaps,
   staking) — gated by the app's program allowlist.
 - ✅ Multi-device add-signer (device-approved).
 - ✅ **Recovery** (self-custodial, code-based) — `setupRecovery` / `recover`.
+- ✅ [Passkeys](/docs/passkeys) as approvers for new-device authorization.
 
 For the cross-chain model and how this compares to Starknet, see
 [Chains](/docs/chains) and [Starknet](/docs/starknet).

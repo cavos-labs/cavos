@@ -20,8 +20,9 @@ export function Providers({ children }) {
     <CavosProvider
       config={{
         appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
-        chain: "solana",        // "starknet" | "solana" | "stellar"
-        network: "testnet",     // resolves to the chain's devnet/sepolia
+        chains: ["solana", "stellar"],
+        defaultChain: "solana",
+        network: "testnet",
         appSalt: "my-app",
         socialRecovery: true,   // optional — see Recovery
       }}
@@ -36,16 +37,16 @@ export function Providers({ children }) {
 }
 ```
 
-The provider manages **exactly one chain**. Behind the scenes it resolves the
-identity, deploys the device-signer account gaslessly on first use, and keeps
-the wallet handle ready for sponsored transactions. See
-[Chains](/docs/chains) for the chain model.
+The provider manages **one or more chains**. Behind the scenes it resolves the
+identity, derives addresses for all configured chains, and keeps the wallet
+handles ready for sponsored transactions. Deployment happens lazily on first
+execute per chain — see [Concepts](/docs/concepts).
 
 ### Props
 
 | Prop | Description |
 |------|-------------|
-| `config` | The chain, network, `appSalt` and credentials. Exactly one chain. |
+| `config` | Chains, network, `appSalt` and credentials. One or more chains via `chains` + `defaultChain`. |
 | `modal` | Login modal appearance and providers. Omit to render no modal. |
 | `identity` | **Bring your own auth.** Pass your signed-in user and Cavos login turns off. `null` while your auth loads or after sign-out. See [Authentication](/docs/auth#in-react). |
 
@@ -73,20 +74,32 @@ function Wallet() {
 
 | Field | Description |
 |-------|-------------|
-| `isAuthenticated: boolean` | Whether a wallet is connected and ready. |
+| `isAuthenticated: boolean` | Whether a wallet is connected. |
 | `user: UserInfo \| null` | `{ userId, email?, provider? }` from the login. |
-| `wallet: CavosWallet \| null` | The connected wallet, discriminated by `wallet.chain`. Narrow on it before chain-native calls. |
-| `address: string \| null` | The deterministic account address. |
+| `wallet: CavosWallet \| null` | The connected wallet for the selected chain, discriminated by `wallet.chain`. Narrow on it before chain-native calls. |
+| `session: CavosWallet & CavosSession \| null` | The full multi-chain session. Use `session.wallet("stellar")` to access other chains. |
+| `address: string \| null` | The account address for the selected chain. |
 | `chain: Chain` | The active chain (`"starknet" \| "solana" \| "stellar"`). |
+| `configuredChains: Chain[]` | All chains configured for this session. |
 | `walletStatus: WalletStatus` | Deployment / device-approval / passkey flags (see below). |
 | `isLoading: boolean` | True during an in-flight login or connect. |
 | `authError: string \| null` | Last unrecoverable auth/connect error. Null while healthy. |
 | `passkeySupported: boolean` | Whether this device/browser can use a platform passkey. |
 
-`WalletStatus`: `{ isDeploying, isReady, needsDeviceApproval, awaitingApproval,
+`WalletStatus`: `{ isDeploying, isReady, isUndeployed, needsDeviceApproval, awaitingApproval,
 pendingRequestId, hasPasskey, isNewAccount, isSocialRecovering,
-socialRecoveryReadyAt, recovery }`. Gate any transaction on
-`walletStatus.isReady`.
+socialRecoveryReadyAt, recovery }`.
+
+- `isUndeployed`: True when the account has not been deployed on-chain yet.
+  First execute will deploy + run atomically.
+- `isReady`: True when deployed and this device is authorized.
+- `needsDeviceApproval`: True when deployed but this device is not authorized.
+
+<Callout type="info">
+Both `isUndeployed` and `isReady` allow execution. Only `needsDeviceApproval`
+blocks transactions. An undeployed wallet can sign messages and execute — the
+first execute deploys the account.
+</Callout>
 
 `walletStatus.recovery` is the one flag most apps actually read:
 `{ protected: boolean; methods: ("passkey" | "social")[] }` — can this user get
@@ -106,6 +119,23 @@ returns. Read it as "not known to be protected" during the first moments of a
 connect, not as "known to be unprotected" — don't show a scary warning on frame one.
 </Callout>
 
+### Chain switching
+
+Switch the selected chain without re-authenticating or remounting:
+
+```tsx
+const { chain, setChain, configuredChains, session } = useCavos();
+
+// Switch to Stellar
+await setChain("stellar");
+
+// Now `chain` is "stellar", `wallet` is the Stellar wallet
+// The walletStatus updates to reflect the Stellar account's state
+```
+
+`setChain` does not re-deploy or re-authenticate — it just changes which wallet
+is active. The session keeps all chains connected.
+
 ### Login
 
 | Method | Description |
@@ -120,8 +150,8 @@ connect, not as "known to be unprotected" — don't show a scary warning on fram
 
 | Method | Description |
 |--------|-------------|
-| `execute(calls, opts?)` | **Starknet only.** Multicall signed by the device key, gasless by default. Returns `{ transactionHash }`. |
-| `signMessage(message)` | **All chains.** Sign an arbitrary message off-chain; returns a uniform `MessageSignature`. See [Wallet actions](/docs/wallet-actions). |
+| `execute(calls, opts?)` | **Starknet only.** Multicall signed by the device key, gasless by default. Returns `{ transactionHash }`. Works on `undeployed` (deploys first) and `ready` wallets. |
+| `signMessage(message)` | **All chains.** Sign an arbitrary message off-chain; returns a uniform `MessageSignature`. Works on `undeployed` and `ready` wallets. See [Wallet actions](/docs/wallet-actions). |
 
 <Callout type="info">
 On **Solana and Stellar**, call the wallet directly for chain-native actions
@@ -139,9 +169,9 @@ the args differ per chain. See [Wallet actions](/docs/wallet-actions).
 | `removeSigner(pubkey)` | Revoke a device signer (gasless `remove_signer`) — the "this wasn't me" escape hatch. Must run from a device that is already authorized, and cannot revoke itself. On **Stellar** use `wallet.removeDevice(...)` instead: devices there are envelope slots, not signer pubkeys. |
 | `listDevices()` | Device signer pubkeys currently authorized on this wallet, for a management UI. Starknet/Solana only — on Stellar call `wallet.listDevices()` for the envelope slot ids. |
 | `enrollPasskey(passkey, params)` | Low-level passkey enrollment when you drive WebAuthn yourself. Most apps want `enrollPasskeyDefault()`. |
-| `enrollPasskeyDefault()` | Enroll a synced passkey as an approver (2FA for new devices). Requires a ready device. |
+| `enrollPasskeyDefault()` | Enroll a synced passkey as an approver (2FA for new devices). Works on `undeployed` (pending until first execute) and `ready` wallets. |
 | `approveDeviceWithPasskey()` | From a `needs-device-approval` browser, prompt the synced passkey to authorize this device. |
-| `setupRecovery()` | Register a backup signer derived from a generated recovery code. **Resolves with the code** — show it to the user once. |
+| `setupRecovery()` | Register a backup signer derived from a generated recovery code. **Resolves with the code** — show it to the user once. Works on `undeployed` (pending until first execute) and `ready` wallets. |
 | `submitSocialRecoveryToken(idToken)` | Drive social recovery with a provider `id_token` your own login obtained. Enrols when the device is ready, recovers when it is not. See [Hardware-isolated recovery](/docs/hardware-isolated-recovery#with-your-own-auth). |
 | `recover(code)` | Recover access after losing every device. Brings the provider to a ready state. |
 | `resendDeviceApproval()` | Re-request the device-approval email for the current pending request. |
@@ -234,7 +264,7 @@ All visual props (`primaryColor`, `theme`, `backgroundColor`, `radius`,
 
 ```tsx
 <CavosProvider
-  config={{ chain: "solana", network: "testnet", appSalt: "my-app", appId }}
+  config={{ chains: ["solana"], defaultChain: "solana", network: "testnet", appSalt: "my-app", appId }}
   modal={{
     appName: "My App",
     appLogo: "/logo.png",
@@ -267,8 +297,8 @@ device-added email). Both ship ready to mount:
 import { ApproveDevicePage } from "@cavos/kit/react";
 
 const configs = [
-  { chain: "starknet", network: "testnet", appSalt: "my-app", appId, paymasterApiKey },
-  { chain: "solana", network: "testnet", appSalt: "my-app", appId },
+  { chains: ["starknet"], defaultChain: "starknet", network: "testnet", appSalt: "my-app", appId, paymasterApiKey },
+  { chains: ["solana"], defaultChain: "solana", network: "testnet", appSalt: "my-app", appId },
 ];
 
 export default function Page() {
@@ -286,21 +316,47 @@ chain's provider fails in a way that reads like the device is gone.
 
 ## Multi-chain in React
 
-The provider is single-chain by design. To let a user switch chains, **remount
-the provider** with a new `key` — this resets auth state and connects a fresh
-wallet for the new chain:
+The provider handles multiple chains natively. Configure them all up front:
 
 ```tsx
-const [chain, setChain] = useState<"solana" | "stellar" | "starknet">("solana");
-
-<CavosProvider key={chain} config={{ chain, network: "testnet", appSalt: "my-app", appId }}>
-  <App onChainChange={setChain} />
+<CavosProvider
+  config={{
+    chains: ["solana", "stellar", "starknet"],
+    defaultChain: "solana",
+    network: "testnet",
+    appSalt: "my-app",
+    appId,
+    paymasterApiKey, // for Starknet
+  }}
+  modal={{ appName: "My App" }}
+>
+  <App />
 </CavosProvider>
 ```
 
-<Callout type="warn">
-Changing the `key` signs the user out — each chain has a separate wallet and
-session. Surface this in your UI (e.g. "Switching chain signs you out").
+Then switch chains without remounting:
+
+```tsx
+function ChainSwitcher() {
+  const { chain, setChain, configuredChains, walletStatus } = useCavos();
+
+  return (
+    <select value={chain} onChange={(e) => setChain(e.target.value as Chain)}>
+      {configuredChains.map((c) => (
+        <option key={c} value={c}>{c}</option>
+      ))}
+    </select>
+  );
+}
+```
+
+`setChain` updates the active chain, and `walletStatus` reflects the new
+chain's status. No re-authentication, no remount, no lost state.
+
+<Callout type="info">
+Each chain has its own address, deployment status, and device authorization.
+Switching chains may show a different `walletStatus` — one chain might be
+`ready` while another is `undeployed` or `needs-device-approval`.
 </Callout>
 
 <Callout type="info">
