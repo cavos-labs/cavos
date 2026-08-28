@@ -15,7 +15,9 @@ import { NextResponse } from 'next/server';
  *   - wallet_count  — wallets under this org, all apps + networks
  *   - wallet_limit  — null = unlimited
  *   - warning       — 'approaching_limit' at ≥80% on a capped plan, else null
- *   - app_salt      — per-app salt for wallet address derivation
+ *   - app_salt      — LEGACY. Wallet addresses are named by the first device
+ *                    signer and stored in `wallets`; nothing derives an address
+ *                    from this value any more. Kept only for older SDKs.
  */
 export async function GET(
     request: Request,

@@ -55,6 +55,18 @@ export class ApiResponse {
     }
 
     /**
+     * Conflict (409) — the registry row already names a different address.
+     * `address` is always included: the client must adopt it, so it is not a
+     * debug detail.
+     */
+    static conflict(message: string, details: Record<string, unknown>): NextResponse {
+        return NextResponse.json({ error: message, ...details }, {
+            status: 409,
+            headers: CORS_HEADERS,
+        });
+    }
+
+    /**
      * Not found (404)
      */
     static notFound(message: string = 'Resource not found'): NextResponse {

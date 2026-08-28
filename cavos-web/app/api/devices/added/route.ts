@@ -21,6 +21,7 @@ import { ApiResponse } from '@/lib/api/response';
 import { ApiMiddleware } from '@/lib/api/middleware';
 import { recordCavosEvent } from '@/lib/operations/events';
 import { notifyDeviceAdded } from '@/lib/devices/removal';
+import { verifyUserToken, isSubject } from '@/lib/api/verifyUserToken';
 
 interface AddedBody {
   app_id: string;
@@ -63,7 +64,7 @@ export async function POST(request: Request) {
 
     const { data: wallet, error: walletErr } = await adminSupabase
       .from('wallets')
-      .select('id, network')
+      .select('id, network, user_social_id')
       .eq('app_id', app.id)
       .eq('environment_id', resolved.environmentId)
       .eq('address', body.wallet_address)
@@ -72,6 +73,11 @@ export async function POST(request: Request) {
     if (walletErr || !wallet) {
       logger.warn('Wallet not found for address', { wallet_address: body.wallet_address });
       return ApiResponse.badRequest('Wallet not found');
+    }
+
+    // Only the wallet's owner may mirror a signer onto it.
+    if (!isSubject(await verifyUserToken(request), wallet.user_social_id)) {
+      return ApiResponse.unauthorized('Invalid user token');
     }
 
     // Mirror the signer. The TEE path authorizes on-chain without ever telling
