@@ -3,10 +3,13 @@ title: Wallet actions
 description: What you do with a connected wallet — read balances, send tokens, sign messages, and sign without submitting.
 ---
 
-Once `walletStatus.isReady` is true, the wallet is deployed and this device is
-an authorized signer. This page covers the common things you do next — all of it
-via `useCavos()` inside a `<CavosProvider>`. See [React](/docs/react) for the
-provider/hook setup.
+Once connected, this page covers the common things you do — all via `useCavos()`
+inside a `<CavosProvider>`. See [React](/docs/react) for the provider/hook setup.
+
+**When can you execute?** Both `undeployed` and `ready` wallets can execute. The
+first execution on an `undeployed` wallet deploys the account atomically. Only
+`needs-device-approval` blocks execution — route that to a passkey or
+[multi-device](/docs/multi-device) approval.
 
 Every chain-specific call narrows on `wallet.chain` first, because `execute`
 keeps each chain's native signature. See [Chains](/docs/chains).
