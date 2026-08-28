@@ -179,9 +179,19 @@ describe('validateClassicCreate', () => {
   const create = () =>
     Operation.createAccount({ destination: ACCOUNT, startingBalance: '0', source: RELAYER });
   const zeroMaster = () => Operation.setOptions({ masterWeight: 0, source: ACCOUNT });
+  const envelope = () =>
+    Operation.manageData({ name: 'cv:ct:0', value: Buffer.alloc(32), source: ACCOUNT });
 
-  it('accepts a zero-balance sponsored create that kills the master key', () => {
-    const tx = build([begin(), create(), zeroMaster(), end()]);
+  it('accepts the first-device shape: create plus the Cavos envelope', () => {
+    // The G address IS the control key here, so there is no master to zero —
+    // doing so would leave the account with no signer at all.
+    const tx = build([begin(), create(), envelope(), end()]);
+    assert.deepEqual(validateClassicCreate(tx, RELAYER), { ok: true });
+  });
+
+  it('still accepts the older shape that also zeroes the master', () => {
+    // SDKs predating the first-device model are unchanged and must keep working.
+    const tx = build([begin(), create(), envelope(), zeroMaster(), end()]);
     assert.deepEqual(validateClassicCreate(tx, RELAYER), { ok: true });
   });
 
@@ -189,7 +199,7 @@ describe('validateClassicCreate', () => {
     const tx = build([
       begin(),
       Operation.createAccount({ destination: ACCOUNT, startingBalance: '100', source: RELAYER }),
-      zeroMaster(),
+      envelope(),
       end(),
     ]);
     const res = validateClassicCreate(tx, RELAYER);
@@ -197,15 +207,29 @@ describe('validateClassicCreate', () => {
     assert.match(res.reason!, /starting balance must be 0/);
   });
 
-  it('refuses a create that leaves the master key alive', () => {
+  it('refuses a bare create with no Cavos envelope', () => {
+    // Otherwise the relayer sponsors reserves for any account at all, which is
+    // the whole thing this gate exists to prevent.
     const tx = build([begin(), create(), end()]);
     const res = validateClassicCreate(tx, RELAYER);
     assert.equal(res.ok, false);
-    assert.match(res.reason!, /zero the master weight/);
+    assert.match(res.reason!, /control envelope/);
+  });
+
+  it('refuses a data key outside the cv: namespace', () => {
+    const tx = build([
+      begin(),
+      create(),
+      Operation.manageData({ name: 'other:key', value: Buffer.alloc(4), source: ACCOUNT }),
+      end(),
+    ]);
+    const res = validateClassicCreate(tx, RELAYER);
+    assert.equal(res.ok, false);
+    assert.match(res.reason!, /outside the cv: namespace/);
   });
 
   it('refuses a trustline inside a create', () => {
-    const tx = build([begin(), create(), zeroMaster(), trust(USDC), end()]);
+    const tx = build([begin(), create(), envelope(), trust(USDC), end()]);
     assert.equal(validateClassicCreate(tx, RELAYER).ok, false);
   });
 });
