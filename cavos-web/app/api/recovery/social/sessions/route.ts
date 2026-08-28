@@ -81,15 +81,6 @@ export async function POST(request: Request) {
   // statuses, so a session that failed or expired releases its challenge and
   // the browser can retry with the same credential instead of sending the user
   // back through the provider.
-  const { data: replayedChallenge } = await admin
-    .from('social_recovery_sessions')
-    .select('id')
-    .eq('auth_challenge_hash', authChallengeHash)
-    .in('status', ['ready', 'completed'])
-    .maybeSingle()
-  if (replayedChallenge) {
-    return NextResponse.json({ error: 'auth_credential_replayed' }, { status: 409 })
-  }
 
   const { data: environmentPolicy } = await admin
     .from('app_environments')
@@ -137,6 +128,31 @@ export async function POST(request: Request) {
     .eq('address', body.wallet_address)
     .maybeSingle()
   if (!wallet) return NextResponse.json({ error: 'wallet_not_found' }, { status: 404 })
+
+  // One credential, one session per wallet.
+  //
+  // This used to be one session per credential outright, which was right while
+  // an account meant one chain. It is not any more: a session holds wallets on
+  // every configured chain, and each needs its own enrolment. Scoped globally,
+  // the first chain to enrol consumed the login and the rest were refused —
+  // silently, since the effect that would have enrolled them simply had no
+  // credential left. The wallets that came out of that work and send, and only
+  // reveal they were never protected when a second device tries to recover.
+  //
+  // The credential still cannot be replayed against the same wallet, which is
+  // what the protection is for: it stops a stolen token opening a second
+  // session for an account it already opened one for. Every session it can
+  // open belongs to a wallet that credential's own subject controls.
+  const { data: replayedChallenge } = await admin
+    .from('social_recovery_sessions')
+    .select('id')
+    .eq('auth_challenge_hash', authChallengeHash)
+    .eq('wallet_id', wallet.id)
+    .in('status', ['ready', 'completed'])
+    .maybeSingle()
+  if (replayedChallenge) {
+    return NextResponse.json({ error: 'auth_credential_replayed' }, { status: 409 })
+  }
 
   const policy = {
     app_id: appId,
