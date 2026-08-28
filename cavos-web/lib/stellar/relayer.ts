@@ -95,8 +95,19 @@ export function parseAnyTransaction(
  *  - exactly one `createAccount` with startingBalance "0", and its destination is
  *    the single non-relayer op source (the new account);
  *  - the sponsored id matches that new account;
- *  - a `setOptions` that zeroes the master weight (our account model);
+ *  - at least one `cv:` data entry, which is what makes it a Cavos account;
  *  - every `manageData` key is under the `cv:` namespace.
+ *
+ * It used to require a `setOptions` zeroing the master weight. That was the old
+ * model's shape, where the master key was derived from the user's identity and
+ * had to be neutered so it could never sign. Under the first-device model the
+ * `G…` address IS the control key, so zeroing the master would leave the account
+ * with no signer at all — the rule would not merely reject the new shape, it
+ * would demand a broken one.
+ *
+ * What is actually being gated is "the relayer only sponsors reserves for Cavos
+ * accounts". The envelope in the `cv:` namespace is what says that, and it is
+ * present in both shapes — so old SDKs still pass unchanged.
  */
 export function validateClassicCreate(tx: Transaction, relayerPublicKey: string): ValidationResult {
   if (tx.source !== relayerPublicKey) {
@@ -108,7 +119,7 @@ export function validateClassicCreate(tx: Transaction, relayerPublicKey: string)
 
   let newAccount: string | undefined;
   let sawCreate = false;
-  let sawMasterZero = false;
+  let sawCavosEnvelope = false;
 
   for (const op of tx.operations) {
     if (!CLASSIC_CREATE_OP_TYPES.has(op.type)) {
@@ -153,15 +164,12 @@ export function validateClassicCreate(tx: Transaction, relayerPublicKey: string)
       if (!md.name.startsWith('cv:')) {
         return { ok: false, reason: `data key ${md.name} is outside the cv: namespace` };
       }
-    }
-    if (op.type === 'setOptions') {
-      const so = op as Operation.SetOptions;
-      if (Number(so.masterWeight) === 0) sawMasterZero = true;
+      sawCavosEnvelope = true;
     }
   }
 
-  if (!sawMasterZero) {
-    return { ok: false, reason: 'create must zero the master weight (Cavos account model)' };
+  if (!sawCavosEnvelope) {
+    return { ok: false, reason: 'create must write the Cavos control envelope (cv: data entries)' };
   }
   return { ok: true };
 }
