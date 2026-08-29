@@ -1,11 +1,12 @@
 ---
 title: Quickstart
-description: Install @cavos/kit, choose a chain adapter, and execute your first sponsored transaction.
+description: Install @cavos/kit, connect to one or more chains, and execute your first sponsored transaction.
 ---
 
 The onboarding contract is shared across every Cavos adapter: authenticate,
-connect, wait for a ready wallet, then execute using the selected chain's native
-method.
+connect, then execute. Connect derives addresses and checks deployment status
+but **never deploys**. The first `execute` triggers deployment atomically with
+the user's operation.
 
 ## 1. Install
 
@@ -22,13 +23,18 @@ origin, rate, and spend in the sponsorship service.
 
 ## 2. Connect
 
+Connect derives the address for every configured chain and checks whether the
+account exists on-chain. It **never deploys**. Deployment happens lazily on the
+first `execute` call.
+
 This Solana example needs only the public App ID in the browser:
 
 ```ts title="TypeScript"
 import { Cavos } from "@cavos/kit";
 
-const wallet = await Cavos.connect({
-  chain: "solana",
+const session = await Cavos.connect({
+  chains: ["solana"],
+  defaultChain: "solana",
   network: "testnet",
   appSalt: "my-app",
   identity: {
@@ -38,32 +44,53 @@ const wallet = await Cavos.connect({
   appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
 });
 
-console.log(wallet.address);
+console.log(session.address);  // the address for the default chain
+console.log(session.status);   // "undeployed" | "ready" | "needs-device-approval"
 ```
 
-`Cavos.connect` authenticates or accepts your identity, resolves the
-deterministic wallet, creates or loads local device authority, and provisions
-the chain account when required.
+The returned session is the default chain's wallet augmented with multi-chain
+methods. `session.wallet("solana")` returns the Solana wallet;
+`session.chainStatus("solana")` returns its status.
+
+### Status values
+
+| Status | Meaning | Can execute? |
+|--------|---------|--------------|
+| `undeployed` | Address derived but no on-chain account yet. | Yes — first execute deploys + runs atomically. |
+| `ready` | Account deployed and this device is authorized. | Yes |
+| `needs-device-approval` | Account deployed but this device is not a signer. | No — route to [device approval](#handle-device-approval). |
+
+<Callout type="info">
+**Lazy deploy**: An `undeployed` wallet can sign messages (`signMessage`) and
+execute. The first `execute` call deploys the account and runs the user's
+operation in a single sponsored transaction. No separate deploy step is needed.
+</Callout>
 
 ## 3. Execute
 
-The return value is a discriminated union. Narrow on `wallet.chain` so
-TypeScript exposes the correct native method:
+Narrow on `wallet.chain` so TypeScript exposes the correct native method. Both
+`undeployed` and `ready` wallets can execute.
 
 ```ts title="TypeScript"
-if (wallet.status !== "ready") {
-  // Handle a returning wallet on a new device.
-  throw new Error("Device approval required");
+const wallet = session.wallet("solana");
+
+// Only needs-device-approval must be handled differently
+if (wallet.status === "needs-device-approval") {
+  throw new Error("This device must be approved first");
 }
 
 if (wallet.chain === "starknet") {
-  await wallet.execute(calls);
+  const { transactionHash } = await wallet.execute(calls);
 } else if (wallet.chain === "solana") {
-  await wallet.execute(1_000_000n, solanaRecipient); // lamports
+  const signature = await wallet.execute(1_000_000n, solanaRecipient); // lamports
 } else if (wallet.chain === "stellar") {
-  await wallet.execute(1_000_000n, stellarRecipient); // stroops
+  const hash = await wallet.execute(1_000_000n, stellarRecipient); // stroops
 }
 ```
+
+When the account is `undeployed`, `execute` deploys it first, then runs the
+operation — atomically, in a single sponsored transaction. After the first
+execute, status becomes `ready`.
 
 For arbitrary execution, Starknet accepts multicalls, Solana exposes
 `executeInstructions`, and Stellar exposes `invokeContract`. Each path has
@@ -73,18 +100,18 @@ adapter-specific validation and sponsorship rules.
 
 | Adapter | Required configuration | Sponsored execution |
 |---|---|---|
-| **Starknet** | App ID, network, app salt, identity, trusted paymaster integration | Paymaster sponsors deploy and execute. |
+| **Starknet** | App ID, network, app salt, identity, `paymasterApiKey` | Paymaster sponsors deploy and execute. |
 | **Solana** | App ID, network, app salt, identity | Hosted relayer becomes fee payer; arbitrary programs are allowlisted per app. |
 | **Stellar** | App ID, network, app salt, identity | Hosted relayer can sponsor reserves and fee-bump submission. |
 
 Use the dedicated [Starknet](/docs/starknet), [Solana](/docs/solana), or
 [Stellar](/docs/stellar) guide for production configuration.
 
-## 5. Handle device approval and recovery
+## 5. Handle device approval
 
 `status === "needs-device-approval"` means the identity already owns a wallet
 but this device is not enrolled. Do not create a second wallet. Route the user
-through [Multi-device](/docs/multi-device), a synced [Passkey](/docs/passkeys),
+through [Passkeys](/docs/passkeys) (recommended), [Multi-device](/docs/multi-device),
 or the adapter's [Recovery](/docs/recovery) path.
 
 <Callout type="info">
@@ -92,6 +119,42 @@ Passkeys and recovery share a product goal across chains, but their cryptographi
 implementation differs. Use the high-level wallet methods and follow the
 selected adapter's capability notes.
 </Callout>
+
+## More than one chain
+
+Connect once, access every configured chain. The session provides wallets for
+all chains without re-authenticating:
+
+```ts title="TypeScript"
+const session = await Cavos.connect({
+  chains: ["solana", "stellar", "starknet"],
+  defaultChain: "solana",
+  network: "testnet",
+  appSalt: "my-app",
+  identity,
+  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+  paymasterApiKey: process.env.NEXT_PUBLIC_CAVOS_PAYMASTER_API_KEY, // Starknet only
+});
+
+// Access any chain's wallet
+const solana = session.wallet("solana");
+const stellar = session.wallet("stellar");
+const starknet = session.wallet("starknet");
+
+// Check status per chain
+console.log(session.chainStatus("solana"));   // "undeployed" | "ready" | "needs-device-approval"
+console.log(session.chainStatus("stellar"));
+console.log(session.chainAddress("stellar")); // G… address
+
+// Execute on Stellar (works even if undeployed — first execute creates the account)
+if (stellar.chain === "stellar" && stellar.status !== "needs-device-approval") {
+  await stellar.execute(10_000_000n, "GDEST...");
+}
+```
+
+Each chain has its own address, derived from the same identity. Deploy happens
+independently per chain on first execute. One login, multiple wallets, no
+re-authentication.
 
 ## React
 
@@ -104,7 +167,8 @@ export function Providers({ children }) {
   return (
     <CavosProvider
       config={{
-        chain: "solana",
+        chains: ["solana", "stellar"],
+        defaultChain: "solana",
         network: "testnet",
         appSalt: "my-app",
         appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
@@ -116,6 +180,9 @@ export function Providers({ children }) {
   );
 }
 ```
+
+The provider gives you `setChain(chain)` to switch the active chain without
+re-mounting or re-authenticating. See [React](/docs/react) for the full guide.
 
 Continue with [React](/docs/react), [React Native](/docs/react-native), or the
 full [API reference](/docs/api-reference).

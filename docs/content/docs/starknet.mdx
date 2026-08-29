@@ -1,27 +1,29 @@
 ---
 title: Starknet
-description: Use @cavos/kit on Starknet — silent device signing, gasless execution, and the Cairo DeviceAccount.
+description: Use @cavos/kit on Starknet — silent device signing, gasless execution via paymaster, and the Cairo DeviceAccount.
 ---
 
-Starknet is one of the current adapters in Cavos' every-chain architecture. A deterministic address
-derived from the user's identity is controlled by a silent secp256r1 (P-256)
-device key, validated on-chain by the Cairo `DeviceAccount` account contract.
-Deploy and execution are sponsored by the Cavos paymaster, so the user pays no
-gas.
+Starknet is one of the current adapters in Cavos' every-chain architecture. A
+deterministic address derived from the user's identity is controlled by a
+silent secp256r1 (P-256) device key, validated on-chain by the Cairo
+`DeviceAccount` account contract. Deploy and execution are sponsored by the
+Cavos paymaster, so the user pays no gas.
 
 ## Connect
 
-`Cavos.connect` with `chain: "starknet"` (the default) does everything:
-authenticate, derive the deterministic address, create/load the silent device
-key, auto-deploy the account on first use, and wire up the gas sponsor.
+`Cavos.connect` with `chain: "starknet"` (or `chains: ["starknet"]`) does
+everything: authenticate, derive the deterministic address, create/load the
+silent device key, and wire up the gas sponsor. **Connect never deploys**. The
+account is created lazily on the first `execute`.
 
 ```ts title="TypeScript"
 import { Cavos } from "@cavos/kit";
 
-const wallet = await Cavos.connect({
-  chain: "starknet",                    // default; shown for clarity
+const session = await Cavos.connect({
+  chains: ["starknet"],
+  defaultChain: "starknet",
   network: "testnet",                   // "testnet" (sepolia) | "mainnet"
-  appSalt: "my-app",                    // namespaces addresses to your app
+  appSalt: "my-app",                    // device-key namespace
   identity: {                           // from your login (see Authentication)
     userId: user.id,
     email: user.email,
@@ -30,21 +32,36 @@ const wallet = await Cavos.connect({
   paymasterApiKey: process.env.NEXT_PUBLIC_CAVOS_PAYMASTER_API_KEY!, // app-scoped, client-visible
 });
 
-console.log(wallet.address);            // deterministic; deployed on first connect
+const wallet = session.wallet("starknet");
+console.log(wallet.address);            // deterministic address
+console.log(wallet.status);             // "undeployed" | "ready" | "needs-device-approval"
 ```
 
 `wallet.chain` narrows to `"starknet"`. The instance members (`address`,
-`status`, `execute`, `addSigner`, `setupRecovery`) are the ones documented in
-the [API reference](/docs/api-reference).
+`status`, `execute`, `addSigner`, `setupRecovery`) are documented in the
+[API reference](/docs/api-reference).
+
+## Status values
+
+| Status | Meaning | Can execute? |
+|--------|---------|--------------|
+| `undeployed` | Address derived, no on-chain account yet | Yes — first execute deploys + runs atomically |
+| `ready` | Account deployed and this device authorized | Yes |
+| `needs-device-approval` | Account deployed but this device not authorized | No — route to device approval |
+
+<Callout type="info">
+**Lazy deploy**: An `undeployed` wallet can sign messages and execute. The
+first `execute` deploys the account and runs the user's calls in a single
+sponsored transaction. After that, status becomes `ready`.
+</Callout>
 
 ## Execute a transaction
 
-When `status === "ready"`, call `execute` with standard Starknet calls. It is
-signed silently by the device key and sponsored by the paymaster — the user sees
-nothing.
+Both `undeployed` and `ready` wallets can execute. Only `needs-device-approval`
+must be handled differently.
 
 ```ts title="TypeScript"
-if (wallet.chain === "starknet" && wallet.status === "ready") {
+if (wallet.chain === "starknet" && wallet.status !== "needs-device-approval") {
   const { transactionHash } = await wallet.execute([
     {
       contractAddress: STRK_TOKEN,
@@ -56,10 +73,13 @@ if (wallet.chain === "starknet" && wallet.status === "ready") {
 }
 ```
 
+When the account is `undeployed`, this call deploys the account first, then
+executes the calls — atomically in a single paymaster-sponsored transaction.
+
 <Callout type="info">
 If `status` is `"needs-device-approval"`, this device is new to an existing
 wallet. Approve it from an already-registered device — see
-[Multi-device](/docs/multi-device).
+[Multi-device](/docs/multi-device) or [Passkeys](/docs/passkeys).
 </Callout>
 
 ## How signing works
@@ -82,8 +102,38 @@ cross-checked test in the `account-contracts` repo.
 ## Gasless execution
 
 `execute` routes through the **Cavos paymaster** (SNIP-9 `execute_from_outside`),
-so the user pays no gas. Both **account deployment** (on first connect) and
-**every execution** are sponsored — the user never needs ETH or STRK to start.
+so the user pays no gas. Both **account deployment** (first execute) and
+**every subsequent execution** are sponsored — the user never needs ETH or STRK.
+
+## Sign messages
+
+Sign arbitrary messages off-chain with the device key. Works on both
+`undeployed` and `ready` wallets:
+
+```ts title="TypeScript"
+const sig = await wallet.signMessage("Hello, Cavos!");
+// sig.signature: Uint8Array (64 bytes, r||s)
+// sig.publicKey: "04..." (uncompressed secp256r1)
+// sig.curve: "secp256r1"
+```
+
+The message is prefixed with `"Cavos Signed Message:\n<len>\n"` before signing.
+
+## Recovery and passkeys
+
+Set up recovery factors so the user can regain access from a new device:
+
+```ts title="TypeScript"
+// On a ready or undeployed wallet
+const code = generateRecoveryCode();
+await wallet.setupRecovery(code);      // registers backup signer (pending if undeployed)
+// Show `code` to the user once — the kit never persists it
+```
+
+For undeployed wallets, `setupRecovery` stores the backup signer pending. It
+gets included in the first deploy transaction automatically.
+
+See [Recovery](/docs/recovery) and [Passkeys](/docs/passkeys) for the full model.
 
 ## Advanced: a plain starknet.js Account
 
@@ -132,10 +182,13 @@ hash is the declared `DeviceAccount` contract; the kit ships the current values.
 
 ## What's available
 
-- ✅ Silent secp256r1 device signer, auto-deployed deterministic account.
+- ✅ Silent secp256r1 device signer, deterministic address.
+- ✅ Lazy deploy — first execute creates the account atomically.
 - ✅ Gasless execute + deployment via the Cavos paymaster.
+- ✅ Sign messages off-chain while undeployed.
 - ✅ [Multi-device](/docs/multi-device) approval + [recovery](/docs/recovery)
   (recovery-code backup) — non-custodial.
+- ✅ [Passkeys](/docs/passkeys) as approvers for new-device authorization.
 
-For the cross-chain model and how Solana compares, see [Chains](/docs/chains) and
-[Solana](/docs/solana).
+For the cross-chain model and how Solana and Stellar compare, see
+[Chains](/docs/chains), [Solana](/docs/solana), and [Stellar](/docs/stellar).

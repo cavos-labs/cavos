@@ -57,15 +57,17 @@ Curves differ across ecosystems, and each adapter resolves that:
 
 ## Writing every-chain application code
 
-Target the unified `Cavos.connect` with `{ chain, network }`, and narrow the
-returned wallet on `wallet.chain` before calling chain-native methods:
+Target the unified `Cavos.connect` with `{ chains, defaultChain, network }`. Use
+`session.wallet(chain)` to get the wallet for a specific chain, and narrow on
+`wallet.chain` before calling chain-native methods:
 
 ```ts title="TypeScript"
 import { Cavos } from "@cavos/kit";
 
-// One entry point; the selected adapter may require additional options.
-const wallet = await Cavos.connect({
-  chain: "starknet",          // "starknet" | "solana" | "stellar"
+// One entry point; connect to one or more chains at once.
+const session = await Cavos.connect({
+  chains: ["starknet"],       // or ["starknet", "solana", "stellar"] for multi-chain
+  defaultChain: "starknet",
   network: "testnet",         // resolves to sepolia / solana-devnet / stellar-testnet
   identity: { userId, email },
   appSalt: "my-app",
@@ -74,15 +76,23 @@ const wallet = await Cavos.connect({
   paymasterApiKey: process.env.NEXT_PUBLIC_CAVOS_PAYMASTER_API_KEY!,
 });
 
+const wallet = session.wallet("starknet");
+console.log(wallet.address);   // address is available immediately
+console.log(wallet.status);    // "undeployed" | "ready" | "needs-device-approval"
+
 // execute() keeps each chain's native signature — narrow on `chain`:
-if (wallet.chain === "starknet") {
+if (wallet.chain === "starknet" && wallet.status !== "needs-device-approval") {
   await wallet.execute(calls);                 // arbitrary Starknet calls
-} else if (wallet.chain === "solana") {
+} else if (wallet.chain === "solana" && wallet.status !== "needs-device-approval") {
   await wallet.execute(amount, destination);   // lamport transfer
-} else if (wallet.chain === "stellar") {
+} else if (wallet.chain === "stellar" && wallet.status !== "needs-device-approval") {
   await wallet.execute(amount, destination);   // XLM transfer (stroops)
 }
 ```
+
+**Lazy deploy**: Connect NEVER deploys the account. Wallets start as `undeployed`
+and the first `execute` deploys + runs atomically. `signMessage` works on
+undeployed wallets too.
 
 When a new adapter ships, the SDK adds its typed `chain` and `network` values.
 Identity and onboarding remain stable; execution stays chain-native. See
