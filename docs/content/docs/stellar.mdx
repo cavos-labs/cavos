@@ -6,7 +6,7 @@ description: Use @cavos/kit on Stellar — a classic G… multisig account whose
 Stellar is one of the current adapters in Cavos' every-chain architecture.
 `@cavos/kit` gives your users a **standard `G…` account** — the same
 address format wallets, exchanges, and every Stellar tool already understand — with
-no seed phrase and no popups. A login derives a deterministic `G…` address, and
+no seed phrase and no popups. A login derives a `G…` address, and
 transactions are signed silently on the device. Gas and account reserves are
 sponsored by the Cavos relayer, so the user never needs to fund or manage XLM to
 get started.
@@ -20,26 +20,27 @@ identical — same `Cavos.connect`, same silent signing, same recovery model.
 
 <Callout type="info">
 **How it works underneath (optional).** The `G…` account is a multisig: a
-deterministic master key (weight 0) fixes the address, and a random **control
-key** (weight 1) does the signing. The control key is sealed **on-chain** in the
-account's own data entries and unwrapped locally on each device, so signing stays
-silent and the account stays self-custodial — no backend ever holds a key. You
-don't need to manage any of this; `Cavos.connect` handles it.
+control key (weight 1) does the signing, sealed **on-chain** in the account's
+own data entries and unwrapped locally on each device, so signing stays silent
+and the account stays self-custodial — no backend ever holds a key. You don't
+need to manage any of this; `Cavos.connect` handles it.
 </Callout>
 
 ## Connect
 
-Use the same unified `Cavos.connect`, passing `chain: "stellar"`. An `appId`
+Use the unified `Cavos.connect`, passing `chains: ["stellar"]`. An `appId`
 activates the gasless relayer (it sponsors the account's XLM reserves and pays
-fees). No `paymasterApiKey` is used on Stellar.
+fees). **Connect never creates the account** — the account is created lazily on
+the first `execute`.
 
 ```ts title="TypeScript"
 import { Cavos } from "@cavos/kit";
 
-const wallet = await Cavos.connect({
-  chain: "stellar",                     // selects the classic-Stellar path
+const session = await Cavos.connect({
+  chains: ["stellar"],
+  defaultChain: "stellar",
   network: "testnet",                   // "testnet" | "mainnet"
-  appSalt: "my-app",                    // namespaces addresses to your app
+  appSalt: "my-app",                    // device-key namespace
   identity: {                           // from your login (see Authentication)
     userId: user.id,
     email: user.email,
@@ -47,12 +48,13 @@ const wallet = await Cavos.connect({
   appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID, // activates the gasless relayer
 });
 
-console.log(wallet.address);            // deterministic G… master address
+const wallet = session.wallet("stellar");
+console.log(wallet.address);            // G… address
+console.log(wallet.status);             // "undeployed" | "ready" | "needs-device-approval"
 ```
 
 `network: "testnet"` resolves to `stellar-testnet`; `"mainnet"` resolves to
-`stellar-mainnet`. The returned `wallet` is a discriminated union, so narrow on
-`wallet.chain === "stellar"` before calling chain-native methods.
+`stellar-mainnet`. The returned `wallet` is discriminated by `wallet.chain`.
 
 <Callout type="info">
 `Cavos.connect` provisions this device's **ECDH unwrap key** for you (a persisted,
@@ -61,15 +63,28 @@ Native / server, pass your own `stellarDeviceKey`. The low-level
 `CavosStellar.connect` requires an explicit `deviceKey`.
 </Callout>
 
+## Status values
+
+| Status | Meaning | Can execute? |
+|--------|---------|--------------|
+| `undeployed` | Address resolved, no on-chain account yet | Yes — first execute creates + runs atomically |
+| `ready` | Account exists and this device can sign | Yes |
+| `needs-device-approval` | Account exists but this device not authorized | No — route to device approval |
+
+<Callout type="info">
+**Lazy deploy**: An `undeployed` wallet can sign messages and execute. The
+first `execute` creates the account (sponsored, 0 XLM cost to the user), then
+performs the operation. After that, status becomes `ready`.
+</Callout>
+
 ## Execute a transfer
 
 On Stellar, `execute(amount, destination)` moves `amount` **stroops** of native
-XLM out of the account to `destination`. It is signed by the control key
-(unlocked silently from the on-chain envelope) and, by default, sponsored by the
-relayer, which fee-bumps and pays the fee.
+XLM out of the account to `destination`. Both `undeployed` and `ready` wallets
+can execute — the first execution creates the account atomically.
 
 ```ts title="TypeScript"
-if (wallet.chain === "stellar" && wallet.status === "ready") {
+if (wallet.chain === "stellar" && wallet.status !== "needs-device-approval") {
   const hash = await wallet.execute(
     10_000_000n,                         // 1 XLM, in stroops
     "GDESTINATION...ADDRESS",            // recipient G… address
@@ -77,6 +92,9 @@ if (wallet.chain === "stellar" && wallet.status === "ready") {
   console.log(hash);                     // Horizon transaction hash
 }
 ```
+
+When the account is `undeployed`, this call creates the account first (sponsored,
+0 XLM cost), then performs the payment. After that, status becomes `ready`.
 
 `amount` is a `bigint` of stroops (`1 XLM = 10_000_000 stroops`). Pass
 `{ sponsored: false }` to submit directly — the account pays its own (tiny) fee
@@ -109,6 +127,12 @@ if (wallet.chain === "stellar" && wallet.status === "ready") {
   });
 }
 ```
+
+<Callout type="warn">
+**Soroban invocations require a deployed account.** Unlike native XLM transfers
+(which auto-create the account), `invokeContract` and `addTrustline` require
+`status === "ready"`. Call `execute()` first to create the account if needed.
+</Callout>
 
 To hold or receive a classic asset (e.g. USDC — needed to fund a USDC escrow),
 open a trustline first. A trustline adds a subentry (reserve); sponsored by the
@@ -212,6 +236,22 @@ co-signing of Soroban calls is still being wired, so on testnet you may run thes
 with `{ sponsored: false }` against a self-funded account.
 </Callout>
 
+## Sign messages
+
+Sign arbitrary messages off-chain with the control key. Works on both
+`undeployed` and `ready` wallets — the control key is generated at connect time:
+
+```ts title="TypeScript"
+const sig = await wallet.signMessage("Hello, Cavos!");
+// sig.signature: Uint8Array
+// sig.publicKey: "G..." (control key's G address)
+// sig.curve: "ed25519"
+```
+
+A verifier calls `Keypair.fromPublicKey(controlAddress).verify(messageBytes,
+signature)` — standard ed25519 math. The message is prefixed with the Cavos
+domain prefix before signing.
+
 ## Unlock factors & silent signing
 
 The control key's seed is sealed under a **DEK** (data-encryption key), and that
@@ -239,7 +279,7 @@ not part of the cross-chain `approveDeviceEverywhere` batch.
 ```ts title="TypeScript"
 import { PasskeyPrf } from "@cavos/kit";
 
-// On a ready device, right after signup:
+// Right after signup — run once to enroll the passkey:
 const prf = new PasskeyPrf({ rpName: "My App" });
 const { secret } = await prf.enroll({
   userId: user.id,
@@ -247,6 +287,10 @@ const { secret } = await prf.enroll({
 });
 await wallet.enrollPasskey(secret);       // writes the cv:wp factor on-chain
 ```
+
+For `undeployed` wallets, `enrollPasskey` stores the passkey wrap pending and
+**creates the account** (sponsored, 0 XLM cost). This ensures the passkey factor
+is never lost to a page refresh before the first execute.
 
 The React `CavosProvider` wraps this as `enrollPasskeyDefault()` /
 `approveDeviceWithPasskey()`, so app code never touches `PasskeyPrf` directly.
@@ -259,7 +303,12 @@ recovery code) to wrap the DEK to this device's slot — future sessions then
 unlock silently:
 
 ```ts title="TypeScript"
-const wallet = await Cavos.connect({ chain: "stellar", /* ...same identity + appSalt... */ });
+const session = await Cavos.connect({
+  chains: ["stellar"],
+  defaultChain: "stellar",
+  /* ...same identity + appSalt... */
+});
+const wallet = session.wallet("stellar");
 
 if (wallet.chain === "stellar" && wallet.status === "needs-device-approval") {
   const prf = new PasskeyPrf({ rpName: "My App" });
@@ -280,14 +329,23 @@ can unlock the account after every device is lost:
 ```ts title="TypeScript"
 import { generateRecoveryCode } from "@cavos/kit";
 
-// On a ready device — run once, have the user store the code:
+// On any device — run once, have the user store the code:
 const code = generateRecoveryCode();
-await wallet.setupRecovery(code);          // writes the cv:wr factor (idempotent)
+await wallet.setupRecovery(code);
+// → show `code` to the user once; the kit never persists it.
 ```
+
+For `undeployed` wallets, `setupRecovery` stores the recovery wrap pending. It
+gets included when the account is created on first `execute`.
 
 ```ts title="TypeScript"
 // After losing every device — reconnect on the new device, then approve it:
-const wallet = await Cavos.connect({ chain: "stellar", /* ...same identity + appSalt... */ });
+const session = await Cavos.connect({
+  chains: ["stellar"],
+  defaultChain: "stellar",
+  /* ...same identity + appSalt... */
+});
+const wallet = session.wallet("stellar");
 
 if (wallet.chain === "stellar" && wallet.status === "needs-device-approval") {
   await wallet.approveThisDeviceWithRecovery(code);
@@ -345,17 +403,27 @@ and all fees are sponsored, so the user locks no XLM. The relayer is **only** a
 fee payer + reserve sponsor — never a custodian or identity authority: a bad or
 absent relayer can cost fees but can never move funds or squat an address.
 
-## Address derivation
+## Address resolution
 
-The `G…` address is the deterministic master key derived from identity + salt
-(`deriveStellarAddress` / `deriveStellarMasterKeypair`), so the same user always
-lands on the same account, computable before creation. The master is set to
-weight 0 at creation; the control key (weight 1) does the signing.
+On Stellar, the `G…` address is resolved via the **registry-first** model (see
+[Concepts](/docs/concepts)). When you call `connect`:
+
+1. **Registry lookup**: The kit checks if this `(userId, appId, chain, network)`
+   already has a registered address.
+2. **If found**: The existing address is returned. The device checks whether it
+   can unlock the on-chain control key.
+3. **If not found**: A new control key is generated. Its public key becomes the
+   `G…` address, and this address is claimed in the registry. The first device
+   to register wins.
+
+The address is computable before the account exists on-chain — off-chain signing
+works immediately. The on-chain account is created on first `execute`.
 
 ```ts title="TypeScript"
-import { deriveStellarAddress } from "@cavos/kit";
-
-const address = deriveStellarAddress({ userId: user.id, appSalt: "my-app" }); // G…
+// The address is available immediately after connect, even if undeployed
+const wallet = session.wallet("stellar");
+console.log(wallet.address);  // G… address
+console.log(wallet.status);   // "undeployed" — no on-chain account yet
 ```
 
 ## Networks & constants
@@ -372,9 +440,10 @@ Networks: `"stellar-testnet"`, `"stellar-mainnet"`.
 
 ## What's available
 
-- ✅ Deterministic classic `G…` multisig account (master weight 0 + on-chain
-  sealed control key), self-custodial with no backend/registry.
+- ✅ Classic `G…` account with on-chain sealed control key, self-custodial.
+- ✅ **Lazy deploy** — first execute creates the account atomically.
 - ✅ Silent signing via the control key unwrapped by this device's ECDH key.
+- ✅ **Sign messages off-chain while undeployed.**
 - ✅ Gasless create + execute via the Cavos relayer (reserves sponsored).
 - ✅ Native XLM transfer (`execute(amount, destination)`) + `balance()`.
 - ✅ **Soroban contract invocation** (`invokeContract`) — the account signs its own

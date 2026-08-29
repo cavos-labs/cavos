@@ -22,7 +22,7 @@ For recovery that works by signing in again instead, see
 
 ## Set up once
 
-Generate a code on a ready device, show it once, and ask the user to store it
+Generate a code on a connected device, show it once, and ask the user to store it
 offline:
 
 ```ts title="TypeScript"
@@ -34,8 +34,10 @@ await wallet.setupRecovery(code);
 // Display `code` once. Never send it to analytics, logs, or your backend.
 ```
 
-`setupRecovery` is adapter-specific and idempotent for the same factor. Gate it
-on `wallet.status === "ready"`.
+`setupRecovery` is adapter-specific and idempotent for the same factor. It works
+on both `undeployed` and `ready` wallets. For `undeployed` wallets, the recovery
+factor is stored pending and included when the account is created on first
+`execute`.
 
 <Callout type="warn">
 Anyone with the recovery code may be able to restore wallet authority. Treat it
@@ -83,14 +85,16 @@ device-account PDA.
 ```ts title="TypeScript"
 import { Cavos } from "@cavos/kit";
 
-const wallet = await Cavos.connect({
-  chain: "stellar",
+const session = await Cavos.connect({
+  chains: ["stellar"],
+  defaultChain: "stellar",
   network: "testnet",
   identity: { userId: user.id, email: user.email },
   appSalt: "my-app",
   appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
 });
 
+const wallet = session.wallet("stellar");
 if (
   wallet.chain === "stellar" &&
   wallet.status === "needs-device-approval"

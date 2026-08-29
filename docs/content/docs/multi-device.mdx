@@ -3,11 +3,11 @@ title: Multi-device
 description: Add a new device to an existing wallet via approval from a registered device.
 ---
 
-A wallet's address depends only on identity, so the **same user on a new device
-lands on the same wallet**. But that new device has its own key, which isn't yet
-an authorized signer on the account. Adding it requires approval from a device
-that already controls the wallet. Chain-native account state—not the Cavos
-backend—is the authority.
+A wallet's address is looked up in the registry by `(userId, appId, chain, network)`,
+so the **same user on a new device lands on the same wallet**. But that new
+device has its own key, which isn't yet an authorized signer on the account.
+Adding it requires approval from a device that already controls the wallet.
+Chain-native account state—not the Cavos backend—is the authority.
 
 ## Detecting a new device
 

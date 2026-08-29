@@ -8,17 +8,21 @@ other than where the symptom appears.
 
 ## Users suddenly have new, empty wallets
 
-**Almost always `appSalt` changed.** Addresses derive from `{ userId, appSalt }`,
-so editing the salt — even reformatting it — points every existing user at a
-different wallet. Nothing errors: the app works perfectly, on the wrong accounts.
+**Almost always the `userId` changed.** Addresses are looked up in the registry
+by `(userId, appId, chain, network)`. If your auth changes what it reports — an
+email where it used to be a primary key, a provider migration that renumbers
+users — those users land on a different wallet. Nothing errors: the app works
+perfectly, on the wrong accounts.
 
-In development `<CavosProvider>` detects this and logs
-`[app-salt-changed]` naming both values. Restore the previous string and the
-wallets come back; the funds were never anywhere else.
+The same applies to `appId`. If you switch environments or change the app ID,
+users get new wallets. Derive `userId` from something immutable.
 
-The same applies to `userId`. If your auth changes what it reports — an email
-where it used to be a primary key, a provider migration that renumbers users —
-those users get new wallets. Derive from something immutable.
+<Callout type="info">
+`appSalt` namespaces the local **device key**, not the address. Changing it
+affects which device key is used on THIS device, but the registry still resolves
+the same address for the same `userId + appId + chain`. Device keys generated
+under a different salt cannot unlock existing wallets without re-approval.
+</Callout>
 
 ## `redirect_uri is not registered for this app`
 
@@ -42,11 +46,18 @@ in your bundle for nothing.
 
 ## Transactions fail with the wallet apparently connected
 
-Check `walletStatus.isReady`, not `isAuthenticated`. A user can be signed in on a
-device the account has not authorized yet — the normal state on a second browser
-— and `execute` will fail until the device is approved. Route
-`walletStatus.needsDeviceApproval` to a passkey prompt or
+Check that `status !== "needs-device-approval"`. Both `undeployed` and `ready`
+wallets can execute — only `needs-device-approval` blocks it.
+
+A user can be signed in on a device the account has not authorized yet — the
+normal state on a second browser — and `execute` will fail until the device is
+approved. Route `walletStatus.needsDeviceApproval` to a passkey prompt or
 [multi-device](/docs/multi-device) approval.
+
+<Callout type="info">
+**Don't require `isReady` for execution.** An `undeployed` wallet can execute.
+The first execution deploys the account atomically, then runs the operation.
+</Callout>
 
 ## Nothing happens when social recovery should run
 

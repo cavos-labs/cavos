@@ -1,6 +1,6 @@
 ---
 title: Concepts
-description: The every-chain architecture, non-custodial invariant, deterministic identity, and adapter boundaries.
+description: The every-chain architecture, non-custodial invariant, registry-first address model, and lazy deployment.
 ---
 
 ## Every-chain, not one account model everywhere
@@ -29,24 +29,112 @@ Registries and recovery services coordinate public state or messages. Paymasters
 and relayers fund or submit transactions. None of those roles is a substitute
 for user authorization.
 
-## Deterministic identity
+## Address resolution: registry-first
 
-The shared input is a stable `userId` plus an app-specific `appSalt`. Each
-adapter maps that input into its native deterministic address model:
+The address is **not** derived purely from identity. It is looked up in the
+registry first, and only computed when the user has no existing wallet.
 
-| Chain | Address model |
-|---|---|
-| Starknet | Poseidon seed and counterfactual Cairo account address |
-| Solana | SHA-256 seed and device-account PDA |
-| Stellar | SHA-256 seed and deterministic classic master account |
+```
+(userId, appId, chain, network) → registry lookup → address
+```
 
-The address does not depend on whichever device connects first. A returning
-identity on a new device resolves the existing wallet and enters device approval
-instead of silently creating a second wallet.
+When you call `connect`:
+
+1. **Registry lookup**: The kit asks the Cavos registry: does this user already
+   have a wallet for this app and chain?
+2. **If found**: The existing address is returned. The device checks whether it
+   is an authorized signer on-chain.
+3. **If not found**: The device computes a candidate address and claims it in
+   the registry. The first device to register wins.
+
+This design prevents a second wallet from being created silently when the same
+user connects from a different device. The second device sees the existing
+address and enters device approval instead of minting a duplicate.
+
+<Callout type="info">
+**Why not deterministic from identity?** A purely deterministic address would
+let any device derive it, but then how would the account know which device is
+authorized? The address includes the first device's public key (directly on
+Solana/Starknet, indirectly on Stellar), which is why the registry records
+which address belongs to which user.
+</Callout>
+
+### The `appSalt` parameter
+
+`appSalt` is **not** the address name. It is the local device-key slot — a
+namespace that keeps device keys separate across different apps on the same
+device. The same user on the same device but different apps gets different
+device keys, which is correct: each app has its own wallet.
+
+The registry key is `(userId, appId, chain, network)`. The `appSalt` affects the
+device-key derivation, not the address derivation directly.
+
+## Lazy deployment
+
+Connect **never** deploys. It resolves the address and checks on-chain status,
+but the account is not created until the first `execute`.
+
+| Connect result | What happens |
+|----------------|--------------|
+| User has no wallet | Address is computed and claimed in registry. `status: "undeployed"`. |
+| User has a wallet, this device is authorized | `status: "ready"`. |
+| User has a wallet, this device is not authorized | `status: "needs-device-approval"`. |
+
+An `undeployed` wallet can:
+- **Sign messages** (`signMessage`) — the signature comes from the local device
+  key, which exists regardless of on-chain state.
+- **Execute** — the first `execute` call deploys the account and runs the
+  user's operation atomically in a single sponsored transaction.
+
+This lazy model means users see their address immediately and can share it
+before their first transaction. The account is created only when they use it.
+
+## Status values
+
+Every wallet has a `status` property:
+
+| Status | Meaning | Can execute? | Can signMessage? |
+|--------|---------|--------------|------------------|
+| `undeployed` | Address derived, no on-chain account yet | Yes (first execute deploys) | Yes |
+| `ready` | Account deployed, this device authorized | Yes | Yes |
+| `needs-device-approval` | Account deployed, this device not authorized | No | No |
+
+The only status that blocks execution is `needs-device-approval`. Both
+`undeployed` and `ready` can execute.
+
+## Multi-chain sessions
+
+One `connect` call can configure multiple chains. The session provides access to
+all of them without re-authenticating:
+
+```ts title="TypeScript"
+const session = await Cavos.connect({
+  chains: ["solana", "stellar", "starknet"],
+  defaultChain: "solana",
+  network: "testnet",
+  identity,
+  appSalt: "my-app",
+  appId,
+  paymasterApiKey, // Starknet only
+});
+
+// The session IS the default chain's wallet
+session.address;           // Solana address
+session.status;            // Solana status
+
+// Access other chains
+session.wallet("stellar"); // CavosStellar instance
+session.chainStatus("stellar");
+session.chainAddress("stellar");
+```
+
+Each chain has its own address (derived from the same identity), its own
+deployment status, and its own device authorization state. They are independent
+accounts sharing one login.
 
 ## Device-native authority
 
-“Device-native” describes where sensitive authority is created or unlocked, not
+"Device-native" describes where sensitive authority is created or unlocked, not
 one universal curve:
 
 - Starknet and Solana use non-extractable P-256 device signers directly.
@@ -63,23 +151,41 @@ The shared API accepts `network: "testnet" | "mainnet"` and the selected adapter
 resolves the concrete network:
 
 ```ts title="TypeScript"
-const wallet = await Cavos.connect({
-  chain: "stellar",
-  network: "testnet", // stellar-testnet
+const session = await Cavos.connect({
+  chains: ["stellar"],
+  defaultChain: "stellar",
+  network: "testnet", // → stellar-testnet
   identity,
   appSalt: "my-app",
   appId,
 });
 ```
 
+| `network` | Starknet | Solana | Stellar |
+|-----------|----------|--------|---------|
+| `testnet` | sepolia | solana-devnet | stellar-testnet |
+| `mainnet` | mainnet | solana-mainnet | stellar-mainnet |
+
 Chain packages also export concrete network constants for advanced use. See the
 individual [chain guides](/docs/chains).
 
 ## Typed native execution
 
-`Cavos.connect` returns `Cavos | CavosSolana | CavosStellar`. Narrow on
+`Cavos.connect` returns a `CavosWallet & CavosSession` union. Narrow on
 `wallet.chain` before execution. This keeps onboarding portable without hiding
 important differences in calls, units, replay protection, or confirmation.
+
+```ts title="TypeScript"
+const wallet = session.wallet("solana");
+
+if (wallet.chain === "starknet") {
+  await wallet.execute(calls);                    // Call[]
+} else if (wallet.chain === "solana") {
+  await wallet.execute(1_000_000n, destination);  // lamports, base58
+} else if (wallet.chain === "stellar") {
+  await wallet.execute(1_000_000n, destination);  // stroops, G…
+}
+```
 
 That same rule applies to every future adapter: extend the discriminated union,
 document capabilities, and preserve native semantics.

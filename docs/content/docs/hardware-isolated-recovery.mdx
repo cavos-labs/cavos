@@ -164,10 +164,11 @@ the single login method shown.
   config={{
     appId,
     environment: "production",
-    chain: "starknet", // also "solana" or "stellar"
+    chains: ["starknet"],          // also "solana", "stellar", or multiple
+    defaultChain: "starknet",
     network: "mainnet",
     appSalt: "my-app",
-    paymasterApiKey,
+    paymasterApiKey,               // for Starknet gasless
     socialRecovery: true,
   }}
   modal={{ appName: "My App" }}
