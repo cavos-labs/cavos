@@ -88,13 +88,13 @@ export function SignInPreview() {
                     Secured by Cavos
                 </p>
             </div>
-            <figcaption className="mt-4 text-center text-[12.5px] text-white/60">
+            <figcaption className="mt-4 text-center text-[12.5px] text-ink/50">
                 The wallet your users will see.{' '}
                 <a
                     href="https://demo.cavos.xyz"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-medium text-white underline decoration-white/30 underline-offset-3 transition-colors hover:decoration-white"
+                    className="font-medium text-brand underline decoration-brand/30 underline-offset-3 transition-colors hover:decoration-brand"
                 >
                     Try the playground
                 </a>

@@ -67,13 +67,13 @@ function useSilkTexture(): Texture | null {
  * polished, reflective gradient surface. Sits on the right and, together with a
  * soft glow, fills the whole right column. Honors prefers-reduced-motion.
  */
-function Orb({ animate, mobile }: { animate: boolean; mobile: boolean }) {
+function Orb({ animate, mobile, rich }: { animate: boolean; mobile: boolean; rich: boolean }) {
     const mesh = useRef<Mesh>(null)
     const group = useRef<Group>(null)
     const silk = useSilkTexture()
 
     const pos: [number, number, number] = mobile ? [1.3, 2.9, 0] : [4.5, 0.1, 0]
-    const scale = mobile ? 1.15 : 2.2
+    const scale = mobile ? (rich ? 1.35 : 1.15) : (rich ? 2.55 : 2.2)
     const baseY = pos[1]
 
     useFrame((state) => {
@@ -111,9 +111,18 @@ function Orb({ animate, mobile }: { animate: boolean; mobile: boolean }) {
     )
 }
 
-export function HeroOrb({ fixed = false }: { fixed?: boolean }) {
+export function HeroOrb({
+    fixed = false,
+    intensity = 'default',
+}: {
+    fixed?: boolean
+    /** `rich` lets more indigo through — used on the landing so the orb
+     *  reads as a brand field behind the widget, not a faint wash. */
+    intensity?: 'default' | 'rich'
+}) {
     const [animate, setAnimate] = useState(true)
     const [mobile, setMobile] = useState(false)
+    const rich = intensity === 'rich'
 
     useEffect(() => {
         const motionMq = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -138,8 +147,12 @@ export function HeroOrb({ fixed = false }: { fixed?: boolean }) {
                 className="absolute inset-0"
                 style={{
                     background: mobile
-                        ? 'radial-gradient(70% 38% at 74% 4%, rgba(64,42,255,0.30) 0%, rgba(64,42,255,0.14) 46%, rgba(255,255,255,0) 78%)'
-                        : 'radial-gradient(70% 100% at 100% 50%, rgba(64,42,255,0.32) 0%, rgba(64,42,255,0.15) 38%, rgba(255,255,255,0) 66%)',
+                        ? rich
+                            ? 'radial-gradient(80% 46% at 74% 2%, rgba(64,42,255,0.48) 0%, rgba(64,42,255,0.22) 42%, rgba(255,255,255,0) 76%)'
+                            : 'radial-gradient(70% 38% at 74% 4%, rgba(64,42,255,0.30) 0%, rgba(64,42,255,0.14) 46%, rgba(255,255,255,0) 78%)'
+                        : rich
+                            ? 'radial-gradient(78% 110% at 100% 48%, rgba(64,42,255,0.52) 0%, rgba(64,42,255,0.24) 40%, rgba(255,255,255,0) 68%)'
+                            : 'radial-gradient(70% 100% at 100% 50%, rgba(64,42,255,0.32) 0%, rgba(64,42,255,0.15) 38%, rgba(255,255,255,0) 66%)',
                 }}
             />
 
@@ -163,7 +176,7 @@ export function HeroOrb({ fixed = false }: { fixed?: boolean }) {
                     <Lightformer intensity={1} position={[0, 0, 4]} scale={[14, 14, 1]} color="#6655ff" />
                 </Environment>
 
-                <Orb animate={animate} mobile={mobile} />
+                <Orb animate={animate} mobile={mobile} rich={rich} />
             </Canvas>
 
             {/* legibility fade — bottom on mobile, left on desktop */}
@@ -171,8 +184,12 @@ export function HeroOrb({ fixed = false }: { fixed?: boolean }) {
                 className="absolute inset-0"
                 style={{
                     background: mobile
-                        ? 'linear-gradient(to bottom, rgba(255,255,255,0) 24%, rgba(255,255,255,0.75) 46%, #FFFFFF 60%)'
-                        : 'linear-gradient(100deg, #FFFFFF 0%, rgba(255,255,255,0.95) 30%, rgba(255,255,255,0.5) 52%, rgba(255,255,255,0) 70%)',
+                        ? rich
+                            ? 'linear-gradient(to bottom, rgba(255,255,255,0) 18%, rgba(255,255,255,0.55) 44%, #FFFFFF 68%)'
+                            : 'linear-gradient(to bottom, rgba(255,255,255,0) 24%, rgba(255,255,255,0.75) 46%, #FFFFFF 60%)'
+                        : rich
+                            ? 'linear-gradient(100deg, #FFFFFF 0%, rgba(255,255,255,0.92) 24%, rgba(255,255,255,0.35) 48%, rgba(255,255,255,0) 64%)'
+                            : 'linear-gradient(100deg, #FFFFFF 0%, rgba(255,255,255,0.95) 30%, rgba(255,255,255,0.5) 52%, rgba(255,255,255,0) 70%)',
                 }}
             />
         </div>
