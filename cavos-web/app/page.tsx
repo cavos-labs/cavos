@@ -110,10 +110,18 @@ export default function LandingPage() {
                                     >
                                         Explore the docs
                                     </a>
+                                    <a
+                                        href="https://demo.cavos.xyz"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex h-14 w-full items-center justify-center text-sm font-medium text-brand hover:text-brand-hover sm:h-auto sm:w-auto"
+                                    >
+                                        Try the playground
+                                    </a>
                                 </div>
                             </div>
 
-                            <div data-hero className="lg:justify-self-end">
+                            <div data-hero className="hidden lg:block lg:justify-self-end">
                                 <SignInPreview />
                             </div>
                         </div>

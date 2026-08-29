@@ -55,7 +55,7 @@ function Method({
 
 export function SignInPreview() {
     return (
-        <figure className="mx-auto w-full max-w-[340px]">
+        <div className="mx-auto w-full max-w-[340px]">
             <div className="rounded-[16px] bg-white p-6 shadow-[0_28px_80px_-28px_rgba(10,10,15,0.45)] ring-1 ring-black/[0.06] sm:p-7">
                 <div className="flex flex-col items-center">
                     <span className="grid h-10 w-10 place-items-center text-ink">
@@ -88,17 +88,6 @@ export function SignInPreview() {
                     Secured by Cavos
                 </p>
             </div>
-            <figcaption className="mt-4 text-center text-[12.5px] text-ink/50">
-                The wallet your users will see.{' '}
-                <a
-                    href="https://demo.cavos.xyz"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-medium text-brand underline decoration-brand/30 underline-offset-3 transition-colors hover:decoration-brand"
-                >
-                    Try the playground
-                </a>
-            </figcaption>
         </figure>
     )
 }
