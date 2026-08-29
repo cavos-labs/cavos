@@ -4,7 +4,7 @@ import { AppsCarousel } from '@/components/AppsCarousel'
 import { FeaturesGrid } from '@/components/landing/FeaturesGrid'
 import { CaseStudies } from '@/components/landing/CaseStudies'
 import { CtaSplit } from '@/components/landing/CtaSplit'
-import { HeroOrb } from '@/components/HeroOrb'
+import { SignInPreview } from '@/components/landing/SignInPreview'
 import { Footer } from '@/components/Footer'
 import { LandingMotion } from '@/components/LandingMotion'
 import Script from 'next/script'
@@ -73,69 +73,78 @@ export default function LandingPage() {
             <Header />
             <LandingMotion />
 
-            {/* Glossy morphing 3D orb — full-bleed, spans header through hero */}
-            <HeroOrb />
+            {/* Brand stage — indigo as a field, the way the playground uses it.
+                White widget sits on the color; copy and chrome invert to match. */}
+            <div className="relative bg-brand text-white">
+                <div
+                    aria-hidden
+                    className="brand-dot-grid pointer-events-none absolute inset-0 opacity-80 [mask-image:radial-gradient(ellipse_at_center,black_35%,transparent_78%)]"
+                />
+                <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0"
+                    style={{
+                        background:
+                            'radial-gradient(80% 60% at 80% 20%, rgba(255,255,255,0.14) 0%, transparent 55%)',
+                    }}
+                />
 
-            {/* Framed grid container — hairline rules on both edges */}
-            <div className="relative mx-auto max-w-[1280px] border-x border-line">
+                <div className="relative mx-auto max-w-[1280px] border-x border-white/12">
+                    <div className="flex flex-col pt-[4.5rem] md:min-h-screen">
+                        <section className="relative flex flex-1 items-start px-6 py-16 md:items-center md:px-16 md:py-20 lg:px-24">
+                            <div className="grid w-full items-center gap-12 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-16">
+                                <div className="space-y-10 md:space-y-12">
+                                    <div data-hero className="max-w-2xl">
+                                        <h1 className="text-[clamp(1.75rem,3.1vw,2.75rem)] font-medium leading-[1.12] tracking-[-0.03em] text-balance">
+                                            <span className="block">
+                                                Your next million users shouldn&apos;t need to understand crypto.
+                                            </span>
+                                            <span className="mt-3 hidden max-w-xl text-[clamp(1.05rem,1.5vw,1.2rem)] font-normal leading-relaxed text-white/70 text-balance sm:block">
+                                                Let them sign in, pay, earn, and own as naturally as they use any other product—while Cavos handles the wallet infrastructure underneath.
+                                            </span>
+                                        </h1>
+                                    </div>
 
-                {/* Hero + social proof together fill one viewport */}
-                <div className="flex flex-col pt-[4.5rem] md:min-h-screen">
+                                    <div data-hero className="grid w-full max-w-sm grid-cols-1 gap-3 sm:flex sm:max-w-none sm:items-center">
+                                        <Link
+                                            href="/register"
+                                            className="inline-flex h-14 w-full items-center justify-center rounded-md bg-white px-7 text-sm font-semibold text-brand transition-colors hover:bg-white/90 active:scale-[0.98] sm:h-auto sm:w-auto sm:py-3"
+                                        >
+                                            Build your first wallet
+                                        </Link>
+                                        <a
+                                            href="https://docs.cavos.xyz"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex h-14 w-full items-center justify-center rounded-md border border-white/25 bg-white/8 px-7 text-sm font-semibold text-white transition-colors hover:bg-white/14 sm:h-auto sm:w-auto sm:py-3"
+                                        >
+                                            Explore the docs
+                                        </a>
+                                    </div>
+                                </div>
 
-                    {/* ── HERO ──────────────────────────────────── */}
-                    <section className="relative md:flex-1 flex items-start md:items-center px-6 md:px-16 lg:px-24 pt-20 pb-12 md:pt-20 md:pb-20">
-                        <div className="space-y-10 md:space-y-14">
-                            <div className="max-w-5xl">
-                                <h1 className="text-[clamp(1.625rem,2.6vw,2.375rem)] font-medium leading-[1.14] tracking-[-0.03em]">
-                                    <span className="block text-ink text-balance">
-                                        Your next million users shouldn&apos;t need to understand crypto.
-                                    </span>
-                                    <span className="mt-2 hidden max-w-4xl text-ink/45 text-balance sm:block">
-                                        Let them sign in, pay, earn, and own as naturally as they use any other product—while Cavos handles the wallet infrastructure underneath.
-                                    </span>
-                                </h1>
+                                <div data-hero className="lg:justify-self-end">
+                                    <SignInPreview />
+                                </div>
                             </div>
+                        </section>
 
-                            <div data-hero className="grid w-full max-w-sm grid-cols-1 gap-3 sm:flex sm:max-w-none sm:items-center">
-                                <Link
-                                    href="/register"
-                                    className="inline-flex h-14 w-full items-center justify-center rounded-md bg-brand px-7 text-sm font-semibold text-white transition-colors hover:bg-brand-hover active:scale-[0.98] sm:h-auto sm:w-auto sm:py-3"
-                                >
-                                    Build your first wallet
-                                </Link>
-                                <a
-                                    href="https://docs.cavos.xyz"
-                                    target="_blank"
-                                    className="inline-flex h-14 w-full items-center justify-center rounded-md border border-line-strong bg-white px-7 text-sm font-semibold text-ink transition-colors hover:border-ink/40 sm:h-auto sm:w-auto sm:py-3"
-                                >
-                                    Explore the docs
-                                </a>
-                            </div>
+                        <div className="border-t border-white/12">
+                            <AppsCarousel tone="on-brand" />
                         </div>
-                    </section>
-
-                    {/* ── APPS / SOCIAL PROOF ─────────────────────── */}
-                    <div className="border-t border-line">
-                        <AppsCarousel />
                     </div>
                 </div>
+            </div>
 
-                {/* ── FEATURES / ADVANTAGES ───────────────────── */}
-                <div className="border-t border-line">
-                    <FeaturesGrid />
-                </div>
+            <div className="relative mx-auto max-w-[1280px] border-x border-line">
+                <FeaturesGrid />
 
-                {/* ── CASE STUDIES / IN THE WILD ──────────────── */}
                 <div className="border-t border-line">
                     <CaseStudies />
                 </div>
-
-                {/* ── PRE-FOOTER CTA ──────────────────────────── */}
-                <div className="border-t border-line">
-                    <CtaSplit />
-                </div>
-
             </div>
+
+            <CtaSplit />
 
             <Footer />
         </main>

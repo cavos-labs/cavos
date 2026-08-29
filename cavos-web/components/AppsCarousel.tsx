@@ -2,7 +2,11 @@ import Image from 'next/image'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { Icon } from '@/components/ui/Icon'
 import { AppsCarouselTrack } from '@/components/AppsCarouselTrack'
-export async function AppsCarousel() {
+export async function AppsCarousel({
+    tone = 'default',
+}: {
+    tone?: 'default' | 'on-brand'
+}) {
     const supabase = createAdminClient()
     const { data: rawApps } = await supabase
         .from('apps')
@@ -21,7 +25,7 @@ export async function AppsCarousel() {
     return (
         <div className="w-full flex flex-col justify-center overflow-hidden py-8">
             <div className="mb-6 px-6 md:px-16 lg:px-24">
-                <p className="text-xs font-medium text-ink/40">
+                <p className={`text-xs font-medium ${tone === 'on-brand' ? 'text-white/55' : 'text-ink/40'}`}>
                     Trusted by teams building the future of blockchain and crypto apps.
                 </p>
             </div>

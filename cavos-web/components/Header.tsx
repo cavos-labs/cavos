@@ -66,9 +66,12 @@ export function Header() {
     // Focused pages (e.g. contact sales) show only the logo + a single account
     // action, so nothing competes with the task in front of the visitor.
     const minimal = pathname === '/contact-sales'
-    // No chrome at rest on any page. Hover or scroll brings the solid bar in
-    // (Stripe-style); the border only ever appears on those states.
-    const transparent = !scrolled && !hovered
+    // No chrome at rest on any page. Hover, scroll, or an open menu brings the
+    // solid bar in (Stripe-style); the border only ever appears on those states.
+    const transparent = !scrolled && !hovered && !anyMenuOpen && !isMenuOpen
+    // Landing hero is a brand indigo field — invert the bar until chrome lands.
+    const inverted = isLanding && transparent
+    const triggerClassName = inverted ? 'text-white/75 hover:text-white' : undefined
 
     useEffect(() => {
         const measure = () => setMenuWidth(window.innerWidth)
@@ -136,23 +139,37 @@ export function Header() {
                   <div className="flex items-center gap-10">
                     {/* Logo */}
                     <Link href="/" className="flex items-center shrink-0 hover:opacity-70 transition-opacity">
-                        <Image
-                            src="/cavos-black.png"
-                            alt="Cavos"
-                            width={112}
-                            height={44}
-                            className="h-8 w-auto"
-                        />
+                        {inverted ? (
+                            <span
+                                role="img"
+                                aria-label="Cavos"
+                                className="block h-8 w-[112px] bg-white"
+                                style={{
+                                    WebkitMask: 'url(/cavos-black.png) center / contain no-repeat',
+                                    mask: 'url(/cavos-black.png) center / contain no-repeat',
+                                }}
+                            />
+                        ) : (
+                            <Image
+                                src="/cavos-black.png"
+                                alt="Cavos"
+                                width={112}
+                                height={44}
+                                className="h-8 w-auto"
+                            />
+                        )}
                     </Link>
 
                     {/* Desktop nav */}
                     {!minimal && (
                     <nav className="hidden md:flex items-center gap-8">
-                        <MegaMenu {...DEVELOPER_MENU} onOpenChange={setDevOpen} />
-                        <MegaMenu {...RESOURCES_MENU} onOpenChange={setResOpen} />
+                        <MegaMenu {...DEVELOPER_MENU} onOpenChange={setDevOpen} triggerClassName={triggerClassName} />
+                        <MegaMenu {...RESOURCES_MENU} onOpenChange={setResOpen} triggerClassName={triggerClassName} />
                         <Link
                             href="/pricing"
-                            className="text-sm font-medium text-ink/60 hover:text-ink transition-colors"
+                            className={`text-sm font-medium transition-colors ${
+                                inverted ? 'text-white/75 hover:text-white' : 'text-ink/60 hover:text-ink'
+                            }`}
                         >
                             Pricing
                         </Link>
@@ -166,7 +183,11 @@ export function Header() {
                             <>
                                 <Link
                                     href="/login"
-                                    className={`${minimal ? 'inline-flex' : 'hidden md:inline-flex'} items-center px-4 py-2 text-sm font-semibold text-ink bg-white rounded-md border border-line-strong hover:border-ink/40 transition-colors duration-150`}
+                                    className={`${minimal ? 'inline-flex' : 'hidden md:inline-flex'} items-center px-4 py-2 text-sm font-semibold rounded-md border transition-colors duration-150 ${
+                                        inverted
+                                            ? 'border-white/25 bg-white/10 text-white hover:bg-white/16'
+                                            : 'border-line-strong bg-white text-ink hover:border-ink/40'
+                                    }`}
                                 >
                                     Sign In
                                 </Link>
@@ -174,7 +195,11 @@ export function Header() {
                                 <Link
                                     href="/contact-sales"
                                     data-pressable
-                                    className="hidden md:inline-flex items-center px-4 py-2 text-sm font-semibold rounded-md bg-brand text-white hover:bg-brand-hover transition-colors duration-150"
+                                    className={`hidden md:inline-flex items-center px-4 py-2 text-sm font-semibold rounded-md transition-colors duration-150 ${
+                                        inverted
+                                            ? 'bg-white text-brand hover:bg-white/90'
+                                            : 'bg-brand text-white hover:bg-brand-hover'
+                                    }`}
                                 >
                                     Contact Sales
                                 </Link>
@@ -184,7 +209,11 @@ export function Header() {
                             <Link
                                 href="/dashboard"
                                 data-pressable
-                                className={`${minimal ? 'inline-flex' : 'hidden md:inline-flex'} items-center px-4 py-2 text-sm font-semibold rounded-md bg-brand text-white hover:bg-brand-hover transition-colors duration-150`}
+                                className={`${minimal ? 'inline-flex' : 'hidden md:inline-flex'} items-center px-4 py-2 text-sm font-semibold rounded-md transition-colors duration-150 ${
+                                    inverted
+                                        ? 'bg-white text-brand hover:bg-white/90'
+                                        : 'bg-brand text-white hover:bg-brand-hover'
+                                }`}
                             >
                                 Dashboard
                             </Link>
@@ -195,7 +224,9 @@ export function Header() {
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
                             data-pressable
                             aria-expanded={isMenuOpen}
-                            className={`${minimal ? 'hidden' : 'md:hidden'} ml-1 w-9 h-9 flex items-center justify-center transition-colors ${transparent ? 'text-white mix-blend-difference' : 'text-ink/70 hover:text-ink'}`}
+                            className={`${minimal ? 'hidden' : 'md:hidden'} ml-1 w-9 h-9 flex items-center justify-center transition-colors ${
+                                inverted ? 'text-white' : transparent ? 'text-white mix-blend-difference' : 'text-ink/70 hover:text-ink'
+                            }`}
                             aria-label="Toggle menu"
                         >
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">

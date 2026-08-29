@@ -326,9 +326,12 @@ export function CaseStudies() {
         <section className="px-6 py-20 md:px-16 md:py-28 lg:px-24">
             {/* header — headline left, supporting copy right (Stripe-clean) */}
             <div data-reveal className="grid gap-6 md:grid-cols-2 md:gap-12">
-                <h2 className="max-w-[18ch] text-[clamp(1.75rem,2.8vw,2.5rem)] font-medium leading-[1.12] tracking-[-0.03em] text-ink">
-                    The wallet your users never have to think about.
-                </h2>
+                <div>
+                    <div className="mb-5 h-1 w-8 bg-brand" aria-hidden />
+                    <h2 className="max-w-[18ch] text-[clamp(1.75rem,2.8vw,2.5rem)] font-medium leading-[1.12] tracking-[-0.03em] text-ink">
+                        The wallet your users never have to think about.
+                    </h2>
+                </div>
                 <p className="max-w-[44ch] self-end text-[15px] leading-relaxed text-muted">
                     Real teams shipping Cavos in production — embedded self-custody woven so
                     deep into their products that people pay, play, and trade without ever

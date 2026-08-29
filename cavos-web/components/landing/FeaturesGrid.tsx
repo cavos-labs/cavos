@@ -219,6 +219,7 @@ export function FeaturesGrid() {
     return (
         <section className="px-6 py-20 md:px-16 md:py-28 lg:px-24">
             <div data-reveal className="max-w-[46rem]">
+                <div className="mb-5 h-1 w-8 bg-brand" aria-hidden />
                 <h2 className="text-[clamp(1.625rem,2.6vw,2.375rem)] font-medium leading-[1.14] tracking-[-0.03em] text-ink">
                     One wallet layer for every chain.{' '}
                     <span className="text-muted">

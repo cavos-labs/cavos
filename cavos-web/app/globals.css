@@ -70,6 +70,12 @@ body {
   background-size: 28px 28px;
 }
 
+/* Same 28px grid, tuned for the saturated indigo stage (hero / closer). */
+.brand-dot-grid {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.16) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
 /* Reveal primitive — visible by default; GSAP enhances when JS runs */
 .js-reveal { will-change: transform, opacity; }
 

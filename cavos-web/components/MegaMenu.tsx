@@ -43,6 +43,8 @@ export interface MegaMenuProps {
     footer?: { title: string; description: string; ctaLabel: string; href: string }
     onNavigate?: () => void
     onOpenChange?: (open: boolean) => void
+    /** Trigger color. Use on inverted (white-on-brand) chrome. */
+    triggerClassName?: string
 }
 
 const isHttp = (href: string) => /^https?:/.test(href)
@@ -178,7 +180,7 @@ const PANEL_VARIANTS = {
 
 const EASE = [0.16, 1, 0.3, 1] as const
 
-export function MegaMenu({ label, left, right, footer, onNavigate, onOpenChange }: MegaMenuProps) {
+export function MegaMenu({ label, left, right, footer, onNavigate, onOpenChange, triggerClassName }: MegaMenuProps) {
     const [open, setOpen] = useState(false)
     const reduce = useReducedMotion()
     const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -320,7 +322,7 @@ export function MegaMenu({ label, left, right, footer, onNavigate, onOpenChange 
                 onFocus={() => { cancelClose(); setOpen(true) }}
                 aria-expanded={open}
                 aria-haspopup="true"
-                className="flex items-center gap-1 text-sm font-medium text-ink/60 hover:text-ink transition-colors outline-none"
+                className={`flex items-center gap-1 text-sm font-medium transition-colors outline-none ${triggerClassName ?? 'text-ink/60 hover:text-ink'}`}
             >
                 {label}
                 <motion.svg
