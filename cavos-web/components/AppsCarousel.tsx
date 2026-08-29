@@ -7,11 +7,19 @@ export async function AppsCarousel({
 }: {
     tone?: 'default' | 'on-brand'
 }) {
-    const supabase = createAdminClient()
-    const { data: rawApps } = await supabase
-        .from('apps')
-        .select('id, name, logo_url')
-        .limit(20)
+    let rawApps: { id: string; name: string; logo_url: string | null }[] | null = null
+    try {
+        if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+            const supabase = createAdminClient()
+            const { data } = await supabase
+                .from('apps')
+                .select('id, name, logo_url')
+                .limit(20)
+            rawApps = data
+        }
+    } catch {
+        rawApps = null
+    }
 
     // Only show apps that actually have a logo image
     const apps = (rawApps ?? []).filter((app) => !!app.logo_url)
