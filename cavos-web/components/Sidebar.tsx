@@ -222,17 +222,28 @@ export function Sidebar() {
                 )}
             </nav>
 
-            <div className="mt-auto flex items-center justify-between border-t border-line px-4 py-3">
-                <Wordmark className="h-5 w-5" />
-                <a
-                    href="https://docs.cavos.xyz"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs font-medium text-muted hover:text-ink"
-                >
-                    Docs
-                    <Icon.External size={11} className="opacity-50" />
-                </a>
+            <div className="mt-auto border-t border-line px-4 py-3">
+                <div className="flex items-center justify-between">
+                    <Wordmark className="h-5 w-5" />
+                    <div className="flex items-center gap-3">
+                        <a
+                            href="https://docs.cavos.xyz"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs font-medium text-muted hover:text-ink"
+                        >
+                            Docs
+                            <Icon.External size={11} className="opacity-50" />
+                        </a>
+                        <button
+                            type="button"
+                            onClick={handleLogout}
+                            className="text-xs font-medium text-muted hover:text-ink"
+                        >
+                            Sign out
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     )
