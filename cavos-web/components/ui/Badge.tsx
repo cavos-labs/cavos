@@ -1,29 +1,32 @@
-import React from 'react';
+import React from 'react'
 
 interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-    variant?: 'default' | 'success' | 'warning' | 'error' | 'neutral';
+    variant?: 'default' | 'ok' | 'warn' | 'danger' | 'neutral' | 'success' | 'warning' | 'error'
+}
+
+const tones: Record<NonNullable<BadgeProps['variant']>, string> = {
+    default: 'text-ink',
+    ok: 'text-muted',
+    success: 'text-muted',
+    warn: 'text-warn',
+    warning: 'text-warn',
+    danger: 'text-danger',
+    error: 'text-danger',
+    neutral: 'text-muted',
 }
 
 export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
     ({ className = '', variant = 'default', children, ...props }, ref) => {
-        const variants = {
-            default: 'bg-black/5 text-black',
-            success: 'bg-green-100 text-green-700',
-            warning: 'bg-yellow-100 text-yellow-700',
-            error: 'bg-red-100 text-red-700',
-            neutral: 'bg-gray-100 text-gray-600'
-        };
-
         return (
             <span
                 ref={ref}
-                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variants[variant]} ${className}`}
+                className={`text-sm font-medium capitalize ${tones[variant]} ${className}`}
                 {...props}
             >
                 {children}
             </span>
-        );
+        )
     }
-);
+)
 
-Badge.displayName = 'Badge';
+Badge.displayName = 'Badge'

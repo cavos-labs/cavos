@@ -46,7 +46,7 @@ export default function TeamPage() {
   if (loading) return <PageSkeleton />
 
   return <div className="space-y-6">
-    <PageHeader title="Team" subtitle="Invite teammates and assign only the access they need." actions={<OrganizationPicker items={organizations} value={organizationId} onChange={setOrganizationId} />} />
+    <PageHeader eyebrow="Workspace" title="Team" subtitle="Invite teammates and assign only the access they need." actions={<OrganizationPicker items={organizations} value={organizationId} onChange={setOrganizationId} />} />
 
     <section className="rounded-xl border border-line bg-white p-5 sm:p-6">
       <div><h2 className="text-sm font-semibold">Invite teammate</h2><p className="mt-1 text-xs text-black/50">Invitations expire after seven days and must be accepted using the invited email.</p></div>

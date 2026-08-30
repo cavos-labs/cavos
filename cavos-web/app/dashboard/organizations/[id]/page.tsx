@@ -178,46 +178,26 @@ export default function OrganizationDetailPage() {
                 Organizations
             </Link>
 
-            {/* ── Org Header ──────────────────────────────── */}
-            <div data-dash-header className="bg-brand rounded-2xl p-6 text-white relative overflow-hidden">
-                <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 60% 80% at 0% 50%, #402AFF14 0%, transparent 60%)' }} />
-
-                <div className="relative flex flex-col sm:flex-row sm:items-start justify-between gap-5">
-                    <div className="flex items-start gap-4">
-                        <div className="w-14 h-14 rounded-xl bg-white/[0.07] border border-white/[0.1] flex items-center justify-center shrink-0">
-                            <Icon.Org className="w-7 h-7 text-white/30" />
-                        </div>
-                        <div className="space-y-1 min-w-0">
-                            <h1 className="text-xl font-bold tracking-tight text-white">{organization.name}</h1>
-                            <p className="text-xs font-mono text-white/30">{organization.slug}</p>
-                            {organization.description && (
-                                <p className="text-sm text-white/35 leading-relaxed pt-0.5">{organization.description}</p>
-                            )}
-                        </div>
-                    </div>
-
-                    <button
-                        onClick={() => setShowDeleteModal(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-400/70 hover:text-red-400 border border-red-500/[0.15] hover:border-red-500/30 rounded-lg transition-all shrink-0"
-                    >
-                        <Icon.Delete className="w-3.5 h-3.5" />
-                        Delete
-                    </button>
+            <div data-dash-header className="flex flex-col gap-4 border-b border-line pb-6 sm:flex-row sm:items-end sm:justify-between">
+                <div className="min-w-0">
+                    <p className="mb-2 text-[11px] font-medium text-muted">Workspace</p>
+                    <h1 className="text-2xl font-semibold tracking-[-0.03em] text-ink md:text-[28px] leading-tight">{organization.name}</h1>
+                    <p className="mt-2 font-mono text-xs text-muted">{organization.slug}</p>
+                    {organization.description && (
+                        <p className="mt-2 max-w-2xl text-sm text-muted">{organization.description}</p>
+                    )}
+                    <dl className="mt-4 flex flex-wrap gap-6 text-sm">
+                        <div><dt className="text-[11px] text-muted">Applications</dt><dd className="font-mono tabular-nums">{apps.length}</dd></div>
+                        <div><dt className="text-[11px] text-muted">Created</dt><dd className="font-mono tabular-nums">{new Date(organization.created_at).toLocaleDateString()}</dd></div>
+                    </dl>
                 </div>
-
-                {/* Stats mini-bar */}
-                <div className="relative mt-6 pt-5 border-t border-white/[0.07] flex flex-wrap gap-6">
-                    {[
-                        { label: 'Applications', value: apps.length },
-                        { label: 'API Keys', value: apiKeys.length },
-                        { label: 'Created', value: new Date(organization.created_at).toLocaleDateString() },
-                    ].map((s) => (
-                        <div key={s.label} className="space-y-0.5">
-                            <div className="text-[10px] uppercase tracking-[0.2em] text-white/25 font-bold">{s.label}</div>
-                            <div className="text-sm font-bold text-white tabular-nums">{s.value}</div>
-                        </div>
-                    ))}
-                </div>
+                <button
+                    onClick={() => setShowDeleteModal(true)}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-danger/20 px-3 py-1.5 text-xs font-medium text-danger hover:bg-danger-soft"
+                >
+                    <Icon.Delete className="h-3.5 w-3.5" />
+                    Delete
+                </button>
             </div>
 
             {/* ── Applications ────────────────────────────── */}
@@ -277,94 +257,19 @@ export default function OrganizationDetailPage() {
                 )}
             </div>
 
-            {/* ── API Keys ─────────────────────────────────── */}
-            <div data-dash-panel className="bg-white border border-line rounded-2xl overflow-hidden">
-                <div className="px-5 py-4 border-b border-line flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-7 h-7 rounded-lg bg-surface border border-line flex items-center justify-center shrink-0">
-                            <Icon.Key className="w-3.5 h-3.5 text-black/40" />
-                        </div>
-                        <div>
-                            <h2 className="text-sm font-semibold leading-none">API Keys</h2>
-                            <p className="text-[11px] text-black/35 mt-0.5">Use these keys to access the Cavos REST API.</p>
-                        </div>
+            <div data-dash-panel className="overflow-hidden rounded-xl border border-line bg-white">
+                <div className="flex items-center justify-between border-b border-line px-5 py-4">
+                    <div>
+                        <h2 className="text-sm font-semibold">API keys</h2>
+                        <p className="mt-1 text-xs text-muted">Create and revoke keys from the workspace API keys page.</p>
                     </div>
-                    <button
-                        onClick={() => setShowCreateKeyModal(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-brand text-white text-xs font-semibold rounded-lg hover:bg-brand-hover transition-all active:scale-95"
+                    <Link
+                        href="/dashboard/api-keys"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-hover"
                     >
-                        <Icon.Add className="w-3.5 h-3.5" />
-                        Generate
-                    </button>
-                </div>
-
-                {keysLoading ? (
-                    <div className="flex justify-center py-10">
-                        <Icon.Spinner className="w-5 h-5 animate-spin text-black/20" />
-                    </div>
-                ) : apiKeys.length === 0 ? (
-                    <div className="text-center py-12">
-                        <div className="w-10 h-10 rounded-xl bg-surface border border-line flex items-center justify-center mx-auto mb-3">
-                            <Icon.Key className="w-5 h-5 text-black/20" />
-                        </div>
-                        <p className="text-sm text-black/35">No API keys yet.</p>
-                        <p className="text-xs text-black/25 mt-1">Generate a key to create apps via the REST API.</p>
-                    </div>
-                ) : (
-                    <div className="divide-y divide-line/60">
-                        {apiKeys.map((apiKey) => (
-                            <div key={apiKey.id} className="flex items-center gap-4 px-5 py-3.5">
-                                <div className="w-7 h-7 rounded-lg bg-surface border border-line flex items-center justify-center shrink-0">
-                                    <Icon.Key className="w-3.5 h-3.5 text-black/35" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                        <p className="text-sm font-semibold text-black truncate">{apiKey.name}</p>
-                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${
-                                            apiKey.is_active
-                                                ? 'bg-surface border border-line text-black/50'
-                                                : 'bg-red-50 border border-red-100 text-red-400'
-                                        }`}>
-                                            {apiKey.is_active ? 'Active' : 'Revoked'}
-                                        </span>
-                                    </div>
-                                    <p className="text-[11px] font-mono text-black/30 mt-0.5">
-                                        {apiKey.key_prefix}••••••••••••••••••••
-                                    </p>
-                                </div>
-                                <div className="hidden sm:block text-right shrink-0">
-                                    <p className="text-[11px] text-black/35">
-                                        {apiKey.last_used_at
-                                            ? `Used ${new Date(apiKey.last_used_at).toLocaleDateString()}`
-                                            : 'Never used'}
-                                    </p>
-                                    <p className="text-[11px] text-black/25 mt-0.5">
-                                        {new Date(apiKey.created_at).toLocaleDateString()}
-                                    </p>
-                                </div>
-                                <button
-                                    onClick={() => handleRevokeKey(apiKey.id)}
-                                    disabled={revokingKeyId === apiKey.id}
-                                    className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-semibold text-red-400/70 hover:text-red-500 border border-red-200/60 hover:border-red-300 rounded-lg transition-all disabled:opacity-40 shrink-0"
-                                >
-                                    {revokingKeyId === apiKey.id
-                                        ? <Icon.Spinner className="w-3 h-3 animate-spin" />
-                                        : <Icon.Close className="w-3 h-3" />
-                                    }
-                                    Revoke
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* API hint */}
-                <div className="px-5 py-3.5 border-t border-line/60 bg-surface/40">
-                    <p className="text-[11px] font-mono text-black/30 leading-relaxed">
-                        <span className="text-black/20">POST</span> https://cavos.xyz/api/v1/apps &nbsp;
-                        <span className="text-black/20">·</span> &nbsp;
-                        <span className="text-black/20">Authorization:</span> Bearer cav_••••••
-                    </p>
+                        Manage keys
+                        <Icon.ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
                 </div>
             </div>
 

@@ -1,37 +1,54 @@
-# Cavos developer console design system
+# Design System: Cavos developer console
 
-## Theme
+## 1. Visual Theme & Atmosphere
 
-A precise operational console. White and cool-neutral surfaces carry dense technical information; ink establishes hierarchy and electric indigo is reserved for primary actions, focus, and current selection. Success, warning, and danger colors communicate state only.
+Simple white operational console. Hairline gray, black type, indigo only on primary actions. Privy is the IA reference, not a visual clone.
 
-## Color
+- **Density:** 7
+- **Variance:** 2
+- **Motion:** 3
 
-- Brand: `#402AFF`; hover `#3420D6`; soft `#ECEAFF`.
-- Ink: `#0A0A0F`; muted text: `#555561` or darker on white.
-- Surface: `#F7F7FB`; line: `#E0E0E6`.
-- Success: dark green text on pale green; warning: dark amber on pale amber; danger: dark red on pale red.
-- Body copy targets 4.5:1 contrast. Never communicate status by color alone.
+Personality: precise, sober, trustworthy.
 
-## Typography
+## 2. Color Palette & Roles
 
-Use Geist for interface text and Geist Mono for identifiers, addresses, timestamps, and tabular figures. Product headings use a compact fixed scale and sentence case. Body prose stays within 65–75 characters; data tables may be wider.
+- **Rail / Canvas / Panel** (`#FFFFFF`)
+- **Surface** (`#F7F7FB`) — inputs, selected rows, table headers
+- **Ink** (`#0A0A0F`)
+- **Muted** (`#555561`)
+- **Line** (`#ECECF0`)
+- **Electric Indigo** (`#402AFF`) — primary buttons, focus, data bars
 
-## Layout and navigation
+Selected: `bg-surface text-ink`. Never cream, never a painted indigo rail, never a dark navy field.
 
-- Retain the global left navigation and a constrained `max-w-6xl` content area.
-- Use persistent contextual tabs for app-level sections.
-- Prefer aligned sections and data tables over grids of equal cards.
-- Collapse navigation structurally on mobile; tables scroll or become labeled rows.
-- Environment context must remain visible in app headers and filters.
+## 3. Typography Rules
 
-## Components and states
+- **UI / titles:** Geist. Page titles are semibold, not a display face.
+- **Mono:** Geist Mono — identifiers and metrics
+- **Ramagothic:** marketing only. Never on the console.
+- Sidebar uses the mark alone
 
-- Panels use restrained borders and at most one level of elevation.
-- Every control implements default, hover, focus-visible, active, disabled, loading, and error states.
-- Loading uses shape-matched skeletons. Empty states teach the next action. Errors explain a corrective action.
-- Status badges include text and/or icon. Health is expressed as passed checks, never an unexplained score.
-- Destructive production actions require explicit confirmation.
+## 4. Layout and navigation
 
-## Motion
+The console is the selected app. App picker at the top of the rail. App sections in the sidebar. Organization tools live in the picker. The mark and Docs sit together at the bottom of the rail.
 
-Motion communicates feedback or state only. Use property-specific CSS transitions between 150–250ms with `cubic-bezier(0.23, 1, 0.32, 1)`. Pressable controls scale to `0.97–0.98`. Avoid page-load choreography. Under `prefers-reduced-motion`, remove positional motion while retaining useful color and opacity feedback.
+## 5. Component Stylings
+
+- **Panel:** white, hairline, 8px, no shadow
+- **Buttons:** primary indigo. Secondary / ghost lift with black alpha
+- **Status:** sentence-case text. Color carries meaning. No dots, no tracked caps, no pastel pills.
+- **Empty state:** dashed line, no brand flood
+
+## 6. Motion & Interaction
+
+Feedback only. 150–250ms. `prefers-reduced-motion` respected.
+
+## 7. Anti-Patterns (Banned)
+
+- Gradients, grain, watermarks, dark navy fields
+- Painted `#402AFF` sidebar
+- Lavender / cream canvas or selected wash
+- OAuth / session-keys copy
+- Ramagothic (or any display face) on dashboard titles
+- Pastel status tags (cream, mint, blush fills)
+- Square bullets or tracked all-caps labels (PRODUCTION, HEALTHY)

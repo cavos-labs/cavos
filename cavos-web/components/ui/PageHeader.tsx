@@ -1,7 +1,7 @@
 import React from 'react'
 
 interface PageHeaderProps {
-    /** Small uppercase eyebrow above the title. */
+    /** Sentence-case kicker above the title. One per page, not per section. */
     eyebrow?: string
     title: React.ReactNode
     /** Sub-line under the title (email, description, count). */
@@ -12,20 +12,23 @@ interface PageHeaderProps {
 }
 
 /**
- * Standard dashboard page header: eyebrow + title + subtitle on the left,
+ * Standard dashboard page header: eyebrow + display title + subtitle on the left,
  * actions on the right. Tagged with `data-dash-header` so DashboardMotion
  * plays its entrance automatically.
  */
-export function PageHeader({ title, subtitle, actions, className = '' }: PageHeaderProps) {
+export function PageHeader({ eyebrow, title, subtitle, actions, className = '' }: PageHeaderProps) {
     return (
-        <div data-dash-header className={`flex items-end justify-between gap-4 ${className}`}>
+        <div data-dash-header className={`flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between ${className}`}>
             <div className="min-w-0">
-                <h1 className="text-2xl md:text-[28px] font-bold tracking-[-0.025em] text-ink text-balance leading-none">{title}</h1>
+                {eyebrow && (
+                    <p className="mb-2 text-[11px] font-medium text-muted">{eyebrow}</p>
+                )}
+                <h1 className="text-2xl md:text-[28px] font-semibold tracking-[-0.03em] text-ink text-balance leading-tight">{title}</h1>
                 {subtitle && (
-                    <p className="text-sm text-black/50 mt-2 font-medium truncate">{subtitle}</p>
+                    <p className="text-sm text-muted mt-2 font-medium text-pretty max-w-2xl">{subtitle}</p>
                 )}
             </div>
-            {actions && <div className="hidden sm:flex items-center gap-2 shrink-0">{actions}</div>}
+            {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
         </div>
     )
 }

@@ -27,7 +27,7 @@ const PAGES: SearchResult[] = [
     { id: 'p-overview', label: 'Overview', href: '/dashboard', kind: 'page' },
     { id: 'p-orgs', label: 'Organizations', href: '/dashboard/organizations', kind: 'page' },
     { id: 'p-apps', label: 'Applications', href: '/dashboard/apps', kind: 'page' },
-    { id: 'p-paymasters', label: 'Paymasters', href: '/dashboard/paymasters', kind: 'page' },
+    { id: 'p-paymasters', label: 'Gas', href: '/dashboard/paymasters', kind: 'page' },
     { id: 'p-billing', label: 'Billing', href: '/dashboard/billing', kind: 'page' },
 ]
 
@@ -177,7 +177,7 @@ export function DashboardTopBar() {
                 <div className="group relative">
                     <Icon.Search
                         size={16}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-black/35 group-focus-within:text-brand transition-colors"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted group-focus-within:text-brand transition-colors"
                     />
                     <input
                         ref={inputRef}
@@ -190,9 +190,9 @@ export function DashboardTopBar() {
                         role="combobox"
                         aria-expanded={open}
                         aria-controls="topbar-search-results"
-                        className="w-full h-9 pl-9 pr-12 rounded-lg bg-surface border border-line text-sm text-ink placeholder:text-black/35 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 focus:bg-white transition-[background-color,border-color,box-shadow] duration-150"
+                        className="w-full h-9 pl-9 pr-12 rounded-lg bg-surface border border-line text-sm text-ink placeholder:text-muted focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/25 focus:bg-panel transition-[background-color,border-color,box-shadow] duration-150"
                     />
-                    <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 hidden xl:flex items-center gap-0.5 font-mono text-[10px] font-medium text-black/35 bg-white border border-line rounded px-1.5 py-0.5 pointer-events-none">
+                    <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 hidden xl:flex items-center gap-0.5 font-mono text-[10px] font-medium text-muted bg-white border border-line rounded px-1.5 py-0.5 pointer-events-none">
                         ⌘K
                     </kbd>
                 </div>
@@ -209,10 +209,10 @@ export function DashboardTopBar() {
                         animate={reduced ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
                         exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: -4 }}
                         transition={reduced ? FADE : SPRING_DEFAULT}
-                        className="absolute top-full left-0 right-0 mt-2 rounded-lg border border-line bg-white shadow-lg shadow-black/[0.08] overflow-hidden py-1.5"
+                        className="absolute top-full left-0 right-0 mt-2 rounded-lg border border-line bg-panel overflow-hidden py-1.5"
                     >
                         {results.length === 0 ? (
-                            <p className="px-3 py-6 text-center text-xs text-black/40">
+                            <p className="px-3 py-6 text-center text-xs text-muted">
                                 No matches for “{query}”
                             </p>
                         ) : (
@@ -227,17 +227,17 @@ export function DashboardTopBar() {
                                         onMouseEnter={() => setActiveIdx(i)}
                                         onClick={() => go(r)}
                                         className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
-                                            active ? 'bg-surface' : ''
+                                            active ? 'bg-surface text-ink' : 'text-ink'
                                         }`}
                                     >
-                                        <ResultIcon size={16} className="text-black/40 shrink-0" />
+                                        <ResultIcon size={16} className={`shrink-0 ${active ? 'text-ink' : 'text-muted'}`} />
                                         <span className="min-w-0 flex-1">
-                                            <span className="block text-[13px] font-medium text-ink truncate">{r.label}</span>
+                                            <span className="block text-[13px] font-medium truncate text-ink">{r.label}</span>
                                             {r.sublabel && (
-                                                <span className="block text-[11px] text-black/40 truncate">{r.sublabel}</span>
+                                                <span className="block text-[11px] truncate text-muted">{r.sublabel}</span>
                                             )}
                                         </span>
-                                        <span className="font-mono text-[10px] uppercase tracking-wide text-black/30 shrink-0">
+                                        <span className="font-mono text-[10px] uppercase tracking-wide shrink-0 text-muted">
                                             {KIND_LABEL[r.kind]}
                                         </span>
                                     </button>
@@ -258,17 +258,10 @@ export function DashboardTopBar() {
                     target="_blank"
                     rel="noopener noreferrer"
                     title="Documentation"
-                    className="w-9 h-9 flex items-center justify-center rounded-lg text-black/50 hover:text-ink hover:bg-black/[0.04] transition-colors"
+                    className="w-9 h-9 flex items-center justify-center rounded-lg text-muted hover:text-ink hover:bg-black/[0.04] transition-colors"
                 >
                     <Icon.Docs size={19} />
                 </a>
-                <button
-                    type="button"
-                    title="Notifications"
-                    className="w-9 h-9 flex items-center justify-center rounded-lg text-black/50 hover:text-ink hover:bg-black/[0.04] transition-colors"
-                >
-                    <Icon.Bell size={19} />
-                </button>
 
                 <span className="w-px h-5 bg-line mx-2" />
 

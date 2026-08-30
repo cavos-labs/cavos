@@ -26,17 +26,17 @@ export function MobileNavigationMenu({ label, items }: { label: string; items: M
       <Popover
         label={label}
         align="start"
-        triggerClassName="flex w-full min-h-12 items-center gap-3 rounded-xl border border-line bg-white px-3.5 py-2.5 text-left transition-colors hover:border-line-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/25"
-        panelClassName="w-full mt-2 overflow-hidden rounded-xl border border-line bg-white shadow-lg shadow-black/[0.06]"
+        triggerClassName="flex w-full min-h-12 items-center gap-3 rounded-xl border border-line bg-panel px-3.5 py-2.5 text-left transition-colors hover:border-line-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/25"
+        panelClassName="w-full mt-2 overflow-hidden rounded-xl border border-line bg-panel"
         trigger={(open) => (
           <>
             <span className="min-w-0 flex-1">
-              <span className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-black/45">{label}</span>
-              <span className="mt-0.5 block truncate text-sm font-semibold text-black/80">{active.label}</span>
+              <span className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">{label}</span>
+              <span className="mt-0.5 block truncate text-sm font-semibold text-ink">{active.label}</span>
             </span>
             <Icon.ArrowDown
               size={14}
-              className={`shrink-0 text-black/45 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+              className={`shrink-0 text-muted transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
             />
           </>
         )}
@@ -50,12 +50,12 @@ export function MobileNavigationMenu({ label, items }: { label: string; items: M
                 role="menuitem"
                 aria-current={item.active ? 'page' : undefined}
                 onClick={close}
-                className={`flex items-center gap-3 border-b border-line/70 px-3.5 py-3 transition-colors last:border-0 ${item.active ? 'text-brand' : 'text-black/65 hover:bg-surface hover:text-black'}`}
+                className={`flex items-center gap-3 border-b border-line/70 px-3.5 py-3 transition-colors last:border-0 ${item.active ? 'bg-surface text-ink' : 'text-muted hover:bg-black/[0.03] hover:text-ink'}`}
               >
-                <span className={`h-1.5 w-1.5 shrink-0 ${item.active ? 'bg-brand' : 'bg-black/15'}`} />
+                <span className={`h-1.5 w-1.5 shrink-0 ${item.active ? 'bg-ink' : 'bg-white/15'}`} />
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-semibold">{item.label}</span>
-                  {item.description && <span className="mt-0.5 block text-xs font-normal text-black/50">{item.description}</span>}
+                  {item.description && <span className="mt-0.5 block text-xs font-normal text-muted">{item.description}</span>}
                 </span>
                 {item.active && <Icon.Check size={14} className="shrink-0" />}
               </Link>

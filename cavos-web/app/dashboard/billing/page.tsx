@@ -155,8 +155,8 @@ export default function BillingPage() {
         <div className="space-y-7 animate-fadeIn max-w-4xl">
 
             <PageHeader
-                eyebrow="Billing"
-                title="Plan &amp; Billing"
+                eyebrow="Workspace"
+                title="Plan and billing"
                 subtitle="Your subscription, wallet usage, and available plans."
             />
 
@@ -353,7 +353,7 @@ const TIERS: TierDef[] = [
     {
         id: 'free', name: 'Free', price: '$0', cadence: 'forever',
         blurb: 'Everything you need to ship.',
-        features: ['Up to 1,000 wallets', 'OAuth + session keys', 'Gasless paymaster', 'All core SDK features', 'Community support'],
+        features: ['Up to 1,000 wallets', 'Device-native wallets', 'Gas sponsorship', 'All core SDK features', 'Community support'],
     },
     {
         id: 'pro', name: 'Pro', price: '$99', cadence: 'per month',

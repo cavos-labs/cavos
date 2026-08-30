@@ -1,6 +1,11 @@
-import { AppNavigation } from '@/components/AppNavigation'
+import { SyncSelectedApp } from '@/components/SyncSelectedApp'
 
 export default async function AppLayout({ children, params }: { children: React.ReactNode; params: Promise<{ id: string }> }) {
   const { id } = await params
-  return <div className="space-y-5"><AppNavigation appId={id} />{children}</div>
+  return (
+    <>
+      <SyncSelectedApp id={id} />
+      {children}
+    </>
+  )
 }
