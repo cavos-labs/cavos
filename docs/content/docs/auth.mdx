@@ -3,9 +3,9 @@ title: Authentication
 description: Use Cavos hosted login (Google / Apple / OTP) or bring your own identity.
 ---
 
-Authentication exists for **one reason**: to produce a stable `userId` that, with
-your `appSalt`, derives the wallet address. The login **never signs transactions**
-— that is always the device key.
+Authentication exists for **one reason**: to produce a stable `userId` (plus
+optional email) that the Cavos registry keys on. The login **never signs
+transactions** — that is always the device key.
 
 You have two options: bring your own identity, or use Cavos hosted auth.
 
@@ -25,9 +25,9 @@ const cavos = await Cavos.connect({
 ```
 
 <Callout type="warn">
-`userId` must be **stable and unique per user**. If it changes, the derived
-address changes and the user gets a different wallet. Use an immutable primary
-key, not an email that can change.
+`userId` must be **stable and unique per user**. If it changes, the registry
+lookup is for a different user — resulting in a different (or new) wallet. Use
+an immutable primary key, not an email that can change.
 </Callout>
 
 ### In React
@@ -161,15 +161,19 @@ dashboard; unregistered redirects are rejected by the backend.
 
 ## How identity becomes an address
 
-Identity is the shared input; derivation is adapter-specific:
+When you call `connect`, the kit looks up the address in the Cavos registry:
 
-| Chain | Deterministic model |
-|---|---|
-| **Starknet** | Poseidon-derived seed → counterfactual Cairo account address. |
-| **Solana** | SHA-256-derived seed → device-account PDA. |
-| **Stellar** | SHA-256-derived seed → deterministic classic master account, then local control-key enrollment. |
+```
+(userId, appId, chain) → registry lookup → address
+```
 
-In each case the wallet is anchored to the stable identity and `appSalt`, not
-to whichever device happens to connect first. Use the public derivation helper
-for the selected adapter only when you need to compute an address without
-calling `Cavos.connect`.
+If the registry has an entry, that address is returned. If not, this device
+computes a candidate address and claims it. The registry is insert-only: the
+first device to register wins. A second device connecting later sees the
+existing address and enters `needs-device-approval` instead of creating a
+duplicate wallet.
+
+The `appSalt` parameter names the local device-key slot — it keeps device keys
+separate across different apps on the same device. It does not determine the
+address. The registry maps this user and app to the address; `appSalt` isolates
+the device key.
