@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Icon } from '@/components/ui/Icon'
+import { PageHeader } from '@/components/ui/PageHeader'
 
 // Common Solana programs developers may want their wallets to call. The relayer
 // always allows the safe set (System, SPL Token, Token-2022, Associated Token);
@@ -102,22 +102,13 @@ export default function ProgramsPage() {
 
   return (
     <div className="space-y-6 animate-fadeIn max-w-5xl">
-      <Link
-        href={`/dashboard/apps/${appId}`}
-        className="inline-flex items-center text-sm text-black/60 hover:text-black transition-colors"
-      >
-        <Icon.ArrowLeft className="w-4 h-4 mr-1" />
-        Back to app
-      </Link>
-
-      <div>
-        <h1 className="text-2xl font-bold text-black">Allowed Solana Programs</h1>
-        <p className="text-black/60 mt-1">
-          Programs your wallets may call via sponsored <code className="text-sm bg-brand/5 px-1.5 py-0.5 rounded">execute</code>.
-          The relayer always allows the safe set (System, SPL Token, Token-2022, Associated Token);
-          add any additional programs your app needs.
-        </p>
-      </div>
+      <PageHeader
+        title="Allowed Solana programs"
+        subtitle="Programs your wallets may call via sponsored execute. The relayer always allows System, SPL Token, Token-2022, and Associated Token."
+      />
+      <p className="text-sm text-muted">
+        Add any additional programs your app needs.
+      </p>
 
       <Card className="p-6 space-y-6">
         {/* Common presets */}

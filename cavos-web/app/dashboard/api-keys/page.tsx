@@ -77,7 +77,7 @@ export default function ApiKeysPage() {
   if (loading) return <PageSkeleton />
 
   return <div className="space-y-6">
-    <PageHeader title="API keys" subtitle="Environment-scoped credentials and usage." actions={<OrganizationPicker items={organizations} value={organizationId} onChange={setOrganizationId} />} />
+    <PageHeader eyebrow="Workspace" title="API keys" subtitle="Environment-scoped credentials and usage." actions={<OrganizationPicker items={organizations} value={organizationId} onChange={setOrganizationId} />} />
 
     <section className="rounded-xl border border-line bg-white p-5">
       <div>

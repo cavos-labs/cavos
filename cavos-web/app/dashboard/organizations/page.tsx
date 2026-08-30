@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Icon } from '@/components/ui/Icon'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { PageSkeleton } from '@/components/ui/Skeleton'
 
 export default function OrganizationsPage() {
     const router = useRouter()
@@ -32,66 +34,45 @@ export default function OrganizationsPage() {
     }
 
     if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-[50vh]">
-                <Icon.Spinner size={26} weight="bold" className="animate-spin text-black/25" />
-            </div>
-        )
+        return <PageSkeleton />
     }
 
     return (
-        <div className="space-y-7 animate-fadeIn">
-
-            {/* Header */}
+        <div className="space-y-6">
             <PageHeader
-                eyebrow="Dashboard"
+                eyebrow="Workspace"
                 title="Organizations"
-                subtitle="Manage your organizations and their applications."
+                subtitle="Group apps, keys, and team access under one workspace."
                 actions={
                     <Link href="/dashboard/organizations/new">
                         <Button icon={<Icon.Add size={15} weight="bold" />}>
-                            New Organization
+                            New organization
                         </Button>
                     </Link>
                 }
             />
 
-            {/* Error */}
             {error && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+                <div role="alert" className="rounded-xl border border-danger/20 bg-danger-soft px-4 py-3 text-sm text-danger">
                     {error}
                 </div>
             )}
 
-            {/* Empty state */}
             {organizations.length === 0 ? (
-                <div data-dash-panel className="relative overflow-hidden rounded-2xl bg-brand text-white p-8 border border-black/10">
-                    <div
-                        className="absolute top-0 right-0 w-64 h-64 pointer-events-none"
-                        style={{ background: 'radial-gradient(ellipse at top right, #402AFF1F 0%, transparent 65%)' }}
-                    />
-                    <div className="relative space-y-4 max-w-md">
-                        <div className="w-10 h-10 rounded-xl bg-white/[0.07] border border-white/[0.08] flex items-center justify-center">
-                            <Icon.Org size={20} className="text-white/55" />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-bold mb-1">No organizations yet</h3>
-                            <p className="text-sm text-white/40 leading-relaxed">
-                                Create an organization to group your apps and manage API keys.
-                            </p>
-                        </div>
+                <EmptyState
+                    title="No organizations yet"
+                    description="Create an organization to group your apps and manage API keys."
+                    action={
                         <Link href="/dashboard/organizations/new">
-                            <Button size="sm" className="bg-white/10 text-white hover:bg-white/16 border border-white/10 rounded-xl mt-1">
-                                Create Organization
-                            </Button>
+                            <Button size="sm">Create organization</Button>
                         </Link>
-                    </div>
-                </div>
+                    }
+                />
             ) : (
                 <div data-dash-panel className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {organizations.map((org) => (
                         <Link key={org.id} href={`/dashboard/organizations/${org.id}`}>
-                            <div className="group h-full bg-white border border-black/[0.08] rounded-2xl p-6 hover:border-black/[0.18] hover:shadow-md hover:shadow-black/[0.05] transition-all">
+                            <div className="group h-full rounded-xl border border-line bg-white p-5 transition-[border-color] duration-150 hover:border-line-strong">
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="p-2.5 bg-black/[0.04] rounded-xl text-ink/65 group-hover:bg-black/[0.07] transition-colors">
                                         <Icon.Org size={17} />
@@ -115,7 +96,7 @@ export default function OrganizationsPage() {
                     <Link href="/dashboard/organizations/new">
                         <div className="group h-full min-h-[120px] bg-surface border border-dashed border-line-strong rounded-2xl p-6 hover:border-black/30 hover:bg-black/[0.03] transition-all flex items-center justify-center gap-2">
                             <Icon.Add size={16} weight="bold" className="text-black/35 group-hover:text-black/60 transition-colors" />
-                            <span className="text-xs font-semibold text-black/40 group-hover:text-black/70 transition-colors">New Organization</span>
+                            <span className="text-xs font-semibold text-muted group-hover:text-ink transition-colors">New organization</span>
                         </div>
                     </Link>
                 </div>

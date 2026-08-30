@@ -18,7 +18,7 @@ export function EmailTemplateNavigation({ appId, active }: { appId: string; acti
   return (
     <>
     <MobileNavigationMenu label="Email template" items={mobileItems} />
-    <nav aria-label="Email templates" className="email-template-nav hidden overflow-x-auto rounded-xl border border-black/10 bg-white p-1.5 sm:block">
+    <nav aria-label="Email templates" className="email-template-nav hidden overflow-x-auto rounded-xl border border-line bg-panel p-1.5 sm:block">
       <ul className="flex min-w-max snap-x snap-mandatory gap-1">
         {templates.map((template) => {
           const selected = template.key === active
@@ -27,10 +27,10 @@ export function EmailTemplateNavigation({ appId, active }: { appId: string; acti
               <Link
                 href={`/dashboard/apps/${appId}/emails${template.path}`}
                 aria-current={selected ? 'page' : undefined}
-                className={`block rounded-lg px-3 py-2 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${selected ? 'bg-brand text-white shadow-sm shadow-brand/20' : 'text-black/60 hover:bg-brand-soft hover:text-brand'}`}
+                className={`block rounded-lg px-3 py-2 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${selected ? 'bg-surface text-ink' : 'text-muted hover:bg-black/[0.03] hover:text-ink'}`}
               >
                 <span className="block text-xs font-semibold">{template.label}</span>
-                <span className={`block text-[10px] ${selected ? 'text-white/65' : 'text-black/40'}`}>{template.description}</span>
+                <span className="block text-[10px] text-muted">{template.description}</span>
               </Link>
             </li>
           )

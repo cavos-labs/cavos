@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ── Brand tokens ──────────────────────────────────────────
-   Electric-indigo on white. Single family (Geist), -1% tracking. */
+   Electric-indigo on cool white. Geist UI, Ramagothic display, Geist Mono data. */
 @theme {
   --color-brand: #402AFF;
   --color-brand-hover: #3420D6;
@@ -10,7 +10,17 @@
   --color-line: #ECECF0;
   --color-line-strong: #E0E0E6;
   --color-surface: #F7F7FB;
-  --color-muted: #6B6B76;
+  --color-panel: #FFFFFF;
+  --color-canvas: #FFFFFF;
+  --color-rail: #FFFFFF;
+  --color-muted: #555561;
+  --color-ok: #1B5E3B;
+  --color-ok-soft: #E8F5EE;
+  --color-warn: #7A4A00;
+  --color-warn-soft: #FBF3DB;
+  --color-danger: #8B1E1E;
+  --color-danger-soft: #FDEBEC;
+  --font-display: var(--font-romagothicbold), var(--font-geist), sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, 'SF Mono', Menlo, monospace;
 
   /* Tighter corner radii — crisp/technical, not soft. rounded-full untouched. */

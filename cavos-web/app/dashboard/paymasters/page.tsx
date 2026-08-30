@@ -223,9 +223,9 @@ export default function PaymastersPage() {
 
             {/* ── Page header ── */}
             <PageHeader
-                eyebrow="Paymasters"
-                title="Gas Balance"
-                subtitle="Fund gas per network to sponsor gasless transactions for your users."
+                eyebrow="Product"
+                title="Gas"
+                subtitle="Fund gas per network to sponsor transactions for your users."
                 actions={
                     selectedChain !== 'starknet' ? null : walletAddress ? (
                         <div className="flex items-center gap-2">

@@ -50,21 +50,19 @@ export function DpaConsentModal() {
         // No onClose: this is a blocking legal step. Escape and scrim dismissal
         // are intentionally off — "Log out instead" is the way out.
         <Modal open={show} labelledBy="dpa-modal-title">
-            <div className="bg-white rounded-2xl border border-line shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="bg-white rounded-2xl border border-line w-full max-w-md overflow-hidden">
 
                     {/* Header */}
-                    <div className="bg-brand px-6 py-5">
+                    <div className="border-b border-line bg-surface px-6 py-5">
                         <div className="flex items-center gap-2.5 mb-2">
-                            <div className="w-7 h-7 rounded-lg bg-white/[0.07] border border-white/[0.1] flex items-center justify-center shrink-0">
-                                <svg className="w-3.5 h-3.5 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <div className="w-7 h-7 rounded-lg bg-white border border-line flex items-center justify-center shrink-0">
+                                <svg className="w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                             </div>
-                            <h2 id="dpa-modal-title" className="text-sm font-bold text-white">Updated legal agreements</h2>
+                            <h2 id="dpa-modal-title" className="text-sm font-bold text-ink">Updated legal agreements</h2>
                         </div>
-                        {/* white/40 on the brand indigo was well under 4.5:1 —
-                            supporting copy still has to be readable. */}
-                        <p className="text-xs text-white/75 leading-relaxed">
+                        <p className="text-xs text-muted leading-relaxed">
                             We&apos;ve published our Data Processing Agreement and Privacy Policy. Please review and accept to continue using Cavos.
                         </p>
                     </div>

@@ -1,23 +1,35 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Icon } from '@/components/ui/Icon'
+import { Wordmark } from '@/components/Wordmark'
+import { Popover } from '@/components/ui/Popover'
 import { useEffect, useState } from 'react'
 import { useOrganization } from '@/lib/hooks/useOrganization'
+import { useApp } from '@/lib/hooks/useApp'
 
-const navigation = [
-    { name: 'Overview',      href: '/dashboard',               icon: Icon.Overview },
-    { name: 'Applications',  href: '/dashboard/apps',          icon: Icon.Apps },
-    { name: 'Activity',      href: '/dashboard/activity',      icon: Icon.Activity },
-    { name: 'Gas & usage',   href: '/dashboard/paymasters',    icon: Icon.Gas },
-    { name: 'Webhooks',      href: '/dashboard/webhooks',      icon: Icon.Bolt },
-    { name: 'Team',          href: '/dashboard/team',          icon: Icon.Org },
-    { name: 'API keys',      href: '/dashboard/api-keys',      icon: Icon.Key },
-    { name: 'Billing',       href: '/dashboard/billing',       icon: Icon.Billing },
-    { name: 'Audit log',     href: '/dashboard/audit-log',     icon: Icon.Docs },
-    { name: 'Settings',      href: '/dashboard/settings',      icon: Icon.Settings },
+const appNav = [
+    { name: 'Overview', suffix: '', icon: Icon.Overview },
+    { name: 'Wallets', suffix: '/wallets', icon: Icon.Wallet },
+    { name: 'Activity', suffix: '/activity', icon: Icon.Activity },
+    { name: 'Emails', suffix: '/emails', icon: Icon.Mail },
+    { name: 'Programs', suffix: '/programs', icon: Icon.Code },
+    { name: 'Environments', suffix: '/environments', icon: Icon.Connect },
+    { name: 'Settings', suffix: '/settings', icon: Icon.Settings },
+]
+
+const accountLinks = [
+    { name: 'Team', href: '/dashboard/team', icon: Icon.Org },
+    { name: 'API keys', href: '/dashboard/api-keys', icon: Icon.Key },
+    { name: 'Billing', href: '/dashboard/billing', icon: Icon.Billing },
+    { name: 'Settings', href: '/dashboard/settings', icon: Icon.Settings },
+    { name: 'Gas', href: '/dashboard/paymasters', icon: Icon.Gas },
+    { name: 'Webhooks', href: '/dashboard/webhooks', icon: Icon.Bolt },
+    { name: 'Activity', href: '/dashboard/activity', icon: Icon.Activity },
+    { name: 'Audit log', href: '/dashboard/audit-log', icon: Icon.Docs },
 ]
 
 export function Sidebar() {
@@ -25,6 +37,7 @@ export function Sidebar() {
     const router = useRouter()
     const [userEmail, setUserEmail] = useState<string | null>(null)
     const { organizations, organizationId, setOrganizationId, loading: organizationsLoading } = useOrganization()
+    const { apps, app, appId, setAppId, loading: appsLoading } = useApp()
 
     useEffect(() => {
         const getUser = async () => {
@@ -42,108 +55,201 @@ export function Sidebar() {
         router.refresh()
     }
 
+    const openApp = (id: string) => {
+        setAppId(id)
+        router.push(`/dashboard/apps/${id}`)
+    }
+
+    useEffect(() => {
+        if (appsLoading || !appId) return
+        const match = pathname.match(/^\/dashboard\/apps\/([^/]+)/)
+        const currentId = match?.[1]
+        if (!currentId || currentId === 'new') return
+        if (!apps.some((item) => item.id === currentId)) {
+            router.replace(`/dashboard/apps/${appId}`)
+        }
+    }, [appId, apps, appsLoading, pathname, router])
+
     return (
-        <div className="flex flex-col h-full bg-white border-r border-line">
+        <div className="flex h-full flex-col bg-white text-ink">
+            <div className="px-3 pt-4 pb-3">
+                <Popover
+                    label="Application and account"
+                    triggerClassName="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-black/[0.03]"
+                    panelClassName="left-0 right-0 mt-1 max-h-[min(32rem,70vh)] w-[calc(16rem-1.5rem)] overflow-y-auto rounded-xl border border-line bg-white py-2"
+                    trigger={(open) => (
+                        <>
+                            <AppMark name={app?.name} logoUrl={app?.logo_url} />
+                            <span className="min-w-0 flex-1">
+                                <span className="block truncate text-sm font-semibold">
+                                    {appsLoading ? 'Loading…' : app?.name ?? 'Select an app'}
+                                </span>
+                                <span className="block truncate text-[11px] text-muted">
+                                    {organizations.find((organization) => organization.id === organizationId)?.name ?? 'Organization'}
+                                </span>
+                            </span>
+                            <Icon.ArrowDown
+                                size={13}
+                                className={`shrink-0 text-muted transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
+                            />
+                        </>
+                    )}
+                >
+                    {(close) => (
+                        <>
+                            <div className="px-3 pb-2">
+                                <label className="block">
+                                    <span className="mb-1.5 block text-[11px] font-medium text-muted">Organization</span>
+                                    <select
+                                        aria-label="Current organization"
+                                        value={organizationId}
+                                        onChange={(event) => setOrganizationId(event.target.value)}
+                                        disabled={organizationsLoading || organizations.length === 0}
+                                        className="h-9 w-full appearance-none truncate rounded-lg border border-line-strong bg-surface px-2.5 pr-7 text-xs font-semibold text-ink outline-none focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-50"
+                                    >
+                                        {organizations.map((organization) => (
+                                            <option key={organization.id} value={organization.id}>
+                                                {organization.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+                            </div>
 
-            {/* Logo */}
-            <div className="h-16 flex items-center px-4 border-b border-line">
-                <Link href="/dashboard" className="hover:opacity-75 transition-opacity">
-                    <span
-                        role="img"
-                        aria-label="Cavos"
-                        className="block h-7 w-7 bg-brand"
-                        style={{
-                            WebkitMask: 'url(/cavos-black.png) center / contain no-repeat',
-                            mask: 'url(/cavos-black.png) center / contain no-repeat',
-                        }}
-                    />
-                </Link>
-            </div>
-
-            <div className="border-b border-line px-3 py-3">
-                <label className="block">
-                    <span className="mb-1.5 block px-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-black/35">
-                        Organization
-                    </span>
-                    <div className="relative">
-                        <select
-                            aria-label="Current organization"
-                            value={organizationId}
-                            onChange={(event) => setOrganizationId(event.target.value)}
-                            disabled={organizationsLoading || organizations.length === 0}
-                            className="h-10 w-full appearance-none truncate rounded-lg border border-line bg-surface px-3 pr-8 text-sm font-semibold text-black/75 outline-none transition-colors hover:border-line-strong focus-visible:ring-2 focus-visible:ring-brand/25 disabled:opacity-50"
-                        >
-                            {organizations.map((organization) => (
-                                <option key={organization.id} value={organization.id}>{organization.name}</option>
+                            <p className="px-3 pb-1 text-[11px] font-medium text-muted">Applications</p>
+                            {apps.length === 0 && !appsLoading && (
+                                <p className="px-3 py-2 text-xs text-muted">No applications yet.</p>
+                            )}
+                            {apps.map((item) => (
+                                <button
+                                    key={item.id}
+                                    role="menuitem"
+                                    onClick={() => { close(); openApp(item.id) }}
+                                    className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm ${item.id === appId ? 'bg-surface font-semibold text-ink' : 'text-ink hover:bg-black/[0.03]'}`}
+                                >
+                                    <AppMark name={item.name} logoUrl={item.logo_url} size="sm" />
+                                    <span className="min-w-0 truncate">{item.name}</span>
+                                    {item.id === appId && <Icon.Check size={13} className="ml-auto shrink-0 text-muted" />}
+                                </button>
                             ))}
-                        </select>
-                        <Icon.ArrowDown size={13} aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-black/35" />
-                    </div>
-                </label>
+                            <Link
+                                href={`/dashboard/apps/new${organizationId ? `?organization_id=${organizationId}` : ''}`}
+                                role="menuitem"
+                                onClick={close}
+                                className="flex items-center gap-2.5 px-3 py-2 text-sm text-ink hover:bg-black/[0.03]"
+                            >
+                                <Icon.Add size={15} />
+                                New application
+                            </Link>
+                            <Link
+                                href="/dashboard/apps"
+                                role="menuitem"
+                                onClick={close}
+                                className="flex items-center gap-2.5 px-3 py-2 text-sm text-ink hover:bg-black/[0.03]"
+                            >
+                                <Icon.Apps size={15} />
+                                All applications
+                            </Link>
+
+                            <div className="my-2 border-t border-line" />
+                            <p className="px-3 pb-1 text-[11px] font-medium text-muted">Account</p>
+                            {accountLinks.map((item) => (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    role="menuitem"
+                                    onClick={close}
+                                    className={`flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-black/[0.03] ${pathname.startsWith(item.href) ? 'font-semibold text-ink' : 'text-ink'}`}
+                                >
+                                    <item.icon size={15} className="shrink-0 text-muted" />
+                                    {item.name}
+                                </Link>
+                            ))}
+                            <Link
+                                href="/dashboard/organizations"
+                                role="menuitem"
+                                onClick={close}
+                                className="flex items-center gap-2.5 px-3 py-2 text-sm text-ink hover:bg-black/[0.03]"
+                            >
+                                <Icon.Org size={15} className="shrink-0 text-muted" />
+                                Manage organizations
+                            </Link>
+                            {userEmail && (
+                                <p className="truncate px-3 pt-2 text-[11px] text-muted">{userEmail}</p>
+                            )}
+                            <button
+                                type="button"
+                                role="menuitem"
+                                onClick={() => { close(); handleLogout() }}
+                                className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-ink hover:bg-black/[0.03]"
+                            >
+                                <Icon.Logout size={15} className="shrink-0 text-muted" />
+                                Sign out
+                            </button>
+                        </>
+                    )}
+                </Popover>
             </div>
 
-            {/* Navigation */}
-            <nav className="flex-1 px-3 py-4 space-y-0.5">
-                {navigation.map((item) => {
-                    const isActive = item.href === '/dashboard'
-                        ? pathname === '/dashboard'
-                        : pathname.startsWith(item.href)
+            <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 pb-2">
+                {appId ? appNav.map((item) => {
+                    const href = `/dashboard/apps/${appId}${item.suffix}`
+                    const isActive = item.suffix
+                        ? pathname.startsWith(href)
+                        : pathname === `/dashboard/apps/${appId}`
 
                     return (
                         <Link
                             key={item.name}
-                            href={item.href}
+                            href={href}
                             aria-current={isActive ? 'page' : undefined}
                             className={`
-                                group flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 active:scale-[0.98]
+                                flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] transition-colors duration-150
                                 ${isActive
-                                    ? 'text-brand font-semibold bg-black/[0.04]'
-                                    : 'text-black/60 font-medium hover:text-black hover:bg-black/[0.035]'
+                                    ? 'bg-surface font-semibold text-ink'
+                                    : 'font-medium text-muted hover:bg-black/[0.03] hover:text-ink'
                                 }
                             `}
                         >
-                            <item.icon
-                                size={19}
-                                weight={isActive ? 'fill' : 'regular'}
-                                className={`shrink-0 transition-colors ${isActive ? 'text-brand' : 'text-black/55 group-hover:text-black'}`}
-                            />
+                            <item.icon size={16} weight={isActive ? 'fill' : 'regular'} className="shrink-0" />
                             {item.name}
                         </Link>
                     )
-                })}
+                }) : (
+                    <p className="px-2.5 py-6 text-xs leading-5 text-muted">
+                        Create an application to see its overview, wallets, and configuration.
+                    </p>
+                )}
             </nav>
 
-            {/* Footer */}
-            <div className="p-3 border-t border-line space-y-0.5">
+            <div className="mt-auto flex items-center justify-between border-t border-line px-4 py-3">
+                <Wordmark className="h-5 w-5" />
                 <a
                     href="https://docs.cavos.xyz"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-black/45 hover:text-black hover:bg-black/[0.03] rounded-lg transition-all"
+                    className="inline-flex items-center gap-1 text-xs font-medium text-muted hover:text-ink"
                 >
-                    <Icon.Docs size={17} className="shrink-0 text-black/40" />
-                    Documentation
-                    <Icon.External size={13} weight="bold" className="ml-auto text-black/25" />
+                    Docs
+                    <Icon.External size={11} className="opacity-50" />
                 </a>
-
-                {/* User info */}
-                {userEmail && (
-                    <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl">
-                        <div className="w-7 h-7 rounded-full bg-black/[0.06] flex items-center justify-center text-xs font-bold text-black/55 shrink-0 select-none">
-                            {userEmail[0].toUpperCase()}
-                        </div>
-                        <span className="text-xs font-medium text-black/50 truncate min-w-0">{userEmail}</span>
-                    </div>
-                )}
-
-                <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-500/70 hover:text-red-600 hover:bg-red-50/80 rounded-xl transition-all"
-                >
-                    <Icon.Logout size={17} className="shrink-0" />
-                    Sign Out
-                </button>
             </div>
         </div>
+    )
+}
+
+function AppMark({ name, logoUrl, size = 'md' }: { name?: string; logoUrl?: string | null; size?: 'sm' | 'md' }) {
+    const box = size === 'sm' ? 'h-6 w-6 rounded-md' : 'h-8 w-8 rounded-lg'
+    const glyph = size === 'sm' ? 12 : 15
+    return (
+        <span className={`relative shrink-0 overflow-hidden border border-line bg-surface ${box}`}>
+            {logoUrl ? (
+                <Image src={logoUrl} alt="" fill className="object-cover" />
+            ) : (
+                <span className="flex h-full w-full items-center justify-center text-muted">
+                    {name ? <span className="text-[10px] font-bold">{name[0]?.toUpperCase()}</span> : <Icon.Apps size={glyph} />}
+                </span>
+            )}
+        </span>
     )
 }

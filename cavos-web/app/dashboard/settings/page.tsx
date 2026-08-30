@@ -59,7 +59,7 @@ export default function SettingsPage() {
   }
 
   return <div className="space-y-6">
-    <PageHeader title="Settings" subtitle="Organization configuration, security and data controls." />
+    <PageHeader eyebrow="Workspace" title="Settings" subtitle="Passkeys, organizations, and data controls." />
 
     <section className="rounded-xl border border-line bg-white">
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-line px-5 py-4">
