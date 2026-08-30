@@ -33,8 +33,10 @@ Each app then has its own tabs:
 | **Settings** | Name, logo, and the `device_approval_url` the emails link to. |
 
 <Callout type="info">
-`appSalt` is **not** a dashboard value — it lives in your code and derives every
-address. Changing it moves every user to a new, empty wallet. See
+`appSalt` is **not** a dashboard value — it lives in your code and names the
+local device-key slot. The registry (keyed by user, app, and chain) determines
+the address. Changing `appSalt` means a new device key on the same registry
+address — typically `needs-device-approval`, not a silent empty wallet. See
 [Troubleshooting](/docs/troubleshooting#users-suddenly-have-new-empty-wallets).
 </Callout>
 
