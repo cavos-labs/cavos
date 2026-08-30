@@ -79,19 +79,19 @@ vs. *which chain*.
 
 ## Wallet addresses across environments
 
-Wallet derivation is deterministic from `userId` + `appSalt` and does not depend
-on `environment`. If you want a user's **development** wallet to be a different
-address than their **production** wallet, use a distinct `appSalt` per
-environment:
+The wallet address does not depend on the Cavos console `environment` flag.
+Addresses come from the registry, keyed by identity, app, and chain.
 
-```ts
-const appSalt = __DEV__ ? "my-app-dev" : "my-app";
-```
+If you want a user's **development** wallet to be a different address than their
+**production** wallet, you need a distinct registry key — which means a separate
+app (distinct `appId`). One `appId` shared across development and production
+shares the registry address.
 
-Keep the same `appSalt` if you deliberately want one address whose console
-accounting differs by environment.
+A distinct `appSalt` only isolates the local device-key slot; it does not create
+a different registry entry. Changing `appSalt` after users have connected means
+their new device key is not authorized on the existing registry address — they
+will see `needs-device-approval`.
 
 <Callout type="warn">
-Treat `appSalt` as permanent: changing it changes every derived address. Decide
-your per-environment salts before onboarding real users.
+Treat `appSalt` as permanent. Decide your salt before onboarding real users.
 </Callout>
