@@ -98,14 +98,6 @@ non-enumerable. The value is not lost, just unprinted: read the message off the
 error you caught, or off the status field for background work
 (`walletStatus`-level errors and `authError`).
 
-## Passkey approval fails on Starknet mainnet
-
-Not yet available there: the mainnet account class has not been re-declared with
-the `add_signer_via_passkey` surface. Use it on Sepolia, or on Solana and
-Stellar, which route approval through the relayer. On Starknet mainnet fall back
-to [multi-device](/docs/multi-device) or [recovery
-codes](/docs/recovery-codes). See [Passkeys](/docs/passkeys).
-
 ## Hydration or `window is not defined` errors
 
 The React bindings are client-only — `@cavos/kit/react` is marked
