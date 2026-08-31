@@ -276,6 +276,14 @@ finding an already-authorized one. On Stellar it is a **WebAuthn PRF** credentia
 whose derived secret wraps the account DEK — it is *not* an on-chain signer and
 not part of the cross-chain `approveDeviceEverywhere` batch.
 
+<Callout type="warn">
+**This is not 2FA.** Unlike Starknet/Solana where the passkey only approves new
+devices, on Stellar the passkey unlocks the spending key directly. Anyone with
+the synced passkey (via iCloud Keychain or Google Password Manager) can spend.
+A synced iCloud/Google passkey recovers the `G…` wallet. Cavos never holds the
+control seed.
+</Callout>
+
 ```ts title="TypeScript"
 import { PasskeyPrf } from "@cavos/kit";
 

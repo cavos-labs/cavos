@@ -169,7 +169,7 @@ the args differ per chain. See [Wallet actions](/docs/wallet-actions).
 | `removeSigner(pubkey)` | Revoke a device signer (gasless `remove_signer`) — the "this wasn't me" escape hatch. Must run from a device that is already authorized, and cannot revoke itself. On **Stellar** use `wallet.removeDevice(...)` instead: devices there are envelope slots, not signer pubkeys. |
 | `listDevices()` | Device signer pubkeys currently authorized on this wallet, for a management UI. Starknet/Solana only — on Stellar call `wallet.listDevices()` for the envelope slot ids. |
 | `enrollPasskey(passkey, params)` | Low-level passkey enrollment when you drive WebAuthn yourself. Most apps want `enrollPasskeyDefault()`. |
-| `enrollPasskeyDefault()` | Enroll a synced passkey as an approver (2FA for new devices). Works on `undeployed` (pending until first execute) and `ready` wallets. |
+| `enrollPasskeyDefault()` | Enroll a synced passkey. On Starknet/Solana, registers an on-chain approver for new devices. On Stellar, wraps the control key (not 2FA — unlocks spending). Works on `undeployed` (pending until first execute) and `ready` wallets. |
 | `approveDeviceWithPasskey()` | From a `needs-device-approval` browser, prompt the synced passkey to authorize this device. |
 | `setupRecovery()` | Register a backup signer derived from a generated recovery code. **Resolves with the code** — show it to the user once. Works on `undeployed` (pending until first execute) and `ready` wallets. |
 | `submitSocialRecoveryToken(idToken)` | Drive social recovery with a provider `id_token` your own login obtained. Enrols when the device is ready, recovers when it is not. See [Hardware-isolated recovery](/docs/hardware-isolated-recovery#with-your-own-auth). |
