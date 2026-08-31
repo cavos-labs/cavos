@@ -4,7 +4,7 @@
 
 ## What is Cavos?
 
-Cavos (`@cavos/kit`) gives an application one wallet integration across chains without flattening their differences. A stable `userId` plus an app-specific salt anchors a deterministic wallet; a chain adapter implements address derivation, signing, execution, recovery, and sponsorship natively for each network.
+Cavos (`@cavos/kit`) gives an application one wallet integration across chains without flattening their differences. Addresses are resolved registry-first by `(userId, appId, chain, network)` — the first device to claim an address wins. A chain adapter implements signing, execution, recovery, and sponsorship natively for each network.
 
 Install: `npm install @cavos/kit`
 
