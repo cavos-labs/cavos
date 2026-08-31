@@ -217,11 +217,6 @@ another authorized device instead of changing the Stellar account model.
   to the [multi-device](/docs/multi-device) and [recovery](/docs/recovery) flows.
 - **RP ID.** Defaults to `window.location.hostname`. Pass `rpId` explicitly only
   if you need a different registrable domain.
-- **Starknet mainnet caveat.** Passkey approval currently works on **Sepolia**
-  only. The mainnet account class hasn't been re-declared with the
-  `add_signer_via_passkey` surface yet, so on Starknet mainnet use
-  [multi-device](/docs/multi-device) / [recovery](/docs/recovery) instead. Solana
-  and Stellar route passkey approval through their relayers and are not affected.
 
 ## Non-custodial
 
