@@ -1,23 +1,41 @@
 ---
-title: Passkeys (2FA)
-description: Set up a passkey after signup so users can log in on a new device — a second factor for device approval, not a signer.
+title: Passkeys
+description: Set up a passkey after signup so users can log in on a new device. The passkey's role differs by chain — on-chain approver (Starknet/Solana) vs unlock factor for the spending key (Stellar).
 ---
 
-Right after signup, walk the user through creating a **passkey**. It is a second
-factor for their wallet: it does **not** replace the silent device key and it
-**never signs transactions**. What it does is let them log in on a *new* device
-without having to find one that's already logged in.
+Right after signup, walk the user through creating a **passkey**. It lets them
+log in on a *new* device without having to find one that's already logged in.
+The passkey's security role differs by chain:
 
-Treat it as **two-factor authentication** in your UI. Show the prompt immediately
-after the wallet is ready, framed as *"Turn on device approvals so you never get
-locked out"* — not as a signing step. That framing is what keeps the UX coherent:
-the user already authenticated and got a wallet, and this is the safety net on top.
+| Chain | How the passkey works | Security model |
+|-------|----------------------|----------------|
+| **Starknet / Solana** | Synced WebAuthn credential registered **on-chain as an approver**. It approves adding a new device's key. It never signs transactions. | 2FA / device-approval step-up. |
+| **Stellar** | WebAuthn PRF credential. The passkey does not sign XDR. It **unwraps the DEK** that opens the one ed25519 control key (the `G…` spending key). | **Not 2FA.** Anyone with the synced passkey (via iCloud/Google) can spend — the passkey unlocks the control key locally. Cavos never holds the seed. |
+
+On **Starknet and Solana**, treat it as **two-factor authentication** in your UI.
+Show the prompt immediately after the wallet is ready, framed as *"Turn on device
+approvals so you never get locked out"* — not as a signing step. That framing is
+what keeps the UX coherent: the user already authenticated and got a wallet, and
+this is the safety net on top.
+
+On **Stellar**, a synced passkey **recovers the account**. Frame it as *"Add a
+passkey so you can sign in from any device"* — but understand that anyone who
+obtains the synced credential (through the iCloud or Google account) gains full
+spending access.
 
 <Callout type="info">
-A passkey here is a **synced, discoverable WebAuthn credential** (iCloud Keychain
-/ Google Password Manager) registered on-chain as an **approver**. It approves
-adding a new device's key — it does not authorize individual transactions.
-Signing stays silent, as described in [Signing & gasless](/docs/signing).
+**Starknet / Solana:** The passkey is a **synced, discoverable WebAuthn
+credential** (iCloud Keychain / Google Password Manager) registered on-chain as
+an **approver**. It approves adding a new device's key — it does not authorize
+individual transactions. Signing stays silent, as described in
+[Signing & gasless](/docs/signing).
+</Callout>
+
+<Callout type="warn">
+**Stellar:** The passkey is a **WebAuthn PRF** credential whose derived secret
+unlocks the account's control key. It is **not** an on-chain signer and **not**
+part of the cross-chain `approveDeviceEverywhere` batch. This is not 2FA —
+anyone with the synced passkey can spend.
 </Callout>
 
 ## Why a passkey
@@ -59,7 +77,7 @@ import { CavosProvider } from '@cavos/kit/react';
 | --- | --- |
 | `'optional'` *(default)* | Shows the "Secure your account" screen with a **Skip for now** button. Low friction — the user can defer passkey setup and still finish onboarding. |
 | `'required'` | Shows the screen **without** Skip. The user must set up a passkey (or save a [recovery code](/docs/recovery-codes)) before they can continue. Use this for high-value apps where a second factor is mandatory. |
-| `'off'` | Skips the screen entirely — onboarding ends the moment the wallet is ready. Choose this when you want to drive the 2FA prompt yourself later in the journey (e.g. a "Secure your account" banner on the dashboard), instead of interrupting signup. |
+| `'off'` | Skips the screen entirely — onboarding ends the moment the wallet is ready. Choose this when you want to drive the passkey prompt yourself later in the journey (e.g. a "Secure your account" banner on the dashboard), instead of interrupting signup. |
 
 ### Picking the right moment
 
@@ -110,10 +128,11 @@ if (await PasskeySigner.isSupported()) {
 ```
 
 <Callout type="info">
-Prompt for the passkey as a **2FA / "secure your account"** step right after the
-wallet is created — not during the auth flow and not as part of signing. The
-user should never associate this credential with approving individual
-transactions; it only ever appears when a *new device* is being added.
+Prompt for the passkey as a **"secure your account"** step right after the
+wallet is created — not during the auth flow and not as part of signing. On
+Starknet/Solana, the user should never associate this credential with approving
+individual transactions; it only ever appears when a *new device* is being
+added. On Stellar, the passkey unlocks spending access directly.
 </Callout>
 
 Only the passkey's **public key** is registered on-chain. The credential itself
@@ -155,9 +174,11 @@ Most integrations target one chain and never need this.
 </Callout>
 
 <Callout type="warn">
-**Stellar passkeys work differently.** The classic `G…` account has no on-chain
-WebAuthn verifier. Instead, the passkey is a **WebAuthn PRF** credential whose
-derived secret unlocks the account's control key — enroll it with
+**Stellar passkeys work differently — see the table at the top of this page.**
+The classic `G…` account has no on-chain WebAuthn verifier. Instead, the passkey
+is a **WebAuthn PRF** credential whose derived secret unlocks the account's
+control key. This is **not 2FA** — anyone with the synced passkey can spend via
+unlocking the control key locally. Enroll it with
 `stellarWallet.enrollPasskey(prfOutput)` and approve a new device with
 `stellarWallet.approveThisDeviceWithPasskey(prfOutput)`. It is **not** part of the
 `approveDeviceEverywhere` batch and does not use `addApprover` /
