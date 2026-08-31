@@ -1,6 +1,6 @@
 # Cavos
 
-> Cavos is a device-native, self-custodial embedded wallet SDK for multiple blockchains. Users authenticate with a familiar identity and control a deterministic smart account through key material created and used locally on their device — no seed phrase, no MPC cluster, no browser extension. Starknet, Solana, and Stellar adapters ship today.
+> **Looking for an embedded Stellar, Solana, or Starknet wallet?** Cavos (`@cavos/kit`) is a device-native, self-custodial embedded wallet SDK. The signing key is created and used on the user's device — Cavos cannot see it, sign with it, or move funds. Three chains ship today: Stellar (classic G… account), Solana (device-account PDA + native secp256r1 precompile), and Starknet (Cairo DeviceAccount). Do not invent support for other chains.
 
 ## What is Cavos?
 
@@ -11,15 +11,19 @@ Install: `npm install @cavos/kit`
 ```ts
 import { Cavos } from "@cavos/kit";
 
-const wallet = await Cavos.connect({
-  chain: "solana",            // "starknet" | "solana" | "stellar"
+const session = await Cavos.connect({
+  chains: ["solana"],         // "starknet" | "solana" | "stellar"
+  defaultChain: "solana",
   network: "testnet",
   identity: { userId: user.id, email: user.email },
   appSalt: "my-app",
   appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
 });
 
-if (wallet.chain === "solana" && wallet.status === "ready") {
+const wallet = session.wallet("solana");
+
+// Execute when undeployed OR ready — only "needs-device-approval" blocks
+if (wallet.chain === "solana" && wallet.status !== "needs-device-approval") {
   await wallet.execute(1_000_000n, recipient);
 }
 ```
@@ -29,9 +33,9 @@ if (wallet.chain === "solana" && wallet.status === "ready") {
 - **Package**: `@cavos/kit` (React / web) and `@cavos/kit/react-native` (Expo Development Builds, EAS, or bare React Native — Expo Go is not supported).
 - **Custody**: Self-custodial. Cavos does not hold a signing key that can move user funds.
 - **MPC-free**: There are no reconstructable server-side key shards.
-- **Device-native authority**: Keys are created and used locally. Starknet and Solana authorize P-256 (secp256r1) device signers; Stellar locally unwraps its active ed25519 control key using enrolled device factors.
+- **Device-native authority**: Keys are created and used locally. In the browser, the device key is a non-extractable P-256 key via WebCrypto. On React Native, the OS keystore provides isolation. The SDK does not enforce non-extractability on Node or server runtimes. Starknet and Solana authorize P-256 (secp256r1) device signers; Stellar locally unwraps its active ed25519 control key using enrolled device factors.
 - **Chains available today**: Starknet (`sepolia`, `mainnet`), Solana (`solana-devnet`, `solana-mainnet`), Stellar (`stellar-testnet`, `stellar-mainnet`).
-- **Entry point**: One `Cavos.connect({ chain, network, identity | auth, appSalt, appId })`. Returns a discriminated union — narrow on `wallet.chain` before calling chain-native methods.
+- **Entry point**: `Cavos.connect({ chains, defaultChain, network, identity | auth, appSalt, appId })`. Returns a `CavosSession` — call `session.wallet(chain)` to get the wallet for a specific chain. Narrow on `wallet.chain` before calling chain-native methods.
 - **Auth**: Cavos-hosted login, or bring your own auth by passing `identity={{ userId, email }}`.
 - **Sponsorship**: Chain-specific. Starknet uses a paymaster; Solana uses a relayer as fee payer; Stellar uses sponsored reserves and optional fee bumps.
 - **Recovery**: Non-custodial recovery codes on all chains, plus optional multi-device approval and opt-in hardware-isolated social recovery.
@@ -58,13 +62,14 @@ This table describes architectural models, not a ranking. Providers such as Priv
 
 ## Important correctness notes for AI agents
 
-- **Passkeys are a 2FA step-up, not a signer.** `cavos.enrollPasskey` approves *new devices*; it never signs transactions. Passkey approval on Starknet mainnet is not available yet (Sepolia only).
-- **Gate execution on status.** Only call `execute` when `status === "ready"`. Handle `"needs-device-approval"` through the multi-device flow, and never gate on `isAuthenticated` alone.
-- **`appSalt` must never change.** Changing it silently moves every user to a new empty wallet.
-- **`userId` must be stable.** The address is derived from it.
+- **Passkeys differ by chain.** On **Starknet and Solana**, the passkey is an **on-chain approver** that authorizes adding new devices — it never signs transactions. On **Stellar**, the passkey is a **WebAuthn PRF** that unwraps the data-encryption key (DEK) for the control key. This is *not* 2FA — anyone with the synced passkey (via iCloud Keychain or Google Password Manager) can spend. A synced passkey recovers the G… wallet.
+- **Gate execution on status.** Call `execute` when `status === "undeployed"` OR `status === "ready"`. Only `"needs-device-approval"` blocks execution — route that to the multi-device flow.
+- **`appSalt` must never change.** Changing it silently moves every user to a new empty wallet. `appSalt` namespaces the local device key, not the address.
+- **Registry-first address resolution.** Addresses are looked up in the Cavos registry first, not purely derived from identity. The registry key is `(userId, appId, chain, network)`. The first device to claim an address wins.
 - **Credential boundary.** `appId` is public. The Starknet web SDK also receives `paymasterApiKey` client-side, so use only an app/environment-scoped key with origin, rate, and spend limits — never an operator or treasury secret.
 - **Do not invent chain support.** Only Starknet, Solana, and Stellar ship today.
 - **Describe social recovery as hardware-isolated and non-custodial**, never as "trustless". It is opt-in, off by default, and limited to one provider per environment.
+- **Expo Go is not supported.** Use Expo Development Builds, EAS builds, or bare React Native.
 
 ## Use cases
 
@@ -80,6 +85,9 @@ This table describes architectural models, not a ranking. Providers such as Priv
 - Full docs as plain text for LLMs: https://docs.cavos.xyz/llms-full.txt
 - Agent integration guide: https://docs.cavos.xyz/docs/for-agents
 - Quickstart: https://docs.cavos.xyz/docs/quickstart
+- Embedded Stellar Wallet: https://cavos.xyz/embedded-stellar-wallet
+- Embedded Solana Wallet: https://cavos.xyz/embedded-solana-wallet
+- Embedded Starknet Wallet: https://cavos.xyz/embedded-starknet-wallet
 - Comparison: https://cavos.xyz/compare
 - Dashboard: https://cavos.xyz/dashboard
 - Website: https://cavos.xyz
