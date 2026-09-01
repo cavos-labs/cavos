@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/Button'
+import { ProfileForm } from '@/components/ProfileForm'
 import { createClient } from '@/lib/supabase/client'
 
 type Passkey = {
@@ -12,6 +13,18 @@ type Passkey = {
   created_at: string
   last_used_at?: string
 }
+
+const workspaceHubLinks = [
+  { href: '/dashboard/billing', title: 'Billing', blurb: 'Your subscription, wallet usage, and available plans.' },
+  { href: '/dashboard/organizations', title: 'Organizations', blurb: 'Names, applications and ownership.' },
+  { href: '/dashboard/team', title: 'Access control', blurb: 'Members, roles and invitations.' },
+  { href: '/dashboard/api-keys', title: 'API keys', blurb: 'Environment-scoped credentials and usage.' },
+  { href: '/dashboard/paymasters', title: 'Gas', blurb: 'Fund gas per network to sponsor transactions for your users.' },
+  { href: '/dashboard/webhooks', title: 'Webhooks', blurb: 'Signed operational events, scoped to one environment.' },
+  { href: '/dashboard/activity', title: 'Activity', blurb: 'Operational events produced or coordinated by Cavos. Retained for 30 days.' },
+  { href: '/dashboard/audit-log', title: 'Audit log', blurb: 'Immutable record of sensitive console actions.' },
+  { href: '/user-privacy', title: 'Privacy and retention', blurb: 'Cavos Events are retained for 30 days; aggregate metrics contain no event payloads.' },
+]
 
 export default function SettingsPage() {
   const [passkeys, setPasskeys] = useState<Passkey[]>([])
@@ -59,7 +72,9 @@ export default function SettingsPage() {
   }
 
   return <div className="space-y-6">
-    <PageHeader eyebrow="Workspace" title="Settings" subtitle="Passkeys, organizations, and data controls." />
+    <PageHeader eyebrow="Workspace" title="Settings" subtitle="Profile, passkeys, billing, and workspace tools." />
+
+    <ProfileForm />
 
     <section className="rounded-xl border border-line bg-white">
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-line px-5 py-4">
@@ -77,9 +92,12 @@ export default function SettingsPage() {
     </section>
 
     <div className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white">
-      <Link href="/dashboard/organizations" className="block px-5 py-4 hover:bg-surface"><p className="text-sm font-semibold">Organizations</p><p className="mt-1 text-xs text-black/45">Names, applications and ownership.</p></Link>
-      <Link href="/dashboard/team" className="block px-5 py-4 hover:bg-surface"><p className="text-sm font-semibold">Access control</p><p className="mt-1 text-xs text-black/45">Members, roles and invitations.</p></Link>
-      <Link href="/user-privacy" className="block px-5 py-4 hover:bg-surface"><p className="text-sm font-semibold">Privacy and retention</p><p className="mt-1 text-xs text-black/45">Cavos Events are retained for 30 days; aggregate metrics contain no event payloads.</p></Link>
+      {workspaceHubLinks.map((item) => (
+        <Link key={item.href} href={item.href} className="block px-5 py-4 hover:bg-surface">
+          <p className="text-sm font-semibold">{item.title}</p>
+          <p className="mt-1 text-xs text-black/45">{item.blurb}</p>
+        </Link>
+      ))}
     </div>
   </div>
 }

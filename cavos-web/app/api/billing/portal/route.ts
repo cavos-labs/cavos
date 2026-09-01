@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     // Informational: Onvo has no hosted portal. Tell the dashboard what's available.
     return NextResponse.json({
       managedExternally: true,
-      reason: 'To cancel your Pro plan, confirm cancellation from the dashboard. Your plan stays active until the end of the current billing period.',
+      reason: 'To cancel your paid plan, confirm cancellation from the dashboard. Your plan stays active until the end of the current billing period.',
     })
   }
 
@@ -69,7 +69,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       canceled: true,
-      reason: 'Your Pro plan will not renew. You keep Pro until the end of the current billing period.',
+      reason: 'Your paid plan will not renew. You keep access until the end of the current billing period.',
     })
   } catch (err) {
     if (err instanceof OnvoConfigError) {

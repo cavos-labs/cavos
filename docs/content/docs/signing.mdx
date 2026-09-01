@@ -72,6 +72,10 @@ made powerless after creation and a random control key becomes the active
 signer. That control seed is encrypted in the account's data entries and
 unwrapped locally using an enrolled device, passkey PRF, or recovery factor.
 
+On web, the unwrapped control key is a non-extractable WebCrypto Ed25519 key.
+Application code (and XSS) cannot export the private bytes, but can still
+execute transactions while the session is unlocked.
+
 For Soroban, `invokeContract` simulates the call and re-signs the account's
 authorization entries with the local control key. A fee-bump relayer can pay the
 outer fee without becoming an account signer. See [Stellar](/docs/stellar).

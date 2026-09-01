@@ -10,6 +10,7 @@ import { Popover } from '@/components/ui/Popover'
 import { useEffect, useState } from 'react'
 import { useOrganization } from '@/lib/hooks/useOrganization'
 import { useApp } from '@/lib/hooks/useApp'
+import { PROFILE_UPDATED } from '@/components/ProfileForm'
 
 const appNav = [
     { name: 'Overview', suffix: '', icon: Icon.Overview },
@@ -18,34 +19,57 @@ const appNav = [
     { name: 'Emails', suffix: '/emails', icon: Icon.Mail },
     { name: 'Programs', suffix: '/programs', icon: Icon.Code },
     { name: 'Environments', suffix: '/environments', icon: Icon.Connect },
-    { name: 'Settings', suffix: '/settings', icon: Icon.Settings },
 ]
 
-const accountLinks = [
+const appSettings = { name: 'Settings', suffix: '/settings', icon: Icon.Settings }
+
+const profileLinks = [
+    { name: 'Profile', href: '/dashboard/settings#profile', icon: Icon.Settings },
+    { name: 'Settings', href: '/dashboard/settings', icon: Icon.Settings },
     { name: 'Team', href: '/dashboard/team', icon: Icon.Org },
     { name: 'API keys', href: '/dashboard/api-keys', icon: Icon.Key },
-    { name: 'Billing', href: '/dashboard/billing', icon: Icon.Billing },
-    { name: 'Settings', href: '/dashboard/settings', icon: Icon.Settings },
-    { name: 'Gas', href: '/dashboard/paymasters', icon: Icon.Gas },
-    { name: 'Webhooks', href: '/dashboard/webhooks', icon: Icon.Bolt },
-    { name: 'Activity', href: '/dashboard/activity', icon: Icon.Activity },
-    { name: 'Audit log', href: '/dashboard/audit-log', icon: Icon.Docs },
 ]
+
+function railLinkClass(active: boolean) {
+    return `
+        flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] transition-colors duration-150
+        ${active
+            ? 'bg-surface font-semibold text-ink'
+            : 'font-medium text-muted hover:bg-black/[0.03] hover:text-ink'
+        }
+    `
+}
 
 export function Sidebar() {
     const pathname = usePathname()
     const router = useRouter()
     const [userEmail, setUserEmail] = useState<string | null>(null)
+    const [displayName, setDisplayName] = useState<string | null>(null)
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
     const { organizations, organizationId, setOrganizationId, loading: organizationsLoading } = useOrganization()
     const { apps, app, appId, setAppId, loading: appsLoading } = useApp()
 
     useEffect(() => {
-        const getUser = async () => {
+        const loadAccount = async () => {
             const supabase = createClient()
             const { data: { user } } = await supabase.auth.getUser()
             setUserEmail(user?.email ?? null)
+            if (!user) {
+                setDisplayName(null)
+                setAvatarUrl(null)
+                return
+            }
+            const { data } = await supabase
+                .from('profiles')
+                .select('full_name, avatar_url')
+                .eq('id', user.id)
+                .maybeSingle()
+            setDisplayName(data?.full_name ?? null)
+            setAvatarUrl(data?.avatar_url ?? null)
         }
-        getUser()
+        loadAccount()
+        window.addEventListener(PROFILE_UPDATED, loadAccount)
+        return () => window.removeEventListener(PROFILE_UPDATED, loadAccount)
     }, [])
 
     const handleLogout = async () => {
@@ -70,11 +94,27 @@ export function Sidebar() {
         }
     }, [appId, apps, appsLoading, pathname, router])
 
+    const billingActive = pathname.startsWith('/dashboard/billing')
+    const settingsHref = appId ? `/dashboard/apps/${appId}${appSettings.suffix}` : null
+    const settingsActive = settingsHref ? pathname.startsWith(settingsHref) : false
+
     return (
         <div className="flex h-full flex-col bg-white text-ink">
-            <div className="px-3 pt-4 pb-3">
+            <div className="flex items-center justify-between px-4 pt-4 pb-1">
+                <Wordmark className="h-5 w-5" />
+                <a
+                    href="https://docs.cavos.xyz"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-medium text-muted hover:text-ink"
+                >
+                    Docs
+                    <Icon.External size={11} className="opacity-50" />
+                </a>
+            </div>
+            <div className="px-3 pt-2 pb-3">
                 <Popover
-                    label="Application and account"
+                    label="Application"
                     triggerClassName="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-black/[0.03]"
                     panelClassName="left-0 right-0 mt-1 max-h-[min(32rem,70vh)] w-[calc(16rem-1.5rem)] overflow-y-auto rounded-xl border border-line bg-white py-2"
                     trigger={(open) => (
@@ -152,19 +192,6 @@ export function Sidebar() {
                             </Link>
 
                             <div className="my-2 border-t border-line" />
-                            <p className="px-3 pb-1 text-[11px] font-medium text-muted">Account</p>
-                            {accountLinks.map((item) => (
-                                <Link
-                                    key={item.href}
-                                    href={item.href}
-                                    role="menuitem"
-                                    onClick={close}
-                                    className={`flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-black/[0.03] ${pathname.startsWith(item.href) ? 'font-semibold text-ink' : 'text-ink'}`}
-                                >
-                                    <item.icon size={15} className="shrink-0 text-muted" />
-                                    {item.name}
-                                </Link>
-                            ))}
                             <Link
                                 href="/dashboard/organizations"
                                 role="menuitem"
@@ -174,18 +201,6 @@ export function Sidebar() {
                                 <Icon.Org size={15} className="shrink-0 text-muted" />
                                 Manage organizations
                             </Link>
-                            {userEmail && (
-                                <p className="truncate px-3 pt-2 text-[11px] text-muted">{userEmail}</p>
-                            )}
-                            <button
-                                type="button"
-                                role="menuitem"
-                                onClick={() => { close(); handleLogout() }}
-                                className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-ink hover:bg-black/[0.03]"
-                            >
-                                <Icon.Logout size={15} className="shrink-0 text-muted" />
-                                Sign out
-                            </button>
                         </>
                     )}
                 </Popover>
@@ -203,13 +218,7 @@ export function Sidebar() {
                             key={item.name}
                             href={href}
                             aria-current={isActive ? 'page' : undefined}
-                            className={`
-                                flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] transition-colors duration-150
-                                ${isActive
-                                    ? 'bg-surface font-semibold text-ink'
-                                    : 'font-medium text-muted hover:bg-black/[0.03] hover:text-ink'
-                                }
-                            `}
+                            className={railLinkClass(isActive)}
                         >
                             <item.icon size={16} weight={isActive ? 'fill' : 'regular'} className="shrink-0" />
                             {item.name}
@@ -220,30 +229,79 @@ export function Sidebar() {
                         Create an application to see its overview, wallets, and configuration.
                     </p>
                 )}
+                <Link
+                    href="/dashboard/billing"
+                    aria-current={billingActive ? 'page' : undefined}
+                    className={railLinkClass(billingActive)}
+                >
+                    <Icon.Billing size={16} weight={billingActive ? 'fill' : 'regular'} className="shrink-0" />
+                    Billing
+                </Link>
+                {settingsHref && (
+                    <Link
+                        href={settingsHref}
+                        aria-current={settingsActive ? 'page' : undefined}
+                        className={railLinkClass(settingsActive)}
+                    >
+                        <appSettings.icon size={16} weight={settingsActive ? 'fill' : 'regular'} className="shrink-0" />
+                        {appSettings.name}
+                    </Link>
+                )}
             </nav>
 
-            <div className="mt-auto border-t border-line px-4 py-3">
-                <div className="flex items-center justify-between">
-                    <Wordmark className="h-5 w-5" />
-                    <div className="flex items-center gap-3">
-                        <a
-                            href="https://docs.cavos.xyz"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-xs font-medium text-muted hover:text-ink"
-                        >
-                            Docs
-                            <Icon.External size={11} className="opacity-50" />
-                        </a>
-                        <button
-                            type="button"
-                            onClick={handleLogout}
-                            className="text-xs font-medium text-muted hover:text-ink"
-                        >
-                            Sign out
-                        </button>
-                    </div>
-                </div>
+            <div className="mt-auto border-t border-line px-3 py-3">
+                <Popover
+                    label="Account"
+                    placement="top"
+                    triggerClassName="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-black/[0.03]"
+                    panelClassName="left-0 right-0 w-full rounded-xl border border-line bg-white py-2"
+                    trigger={() => (
+                        <>
+                            <span className="relative flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-surface text-[11px] font-semibold text-ink">
+                                {avatarUrl ? (
+                                    <Image src={avatarUrl} alt="" fill className="object-cover" />
+                                ) : (
+                                    (displayName?.[0] || userEmail?.[0] || '?').toUpperCase()
+                                )}
+                            </span>
+                            <span className="min-w-0 flex-1">
+                                <span className="block truncate text-xs font-medium text-ink">
+                                    {displayName || userEmail || 'Account'}
+                                </span>
+                                {displayName && userEmail && (
+                                    <span className="block truncate text-[11px] text-muted">{userEmail}</span>
+                                )}
+                            </span>
+                        </>
+                    )}
+                >
+                    {(close) => (
+                        <>
+                            {profileLinks.map((item) => (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    role="menuitem"
+                                    onClick={close}
+                                    className={`flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-black/[0.03] ${pathname.startsWith(item.href) ? 'font-semibold text-ink' : 'text-ink'}`}
+                                >
+                                    <item.icon size={15} className="shrink-0 text-muted" />
+                                    {item.name}
+                                </Link>
+                            ))}
+                            <div className="my-1 border-t border-line" />
+                            <button
+                                type="button"
+                                role="menuitem"
+                                onClick={() => { close(); handleLogout() }}
+                                className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-ink hover:bg-black/[0.03]"
+                            >
+                                <Icon.Logout size={15} className="shrink-0 text-muted" />
+                                Sign out
+                            </button>
+                        </>
+                    )}
+                </Popover>
             </div>
         </div>
     )

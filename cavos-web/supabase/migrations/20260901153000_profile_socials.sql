@@ -1,0 +1,4 @@
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS x_url TEXT,
+  ADD COLUMN IF NOT EXISTS github_url TEXT,
+  ADD COLUMN IF NOT EXISTS website_url TEXT;
