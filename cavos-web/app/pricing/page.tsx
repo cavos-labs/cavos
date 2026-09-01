@@ -93,6 +93,22 @@ const DEV_INCLUDES = [
     'Gas sponsorship integrations',
 ]
 
+function IcoTelegram({ className = '' }: { className?: string }) {
+    return (
+        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+        </svg>
+    )
+}
+
+function IcoSlack({ className = '' }: { className?: string }) {
+    return (
+        <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z" />
+        </svg>
+    )
+}
+
 const RECOVERY_FEATURES = [
     { label: 'On-device recovery', desc: 'Passkey, recovery code, or enrolled device.' },
     { label: 'Enclave recovery', desc: 'AWS Nitro hardware isolation for device key rewrap.' },
@@ -152,12 +168,11 @@ function Check({ className = '' }: { className?: string }) {
     )
 }
 
-function formatPlanRow(plan: Plan): { label: string; range: string; price: string; unit?: string } {
+function formatPlanRow(plan: Plan): { name: string; desc: string; price: string; unit?: string } {
     if (plan.feeUsdPerMonth === 0) {
-        return { label: plan.name, range: 'Up to 1,000 wallet creates', price: 'Free' }
+        return { name: plan.name, desc: 'First 1,000 wallet creates', price: 'Free' }
     }
-    const rangeText = plan.recovery === 'on-device' ? 'On-device recovery' : 'Enclave recovery'
-    return { label: plan.name, range: rangeText, price: `$${plan.feeUsdPerMonth}`, unit: '/mo' }
+    return { name: plan.name, desc: 'Unlimited creates', price: `$${plan.feeUsdPerMonth}`, unit: '/mo' }
 }
 
 export default function PricingPage() {
@@ -231,10 +246,8 @@ export default function PricingPage() {
                                         className="flex items-end justify-between gap-4 py-4 border-t border-line first:border-t-0"
                                     >
                                         <div>
-                                            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
-                                                {row.label}
-                                            </div>
-                                            <div className="mt-1.5 text-[15px] text-ink">{row.range}</div>
+                                            <div className="text-[15px] font-medium text-ink">{row.name}</div>
+                                            <div className="mt-1 text-[14px] text-muted">{row.desc}</div>
                                         </div>
                                         <div className="flex items-baseline gap-1 shrink-0">
                                             <span className="text-[1.75rem] font-medium tracking-[-0.03em] text-ink leading-none">
@@ -262,6 +275,15 @@ export default function PricingPage() {
                                 </li>
                             ))}
                         </ul>
+
+                        <div className="mt-5 flex items-center gap-2.5 text-[14px]">
+                            <Check className="shrink-0 w-3.5 h-3.5 text-brand" />
+                            <span className="text-ink/70 leading-snug">Priority support via Telegram or Slack</span>
+                            <span className="flex items-center gap-1.5 text-muted">
+                                <IcoTelegram />
+                                <IcoSlack />
+                            </span>
+                        </div>
                     </div>
 
                     {/* Right — recovery options */}
