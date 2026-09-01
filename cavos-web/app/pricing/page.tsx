@@ -87,35 +87,16 @@ const PLANS: Plan[] = [
     { id: 'complete', name: 'Complete', feeUsdPerMonth: 139, createCap: 'unlimited', recovery: 'enclave' },
 ]
 
-const PLAN_DETAILS: Record<PlanId, { tagline: string; features: string[] }> = {
-    free: {
-        tagline: 'Get started with the full SDK. First 1,000 wallet creates free.',
-        features: [
-            'Full SDK and chain adapters',
-            'Starknet, Solana, Stellar',
-            'Web and React Native',
-            'Dashboard analytics',
-        ],
-    },
-    essential: {
-        tagline: 'On-device recovery for production apps.',
-        features: [
-            'Everything in Free',
-            'Unlimited wallet creates',
-            'Passkey and recovery code recovery',
-            'Multi-device enrollment',
-        ],
-    },
-    complete: {
-        tagline: 'Hardware-isolated enclave recovery for high-value wallets.',
-        features: [
-            'Everything in Essential',
-            'AWS Nitro enclave recovery',
-            'Device key rewrap for lost passkeys',
-            'Opt-in recovery UX',
-        ],
-    },
-}
+const DEV_INCLUDES = [
+    'Starknet, Solana & Stellar adapters',
+    'Web and React Native SDKs',
+    'Gas sponsorship integrations',
+]
+
+const RECOVERY_FEATURES = [
+    { label: 'On-device recovery', desc: 'Passkey, recovery code, or enrolled device.' },
+    { label: 'Enclave recovery', desc: 'AWS Nitro hardware isolation for device key rewrap.' },
+]
 
 const FEATURE_GROUPS: { title: string; Art: () => React.ReactElement; items: string[] }[] = [
     {
@@ -171,9 +152,12 @@ function Check({ className = '' }: { className?: string }) {
     )
 }
 
-function formatPrice(plan: Plan): { main: string; suffix?: string } {
-    if (plan.feeUsdPerMonth === 0) return { main: 'Free' }
-    return { main: `$${plan.feeUsdPerMonth}`, suffix: '/mo' }
+function formatPlanRow(plan: Plan): { label: string; range: string; price: string; unit?: string } {
+    if (plan.feeUsdPerMonth === 0) {
+        return { label: plan.name, range: 'Up to 1,000 wallet creates', price: 'Free' }
+    }
+    const rangeText = plan.recovery === 'on-device' ? 'On-device recovery' : 'Enclave recovery'
+    return { label: plan.name, range: rangeText, price: `$${plan.feeUsdPerMonth}`, unit: '/mo' }
 }
 
 export default function PricingPage() {
@@ -225,62 +209,87 @@ export default function PricingPage() {
                     </p>
                 </header>
 
-                {/* ── Plans ── */}
-                <section className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {PLANS.map((plan) => {
-                        const details = PLAN_DETAILS[plan.id]
-                        const price = formatPrice(plan)
-                        const isHighlighted = plan.id === 'essential'
+                {/* ── Plans — one card, split in two ── */}
+                <section className="mt-10 grid grid-cols-1 lg:grid-cols-2 items-stretch rounded-[18px] border border-line-strong bg-white overflow-hidden divide-y lg:divide-y-0 lg:divide-x divide-line-strong">
 
-                        return (
-                            <div
-                                key={plan.id}
-                                className={`flex flex-col p-7 md:p-8 rounded-[18px] border ${
-                                    isHighlighted
-                                        ? 'border-brand bg-brand/[0.03]'
-                                        : 'border-line-strong bg-white'
-                                }`}
-                            >
-                                {isHighlighted && (
-                                    <div className="mb-4 -mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-brand">
-                                        Most popular
+                    {/* Left — price rows */}
+                    <div className="flex flex-col p-7 md:p-9">
+                        <h2 className="text-[1.75rem] md:text-[2.125rem] font-medium tracking-[-0.04em] text-ink leading-[0.95]">
+                            Plans
+                        </h2>
+                        <p className="mt-3 text-[14px] text-muted leading-relaxed max-w-[44ch]">
+                            The full SDK on every tier. Free up to 1,000 wallet creates.
+                            Paid plans add unlimited creates and recovery options.
+                        </p>
+
+                        <div className="mt-7">
+                            {PLANS.map((plan) => {
+                                const row = formatPlanRow(plan)
+                                return (
+                                    <div
+                                        key={plan.id}
+                                        className="flex items-end justify-between gap-4 py-4 border-t border-line first:border-t-0"
+                                    >
+                                        <div>
+                                            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
+                                                {row.label}
+                                            </div>
+                                            <div className="mt-1.5 text-[15px] text-ink">{row.range}</div>
+                                        </div>
+                                        <div className="flex items-baseline gap-1 shrink-0">
+                                            <span className="text-[1.75rem] font-medium tracking-[-0.03em] text-ink leading-none">
+                                                {row.price}
+                                            </span>
+                                            {row.unit && <span className="text-sm text-muted">{row.unit}</span>}
+                                        </div>
                                     </div>
-                                )}
-                                <h2 className="text-[1.5rem] md:text-[1.75rem] font-medium tracking-[-0.03em] text-ink leading-none">
-                                    {plan.name}
-                                </h2>
-                                <div className="mt-4 flex items-baseline gap-1">
-                                    <span className="text-[2rem] font-medium tracking-[-0.03em] text-ink leading-none">
-                                        {price.main}
-                                    </span>
-                                    {price.suffix && <span className="text-sm text-muted">{price.suffix}</span>}
-                                </div>
-                                <p className="mt-3 text-[14px] text-muted leading-relaxed">
-                                    {details.tagline}
-                                </p>
+                                )
+                            })}
+                        </div>
 
-                                <ul className="mt-6 space-y-2.5 flex-1">
-                                    {details.features.map((f) => (
-                                        <li key={f} className="flex items-start gap-2.5 text-[14px]">
-                                            <Check className="shrink-0 mt-[3px] w-3.5 h-3.5 text-brand" />
-                                            <span className="text-ink/70 leading-snug">{f}</span>
-                                        </li>
-                                    ))}
-                                </ul>
+                        <Link
+                            href="/register"
+                            className="mt-7 inline-flex items-center justify-center h-11 px-6 rounded-full bg-brand text-white text-[15px] font-medium hover:bg-brand-hover transition-colors duration-200 active:scale-[0.99]"
+                        >
+                            Get started
+                        </Link>
 
-                                <Link
-                                    href="/register"
-                                    className={`mt-7 inline-flex items-center justify-center h-11 px-6 rounded-full text-[15px] font-medium transition-colors duration-200 active:scale-[0.99] ${
-                                        isHighlighted
-                                            ? 'bg-brand text-white hover:bg-brand-hover'
-                                            : 'border border-ink/15 text-ink hover:border-ink/35 hover:bg-surface'
-                                    }`}
-                                >
-                                    Get started
-                                </Link>
-                            </div>
-                        )
-                    })}
+                        <ul className="mt-7 grid sm:grid-cols-2 gap-x-6 gap-y-2.5 flex-1 content-start">
+                            {DEV_INCLUDES.map((f) => (
+                                <li key={f} className="flex items-start gap-2.5 text-[14px]">
+                                    <Check className="shrink-0 mt-[3px] w-3.5 h-3.5 text-brand" />
+                                    <span className="text-ink/70 leading-snug">{f}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    {/* Right — recovery options */}
+                    <div className="flex flex-col p-7 md:p-9 bg-surface">
+                        <h2 className="text-[1.75rem] md:text-[2.125rem] font-medium tracking-[-0.04em] text-ink leading-[0.95]">
+                            Recovery
+                        </h2>
+                        <p className="mt-3 text-[14px] text-muted leading-relaxed max-w-[44ch]">
+                            The fork between paid plans is recovery. Essential uses on-device methods.
+                            Complete adds hardware-isolated enclave recovery.
+                        </p>
+
+                        <ul className="mt-7 space-y-5 flex-1">
+                            {RECOVERY_FEATURES.map((f) => (
+                                <li key={f.label} className="flex items-start gap-3">
+                                    <Check className="shrink-0 mt-[3px] w-4 h-4 text-brand" />
+                                    <div>
+                                        <div className="text-[15px] font-medium text-ink">{f.label}</div>
+                                        <div className="mt-1 text-[14px] text-ink/60 leading-relaxed">{f.desc}</div>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+
+                        <p className="mt-7 text-[13px] text-muted leading-relaxed">
+                            The enclave rewraps a device encryption key. It does not hold your Stellar control seed or sign transactions.
+                        </p>
+                    </div>
                 </section>
 
                 <p className="mt-7 text-center text-[13px] text-muted">
@@ -323,7 +332,7 @@ export default function PricingPage() {
                     </div>
                 </section>
 
-                {/* ── CTA ── */}
+                {/* ── CTA — light framed band ── */}
                 <section className="mt-28 rounded-2xl border border-line-strong bg-surface px-8 py-12 md:px-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="max-w-md">
                         <h2 className="text-2xl md:text-[28px] font-medium tracking-[-0.02em] text-ink leading-[1.15] text-balance">
