@@ -235,6 +235,13 @@ export function Sidebar() {
                             Docs
                             <Icon.External size={11} className="opacity-50" />
                         </a>
+                        <Link
+                            href="/dashboard/settings"
+                            aria-current={pathname === '/dashboard/settings' ? 'page' : undefined}
+                            className="text-xs font-medium text-muted hover:text-ink"
+                        >
+                            Account
+                        </Link>
                         <button
                             type="button"
                             onClick={handleLogout}
