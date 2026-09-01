@@ -5,29 +5,29 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { FADE, SPRING_DEFAULT } from '@/lib/motion'
 
 type Align = 'start' | 'end'
+type Placement = 'top' | 'bottom'
+
+function panelOrigin(placement: Placement, align: Align) {
+    const edge = placement === 'top' ? 'bottom' : 'top'
+    const side = align === 'end' ? 'right' : 'left'
+    return `${edge} ${side}`
+}
 
 interface PopoverProps {
-    /** Rendered inside the trigger button. Receives the open state. */
     trigger: (open: boolean) => React.ReactNode
     label: string
     align?: Align
+    placement?: Placement
     triggerClassName?: string
     panelClassName?: string
     children: (close: () => void) => React.ReactNode
 }
 
-/**
- * A popover that grows out of the control that opened it.
- *
- * `transform-origin` sits on the trigger corner, so the panel scales from the
- * button rather than from its own centre — the spatial relationship between
- * "the thing I pressed" and "the thing that appeared" stays obvious. It
- * leaves along the same path it arrived by.
- */
 export function Popover({
     trigger,
     label,
     align = 'start',
+    placement = 'bottom',
     triggerClassName = '',
     panelClassName = '',
     children,
@@ -78,11 +78,11 @@ export function Popover({
                         id={panelId}
                         role="menu"
                         aria-label={label}
-                        className={`absolute z-50 ${align === 'end' ? 'right-0' : 'left-0'} ${panelClassName}`}
-                        style={{ transformOrigin: align === 'end' ? 'top right' : 'top left' }}
-                        initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.94, y: -4 }}
+                        className={`absolute z-50 ${align === 'end' ? 'right-0' : 'left-0'} ${placement === 'top' ? 'bottom-full mb-1' : ''} ${panelClassName}`}
+                        style={{ transformOrigin: panelOrigin(placement, align) }}
+                        initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.94, y: placement === 'top' ? 4 : -4 }}
                         animate={reduced ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
-                        exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.94, y: -4 }}
+                        exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.94, y: placement === 'top' ? 4 : -4 }}
                         transition={reduced ? FADE : SPRING_DEFAULT}
                     >
                         {children(() => setOpen(false))}

@@ -30,7 +30,7 @@ Selected: `bg-surface text-ink`. Never cream, never a painted indigo rail, never
 
 ## 4. Layout and navigation
 
-The console is the selected app. App picker at the top of the rail. App sections in the sidebar. Organization tools live in the picker. The mark and Docs sit together at the bottom of the rail.
+The console is the selected app. The mark sits at the top of the rail, then the app picker. App sections in the sidebar. Billing sits on the rail above app Settings, always. Footer profile opens the developer profile and workspace settings. Picker switches org and app.
 
 ## 5. Component Stylings
 
