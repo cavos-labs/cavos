@@ -21,17 +21,6 @@ const appNav = [
     { name: 'Settings', suffix: '/settings', icon: Icon.Settings },
 ]
 
-const accountLinks = [
-    { name: 'Team', href: '/dashboard/team', icon: Icon.Org },
-    { name: 'API keys', href: '/dashboard/api-keys', icon: Icon.Key },
-    { name: 'Billing', href: '/dashboard/billing', icon: Icon.Billing },
-    { name: 'Settings', href: '/dashboard/settings', icon: Icon.Settings },
-    { name: 'Gas', href: '/dashboard/paymasters', icon: Icon.Gas },
-    { name: 'Webhooks', href: '/dashboard/webhooks', icon: Icon.Bolt },
-    { name: 'Activity', href: '/dashboard/activity', icon: Icon.Activity },
-    { name: 'Audit log', href: '/dashboard/audit-log', icon: Icon.Docs },
-]
-
 export function Sidebar() {
     const pathname = usePathname()
     const router = useRouter()
@@ -152,19 +141,6 @@ export function Sidebar() {
                             </Link>
 
                             <div className="my-2 border-t border-line" />
-                            <p className="px-3 pb-1 text-[11px] font-medium text-muted">Account</p>
-                            {accountLinks.map((item) => (
-                                <Link
-                                    key={item.href}
-                                    href={item.href}
-                                    role="menuitem"
-                                    onClick={close}
-                                    className={`flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-black/[0.03] ${pathname.startsWith(item.href) ? 'font-semibold text-ink' : 'text-ink'}`}
-                                >
-                                    <item.icon size={15} className="shrink-0 text-muted" />
-                                    {item.name}
-                                </Link>
-                            ))}
                             <Link
                                 href="/dashboard/organizations"
                                 role="menuitem"
