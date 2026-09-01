@@ -52,49 +52,76 @@ function IcoShield() {
 }
 
 export const metadata = {
-    title: "Multichain Embedded Wallet Pricing",
-    description: "Simple wallet-based pricing for Cavos multichain embedded wallets. Start free for up to 1,000 wallets or choose Pro for unlimited wallets.",
+    title: "Embedded Wallet Pricing | Cavos",
+    description: "Flat monthly fees for multichain embedded wallets. Free up to 1,000 wallets. Essential $59/mo. Complete $139/mo with enclave recovery.",
     alternates: {
         canonical: "https://cavos.xyz/pricing",
     },
     openGraph: {
-        title: "Multichain Embedded Wallet Pricing | Cavos",
-        description: "One wallet-based price across apps, networks, and supported chains. Start free for up to 1,000 wallets.",
+        title: "Embedded Wallet Pricing | Cavos",
+        description: "Flat monthly org fees. Free up to 1,000 wallets. Essential $59/mo. Complete $139/mo.",
         url: "https://cavos.xyz/pricing",
         images: ["/og-image.png"],
     },
     twitter: {
         card: "summary_large_image",
-        title: "Multichain Embedded Wallet Pricing | Cavos",
-        description: "One wallet-based price across apps, networks, and supported chains. Start free for up to 1,000 wallets.",
+        title: "Embedded Wallet Pricing | Cavos",
+        description: "Flat monthly org fees. Free up to 1,000 wallets. Essential $59/mo. Complete $139/mo.",
         images: ["/og-image.png"],
     },
 }
 
-/* Self-serve usage tiers — one panel, billed by wallets created. */
-const USAGE_TIERS: { label: string; range: string; price: string; unit?: string }[] = [
-    { label: 'Free', range: 'Up to 1,000 wallets', price: 'Free' },
-    { label: 'Pro', range: 'Unlimited wallets', price: '$99', unit: '/mo' },
+/* ── Domain model: one source of truth ── */
+type PlanId = 'free' | 'essential' | 'complete'
+type Plan = {
+    id: PlanId
+    name: string
+    feeUsdPerMonth: 0 | 59 | 139
+    createCap: 1000 | 'unlimited'
+    recovery: 'none-on-plan' | 'on-device' | 'enclave'
+}
+
+const PLANS: Plan[] = [
+    { id: 'free', name: 'Free', feeUsdPerMonth: 0, createCap: 1000, recovery: 'none-on-plan' },
+    { id: 'essential', name: 'Essential', feeUsdPerMonth: 59, createCap: 'unlimited', recovery: 'on-device' },
+    { id: 'complete', name: 'Complete', feeUsdPerMonth: 139, createCap: 'unlimited', recovery: 'enclave' },
 ]
 
-const DEV_INCLUDES = [
-    'Device-native embedded wallets',
-    'Starknet, Solana & Stellar adapters',
-    'Gas sponsorship integrations',
-]
-
-const CUSTOM_FEATURES = [
-    'Volume-based pricing',
-    'Dedicated support',
-    'Custom integrations',
-    'Invoicing & contracts',
-]
+const PLAN_DETAILS: Record<PlanId, { tagline: string; features: string[] }> = {
+    free: {
+        tagline: 'Get started with the full SDK. First 1,000 wallet creates free.',
+        features: [
+            'Full SDK and chain adapters',
+            'Starknet, Solana, Stellar',
+            'Web and React Native',
+            'Dashboard analytics',
+        ],
+    },
+    essential: {
+        tagline: 'On-device recovery for production apps.',
+        features: [
+            'Everything in Free',
+            'Unlimited wallet creates',
+            'Passkey and recovery code recovery',
+            'Multi-device enrollment',
+        ],
+    },
+    complete: {
+        tagline: 'Hardware-isolated enclave recovery for high-value wallets.',
+        features: [
+            'Everything in Essential',
+            'AWS Nitro enclave recovery',
+            'Device key rewrap for lost passkeys',
+            'Opt-in recovery UX',
+        ],
+    },
+}
 
 const FEATURE_GROUPS: { title: string; Art: () => React.ReactElement; items: string[] }[] = [
     {
         title: 'Wallet creation',
         Art: IcoWallet,
-        items: ['Embedded wallets', 'Self-custodial smart accounts', 'No seed phrases or extensions'],
+        items: ['Embedded wallets', 'No seed phrases or extensions', 'Single API across chains'],
     },
     {
         title: 'Gasless transactions',
@@ -109,26 +136,30 @@ const FEATURE_GROUPS: { title: string; Art: () => React.ReactElement; items: str
     {
         title: 'Security & recovery',
         Art: IcoShield,
-        items: ['Device-bound signers', 'Multi-device authorization', 'Non-custodial recovery', 'No MPC key reconstruction'],
+        items: ['Device-bound signers', 'On-device or enclave recovery', 'Non-custodial architecture'],
     },
 ]
 
 const FAQ: { q: string; a: string }[] = [
     {
-        q: 'What counts as a wallet?',
-        a: 'Every smart account your users create through Cavos counts as one wallet, regardless of app, network, or supported chain.',
+        q: 'What counts as a wallet create?',
+        a: 'Each new wallet your app provisions counts toward the create cap. Existing wallets, reads, and signatures remain unrestricted. When Free hits 1,000 creates, only new creates pause.',
     },
     {
-        q: 'What happens when I hit the free limit?',
-        a: 'Existing wallets always keep working — reading, signing, transactions and recovery are never gated. Only the creation of new wallets pauses at 1,000. Upgrading to Pro lifts the limit instantly.',
+        q: 'Which chains are supported?',
+        a: 'Starknet, Solana, and Stellar. The same SDK and adapters ship on every plan. Stellar wallets are classic G accounts.',
+    },
+    {
+        q: 'What is enclave recovery?',
+        a: 'Complete includes AWS Nitro enclave recovery. If a user loses their passkey, they can rewrap their device encryption key to a new device through a hardware-isolated flow. The enclave never holds your Stellar control seed or signs transactions.',
     },
     {
         q: 'Is gas sponsorship included?',
-        a: 'Gas sponsorship is available on every plan and funded separately. Funding and metering follow each chain’s model, including Starknet gas tanks and Solana or Stellar relayer balances.',
+        a: 'Gas sponsorship is available on every plan and funded separately. Costs are billed to the integrator, not included in these flat fees.',
     },
     {
         q: 'Can I cancel anytime?',
-        a: 'Yes. Pro is month-to-month. When you cancel, you keep Pro until the end of the current billing period, then drop back to Free. Your wallets are never deleted.',
+        a: 'Yes. Paid plans are month-to-month. When you cancel, you keep your plan until the billing period ends, then drop back to Free. Your wallets are never deleted.',
     },
 ]
 
@@ -140,6 +171,11 @@ function Check({ className = '' }: { className?: string }) {
     )
 }
 
+function formatPrice(plan: Plan): { main: string; suffix?: string } {
+    if (plan.feeUsdPerMonth === 0) return { main: 'Free' }
+    return { main: `$${plan.feeUsdPerMonth}`, suffix: '/mo' }
+}
+
 export default function PricingPage() {
     const jsonLd = {
         "@context": "https://schema.org",
@@ -147,11 +183,14 @@ export default function PricingPage() {
             {
                 "@type": "Product",
                 "name": "Cavos Embedded Wallet SDK",
-                "description": "Device-native multichain embedded wallet SDK with wallet-based pricing.",
-                "offers": [
-                    { "@type": "Offer", "name": "Free", "price": "0", "priceCurrency": "USD", "description": "Up to 1,000 wallets." },
-                    { "@type": "Offer", "name": "Pro", "price": "99", "priceCurrency": "USD", "description": "Unlimited wallets, billed monthly." },
-                ],
+                "description": "Device-native multichain embedded wallet SDK with flat monthly pricing.",
+                "offers": PLANS.map((p) => ({
+                    "@type": "Offer",
+                    "name": p.name,
+                    "price": String(p.feeUsdPerMonth),
+                    "priceCurrency": "USD",
+                    "description": p.createCap === 1000 ? 'Up to 1,000 wallet creates.' : `${p.name} plan, billed monthly.`,
+                })),
             },
             {
                 "@type": "FAQPage",
@@ -178,96 +217,74 @@ export default function PricingPage() {
                 {/* ── Hero ── */}
                 <header className="relative max-w-3xl">
                     <h1 className="text-[clamp(2rem,4vw,3rem)] font-medium tracking-[-0.035em] leading-[1.05] text-ink text-balance">
-                        Pricing that scales with your wallets.
+                        Flat org fees. Unlimited after the first 1,000.
                     </h1>
                     <p className="mt-4 text-[16px] md:text-[17px] text-muted leading-relaxed max-w-xl">
-                        One simple unit: a wallet. Start free up to 1,000 wallets across all your apps,
-                        upgrade to unlimited when you grow, and talk to us when you need more.
+                        Three plans with predictable monthly costs. Free gets you started.
+                        Paid plans unlock unlimited creates and advanced recovery.
                     </p>
                 </header>
 
-                {/* ── Plans — one card, split in two ── */}
-                <section className="mt-10 grid grid-cols-1 lg:grid-cols-2 items-stretch rounded-[18px] border border-line-strong bg-white overflow-hidden divide-y lg:divide-y-0 lg:divide-x divide-line-strong">
+                {/* ── Plans ── */}
+                <section className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {PLANS.map((plan) => {
+                        const details = PLAN_DETAILS[plan.id]
+                        const price = formatPrice(plan)
+                        const isHighlighted = plan.id === 'essential'
 
-                    {/* Developer — self-serve, billed by wallets */}
-                    <div className="flex flex-col p-7 md:p-9">
-                        <h2 className="text-[1.75rem] md:text-[2.125rem] font-medium tracking-[-0.04em] text-ink leading-[0.95]">
-                            Developer
-                        </h2>
-                        <p className="mt-3 text-[14px] text-muted leading-relaxed max-w-[44ch]">
-                            For teams getting started. The full SDK, free up to 1,000 wallets —
-                            go unlimited the moment you outgrow it.
-                        </p>
-
-                        <div className="mt-7">
-                            {USAGE_TIERS.map((row) => (
-                                <div
-                                    key={row.label}
-                                    className="flex items-end justify-between gap-4 py-4 border-t border-line first:border-t-0"
-                                >
-                                    <div>
-                                        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
-                                            {row.label}
-                                        </div>
-                                        <div className="mt-1.5 text-[15px] text-ink">{row.range}</div>
+                        return (
+                            <div
+                                key={plan.id}
+                                className={`flex flex-col p-7 md:p-8 rounded-[18px] border ${
+                                    isHighlighted
+                                        ? 'border-brand bg-brand/[0.03]'
+                                        : 'border-line-strong bg-white'
+                                }`}
+                            >
+                                {isHighlighted && (
+                                    <div className="mb-4 -mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-brand">
+                                        Most popular
                                     </div>
-                                    <div className="flex items-baseline gap-1 shrink-0">
-                                        <span className="text-[1.75rem] font-medium tracking-[-0.03em] text-ink leading-none">
-                                            {row.price}
-                                        </span>
-                                        {row.unit && <span className="text-sm text-muted">{row.unit}</span>}
-                                    </div>
+                                )}
+                                <h2 className="text-[1.5rem] md:text-[1.75rem] font-medium tracking-[-0.03em] text-ink leading-none">
+                                    {plan.name}
+                                </h2>
+                                <div className="mt-4 flex items-baseline gap-1">
+                                    <span className="text-[2rem] font-medium tracking-[-0.03em] text-ink leading-none">
+                                        {price.main}
+                                    </span>
+                                    {price.suffix && <span className="text-sm text-muted">{price.suffix}</span>}
                                 </div>
-                            ))}
-                        </div>
+                                <p className="mt-3 text-[14px] text-muted leading-relaxed">
+                                    {details.tagline}
+                                </p>
 
-                        <Link
-                            href="/register"
-                            className="mt-7 inline-flex items-center justify-center h-11 px-6 rounded-full bg-brand text-white text-[15px] font-medium hover:bg-brand-hover transition-colors duration-200 active:scale-[0.99]"
-                        >
-                            Get started
-                        </Link>
+                                <ul className="mt-6 space-y-2.5 flex-1">
+                                    {details.features.map((f) => (
+                                        <li key={f} className="flex items-start gap-2.5 text-[14px]">
+                                            <Check className="shrink-0 mt-[3px] w-3.5 h-3.5 text-brand" />
+                                            <span className="text-ink/70 leading-snug">{f}</span>
+                                        </li>
+                                    ))}
+                                </ul>
 
-                        <ul className="mt-7 grid sm:grid-cols-2 gap-x-6 gap-y-2.5 flex-1 content-start">
-                            {DEV_INCLUDES.map((f) => (
-                                <li key={f} className="flex items-start gap-2.5 text-[14px]">
-                                    <Check className="shrink-0 mt-[3px] w-3.5 h-3.5 text-brand" />
-                                    <span className="text-ink/70 leading-snug">{f}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    {/* Custom — sales-led */}
-                    <div className="flex flex-col p-7 md:p-9 bg-surface">
-                        <h2 className="text-[1.75rem] md:text-[2.125rem] font-medium tracking-[-0.04em] text-ink leading-[0.95]">
-                            Custom
-                        </h2>
-                        <p className="mt-3 text-[14px] text-muted leading-relaxed max-w-[44ch]">
-                            For platforms at scale that need volume pricing, compliance,
-                            and a dedicated path to production.
-                        </p>
-
-                        <ul className="mt-7 space-y-3.5 flex-1">
-                            {CUSTOM_FEATURES.map((f) => (
-                                <li key={f} className="flex items-start gap-3 text-[15px]">
-                                    <Check className="shrink-0 mt-[3px] w-4 h-4 text-brand" />
-                                    <span className="text-ink/75 leading-snug">{f}</span>
-                                </li>
-                            ))}
-                        </ul>
-
-                        <Link
-                            href="/contact-sales"
-                            className="mt-7 inline-flex items-center justify-center h-11 px-6 rounded-full border border-ink/15 text-ink text-[15px] font-medium hover:border-ink/35 hover:bg-white transition-colors duration-200 active:scale-[0.99]"
-                        >
-                            Contact sales
-                        </Link>
-                    </div>
+                                <Link
+                                    href="/register"
+                                    className={`mt-7 inline-flex items-center justify-center h-11 px-6 rounded-full text-[15px] font-medium transition-colors duration-200 active:scale-[0.99] ${
+                                        isHighlighted
+                                            ? 'bg-brand text-white hover:bg-brand-hover'
+                                            : 'border border-ink/15 text-ink hover:border-ink/35 hover:bg-surface'
+                                    }`}
+                                >
+                                    Get started
+                                </Link>
+                            </div>
+                        )
+                    })}
                 </section>
 
                 <p className="mt-7 text-center text-[13px] text-muted">
-                    Every plan includes the full SDK and every available chain adapter. Sponsorship is funded separately per chain.
+                    Every plan includes the full SDK and all chain adapters. Gas sponsorship is funded separately.
                 </p>
 
                 {/* ── Features out of the box ── */}
@@ -306,14 +323,14 @@ export default function PricingPage() {
                     </div>
                 </section>
 
-                {/* ── CTA — light framed band ── */}
+                {/* ── CTA ── */}
                 <section className="mt-28 rounded-2xl border border-line-strong bg-surface px-8 py-12 md:px-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="max-w-md">
                         <h2 className="text-2xl md:text-[28px] font-medium tracking-[-0.02em] text-ink leading-[1.15] text-balance">
                             Start building in minutes.
                         </h2>
                         <p className="mt-3 text-sm text-ink/55 leading-relaxed font-normal">
-                            Spin up your first 1,000 wallets free — no credit card required.
+                            Your first 1,000 wallet creates are free. No credit card required.
                         </p>
                     </div>
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
