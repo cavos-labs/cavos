@@ -63,7 +63,7 @@ export function Sidebar() {
         <div className="flex h-full flex-col bg-white text-ink">
             <div className="px-3 pt-4 pb-3">
                 <Popover
-                    label="Application and account"
+                    label="Application"
                     triggerClassName="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-black/[0.03]"
                     panelClassName="left-0 right-0 mt-1 max-h-[min(32rem,70vh)] w-[calc(16rem-1.5rem)] overflow-y-auto rounded-xl border border-line bg-white py-2"
                     trigger={(open) => (
