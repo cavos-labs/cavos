@@ -18,8 +18,9 @@ const appNav = [
     { name: 'Emails', suffix: '/emails', icon: Icon.Mail },
     { name: 'Programs', suffix: '/programs', icon: Icon.Code },
     { name: 'Environments', suffix: '/environments', icon: Icon.Connect },
-    { name: 'Settings', suffix: '/settings', icon: Icon.Settings },
 ]
+
+const appSettings = { name: 'Settings', suffix: '/settings', icon: Icon.Settings }
 
 const profileLinks = [
     { name: 'Settings', href: '/dashboard/settings', icon: Icon.Settings },
@@ -75,9 +76,25 @@ export function Sidebar() {
         }
     }, [appId, apps, appsLoading, pathname, router])
 
+    const billingActive = pathname.startsWith('/dashboard/billing')
+    const settingsHref = appId ? `/dashboard/apps/${appId}${appSettings.suffix}` : null
+    const settingsActive = settingsHref ? pathname.startsWith(settingsHref) : false
+
     return (
         <div className="flex h-full flex-col bg-white text-ink">
-            <div className="px-3 pt-4 pb-3">
+            <div className="flex items-center justify-between px-4 pt-4 pb-1">
+                <Wordmark className="h-5 w-5" />
+                <a
+                    href="https://docs.cavos.xyz"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-medium text-muted hover:text-ink"
+                >
+                    Docs
+                    <Icon.External size={11} className="opacity-50" />
+                </a>
+            </div>
+            <div className="px-3 pt-2 pb-3">
                 <Popover
                     label="Application"
                     triggerClassName="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-black/[0.03]"
@@ -194,32 +211,27 @@ export function Sidebar() {
                         Create an application to see its overview, wallets, and configuration.
                     </p>
                 )}
-            </nav>
-
-            <div className="mt-auto px-3 pb-1">
                 <Link
                     href="/dashboard/billing"
-                    aria-current={pathname.startsWith('/dashboard/billing') ? 'page' : undefined}
-                    className={railLinkClass(pathname.startsWith('/dashboard/billing'))}
+                    aria-current={billingActive ? 'page' : undefined}
+                    className={railLinkClass(billingActive)}
                 >
-                    <Icon.Billing size={16} weight={pathname.startsWith('/dashboard/billing') ? 'fill' : 'regular'} className="shrink-0" />
+                    <Icon.Billing size={16} weight={billingActive ? 'fill' : 'regular'} className="shrink-0" />
                     Billing
                 </Link>
-            </div>
-
-            <div className="border-t border-line px-3 py-3">
-                <div className="mb-2 flex items-center justify-between px-1">
-                    <Wordmark className="h-5 w-5" />
-                    <a
-                        href="https://docs.cavos.xyz"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs font-medium text-muted hover:text-ink"
+                {settingsHref && (
+                    <Link
+                        href={settingsHref}
+                        aria-current={settingsActive ? 'page' : undefined}
+                        className={railLinkClass(settingsActive)}
                     >
-                        Docs
-                        <Icon.External size={11} className="opacity-50" />
-                    </a>
-                </div>
+                        <appSettings.icon size={16} weight={settingsActive ? 'fill' : 'regular'} className="shrink-0" />
+                        {appSettings.name}
+                    </Link>
+                )}
+            </nav>
+
+            <div className="mt-auto border-t border-line px-3 py-3">
                 <Popover
                     label="Account"
                     placement="top"
