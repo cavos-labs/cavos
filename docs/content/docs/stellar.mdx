@@ -393,9 +393,9 @@ user presents them in this call**. Prompt for the passkey first — otherwise th
 user loses their synced anchor and this device becomes the only way in.
 </Callout>
 
-This is what makes revocation actually revoke: the evicted device may already
-have cached the control seed, so erasing its wrap alone would change nothing.
-Rotating the control key is the only honest eviction. On Starknet and Solana,
+This is what makes revocation actually revoke: the evicted device may still have
+an active session that can sign (on web, the control key is non-extractable but
+usable while unlocked). Rotating the control key is the only honest eviction. On Starknet and Solana,
 where devices are real on-chain signers, `removeSigner(pubkey)` is surgical.
 
 ## Gasless vs self-funded
