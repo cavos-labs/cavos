@@ -2,17 +2,20 @@
  * Onvo server client — recurring subscriptions.
  *
  * Adapted from the reference Onvo integration at framezz/vigilant-goggles
- * (one-time Payment Intents). Cavos needs RECURRING subscriptions ($99/mo Pro),
- * so the subscription functions below are net-new vs the reference. The
- * transport (onvoFetch, auth header, error classes, webhook verification) is
- * reused verbatim.
+ * (one-time Payment Intents). Cavos uses RECURRING subscriptions for paid plans
+ * (Essential $59/mo, Complete $139/mo). The subscription functions below are
+ * net-new vs the reference. The transport (onvoFetch, auth header, error
+ * classes, webhook verification) is reused verbatim.
+ *
+ * NOTE: Onvo payments are not live yet. The dashboard disables checkout. This
+ * module is kept in place for when payments go live.
  *
  * Confirmed against the real Onvo docs (https://docs.onvopay.com —
  * payments/subscriptions, webhooks, openapi.yaml). Recurring flow:
  *   Product (POST /products) → recurring Price (POST /prices) → Customer
  *   (POST /customers) → Subscription (POST /subscriptions, items:[{ priceId }]).
- * Product + recurring Price are created once out-of-band; that price id is
- * ONVO_PRO_PRICE_ID. Subscription create takes `items` + `paymentMethodId`.
+ * Product + recurring Price are created once out-of-band. Subscription create
+ * takes `items` + `paymentMethodId`.
  *
  * Plan changes are driven ONLY by the two documented subscription webhooks:
  *   subscription.renewal.succeeded / subscription.renewal.failed
@@ -180,7 +183,7 @@ export async function createOnvoCustomer({
 }
 
 /**
- * Create a Pro subscription for an org and charge the first period immediately.
+ * Create a paid subscription for an org and charge the first period immediately.
  *
  * Per the Onvo recurring-subscriptions doc, the price is passed inside an
  * `items` array (`[{ priceId, quantity }]`) and the card via `paymentMethodId`.

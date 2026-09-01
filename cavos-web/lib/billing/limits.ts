@@ -2,10 +2,12 @@
  * Wallet-count billing gate. Single source of truth for the free-tier limit.
  *
  * See docs/BILLING_AND_DB_SPEC.md §5. The model:
- *   - Free  → 1,000 wallets per org (across all apps + networks).
- *   - Pro   → unlimited (kept in sync with Onvo via the webhook).
- *   - Custom→ unlimited, or a contract cap via `custom_wallet_limit`
- *             (set manually, never via the webhook — billed out-of-band).
+ *   - Free     → 1,000 wallets per org (across all apps + networks).
+ *   - Essential→ $59/mo unlimited wallets, on-device recovery (passkey/code/device).
+ *   - Complete → $139/mo unlimited wallets, enclave recovery.
+ *   - Custom   → unlimited (or contract cap), billed out-of-band.
+ *
+ * Legacy 'pro' rows are mapped to 'essential' for limit checks (unlimited).
  *
  * What is gated: creating NEW wallets only. Reading, signing, recovery and
  * transactions are NEVER gated — blocking those would lock users out of funds.
@@ -21,7 +23,8 @@ export const FREE_WALLET_LIMIT = 1000
 export const WARN_THRESHOLD = 0.8   // soft warning at 80% of limit
 const BLOCK_THRESHOLD = 1.0         // hard block at 100%
 
-export type PlanTier = 'free' | 'pro' | 'custom'
+export type SoldPlanId = 'free' | 'essential' | 'complete'
+export type PlanTier = 'free' | 'essential' | 'complete' | 'pro' | 'custom'
 export type SubscriptionStatus = 'active' | 'past_due' | 'canceled'
 
 export interface OrgPlan {

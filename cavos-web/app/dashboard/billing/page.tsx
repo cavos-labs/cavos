@@ -2,18 +2,16 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Badge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useRouter } from 'next/navigation';
-import { tokenizeOnvoCard } from '@/lib/onvo-client';
 
 interface PlanUsage {
-    tier: 'free' | 'pro' | 'custom';
+    tier: 'free' | 'essential' | 'complete' | 'pro' | 'custom';
     status: 'active' | 'past_due' | 'canceled';
     /** Wallet count for the org, summed across all apps + networks. `-1` = unlimited. */
     count: number;
-    /** Wallet limit. `null` = unlimited (pro / custom without cap). */
+    /** Wallet limit. `null` = unlimited (paid plans). */
     limit: number | null;
     /** `'approaching_limit'` at ≥80% on a capped plan. */
     warning: 'approaching_limit' | null;
@@ -21,7 +19,13 @@ interface PlanUsage {
     cancel_at_period_end: boolean;
 }
 
-const TIER_LABEL: Record<PlanUsage['tier'], string> = { free: 'Free', pro: 'Pro', custom: 'Custom' };
+const TIER_LABEL: Record<PlanUsage['tier'], string> = {
+    free: 'Free',
+    essential: 'Essential',
+    complete: 'Complete',
+    pro: 'Pro',
+    custom: 'Custom',
+};
 
 function formatDate(iso: string | null): string | null {
     if (!iso) return null;
@@ -33,11 +37,7 @@ export default function BillingPage() {
     const [loading, setLoading] = useState(true);
     const [plan, setPlan] = useState<PlanUsage | null>(null);
     const [planError, setPlanError] = useState<string | null>(null);
-    const [showUpgradeForm, setShowUpgradeForm] = useState(false);
-    const [checkoutStatus, setCheckoutStatus] = useState<'idle' | 'submitting' | 'done' | 'error'>('idle');
-    const [checkoutError, setCheckoutError] = useState<string | null>(null);
     const [notice, setNotice] = useState<string | null>(null);
-    const [card, setCard] = useState({ number: '', expiry: '', cvc: '', holderName: '', email: '' });
 
     const router = useRouter();
 
@@ -79,50 +79,8 @@ export default function BillingPage() {
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
-    const handleUpgrade = async () => {
-        const publicKey = process.env.NEXT_PUBLIC_ONVO_PUBLIC_KEY;
-        if (!publicKey) {
-            setCheckoutError('Payments are not configured. Contact support to upgrade.');
-            setCheckoutStatus('error');
-            return;
-        }
-        if (!card.number || !card.expiry || !card.cvc || !card.holderName || !card.email) {
-            setCheckoutError('Fill in all card details.');
-            setCheckoutStatus('error');
-            return;
-        }
-
-        setCheckoutStatus('submitting');
-        setCheckoutError(null);
-        try {
-            // Tokenize browser-side — raw card data never hits our server. Onvo
-            // also creates/associates a customer for the card.
-            const { paymentMethodId, customerId } = await tokenizeOnvoCard(publicKey, card);
-
-            // plan_tier is NOT flipped here — the Onvo renewal webhook does that.
-            const res = await fetch('/api/billing/checkout', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ paymentMethodId, customerId }),
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Checkout failed.');
-
-            setCheckoutStatus('done');
-            await fetchData();
-            setTimeout(() => {
-                setCheckoutStatus('idle');
-                setShowUpgradeForm(false);
-                setCard({ number: '', expiry: '', cvc: '', holderName: '', email: '' });
-            }, 3000);
-        } catch (err) {
-            setCheckoutError(err instanceof Error ? err.message : 'Checkout failed.');
-            setCheckoutStatus('error');
-        }
-    };
-
     const handleCancel = async () => {
-        if (!window.confirm('Cancel Pro? You keep Pro until the end of the current billing period, then drop to Free.')) return;
+        if (!window.confirm('Cancel your paid plan? You keep access until the end of the current billing period, then drop to Free.')) return;
         setNotice(null);
         try {
             const res = await fetch('/api/billing/portal', {
@@ -132,12 +90,14 @@ export default function BillingPage() {
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Could not cancel subscription.');
-            setNotice(data.reason || 'Your Pro plan will not renew.');
+            setNotice(data.reason || 'Your paid plan will not renew.');
             await fetchData();
         } catch (err) {
             setNotice(err instanceof Error ? err.message : 'Could not cancel subscription.');
         }
     };
+
+    const isPaidTier = (t: PlanUsage['tier']) => t === 'essential' || t === 'complete' || t === 'pro';
 
     if (loading) {
         return (
@@ -167,42 +127,24 @@ export default function BillingPage() {
                         <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-black/40">Current plan</span>
                         <div className="flex items-center gap-3">
                             <h2 className="text-2xl font-bold tracking-tight text-ink">{plan ? TIER_LABEL[tier] : '—'}</h2>
-                            {plan && (
-                                <Badge
-                                    variant={
-                                        plan.cancel_at_period_end ? 'warning'
-                                        : plan.status === 'past_due' ? 'warning'
-                                        : plan.status === 'active' && tier !== 'free' ? 'success'
-                                        : plan.warning === 'approaching_limit' ? 'warning'
-                                        : 'neutral'
-                                    }
-                                >
-                                    {plan.cancel_at_period_end ? 'Cancels at period end'
-                                        : tier === 'free' ? (plan.warning === 'approaching_limit' ? 'Near limit' : 'Free plan')
-                                        : plan.status === 'active' ? 'Active'
-                                        : plan.status === 'past_due' ? 'Past due' : 'Canceled'}
-                                </Badge>
-                            )}
                         </div>
-                        {tier !== 'free' && renewal && (
+                        {plan && (
                             <p className="text-xs text-black/45 font-medium">
-                                {plan?.cancel_at_period_end ? 'Access until' : 'Renews'} {renewal}
+                                {plan.cancel_at_period_end
+                                    ? `Cancels at period end${renewal ? ` — access until ${renewal}` : ''}`
+                                    : plan.status === 'past_due'
+                                    ? 'Payment past due'
+                                    : isPaidTier(tier) && renewal
+                                    ? `Renews ${renewal}`
+                                    : tier === 'free' && plan.warning === 'approaching_limit'
+                                    ? 'Approaching wallet limit'
+                                    : null}
                             </p>
                         )}
                     </div>
 
                     {/* Plan CTA */}
-                    {plan && tier === 'free' && (
-                        <button
-                            type="button"
-                            disabled
-                            className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-brand/40 text-white text-sm font-semibold rounded-xl cursor-not-allowed"
-                        >
-                            <Icon.Bolt size={15} weight="fill" />
-                            Upgrade to Pro — Coming soon
-                        </button>
-                    )}
-                    {plan && tier === 'pro' && !plan.cancel_at_period_end && (
+                    {plan && isPaidTier(tier) && !plan.cancel_at_period_end && (
                         <button
                             type="button"
                             onClick={handleCancel}
@@ -262,86 +204,18 @@ export default function BillingPage() {
                 </p>
             </section>
 
-            {/* ── Upgrade card form (Free tier only) ── */}
-            {showUpgradeForm && tier === 'free' && (
-                <div className="rounded-2xl bg-white border border-line p-6 space-y-4">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-bold">Upgrade to Pro — $99/mo</h3>
-                        <button
-                            onClick={() => { setShowUpgradeForm(false); setCheckoutStatus('idle'); setCheckoutError(null); }}
-                            className="w-7 h-7 flex items-center justify-center text-black/30 hover:text-black transition-colors rounded-lg hover:bg-black/5"
-                        >
-                            <Icon.Close size={16} weight="bold" />
-                        </button>
-                    </div>
-
-                    <p className="text-xs text-black/50 leading-relaxed">
-                        Unlimited wallets across all your apps. Cancel anytime. Card details are tokenized in your
-                        browser and never reach our server.
-                    </p>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {[
-                            { key: 'holderName', label: 'Cardholder name', placeholder: 'Jane Doe', span: true, type: 'text', mode: undefined, auto: 'cc-name' },
-                            { key: 'email', label: 'Email', placeholder: 'you@company.com', span: true, type: 'email', mode: undefined, auto: 'email' },
-                            { key: 'number', label: 'Card number', placeholder: '4242 4242 4242 4242', span: true, type: 'text', mode: 'numeric', auto: 'cc-number' },
-                            { key: 'expiry', label: 'Expiry', placeholder: 'MM/YY', span: false, type: 'text', mode: 'numeric', auto: 'cc-exp' },
-                            { key: 'cvc', label: 'CVC', placeholder: '123', span: false, type: 'text', mode: 'numeric', auto: 'cc-csc' },
-                        ].map((f) => (
-                            <div key={f.key} className={`space-y-1.5 ${f.span ? 'sm:col-span-2' : ''}`}>
-                                <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-black/40 block">{f.label}</label>
-                                <input
-                                    type={f.type}
-                                    inputMode={f.mode as React.HTMLAttributes<HTMLInputElement>['inputMode']}
-                                    autoComplete={f.auto}
-                                    placeholder={f.placeholder}
-                                    value={card[f.key as keyof typeof card]}
-                                    onChange={(e) => setCard({ ...card, [f.key]: e.target.value })}
-                                    className="w-full h-10 px-3 rounded-lg bg-surface border border-line text-sm text-ink placeholder:text-black/30 focus:outline-none focus:border-ink/30 focus:bg-white transition-colors tabular-nums"
-                                />
-                            </div>
-                        ))}
-                    </div>
-
-                    {checkoutStatus === 'error' && checkoutError && (
-                        <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">
-                            <Icon.Warning size={14} weight="fill" className="shrink-0" />
-                            <span>{checkoutError}</span>
-                        </div>
-                    )}
-                    {checkoutStatus === 'done' && (
-                        <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-700">
-                            <Icon.CheckCircle size={14} weight="fill" className="shrink-0" />
-                            <span>Subscription created. Your plan updates to Pro once Onvo confirms the charge.</span>
-                        </div>
-                    )}
-
-                    <button
-                        type="button"
-                        onClick={handleUpgrade}
-                        disabled={checkoutStatus === 'submitting'}
-                        className="w-full inline-flex items-center justify-center gap-2 h-11 px-5 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand-hover transition-all active:scale-[0.98] disabled:opacity-50"
-                    >
-                        {checkoutStatus === 'submitting'
-                            ? <><Icon.Spinner size={15} weight="bold" className="animate-spin" /> Processing…</>
-                            : <><Icon.Bolt size={15} weight="fill" /> Start Pro — $99/mo</>}
-                    </button>
-                </div>
-            )}
-
             {/* ── Plans comparison ── */}
-            <PlansComparison tier={tier} onUpgrade={() => { setShowUpgradeForm(true); setCheckoutStatus('idle'); setCheckoutError(null); }} />
+            <PlansComparison tier={tier} />
         </div>
     );
 }
 
 /* ── Plans comparison ───────────────────────────────────────────
-   Three tiers, each visually distinct (not an identical card grid):
-   Free is the baseline, Pro is the emphasized brand tier, Custom is
-   the contact-sales lane. The current tier is marked inline. */
+   Three tiers: Free, Essential $59, Complete $139.
+   Payments are not live yet — CTAs show disabled state. */
 
 interface TierDef {
-    id: PlanUsage['tier'];
+    id: 'free' | 'essential' | 'complete';
     name: string;
     price: string;
     cadence: string;
@@ -353,40 +227,37 @@ const TIERS: TierDef[] = [
     {
         id: 'free', name: 'Free', price: '$0', cadence: 'forever',
         blurb: 'Everything you need to ship.',
-        features: ['Up to 1,000 wallets', 'Device-native wallets', 'Gas sponsorship', 'All core SDK features', 'Community support'],
+        features: ['Up to 1,000 wallets', 'Device-native wallets', 'Gas sponsorship (usage-based)', 'All core SDK features', 'Community support'],
     },
     {
-        id: 'pro', name: 'Pro', price: '$99', cadence: 'per month',
-        blurb: 'For apps growing past the free tier.',
-        features: ['Unlimited wallets', 'Everything in Free', 'Higher rate limits', 'Priority support', 'Cancel anytime'],
+        id: 'essential', name: 'Essential', price: '$59', cadence: 'per month',
+        blurb: 'Unlimited wallets, on-device recovery.',
+        features: ['Unlimited wallets', 'On-device recovery (passkey, code, device)', 'Gas sponsorship (usage-based)', 'Priority support', 'Cancel anytime'],
     },
     {
-        id: 'custom', name: 'Custom', price: "Let's talk", cadence: 'tailored',
-        blurb: 'Volume, compliance, and SLAs.',
-        features: ['Volume-based pricing', 'Dedicated infrastructure', 'Invoicing & contracts'],
+        id: 'complete', name: 'Complete', price: '$139', cadence: 'per month',
+        blurb: 'Unlimited wallets, enclave recovery.',
+        features: ['Unlimited wallets', 'Enclave recovery', 'Gas sponsorship (usage-based)', 'Priority support', 'Cancel anytime'],
     },
 ];
 
-function PlansComparison({ tier, onUpgrade }: { tier: PlanUsage['tier']; onUpgrade: () => void }) {
+function PlansComparison({ tier }: { tier: PlanUsage['tier'] }) {
+    const isPaidTier = (t: PlanUsage['tier']) => t === 'essential' || t === 'complete' || t === 'pro';
+    const isCurrentPaid = isPaidTier(tier);
+
     return (
         <div className="space-y-4">
             <h2 className="text-[10px] font-bold uppercase tracking-[0.18em] text-black/40 px-1">Plans</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-line rounded-2xl border border-line overflow-hidden">
                 {TIERS.map((t) => {
-                    const isCurrent = t.id === tier;
-                    const isPro = t.id === 'pro';
+                    const isCurrent = t.id === tier || (isCurrentPaid && t.id === 'essential' && tier === 'pro');
                     return (
                         <div
                             key={t.id}
-                            className={`relative flex flex-col p-6 ${isPro ? 'bg-surface' : 'bg-white'}`}
+                            className="relative flex flex-col p-6 bg-white"
                         >
                             <div className="flex items-center justify-between gap-2 min-h-[22px]">
                                 <h3 className="text-sm font-bold tracking-tight text-ink">{t.name}</h3>
-                                {isPro && (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-brand text-white text-[9px] font-bold uppercase tracking-[0.12em]">
-                                        Popular
-                                    </span>
-                                )}
                             </div>
 
                             <p className="mt-1.5 text-xs text-black/45 leading-relaxed">{t.blurb}</p>
@@ -412,24 +283,17 @@ function PlansComparison({ tier, onUpgrade }: { tier: PlanUsage['tier']; onUpgra
                                     <div className="inline-flex items-center justify-center gap-1.5 w-full h-10 rounded-xl text-sm font-semibold bg-surface border border-line text-black/45">
                                         <Icon.Check size={14} weight="bold" /> Current plan
                                     </div>
-                                ) : t.id === 'pro' ? (
-                                    <button
-                                        disabled
-                                        className="w-full h-10 inline-flex items-center justify-center gap-1.5 bg-brand/40 text-white text-sm font-semibold rounded-xl cursor-not-allowed"
-                                    >
-                                        <Icon.Bolt size={14} weight="fill" /> Coming soon
-                                    </button>
-                                ) : t.id === 'custom' ? (
-                                    <a
-                                        href="/contact-sales"
-                                        className="w-full h-10 inline-flex items-center justify-center gap-1.5 border border-brand/80 text-ink text-sm font-semibold rounded-xl hover:bg-brand hover:text-white transition-all active:scale-[0.98]"
-                                    >
-                                        Contact sales <Icon.ArrowRight size={14} weight="bold" />
-                                    </a>
-                                ) : (
+                                ) : t.id === 'free' ? (
                                     <div className="inline-flex items-center justify-center w-full h-10 rounded-xl text-sm font-medium bg-surface border border-line text-black/40">
                                         Included
                                     </div>
+                                ) : (
+                                    <button
+                                        disabled
+                                        className="w-full h-10 inline-flex items-center justify-center gap-1.5 bg-brand text-white text-sm font-semibold rounded-xl opacity-50 cursor-not-allowed"
+                                    >
+                                        Payments not live yet
+                                    </button>
                                 )}
                             </div>
                         </div>
