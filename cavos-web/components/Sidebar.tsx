@@ -10,6 +10,7 @@ import { Popover } from '@/components/ui/Popover'
 import { useEffect, useState } from 'react'
 import { useOrganization } from '@/lib/hooks/useOrganization'
 import { useApp } from '@/lib/hooks/useApp'
+import { PROFILE_UPDATED } from '@/components/ProfileForm'
 
 const appNav = [
     { name: 'Overview', suffix: '', icon: Icon.Overview },
@@ -23,6 +24,7 @@ const appNav = [
 const appSettings = { name: 'Settings', suffix: '/settings', icon: Icon.Settings }
 
 const profileLinks = [
+    { name: 'Profile', href: '/dashboard/settings#profile', icon: Icon.Settings },
     { name: 'Settings', href: '/dashboard/settings', icon: Icon.Settings },
     { name: 'Team', href: '/dashboard/team', icon: Icon.Org },
     { name: 'API keys', href: '/dashboard/api-keys', icon: Icon.Key },
@@ -42,16 +44,32 @@ export function Sidebar() {
     const pathname = usePathname()
     const router = useRouter()
     const [userEmail, setUserEmail] = useState<string | null>(null)
+    const [displayName, setDisplayName] = useState<string | null>(null)
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
     const { organizations, organizationId, setOrganizationId, loading: organizationsLoading } = useOrganization()
     const { apps, app, appId, setAppId, loading: appsLoading } = useApp()
 
     useEffect(() => {
-        const getUser = async () => {
+        const loadAccount = async () => {
             const supabase = createClient()
             const { data: { user } } = await supabase.auth.getUser()
             setUserEmail(user?.email ?? null)
+            if (!user) {
+                setDisplayName(null)
+                setAvatarUrl(null)
+                return
+            }
+            const { data } = await supabase
+                .from('profiles')
+                .select('full_name, avatar_url')
+                .eq('id', user.id)
+                .maybeSingle()
+            setDisplayName(data?.full_name ?? null)
+            setAvatarUrl(data?.avatar_url ?? null)
         }
-        getUser()
+        loadAccount()
+        window.addEventListener(PROFILE_UPDATED, loadAccount)
+        return () => window.removeEventListener(PROFILE_UPDATED, loadAccount)
     }, [])
 
     const handleLogout = async () => {
@@ -239,11 +257,20 @@ export function Sidebar() {
                     panelClassName="left-0 right-0 w-full rounded-xl border border-line bg-white py-2"
                     trigger={() => (
                         <>
-                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-[11px] font-semibold text-ink">
-                                {(userEmail?.[0] ?? '?').toUpperCase()}
+                            <span className="relative flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-surface text-[11px] font-semibold text-ink">
+                                {avatarUrl ? (
+                                    <Image src={avatarUrl} alt="" fill className="object-cover" />
+                                ) : (
+                                    (displayName?.[0] || userEmail?.[0] || '?').toUpperCase()
+                                )}
                             </span>
-                            <span className="min-w-0 flex-1 truncate text-xs font-medium text-ink">
-                                {userEmail ?? 'Account'}
+                            <span className="min-w-0 flex-1">
+                                <span className="block truncate text-xs font-medium text-ink">
+                                    {displayName || userEmail || 'Account'}
+                                </span>
+                                {displayName && userEmail && (
+                                    <span className="block truncate text-[11px] text-muted">{userEmail}</span>
+                                )}
                             </span>
                         </>
                     )}

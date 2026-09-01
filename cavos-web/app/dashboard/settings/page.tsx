@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/Button'
+import { ProfileForm } from '@/components/ProfileForm'
 import { createClient } from '@/lib/supabase/client'
 
 type Passkey = {
@@ -71,7 +72,9 @@ export default function SettingsPage() {
   }
 
   return <div className="space-y-6">
-    <PageHeader eyebrow="Workspace" title="Settings" subtitle="Passkeys, billing, organizations, and workspace tools." />
+    <PageHeader eyebrow="Workspace" title="Settings" subtitle="Profile, passkeys, billing, and workspace tools." />
+
+    <ProfileForm />
 
     <section className="rounded-xl border border-line bg-white">
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-line px-5 py-4">
