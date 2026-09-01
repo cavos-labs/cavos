@@ -119,8 +119,8 @@ export async function orgPlan(orgId: string): Promise<OrgPlan> {
   const status = data.status as SubscriptionStatus
   const active = status === 'active'
 
-  if ((tier === 'pro' || tier === 'custom') && active) {
-    // Pro = unlimited. Custom = unlimited unless the contract sets a cap.
+  const paid = tier === 'essential' || tier === 'complete' || tier === 'pro' || tier === 'custom'
+  if (paid && active) {
     const limit = tier === 'custom' && data.custom_wallet_limit != null
       ? data.custom_wallet_limit
       : Infinity
