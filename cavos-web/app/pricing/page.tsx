@@ -278,10 +278,11 @@ export default function PricingPage() {
 
                         <div className="mt-5 flex items-center gap-2.5 text-[14px]">
                             <Check className="shrink-0 w-3.5 h-3.5 text-brand" />
-                            <span className="text-ink/70 leading-snug">Priority support via Telegram or Slack</span>
-                            <span className="flex items-center gap-1.5 text-muted">
-                                <IcoTelegram />
-                                <IcoSlack />
+                            <span className="text-ink/70 leading-snug inline-flex items-center gap-x-1 flex-wrap">
+                                Priority support via Telegram
+                                <IcoTelegram className="text-muted shrink-0" />
+                                or Slack
+                                <IcoSlack className="text-muted shrink-0" />
                             </span>
                         </div>
                     </div>
