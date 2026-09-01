@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Icon } from '@/components/ui/Icon';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 interface PlanUsage {
     tier: 'free' | 'essential' | 'complete' | 'pro' | 'custom';
@@ -212,7 +213,7 @@ export default function BillingPage() {
 
 /* ── Plans comparison ───────────────────────────────────────────
    Three tiers: Free, Essential $59, Complete $139.
-   Payments are not live yet — CTAs show disabled state. */
+   Paid plans route to /contact-sales until Onvo checkout is live. */
 
 interface TierDef {
     id: 'free' | 'essential' | 'complete';
@@ -288,12 +289,12 @@ function PlansComparison({ tier }: { tier: PlanUsage['tier'] }) {
                                         Included
                                     </div>
                                 ) : (
-                                    <button
-                                        disabled
-                                        className="w-full h-10 inline-flex items-center justify-center gap-1.5 bg-brand text-white text-sm font-semibold rounded-xl opacity-50 cursor-not-allowed"
+                                    <Link
+                                        href="/contact-sales"
+                                        className="w-full h-10 inline-flex items-center justify-center gap-1.5 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand-hover transition-colors active:scale-[0.98]"
                                     >
-                                        Payments not live yet
-                                    </button>
+                                        Contact sales
+                                    </Link>
                                 )}
                             </div>
                         </div>
