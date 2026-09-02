@@ -1,0 +1,18 @@
+# Cavos SEP-1 stellar.toml
+# https://developers.stellar.org/docs/tokens/publishing-asset-info
+
+VERSION = "2.0.0"
+NETWORK_PASSPHRASE = "Test SDF Network ; September 2015"
+
+# SIGNING_KEY is the org auth key for client_domain signing (SEP-10).
+# This is NOT a user-control seed, NOT cv:ct, NOT Nitro. Cavos never signs
+# user payments with this key.
+SIGNING_KEY = "GA4LW6XL3TNZDC2GYLJD7FIS2OG62HEQVTZ7F4AOY2ESTY4IUNJNWGUK"
+
+[DOCUMENTATION]
+ORG_NAME = "Cavos"
+ORG_URL = "https://cavos.xyz"
+ORG_GITHUB = "cavos-labs"
+ORG_TWITTER = "cavosxyz"
+ORG_OFFICIAL_EMAIL = "adrianvrj@cavos.xyz"
+ORG_DESCRIPTION = "Device-native self-custodial embedded wallets for Starknet, Solana, and Stellar."

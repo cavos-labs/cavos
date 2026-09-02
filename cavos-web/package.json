@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:stellar-gas": "npx tsx --test lib/stellar/hd.test.ts lib/stellar/reserves.test.ts lib/stellar/relayer.test.ts",
+    "test:stellar-sep10": "npx tsx --test lib/stellar/sep10.test.ts",
     "test:api": "npx tsx --test lib/api/verifyUserToken.test.ts lib/api/walletRow.test.ts"
   },
   "dependencies": {
