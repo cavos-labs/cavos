@@ -21,10 +21,19 @@ const nextConfig: NextConfig = {
     return [
       // Standard JWKS discovery path → Cavos Firebase public key endpoint
       { source: '/.well-known/jwks.json', destination: '/api/jwks/cavos-firebase' },
+      // SEP-10 client_domain sign endpoint (canonical: /api/stellar/sep10/sign)
+      { source: '/sign', destination: '/api/stellar/sep10/sign' },
     ];
   },
   async headers() {
     return [
+      {
+        source: "/.well-known/stellar.toml",
+        headers: [
+          { key: "Content-Type", value: "text/plain; charset=utf-8" },
+          { key: "Access-Control-Allow-Origin", value: "*" },
+        ],
+      },
       {
         source: "/api/:path*",
         headers: [
