@@ -7,8 +7,7 @@ NETWORK_PASSPHRASE = "Test SDF Network ; September 2015"
 # SIGNING_KEY is the org auth key for client_domain signing (SEP-10).
 # This is NOT a user-control seed, NOT cv:ct, NOT Nitro. Cavos never signs
 # user payments with this key.
-# TODO(CAV-11): A follow-up commit will add the real Ed25519 G-address here
-# once the keypair is generated and the secret stored in env.
+SIGNING_KEY = "GA4LW6XL3TNZDC2GYLJD7FIS2OG62HEQVTZ7F4AOY2ESTY4IUNJNWGUK"
 
 [DOCUMENTATION]
 ORG_NAME = "Cavos"
