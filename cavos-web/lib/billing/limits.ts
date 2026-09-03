@@ -7,7 +7,8 @@
  *   - Complete → $139/mo unlimited wallets, enclave recovery.
  *   - Custom   → unlimited (or contract cap), billed out-of-band.
  *
- * Legacy 'pro' rows are mapped to 'essential' for limit checks (unlimited).
+ * Legacy 'pro' rows (from a never-launched payment integration) are mapped
+ * to 'essential' for limit checks (unlimited).
  *
  * What is gated: creating NEW wallets only. Reading, signing, recovery and
  * transactions are NEVER gated — blocking those would lock users out of funds.
