@@ -75,6 +75,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.2,
     },
     {
+      url: `${baseUrl}/terms`,
+      changeFrequency: 'yearly',
+      priority: 0.2,
+    },
+    {
       url: 'https://demo.cavos.xyz',
       changeFrequency: 'weekly',
       priority: 0.9,

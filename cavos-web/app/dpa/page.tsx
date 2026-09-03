@@ -5,12 +5,12 @@ import { Footer } from '@/components/Footer'
 
 export const metadata: Metadata = {
     title: 'Data Processing Agreement',
-    description: 'Cavos Labs Data Processing Agreement (DPA) — GDPR Art. 28 compliant agreement for developers integrating the Cavos SDK.',
+    description: 'Cavos Data Processing Agreement (DPA) — GDPR Art. 28 compliant agreement for developers integrating the Cavos SDK.',
     alternates: { canonical: 'https://cavos.xyz/dpa' },
 }
 
-const DPA_VERSION = '1.0'
-const LAST_UPDATED = 'March 16, 2026'
+const DPA_VERSION = '1.1'
+const LAST_UPDATED = 'September 3, 2026'
 
 function Section({ num, title, children }: { num: number; title: string; children: React.ReactNode }) {
     return (
@@ -79,7 +79,10 @@ export default function DpaPage() {
                         <span>Last updated: {LAST_UPDATED}</span>
                     </div>
                     <p className="mt-4 text-sm text-black/60 leading-relaxed">
-                        This Data Processing Agreement (&ldquo;DPA&rdquo;) forms part of the Cavos Terms of Service between Cavos Labs (&ldquo;Processor&rdquo;) and the developer or company registering an account (&ldquo;Controller&rdquo;). It governs the processing of personal data by Cavos on behalf of the Controller in accordance with GDPR Art. 28.
+                        This Data Processing Agreement (&ldquo;<strong className="text-black/80">DPA</strong>&rdquo;) forms part of the Cavos Terms of Service between <strong className="text-black/80">Cavos, LLC</strong>, a Delaware limited liability company (&ldquo;<strong className="text-black/80">Processor</strong>,&rdquo; &ldquo;<strong className="text-black/80">Cavos</strong>&rdquo;) and the developer or company registering an account (&ldquo;<strong className="text-black/80">Controller</strong>&rdquo;). It governs the processing of personal data by Cavos on behalf of the Controller in accordance with GDPR Art. 28.
+                    </p>
+                    <p className="mt-3 text-sm text-black/60">
+                        &ldquo;Cavos Labs&rdquo; may appear as a product or brand name. The Processor is <strong className="text-black/80">Cavos, LLC</strong>.
                     </p>
                     <p className="mt-3 text-sm text-black/60">
                         By creating a Cavos account, the Controller agrees to the terms of this DPA.
@@ -90,11 +93,11 @@ export default function DpaPage() {
                 <div className="bg-[#F7F5F2] border border-[#EAE5DC] rounded-2xl p-6 md:p-10 space-y-0">
 
                     <Section num={1} title="Definitions">
-                        <Clause id="1.1">&ldquo;Personal Data&rdquo; means any information relating to an identified or identifiable natural person as defined in GDPR Art. 4(1).</Clause>
-                        <Clause id="1.2">&ldquo;Controller&rdquo; means the developer or company that determines the purposes and means of processing Personal Data of their End Users.</Clause>
-                        <Clause id="1.3">&ldquo;Processor&rdquo; means Cavos Labs, which processes Personal Data on behalf of the Controller.</Clause>
-                        <Clause id="1.4">&ldquo;End Users&rdquo; means the natural persons who use the Controller&rsquo;s application and whose data is processed through Cavos infrastructure.</Clause>
-                        <Clause id="1.5">&ldquo;Services&rdquo; means the embedded wallet infrastructure, SDK, and dashboard provided by Cavos Labs at cavos.xyz.</Clause>
+                        <Clause id="1.1">&ldquo;<strong className="text-black/80">Personal Data</strong>&rdquo; means any information relating to an identified or identifiable natural person as defined in GDPR Art. 4(1).</Clause>
+                        <Clause id="1.2">&ldquo;<strong className="text-black/80">Controller</strong>&rdquo; means the developer or company that determines the purposes and means of processing Personal Data of their End Users.</Clause>
+                        <Clause id="1.3">&ldquo;<strong className="text-black/80">Processor</strong>&rdquo; means <strong className="text-black/80">Cavos, LLC</strong>, which processes Personal Data on behalf of the Controller.</Clause>
+                        <Clause id="1.4">&ldquo;<strong className="text-black/80">End Users</strong>&rdquo; means the natural persons who use the Controller&rsquo;s application and whose data is processed through Cavos infrastructure.</Clause>
+                        <Clause id="1.5">&ldquo;<strong className="text-black/80">Services</strong>&rdquo; means the embedded wallet infrastructure, SDK, and dashboard provided by Cavos, LLC at cavos.xyz.</Clause>
                     </Section>
 
                     <Section num={2} title="Subject matter and duration">
@@ -105,7 +108,7 @@ export default function DpaPage() {
                     <Section num={3} title="Nature and purpose of processing">
                         <Clause id="3.1">The Processor provides the following processing activities on behalf of the Controller:</Clause>
                         <ul className="list-disc pl-5 space-y-1.5 ml-6">
-                            <li>Storing pseudonymous wallet addresses (Starknet account addresses) to compute Monthly Active Users for billing</li>
+                            <li>Storing pseudonymous wallet addresses (blockchain account addresses, including on Starknet, Solana, and Stellar as configured) to compute usage metrics for billing</li>
                             <li>Recording transaction counts (without transaction hashes) per wallet per application</li>
                             <li>Sending transactional emails (verification, password reset) to End Users on behalf of the Controller, using email addresses provided by the Controller</li>
                             <li>Verifying identity via OAuth providers (Google, Apple) and email/password (Firebase) as configured by the Controller</li>
@@ -131,7 +134,7 @@ export default function DpaPage() {
                         <Clause id="5.3">The Controller shall inform the Processor without undue delay if it becomes aware that any processing instruction infringes applicable law.</Clause>
                     </Section>
 
-                    <Section num={6} title="Obligations of the Processor (Cavos)">
+                    <Section num={6} title="Obligations of the Processor (Cavos, LLC)">
                         <p>In accordance with GDPR Art. 28(3), Cavos shall:</p>
                         <ul className="list-disc pl-5 space-y-2 ml-6">
                             <li>Process Personal Data only on documented instructions from the Controller (i.e., use of the Services).</li>
@@ -176,6 +179,9 @@ export default function DpaPage() {
                             <li>Regular dependency updates and security patching</li>
                             <li>Pseudonymisation of analytics data (wallet addresses without linked identifiers)</li>
                         </ul>
+                        <p className="mt-2 text-xs text-black/40">
+                            These measures are operational descriptions. This DPA does not claim SOC 2 or other third-party certifications.
+                        </p>
                     </Section>
 
                     <Section num={11} title="Governing law and supervisory authority">
@@ -200,8 +206,10 @@ export default function DpaPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z" />
                     </svg>
                     <p className="text-xs text-white/50 leading-relaxed">
-                        This DPA is accepted electronically when you create a Cavos account. The acceptance timestamp and DPA version are recorded and stored with your account for compliance purposes.{' '}
-                        <Link href="/privacy" className="underline underline-offset-2 hover:text-white/80 transition-colors">Privacy Policy</Link>
+                        This DPA is accepted electronically when you create a Cavos account. The acceptance timestamp and DPA version are recorded and stored with your account for compliance purposes. See also the{' '}
+                        <Link href="/privacy" className="underline underline-offset-2 hover:text-white/80 transition-colors">Privacy Policy</Link>{' '}
+                        and{' '}
+                        <Link href="/terms" className="underline underline-offset-2 hover:text-white/80 transition-colors">Terms of Service</Link>.
                     </p>
                 </div>
             </div>
