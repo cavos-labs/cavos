@@ -5,11 +5,11 @@ import { Footer } from '@/components/Footer'
 
 export const metadata: Metadata = {
     title: 'Privacy Policy',
-    description: 'Cavos Labs privacy policy — how we collect, use, and protect your data.',
+    description: 'Cavos privacy policy — how we collect, use, and protect your data.',
     alternates: { canonical: 'https://cavos.xyz/privacy' },
 }
 
-const LAST_UPDATED = 'March 16, 2026'
+const LAST_UPDATED = 'September 3, 2026'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
     return (
@@ -77,39 +77,49 @@ export default function PrivacyPage() {
 
                     <Section title="1. Who we are">
                         <p>
-                            Cavos Labs (&ldquo;Cavos&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;) operates the developer platform available at{' '}
+                            <strong className="text-black/80">Cavos, LLC</strong>, a Delaware limited liability company (&ldquo;<strong className="text-black/80">Cavos</strong>,&rdquo; &ldquo;<strong className="text-black/80">we</strong>,&rdquo; &ldquo;<strong className="text-black/80">us</strong>&rdquo;), operates the developer platform available at{' '}
                             <Link href="https://cavos.xyz" className="underline underline-offset-2 hover:text-black transition-colors">cavos.xyz</Link>{' '}
-                            and the Cavos SDK. Our registered contact for privacy matters is{' '}
+                            and the Cavos SDK.
+                        </p>
+                        <p>
+                            &ldquo;Cavos Labs&rdquo; is a <strong className="text-black/80">product/brand name</strong>. The legal entity that contracts with you and that operates the platform is <strong className="text-black/80">Cavos, LLC</strong>.
+                        </p>
+                        <p>
+                            Our contact for privacy matters is{' '}
                             <a href="mailto:hello@cavos.xyz" className="underline underline-offset-2 hover:text-black transition-colors">hello@cavos.xyz</a>.
                         </p>
                     </Section>
 
                     <Section title="2. Scope — developers vs. end users">
                         <p>
-                            This policy applies to <strong className="text-black/80">developers and companies</strong> (&ldquo;you&rdquo;) who register an account on cavos.xyz and integrate the Cavos SDK into their applications.
+                            This policy applies to developers and companies (&ldquo;<strong className="text-black/80">you</strong>&rdquo;) who register an account on cavos.xyz and integrate the Cavos SDK into their applications.
                         </p>
                         <p>
-                            Cavos acts as a <strong className="text-black/80">Data Processor</strong> under GDPR. Your application&rsquo;s end users are your responsibility — you are the Data Controller for their personal data. You must obtain appropriate consent from your end users and publish your own privacy policy covering your use of Cavos.
+                            For personal data of <strong className="text-black/80">your application&rsquo;s end users</strong> that is processed through the Services, Cavos, LLC acts as a <strong className="text-black/80">Data Processor</strong> under GDPR. You are the <strong className="text-black/80">Data Controller</strong> for that data. You must obtain appropriate consent from your end users and publish your own privacy policy covering your use of Cavos. Processing of that data is further described in the{' '}
+                            <Link href="/dpa" className="underline underline-offset-2 hover:text-black transition-colors">Data Processing Agreement</Link>.
+                        </p>
+                        <p>
+                            For <strong className="text-black/80">your</strong> account, billing, and dashboard data, Cavos, LLC determines the purposes and means of processing as described below.
                         </p>
                     </Section>
 
-                    <Section title="3. Data we collect about you (the developer)">
+                    <Section title="3. Data we collect">
                         <Sub title="Account data">
                             <p>When you register: email address, full name (optional), organization name. Stored in our database (Supabase) and used to manage your access to the Cavos dashboard.</p>
                         </Sub>
                         <Sub title="Billing data">
-                            <p>If you subscribe to a paid plan, we store a Stripe customer ID and subscription ID. Full payment details (card numbers, etc.) are handled exclusively by Stripe and never touch our servers.</p>
+                            <p>If you subscribe to a paid plan, we store a <strong className="text-black/80">Stripe</strong> customer ID and subscription ID. Full payment details (card numbers, etc.) are handled exclusively by Stripe and never touch our servers.</p>
                         </Sub>
                         <Sub title="Usage analytics">
                             <p>
-                                We track pseudonymous wallet counts and transaction counts per application to calculate your Monthly Active Users (MAU) for billing purposes. We store:
+                                We track pseudonymous wallet counts and transaction counts per application to calculate billing metrics (including wallet-create counts and related usage). We store:
                             </p>
                             <ul className="list-disc pl-4 mt-2 space-y-1">
-                                <li>Wallet addresses (pseudonymous Starknet addresses) — no emails or names linked</li>
+                                <li>Wallet addresses (pseudonymous chain addresses) — no emails or names linked</li>
                                 <li>Transaction counts per wallet — no transaction hashes stored</li>
                                 <li>Network type (mainnet / testnet)</li>
                             </ul>
-                            <p className="mt-2">This data belongs to your end users&rsquo; activity but is processed by us only to compute your billing metrics.</p>
+                            <p className="mt-2">This data belongs to your end users&rsquo; activity but is processed by us only to compute your billing metrics and operate the Services.</p>
                         </Sub>
                         <Sub title="Dashboard analytics">
                             <p>With your consent, we use Vercel Analytics to collect anonymous pageview data when you use the cavos.xyz dashboard. No cookies are set, no cross-site tracking occurs, and no personal data is collected. You can decline at any time via the consent banner.</p>
@@ -119,7 +129,7 @@ export default function PrivacyPage() {
                     <Section title="4. Legal basis for processing">
                         <ul className="list-disc pl-4 space-y-2">
                             <li><strong className="text-black/80">Contract (Art. 6(1)(b))</strong> — account data and billing data are necessary to provide the service you signed up for.</li>
-                            <li><strong className="text-black/80">Legitimate interest (Art. 6(1)(f))</strong> — pseudonymous usage metrics (wallet counts) are necessary for billing accuracy.</li>
+                            <li><strong className="text-black/80">Legitimate interest (Art. 6(1)(f))</strong> — pseudonymous usage metrics (wallet counts) are necessary for billing accuracy and operating the platform.</li>
                             <li><strong className="text-black/80">Consent (Art. 6(1)(a))</strong> — Vercel Analytics, only if you accept the consent banner.</li>
                         </ul>
                     </Section>
@@ -152,7 +162,7 @@ export default function PrivacyPage() {
                             <li><strong className="text-black/80">Rectification (Art. 16)</strong> — correct inaccurate data via your dashboard profile settings.</li>
                             <li><strong className="text-black/80">Erasure (Art. 17)</strong> — delete your account and all associated data from your dashboard settings.</li>
                             <li><strong className="text-black/80">Portability (Art. 20)</strong> — receive your data in a machine-readable format upon request.</li>
-                            <li><strong className="text-black/80">Restriction & Objection (Art. 18, 21)</strong> — contact us to restrict processing or object to legitimate-interest processing.</li>
+                            <li><strong className="text-black/80">Restriction &amp; Objection (Art. 18, 21)</strong> — contact us to restrict processing or object to legitimate-interest processing.</li>
                         </ul>
                         <p>
                             To exercise any right, email{' '}
@@ -172,6 +182,9 @@ export default function PrivacyPage() {
                     <Section title="9. Security">
                         <p>
                             We implement technical and organizational measures to protect your data: TLS in transit, row-level security in our database, restricted access to production systems, and no storage of sensitive credentials on our servers. In the event of a data breach affecting your data, we will notify you and the relevant supervisory authority within 72 hours as required by Art. 33 GDPR.
+                        </p>
+                        <p>
+                            This section describes measures we actually operate. It does not claim SOC 2 or other certifications.
                         </p>
                     </Section>
 
