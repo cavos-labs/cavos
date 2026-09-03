@@ -38,8 +38,10 @@ export function Footer() {
                 <div className="space-y-5">
                     <h5 className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/50">Legal</h5>
                     <ul className="space-y-3 text-sm font-medium text-black/25">
+                        <li><Link href="/terms" className="hover:text-black transition-colors">Terms of Service</Link></li>
                         <li><Link href="/privacy" className="hover:text-black transition-colors">Privacy Policy</Link></li>
                         <li><Link href="/dpa" className="hover:text-black transition-colors">Data Processing Agreement</Link></li>
+                        <li><Link href="/user-terms" className="hover:text-black transition-colors">End-User Terms</Link></li>
                     </ul>
                 </div>
             </div>
