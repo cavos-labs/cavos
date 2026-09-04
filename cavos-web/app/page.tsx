@@ -94,11 +94,6 @@ export default function LandingPage() {
                                         Let them sign in, pay, earn, and own as naturally as they use any other product—while Cavos handles the wallet infrastructure underneath.
                                     </span>
                                 </h1>
-                                <p className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-medium text-ink/40">
-                                    <span>Self-custodial · MPC-free</span>
-                                    <span className="hidden sm:inline">•</span>
-                                    <span>Flat org fees, not per-MAU</span>
-                                </p>
                             </div>
 
                             <div data-hero className="grid w-full max-w-sm grid-cols-1 gap-3 sm:flex sm:max-w-none sm:items-center">
