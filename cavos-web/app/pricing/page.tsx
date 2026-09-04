@@ -110,8 +110,8 @@ function IcoSlack({ className = '' }: { className?: string }) {
 }
 
 const RECOVERY_FEATURES = [
-    { label: 'On-device recovery', desc: 'Passkey, recovery code, or enrolled device.' },
-    { label: 'Enclave recovery', desc: 'AWS Nitro hardware isolation for device key rewrap.' },
+    { label: 'On-device recovery', desc: 'Recovery code or enrolled device. Passkey behavior differs by chain: on Starknet and Solana, passkeys authorize new devices (approver); on Stellar, a synced passkey unwraps the control key and can spend.' },
+    { label: 'Enclave recovery', desc: 'AWS Nitro hardware-isolated, non-custodial key rewrap. Open-source under Apache-2.0 (cavos-labs/cavos-recovery).' },
 ]
 
 const FEATURE_GROUPS: { title: string; Art: () => React.ReactElement; items: string[] }[] = [

@@ -82,9 +82,9 @@ function MockupAccount() {
                         </svg>
                     </div>
 
-                    {/* OUTPUT — smart account */}
+                    {/* OUTPUT — chain-native account */}
                     <div className="min-w-0 flex-1">
-                        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink/40">smart account</p>
+                        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink/40">chain-native account</p>
                         <div className={`${row} mt-2.5 gap-2`}>
                             <span className="font-mono text-[15px] font-medium tracking-tight text-ink">0x04a3…b7f9</span>
                             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
@@ -114,7 +114,7 @@ function MockupGas() {
                     <span className="inline-flex items-center gap-1 rounded-full bg-brand px-2 py-0.5 text-[10px] font-semibold text-white">Gasless</span>
                 </div>
                 <p className="mt-1.5 text-[24px] font-semibold tracking-tight text-ink">$0.00</p>
-                <p className="text-[11px] text-emerald-600">Sponsored · user pays nothing</p>
+                <p className="text-[11px] text-emerald-600">Sponsorable · gasless when funded</p>
             </div>
             <div className="absolute -bottom-5 left-7 right-7 rounded-xl border border-line bg-white p-4 shadow-[0_20px_44px_-26px_rgba(10,10,15,0.3)] md:left-9 md:right-9">
                 <p className="text-[11px] font-medium text-ink/40">Sponsored transactions · 30d</p>
@@ -140,7 +140,7 @@ function MockupDeviceSigners() {
                     </span>
                     <div className="leading-tight">
                         <p className="text-[12.5px] font-medium text-ink">Device signer</p>
-                        <p className="font-mono text-[10px] text-ink/40">P-256 · hardware-bound</p>
+                        <p className="font-mono text-[10px] text-ink/40">P-256 · device-bound</p>
                     </div>
                     <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-surface px-2.5 py-0.5 text-[10px] font-semibold text-ink/70 ring-1 ring-line"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />Active</span>
                 </div>
@@ -220,7 +220,7 @@ export function FeaturesGrid() {
         <section className="px-6 py-20 md:px-16 md:py-28 lg:px-24">
             <div data-reveal className="max-w-[46rem]">
                 <h2 className="text-[clamp(1.625rem,2.6vw,2.375rem)] font-medium leading-[1.14] tracking-[-0.03em] text-ink">
-                    One wallet layer for every chain.{' '}
+                    One wallet layer for Starknet, Solana, and Stellar.{' '}
                     <span className="text-muted">
                         Device-native signing, chain-specific execution, and gas abstraction
                         behind one product integration.
@@ -238,14 +238,14 @@ export function FeaturesGrid() {
                 <div className="grid divide-y divide-line border-b border-line lg:grid-cols-3 lg:divide-x lg:divide-y-0">
                     <Cell
                         className="lg:col-span-2"
-                        title="Smart accounts from your existing identity"
-                        body="Bring a stable user identity and create a deterministic, self-custodial account without extensions or seed phrases."
+                        title="Chain-native accounts from your existing identity"
+                        body="Bring a stable user identity and resolve a self-custodial account — the first device to claim names the address. No extensions or seed phrases."
                     >
                         <MockupAccount />
                     </Cell>
                     <Cell
-                        title="Gas, fully abstracted"
-                        body="Sponsor gas so users transact from the very first tap — no tokens, no top-ups, no friction."
+                        title="Gas sponsorship built in"
+                        body="Integrators fund gas so users transact from the very first tap — sponsorable on every chain, gasless when you choose."
                     >
                         <MockupGas />
                     </Cell>
@@ -265,8 +265,8 @@ export function FeaturesGrid() {
                         <MockupVerify />
                     </Cell>
                     <Cell
-                        title="One SDK, every chain and platform"
-                        body="Use one integration model across Starknet, Solana, Stellar, web, iOS, and Android, then add new chain adapters as they ship."
+                        title="One SDK for Starknet, Solana, Stellar"
+                        body="Use one integration model across web, iOS, and Android. New chain adapters can ship as the architecture grows."
                     >
                         <MockupSdk />
                     </Cell>

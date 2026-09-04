@@ -41,7 +41,7 @@ export default function LandingPage() {
                 "operatingSystem": "Web, iOS, Android",
                 "applicationCategory": "DeveloperApplication",
                 "applicationSubCategory": "Multichain embedded wallet infrastructure",
-                "description": "Cavos is a device-native embedded wallet SDK for building verifiable, self-custodial smart accounts across blockchains. Starknet, Solana, and Stellar adapters are available today, with an architecture designed for every chain.",
+                "description": "Cavos is a device-native embedded wallet SDK for building verifiable, self-custodial accounts. Starknet, Solana, and Stellar adapters ship today; the architecture supports additional adapters.",
                 "offers": {
                     "@type": "Offer",
                     "price": "0",
@@ -51,7 +51,7 @@ export default function LandingPage() {
                 "author": { "@id": "https://cavos.xyz/#organization" },
                 "featureList": [
                     "Device-native P-256 signers",
-                    "Deterministic smart-account addresses",
+                    "Registry-first address resolution",
                     "Device-controlled self-custody",
                     "Gas sponsorship and relayers",
                     "Starknet, Solana, and Stellar adapters",
@@ -94,6 +94,11 @@ export default function LandingPage() {
                                         Let them sign in, pay, earn, and own as naturally as they use any other product—while Cavos handles the wallet infrastructure underneath.
                                     </span>
                                 </h1>
+                                <p className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-medium text-ink/40">
+                                    <span>Self-custodial · MPC-free</span>
+                                    <span className="hidden sm:inline">•</span>
+                                    <span>Flat org fees, not per-MAU</span>
+                                </p>
                             </div>
 
                             <div data-hero className="grid w-full max-w-sm grid-cols-1 gap-3 sm:flex sm:max-w-none sm:items-center">
