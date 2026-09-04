@@ -24,7 +24,7 @@ export function CtaSplit() {
                         Embed your first multichain wallet today.
                     </h2>
                     <p className="mt-4 text-[15px] leading-relaxed text-muted">
-                        Pick a chain, connect a stable user identity, and give users a device-native smart account. Free for your first 1,000 wallets.
+                        Pick a chain, connect a stable user identity, and give users a device-native wallet. Free for your first 1,000 wallets.
                     </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
@@ -50,10 +50,10 @@ export function CtaSplit() {
             <div className="flex flex-col justify-between gap-10 bg-surface px-6 py-16 md:px-16 md:py-20 lg:px-24">
                 <div className="max-w-[34ch]">
                     <h2 className="text-[clamp(1.5rem,2.4vw,2.125rem)] font-medium leading-[1.15] tracking-[-0.03em] text-ink">
-                        Building something custom?
+                        Building something bigger?
                     </h2>
                     <p className="mt-4 text-[15px] leading-relaxed text-muted">
-                        Custom appchains, dedicated signers, volume pricing. Tell us what you are building and the team will help you ship it.
+                        Flat org fees, no per-MAU pricing. Tell us what you are building and the team will help you scope the integration.
                     </p>
                 </div>
                 <Link
