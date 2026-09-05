@@ -10,8 +10,9 @@ export interface Database {
   public: {
     Tables: {
       // ── Billing ───────────────────────────────────────────────────────────
-      // Per-org subscription state (plan_tier, Onvo linkage, custom contract).
+      // Per-org subscription state (plan_tier, payment processor linkage, custom contract).
       // plan_tier is the single source of truth for the wallet-count gate.
+      // NOTE: onvo_* columns are legacy; Stripe integration is planned.
       org_subscriptions: {
         Row: {
           org_id: string
