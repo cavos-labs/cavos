@@ -41,7 +41,7 @@ export default function LandingPage() {
                 "operatingSystem": "Web, iOS, Android",
                 "applicationCategory": "DeveloperApplication",
                 "applicationSubCategory": "Multichain embedded wallet infrastructure",
-                "description": "Cavos is a device-native embedded wallet SDK for building verifiable, self-custodial smart accounts across blockchains. Starknet, Solana, and Stellar adapters are available today, with an architecture designed for every chain.",
+                "description": "Cavos is a device-native embedded wallet SDK for building verifiable, self-custodial accounts. Starknet, Solana, and Stellar adapters ship today; the architecture supports additional adapters.",
                 "offers": {
                     "@type": "Offer",
                     "price": "0",
@@ -51,7 +51,7 @@ export default function LandingPage() {
                 "author": { "@id": "https://cavos.xyz/#organization" },
                 "featureList": [
                     "Device-native P-256 signers",
-                    "Deterministic smart-account addresses",
+                    "Registry-first address resolution",
                     "Device-controlled self-custody",
                     "Gas sponsorship and relayers",
                     "Starknet, Solana, and Stellar adapters",

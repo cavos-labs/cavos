@@ -94,7 +94,7 @@ const globalJsonLd = {
         "@type": "ImageObject",
         "url": "https://cavos.xyz/CavosLogo.png"
       },
-      "description": "Cavos Labs builds device-native, verifiable smart-account infrastructure for every blockchain.",
+      "description": "Cavos Labs builds device-native, verifiable wallet infrastructure. Starknet, Solana, and Stellar adapters ship today.",
       "sameAs": [
         "https://twitter.com/cavosxyz",
         "https://github.com/cavos-labs"
@@ -110,7 +110,7 @@ const globalJsonLd = {
       "@id": "https://cavos.xyz/#website",
       "url": "https://cavos.xyz",
       "name": "Cavos",
-      "description": "Multichain embedded wallet infrastructure for device-native, verifiable smart accounts.",
+      "description": "Embedded wallet infrastructure for Starknet, Solana, and Stellar — device-native and verifiable.",
       "publisher": { "@id": "https://cavos.xyz/#organization" }
     }
   ]

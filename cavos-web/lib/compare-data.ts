@@ -87,7 +87,7 @@ export const COMPETITORS: Competitor[] = [
         ],
         faq: [
             { question: 'Does Cavos support connecting existing wallets like MetaMask?', answer: 'No. Cavos provisions and controls an embedded, device-native account for each user. If connecting existing external wallets is a requirement, a connection-focused provider such as Dynamic is the better fit, and the two models can coexist in one product.' },
-            { question: 'Which is better for non-crypto users?', answer: 'Cavos is designed so a user never selects a wallet: they sign in with an identity you already own and a deterministic self-custodial account is derived. Dynamic can also hide this, but its surface area is broader because it also serves crypto-native connection flows.' },
+            { question: 'Which is better for non-crypto users?', answer: 'Cavos is designed so a user never selects a wallet: they sign in with an identity you already own and a self-custodial account is resolved (the first device to claim names the address). Dynamic can also hide this, but its surface area is broader because it also serves crypto-native connection flows.' },
         ],
     },
     {
@@ -169,7 +169,7 @@ export const COMPETITORS: Competitor[] = [
         ],
         rows: [
             { feature: 'Signing authority', cavos: CAVOS_CUSTODY, them: 'Delegated key management backed by hardware security modules operated by the provider.' },
-            { feature: 'Onboarding', cavos: 'Sign in with an identity you already own; the account is derived deterministically.', them: 'Email magic link and social login.' },
+            { feature: 'Onboarding', cavos: 'Sign in with an identity you already own; the account is resolved registry-first.', them: 'Email magic link and social login.' },
             { feature: 'Chain coverage', cavos: CAVOS_CHAINS, them: 'EVM-focused with additional chain support.' },
             { feature: 'Account model', cavos: 'Native smart accounts and device-account programs per chain.', them: 'Primarily EOA-style wallets.' },
             { feature: 'Gas sponsorship', cavos: CAVOS_GAS, them: 'Available through account abstraction integrations.' },

@@ -95,5 +95,5 @@ This table describes architectural models, not a ranking. Providers such as Priv
 
 ## Company
 
-Cavos Labs — device-native, verifiable smart-account infrastructure for every chain.
+Cavos Labs — device-native, verifiable wallet infrastructure for Starknet, Solana, and Stellar.
 X/Twitter: @cavosxyz
