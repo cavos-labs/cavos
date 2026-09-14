@@ -26,9 +26,10 @@ apart:
 - **Events & webhooks** — the event stream and webhook subscriptions are scoped
   per environment, so your development integration doesn't fire production hooks.
 - **Social recovery** — enable or disable [hardware-isolated
-  recovery](/docs/hardware-isolated-recovery), choose exactly one of Google,
-  Apple, or email magic link, set the on-chain timelock, and register your own
-  OAuth client ID if you authenticate users yourself. All independent per
+  recovery](/docs/hardware-isolated-recovery) for **Starknet and Solana** wallets
+  in that environment, choose exactly one of Google, Apple, or email magic link,
+  set the on-chain timelock, and register your own OAuth client ID if you
+  authenticate users yourself. Classic Stellar is unaffected. All independent per
   environment, so you can rehearse recovery in development against a different
   provider than production uses.
 
