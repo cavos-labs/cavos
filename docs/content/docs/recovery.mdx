@@ -18,7 +18,7 @@ be arranged after the fact.
 | [**Multi-device**](/docs/multi-device) | Another signed-in device | Users who already have a second device | Nothing to set up |
 | [**Passkeys**](/docs/passkeys) | Face ID / Touch ID / PIN | Almost everyone — the strongest default | One prompt at signup |
 | [**Recovery codes**](/docs/recovery-codes) | A code they stored | A last-resort factor, and self-hosted setups | The user must keep a secret |
-| [**Hardware-isolated recovery**](/docs/hardware-isolated-recovery) | To sign in again with Google / Apple / email | Consumer apps where users will lose everything | Opt-in per environment; adds an enclave to the trust model |
+| [**Hardware-isolated recovery**](/docs/hardware-isolated-recovery) | To sign in again with Google / Apple / email | Consumer apps on **Starknet and Solana** where users will lose everything | Opt-in per environment; adds an enclave to the trust model. Not offered on classic Stellar. |
 
 The first two answer *"I still have something."* The last two answer *"I have
 nothing."* A serious app wants at least one of each.
@@ -30,10 +30,12 @@ device, needs no secret the user can misplace, and costs one prompt during
 onboarding. The built-in modal offers it automatically.
 
 **Add a way back from nothing.** A passkey is bound to the user's platform
-account; if they lose access to that too, they need another path. That is either
-a recovery code they kept, or hardware-isolated recovery — which works by
-signing in again and so asks nothing of the user in advance. Consumer apps
-usually want the latter, because in practice most users will not keep a code.
+account; if they lose access to that too, they need another path. On Starknet
+and Solana that is either a recovery code they kept, or hardware-isolated
+recovery — which works by signing in again and so asks nothing of the user in
+advance. Consumer apps on those chains usually want the latter, because in
+practice most users will not keep a code. On **classic Stellar**, the way back
+from nothing *is* the passkey or the recovery code: the enclave is not offered.
 
 **Do not rely on multi-device alone.** It is excellent when it applies and
 useless in the case that matters: the user who had one phone and dropped it in a
@@ -48,10 +50,10 @@ a second authority during onboarding rather than when it is needed.
 
 ## What Cavos never does
 
-None of these paths gives Cavos a key that can move funds. The account contract
-is the sole authority over who may sign, and every recovery path adds an
-authority the user's own device — or an enclave that the user's device granted a
-single restricted permission to — authorized on-chain.
+None of these paths gives Cavos a key that can move funds. The account is the
+sole authority over who may sign, and every recovery path adds an authority the
+user's own device — or, on Starknet and Solana, an enclave that the user's
+device granted a single restricted permission to — authorized on-chain.
 
 Hardware-isolated recovery is the only path that introduces a party beyond the
 user and the chain, and it is deliberately bounded: see

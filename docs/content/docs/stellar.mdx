@@ -267,7 +267,9 @@ same DEK → the same control key:
 On a returning device, `connect` unwraps the device slot and the wallet is
 `ready` — no prompt. On a **new** device there is no device slot yet, so status
 is `needs-device-approval` until the user approves it with a passkey or recovery
-code (below).
+code (below). Signing in again does not restore a classic Stellar device — that
+is the [hardware-isolated](/docs/hardware-isolated-recovery) path on Starknet and
+Solana only.
 
 ## Add a passkey (recommended)
 
@@ -330,6 +332,12 @@ because any factor yields the control key, there is no trip back to an old
 device. See [Multi-device](/docs/multi-device) for the cross-chain model.
 
 ## Recovery
+
+Classic Stellar does **not** use [hardware-isolated
+recovery](/docs/hardware-isolated-recovery). A new device is authorized with a
+[passkey](/docs/passkeys) or a recovery code. The enclave is for Starknet and
+Solana today; it will apply to Stellar only when contract accounts (`C…`) can
+restrict that authority with `__check_auth`.
 
 Set up a recovery code as an offline backup factor. It wraps the same DEK, so it
 can unlock the account after every device is lost:

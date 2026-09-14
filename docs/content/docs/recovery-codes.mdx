@@ -112,10 +112,12 @@ then enrolls the fresh device's envelope slot.
 - Verify recovery on physical iOS and Android devices before production release.
 - Treat the code as one factor among several, not the plan. Most users will not
   keep it, which is the problem [hardware-isolated
-  recovery](/docs/hardware-isolated-recovery) exists to solve.
-- If the user loses every device and every recovery factor, and social recovery
-  was never enrolled, Cavos cannot restore access. That is the cost of the
-  guarantee, not a gap in it.
+  recovery](/docs/hardware-isolated-recovery) exists to solve on Starknet and
+  Solana. Classic Stellar does not use the enclave: the code (or a synced
+  passkey) *is* the way back from nothing.
+- If the user loses every device and every recovery factor, and — on Starknet or
+  Solana — social recovery was never enrolled, Cavos cannot restore access. That
+  is the cost of the guarantee, not a gap in it.
 
 See [Multi-device](/docs/multi-device), [Passkeys](/docs/passkeys), and the
 selected [chain guide](/docs/chains).
