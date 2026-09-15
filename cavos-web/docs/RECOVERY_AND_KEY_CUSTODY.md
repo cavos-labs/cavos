@@ -88,8 +88,10 @@ Verified in the SDK:
   one WebAuthn assertion over a batch challenge (`sha256(concat(leaves))`)
   approves this device on every chain at once, verified on chain.
 - Stellar: `CavosStellar.approveThisDeviceWithPasskey(prfOutput)` — a WebAuthn
-  PRF output unwraps the DEK held in the account's own `cv:wp` data entries.
-- Both chains also carry `approveThisDeviceWithRecovery(code)` against `cv:wr`.
+  PRF output derives an ed25519 Horizon signer that `setOptions` this device
+  onto the account.
+- Stellar also carries `approveThisDeviceWithRecovery(code)` against a derived
+  extra signer. Starknet/Solana use `Cavos.recover` / `CavosSolana.recover`.
 
 None of these touch a Cavos server. Recovery depends on the user's passkey
 provider — which is arguably *more* self-custodial, and notably does not depend

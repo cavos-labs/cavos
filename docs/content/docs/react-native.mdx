@@ -120,8 +120,8 @@ and magic links through the registered deep/universal link.
 ## Keys and security levels
 
 `NativeDeviceSigner` uses Secure Enclave on iOS when available, and StrongBox →
-TEE → OS-protected Android Keystore on Android. `NativeDeviceUnwrapKey` is a
-separate P-256 ECDH key used by Stellar. The default policy is
+TEE → OS-protected Android Keystore on Android. Stellar signs with an ed25519
+control key per device (`NativeControlSigner` on iOS). The default policy is
 `minimumKeySecurity: "os-protected"`; use `"hardware"` to reject a software
 fallback.
 

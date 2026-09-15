@@ -10,7 +10,7 @@ The passkey's security role differs by chain:
 | Chain | How the passkey works | Security model |
 |-------|----------------------|----------------|
 | **Starknet / Solana** | Synced WebAuthn credential registered **on-chain as an approver**. It approves adding a new device's key. It never signs transactions. | 2FA / device-approval step-up. |
-| **Stellar** | WebAuthn PRF credential. The passkey does not sign XDR. It **unwraps the DEK** that opens the one ed25519 control key (the `G…` spending key). | **Not 2FA.** Anyone with the synced passkey (via iCloud/Google) can spend — the passkey unlocks the control key locally. Cavos never holds the seed. |
+| **Stellar** | WebAuthn PRF credential. The passkey does not sign XDR. Its PRF output **derives an ed25519 Horizon signer** (weight 1) on the `G…` account. | **Not 2FA.** Anyone with the synced passkey (via iCloud/Google) can spend — the derived key is a real signer. Cavos never holds a seed. |
 
 On **Starknet and Solana**, treat it as **two-factor authentication** in your UI.
 Show the prompt immediately after the wallet is ready, framed as *"Turn on device
@@ -32,10 +32,10 @@ individual transactions. Signing stays silent, as described in
 </Callout>
 
 <Callout type="warn">
-**Stellar:** The passkey is a **WebAuthn PRF** credential whose derived secret
-unlocks the account's control key. It is **not** an on-chain signer and **not**
-part of the cross-chain `approveDeviceEverywhere` batch. This is not 2FA —
-anyone with the synced passkey can spend.
+**Stellar:** The passkey is a **WebAuthn PRF** credential whose derived ed25519
+key is a weight-1 Horizon signer. It is **not** part of the cross-chain
+`approveDeviceEverywhere` batch. This is not 2FA — anyone with the synced
+passkey can spend.
 </Callout>
 
 ## Why a passkey
@@ -176,12 +176,11 @@ Most integrations target one chain and never need this.
 <Callout type="warn">
 **Stellar passkeys work differently — see the table at the top of this page.**
 The classic `G…` account has no on-chain WebAuthn verifier. Instead, the passkey
-is a **WebAuthn PRF** credential whose derived secret unlocks the account's
-control key. This is **not 2FA** — anyone with the synced passkey can spend via
-unlocking the control key locally. Enroll it with
-`stellarWallet.enrollPasskey(prfOutput)` and approve a new device with
-`stellarWallet.approveThisDeviceWithPasskey(prfOutput)`. It is **not** part of the
-`approveDeviceEverywhere` batch and does not use `addApprover` /
+is a **WebAuthn PRF** credential whose derived ed25519 key is added as a Horizon
+signer. This is **not 2FA** — anyone with the synced passkey can spend. Enroll
+it with `stellarWallet.enrollPasskey(prfOutput)` and approve a new device with
+`stellarWallet.approveThisDeviceWithPasskey(prfOutput)`. It is **not** part of
+the `approveDeviceEverywhere` batch and does not use `addApprover` /
 `add_signer_via_passkey`. The React `CavosProvider` wraps this for you via
 `enrollPasskeyDefault()` / `approveDeviceWithPasskey()`.
 </Callout>

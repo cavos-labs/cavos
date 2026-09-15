@@ -13,7 +13,7 @@ model.
 |---|---|---|---|
 | **Starknet** | Non-extractable P-256 device key | Cairo `DeviceAccount` recovers and authorizes the signer | Paymaster-sponsored deployment and execution |
 | **Solana** | Non-extractable P-256 device key | Native secp256r1 precompile bound to the Cavos program instruction | Relayer co-signs as fee payer |
-| **Stellar** | Random ed25519 control key unwrapped locally by an enrolled device factor | Native classic-account signature and Soroban authorization | Sponsored reserves and optional fee-bump submission |
+| **Stellar** | Per-device ed25519 Horizon signer (non-extractable on web) | Native classic-account signature and Soroban authorization | Sponsored reserves and optional fee-bump submission |
 
 The backend can transport, sponsor, or submit a transaction. It does not hold
 the user authority required to move funds.
@@ -32,7 +32,7 @@ const signer = await WebCryptoSigner.loadOrCreate({ keyId: address });
 const publicKey = await signer.getPublicKey();
 ```
 
-`Cavos.connect` provisions the appropriate key or unwrap factor automatically.
+`Cavos.connect` provisions the appropriate key automatically.
 Most applications should not instantiate low-level signers directly.
 
 ## Starknet
@@ -67,12 +67,13 @@ program allowlist. See [Solana](/docs/solana).
 
 ## Stellar
 
-Stellar uses its native ed25519 account model. The deterministic master key is
-made powerless after creation and a random control key becomes the active
-signer. That control seed is encrypted in the account's data entries and
-unwrapped locally using an enrolled device, passkey PRF, or recovery factor.
+Stellar uses its native ed25519 account model. The first device generates a
+non-extractable Ed25519 key whose public key *is* the `G…` address. Extra
+devices, a passkey, and a recovery code are additional weight-1 Horizon signers.
+Each device signs with its own local key — there is no shared seed stored
+on-chain.
 
-On web, the unwrapped control key is a non-extractable WebCrypto Ed25519 key.
+On web, the control key is a non-extractable WebCrypto Ed25519 key.
 Application code (and XSS) cannot export the private bytes, but can still
 execute transactions while the session is unlocked.
 
