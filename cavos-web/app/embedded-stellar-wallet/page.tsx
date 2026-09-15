@@ -8,7 +8,7 @@ const PAGE_URL = 'https://cavos.xyz/embedded-stellar-wallet'
 
 export const metadata: Metadata = {
     title: 'Embedded Stellar Wallet SDK',
-    description: 'A device-native, self-custodial embedded wallet for Stellar. The signing key is created and used on the user\'s device — Cavos cannot see it, sign with it, or move funds. Classic G… account with on-chain sealed control key.',
+    description: 'A device-native, self-custodial embedded wallet for Stellar. The signing key is created and used on the user\'s device — Cavos cannot see it, sign with it, or move funds. Classic G… account with per-device Horizon ed25519 signers.',
     alternates: {
         canonical: PAGE_URL,
     },
@@ -58,7 +58,7 @@ export default function EmbeddedStellarWalletPage() {
         operatingSystem: 'Web, iOS, Android',
         applicationCategory: 'DeveloperApplication',
         applicationSubCategory: 'Embedded Stellar Wallet SDK',
-        description: 'A device-native, self-custodial embedded wallet SDK for Stellar. The signing key is created and used on the user\'s device. Classic G… account with on-chain sealed control key, gasless transactions, and Soroban contract support.',
+        description: 'A device-native, self-custodial embedded wallet SDK for Stellar. The signing key is created and used on the user\'s device. Classic G… account with per-device Horizon ed25519 signers, gasless transactions, and Soroban contract support.',
         offers: {
             '@type': 'Offer',
             price: '0',
@@ -69,7 +69,7 @@ export default function EmbeddedStellarWalletPage() {
         featureList: [
             'Device-native signing key',
             'Classic G… Stellar account',
-            'On-chain sealed control key',
+            'Per-device Horizon ed25519 signers',
             'Gasless transactions via relayer',
             'Soroban contract invocations',
             'WebAuthn PRF passkey recovery',
@@ -100,10 +100,10 @@ export default function EmbeddedStellarWalletPage() {
                         mobile (Expo Development Builds, EAS, or bare React Native — Expo Go is not supported).
                     </p>
                     <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted">
-                        In the browser, the device key is a non-extractable P-256 key stored via WebCrypto.
-                        On React Native, it uses the OS keystore. These platform primitives provide the
-                        hardware-backed isolation — the SDK does not enforce non-extractability on Node
-                        or other server runtimes.
+                        In the browser, each device&apos;s ed25519 control key is a non-extractable
+                        WebCrypto key. On React Native, it uses the OS keystore. These platform
+                        primitives provide the hardware-backed isolation — the SDK does not enforce
+                        non-extractability on Node or other server runtimes.
                     </p>
                 </header>
 
@@ -118,15 +118,15 @@ export default function EmbeddedStellarWalletPage() {
                         <ul className="mt-5 space-y-3 text-sm leading-relaxed text-muted">
                             <li className="flex gap-3">
                                 <span aria-hidden="true" className="mt-[0.55em] h-1 w-1 shrink-0 rounded-full bg-brand" />
-                                <span>A <strong>control key</strong> (weight 1) signs transactions. Its seed is sealed <strong>on-chain</strong> in the account&apos;s data entries (<code className="text-xs bg-white px-1 py-0.5 rounded border border-line">cv:ct</code>).</span>
+                                <span>The <strong>G… address is this device&apos;s ed25519 public key</strong>. That key lives only on the device (non-extractable WebCrypto in the browser) and signs as a weight-1 Horizon signer.</span>
                             </li>
                             <li className="flex gap-3">
                                 <span aria-hidden="true" className="mt-[0.55em] h-1 w-1 shrink-0 rounded-full bg-brand" />
-                                <span>Each device holds an ECDH key that unwraps its own slot to obtain the control key — signing is silent and local.</span>
+                                <span>Extra devices, a passkey, and a recovery code are additional weight-1 Horizon signers on the same account — <em>not</em> wraps of a shared seed. Signing is silent and local.</span>
                             </li>
                             <li className="flex gap-3">
                                 <span aria-hidden="true" className="mt-[0.55em] h-1 w-1 shrink-0 rounded-full bg-brand" />
-                                <span><strong>Passkey:</strong> On Stellar, the passkey is a <strong>WebAuthn PRF</strong> that unwraps the data-encryption key (DEK) for the control key. This is <em>not</em> 2FA — anyone with the synced passkey (via iCloud Keychain or Google Password Manager) can spend. A synced passkey recovers the G… wallet.</span>
+                                <span><strong>Passkey:</strong> On Stellar, a <strong>WebAuthn PRF</strong> credential derives an ed25519 key added as a Horizon signer. This is <em>not</em> 2FA — anyone with the synced passkey (via iCloud Keychain or Google Password Manager) can spend. A synced passkey recovers the G… wallet.</span>
                             </li>
                         </ul>
                     </div>
@@ -161,7 +161,7 @@ export default function EmbeddedStellarWalletPage() {
                             ['Classic G… address', 'Standard Stellar address format compatible with all exchanges, wallets, and ecosystem tools.'],
                             ['Gasless transactions', 'The Cavos relayer sponsors account reserves and pays transaction fees — users hold no XLM to get started.'],
                             ['Soroban support', 'The account can invoke Soroban contracts and satisfy require_auth for on-chain apps like escrows.'],
-                            ['Passkey + recovery', 'WebAuthn PRF passkey for device approval (note: on Stellar it unwraps the spending key, not 2FA). Recovery codes as offline backup.'],
+                            ['Passkey + recovery', 'WebAuthn PRF passkey adds a Horizon spender for device approval (not 2FA). Recovery codes derive an offline backup signer.'],
                             ['Lazy deploy', 'Connect derives the address immediately. The on-chain account is created on first execute, atomically.'],
                         ].map(([title, body]) => (
                             <article key={title} className="bg-white p-7">
