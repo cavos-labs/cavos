@@ -13,7 +13,7 @@ model.
 |---|---|---|---|
 | **Starknet** | Non-extractable P-256 device key | Cairo `DeviceAccount` recovers and authorizes the signer | Paymaster-sponsored deployment and execution |
 | **Solana** | Non-extractable P-256 device key | Native secp256r1 precompile bound to the Cavos program instruction | Relayer co-signs as fee payer |
-| **Stellar** | Per-device ed25519 Horizon signer (non-extractable on web) | Native classic-account signature and Soroban authorization | Sponsored reserves and optional fee-bump submission |
+| **Stellar** | Sealed ed25519 control key (non-extractable WebCrypto on web after unlock) | Native classic-account signature and Soroban authorization | Sponsored reserves and optional fee-bump submission |
 
 The backend can transport, sponsor, or submit a transaction. It does not hold
 the user authority required to move funds.
@@ -67,19 +67,21 @@ program allowlist. See [Solana](/docs/solana).
 
 ## Stellar
 
-Stellar uses its native ed25519 account model. The first device generates a
-non-extractable Ed25519 key whose public key *is* the `G…` address. Extra
-devices, a passkey, and a recovery code are additional weight-1 Horizon signers.
-Each device signs with its own local key — there is no shared seed stored
-on-chain.
+Stellar uses its native ed25519 account model. One weight-1 **control key**
+signs; its public key *is* the `G…` address. That key's seed is sealed on-chain
+in account `MANAGE_DATA` under `cv:ct` (encrypted by a DEK). Device, passkey, and
+recovery factors wrap the DEK independently (`cv:wd:<slot>`, `cv:wp`, `cv:wr`) —
+they do not become extra Horizon signers. The device's P-256 key is used for
+ECIES unwrapping, not as the Stellar transaction signature.
 
-On web, the control key is a non-extractable WebCrypto Ed25519 key.
-Application code (and XSS) cannot export the private bytes, but can still
-execute transactions while the session is unlocked.
+On web, after unlock the spend path imports the seed into a non-extractable
+WebCrypto Ed25519 `CryptoKey`; the seed is not kept on the instance. Application
+code (and XSS) cannot export the private bytes, but can still execute
+transactions while the session is unlocked.
 
 For Soroban, `invokeContract` simulates the call and re-signs the account's
-authorization entries with the local control key. A fee-bump relayer can pay the
-outer fee without becoming an account signer. See [Stellar](/docs/stellar).
+authorization entries with the control key. A fee-bump relayer can pay the outer
+fee without becoming an account signer. See [Stellar](/docs/stellar).
 
 ## Signing without submission
 

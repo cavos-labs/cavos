@@ -1,6 +1,6 @@
 ---
 title: Stellar
-description: Use @cavos/kit on Stellar — a classic G… account whose devices are Horizon ed25519 signers, gasless via the Cavos relayer, and able to sign Soroban contract calls and Trustless Work escrows.
+description: Use @cavos/kit on Stellar — a classic G… account whose ed25519 control-key seed is sealed on-chain under cv:ct, unlocked by device/passkey/recovery DEK wraps, gasless via the Cavos relayer, and able to sign Soroban contract calls and Trustless Work escrows.
 ---
 
 Stellar is one of the current adapters in Cavos' every-chain architecture.
@@ -19,12 +19,15 @@ apps like [escrows](#soroban-contracts--escrows). If you've used the
 identical — same `Cavos.connect`, same silent signing, same recovery model.
 
 <Callout type="info">
-**How it works underneath (optional).** The `G…` address is this device's
-ed25519 public key. That key lives only on the device (non-extractable
-WebCrypto in the browser) and signs as a weight-1 Horizon signer. Extra
-devices, a passkey, and a recovery code are additional weight-1 signers on the
-same account — not wraps of a shared seed. No backend ever holds a key. You
-don't need to manage any of this; `Cavos.connect` handles it.
+**How it works underneath (optional).** The `G…` address is a classic account
+whose only weight-1 signer is one ed25519 **control key**. That key's seed is
+sealed on-chain in account `MANAGE_DATA` under `cv:ct` (chunked), encrypted by a
+DEK. Unlock factors wrap the DEK independently: device (P-256 ECIES in
+`cv:wd:<slot>/…`), passkey WebAuthn PRF (`cv:wp`), and recovery code (`cv:wr`).
+On web, after unlock the spend path uses a non-extractable WebCrypto Ed25519
+key; the seed is not kept on the instance. Cavos never holds the seed. The
+relayer is fee/reserve sponsor only. You don't need to manage any of this;
+`Cavos.connect` handles it.
 </Callout>
 
 ## Connect
@@ -58,10 +61,12 @@ console.log(wallet.status);             // "undeployed" | "ready" | "needs-devic
 `stellar-mainnet`. The returned `wallet` is discriminated by `wallet.chain`.
 
 <Callout type="info">
-`Cavos.connect` creates or loads this device's **ed25519 control key** (a
-non-extractable WebCrypto key in the browser). On a first-time user that public
-key *is* the `G…` address. A returning device loads the same local key and is
-`ready` without a prompt.
+`Cavos.connect` creates or loads this device's **P-256 unwrap key** and unlocks
+the account's **ed25519 control key** from the on-chain envelope (or generates
+both on first use). On a first-time user that control public key *is* the `G…`
+address. A returning device unwraps the same control key silently and is
+`ready` without a prompt. On web the control key is imported as non-extractable
+WebCrypto Ed25519 after unlock; the seed is not kept on the instance.
 </Callout>
 
 ## Status values
@@ -69,8 +74,8 @@ key *is* the `G…` address. A returning device loads the same local key and is
 | Status | Meaning | Can execute? |
 |--------|---------|--------------|
 | `undeployed` | Address resolved, no on-chain account yet | Yes — first execute creates + runs atomically |
-| `ready` | Account exists and this device can sign | Yes |
-| `needs-device-approval` | Account exists but this device not authorized | No — route to device approval |
+| `ready` | Account exists and this device can unlock/sign | Yes |
+| `needs-device-approval` | Account exists but this device has no DEK wrap yet | No — route to device approval |
 
 <Callout type="info">
 **Lazy deploy**: An `undeployed` wallet can sign messages and execute. The
@@ -155,7 +160,7 @@ const signedXdr = await wallet.signXdr(unsignedXdr); // your backend submits it
 
 It handles both auth models: Soroban auth entries naming **this** account are
 re-signed (`authorizeEntry`), source-account auth and classic transactions are
-satisfied by this device's ed25519 signature. Entries authorizing other
+satisfied by the control key's ed25519 signature. Entries authorizing other
 addresses are left untouched.
 
 ### Trustless Work escrows
@@ -255,35 +260,35 @@ domain prefix before signing.
 
 ## Unlock factors & silent signing
 
-Every factor is its own weight-1 Horizon signer. There is no shared seed sealed
-on-chain:
+One control key signs transactions. Unlock factors are independent wraps of the
+DEK that decrypts that sealed seed — not additional Horizon signers:
 
-| Factor | Purpose | How it's derived |
-|--------|---------|------------------|
-| **Device** (ed25519) | Silent daily signing on a known device | Non-extractable WebCrypto key on this device; first device's public key is the `G…` address |
-| **Passkey** (WebAuthn PRF) | Synced signer to approve a new device / recover | PRF output derives an ed25519 extra signer |
-| **Recovery code** | Offline backup (optional) | The code derives an ed25519 extra signer |
+| Factor | Purpose | How it unlocks |
+|--------|---------|----------------|
+| **Device** (P-256 ECIES) | Silent daily unlock on a known device | Wraps the DEK in `cv:wd:<slot>/…` — per-device, non-syncable |
+| **Passkey** (WebAuthn PRF) | Synced unlock to approve a new device / recover | Wraps the DEK in `cv:wp` — synced across the user's password manager |
+| **Recovery code** | Offline backup (optional) | Wraps the DEK in `cv:wr` |
 
-On a returning device, `connect` loads this device's local key and the wallet is
-`ready` — no prompt. On a **new** device that key is not a Horizon signer yet, so
-status is `needs-device-approval` until the user approves it with a passkey or
-recovery code (below). Signing in again does not restore a classic Stellar
-device — that is the [hardware-isolated](/docs/hardware-isolated-recovery) path
-on Starknet and Solana only.
+On a returning device, `connect` unwraps the DEK via this device's wrap, imports
+the control key, and the wallet is `ready` — no prompt. On a **new** device that
+slot has no wrap yet, so status is `needs-device-approval` until the user
+approves it with a passkey or recovery code (below). Signing in again does not
+restore a classic Stellar device — that is the
+[hardware-isolated](/docs/hardware-isolated-recovery) path on Starknet and
+Solana only.
 
 ## Add a passkey (recommended)
 
 A passkey is the synced factor that lets a user approve a **new** device without
 finding an already-authorized one. On Stellar it is a **WebAuthn PRF** credential
-whose derived ed25519 key is added as a Horizon signer — it is *not* part of the
-cross-chain `approveDeviceEverywhere` batch.
+whose output wraps the DEK into `cv:wp` — it is *not* part of the cross-chain
+`approveDeviceEverywhere` batch.
 
 <Callout type="warn">
 **This is not 2FA.** Unlike Starknet/Solana where the passkey only approves new
-devices, on Stellar the passkey-derived key is a weight-1 spender. Anyone with
-the synced passkey (via iCloud Keychain or Google Password Manager) can spend.
-A synced iCloud/Google passkey recovers the `G…` wallet. Cavos never holds a
-seed.
+devices, on Stellar anyone with the synced passkey (via iCloud Keychain or Google
+Password Manager) can unwrap the DEK and spend / recover. A synced
+iCloud/Google passkey recovers the `G…` wallet. Cavos never holds a seed.
 </Callout>
 
 ```ts title="TypeScript"
@@ -295,7 +300,7 @@ const { secret } = await prf.enroll({
   userId: user.id,
   userName: user.email ?? user.id,
 });
-await wallet.enrollPasskey(secret);       // adds the passkey as a Horizon signer
+await wallet.enrollPasskey(secret);       // wraps the DEK under the PRF → cv:wp
 ```
 
 For `undeployed` wallets, `enrollPasskey` stores the passkey wrap pending and
@@ -309,8 +314,8 @@ The React `CavosProvider` wraps this as `enrollPasskeyDefault()` /
 
 When the same identity connects on a fresh device, it lands on the same `G…`
 address with `status: "needs-device-approval"`. Unlock with the passkey (or a
-recovery code) to `setOptions` this device's ed25519 key onto the account —
-future sessions then sign silently:
+recovery code) to unwrap the DEK and write a new device wrap under
+`cv:wd:<slot>` — future sessions then unlock silently:
 
 ```ts title="TypeScript"
 const session = await Cavos.connect({
@@ -327,9 +332,9 @@ if (wallet.chain === "stellar" && wallet.status === "needs-device-approval") {
 }
 ```
 
-The unlocking factor is itself a Horizon signer, so it can add this device
-without a trip back to an old phone. See [Multi-device](/docs/multi-device) for
-the cross-chain model.
+The unlocking factor unwraps the DEK, so it can enroll this device without a
+trip back to an old phone. See [Multi-device](/docs/multi-device) for the
+cross-chain model.
 
 ## Recovery
 
@@ -339,8 +344,8 @@ recovery](/docs/hardware-isolated-recovery). A new device is authorized with a
 Solana today; it will apply to Stellar only when contract accounts (`C…`) can
 restrict that authority with `__check_auth`.
 
-Set up a recovery code as an offline backup factor. It derives its own ed25519
-signer, so it can add a new device after every phone is lost:
+Set up a recovery code as an offline backup factor. It wraps the DEK into
+`cv:wr`, so it can unlock a new device after every phone is lost:
 
 ```ts title="TypeScript"
 import { generateRecoveryCode } from "@cavos/kit";
@@ -351,7 +356,7 @@ await wallet.setupRecovery(code);
 // → show `code` to the user once; the kit never persists it.
 ```
 
-For `undeployed` wallets, `setupRecovery` stores the recovery signer pending. It
+For `undeployed` wallets, `setupRecovery` stores the recovery wrap pending. It
 gets included when the account is created on first `execute`.
 
 ```ts title="TypeScript"
@@ -374,25 +379,33 @@ the code. See [Recovery codes](/docs/recovery-codes) for the model.
 
 ## Manage devices
 
-A "device" on classic Stellar is a **Horizon signer** (`G…` public key), same
-idea as Starknet/Solana on-chain signers. List them and revoke one:
+A "device" on classic Stellar is a **DEK wrap slot** (`cv:wd:<slot>`) that can
+silently unlock the shared control key — the same product idea as
+Starknet/Solana on-chain signers, implemented as envelope wraps. List slots and
+revoke one:
 
 ```ts title="TypeScript"
-const signers = await wallet.listDevices();      // G… keys; this device is wallet.address or wallet.controlAddress
+const slots = await wallet.listDevices();      // device wrap slot ids; this device is deviceKey.slotId()
 
 await wallet.removeDevice({
-  slotId,                                      // the signer to drop — never this device's own key
+  slotId,                                      // the wrap slot to drop — never this device's own slot
 });
 ```
 
 <Callout type="warn">
-**Revocation is surgical.** `removeDevice` drops that one signer via
-`setOptions` (weight 0). Other devices, the passkey, and the recovery signer
-stay. You cannot revoke the signer this device is using.
+**Revocation rotates the envelope.** Classic Stellar has no surgical
+`remove_signer` for wrap slots: an evicted device may already have unlocked the
+control seed. `removeDevice` therefore rotates, in one transaction signed by the
+current control key: it rewrites a fresh DEK-sealed `cv:ct`, keeps a wrap for
+*this* device, and replaces the weight-1 control signer. **Every other device
+slot is evicted** and must be approved again. Pass `passkeyPrfOutput` /
+`recoveryCode` if you want those factors carried onto the new envelope;
+otherwise this device becomes the only way in.
 
 The evicted device may still have an active session that can sign until it
 reconnects — on web the control key is non-extractable but usable while
-unlocked. On Starknet and Solana, `removeSigner(pubkey)` is the same idea.
+unlocked. On Starknet and Solana, `removeSigner(pubkey)` is the analogous
+product call.
 </Callout>
 
 ## Gasless vs self-funded
@@ -403,10 +416,11 @@ unlocked. On Starknet and Solana, `removeSigner(pubkey)` is the same idea.
 | **Self-funded fallback** | no `appId`, a `stellarSourceKeypair` is passed | Your funded keypair funds reserves + pays fees |
 
 Every Stellar account locks XLM **reserves** (a base reserve plus ~0.5 XLM per
-subentry — data entries and extra signers). With the relayer, those reserves
-and all fees are sponsored, so the user locks no XLM. The relayer is **only** a
-fee payer + reserve sponsor — never a custodian or identity authority: a bad or
-absent relayer can cost fees but can never move funds or squat an address.
+subentry — data entries for the envelope and the control signer). With the
+relayer, those reserves and all fees are sponsored, so the user locks no XLM. The
+relayer is **only** a fee payer + reserve sponsor — never a custodian or identity
+authority: a bad or absent relayer can cost fees but can never move funds or squat
+an address.
 
 ## Address resolution
 
@@ -416,7 +430,7 @@ On Stellar, the `G…` address is resolved via the **registry-first** model (see
 1. **Registry lookup**: The kit checks if this `(userId, appId, chain, network)`
    already has a registered address.
 2. **If found**: The existing address is returned. The device checks whether it
-   holds a matching local key and is already a Horizon signer.
+   holds a matching local unwrap key and already has a DEK wrap for this slot.
 3. **If not found**: A new ed25519 control key is generated. Its public key
    becomes the `G…` address, and this address is claimed in the registry. The
    first device to register wins.
@@ -445,9 +459,9 @@ Networks: `"stellar-testnet"`, `"stellar-mainnet"`.
 
 ## What's available
 
-- ✅ Classic `G…` account with per-device Horizon signers, self-custodial.
+- ✅ Classic `G…` account with a sealed on-chain control-seed envelope (`cv:ct`), self-custodial.
 - ✅ **Lazy deploy** — first execute creates the account atomically.
-- ✅ Silent signing via this device's non-extractable ed25519 key.
+- ✅ Silent unlock via this device's P-256 wrap; spend with non-extractable WebCrypto Ed25519 on web.
 - ✅ **Sign messages off-chain while undeployed.**
 - ✅ Gasless create + execute via the Cavos relayer (reserves sponsored).
 - ✅ Native XLM transfer (`execute(amount, destination)`) + `balance()`.
@@ -457,7 +471,7 @@ Networks: `"stellar-testnet"`, `"stellar-mainnet"`.
 - ✅ **Trustless Work escrows** out of the box: `deployEscrow` (via factory) and
   the `TrustlessWorkEscrow` wrapper (fund → deliver → approve → release, plus
   disputes) with `getEscrow` live state reads.
-- ✅ **Passkey** (WebAuthn PRF) and **recovery-code** unlock factors for
+- ✅ **Passkey** (WebAuthn PRF) and **recovery-code** DEK wraps for
   approving new devices and recovering after total device loss.
 
 For the cross-chain model and how this compares to the other chains, see
