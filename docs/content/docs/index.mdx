@@ -33,7 +33,7 @@ if (wallet.chain === "solana" && wallet.status === "ready") {
 | Piece | Role |
 |---|---|
 | **Identity** | A stable `userId` plus an app-specific salt anchors the wallet independently of the current device. |
-| **Device-native authority** | Keys are created and used locally. Starknet and Solana authorize P-256 device signers; Stellar locally unwraps its active ed25519 control key with enrolled device factors. |
+| **Device-native authority** | Keys are created and used locally. Starknet and Solana authorize P-256 device signers; Stellar authorizes per-device ed25519 Horizon signers. |
 | **Chain adapter** | Implements address derivation, signing, execution, recovery, and sponsorship for one network family. |
 | **Unified SDK** | `Cavos.connect({ chain, network })` returns a discriminated wallet union so shared onboarding stays stable and chain-native methods remain typed. |
 | **Sponsorship** | A paymaster, relayer, fee payer, or fee-bump service removes the need for users to acquire gas when that adapter supports it. |
@@ -46,8 +46,8 @@ format:
 - **Starknet:** Cairo `DeviceAccount`, arbitrary multicalls, Starknet paymaster.
 - **Solana:** device-account PDA, native P-256 verification, transfer or
   allowlisted CPI execution, sponsoring relayer.
-- **Stellar:** classic `G…` account, locally unwrapped control key, XLM payments,
-  Soroban invocation, optional fee-bump sponsorship.
+- **Stellar:** classic `G…` account, per-device ed25519 Horizon signers, XLM
+  payments, Soroban invocation, optional fee-bump sponsorship.
 
 Narrow on `wallet.chain` before calling chain-native methods. See
 [Chains](/docs/chains) for the capability matrix.

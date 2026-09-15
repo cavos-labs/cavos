@@ -18,7 +18,7 @@ For recovery that works by signing in again instead, see
 |---|---|---|
 | **Starknet** | Derives a backup P-256 signer registered on the account | `Cavos.recover(...)` authorizes the fresh device |
 | **Solana** | Derives a backup signer registered by the device-account program | `CavosSolana.recover(...)` authorizes the fresh device |
-| **Stellar** | Derives a key-encryption factor that unwraps the account control key | Reconnect, then call `approveThisDeviceWithRecovery(code)` |
+| **Stellar** | Derives an ed25519 extra signer on the `G…` account | Reconnect, then call `approveThisDeviceWithRecovery(code)` |
 
 ## Set up once
 
@@ -103,8 +103,8 @@ if (
 }
 ```
 
-The recovery factor unwraps the existing Stellar control key locally. That key
-then enrolls the fresh device's envelope slot.
+The recovery factor is itself a Horizon signer. It `setOptions` the fresh
+device's ed25519 key onto the account.
 
 ## Product guidance
 

@@ -22,8 +22,8 @@ itself as a signer.
 - **Starknet:** the Cairo account authorizes P-256 device signers.
 - **Solana:** the device-account program authorizes P-256 keys whose signatures
   were verified by the native precompile.
-- **Stellar:** the classic account authorizes an ed25519 control key that is
-  encrypted on-chain and unwrapped locally.
+- **Stellar:** the classic account authorizes ed25519 Horizon signers held
+  locally on each device.
 
 Registries and recovery services coordinate public state or messages. Paymasters
 and relayers fund or submit transactions. None of those roles is a substitute
@@ -138,8 +138,8 @@ accounts sharing one login.
 one universal curve:
 
 - Starknet and Solana use non-extractable P-256 device signers directly.
-- Stellar uses a device-bound P-256 unwrap key to recover the active ed25519
-  control key locally.
+- Stellar uses a non-extractable ed25519 control key per device as a Horizon
+  signer. The first device's public key is the `G…` address.
 
 On mobile, Cavos prefers hardware-backed key storage and reports the actual
 capabilities of the device. Hardware claims must be validated on physical

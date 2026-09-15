@@ -29,7 +29,7 @@ details:
 <Cards>
   <Card title="Starknet" href="/docs/starknet" description="Cairo DeviceAccount, 5-felt signatures, Cavos paymaster." />
   <Card title="Solana" href="/docs/solana" description="Native secp256r1 precompile, device-account PDA, Cavos relayer." />
-  <Card title="Stellar" href="/docs/stellar" description="Classic G… multisig, on-chain sealed control key, Cavos relayer." />
+  <Card title="Stellar" href="/docs/stellar" description="Classic G… account, per-device Horizon signers, Cavos relayer." />
 </Cards>
 
 ## How the abstraction works
@@ -39,7 +39,8 @@ Three layers keep Cavos portable:
 - **The product contract is the constant.** Stable identity, local authority,
   self-custody, recovery, and optional sponsorship are required of every adapter.
 - **Device-native keys stay local.** Their exact role can vary: direct P-256
-  authorization on Starknet/Solana, or local envelope unlock for Stellar.
+  authorization on Starknet/Solana, or per-device ed25519 Horizon signers on
+  Stellar.
 - **A `ChainAdapter` per chain** handles chain-specific deterministic
   address computation, signature encoding, and the deploy / add-signer / remove-signer
   calls. `StarknetAdapter`, `SolanaAdapter`, and `StellarAdapter` ship today.
@@ -49,11 +50,10 @@ Curves differ across ecosystems, and each adapter resolves that:
 - **Starknet** — on-chain secp256r1 verification in the Cairo `DeviceAccount`.
 - **Solana** — every guarded action pairs Solana's **native secp256r1 precompile**
   with the Cavos device-account program instruction.
-- **Stellar** — a **classic `G…` multisig account** (no Soroban contract): a
-  deterministic master key with weight 0 plus a control key sealed on-chain in the
-  account's data entries. The control key is unwrapped locally per-device (via an
-  ECDH device key, a WebAuthn PRF passkey, or a recovery code) and signs
-  transactions. Self-custodial, no backend key.
+- **Stellar** — a **classic `G…` account** (no Soroban contract): the first
+  device's ed25519 public key *is* the address. Extra devices, a passkey, and a
+  recovery code are additional weight-1 Horizon signers. Each device signs with
+  its own local key. Self-custodial, no backend key.
 
 ## Writing every-chain application code
 

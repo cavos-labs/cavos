@@ -123,12 +123,11 @@ await removeSigner(devices[1]);                 // sponsored remove_signer
 revoke itself — the same rule the revocation page surfaces as `isSelf`.
 
 <Callout type="info">
-**Stellar works differently.** Its devices are envelope slots, not on-chain
-signer pubkeys, so `listDevices()` / `removeSigner()` on the hook throw there.
-Call `wallet.listDevices()` (slot ids) and `wallet.removeDevice({ slotId, … })`
-after narrowing on `wallet.chain === "stellar"`, and read
-[Stellar → Manage devices](/docs/stellar#manage-devices) first: revocation there
-rotates the control key and evicts **every** other device.
+**Stellar uses the same idea, a different API.** Devices are Horizon signer
+keys, so `listDevices()` / `removeSigner()` on the hook throw there. Call
+`wallet.listDevices()` and `wallet.removeDevice({ slotId })` after narrowing on
+`wallet.chain === "stellar"`. Revocation drops that one signer. See
+[Stellar → Manage devices](/docs/stellar#manage-devices).
 </Callout>
 
 ## The non-custodial guarantee

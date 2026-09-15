@@ -55,7 +55,7 @@ interface ConnectOptions {
   // --- Stellar-only (classic `G…` multisig) ---
   stellarRelayer?: StellarRelayer;        // gasless sponsorship
   stellarSourceKeypair?: StellarKeypair;  // self-funded source/fee-payer
-  stellarDeviceKey?: DeviceUnwrapKey;     // this device's ECDH unwrap key
+  stellarDeviceKey?: DeviceUnwrapKey;     // unused by the current signer model; keep only if a low-level caller still passes one
   createStellarDeviceKey?: (keyId: string) => Promise<DeviceUnwrapKey>;
 }
 
@@ -226,11 +226,8 @@ Classic `G…` multisig account. See [Stellar](/docs/stellar).
 | `StellarRelayer`, `StellarRelayerOptions`, `StellarRelayKind` | Gasless relayer. |
 | `STELLAR_NETWORKS`, `StellarNetwork`, `HORIZON_URL`, `SOROBAN_RPC_URL`, `XLM_DECIMALS` | Network configs. |
 | `TrustlessWorkEscrow`, `deployEscrow`, `buildEscrowScVal` | Trustless Work escrow wrapper. |
-| `DeviceUnwrapKey`, `LocalDeviceUnwrapKey`, `WebCryptoDeviceUnwrapKey`, `deviceSlotId` | Device ECDH key. |
-| `PasskeyPrf`, `PasskeyPrfOptions`, `PasskeyPrfEnrollParams` | WebAuthn PRF helper. |
+| `PasskeyPrf`, `PasskeyPrfOptions`, `PasskeyPrfEnrollParams` | WebAuthn PRF helper (derives the Stellar extra signer). |
 | `generateControlKey`, `controlKeypairFromSeed` | Control key generation. |
-| `generateDEK`, `sealControlSeed`, `openControlSeed`, `wrapDEK`, `unwrapDEK`, `eciesWrapDEK`, `eciesUnwrapDEK`, `derivePasskeyKEK`, `deriveRecoveryKEK` | Envelope crypto. |
-| `toDataEntries`, `fromDataEntries`, `AccountEnvelope` | Envelope serialization. |
 
 ### Shared interface types
 
@@ -254,10 +251,10 @@ Classic `G…` multisig account. See [Stellar](/docs/stellar).
 | `CavosProvider`, `useCavos`, `CavosAuthModal` | React Native context, hook, and native auth UI. |
 | `Cavos` | Native connect entry point. |
 | `NativeCavosAuth`, `NativeCavosAuthError` | Native auth adapters. |
-| `NativeDeviceSigner` | Secure Enclave/Keystore P-256 signer. |
-| `NativeDeviceUnwrapKey` | P-256 ECDH key for Stellar. |
+| `NativeDeviceSigner` | Secure Enclave/Keystore P-256 signer (Starknet/Solana). |
+| `NativeControlSigner` | Native ed25519 control key for Stellar (iOS). |
 | `NativePasskeySigner`, `NativePasskeyPrf` | Native passkey adapters. |
-| `getNativeCapabilities()` | Reports signing, ECDH, passkey, and PRF support. |
+| `getNativeCapabilities()` | Reports signing, passkey, and PRF support. |
 | `getCavosNativeModule()` | Underlying Expo native module. |
 | `deleteDeviceKeys(keyId)` | Remove native device keys. |
 | `approveDeviceEverywhere` | Shared passkey approval helper. |
