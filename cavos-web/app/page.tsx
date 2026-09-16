@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { Header } from '@/components/Header'
-import { AppsCarousel } from '@/components/AppsCarousel'
 import { FeaturesGrid } from '@/components/landing/FeaturesGrid'
 import { CaseStudies } from '@/components/landing/CaseStudies'
 import { CtaSplit } from '@/components/landing/CtaSplit'
@@ -79,7 +78,7 @@ export default function LandingPage() {
             {/* Framed grid container — hairline rules on both edges */}
             <div className="relative mx-auto max-w-[1280px] border-x border-line">
 
-                {/* Hero + social proof together fill one viewport */}
+                {/* Hero fills one viewport */}
                 <div className="flex flex-col pt-[4.5rem] md:min-h-screen">
 
                     {/* ── HERO ──────────────────────────────────── */}
@@ -113,11 +112,6 @@ export default function LandingPage() {
                             </div>
                         </div>
                     </section>
-
-                    {/* ── APPS / SOCIAL PROOF ─────────────────────── */}
-                    <div className="border-t border-line">
-                        <AppsCarousel />
-                    </div>
                 </div>
 
                 {/* ── FEATURES / ADVANTAGES ───────────────────── */}
