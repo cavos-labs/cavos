@@ -46,13 +46,7 @@ export async function POST(
   }
 
   const admin = createAdminClient()
-  const { data: session } = await admin
-    .from('social_recovery_sessions')
-    .select(
-      'wallet_id, app_id, environment_id, action, provider, delay_seconds, status, expires_at, auth_challenge_hash',
-    )
-    .eq('id', id)
-    .maybeSingle()
+  const session = await loadSession(admin, id)
   if (!session) return NextResponse.json({ error: 'session_not_found' }, { status: 404 })
   if (session.status !== 'ready') {
     return NextResponse.json({ error: 'session_not_ready' }, { status: 409 })
@@ -106,12 +100,35 @@ export async function POST(
   }
 }
 
+const SESSION_COLUMNS =
+  'wallet_id, app_id, environment_id, action, provider, delay_seconds, status, expires_at, auth_challenge_hash'
+
 interface SessionRow {
   wallet_id: string
   app_id: string
   environment_id: string
   provider: string
   delay_seconds: number
+  action: string
+  dek_enroll?: boolean
+}
+
+async function loadSession(
+  admin: ReturnType<typeof createAdminClient>,
+  id: string,
+): Promise<(SessionRow & { status: string; expires_at: string; auth_challenge_hash: string }) | null> {
+  const withDek = await admin
+    .from('social_recovery_sessions')
+    .select(`${SESSION_COLUMNS}, dek_enroll`)
+    .eq('id', id)
+    .maybeSingle()
+  if (!withDek.error) return withDek.data
+  const withoutDek = await admin
+    .from('social_recovery_sessions')
+    .select(SESSION_COLUMNS)
+    .eq('id', id)
+    .maybeSingle()
+  return withoutDek.data
 }
 
 /**
@@ -151,6 +168,7 @@ async function persistEnrollment(
     .single()
   if (!wallet) throw new Error('enrolment wallet is missing')
 
+  const dekSealed = session.dek_enroll === true
   const { error } = await admin.from('social_recovery_enrollments').upsert(
     {
       wallet_id: session.wallet_id,
@@ -164,11 +182,13 @@ async function persistEnrollment(
       recovery_pub_x: result.recovery_x_hex,
       recovery_pub_y: result.recovery_y_hex,
       sealed_record: result.sealed_record_b64,
-      // Stellar classic cannot install a restricted authority on-chain, so its
-      // sealed DEK record is complete the moment the enclave returns.
-      // Starknet and Solana stay pending until the device confirms the
-      // enrolment transaction.
-      onchain_status: String(wallet.network).startsWith('stellar-') ? 'active' : 'pending',
+      // Native Ed25519 (dek_enroll) and Stellar classic cannot install a
+      // restricted authority on-chain. The sealed wrap is complete here.
+      // Starknet and PDA Solana stay pending until the device confirms.
+      onchain_status:
+        dekSealed || String(wallet.network).startsWith('stellar-') ? 'active' : 'pending',
+      // Same deploy-before-migration rule as dek_enroll: omit the false default.
+      ...(dekSealed ? { dek_sealed: true } : {}),
       updated_at: new Date().toISOString(),
     },
     { onConflict: 'wallet_id' },
