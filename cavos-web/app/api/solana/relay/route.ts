@@ -19,6 +19,7 @@ import {
   connectionFor,
   isSupportedSolanaNetwork,
   validateSponsoredTransaction,
+  validateNativeSponsoredTransaction,
 } from '@/lib/solana/relayer';
 import { getRelayerSigner } from '@/lib/solana/signer';
 import { resolveSolanaProgramAllowlist } from '@/lib/solana/programs';
@@ -30,8 +31,9 @@ interface RelayRequest {
   app_id: string;
   network: string;
   environment?: 'development' | 'production';
-  /** base64-encoded legacy Transaction with fee payer = relayer, no signatures. */
+  /** base64-encoded Transaction. PDA path is unsigned; native path is user-signed. */
   transaction: string;
+  kind?: 'native' | 'legacy';
 }
 
 /** GET — expose the relayer fee-payer pubkey (per network) so the SDK can build the tx. */
@@ -132,16 +134,11 @@ export async function POST(request: Request) {
 
     const signer = await getRelayerSigner(body.network);
 
-    // Fetch the app's Solana program allowlist so the sponsor gate can permit
-    // the CPI targets this app configured (e.g. Jupiter). Falls back to the
-    // always-safe set when unset. This is the anti-abuse control for arbitrary
-    // execute: it bounds what an app_id holder can have Cavos bank.
     const allowedPrograms = await resolveSolanaProgramAllowlist(appId);
-
-    // Security gate: only co-sign the Cavos device-account flow with the relayer
-    // as fee payer. Rejects anything that could move the relayer's lamports, and
-    // restricts `execute` CPIs to the app's allowlist (+ the safe set).
-    const check = validateSponsoredTransaction(tx, signer.publicKey, allowedPrograms);
+    const native = body.kind === 'native';
+    const check = native
+      ? validateNativeSponsoredTransaction(tx, signer.publicKey, allowedPrograms)
+      : validateSponsoredTransaction(tx, signer.publicKey, allowedPrograms);
     if (!check.ok) {
       logger.warn('Relay rejected', { reason: check.reason, app_id: body.app_id });
       await recordCavosEvent({ appId, environmentId: environment?.id, eventType: 'relay.rejected', status: 'failed', severity: 'warning', requestId: logger.requestId, network: body.network, errorCode: 'not_eligible', metadata: { reason: check.reason } });
@@ -171,18 +168,33 @@ export async function POST(request: Request) {
     }
 
     const connection = connectionFor(body.network);
-    // Set a fresh blockhash and sign as fee payer (the only required signature —
-    // device-account ixs are authorized by the precompile, not Solana signers).
-    // `finalized`, not `confirmed`: the default endpoint is load-balanced across
-    // nodes, so a just-confirmed blockhash from one node is unknown to the node
-    // that runs preflight a moment later — which fails as "Blockhash not found"
-    // before the transaction is ever broadcast. A finalized blockhash is ~32
-    // slots (~13s) old and known everywhere. It costs some of the validity
-    // window (~60s -> ~47s), which the polling confirm below absorbs.
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('finalized');
-    tx.recentBlockhash = blockhash;
-    tx.feePayer = signer.publicKey;
-    await signer.signTransaction(tx);
+    let lastValidBlockHeight: number;
+    if (native) {
+      // The user already signed the message, including its blockhash. Rewriting
+      // it here would invalidate that signature.
+      const status = await connection.getLatestBlockhash('finalized');
+      lastValidBlockHeight = status.lastValidBlockHeight;
+      if (!tx.feePayer || !tx.feePayer.equals(signer.publicKey)) {
+        return ApiResponse.badRequest('Transaction not eligible for sponsorship', {
+          reason: 'fee payer must be the Cavos relayer',
+        });
+      }
+      await signer.signTransaction(tx);
+    } else {
+      // Set a fresh blockhash and sign as fee payer (the only required signature —
+      // device-account ixs are authorized by the precompile, not Solana signers).
+      // `finalized`, not `confirmed`: the default endpoint is load-balanced across
+      // nodes, so a just-confirmed blockhash from one node is unknown to the node
+      // that runs preflight a moment later — which fails as "Blockhash not found"
+      // before the transaction is ever broadcast. A finalized blockhash is ~32
+      // slots (~13s) old and known everywhere. It costs some of the validity
+      // window (~60s -> ~47s), which the polling confirm below absorbs.
+      const { blockhash, lastValidBlockHeight: height } = await connection.getLatestBlockhash('finalized');
+      lastValidBlockHeight = height;
+      tx.recentBlockhash = blockhash;
+      tx.feePayer = signer.publicKey;
+      await signer.signTransaction(tx);
+    }
 
     const raw = tx.serialize();
     const signature = await connection.sendRawTransaction(raw, {

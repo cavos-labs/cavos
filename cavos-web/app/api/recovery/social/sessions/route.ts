@@ -41,6 +41,11 @@ interface StartBody {
   provider?: string
   /** Base64url SHA-256 of the fresh provider ID token; never the token itself. */
   auth_challenge?: string
+  /**
+   * Native Ed25519 enroll. The kit will send a MasterDEK in the encrypted job.
+   * Persist treats that sealed wrap as complete (no on-chain confirm).
+   */
+  dek_enroll?: boolean
 }
 
 export async function POST(request: Request) {
@@ -169,7 +174,10 @@ export async function POST(request: Request) {
     .maybeSingle()
 
   if (body.action === 'enroll' && enrollment?.onchain_status === 'active') {
-    return NextResponse.json({ error: 'already_enrolled' }, { status: 409 })
+    return NextResponse.json(
+      { error: 'already_enrolled', wallet_address: body.wallet_address },
+      { status: 409 },
+    )
   }
   if (body.action === 'enroll' && enrollment?.onchain_status === 'pending') {
     // The enclave finished a previous attempt before the browser submitted the
@@ -260,6 +268,9 @@ export async function POST(request: Request) {
     provider,
     delay_seconds: environmentPolicy.social_recovery_delay_seconds,
     auth_challenge_hash: authChallengeHash,
+    // Only send the column when it is true so a deploy that lands before the
+    // dek_enroll migration does not reject every session insert.
+    ...(body.action === 'enroll' && body.dek_enroll === true ? { dek_enroll: true } : {}),
     status: 'ready',
     expires_at: expiresAt,
   })

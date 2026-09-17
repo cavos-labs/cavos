@@ -2,35 +2,45 @@
  * GET /api/recovery/social/enrollment?app_id=&wallet_address=[&environment=]
  *   → { enrolled: boolean }
  *
- * Whether this wallet already has an active social-recovery enrollment.
+ * GET /api/recovery/social/enrollment?app_id=&provider=&subject=[&environment=]
+ *   → { enrolled: boolean, wallet_address?: string }
  *
- * The SDK asks once per connect, for two reasons. It lets an app tell a
- * protected wallet from an unprotected one, which it previously had no way to
- * know and therefore tended to assert. And it lets the SDK skip re-enrolling a
- * wallet that is already enrolled: without this, every fresh login ran a full
- * enclave round trip that ended in the 409 from ../sessions.
- *
- * Public in the same sense as the rest of the SDK surface — it takes the app's
- * public id and an address, and answers one boolean about an address the caller
- * already holds. It reveals nothing that address does not.
+ * Address lookup is the existing SDK check. Subject lookup finds a sealed
+ * MasterDEK for this Google/Apple/email identity so a second chain or a new
+ * device can unwrap instead of minting a second DEK.
  */
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier';
 import { checkRateLimit, clientIp } from '@/lib/api/rateLimit';
+import {
+  isSocialRecoveryProvider,
+  providerAudiences,
+  providerPolicy,
+} from '@/lib/recovery/social/config';
+import { identityCommitmentHex } from '@/lib/recovery/social/identityCommitment';
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const appIdParam = url.searchParams.get('app_id');
   const walletAddress = url.searchParams.get('wallet_address');
+  const provider = url.searchParams.get('provider');
+  const subject = url.searchParams.get('subject');
   const environment =
     url.searchParams.get('environment_id') || url.searchParams.get('environment') || undefined;
 
-  if (!appIdParam || !walletAddress) {
+  const identityLookup = Boolean(provider && subject);
+  if (!appIdParam || (!walletAddress && !identityLookup)) {
     return NextResponse.json(
-      { error: 'app_id and wallet_address are required' },
+      { error: 'app_id and wallet_address, or app_id, provider and subject, are required' },
       { status: 400 },
     );
+  }
+  if (identityLookup && (typeof subject !== 'string' || subject.length === 0 || subject.length > 256)) {
+    return NextResponse.json({ error: 'invalid_subject' }, { status: 400 });
+  }
+  if (identityLookup && !isSocialRecoveryProvider(provider)) {
+    return NextResponse.json({ error: 'unsupported_provider' }, { status: 400 });
   }
 
   const rl = checkRateLimit(`social-enrollment:${clientIp(request)}`, 60, 60_000);
@@ -47,6 +57,42 @@ export async function GET(request: Request) {
   }
 
   const admin = createAdminClient();
+
+  if (identityLookup && isSocialRecoveryProvider(provider) && subject) {
+    const { data: environmentPolicy } = await admin
+      .from('app_environments')
+      .select('social_recovery_audiences')
+      .eq('id', resolved.environmentId)
+      .eq('app_id', resolved.appId)
+      .single();
+    if (!environmentPolicy) {
+      return NextResponse.json({ error: 'environment_not_found' }, { status: 404 });
+    }
+    const policy = {
+      app_id: resolved.appId,
+      environment_id: resolved.environmentId,
+      ...providerPolicy(provider, providerAudiences(environmentPolicy.social_recovery_audiences)),
+    };
+    const commitment = identityCommitmentHex(policy, subject);
+    const { data: enrollment } = await admin
+      .from('social_recovery_enrollments')
+      .select('wallet_id, onchain_status')
+      .eq('environment_id', resolved.environmentId)
+      .eq('identity_commitment', commitment)
+      .eq('dek_sealed', true)
+      .eq('onchain_status', 'active')
+      .limit(1)
+      .maybeSingle();
+    if (!enrollment?.wallet_id) return NextResponse.json({ enrolled: false });
+    const { data: wallet } = await admin
+      .from('wallets')
+      .select('address')
+      .eq('id', enrollment.wallet_id)
+      .maybeSingle();
+    if (!wallet?.address) return NextResponse.json({ enrolled: false });
+    return NextResponse.json({ enrolled: true, wallet_address: wallet.address });
+  }
+
   const { data: wallet } = await admin
     .from('wallets')
     .select('id')

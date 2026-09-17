@@ -20,18 +20,24 @@ import { recordCavosEvent } from '@/lib/operations/events';
 import { verifyUserToken, isSubject } from '@/lib/api/verifyUserToken';
 import { insertWalletRow } from '@/lib/api/walletRow';
 import { StrKey } from '@stellar/stellar-sdk';
+import { PublicKey } from '@solana/web3.js';
 
 /**
- * Stellar classic-G wallets are self-custodial: the `G…` address is a pure
- * function of the passkey identity, so they carry neither an `encrypted_pk_blob`
- * (there is no server-held key) nor a secp256r1 device signer. We still register
- * them so they land in the `wallets` table and count toward billing. Guard the
- * relaxed validation to genuine Stellar accounts: network must be `stellar-*` and
- * the address must be a checksum-valid ed25519 public key.
+ * Native Ed25519 wallets (classic Stellar G, Solana system accounts) are
+ * self-custodial. They may omit `encrypted_pk_blob` at first claim; a later
+ * POST can fill a 60-byte passkey-PRF wrap so a new device can restore the
+ * same spend key without the enclave. PDA Solana stays off-curve and still
+ * needs `devices` or a blob.
  */
-function isStellarSelfCustodial(network: unknown, address: unknown): boolean {
-    return typeof network === 'string' && network.startsWith('stellar-')
-        && typeof address === 'string' && StrKey.isValidEd25519PublicKey(address);
+function isNativeEd25519Account(network: unknown, address: unknown): boolean {
+    if (typeof network !== 'string' || typeof address !== 'string') return false;
+    if (network.startsWith('stellar-')) return StrKey.isValidEd25519PublicKey(address);
+    if (!network.startsWith('solana-')) return false;
+    try {
+        return PublicKey.isOnCurve(new PublicKey(address).toBytes());
+    } catch {
+        return false;
+    }
 }
 
 /**
@@ -159,8 +165,8 @@ export async function POST(request: Request) {
         const required: (keyof WalletSaveRequest)[] = ['app_id', 'user_social_id', 'network', 'address'];
         // Stellar classic-G wallets are self-custodial (no server blob, no secp256r1
         // device signer), so only those may omit `encrypted_pk_blob` without devices.
-        const stellarSelfCustodial = isStellarSelfCustodial(network, address);
-        if (!stellarSelfCustodial && (!devices || !Array.isArray(devices) || devices.length === 0)) {
+        const nativeEd25519 = isNativeEd25519Account(network, address);
+        if (!nativeEd25519 && (!devices || !Array.isArray(devices) || devices.length === 0)) {
             required.push('encrypted_pk_blob');
         }
         const validation = ApiValidator.validateRequired<WalletSaveRequest>(body, required);
@@ -286,6 +292,17 @@ export async function POST(request: Request) {
             return ApiResponse.conflict('address_already_registered', { address: result.row.address });
         }
         const data = result.row;
+
+        if (encrypted_pk_blob) {
+            await adminSupabase
+                .from('wallets')
+                .update({
+                    encrypted_pk_blob,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', data.id)
+                .is('encrypted_pk_blob', null);
+        }
 
         // Store the authorized device signer(s) for device-signer wallets.
         if (devices && Array.isArray(devices) && devices.length > 0) {
