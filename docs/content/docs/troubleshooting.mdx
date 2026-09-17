@@ -18,10 +18,14 @@ The same applies to `appId`. If you switch environments or change the app ID,
 users get new wallets. Derive `userId` from something immutable.
 
 <Callout type="info">
-`appSalt` namespaces the local **device key**, not the address. Changing it
-affects which device key is used on THIS device, but the registry still resolves
-the same address for the same `userId + appId + chain`. Device keys generated
-under a different salt cannot unlock existing wallets without re-approval.
+On **Starknet**, `appSalt` namespaces the local **device key**, not the
+registry address. Changing it means this browser's P-256 key is not authorized
+on the existing wallet (`needs-device-approval`).
+
+On **native Solana and Stellar**, `appSalt` is also the HKDF salt for the spend
+key. Changing it derives a different Ed25519 address that will not match the
+registry row — the user cannot unwrap the DEK onto the claimed account. Treat
+it as permanent.
 </Callout>
 
 ## `redirect_uri is not registered for this app`

@@ -1,6 +1,6 @@
 ---
 title: Recovery codes
-description: The self-custodial recovery baseline — a code the user stores, which restores wallet authority on Starknet, Solana, and Stellar.
+description: A stored code that restores Starknet (and grandfathered Stellar). Native Solana and Stellar restore the MasterDEK instead.
 ---
 
 Cavos cannot reset a wallet or authorize a replacement device by itself. The
@@ -35,10 +35,10 @@ await wallet.setupRecovery(code);
 // Display `code` once. Never send it to analytics, logs, or your backend.
 ```
 
-`setupRecovery` is adapter-specific and idempotent for the same factor. It works
-on both `undeployed` and `ready` wallets. For `undeployed` wallets, the recovery
-factor is stored pending and included when the account is created on first
-`execute`.
+`setupRecovery` is adapter-specific. Native Solana/Stellar ignore it. On
+Starknet it is idempotent for the same factor and works on both `undeployed`
+and `ready` wallets. For `undeployed` Starknet wallets, the recovery factor is
+stored pending and included when the account is created on first `execute`.
 
 <Callout type="warn">
 Anyone with the recovery code may be able to restore wallet authority. Treat it
@@ -77,6 +77,11 @@ await approveDeviceWithPasskey();
 
 ## Restore Stellar
 
+**Native DEK:** do not call `approveThisDeviceWithRecovery`. Sign in again
+(enclave) or `approveDeviceWithPasskey()`.
+
+**Grandfathered:**
+
 ```ts title="TypeScript"
 import { Cavos } from "@cavos/kit";
 
@@ -92,7 +97,8 @@ const session = await Cavos.connect({
 const wallet = session.wallet("stellar");
 if (
   wallet.chain === "stellar" &&
-  wallet.status === "needs-device-approval"
+  wallet.status === "needs-device-approval" &&
+  !wallet.nativeDek
 ) {
   await wallet.approveThisDeviceWithRecovery(code);
 }
@@ -107,12 +113,12 @@ device's ed25519 key onto the account.
 - Verify recovery on physical iOS and Android devices before production release.
 - Treat the code as one factor among several, not the plan. Most users will not
   keep it, which is the problem [hardware-isolated
-  recovery](/docs/hardware-isolated-recovery) exists to solve on Starknet and
-  Solana. Classic Stellar does not use the enclave: the code (or a synced
-  passkey) *is* the way back from nothing.
-- If the user loses every device and every recovery factor, and — on Starknet or
-  Solana — social recovery was never enrolled, Cavos cannot restore access. That
-  is the cost of the guarantee, not a gap in it.
+  recovery](/docs/hardware-isolated-recovery) exists to solve on Starknet,
+  Solana, and native Stellar. Grandfathered Stellar wallets still use the code
+  (or a synced passkey extra signer) as the way back from nothing.
+- If the user loses every device and every recovery factor, and — on Starknet,
+  Solana, or native Stellar — social recovery was never enrolled, Cavos cannot
+  restore access. That is the cost of the guarantee, not a gap in it.
 
 See [Multi-device](/docs/multi-device), [Passkeys](/docs/passkeys), and the
 selected [chain guide](/docs/chains).

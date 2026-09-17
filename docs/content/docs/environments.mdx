@@ -26,12 +26,13 @@ apart:
 - **Events & webhooks** — the event stream and webhook subscriptions are scoped
   per environment, so your development integration doesn't fire production hooks.
 - **Social recovery** — enable or disable [hardware-isolated
-  recovery](/docs/hardware-isolated-recovery) for **Starknet and Solana** wallets
-  in that environment, choose exactly one of Google, Apple, or email magic link,
-  set the on-chain timelock, and register your own OAuth client ID if you
-  authenticate users yourself. Classic Stellar is unaffected. All independent per
-  environment, so you can rehearse recovery in development against a different
-  provider than production uses.
+  recovery](/docs/hardware-isolated-recovery) for **Starknet, Solana, and
+  native Stellar** wallets in that environment, choose exactly one of Google,
+  Apple, or email magic link, set the on-chain timelock (Starknet), and register
+  your own OAuth client ID if you authenticate users yourself. Grandfathered
+  Stellar wallets are unaffected. All independent per environment, so you can
+  rehearse recovery in development against a different provider than production
+  uses.
 
 <Callout type="info">
 **Callback URLs are per app, not per environment.** A URL you add so a tunnel
@@ -88,10 +89,9 @@ If you want a user's **development** wallet to be a different address than their
 app (distinct `appId`). One `appId` shared across development and production
 shares the registry address.
 
-A distinct `appSalt` only isolates the local device-key slot; it does not create
-a different registry entry. Changing `appSalt` after users have connected means
-their new device key is not authorized on the existing registry address — they
-will see `needs-device-approval`.
+A distinct `appSalt` isolates the local device-key slot. On **native Solana
+and Stellar** it is also the HKDF salt, so changing it after users have
+connected derives a spend key that will not match the registry address.
 
 <Callout type="warn">
 Treat `appSalt` as permanent. Decide your salt before onboarding real users.

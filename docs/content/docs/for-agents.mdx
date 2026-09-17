@@ -44,13 +44,13 @@ Then ask it to integrate `@cavos/kit` into your app.
 - **Gas sponsorship differs per chain:** Starknet uses a paymaster; Solana uses a relayer as fee payer; Stellar uses sponsored reserves and optional fee bumps. Never put a secret sponsorship credential in client-side code.
 - **Gate execution on status:** call `execute` when `status === "undeployed"` OR `status === "ready"`. Only `"needs-device-approval"` blocks execution — route that to [multi-device](/docs/multi-device).
 - **Credential boundary:** `appId` is public. The current Starknet web SDK also receives `paymasterApiKey` client-side, so use only an app/environment-scoped key with origin, rate, and spend restrictions—never an operator or treasury secret.
-- **Registry-first address resolution:** Addresses are looked up in the Cavos registry first, not purely derived from identity. The registry key is `(userId, appId, chain, network)`. The first device to claim an address wins. `appSalt` namespaces the local device key, not the address.
+- **Registry-first address resolution:** Addresses are looked up in the Cavos registry first, not purely derived from identity. The registry key is `(userId, appId, chain, network)`. The first device to claim an address wins. `appSalt` is the local device-key slot and, on native Solana/Stellar, the HKDF salt for the spend key. Never change it.
 - **Recovery:** Starknet still has `wallet.setupRecovery(generateRecoveryCode())` and `Cavos.recover`. Native Solana: `setupRecovery` is a no-op and `CavosSolana.recover` throws — restore with enclave login or `approveDeviceWithPasskey()`. Native Stellar with enclave unwraps the same DEK. Grandfathered Stellar still uses `approveThisDeviceWithRecovery(code)`.
 - **Social recovery / enclave:** `socialRecovery: true` or `deviceApproval: "enclave"`. Solana and Stellar: the enclave seals the MasterDEK. Starknet: restricted `add_signer`. Describe it as *hardware-isolated, non-custodial* — never *trustless*. See [Hardware-isolated recovery](/docs/hardware-isolated-recovery).
-- **Bring your own auth** still uses `identity` + `submitSocialRecoveryToken(idToken)` with the provider's raw `id_token` (fresh, <5 minutes). That call now restores Solana/Stellar DEK wraps as well as Starknet.
-- **Device management:** Starknet still has on-chain signers (`listDevices` / `removeSigner`). Native Solana has **one** spend key — those APIs throw. Stellar grandfathered wallets still use Horizon `listDevices` / `removeDevice`.
+- **Bring your own auth** still uses `identity` + `submitSocialRecoveryToken(idToken)` with the provider's raw `id_token` (fresh, under 5 minutes). That call now restores Solana/Stellar DEK wraps as well as Starknet.
+- **Device management:** Starknet still has on-chain signers (`listDevices` / `removeSigner`). Native Solana has **one** spend key — those APIs throw. Native Stellar restores the MasterDEK; grandfathered Stellar still uses Horizon `listDevices` / `removeDevice`.
 - **Ask about the console when a value is missing:** `appId`, callback URLs, the Solana program allowlist, gas balance, webhooks, and API keys all live in the dashboard, per environment. See [Dashboard](/docs/dashboard).
-- **When something fails, check configuration before code.** The common causes are a changed `appSalt` (every user silently lands on a new empty wallet), an unregistered callback URL, gating on `isAuthenticated` instead of `walletStatus.isReady`, or social recovery not enabled for the environment. See [Troubleshooting](/docs/troubleshooting).
+- **When something fails, check configuration before code.** The common causes are a changed `appSalt` (on native Solana/Stellar the HKDF no longer matches the registry row), an unregistered callback URL, gating on `isAuthenticated` instead of `walletStatus.isReady`, or social recovery not enabled for the environment. See [Troubleshooting](/docs/troubleshooting).
 - **Non-custodial invariant:** Cavos never holds a hot spender. The enclave may wrap a MasterDEK or (Starknet only) schedule one `add_signer`. Don't design flows that assume a Cavos server can transfer.
 
 ## Reference pages
@@ -59,7 +59,7 @@ Then ask it to integrate `@cavos/kit` into your app.
   <Card title="Quickstart" href="/docs/quickstart" description="Install → gasless transaction." />
   <Card title="Starknet" href="/docs/starknet" description="Cairo DeviceAccount + Cavos paymaster." />
   <Card title="Solana" href="/docs/solana" description="Native Ed25519 system account + fee-payer relayer." />
-  <Card title="Stellar" href="/docs/stellar" description="Classic account + local control-key unlock + Soroban." />
+  <Card title="Stellar" href="/docs/stellar" description="Classic G… + MasterDEK unlock + Soroban." />
   <Card title="API reference" href="/docs/api-reference" description="Every public export." />
   <Card title="Concepts" href="/docs/concepts" description="Security model & determinism." />
   <Card title="Dashboard" href="/docs/dashboard" description="Console: roles, API keys, webhooks, sponsorship." />

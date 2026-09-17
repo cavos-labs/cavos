@@ -120,8 +120,10 @@ and magic links through the registered deep/universal link.
 ## Keys and security levels
 
 `NativeDeviceSigner` uses Secure Enclave on iOS when available, and StrongBox →
-TEE → OS-protected Android Keystore on Android. Stellar signs with an ed25519
-control key per device (`NativeControlSigner` on iOS). The default policy is
+TEE → OS-protected Android Keystore on Android. That P-256 key is the Starknet
+device signer. **Native Solana/Stellar** spend with Ed25519 derived from the
+MasterDEK (imported into the native signer). Grandfathered Stellar still uses
+`NativeControlSigner` per device. The default policy is
 `minimumKeySecurity: "os-protected"`; use `"hardware"` to reject a software
 fallback.
 
@@ -167,6 +169,8 @@ MasterDEK. If Android does not return PRF, use the enclave.
 ## Logout, reinstall, and recovery
 
 `logout()` clears only the persisted `Identity` and pending nonce. Keys remain in
-Secure Enclave/Keychain or Keystore so the user can reconnect. Reinstalling the
-app creates a new device key and requires passkey, device approval, or recovery.
-Recovery codes are generated and displayed once; store them outside the app.
+Secure Enclave/Keychain or Keystore so the user can reconnect. It does not sign
+the user out of Google or Apple. Reinstalling the app creates a new device that
+must unwrap the MasterDEK (enclave or passkey) or, on grandfathered Stellar,
+use a recovery code. Recovery codes are generated and displayed once; store
+them outside the app. They are not used on native Solana/Stellar.

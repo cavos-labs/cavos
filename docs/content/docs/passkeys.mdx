@@ -66,8 +66,8 @@ if (walletStatus.needsDeviceApproval) {
 ```
 
 On Solana, `approveDeviceWithPasskey` reconnects with `{ passkey: true }` so the
-PRF can derive the MasterDEK. On Starknet it still submits
-`add_signer_via_passkey`.
+PRF can derive the MasterDEK. Native Stellar does the same. On Starknet it still
+submits `add_signer_via_passkey`.
 
 ## Starknet — on-chain approver
 

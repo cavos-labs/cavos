@@ -17,8 +17,10 @@ kit resolves the concrete network (sepolia / solana-devnet for testnet, mainnet
 otherwise) and returns a multi-chain session. The session IS the default chain's
 wallet, augmented with methods to access other configured chains.
 
-Connect **never deploys**. It derives addresses and checks on-chain status, but
-account creation happens lazily on the first `execute` call per chain.
+Connect **never deploys** Starknet or Stellar accounts. It derives addresses and
+checks on-chain status; those accounts are created on the first `execute`.
+Native **Solana** is a system account: `ready` once this device unwraps the
+spend key.
 
 ```ts title="TypeScript"
 interface ConnectOptions {
@@ -52,7 +54,7 @@ interface ConnectOptions {
   feePayer?: Keypair;                     // self-funded fallback
   passkeyPrf?: PasskeyPrfProvider;        // PRF derives the MasterDEK (single-chain)
 
-  // --- Stellar-only (classic `G…` multisig) ---
+  // --- Stellar-only (classic `G…`) ---
   stellarRelayer?: StellarRelayer;        // gasless sponsorship
   stellarSourceKeypair?: StellarKeypair;  // self-funded source/fee-payer
   stellarDeviceKey?: DeviceUnwrapKey;     // unused by the current signer model; keep only if a low-level caller still passes one
@@ -217,11 +219,12 @@ native, PRF is the MasterDEK KDF (can spend). Login never prompts. See
 
 ### Stellar
 
-Classic `G…` multisig account. See [Stellar](/docs/stellar).
+Classic `G…` account. Native MasterDEK path shares the DEK with Solana;
+grandfathered wallets still use extra Horizon signers. See [Stellar](/docs/stellar).
 
 | Export | Description |
 |--------|-------------|
-| `CavosStellar` | High-level Stellar client. `connect`, `execute(amount, dest)`, `signMessage(...)`, `signTransaction(...)`, `balance()`, `invokeContract(...)`, `signXdr(...)`, `addTrustline(...)`, `tokenBalance(...)`, `enrollPasskey(prfOutput)`, `setupRecovery(code)`, `approveThisDeviceWithPasskey(...)`, `approveThisDeviceWithRecovery(...)`, `hasPasskey`, `isReady`, `listDevices()`, `removeDevice(...)`. |
+| `CavosStellar` | High-level Stellar client. `nativeDek` is true on the current path. Native: `enrollPasskey` / `setupRecovery` no-op; `approveThisDeviceWithPasskey` / `approveThisDeviceWithRecovery` throw — reconnect with passkey or enclave. Grandfathered methods remain for older wallets. |
 | `ConnectStellarOptions`, `StellarConnectStatus` | Option/status types. |
 | `StellarAdapter`, `StellarAdapterOptions` | Low-level adapter. |
 | `StellarRelayer`, `StellarRelayerOptions`, `StellarRelayKind` | Gasless relayer. |
@@ -253,7 +256,7 @@ Classic `G…` multisig account. See [Stellar](/docs/stellar).
 | `Cavos` | Native connect entry point. |
 | `NativeCavosAuth`, `NativeCavosAuthError` | Native auth adapters. |
 | `NativeDeviceSigner` | Secure Enclave/Keystore P-256 signer (**Starknet**). |
-| `NativeControlSigner` | Native ed25519 control key for Stellar (iOS). |
+| `NativeControlSigner` | Native ed25519 control key. Used on grandfathered Stellar; native MasterDEK imports Ed25519 into the native signer. |
 | `NativePasskeySigner`, `NativePasskeyPrf` | Native passkey adapters. |
 | `getNativeCapabilities()` | Reports signing, passkey, and PRF support. |
 | `getCavosNativeModule()` | Underlying Expo native module. |

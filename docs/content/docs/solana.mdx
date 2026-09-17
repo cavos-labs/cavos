@@ -121,8 +121,8 @@ Programs) **plus** System, SPL Token, Token-2022, and Associated Token. A
 1,000,000 CU cap also applies.
 </Callout>
 
-`addSigner`, `removeSigner`, `enrollPasskey` (as an on-chain approver),
-`setupRecovery`, and `CavosSolana.recover` **throw** on native accounts. A native
+`addSigner`, `removeSigner`, `enrollPasskey` (as an on-chain approver), and
+`CavosSolana.recover` **throw**. `setupRecovery` is a **no-op**. A native
 account has one spend key. Restore it; do not add a second signer.
 
 ## Sign messages

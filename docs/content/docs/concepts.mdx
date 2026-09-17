@@ -68,14 +68,16 @@ The registry key is `(userId, appId, chain, network)`.
 
 ## Lazy deployment
 
-Connect **never** deploys. It resolves the address and checks on-chain status,
-but the account is not created until the first `execute`.
+Connect **never** deploys Starknet or Stellar accounts. It resolves the address
+and checks on-chain status; those accounts are created on the first `execute`.
+**Solana** is a system account: `ready` once this device has the spend key.
+Fund it, then spend — there is no `initialize`.
 
 | Connect result | What happens |
 |----------------|--------------|
-| User has no wallet | Address is computed and claimed in registry. `status: "undeployed"`. |
-| User has a wallet, this device is authorized | `status: "ready"`. |
-| User has a wallet, this device is not authorized | `status: "needs-device-approval"`. |
+| User has no wallet | Address is computed and claimed in registry. Starknet/Stellar: `undeployed`. Solana: `ready` once the spend key is unwrapped. |
+| User has a wallet, this device can sign | `status: "ready"`. |
+| User has a wallet, this device has no wrap / is not a signer | `status: "needs-device-approval"`. |
 
 An `undeployed` wallet can:
 - **Sign messages** (`signMessage`) — the signature comes from the local device

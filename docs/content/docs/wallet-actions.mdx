@@ -141,10 +141,13 @@ if (passkeySupported && !walletStatus.hasPasskey) {
 
 ### Recovery code
 
+Starknet (and grandfathered Stellar). Native Solana/Stellar: `setupRecovery` is
+a no-op — restore with the enclave or `approveDeviceWithPasskey()`.
+
 ```ts title="TypeScript"
 const { setupRecovery } = useCavos();
 
-const code = await setupRecovery(); // string — show this to the user ONCE
+const code = await setupRecovery(); // string | undefined — show it ONCE when present
 ```
 
 <Callout type="warn">

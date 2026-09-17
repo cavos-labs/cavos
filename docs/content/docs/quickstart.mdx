@@ -24,8 +24,9 @@ origin, rate, and spend in the sponsorship service.
 ## 2. Connect
 
 Connect derives the address for every configured chain and checks whether the
-account exists on-chain. It **never deploys**. Deployment happens lazily on the
-first `execute` call.
+account exists on-chain. It **never deploys** Starknet or Stellar. Deployment
+happens lazily on the first `execute` call. Native Solana is `ready` once this
+device has the spend key.
 
 This Solana example needs only the public App ID in the browser:
 

@@ -12,41 +12,42 @@ unwraps the MasterDEK (enclave or passkey). It does not `add_signer`.
 
 ## Detecting a new device
 
-When `Cavos.connect` runs on a device whose key isn't an authorized signer, it
-returns `status: "needs-device-approval"` and records a pending request:
+When `Cavos.connect` runs on a device that cannot spend yet, it returns
+`status: "needs-device-approval"`.
+
+On **Starknet**, the kit can file a hosted device-addition request
+(`pendingRequestId`) and email the owner:
 
 ```ts title="TypeScript"
 const cavos = await Cavos.connect({ /* ... */ });
 
 if (cavos.status === "needs-device-approval") {
-  // This device requested addition. Prompt the user to approve from an
-  // existing device. Poll for approval, then reconnect.
-  console.log(cavos.pendingRequestId);
+  console.log(cavos.pendingRequestId); // Starknet email flow
 }
 ```
 
-Under the hood, when an `appId` is set, the kit uses the hosted
-`HttpRecoveryClient` to file a device-addition request, which notifies the user
-(styled as a login-approval prompt).
+Native **Solana/Stellar** do not use that email path. Unwrap the MasterDEK with
+enclave login or `approveDeviceWithPasskey()`.
 
 ## Approve with a passkey instead
 
-If the user [enrolled a passkey](/docs/passkeys) after signup, they can self-approve
-from the new browser with **one prompt** — no email round-trip, no second device:
+If the user [enrolled a passkey](/docs/passkeys) after signup, they can restore
+this device with **one prompt** — no email round-trip, no second device:
 
 ```ts title="TypeScript"
-import { Cavos, PasskeySigner } from "@cavos/kit";
+const { approveDeviceWithPasskey, walletStatus } = useCavos();
 
-const cavos = await Cavos.connect({ /* same identity + appSalt... */ });
-
-if (cavos.status === "needs-device-approval") {
-  await cavos.approveThisDeviceWithPasskey({ passkey: new PasskeySigner() });
-  // cavos is now ready.
+if (walletStatus.needsDeviceApproval) {
+  await approveDeviceWithPasskey();
 }
 ```
 
-`approveThisDeviceWithPasskey` is the recommended path for users who have a
-passkey; the hosted approval page below is the fallback for those who don't.
+On **native Solana/Stellar** that reconnects with `{ passkey: true }` so PRF
+derives the MasterDEK. On **Starknet** it submits `add_signer_via_passkey`.
+Grandfathered Stellar still `setOptions`s an extra Horizon signer.
+
+The hosted approval page below is the Starknet email fallback for users who
+never enrolled a passkey.
 
 ## Host the approval and revocation pages
 
@@ -124,11 +125,11 @@ await removeSigner(devices[1]);                 // sponsored remove_signer
 revoke itself — the same rule the revocation page surfaces as `isSelf`.
 
 <Callout type="info">
-**Stellar uses the same idea, a different API.** Devices are Horizon signer
-keys, so `listDevices()` / `removeSigner()` on the hook throw there. Call
+**Stellar grandfathered wallets** still use Horizon signer keys, so
+`listDevices()` / `removeSigner()` on the hook throw there. Call
 `wallet.listDevices()` and `wallet.removeDevice({ slotId })` after narrowing on
-`wallet.chain === "stellar"`. Revocation drops that one signer. See
-[Stellar → Manage devices](/docs/stellar#manage-devices).
+`wallet.chain === "stellar"`. Native Solana has one spend key — those APIs
+throw. See [Stellar → Manage devices](/docs/stellar#manage-devices).
 </Callout>
 
 ## The non-custodial guarantee
