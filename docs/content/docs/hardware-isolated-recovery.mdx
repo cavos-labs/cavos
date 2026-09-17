@@ -14,6 +14,15 @@ isolated environment whose exact software is measured by hardware and attested
 by AWS — holding a key that the chain itself restricts to a single, delayed,
 cancellable action.
 
+<Callout type="info">
+**Availability.** Hardware-isolated recovery is **opt-in per environment**, not
+on by default. The SDK path ships in `@cavos/kit`, but the enclave it talks to
+has to be enabled for your app and environment in the
+[dashboard](/docs/dashboard) before `socialRecovery: true` or
+`deviceApproval: "enclave"` resolves — ask us to turn it on. Every other
+recovery path in [Recovery](/docs/recovery) works without it.
+</Callout>
+
 <Callout type="warn">
 Call this **hardware-isolated, non-custodial** recovery, never *trustless*
 recovery. No Cavos employee holds a key that can move funds, but the measured
