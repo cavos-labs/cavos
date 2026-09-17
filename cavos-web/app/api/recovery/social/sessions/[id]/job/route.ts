@@ -184,7 +184,7 @@ async function persistEnrollment(
       sealed_record: result.sealed_record_b64,
       // Native Ed25519 (dek_enroll) and Stellar classic cannot install a
       // restricted authority on-chain. The sealed wrap is complete here.
-      // Starknet and PDA Solana stay pending until the device confirms.
+      // Starknet stays pending until the device confirms.
       onchain_status:
         dekSealed || String(wallet.network).startsWith('stellar-') ? 'active' : 'pending',
       // Same deploy-before-migration rule as dek_enroll: omit the false default.

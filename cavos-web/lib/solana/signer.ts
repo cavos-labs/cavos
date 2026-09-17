@@ -7,9 +7,10 @@
  * Co-signing goes through `RelayerSigner`, which exposes only the public key and
  * a `signTransaction` operation.
  *
- * The whitelist in `validateSponsoredTransaction` is the safety net: the relayer
- * only ever co-signs the Cavos device-account flow, so even a fully abused
- * signer can lose at most the bounded hot float, never user funds.
+ * The whitelist in `validateNativeSponsoredTransaction` is the safety net: the
+ * relayer only ever co-signs a native system-account transfer whose fee payer
+ * is the sponsor, so even a fully abused signer can lose at most the bounded
+ * hot float, never user funds.
  */
 import { Keypair, PublicKey, type Transaction } from '@solana/web3.js';
 import bs58 from 'bs58';
@@ -28,8 +29,8 @@ export interface RelayerSigner {
  *
  * The relay signer is a single operational wallet Cavos controls (not per-user
  * custody), so in-process signing is safe and costs nothing per signature. The
- * whitelist in `validateSponsoredTransaction` bounds the blast radius to the hot
- * float, never user funds.
+ * whitelist in `validateNativeSponsoredTransaction` bounds the blast radius to
+ * the hot float, never user funds.
  *
  * Env (per cluster, falling back to the unsuffixed name):
  *   SOLANA_RELAYER_SECRET_KEY[_MAINNET|_DEVNET]
