@@ -17,8 +17,9 @@ For recovery that works by signing in again instead, see
 | Chain | Recovery code role | Restore path |
 |---|---|---|
 | **Starknet** | Derives a backup P-256 signer registered on the account | `Cavos.recover(...)` authorizes the fresh device |
-| **Solana** | Derives a backup signer registered by the device-account program | `CavosSolana.recover(...)` authorizes the fresh device |
-| **Stellar** | Derives an ed25519 extra signer on the `G…` account | Reconnect, then call `approveThisDeviceWithRecovery(code)` |
+| **Solana** | **Not used.** Native accounts have one spend key | Enclave login or `approveDeviceWithPasskey()` |
+| **Stellar (enclave)** | Same MasterDEK wrap as Solana | Sign in again |
+| **Stellar (grandfathered)** | Extra ed25519 Horizon signer | Reconnect, then `approveThisDeviceWithRecovery(code)` |
 
 ## Set up once
 
@@ -65,20 +66,14 @@ coordinates submission but cannot manufacture that authorization.
 
 ## Restore Solana
 
+Do not call `CavosSolana.recover`. Native Solana restores the MasterDEK:
+
 ```ts title="TypeScript"
-import { CavosSolana } from "@cavos/kit";
-
-const wallet = await CavosSolana.recover({
-  code,
-  identity: { userId: user.id, email: user.email },
-  network: "solana-devnet",
-  appSalt: "my-app",
-  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
-});
+// Enclave: the same Google/Apple login on the new device unwraps the DEK.
+// Passkey:
+const { approveDeviceWithPasskey } = useCavos();
+await approveDeviceWithPasskey();
 ```
-
-The recovery signer authorizes a new P-256 device key in the deterministic
-device-account PDA.
 
 ## Restore Stellar
 

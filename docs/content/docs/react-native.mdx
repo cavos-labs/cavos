@@ -160,9 +160,9 @@ const wallet = await Cavos.connect({
 ```
 
 Starknet and Solana share passkey approval through one assertion with
-`approveDeviceEverywhere`. Stellar uses a separate PRF-based passkey factor;
-when Android's credential provider does not support PRF, the native UI directs
-the user to a recovery code or another authorized device.
+`approveDeviceEverywhere` **only on Starknet**. Native Solana/Stellar use
+`NativePasskeyPrf` / `approveDeviceWithPasskey()` so the PRF can derive the
+MasterDEK. If Android does not return PRF, use the enclave.
 
 ## Logout, reinstall, and recovery
 

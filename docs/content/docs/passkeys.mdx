@@ -1,241 +1,132 @@
 ---
 title: Passkeys
-description: Set up a passkey after signup so users can log in on a new device. The passkey's role differs by chain — on-chain approver (Starknet/Solana) vs unlock factor for the spending key (Stellar).
+description: Add a passkey after login. On Solana and Stellar it is a KDF of the MasterDEK. On Starknet it is an on-chain approver. Login never prompts for it.
 ---
 
-Right after signup, walk the user through creating a **passkey**. It lets them
-log in on a *new* device without having to find one that's already logged in.
-The passkey's security role differs by chain:
+Login with Google / Apple / email **does not** ask for a passkey. The app
+decides when to enroll (`enrollPasskeyDefault`) and when a new device restores
+with it (`approveDeviceWithPasskey`).
 
-| Chain | How the passkey works | Security model |
+The passkey's role depends on the chain:
+
+| Chain | How the passkey works | Can it spend? |
 |-------|----------------------|----------------|
-| **Starknet / Solana** | Synced WebAuthn credential registered **on-chain as an approver**. It approves adding a new device's key. It never signs transactions. | 2FA / device-approval step-up. |
-| **Stellar** | WebAuthn PRF credential. The passkey does not sign XDR. Its PRF output **derives an ed25519 Horizon signer** (weight 1) on the `G…` account. | **Not 2FA.** Anyone with the synced passkey (via iCloud/Google) can spend — the derived key is a real signer. Cavos never holds a seed. |
+| **Solana / Stellar (native)** | WebAuthn **PRF** is HKDF of the MasterDEK (`cavos-master-dek-passkey-v1`). `connect({ passkey: true })` remints the same spend key. | **Yes.** Anyone with the synced credential can spend. Not 2FA. |
+| **Starknet** | Synced WebAuthn credential registered **on-chain as an approver**. It authorizes adding a new device's P-256 key. It never signs transactions. | No. Device-approval step-up. |
 
-On **Starknet and Solana**, treat it as **two-factor authentication** in your UI.
-Show the prompt immediately after the wallet is ready, framed as *"Turn on device
-approvals so you never get locked out"* — not as a signing step. That framing is
-what keeps the UX coherent: the user already authenticated and got a wallet, and
-this is the safety net on top.
-
-On **Stellar**, a synced passkey **recovers the account**. Frame it as *"Add a
-passkey so you can sign in from any device"* — but understand that anyone who
-obtains the synced credential (through the iCloud or Google account) gains full
-spending access.
+`deviceApproval: "passkey"` is **one chain**. A passkey is not a multi-chain
+session: use `deviceApproval: "enclave"` when Solana, Stellar, and Starknet
+share a login.
 
 <Callout type="info">
-**Starknet / Solana:** The passkey is a **synced, discoverable WebAuthn
-credential** (iCloud Keychain / Google Password Manager) registered on-chain as
-an **approver**. It approves adding a new device's key — it does not authorize
-individual transactions. Signing stays silent, as described in
-[Signing & gasless](/docs/signing).
+**Default:** `secureStep` is `'off'`. The built-in modal will not show "Secure
+your account" after signup. Call `enrollPasskeyDefault()` from your own UI
+(settings, first transaction, a banner). Set `secureStep: 'optional'` or
+`'required'` only if you want that screen in the modal.
 </Callout>
 
-<Callout type="warn">
-**Stellar:** The passkey is a **WebAuthn PRF** credential whose derived ed25519
-key is a weight-1 Horizon signer. It is **not** part of the cross-chain
-`approveDeviceEverywhere` batch. This is not 2FA — anyone with the synced
-passkey can spend.
-</Callout>
-
-## Why a passkey
-
-Without a passkey, adding a new device requires **either** an already-registered
-device (the [multi-device](/docs/multi-device) approval flow) **or** the recovery
-recovery code ([recovery codes](/docs/recovery-codes)). Both can fail the user at the worst
-moment: the other device isn't nearby, or the code was lost.
-
-A passkey removes that dependency. Because it syncs across the user's devices
-through the OS, a single WebAuthn prompt from **any** browser can authorize the
-new device's key on-chain — no second device hunt, no recovery code. It is the
-lowest-friction path to "log in on my new phone."
-
-## Control when it's asked (React SDK)
-
-If you use the `CavosProvider` with the built-in auth modal, the kit shows a
-**"Secure your account"** step automatically right after a brand-new wallet is
-created. You decide — per app — whether that step interrupts onboarding, runs as
-an optional nudge, or is skipped entirely. The `secureStep` modal option is the
-single knob for this:
+## Control when it's asked (React)
 
 ```tsx title="app/layout.tsx"
 import { CavosProvider } from '@cavos/kit/react';
 
 <CavosProvider
-  config={config}
+  config={{
+    appId,
+    chains: ["solana"],
+    network: "testnet",
+    appSalt: "my-app",
+    deviceApproval: "passkey",   // single chain only
+  }}
   modal={{
-    appName: 'My App',
-    // When the passkey / recovery prompt appears after signup:
-    secureStep: 'optional', // 'optional' | 'required' | 'off'
+    appName: "My App",
+    secureStep: "off",           // default — login never prompts
   }}
 >
   {children}
 </CavosProvider>
 ```
 
-| `secureStep` | Behavior after a new account is created |
+| `secureStep` | Behavior after a new account |
 | --- | --- |
-| `'optional'` *(default)* | Shows the "Secure your account" screen with a **Skip for now** button. Low friction — the user can defer passkey setup and still finish onboarding. |
-| `'required'` | Shows the screen **without** Skip. The user must set up a passkey (or save a [recovery code](/docs/recovery-codes)) before they can continue. Use this for high-value apps where a second factor is mandatory. |
-| `'off'` | Skips the screen entirely — onboarding ends the moment the wallet is ready. Choose this when you want to drive the passkey prompt yourself later in the journey (e.g. a "Secure your account" banner on the dashboard), instead of interrupting signup. |
-
-### Picking the right moment
-
-The right value depends on **where in the user journey** asking for a passkey
-feels natural, not disruptive:
-
-- **`'off'` — ask later.** Friction-free onboarding. Drop the user straight into
-  the app, then surface the passkey prompt from your own UI once they've hit an
-  "aha" moment (first transaction, settings page, or a dedicated security
-  screen). You can still enroll any time with `enrollPasskey` from
-  [`useCavos()`](/docs/multi-device) — `secureStep: 'off'` only removes the
-  *automatic* post-signup screen.
-- **`'optional'` — ask now, let them skip.** The default. Good when you want to
-  plant the seed early but respect the user's pace; the skip keeps conversion
-  high while the prompt keeps the option visible.
-- **`'required'` — ask now, no skipping.** Best for custody-like UX, treasuries,
-  or any context where losing device access is unacceptable. Pair it with the
-  recovery-code fallback (the screen offers both) so the user always has a
-  path forward even without a platform authenticator.
-
-<Callout type="info">
-The passkey setup is **gasless, idempotent, and device-signed** — the same call
-described in [Set it up after signup](#set-it-up-after-signup). `secureStep`
-only controls *whether and when* the built-in modal shows it automatically; the
-underlying `enrollPasskey` API is always available to trigger on your own terms.
-</Callout>
-
-## Set it up after signup
-
-Once `connect` returns `status: "ready"`, gate on platform support and enroll.
-`enrollPasskey` does two things in one call: it creates the credential (a system
-prompt the user confirms with biometrics / screen lock) and registers its public
-key on-chain as an approver via `addApprover`. It is gasless, device-signed, and
-idempotent.
+| `'off'` *(default)* | No passkey screen. Call `enrollPasskeyDefault()` yourself. |
+| `'optional'` | Modal "Secure your account" with Skip. |
+| `'required'` | Same screen without Skip. |
 
 ```ts title="TypeScript"
-import { Cavos, PasskeySigner } from "@cavos/kit";
+const { enrollPasskeyDefault, approveDeviceWithPasskey, walletStatus } = useCavos();
 
-// cavos is ready (status === "ready") right after signup.
+// After login, when you want the credential:
+await enrollPasskeyDefault();
+
+// On a new device that has no local wrap:
+if (walletStatus.needsDeviceApproval) {
+  await approveDeviceWithPasskey();
+}
+```
+
+On Solana, `approveDeviceWithPasskey` reconnects with `{ passkey: true }` so the
+PRF can derive the MasterDEK. On Starknet it still submits
+`add_signer_via_passkey`.
+
+## Starknet — on-chain approver
+
+Once `status === "ready"`, enroll with `PasskeySigner` (or `enrollPasskeyDefault`,
+which registers `addApprover` on Starknet wallets in the session):
+
+```ts title="TypeScript"
+import { PasskeySigner } from "@cavos/kit";
+
 if (await PasskeySigner.isSupported()) {
-  const passkey = new PasskeySigner();               // rpId defaults to your hostname
-  const { publicKey } = await cavos.enrollPasskey(passkey, {
+  const passkey = new PasskeySigner();
+  await cavos.enrollPasskey(passkey, {
     userId: identity.userId,
     userName: identity.email ?? identity.userId,
   });
-  // publicKey { x, y } is now a registered approver of this wallet.
 }
 ```
 
-<Callout type="info">
-Prompt for the passkey as a **"secure your account"** step right after the
-wallet is created — not during the auth flow and not as part of signing. On
-Starknet/Solana, the user should never associate this credential with approving
-individual transactions; it only ever appears when a *new device* is being
-added. On Stellar, the passkey unlocks spending access directly.
-</Callout>
-
-Only the passkey's **public key** is registered on-chain. The credential itself
-is held and synced by the OS authenticator — the kit never stores it.
-
-## Approve a new device with a passkey
-
-When the same identity connects on a fresh browser, it lands on the same wallet
-address but with `status: "needs-device-approval"` — this device's key isn't an
-authorized signer yet. If the user enrolled a passkey, they can self-approve from
-that new browser in one prompt:
+On a new browser:
 
 ```ts title="TypeScript"
-const cavos = await Cavos.connect({ /* ...same identity + appSalt... */ });
-
 if (cavos.status === "needs-device-approval") {
-  const passkey = new PasskeySigner();
-  // One prompt: the synced passkey authorizes adding THIS device's key.
-  await cavos.approveThisDeviceWithPasskey({ passkey });
-  // cavos is now ready; no second device required.
+  await cavos.approveThisDeviceWithPasskey({ passkey: new PasskeySigner() });
 }
 ```
 
-Internally, the kit builds a per-chain "leaf" from the new device key and the
-on-chain passkey nonce, the passkey signs a challenge over it, and an
-`add_signer_via_passkey` call is submitted. The assertion does not carry the
-public key, so the kit recovers both secp256r1 candidates and matches the
-enrolled approver via an on-chain view — no backend lookup.
+`approveDeviceEverywhere` is Starknet-only in practice (on-chain assertion).
+Native Solana throws if you treat the passkey as an approver.
 
-<Callout type="info">
-**Advanced — multiple independent chains.** Each `Cavos` wallet handle is one
-chain. If your app manages several chain wallets for the same user, the low-level
-`approveDeviceEverywhere([wallet, ...], passkey)` util approves the device on each
-with a **single** passkey prompt (one batched challenge, isolated per-chain
-submission). It returns `{ chain, transactionHash?, error? }[]`, and reusing the
-same passkey pubkey across chains is a per-wallet `addApprover(pubkey)` (idempotent).
-This covers **Starknet and Solana** (the on-chain assertion model on this page).
-Most integrations target one chain and never need this.
-</Callout>
+## Solana / Stellar — PRF is the KDF
 
-<Callout type="warn">
-**Stellar passkeys work differently — see the table at the top of this page.**
-The classic `G…` account has no on-chain WebAuthn verifier. Instead, the passkey
-is a **WebAuthn PRF** credential whose derived ed25519 key is added as a Horizon
-signer. This is **not 2FA** — anyone with the synced passkey can spend. Enroll
-it with `stellarWallet.enrollPasskey(prfOutput)` and approve a new device with
-`stellarWallet.approveThisDeviceWithPasskey(prfOutput)`. It is **not** part of
-the `approveDeviceEverywhere` batch and does not use `addApprover` /
-`add_signer_via_passkey`. The React `CavosProvider` wraps this for you via
-`enrollPasskeyDefault()` / `approveDeviceWithPasskey()`.
-</Callout>
+Do not call `wallet.enrollPasskey(PasskeySigner)` on native Solana — it throws.
+Use `enrollPasskeyDefault()`, which creates a `PasskeyPrf` credential.
 
-## Prerequisites & limits
+A synced iCloud / Google passkey **is** the wallet on those chains. Frame it as
+*"Add a passkey so you can open this wallet on any device"* — not as 2FA.
+
+## Prerequisites
+
+- **HTTPS or `http://localhost`.** A LAN IP fails WebAuthn. Use a tunnel for
+  phones.
+- Gate on `PasskeySigner.isSupported()` / platform authenticator.
+- `rpId` defaults to `window.location.hostname`.
 
 ### React Native
-
-Use `NativePasskeySigner` for Starknet/Solana and `NativePasskeyPrf` for Stellar:
 
 ```ts
 import { NativePasskeySigner, NativePasskeyPrf } from "@cavos/kit/react-native";
 
-const approver = new NativePasskeySigner({ rpId: "auth.example.com" });
-const stellarFactor = new NativePasskeyPrf({ rpId: "auth.example.com" });
+const starknetApprover = new NativePasskeySigner({ rpId: "auth.example.com" });
+const nativePrf = new NativePasskeyPrf({ rpId: "auth.example.com" });
 ```
 
-Native passkeys require `rpId`, an associated domain, and a Development Build
-or bare app. iOS uses AuthenticationServices; Android uses Credential Manager.
-If Android does not return a PRF result for Stellar, use the recovery code or
-another authorized device instead of changing the Stellar account model.
+If Android does not return PRF, restore with the enclave (if enabled) rather
+than changing the account model.
 
-- Expo Go is not supported because it cannot load the custom native module.
-- iOS requires 16 or later; Android requires API 28 or later.
-- Test Secure Enclave/StrongBox claims on physical devices, not simulators.
+## Related
 
-- **Secure context required.** WebAuthn needs HTTPS or `http://localhost`. A LAN
-  IP fails — the kit throws an actionable error pointing you to `localhost`, a
-  real HTTPS domain, or a tunnel (cloudflared / ngrok). The silent device key
-  works over an IP; passkeys don't.
-- **Check support first.** Gate enrollment on `await PasskeySigner.isSupported()`
-  (it checks for a platform authenticator). On unsupported platforms, fall back
-  to the [multi-device](/docs/multi-device) and [recovery](/docs/recovery) flows.
-- **RP ID.** Defaults to `window.location.hostname`. Pass `rpId` explicitly only
-  if you need a different registrable domain.
-
-## Non-custodial
-
-A passkey strengthens the wallet without introducing custody:
-
-- Only the passkey's **public key** is on-chain. The credential stays with the OS
-  authenticator; Cavos never receives it.
-- `add_signer_via_passkey` is a public external that is authorized solely by the
-  embedded WebAuthn assertion — it still requires a valid signature. Cavos
-  sponsors the gas but **cannot** add a signer without the passkey's assertion.
-- Removing the passkey is an on-chain `remove_approver`, gated to the account
-  like any signer change.
-
-Combine it with the other two fallbacks for the strongest setup:
-
-1. **Passkey** (this page) — self-serve approval on any new device.
-2. **Multiple devices** ([multi-device](/docs/multi-device)) — approve from an
-   existing, logged-in device.
-3. **Recovery code** ([recovery codes](/docs/recovery-codes)) — the last resort when all
-   devices and the passkey are gone.
-
-See [Concepts → non-custodial model](/docs/concepts) for the full security
-rationale.
+- [Hardware-isolated recovery](/docs/hardware-isolated-recovery) — Google/Apple
+  unwrap of the same MasterDEK, and it **can** cover several chains at once.
+- [Multi-device](/docs/multi-device) — Starknet still approves extra P-256
+  signers from an existing device.

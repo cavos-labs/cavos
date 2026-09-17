@@ -19,12 +19,10 @@ apps like [escrows](#soroban-contracts--escrows). If you've used the
 identical — same `Cavos.connect`, same silent signing, same recovery model.
 
 <Callout type="info">
-**How it works underneath (optional).** The `G…` address is this device's
-ed25519 public key. That key lives only on the device (non-extractable
-WebCrypto in the browser) and signs as a weight-1 Horizon signer. Extra
-devices, a passkey, and a recovery code are additional weight-1 signers on the
-same account — not wraps of a shared seed. No backend ever holds a key. You
-don't need to manage any of this; `Cavos.connect` handles it.
+**How it works underneath (optional).** With `deviceApproval: "enclave"` or a
+passkey, the `G…` is HKDF of the MasterDEK (same wrap as Solana). A new device
+unwraps that DEK. Grandfathered wallets still use extra weight-1 Horizon
+signers. No backend ever holds a spend key.
 </Callout>
 
 ## Connect
@@ -255,21 +253,22 @@ domain prefix before signing.
 
 ## Unlock factors & silent signing
 
-Every factor is its own weight-1 Horizon signer. There is no shared seed sealed
-on-chain:
+**Native DEK path (enclave / passkey):** one spend key, restored by unwrap or
+PRF. Signing in again with the enrolled Google/Apple identity **does** restore
+the account.
 
-| Factor | Purpose | How it's derived |
-|--------|---------|------------------|
-| **Device** (ed25519) | Silent daily signing on a known device | Non-extractable WebCrypto key on this device; first device's public key is the `G…` address |
-| **Passkey** (WebAuthn PRF) | Synced signer to approve a new device / recover | PRF output derives an ed25519 extra signer |
-| **Recovery code** | Offline backup (optional) | The code derives an ed25519 extra signer |
+**Grandfathered path:** extra Horizon signers.
 
-On a returning device, `connect` loads this device's local key and the wallet is
-`ready` — no prompt. On a **new** device that key is not a Horizon signer yet, so
-status is `needs-device-approval` until the user approves it with a passkey or
-recovery code (below). Signing in again does not restore a classic Stellar
-device — that is the [hardware-isolated](/docs/hardware-isolated-recovery) path
-on Starknet and Solana only.
+| Factor | Native DEK | Grandfathered |
+|--------|------------|---------------|
+| **Device** | Ed25519 imported from the DEK | Random WebCrypto key; first device's pubkey is the `G…` |
+| **Passkey** | PRF → MasterDEK (can spend) | Extra weight-1 signer |
+| **Enclave** | Seals / unwraps the DEK | Not used |
+| **Recovery code** | Not used | Extra weight-1 signer |
+
+On a returning device with a local wrap, `connect` is `ready` with no prompt.
+On a new device with no wrap, status is `needs-device-approval` until enclave
+login or `approveDeviceWithPasskey()`.
 
 ## Add a passkey (recommended)
 
@@ -279,11 +278,9 @@ whose derived ed25519 key is added as a Horizon signer — it is *not* part of t
 cross-chain `approveDeviceEverywhere` batch.
 
 <Callout type="warn">
-**This is not 2FA.** Unlike Starknet/Solana where the passkey only approves new
-devices, on Stellar the passkey-derived key is a weight-1 spender. Anyone with
-the synced passkey (via iCloud Keychain or Google Password Manager) can spend.
-A synced iCloud/Google passkey recovers the `G…` wallet. Cavos never holds a
-seed.
+**On the native DEK path this is not 2FA.** The passkey remints the spend key.
+The same is true on Solana. Use the enclave if you want Google/Apple restore
+without giving a synced credential spending power by itself.
 </Callout>
 
 ```ts title="TypeScript"

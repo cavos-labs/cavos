@@ -4,10 +4,11 @@ description: Add a new device to an existing wallet via approval from a register
 ---
 
 A wallet's address is looked up in the registry by `(userId, appId, chain, network)`,
-so the **same user on a new device lands on the same wallet**. But that new
-device has its own key, which isn't yet an authorized signer on the account.
-Adding it requires approval from a device that already controls the wallet.
-Chain-native account state—not the Cavos backend—is the authority.
+so the **same user on a new device lands on the same wallet**.
+
+On **Starknet**, that new device has its own P-256 key, which must be added as a
+signer. On **native Solana and Stellar**, there is one spend key: the new device
+unwraps the MasterDEK (enclave or passkey). It does not `add_signer`.
 
 ## Detecting a new device
 

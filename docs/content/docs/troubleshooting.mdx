@@ -72,9 +72,9 @@ Three causes, in the order worth checking:
    yourself, enrolment and recovery do not happen automatically — the SDK never
    sees a provider token. Call `submitSocialRecoveryToken(idToken)` yourself. See
    [With your own auth](/docs/hardware-isolated-recovery#with-your-own-auth).
-4. **The active wallet is classic Stellar.** Hardware-isolated recovery is
-   Starknet and Solana only. A new `G…` device uses a passkey or a recovery
-   code. See [Stellar](/docs/stellar#recovery).
+4. **The creating device never sealed.** Mac logged in from IndexedDB; the phone
+   got `not_enrolled`. Reconnect once on the device that has the wrap — enroll
+   is idempotent.
 
 ## `id_token issuer … cannot be used for social recovery`
 

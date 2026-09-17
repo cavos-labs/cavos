@@ -188,13 +188,13 @@ const { signature, publicKey, curve } = await signMessage("Sign in to dapp.com")
 | Field | Meaning |
 |-------|---------|
 | `signature` | 64-byte signature (`r‖s` for secp256r1, ed25519 raw). |
-| `publicKey` | The verifier input — Starknet/Solana: the device P-256 key (hex); Stellar: the `G…` control address. |
-| `curve` | `"secp256r1"` (Starknet, Solana) or `"ed25519"` (Stellar). Determines how to verify. |
+| `publicKey` | The verifier input — Starknet: device P-256 hex; Solana/Stellar: the account address (base58 / `G…`). |
+| `curve` | `"secp256r1"` (Starknet) or `"ed25519"` (Solana, Stellar). |
 
 **Per-chain details:**
 
 - **Starknet** — signs `sha256("Cavos Signed Message:\n<len>\n" + message)` with the device P-256 key. `publicKey` is the uncompressed `04‖x‖y` hex.
-- **Solana** — signs `sha256("\x18Solana Signed Message:\n<len>\n" + message)`, matching the wallet-adapter `signMessage` convention. `publicKey` is the 33-byte compressed P-256 hex.
+- **Solana** — signs the prefixed message with the **Ed25519** spend key. `publicKey` is the base58 address. `curve` is `"ed25519"`.
 - **Stellar** — the signing key is the **ed25519 control key** (not P-256), so `curve` is `"ed25519"` and `publicKey` is the `G…` control address.
 
 **Verifying off-chain** (what a third party / backend does):
@@ -205,12 +205,10 @@ import { sha256 } from "@noble/hashes/sha256";
 import { Keypair } from "@stellar/stellar-sdk";
 
 if (curve === "secp256r1") {
-  // Starknet / Solana — verify the P-256 signature over sha256(prefixedMessage).
+  // Starknet — verify the P-256 signature over sha256(prefixedMessage).
   const valid = p256.verify(signature, sha256(prefixedMessage), publicKeyHex);
 } else {
-  // Stellar — ed25519 verify against the control address.
-  const kp = Keypair.fromPublicKey(publicKey); // G… address
-  const valid = kp.verify(prefixedMessage, signature);
+  // Solana / Stellar — ed25519.
 }
 ```
 
@@ -238,15 +236,11 @@ What you get back, and what to do with it:
 
 - **Starknet** — the signed invoke (`calldata`, the 5-felt device `signature`, `nonce`, `resourceBounds`, `version`). A relayer broadcasts it via the account's `invokeFunction`.
 - **Stellar** — the control-signed inner transaction as base64 **XDR**. Submit it directly via Horizon, or hand it to a relayer to fee-bump (the control signature stays valid through the wrap).
-- **Solana** — the device's P-256 signature over the transfer message: `{ message, signature, publicKey }`.
+- **Solana** — `{ message, signature, publicKey }` where `signature` is Ed25519 over the Solana message. A relayer can fee-pay; it must not replace the user signature.
 
 <Callout type="warn">
-**Solana's `signTransaction` is NOT a signed Solana transaction.** The device
-P-256 key never signs the Solana transaction itself — it signs a domain-tagged
-message verified on-chain by the native secp256r1 precompile. A relayer or
-feePayer must take this `(message, signature, publicKey)` triple, assemble the
-`[secp256r1 precompile ix, execute_transfer ix]` bundle, add a recent blockhash
-+ the feePayer's signature, and submit.
+**Solana `signTransaction` is a user-signed message**, not a fully submitted
+transaction. Attach the relayer (or `feePayer`) signature and broadcast.
 </Callout>
 
 <Callout type="warn">
