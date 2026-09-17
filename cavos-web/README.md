@@ -25,7 +25,7 @@ available after implementation, security review, and end-to-end validation.
 - TypeScript and Tailwind CSS v4
 - Supabase for developer identity and product data
 - Auth0/hosted OAuth compatibility for end-user authentication
-- Onvo for subscriptions
+- Stripe for subscriptions (planned)
 - `@cavos/kit` for the current wallet model
 
 ## Local setup

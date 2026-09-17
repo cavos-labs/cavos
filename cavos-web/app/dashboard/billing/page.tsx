@@ -213,7 +213,7 @@ export default function BillingPage() {
 
 /* ── Plans comparison ───────────────────────────────────────────
    Three tiers: Free, Essential $59, Complete $139.
-   Paid plans route to /contact-sales until Onvo checkout is live. */
+   Paid plans route to /contact-sales until Stripe Checkout is live. */
 
 interface TierDef {
     id: 'free' | 'essential' | 'complete';
