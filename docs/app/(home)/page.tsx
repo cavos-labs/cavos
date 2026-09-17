@@ -11,7 +11,8 @@ const cavos = await Cavos.connect({
 });
 
 if (cavos.chain === "solana") {
-  await cavos.execute(amount, recipient); // gasless
+  // The relayer is fee payer; the account holds the lamports.
+  await cavos.execute(amount, recipient);
 }`;
 
 const TOPICS: {
@@ -44,7 +45,7 @@ const TOPICS: {
   {
     label: 'Recovery',
     href: '/docs/recovery',
-    desc: 'Passphrase-derived backup signer — non-custodial after device loss.',
+    desc: 'Passkey, enclave sign-in, or a recovery code. Non-custodial after device loss.',
   },
   {
     label: 'API reference',
@@ -79,13 +80,14 @@ export default function HomePage() {
             <h1 className="text-balance text-[clamp(1.875rem,2.8vw,2.5rem)] font-normal leading-[1.15] tracking-[-0.02em] text-ink">
               Multichain, device-native
               <br />
-              smart accounts.
+              embedded wallets.
             </h1>
 
             <p className="mt-6 max-w-md text-pretty text-[1.05rem] leading-relaxed text-muted">
-              Build self-custodial smart accounts across blockchains with one
-              chain-configurable SDK. Starknet, Solana, and Stellar today; an
-              adapter model for every chain that comes next.
+              Build self-custodial embedded wallets across blockchains with one
+              chain-configurable SDK — a Cairo smart account on Starknet, native
+              Ed25519 accounts on Solana and Stellar. Every chain that comes
+              next joins through an adapter.
             </p>
 
             <div className="mt-9 flex flex-wrap items-center gap-3">
@@ -122,18 +124,18 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Dark code window */}
+          {/* Code window */}
           <div className="relative">
-            <div className="overflow-hidden rounded-xl border border-[#2c2654] bg-[#181430] shadow-[0_24px_48px_-24px_rgba(64,42,255,0.4)]">
-              <div className="flex items-center gap-2 border-b border-[#2c2654] bg-[#211c40] px-4 py-2.5">
-                <span className="size-2.5 rounded-full bg-white/15" />
-                <span className="size-2.5 rounded-full bg-white/15" />
-                <span className="size-2.5 rounded-full bg-white/15" />
-                <span className="ml-2 font-mono text-[11px] text-[#b9b4e6]">
+            <div className="overflow-hidden rounded-xl border border-line-strong bg-white">
+              <div className="flex items-center gap-2 border-b border-line bg-surface px-4 py-2.5">
+                <span className="size-2.5 rounded-full border border-line-strong" />
+                <span className="size-2.5 rounded-full border border-line-strong" />
+                <span className="size-2.5 rounded-full border border-line-strong" />
+                <span className="ml-2 font-mono text-[11px] text-muted">
                   connect.ts
                 </span>
               </div>
-              <pre className="overflow-x-auto px-5 py-5 font-mono text-[13px] leading-relaxed text-[#e1e4e8]">
+              <pre className="overflow-x-auto px-5 py-5 font-mono text-[13px] leading-relaxed text-ink">
                 <code>{SNIPPET}</code>
               </pre>
             </div>
