@@ -1,12 +1,4 @@
-import { createHash } from 'node:crypto'
-import bs58 from 'bs58'
-import { Connection, PublicKey } from '@solana/web3.js'
 import { hash, RpcProvider } from 'starknet'
-import {
-  deviceAccountProgramId,
-  isSupportedSolanaNetwork,
-  rpcUrl as solanaRpcUrl,
-} from '@/lib/solana/relayer'
 
 interface EnrollmentProof {
   txHash: string
@@ -19,12 +11,7 @@ interface EnrollmentProof {
   policyHashHex: string
 }
 
-const SOCIAL_RECOVERY_SEED = Buffer.from('social-recovery')
 const ENROLL_SELECTOR = hash.getSelectorFromName('SocialRecoveryEnrolled')
-const ENROLL_DISCRIMINATOR = createHash('sha256')
-  .update('global:enroll_social_recovery')
-  .digest()
-  .subarray(0, 8)
 const U128_MASK = (1n << 128n) - 1n
 
 function sameInteger(left: string, right: bigint | string): boolean {
@@ -95,56 +82,8 @@ async function verifyStarknetEnrollment(proof: EnrollmentProof): Promise<boolean
   return receipt.events.some((event) => {
     if (!sameInteger(event.from_address, proof.walletAddress)) return false
     if (!event.keys.some((key) => sameInteger(key, ENROLL_SELECTOR))) return false
-    // data[0] is recovery_id (Poseidon of x/y); the remaining fields are the
-    // exact authority and policy that the enclave returned.
     if (event.data.length !== 8) return false
     return expectedData.every((expected, index) => sameInteger(event.data[index + 1], expected))
-  })
-}
-
-async function verifySolanaEnrollment(proof: EnrollmentProof): Promise<boolean> {
-  if (!isSupportedSolanaNetwork(proof.network)) return false
-  const connection = new Connection(solanaRpcUrl(proof.network), 'confirmed')
-  const transaction = await retry(() =>
-    connection.getParsedTransaction(proof.txHash, {
-      commitment: 'confirmed',
-      maxSupportedTransactionVersion: 0,
-    }),
-  )
-  if (!transaction || transaction.meta?.err) return false
-
-  const programId = new PublicKey(deviceAccountProgramId())
-  const wallet = new PublicKey(proof.walletAddress)
-  const [recoveryConfig] = PublicKey.findProgramAddressSync(
-    [SOCIAL_RECOVERY_SEED, wallet.toBuffer()],
-    programId,
-  )
-  const recoveryKey = Buffer.from(proof.recoveryPubkeyCompressedB64, 'base64')
-  const policyHash = Buffer.from(proof.policyHashHex.replace(/^0x/, '').padStart(64, '0'), 'hex')
-  if (recoveryKey.length !== 33 || policyHash.length !== 32) return false
-  const delay = Buffer.alloc(4)
-  delay.writeUInt32LE(proof.delaySeconds)
-  const expectedData = Buffer.concat([
-    ENROLL_DISCRIMINATOR,
-    recoveryKey,
-    delay,
-    policyHash,
-  ])
-
-  return transaction.transaction.message.instructions.some((instruction) => {
-    if (!instruction.programId.equals(programId) || !('data' in instruction)) return false
-    if (
-      instruction.accounts.length < 2 ||
-      !instruction.accounts[0].equals(wallet) ||
-      !instruction.accounts[1].equals(recoveryConfig)
-    ) {
-      return false
-    }
-    try {
-      return Buffer.from(bs58.decode(instruction.data)).equals(expectedData)
-    } catch {
-      return false
-    }
   })
 }
 
@@ -152,8 +91,7 @@ export async function verifyEnrollmentTransaction(proof: EnrollmentProof): Promi
   if (proof.network === 'sepolia' || proof.network === 'mainnet') {
     return verifyStarknetEnrollment(proof)
   }
-  if (proof.network.startsWith('solana-')) {
-    return verifySolanaEnrollment(proof)
-  }
+  // Native Solana/Stellar enroll the DEK at connect; there is no on-chain
+  // enroll_social_recovery transaction to verify.
   return false
 }

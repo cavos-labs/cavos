@@ -23,11 +23,9 @@ import { StrKey } from '@stellar/stellar-sdk';
 import { PublicKey } from '@solana/web3.js';
 
 /**
- * Native Ed25519 wallets (classic Stellar G, Solana system accounts) are
- * self-custodial. They may omit `encrypted_pk_blob` at first claim; a later
- * POST can fill a 60-byte passkey-PRF wrap so a new device can restore the
- * same spend key without the enclave. PDA Solana stays off-curve and still
- * needs `devices` or a blob.
+ * Native Ed25519 wallets (classic Stellar G, on-curve Solana) are
+ * self-custodial. They omit `encrypted_pk_blob`: the spend key is derived on
+ * the device. Off-curve rows still need `devices` or a blob.
  */
 function isNativeEd25519Account(network: unknown, address: unknown): boolean {
     if (typeof network !== 'string' || typeof address !== 'string') return false;
@@ -292,17 +290,6 @@ export async function POST(request: Request) {
             return ApiResponse.conflict('address_already_registered', { address: result.row.address });
         }
         const data = result.row;
-
-        if (encrypted_pk_blob) {
-            await adminSupabase
-                .from('wallets')
-                .update({
-                    encrypted_pk_blob,
-                    updated_at: new Date().toISOString(),
-                })
-                .eq('id', data.id)
-                .is('encrypted_pk_blob', null);
-        }
 
         // Store the authorized device signer(s) for device-signer wallets.
         if (devices && Array.isArray(devices) && devices.length > 0) {

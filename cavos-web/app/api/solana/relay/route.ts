@@ -3,7 +3,7 @@
  *
  * GET  /api/solana/relay            → { fee_payer } (the relayer pubkey the SDK
  *                                      sets as fee payer before serializing).
- * POST /api/solana/relay            → co-sign + submit a Cavos device-account tx.
+ * POST /api/solana/relay            → co-sign + submit a user-signed native tx.
  *
  * The relayer pays fees/rent so the user's silent device key (which holds no SOL)
  * gets a gasless experience. It is a fee payer, NOT a custodian — see
@@ -18,7 +18,6 @@ import { checkRateLimit, clientIp } from '@/lib/api/rateLimit';
 import {
   connectionFor,
   isSupportedSolanaNetwork,
-  validateSponsoredTransaction,
   validateNativeSponsoredTransaction,
 } from '@/lib/solana/relayer';
 import { getRelayerSigner } from '@/lib/solana/signer';
@@ -31,9 +30,9 @@ interface RelayRequest {
   app_id: string;
   network: string;
   environment?: 'development' | 'production';
-  /** base64-encoded Transaction. PDA path is unsigned; native path is user-signed. */
+  /** base64-encoded user-signed Transaction. Native system accounts only. */
   transaction: string;
-  kind?: 'native' | 'legacy';
+  kind?: 'native';
 }
 
 /** GET — expose the relayer fee-payer pubkey (per network) so the SDK can build the tx. */
@@ -135,10 +134,12 @@ export async function POST(request: Request) {
     const signer = await getRelayerSigner(body.network);
 
     const allowedPrograms = await resolveSolanaProgramAllowlist(appId);
-    const native = body.kind === 'native';
-    const check = native
-      ? validateNativeSponsoredTransaction(tx, signer.publicKey, allowedPrograms)
-      : validateSponsoredTransaction(tx, signer.publicKey, allowedPrograms);
+    if (body.kind && body.kind !== 'native') {
+      return ApiResponse.badRequest('Transaction not eligible for sponsorship', {
+        reason: 'only native Solana transactions are sponsored',
+      });
+    }
+    const check = validateNativeSponsoredTransaction(tx, signer.publicKey, allowedPrograms);
     if (!check.ok) {
       logger.warn('Relay rejected', { reason: check.reason, app_id: body.app_id });
       await recordCavosEvent({ appId, environmentId: environment?.id, eventType: 'relay.rejected', status: 'failed', severity: 'warning', requestId: logger.requestId, network: body.network, errorCode: 'not_eligible', metadata: { reason: check.reason } });
@@ -169,32 +170,14 @@ export async function POST(request: Request) {
 
     const connection = connectionFor(body.network);
     let lastValidBlockHeight: number;
-    if (native) {
-      // The user already signed the message, including its blockhash. Rewriting
-      // it here would invalidate that signature.
-      const status = await connection.getLatestBlockhash('finalized');
-      lastValidBlockHeight = status.lastValidBlockHeight;
-      if (!tx.feePayer || !tx.feePayer.equals(signer.publicKey)) {
-        return ApiResponse.badRequest('Transaction not eligible for sponsorship', {
-          reason: 'fee payer must be the Cavos relayer',
-        });
-      }
-      await signer.signTransaction(tx);
-    } else {
-      // Set a fresh blockhash and sign as fee payer (the only required signature —
-      // device-account ixs are authorized by the precompile, not Solana signers).
-      // `finalized`, not `confirmed`: the default endpoint is load-balanced across
-      // nodes, so a just-confirmed blockhash from one node is unknown to the node
-      // that runs preflight a moment later — which fails as "Blockhash not found"
-      // before the transaction is ever broadcast. A finalized blockhash is ~32
-      // slots (~13s) old and known everywhere. It costs some of the validity
-      // window (~60s -> ~47s), which the polling confirm below absorbs.
-      const { blockhash, lastValidBlockHeight: height } = await connection.getLatestBlockhash('finalized');
-      lastValidBlockHeight = height;
-      tx.recentBlockhash = blockhash;
-      tx.feePayer = signer.publicKey;
-      await signer.signTransaction(tx);
+    const status = await connection.getLatestBlockhash('finalized');
+    lastValidBlockHeight = status.lastValidBlockHeight;
+    if (!tx.feePayer || !tx.feePayer.equals(signer.publicKey)) {
+      return ApiResponse.badRequest('Transaction not eligible for sponsorship', {
+        reason: 'fee payer must be the Cavos relayer',
+      });
     }
+    await signer.signTransaction(tx);
 
     const raw = tx.serialize();
     const signature = await connection.sendRawTransaction(raw, {
