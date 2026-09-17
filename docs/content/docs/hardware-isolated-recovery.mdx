@@ -1,6 +1,6 @@
 ---
 title: Hardware-isolated recovery
-description: Recover a Starknet or Solana wallet by signing in again — verified inside an attested enclave, without giving Cavos a key that can move funds. Not offered on classic Stellar.
+description: Restore a Solana or Stellar MasterDEK — or schedule a Starknet add_signer — by signing in again. Verified inside an attested Nitro enclave. Cavos never holds a key that can spend.
 ---
 
 A recovery code works, but it asks the user to keep a secret safe forever, and
@@ -24,10 +24,11 @@ is explicit about both halves.
 </Callout>
 
 <Callout type="info">
-**Starknet and Solana only.** Classic Stellar (`G…`) does not use the enclave —
-authorize a new device with a [passkey](/docs/passkeys) or a [recovery
-code](/docs/recovery-codes). Stellar contract accounts (`C…`) will use this path
-later, when the chain can restrict the enclave to adding a device.
+**Solana, Stellar, and Starknet — different jobs.** On Solana and Stellar the
+enclave **seals and unwraps the MasterDEK**. It does not sign transfers. On
+Starknet it still holds a restricted recovery authority that can only schedule
+`add_signer`. Set `deviceApproval: "enclave"` (or `socialRecovery: true`).
+Passkey approval is a different, single-chain path.
 </Callout>
 
 ## How it works
@@ -49,17 +50,23 @@ controls, and **recovery**, later, on a device that has nothing.
    document rather than from the response that carried it, so there is nothing
    to cross-check: substituting a key would mean forging an AWS signature. The
    Cavos control plane relays ciphertext it cannot read.
-4. Inside, the enclave verifies the token, generates a recovery keypair, and
-   seals the private half so only an enclave running the same measured image can
-   ever open it. It returns only the public key.
-5. That public key is registered on-chain as a **restricted recovery authority**
-   — see [What the chain enforces](#what-the-chain-enforces).
+4. Inside, the enclave verifies the token. On **Solana and Stellar** it seals
+   the MasterDEK (`dek_enroll`) so a later device can unwrap it. On **Starknet**
+   it generates a recovery keypair, seals the private half, and returns the
+   public key.
+5. Starknet registers that public key on-chain as a **restricted recovery
+   authority**. Native Solana/Stellar have no extra on-chain recovery signer —
+   the wrap **is** the restore path. Reconnect reseals if this device already
+   has the DEK locally, so a first enroll that failed after claiming the
+   address still recovers.
 
 ### Recovery
 
 The user signs in on the new device and the same channel is established. The
-enclave verifies the token, opens its sealed key, and signs **one** message: an
-authorization for this specific new device. The chain does the rest.
+enclave verifies the token. On Solana/Stellar it unwraps the MasterDEK to this
+device's wrap key. On Starknet it signs **one** message: an authorization for
+this specific new device. The chain (Starknet) or the derived spend key
+(Solana/Stellar) does the rest.
 
 The result is worth stating plainly: an attacker who fully compromises the Cavos
 backend gets ciphertext they cannot decrypt and an on-chain authority they cannot
@@ -86,11 +93,11 @@ are never accepted.
 The enclave's authority is not "a key that can sign for the wallet". It is a key
 the account contract will listen to for exactly one purpose.
 
-| Chain | Enforced recovery capability |
+| Chain | What the enclave does |
 |---|---|
-| **Starknet** | A separate P-256 authority may only schedule one exact `add_signer`; nonce, expiry, timelock, cancellation, and finalization are contract-enforced. Existing accounts opt in through their normal device-authorized `upgrade` and enrollment calls. |
-| **Solana** | A separate recovery PDA stores the P-256 authority and policy. The native P-256 precompile plus program state enforce the exact signer, nonce, expiry, timelock, cancellation, and finalization. |
-| **Stellar classic (`G…`)** | Not offered. A classic account cannot restrict a signer to add-device-only, so `@cavos/kit` never enrolls or recovers `G…` wallets through the enclave. A new device uses a [passkey](/docs/passkeys) or a [recovery code](/docs/recovery-codes). Contract accounts (`C…`) will use the enclave later, when `__check_auth` can bind that authority to `add_device`. |
+| **Solana** | Seals / unwraps the MasterDEK. The spend key is HKDF of that DEK. No recovery PDA, no `add_signer`. |
+| **Stellar** | Same MasterDEK wrap as Solana (`cavos-ed25519-stellar-v1`). A new device is the same `G…`, not an extra Horizon signer. |
+| **Starknet** | A separate P-256 authority may only schedule one exact `add_signer`; nonce, expiry, timelock, cancellation, and finalization are contract-enforced. |
 
 A non-zero timelock turns recovery into something the real owner can veto: the
 signer is committed on-chain but inert until the delay passes, and any other
@@ -112,20 +119,15 @@ reports zeroed measurements, which no pinned policy accepts, and KMS refuses to
 release the key to it. A
 Cavos employee asked to hand over a user's key has nothing to hand over.
 
-**The key cannot move money.** This is the part that carries most of the weight.
-The enclave's key is not a wallet signer. It is registered on the account in a
-separate, restricted role whose only permitted action is to schedule the addition
-of one specific new signer. It cannot transfer, approve, call a contract, or
-authorize anything else, because the account contract will not accept those
-instructions from that role — see [What the chain
-enforces](#what-the-chain-enforces). Compare that with a custodial provider,
-where the recovery key *is* the spending key and restraint is a matter of policy.
+**The key cannot move money on Starknet.** The enclave's Starknet key is not a
+wallet signer. Native Solana/Stellar: the enclave holds a wrap of the MasterDEK,
+not a hot spender. Compromise of the wrap still means restore of the spend key —
+that is why attestation pins and the 5-minute token window exist. Compare that
+with a custodial provider, where the operator's key *is* the spending key.
 
-**Nothing is added to your account without your device authorizing it.** The
-recovery authority is registered during enrolment by a transaction your own
-device signs. Cavos cannot insert itself into an account after the fact; an
-account that never enrolled has no recovery authority at all, and no amount of
-control over the backend creates one.
+**Nothing is added without this device holding the DEK (or a Starknet signer).**
+Native enroll is a wrap, not an extra on-chain authority. Starknet still
+registers the recovery role with a transaction the current device signs.
 
 **The real owner can veto a recovery.** With a non-zero timelock the scheduled
 signer is inert until the delay passes and any existing device can cancel it. So
@@ -153,8 +155,9 @@ formality:
 The honest summary: breaking this needs a compromised enclave image **and** the
 timelock to expire without the owner noticing. It never needs only Cavos.
 
-Classic Stellar is not in this trust model, because it is not on this path. A
-new `G…` device is authorized with a passkey or a recovery code.
+Classic Stellar **is** on this path when `deviceApproval` is `"enclave"`: the
+`G…` is HKDF of the sealed DEK. Grandfathered wallets that never enrolled still
+need a passkey or recovery code.
 
 Keep a second factor regardless. Encourage a passkey or a second device, and
 treat social recovery as one path among several rather than the only one.
@@ -170,9 +173,9 @@ the single login method shown.
   config={{
     appId,
     environment: "production",
-    chains: ["starknet"],          // also "solana", or both. Classic Stellar
-                                   // in the same app still uses passkey / recovery code.
-    defaultChain: "starknet",
+    chains: ["solana", "stellar"], // native DEK wrap. Add "starknet" for the
+                                   // on-chain add_signer authority as well.
+    defaultChain: "solana",
     network: "mainnet",
     appSalt: "my-app",
     paymasterApiKey,               // for Starknet gasless
@@ -184,11 +187,12 @@ the single login method shown.
 </CavosProvider>
 ```
 
-That is the whole integration. `<CavosProvider>` enrols a ready **Starknet or
-Solana** wallet after a fresh login and recovers an unregistered device on those
-chains, both automatically. Classic Stellar is skipped even when it is in
-`chains`. Watch progress on `walletStatus.isSocialRecovering` and
-`socialRecoveryReadyAt`.
+That is the whole integration. `<CavosProvider>` enrolls after a fresh login
+when this device has the DEK (Solana/Stellar reseal; Starknet still confirms
+on-chain) and unwraps on a device that does not. Watch
+`walletStatus.isSocialRecovering`. A 409 `not_enrolled` on a new phone means the
+creating device never sealed — open that wallet once more on the original
+device.
 
 ## The attestation pin
 
@@ -247,8 +251,7 @@ that pinned its own measurements is never silently repointed.
 Social recovery works when you authenticate users yourself — Clerk, Auth0,
 Firebase, your own backend — as long as a real Google or Apple sign-in happens
 somewhere underneath. **Your users never sign in twice:** you pass the provider
-token your login already obtained. Same chain rule as the rest of this page:
-Starknet and Solana only.
+token your login already obtained. Works on Solana, Stellar, and Starknet.
 
 Register your OAuth client ID once in **Dashboard → App → Environments → Your
 OAuth client ID**. The enclave then accepts tokens minted for your client

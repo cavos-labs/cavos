@@ -60,9 +60,10 @@ mount, so a Cavos session cannot outlive the session that authorized it — unli
 Cavos hosted auth, which remembers its own logins so a reload can reconnect
 silently.
 
-Social recovery also works from your own auth on Starknet and Solana; see
+Social recovery also works from your own auth on Starknet, Solana, and Stellar
+(native MasterDEK wrap); see
 [Hardware-isolated recovery](/docs/hardware-isolated-recovery#with-your-own-auth).
-Classic Stellar is not on that path.
+Grandfathered Stellar wallets still need a passkey or recovery code.
 
 ## Option B — Cavos hosted auth (`CavosAuth`)
 
@@ -174,7 +175,7 @@ first device to register wins. A second device connecting later sees the
 existing address and enters `needs-device-approval` instead of creating a
 duplicate wallet.
 
-The `appSalt` parameter names the local device-key slot — it keeps device keys
-separate across different apps on the same device. It does not determine the
-address. The registry maps this user and app to the address; `appSalt` isolates
-the device key.
+The `appSalt` parameter names the local device-key slot. On **native Solana
+and Stellar** it is also the HKDF salt for the spend key, so changing it
+derives a different address that will not match the registry row. Never change
+it. The registry key remains `(userId, appId, chain, network)`.

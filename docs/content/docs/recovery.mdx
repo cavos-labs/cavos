@@ -16,30 +16,28 @@ be arranged after the fact.
 | Path | The user needs | Best for | Cost |
 |---|---|---|---|
 | [**Multi-device**](/docs/multi-device) | Another signed-in device | Users who already have a second device | Nothing to set up |
-| [**Passkeys**](/docs/passkeys) | Face ID / Touch ID / PIN | Almost everyone — the strongest default | One prompt at signup |
-| [**Recovery codes**](/docs/recovery-codes) | A code they stored | A last-resort factor, and self-hosted setups | The user must keep a secret |
-| [**Hardware-isolated recovery**](/docs/hardware-isolated-recovery) | To sign in again with Google / Apple / email | Consumer apps on **Starknet and Solana** where users will lose everything | Opt-in per environment; adds an enclave to the trust model. Not offered on classic Stellar. |
+| [**Passkeys**](/docs/passkeys) | Face ID / Touch ID / PIN | Almost everyone | One prompt **after** login (`enrollPasskeyDefault`) — never during OAuth |
+| [**Recovery codes**](/docs/recovery-codes) | A code they stored | Starknet, and grandfathered Stellar | The user must keep a secret |
+| [**Hardware-isolated recovery**](/docs/hardware-isolated-recovery) | To sign in again with Google / Apple / email | Solana, Stellar, and Starknet | Opt-in per environment; the enclave wraps the MasterDEK (Solana/Stellar) or schedules `add_signer` (Starknet) |
 
 The first two answer *"I still have something."* The last two answer *"I have
 nothing."* A serious app wants at least one of each.
 
 ## What to offer
 
-**Start with a passkey.** It is synced by the platform, survives losing the
-device, needs no secret the user can misplace, and costs one prompt during
-onboarding. The built-in modal offers it automatically.
+**Start with a passkey or the enclave — not both as the same `deviceApproval`.**
+`deviceApproval: "passkey"` is one chain and the PRF *is* the Solana/Stellar
+spend key. `deviceApproval: "enclave"` wraps the MasterDEK for every native
+chain in the session. Login never asks for a passkey; call
+`enrollPasskeyDefault()` if you also want the credential.
 
-**Add a way back from nothing.** A passkey is bound to the user's platform
-account; if they lose access to that too, they need another path. On Starknet
-and Solana that is either a recovery code they kept, or hardware-isolated
-recovery — which works by signing in again and so asks nothing of the user in
-advance. Consumer apps on those chains usually want the latter, because in
-practice most users will not keep a code. On **classic Stellar**, the way back
-from nothing *is* the passkey or the recovery code: the enclave is not offered.
+**Add a way back from nothing.** On Solana/Stellar that is the enclave (sign in
+again) or the passkey PRF. Recovery codes do **not** restore native Solana.
+On Starknet, recovery codes and the enclave's restricted `add_signer` still
+apply.
 
-**Do not rely on multi-device alone.** It is excellent when it applies and
-useless in the case that matters: the user who had one phone and dropped it in a
-lake.
+**Do not rely on multi-device alone** for native Solana: there is no second
+on-chain signer. A second phone unwraps the same DEK.
 
 <Callout type="warn">
 If a user loses every device and every factor, and none of the above was set up,
@@ -50,10 +48,9 @@ a second authority during onboarding rather than when it is needed.
 
 ## What Cavos never does
 
-None of these paths gives Cavos a key that can move funds. The account is the
-sole authority over who may sign, and every recovery path adds an authority the
-user's own device — or, on Starknet and Solana, an enclave that the user's
-device granted a single restricted permission to — authorized on-chain.
+None of these paths gives Cavos a hot key that can move funds in production
+relaying. The enclave may wrap a MasterDEK (Solana/Stellar) or hold a Starknet
+authority that can only schedule `add_signer`.
 
 Hardware-isolated recovery is the only path that introduces a party beyond the
 user and the chain, and it is deliberately bounded: see

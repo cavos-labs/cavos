@@ -17,8 +17,10 @@ kit resolves the concrete network (sepolia / solana-devnet for testnet, mainnet
 otherwise) and returns a multi-chain session. The session IS the default chain's
 wallet, augmented with methods to access other configured chains.
 
-Connect **never deploys**. It derives addresses and checks on-chain status, but
-account creation happens lazily on the first `execute` call per chain.
+Connect **never deploys** Starknet or Stellar accounts. It derives addresses and
+checks on-chain status; those accounts are created on the first `execute`.
+Native **Solana** is a system account: `ready` once this device unwraps the
+spend key.
 
 ```ts title="TypeScript"
 interface ConnectOptions {
@@ -30,7 +32,7 @@ interface ConnectOptions {
   chain?: Chain;                          // treated as chains: [chain], defaultChain: chain
 
   network: "testnet" | "mainnet";         // resolves to each chain's concrete network
-  appSalt: string;                        // device-key namespace (not the address)
+  appSalt: string;                        // device-key slot; HKDF salt on Solana/Stellar native
   auth?: AuthProvider;                    // pass `auth` OR `identity`
   identity?: Identity;
   appId?: string;                         // hosted registry + relayers
@@ -48,11 +50,11 @@ interface ConnectOptions {
   classHash?: string;
 
   // --- Solana-only ---
-  programId?: string;                     // device-account program override
-  relayer?: SolanaRelayer;                // gasless sponsorship
+  relayer?: SolanaRelayer;                // gasless fee payer
   feePayer?: Keypair;                     // self-funded fallback
+  passkeyPrf?: PasskeyPrfProvider;        // PRF derives the MasterDEK (single-chain)
 
-  // --- Stellar-only (classic `G…` multisig) ---
+  // --- Stellar-only (classic `G…`) ---
   stellarRelayer?: StellarRelayer;        // gasless sponsorship
   stellarSourceKeypair?: StellarKeypair;  // self-funded source/fee-payer
   stellarDeviceKey?: DeviceUnwrapKey;     // unused by the current signer model; keep only if a low-level caller still passes one
@@ -111,9 +113,9 @@ Members on the `Cavos` instance (`wallet.chain === "starknet"`).
 
 ### `Cavos.recover(options): Promise<Cavos>`
 
-Recover after losing every device using a saved recovery code. (Starknet path;
-Solana uses `CavosSolana.recover`. On Stellar you reconnect and call
-`wallet.approveThisDeviceWithRecovery(code)`.)
+Recover after losing every device using a saved recovery code. **Starknet only.**
+Native Solana restores by connecting (enclave or passkey). On grandfathered
+Stellar, reconnect and call `wallet.approveThisDeviceWithRecovery(code)`.
 
 ```ts title="TypeScript"
 interface RecoveryOptions {
@@ -156,8 +158,9 @@ interface RecoveryOptions {
 
 ### Hardware-isolated social recovery
 
-Optional, opt-in per environment, on **Starknet and Solana**. Classic Stellar
-does not use the enclave. See [Hardware-isolated recovery](/docs/hardware-isolated-recovery).
+Optional, opt-in per environment. On Solana/Stellar the enclave seals the
+MasterDEK. On Starknet it still schedules a restricted `add_signer`. See
+[Hardware-isolated recovery](/docs/hardware-isolated-recovery).
 
 | Export | Description |
 |--------|-------------|
@@ -172,7 +175,8 @@ does not use the enclave. See [Hardware-isolated recovery](/docs/hardware-isolat
 
 ## Passkeys
 
-A second factor for approving new devices — not a transaction signer. See
+On Starknet, a second factor for approving new devices. On Solana/Stellar
+native, PRF is the MasterDEK KDF (can spend). Login never prompts. See
 [Passkeys](/docs/passkeys).
 
 | Export | Description |
@@ -180,8 +184,9 @@ A second factor for approving new devices — not a transaction signer. See
 | `PasskeySigner` | Browser WebAuthn signer. `static isSupported()`, `enroll(...)`, `assert(...)`. |
 | `PasskeySignerOptions`, `PasskeyEnrollParams`, `EnrolledPasskey` | Types. |
 | `PasskeyAssertion` | Parsed WebAuthn assertion. |
-| `approveDeviceEverywhere(wallets, passkey)` | Approve this device across multiple wallets with a single passkey prompt. |
-| `PasskeyApprovable` | Interface implemented by `Cavos` and `CavosSolana`. |
+| `approveDeviceEverywhere(wallets, passkey)` | Starknet on-chain assertion batch. Not native Solana. |
+| `PasskeyApprovable` | Interface implemented by Starknet `Cavos`. Native `CavosSolana` throws on approver APIs. |
+| `PasskeyPrf` | WebAuthn PRF helper. Native Solana/Stellar KDF. |
 
 ## Signers
 
@@ -206,27 +211,26 @@ A second factor for approving new devices — not a transaction signer. See
 
 | Export | Description |
 |--------|-------------|
-| `CavosSolana` | High-level Solana client. `connect`, `execute(amount, dest)`, `executeInstructions(...)`, `signMessage(...)`, `signTransaction(...)`, `addSigner`, `removeSigner`, `setupRecovery`, static `recover`. |
-| `ConnectSolanaOptions`, `RecoverSolanaOptions` | Option types. |
+| `CavosSolana` | Native Ed25519 system account. `connect`, `execute(amount, dest)`, `executeInstructions(...)`, `signMessage` (`ed25519`). `addSigner` / `recover` throw. |
+| `ConnectSolanaOptions`, `RecoverSolanaOptions` | Option types (`RecoverSolanaOptions` is deprecated). |
 | `InstructionData`, `InstructionAccount` | Serializable instruction shape. |
-| `SolanaRelayer`, `SolanaRelayerOptions` | Gasless relayer. |
-| `SolanaAdapter`, `SolanaAdapterOptions` | Low-level adapter. |
+| `SolanaRelayer`, `SolanaRelayerOptions` | Fee-payer relayer. |
 | `SOLANA_NETWORKS`, `SolanaNetwork` | Network configs. |
-| `DEVICE_ACCOUNT_PROGRAM_ID`, `SECP256R1_PROGRAM_ID` | Program ids. |
 
 ### Stellar
 
-Classic `G…` multisig account. See [Stellar](/docs/stellar).
+Classic `G…` account. Native MasterDEK path shares the DEK with Solana;
+grandfathered wallets still use extra Horizon signers. See [Stellar](/docs/stellar).
 
 | Export | Description |
 |--------|-------------|
-| `CavosStellar` | High-level Stellar client. `connect`, `execute(amount, dest)`, `signMessage(...)`, `signTransaction(...)`, `balance()`, `invokeContract(...)`, `signXdr(...)`, `addTrustline(...)`, `tokenBalance(...)`, `enrollPasskey(prfOutput)`, `setupRecovery(code)`, `approveThisDeviceWithPasskey(...)`, `approveThisDeviceWithRecovery(...)`, `hasPasskey`, `isReady`, `listDevices()`, `removeDevice(...)`. |
+| `CavosStellar` | High-level Stellar client. `nativeDek` is true on the current path. Native: `enrollPasskey` / `setupRecovery` no-op; `approveThisDeviceWithPasskey` / `approveThisDeviceWithRecovery` throw — reconnect with passkey or enclave. Grandfathered methods remain for older wallets. |
 | `ConnectStellarOptions`, `StellarConnectStatus` | Option/status types. |
 | `StellarAdapter`, `StellarAdapterOptions` | Low-level adapter. |
 | `StellarRelayer`, `StellarRelayerOptions`, `StellarRelayKind` | Gasless relayer. |
 | `STELLAR_NETWORKS`, `StellarNetwork`, `HORIZON_URL`, `SOROBAN_RPC_URL`, `XLM_DECIMALS` | Network configs. |
 | `TrustlessWorkEscrow`, `deployEscrow`, `buildEscrowScVal` | Trustless Work escrow wrapper. |
-| `PasskeyPrf`, `PasskeyPrfOptions`, `PasskeyPrfEnrollParams` | WebAuthn PRF helper (derives the Stellar extra signer). |
+| `PasskeyPrf`, `PasskeyPrfOptions`, `PasskeyPrfEnrollParams` | WebAuthn PRF helper (MasterDEK KDF / grandfathered extra signer). |
 | `generateControlKey`, `controlKeypairFromSeed` | Control key generation. |
 
 ### Shared interface types
@@ -251,8 +255,8 @@ Classic `G…` multisig account. See [Stellar](/docs/stellar).
 | `CavosProvider`, `useCavos`, `CavosAuthModal` | React Native context, hook, and native auth UI. |
 | `Cavos` | Native connect entry point. |
 | `NativeCavosAuth`, `NativeCavosAuthError` | Native auth adapters. |
-| `NativeDeviceSigner` | Secure Enclave/Keystore P-256 signer (Starknet/Solana). |
-| `NativeControlSigner` | Native ed25519 control key for Stellar (iOS). |
+| `NativeDeviceSigner` | Secure Enclave/Keystore P-256 signer (**Starknet**). |
+| `NativeControlSigner` | Native ed25519 control key. Used on grandfathered Stellar; native MasterDEK imports Ed25519 into the native signer. |
 | `NativePasskeySigner`, `NativePasskeyPrf` | Native passkey adapters. |
 | `getNativeCapabilities()` | Reports signing, passkey, and PRF support. |
 | `getCavosNativeModule()` | Underlying Expo native module. |

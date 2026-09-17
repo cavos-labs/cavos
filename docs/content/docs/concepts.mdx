@@ -10,7 +10,8 @@ must provide stable identity, local user authority, typed execution,
 non-custodial recovery, and a documented sponsorship path. The implementation
 remains native to the selected network.
 
-`StarknetAdapter`, `SolanaAdapter`, and `StellarAdapter` are available today.
+`StarknetAdapter` and `StellarAdapter` ship today. Solana is a native Ed25519
+system account (`CavosSolana`); there is no `SolanaAdapter` in this release.
 Future chains are roadmap adapters until their code, security review, and
 end-to-end validation are complete.
 
@@ -20,10 +21,8 @@ The Cavos backend must not possess authority that can move user funds or enroll
 itself as a signer.
 
 - **Starknet:** the Cairo account authorizes P-256 device signers.
-- **Solana:** the device-account program authorizes P-256 keys whose signatures
-  were verified by the native precompile.
-- **Stellar:** the classic account authorizes ed25519 Horizon signers held
-  locally on each device.
+- **Solana:** a native Ed25519 system account. The relayer is fee payer, never a spender.
+- **Stellar:** the classic account's Ed25519 control key (MasterDEK, or extra Horizon signers on grandfathered wallets).
 
 Registries and recovery services coordinate public state or messages. Paymasters
 and relayers fund or submit transactions. None of those roles is a substitute
@@ -42,43 +41,43 @@ When you call `connect`:
 
 1. **Registry lookup**: The kit asks the Cavos registry: does this user already
    have a wallet for this app and chain?
-2. **If found**: The existing address is returned. The device checks whether it
-   is an authorized signer on-chain.
-3. **If not found**: The device computes a candidate address and claims it in
-   the registry. The first device to register wins.
+2. **If found**: The existing address is returned. On Starknet the device checks
+   whether it is an authorized signer. On Solana/Stellar it unwraps the MasterDEK
+   (local wrap, enclave, or passkey) or lands on `needs-device-approval`.
+3. **If not found**: The device mints a MasterDEK (or uses passkey PRF), derives
+   the address, and claims it. The first device to register wins.
 
 This design prevents a second wallet from being created silently when the same
 user connects from a different device. The second device sees the existing
 address and enters device approval instead of minting a duplicate.
 
 <Callout type="info">
-**Why not deterministic from identity?** A purely deterministic address would
-let any device derive it, but then how would the account know which device is
-authorized? The address includes the first device's public key (directly on
-Solana/Starknet, indirectly on Stellar), which is why the registry records
-which address belongs to which user.
+**Why a registry?** The first device mints (or PRF-derives) a MasterDEK and
+claims the derived address. A second device must unwrap that same DEK — it
+cannot invent a new one. The registry records which address belongs to which
+user so connect does not mint a duplicate.
 </Callout>
 
 ### The `appSalt` parameter
 
-`appSalt` is **not** the address name. It is the local device-key slot — a
-namespace that keeps device keys separate across different apps on the same
-device. The same user on the same device but different apps gets different
-device keys, which is correct: each app has its own wallet.
+`appSalt` is the local device-key slot. On **Solana and Stellar native** it is
+also the HKDF salt for the spend key, so changing it derives a different
+address that will not match the existing registry row. Never change it.
 
-The registry key is `(userId, appId, chain, network)`. The `appSalt` affects the
-device-key derivation, not the address derivation directly.
+The registry key is `(userId, appId, chain, network)`.
 
 ## Lazy deployment
 
-Connect **never** deploys. It resolves the address and checks on-chain status,
-but the account is not created until the first `execute`.
+Connect **never** deploys Starknet or Stellar accounts. It resolves the address
+and checks on-chain status; those accounts are created on the first `execute`.
+**Solana** is a system account: `ready` once this device has the spend key.
+Fund it, then spend — there is no `initialize`.
 
 | Connect result | What happens |
 |----------------|--------------|
-| User has no wallet | Address is computed and claimed in registry. `status: "undeployed"`. |
-| User has a wallet, this device is authorized | `status: "ready"`. |
-| User has a wallet, this device is not authorized | `status: "needs-device-approval"`. |
+| User has no wallet | Address is computed and claimed in registry. Starknet/Stellar: `undeployed`. Solana: `ready` once the spend key is unwrapped. |
+| User has a wallet, this device can sign | `status: "ready"`. |
+| User has a wallet, this device has no wrap / is not a signer | `status: "needs-device-approval"`. |
 
 An `undeployed` wallet can:
 - **Sign messages** (`signMessage`) — the signature comes from the local device
@@ -137,9 +136,10 @@ accounts sharing one login.
 "Device-native" describes where sensitive authority is created or unlocked, not
 one universal curve:
 
-- Starknet and Solana use non-extractable P-256 device signers directly.
-- Stellar uses a non-extractable ed25519 control key per device as a Horizon
-  signer. The first device's public key is the `G…` address.
+- Starknet uses non-extractable P-256 device signers on the account contract.
+- Solana and Stellar use non-extractable Ed25519 spend keys derived from a
+  MasterDEK (enclave wrap or passkey PRF). Grandfathered Stellar wallets still
+  use extra Horizon signers.
 
 On mobile, Cavos prefers hardware-backed key storage and reports the actual
 capabilities of the device. Hardware claims must be validated on physical

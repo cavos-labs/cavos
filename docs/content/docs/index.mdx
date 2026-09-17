@@ -32,8 +32,8 @@ if (wallet.chain === "solana" && wallet.status === "ready") {
 
 | Piece | Role |
 |---|---|
-| **Identity** | A stable `userId` plus an app-specific salt anchors the wallet independently of the current device. |
-| **Device-native authority** | Keys are created and used locally. Starknet and Solana authorize P-256 device signers; Stellar authorizes per-device ed25519 Horizon signers. |
+| **Identity** | A stable `userId` plus an app-specific salt. On Solana/Stellar the salt is also HKDF input for the spend key. |
+| **Device-native authority** | Starknet authorizes P-256 device signers. Solana and Stellar spend with native Ed25519 derived from a MasterDEK. |
 | **Chain adapter** | Implements address derivation, signing, execution, recovery, and sponsorship for one network family. |
 | **Unified SDK** | `Cavos.connect({ chain, network })` returns a discriminated wallet union so shared onboarding stays stable and chain-native methods remain typed. |
 | **Sponsorship** | A paymaster, relayer, fee payer, or fee-bump service removes the need for users to acquire gas when that adapter supports it. |
@@ -44,10 +44,8 @@ Execution is intentionally not reduced to a misleading universal transaction
 format:
 
 - **Starknet:** Cairo `DeviceAccount`, arbitrary multicalls, Starknet paymaster.
-- **Solana:** device-account PDA, native P-256 verification, transfer or
-  allowlisted CPI execution, sponsoring relayer.
-- **Stellar:** classic `G…` account, per-device ed25519 Horizon signers, XLM
-  payments, Soroban invocation, optional fee-bump sponsorship.
+- **Solana:** native Ed25519 system account, transfer or allowlisted instructions, sponsoring fee payer.
+- **Stellar:** classic `G…` account, native Ed25519 control key (MasterDEK or grandfathered extra signers), XLM payments, Soroban invocation, optional fee-bump.
 
 Narrow on `wallet.chain` before calling chain-native methods. See
 [Chains](/docs/chains) for the capability matrix.
@@ -69,8 +67,8 @@ Narrow on `wallet.chain` before calling chain-native methods. See
   <Card title="Quickstart" href="/docs/quickstart" description="Install, choose an adapter, and execute a sponsored transaction." />
   <Card title="Chains" href="/docs/chains" description="Current availability and the adapter contract for future chains." />
   <Card title="Starknet" href="/docs/starknet" description="Cairo DeviceAccount and paymaster execution." />
-  <Card title="Solana" href="/docs/solana" description="Device-account PDA and sponsoring relayer." />
-  <Card title="Stellar" href="/docs/stellar" description="Classic account, local control-key unlock, and Soroban calls." />
+  <Card title="Solana" href="/docs/solana" description="Native Ed25519 system account and sponsoring fee payer." />
+  <Card title="Stellar" href="/docs/stellar" description="Classic G… account, MasterDEK unlock, and Soroban calls." />
   <Card title="React" href="/docs/react" description="Provider, hooks, modal, and chain switching." />
   <Card title="React Native" href="/docs/react-native" description="Secure Enclave, Android Keystore, and native passkeys." />
   <Card title="Dashboard" href="/docs/dashboard" description="Console: roles, API keys, webhooks, sponsorship, allowlists." />

@@ -28,8 +28,8 @@ details:
 
 <Cards>
   <Card title="Starknet" href="/docs/starknet" description="Cairo DeviceAccount, 5-felt signatures, Cavos paymaster." />
-  <Card title="Solana" href="/docs/solana" description="Native secp256r1 precompile, device-account PDA, Cavos relayer." />
-  <Card title="Stellar" href="/docs/stellar" description="Classic G… account, per-device Horizon signers, Cavos relayer." />
+  <Card title="Solana" href="/docs/solana" description="Native Ed25519 system account, Cavos relayer as fee payer." />
+  <Card title="Stellar" href="/docs/stellar" description="Classic G… account, MasterDEK or extra Horizon signers." />
 </Cards>
 
 ## How the abstraction works
@@ -38,22 +38,14 @@ Three layers keep Cavos portable:
 
 - **The product contract is the constant.** Stable identity, local authority,
   self-custody, recovery, and optional sponsorship are required of every adapter.
-- **Device-native keys stay local.** Their exact role can vary: direct P-256
-  authorization on Starknet/Solana, or per-device ed25519 Horizon signers on
-  Stellar.
-- **A `ChainAdapter` per chain** handles chain-specific deterministic
-  address computation, signature encoding, and the deploy / add-signer / remove-signer
-  calls. `StarknetAdapter`, `SolanaAdapter`, and `StellarAdapter` ship today.
+- **Device-native keys stay local.** Starknet uses P-256 on the account contract. Solana and Stellar use Ed25519 spend keys derived from a MasterDEK.
+- **A `ChainAdapter` per chain** still exists for Starknet (`StarknetAdapter`) and Stellar (`StellarAdapter`). Solana is `CavosSolana` over a native system account — there is no `SolanaAdapter` in this release.
 
 Curves differ across ecosystems, and each adapter resolves that:
 
 - **Starknet** — on-chain secp256r1 verification in the Cairo `DeviceAccount`.
-- **Solana** — every guarded action pairs Solana's **native secp256r1 precompile**
-  with the Cavos device-account program instruction.
-- **Stellar** — a **classic `G…` account** (no Soroban contract): the first
-  device's ed25519 public key *is* the address. Extra devices, a passkey, and a
-  recovery code are additional weight-1 Horizon signers. Each device signs with
-  its own local key. Self-custodial, no backend key.
+- **Solana** — native Ed25519 system account. The user key signs the Solana message; the relayer is fee payer only.
+- **Stellar** — classic `G…`. With enclave or passkey, the address is HKDF of the same MasterDEK as Solana. Older wallets still use extra Horizon signers.
 
 ## Writing every-chain application code
 
