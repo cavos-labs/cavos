@@ -1,0 +1,504 @@
+---
+title: Reserve
+description: Pay Stellar reserves and fees in a held token with @cavos/reserve. Classic G… accounts. Any wallet.
+---
+
+`@cavos/reserve` sponsors the two XLM costs Stellar charges — **reserves**
+(locked) and **fees** (spent) — and collects both in a token the user already
+holds. Classic `G…` accounts only. No Cavos app, no API key, no wallet lock-in.
+
+```bash title="Terminal"
+npm install @cavos/reserve @stellar/stellar-sdk
+```
+
+```ts title="TypeScript"
+import { Reserve } from "@cavos/reserve";
+
+const reserve = await Reserve.connect("testnet");
+// Mainnet: await Reserve.connect("mainnet")
+
+const USDC = "USDC:GCKUFD5KAAM6DRSLODK55OVECMB5IJ5NSFQYFTBZRPOTJASUKTBZXGS2"; // Cavos Testnet USDC — not Circle
+
+const { hash } = await reserve.pay(
+  {
+    source: address,
+    destination,
+    amount: "10",
+    token: USDC,
+    maxSend: "0.05",
+  },
+  (xdr, { networkPassphrase }) =>
+    wallet.signTransaction(xdr, { networkPassphrase }),
+);
+```
+
+The signer is whatever the wallet already exposes — Freighter, Albedo, a
+`Keypair`, or a Cavos Stellar wallet's `signXdr`. This package is not specific
+to any wallet or account type: any `G…` address works.
+
+Later snippets reuse `USDC` as that testnet issuer. Circle's **mainnet** USDC
+is `USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN`. Always take
+the live string from `tokens()` — an asset code is not an identity.
+
+<Callout type="info">
+**Hosted service.** `new Reserve("testnet")` pins
+`https://reserve.cavos.xyz/testnet` and the testnet passphrase.
+`Reserve.connect` does the same and also pins the **sponsor** from `/health`,
+so a quote that pays anyone else is refused. Prefer `connect`.
+</Callout>
+
+## Two costs, one payment
+
+Stellar needs XLM for two different things. Covering only the fee still leaves
+the user holding lumens so the account can exist.
+
+| Cost | What it is | How Reserve covers it |
+|---|---|---|
+| **Reserves** | XLM *locked*: 1 XLM per account (2 × 0.5 base reserve) + 0.5 per subentry | Sponsored reserves (CAP-33). The user's minimum balance stays at 0. |
+| **Fees** | XLM *spent*: 100 stroops per operation | Fee-bump (CAP-15). The inner transaction is untouched. |
+
+The user pays for both in the same transaction: a `PathPaymentStrictReceive`
+buys exactly the XLM owed through the SDEX / liquidity pools. There is no
+oracle — the rate is the route the payment itself takes. If liquidity moves
+past the quoted `sendMax`, the inner transaction fails and the user is charged
+nothing.
+
+## When to use this vs the kit relayer
+
+[Stellar in `@cavos/kit`](/docs/stellar) already has a gasless path: with an
+`appId`, the Cavos relayer sponsors reserves and fees **in XLM**. The user
+never holds lumens because Cavos pays.
+
+`@cavos/reserve` is a different product:
+
+| | `@cavos/kit` Stellar relayer | `@cavos/reserve` |
+|---|---|---|
+| Who pays | Cavos, in XLM | The user, in an allowlisted token |
+| Who it is for | Embedded Cavos wallets | Any `G…` — Freighter, kit, a raw keypair |
+| What it sponsors | Kit `execute`, trustlines, optional fee-bumps | Classic ops on an allowlist. No Soroban |
+| Identity | Cavos `appId` + registry | None. Paste the URL and it works |
+
+Use **kit's relayer** when you want gasless embedded wallets and Cavos covers
+XLM. Use **Reserve** when the user should pay those same costs in USDC (or
+another accepted asset) — including a Freighter account, or a kit wallet you
+do **not** send through `wallet.execute`.
+
+They compose. A kit Stellar wallet can sign a Reserve transaction with
+`wallet.signXdr`. That is how you get a Cavos-authenticated `G…` that holds
+**zero XLM** and pays its own way in a token. Do not also call
+`wallet.execute` for that first creation: kit would create the account on the
+relayer path instead.
+
+## Pay
+
+`pay` looks at the destination. If it can receive a Payment (account exists,
+and for a credit asset a live trustline), that is what is built. Otherwise the
+money is left as a **claimable balance**. The sender is a second claimant: if
+nobody claims it, they can take it back after seven days.
+
+```ts title="TypeScript"
+const { hash } = await reserve.pay(
+  {
+    source: address,
+    destination,
+    amount: "10",
+    token: USDC,
+    maxSend: "0.05",
+  },
+  sign,
+);
+```
+
+`maxSend` is a decimal in the **fee token** (the same asset as `token` here).
+`maxSendStroops` is the same ceiling in stroops (`1` token = `10_000_000`
+stroops). One of them is required: the fee payment is not one of the user's
+operations, so without a ceiling a quote for any amount at all would verify
+cleanly.
+
+## Activate an account that holds no XLM
+
+Someone with no account cannot hold XLM and cannot source a transaction. Never
+create the account empty: sponsored reserves handed to an address that never
+comes back cannot be recovered (`RevokeSponsorship` fails with
+`REVOKE_SPONSORSHIP_LOW_RESERVE`).
+
+Stellar's mechanism for paying someone who has no account yet is a claimable
+balance. The recipient's first transaction does everything at once — create,
+trust, claim — and the reserves (1.5 XLM for an account with one trustline)
+plus the fees come out of the claimed funds:
+
+```ts title="TypeScript"
+await reserve.activate(
+  {
+    address: newAddress,
+    token: USDC,
+    balanceId,
+    maxSend: "5",
+  },
+  sign,
+);
+```
+
+The claimable has to cover opening reserves plus the fee. `quote.createsAccount`
+is `true` on this path. Equivalent explicit ops, if you would rather quote
+yourself:
+
+```ts title="TypeScript"
+await reserve.send(
+  {
+    source: newAddress,
+    feeToken: USDC,
+    maxSend: "5",
+    ops: [
+      { type: "create_account", destination: newAddress },
+      { type: "change_trust", asset: USDC },
+      { type: "claim_balance", balance_id: balanceId },
+    ],
+  },
+  sign,
+);
+```
+
+<Callout type="warn">
+Do not create an empty account and hope it comes back. Activate in the same
+transaction that claims the funds. `pay` already leaves a claimable when the
+destination is not ready.
+</Callout>
+
+## Signers
+
+The SDK asks the wallet to sign **bytes it has already verified**. Shape:
+
+```ts title="TypeScript"
+type Signer = (
+  xdr: string,
+  opts: { networkPassphrase: string },
+) => Promise<string> | string;
+```
+
+**Freighter:**
+
+```ts title="TypeScript"
+import { signTransaction } from "@stellar/freighter-api";
+
+const sign = async (xdr: string, { networkPassphrase }: { networkPassphrase: string }) => {
+  const signed = await signTransaction(xdr, { networkPassphrase, address });
+  if (signed.error || !signed.signedTxXdr) {
+    throw new Error(signed.error?.message ?? "Freighter did not sign");
+  }
+  return signed.signedTxXdr;
+};
+```
+
+**`@cavos/kit` Stellar wallet** (`signXdr` does not submit):
+
+```ts title="TypeScript"
+import { Cavos } from "@cavos/kit";
+import { Reserve } from "@cavos/reserve";
+
+const session = await Cavos.connect({
+  chains: ["stellar"],
+  defaultChain: "stellar",
+  network: "testnet",
+  identity,
+  appSalt: "my-app",
+  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+});
+const wallet = session.wallet("stellar");
+const reserve = await Reserve.connect("testnet");
+const USDC = "USDC:GCKUFD5KAAM6DRSLODK55OVECMB5IJ5NSFQYFTBZRPOTJASUKTBZXGS2";
+
+if (wallet.chain === "stellar") {
+  await reserve.pay(
+    { source: wallet.address, destination, amount: "10", token: USDC, maxSend: "0.05" },
+    (xdr) => wallet.signXdr(xdr),
+  );
+}
+```
+
+**A `Keypair`:**
+
+```ts title="TypeScript"
+import { TransactionBuilder } from "@stellar/stellar-sdk";
+
+const sign = (xdr: string, { networkPassphrase }: { networkPassphrase: string }) => {
+  const tx = TransactionBuilder.fromXDR(xdr, networkPassphrase);
+  tx.sign(keypair);
+  return tx.toXDR();
+};
+```
+
+## Verification is the point
+
+The service builds the bytes a wallet is asked to sign. Comparing those bytes
+only against the quote the service just sealed proves nothing: a compromised
+server can make the two agree. `quote` therefore keeps the request **you**
+made, and `build` / `send` refuse anything that does not match it.
+
+That check needs three things the HTTP body used to omit:
+
+- **`maxSend` / `maxSendStroops`** — the fee payment is not one of `ops`.
+- **the operations and fee token you asked for** — not the ones the payload
+  claims you asked for.
+- **`networkPassphrase` and `sponsor`**, when set on the client — neither is
+  inside the envelope a wallet signs.
+
+The path of the fee payment is compared hop for hop against the quote. A
+hostile route cannot spend more than `maxSendStroops`; that ceiling, not a
+local path finder, is what bounds the loss.
+
+Calling `/v1/build` yourself and signing the bytes gives this up. Use `send`,
+or call `verifyTransaction` with the request **you** made:
+
+```ts title="TypeScript"
+import { verifyTransaction, readQuote } from "@cavos/reserve";
+
+verifyTransaction(xdr, readQuote(quoteToken), {
+  source,
+  feeToken: USDC,
+  maxSendStroops: 500_000,
+  ops,
+});
+```
+
+<Callout type="warn">
+Do not verify a quote against its own payload. Pass the caller's inputs.
+`ReserveVerificationError` means the SDK refused to sign.
+</Callout>
+
+## Quote, then send
+
+`pay` and `activate` are wrappers around this:
+
+```ts title="TypeScript"
+const quote = await reserve.quote({
+  source: address,
+  feeToken: USDC,
+  maxSend: "0.05",
+  ops: [
+    { type: "payment", destination, asset: USDC, amount: "10" },
+  ],
+});
+
+console.log(quote.mode);            // "sponsored" | "bootstrap"
+console.log(quote.chargeStroops);   // XLM the service receives
+console.log(quote.sendMaxStroops);  // ceiling in the fee token
+console.log(quote.reserveStroops);  // XLM locked on the sponsor's side
+console.log(quote.slippageBps);
+console.log(quote.createsAccount);
+console.log(quote.expiresAtLedger);
+
+const { hash } = await reserve.send(quote, sign);
+```
+
+`send` is `build` → verify → sign → submit. You can split it (`build`, then
+`submit(quote, signedXdr)`) when the signer lives in another process.
+
+Quotes live about a minute (`RESERVE_QUOTE_LEDGERS`, default 12). They travel
+as an HMAC-signed payload — the service stores nothing. At submit it rebuilds
+the inner transaction and compares XDR byte for byte.
+
+### Modes
+
+| Mode | When | Who sources the inner tx |
+|---|---|---|
+| **`sponsored`** | The account already exists | The user. The sponsor only fee-bumps. |
+| **`bootstrap`** | The account does not exist yet | The sponsor (or a channel account). The new account co-signs. Requires a `claim_balance` in the same request. |
+
+Bootstrap consumes a sponsor sequence unless extra channel accounts are
+configured. A second concurrent bootstrap returns `503 bootstrap_busy` —
+retry.
+
+## Operations
+
+Reserve is not a general submit pipeline. The request type cannot express
+`SetOptions`, `InvokeHostFunction`, or arbitrary XDR, so no transaction it
+builds can add a signer or change thresholds.
+
+| `type` | Fields | |
+|---|---|---|
+| `create_account` | `destination` | Starting balance is 0. Reserves sponsored. |
+| `payment` | `destination`, `asset`, `amount` | Classic payment. |
+| `path_payment_strict_send` | `destination`, `send_asset`, `send_amount`, `dest_asset`, `dest_min`, `path?` | Classic DEX swap. |
+| `change_trust` | `asset`, `limit?` | Opens a trustline. Its reserve is sponsored. |
+| `claim_balance` | `balance_id` | Horizon's 72-character hex id. Required to bootstrap. |
+| `create_claimable_balance` | `destination`, `asset`, `amount` | Used when a Payment would fail. The service always adds the sender as a second claimant, reclaimable after seven days. |
+
+`asset` is canonical `CODE:ISSUER`, or `"native"` for XLM. Contract ids
+(`C…`) are refused.
+
+## Accepted tokens
+
+Only allowlisted assets are accepted as payment. An asset code is not an
+identity on Stellar — mainnet has hundreds of issuers of something called
+"USDC". Always show the issuer or its `home_domain` in the UI, never the code
+alone.
+
+```ts title="TypeScript"
+const { known } = await reserve.tokens();
+// [{ asset: "USDC:GA5ZSEJ…", code: "USDC", domain: "circle.com", issuer, slippageBps, note }]
+```
+
+`GET /v1/tokens` is the source of truth for a given deployment. The hosted
+lists as of this writing:
+
+**Testnet** (`https://reserve.cavos.xyz/testnet`)
+
+| Asset | Domain | Notes |
+|---|---|---|
+| `native` | stellar.org | XLM |
+| `USDC:GCKUFD5KAAM6DRSLODK55OVECMB5IJ5NSFQYFTBZRPOTJASUKTBZXGS2` | cavos.xyz | Cavos Testnet USDC — not Circle. What the Reserve demo sends. |
+| `USDC:GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5` | centre.io | Circle USDC on Testnet |
+
+**Mainnet** (`https://reserve.cavos.xyz/mainnet`)
+
+| Asset | Domain |
+|---|---|
+| `native` | stellar.org |
+| `USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN` | circle.com |
+| `USDT0:GATISXX6BZ6NC7IKQBY37CJD4SOZL3CYZJWXEDG6JVIY4WBS6KXJHN6Q` | usdt0.to |
+| `EURC:GDHU6WRG4IEQXM5NZ4BMPKOXHW76MZM4Y2IEMFDVXBSDP6SJY4ITNPP2` | circle.com |
+| `PYUSD:GDQE7IXJ4HUHV6RQHIUPRJSEZE4DRS5WY577O2FY6YQ5LVWZ7JZTU2V5` | token-metadata.paxos.com |
+| `USDGLO:GBBS25EGYQPGEZCGCFBKG4OAGFXU6DSOQBGTHELLJT3HZXZJ34HWS6XV` | app.glodollar.org |
+| `AQUA:GBNZILSTVQZ4R7IKQDGHYGY2QXL5QOFJYQMXPKWRRM5PAV7Y4M67AQUA` | aqua.network |
+| `SHX:GDSTRSHXHGJ7ZIVRBXEYE5Q74XUVCUSEKEBR7UCHEUUEK72N7I7KJ6JH` | stronghold.co |
+| `yXLM:GARDNV3Q7YGT4AKSDF25LT32YSCCW4EV22Y2TV3I2PU2MMXJTEDL5T55` | ultracapital.xyz |
+| `yUSDC:GDGTVWSM4MGS4T7Z6W4RPWOCHE2I6RDFCIFZGS3DOA63LWQTRNZNTTFF` | ultracapital.xyz |
+
+The fee is *strict receive*: the sponsor is credited exactly the quoted XLM,
+and the user's balance is debited whatever the market asks, up to `sendMax`.
+When the market moves in their favour they pay less. Past that ceiling the
+inner transaction fails; the sponsor still pays the fee-bump fee.
+
+## Client API
+
+| | |
+|---|---|
+| `new Reserve("testnet" \| "mainnet")` | Hosted URL + pinned passphrase |
+| `new Reserve({ url, network, networkPassphrase, sponsor, headers, fetch, horizonUrl })` | Self-host, extra headers, or a pinned sponsor |
+| `Reserve.connect(network)` | Same, plus sponsor pinned from `/health` |
+| `pay({ source, destination, amount, token, maxSend })` | Payment, or a claimable if the dest is not ready |
+| `activate({ address, token, balanceId, maxSend })` | create + trust + claim |
+| `quote({ source, ops, feeToken?, maxSend })` | Price classic operations |
+| `send(quote \| request, signer)` | build → verify → sign → submit |
+| `build(quote)` | Fetch the transaction and verify it against the held request |
+| `submit(quote, signedXdr)` | Submit an already-signed transaction |
+| `tokens()` | Assets this deployment accepts, with issuer and domain |
+| `destinationReady(destination, asset)` | Whether a Payment would land |
+| `readQuote(token)` | Decode a quote payload |
+| `verifyQuote` / `verifyTransaction` | The check, on its own |
+
+Peer dependency: `@stellar/stellar-sdk` ≥ 12.
+
+Self-host a single network at `http://127.0.0.1:8080` (the process answers
+`/v1` at the root). Point the client with
+`new Reserve({ url: "http://127.0.0.1:8080", network: "testnet" })`.
+
+## HTTP
+
+Prefer the SDK. These are the endpoints it calls. Prefix every path with
+`/testnet` or `/mainnet`. Spec:
+[openapi.yaml](https://reserve.cavos.xyz/openapi.yaml).
+
+```
+GET  /{network}/v1/tokens
+GET  /{network}/v1/status/{hash}
+POST /{network}/v1/quote          { source, fee_token, ops[] }
+POST /{network}/v1/build          { quote }
+POST /{network}/v1/submit         { quote, signed_xdr }
+POST /{network}/v1/challenge      { address }          // optional key
+POST /{network}/v1/keys           { signed_xdr }       // optional key
+GET  /health
+GET  /{network}/health
+```
+
+```bash title="Terminal"
+curl -s https://reserve.cavos.xyz/testnet/v1/quote \
+  -H 'content-type: application/json' \
+  -d '{
+    "source": "G…",
+    "fee_token": "native",
+    "ops": [{
+      "type": "payment",
+      "destination": "G…",
+      "asset": "native",
+      "amount": "10"
+    }]
+  }'
+```
+
+Quote response:
+`{ quote, mode, charge_stroops, send_max_stroops, reserve_stroops, slippage_bps, creates_account, expires_at_ledger }`.
+
+## Optional keys
+
+A key is identity, never authorisation. Unkeyed callers are served from a
+smaller budget, so the URL works with no signup.
+
+| | Requests / minute |
+|---|---|
+| Unkeyed | 30 |
+| Keyed (`Authorization: Bearer cav_…`) | 600 |
+| Global ceiling | 3000 |
+
+Get one from [reserve.cavos.xyz](https://reserve.cavos.xyz/#key): connect a
+wallet, sign a challenge, keep the key. Signing again returns the same key.
+Nothing is stored.
+
+```ts title="TypeScript"
+const reserve = new Reserve({
+  network: "testnet",
+  headers: { Authorization: `Bearer ${key}` },
+});
+```
+
+## Errors
+
+JSON `{ error, message }`. `Retry-After` when `rate_limited` or
+`bootstrap_busy`. The SDK throws `ReserveError` with `code` and `status`.
+
+| `error` | Status | |
+|---|---|---|
+| `rate_limited` | 429 | Slow down, or raise the limit with a key. |
+| `bootstrap_busy` | 503 | Another new-account quote is in flight. Retry. |
+| `token_not_allowed` | 400 | Not on this deployment's allowlist. Call `tokens()`. |
+| `no_path` | 422 | No SDEX / pool route from the fee token to XLM. |
+| `unclaimable` | 422 | The balance cannot be claimed by this address. |
+| `quote_expired` | 409 | Quote ~60s. Get a new one. |
+| `quote_signature` | 401 | Tampered or foreign quote. |
+| `quote_mismatch` | 400 | Built XDR does not match the quote. |
+| `path_moved` | 409 | Route moved past `sendMax`. Quote again. |
+| `horizon` | 502 | Upstream Horizon failed. |
+| `invalid_request` / `invalid_address` | 400 | Malformed body. |
+
+## What it is not
+
+- **Not custodial.** Reserve never holds a user key and never adds itself as
+  a signer. Sponsorship is a reserve obligation, not authority.
+- **Not the kit Stellar relayer.** That path is Cavos paying XLM for embedded
+  wallets. This path is the user paying in a token, from any wallet.
+- **Not a general relayer.** No arbitrary XDR, no Soroban, no `SetOptions`.
+- **Not a dashboard.** Keys are signed statements about an address. Signing
+  the challenge again returns the same one.
+- **Not multi-chain.** Classic Stellar `G…` accounts only.
+
+The remaining risk is blind-signing a server-built XDR, which is why the SDK
+rebuilds and verifies locally before the wallet sees the bytes.
+
+## What it charges
+
+Twenty per cent over cost, with a floor of 56,000 stroops (about $0.001 at
+XLM near $0.18). Reserves are passed on in full — they are money handed over,
+not a service. A new account with one trustline costs 1.5 XLM of reserves, so
+it is charged 1.5 XLM plus margin, out of the funds it claims.
+
+## Machine-readable
+
+The hosted product also publishes agent files. This page is the copy that
+lives with the rest of docs.cavos.xyz (and therefore in `/llms-full.txt`).
+
+```bash title="Terminal"
+curl -s https://docs.cavos.xyz/llms-full.txt
+curl -s https://reserve.cavos.xyz/openapi.yaml
+curl -s https://reserve.cavos.xyz/testnet/v1/tokens
+```

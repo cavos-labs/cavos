@@ -31,9 +31,17 @@ Then ask it to integrate `@cavos/kit` into your app.
 >
 > [paste contents of /llms-full.txt]
 
+For token-pay Stellar sponsorship (`@cavos/reserve`), same paste, different ask:
+
+> Using the Cavos docs below, add `@cavos/reserve` so users pay Stellar
+> reserves and fees in USDC and never hold XLM. Use `Reserve.connect("testnet")`,
+> `pay` / `activate` / `send`, and a `maxSend` ceiling. Do not call `/v1/build`
+> and sign the bytes. Token identity is CODE:ISSUER from `tokens()`. Never
+> create an empty account.
+
 ## What an agent should know up front
 
-- **Install:** `npm install @cavos/kit`.
+- **Install:** `npm install @cavos/kit`. Stellar token-pay sponsorship is a **separate** package: `npm install @cavos/reserve @stellar/stellar-sdk`. See [Reserve](/docs/reserve).
 - **Every-chain direction, three adapters today:** **Starknet**, **Solana**, and **Stellar** (classic `G…` account) ship now. Never invent support for a roadmap chain. See [Chains](/docs/chains).
 - **React Native:** use `@cavos/kit/react-native` with Expo Development Builds/EAS or bare React Native. Expo Go is not supported; configure `redirectUri`, `rpId`, and the native config plugin. See [React Native](/docs/react-native).
 - **Passkeys.** Login never prompts. Call `enrollPasskeyDefault()` / `approveDeviceWithPasskey()`. On **Solana/Stellar** the PRF is the MasterDEK KDF (can spend). On **Starknet** it is an on-chain approver. `deviceApproval: "passkey"` is one chain; use `"enclave"` for multi-chain. See [Passkeys](/docs/passkeys).
@@ -41,7 +49,7 @@ Then ask it to integrate `@cavos/kit` into your app.
 - **Multi-chain sessions:** Pass `chains: ["starknet", "solana"]` to connect multiple chains at once. Use `session.wallet("solana")` to get each chain's wallet. In React, use `setChain()` to switch the active chain without remounting.
 - **`execute` differs per chain:** Starknet → `wallet.execute(calls)`; Solana → `wallet.execute(amount, destination)` or allowlisted `wallet.executeInstructions(instructions)`; Stellar → `wallet.execute(amount, destination)` plus `wallet.invokeContract(...)` for Soroban calls.
 - **Lazy deploy on Starknet/Stellar:** Connect never deploys those accounts. Native **Solana** is a system account: `ready` once this device has the spend key; fund it with lamports before the first transfer.
-- **Gas sponsorship differs per chain:** Starknet uses a paymaster; Solana uses a relayer as fee payer; Stellar uses sponsored reserves and optional fee bumps. Never put a secret sponsorship credential in client-side code.
+- **Gas sponsorship differs per chain:** Starknet uses a paymaster; Solana uses a relayer as fee payer; Stellar kit relayer (`appId`) sponsors reserves and fees in XLM. `@cavos/reserve` is not that relayer. It lets any `G…` pay those same costs in an allowlisted token. Use `pay` / `activate` / `send`; do not call `/v1/build` and sign the bytes. Never send Soroban, SetOptions, or arbitrary XDR. `maxSend` (or `maxSendStroops`) is required. Token identity is `CODE:ISSUER`. Never create an empty account — activate with a claimable in the same transaction. Unkeyed: 30 req/min. Concurrent bootstrap can return `503 bootstrap_busy` — retry. See [Reserve](/docs/reserve). Never put a secret sponsorship credential in client-side code.
 - **Gate execution on status:** call `execute` when `status === "undeployed"` OR `status === "ready"`. Only `"needs-device-approval"` blocks execution — route that to [multi-device](/docs/multi-device).
 - **Credential boundary:** `appId` is public. The current Starknet web SDK also receives `paymasterApiKey` client-side, so use only an app/environment-scoped key with origin, rate, and spend restrictions—never an operator or treasury secret.
 - **Registry-first address resolution:** Addresses are looked up in the Cavos registry first, not purely derived from identity. The registry key is `(userId, appId, chain, network)`. The first device to claim an address wins. `appSalt` is the local device-key slot and, on native Solana/Stellar, the HKDF salt for the spend key. Never change it.
@@ -60,6 +68,7 @@ Then ask it to integrate `@cavos/kit` into your app.
   <Card title="Starknet" href="/docs/starknet" description="Cairo DeviceAccount + Cavos paymaster." />
   <Card title="Solana" href="/docs/solana" description="Native Ed25519 system account + fee-payer relayer." />
   <Card title="Stellar" href="/docs/stellar" description="Classic G… + MasterDEK unlock + Soroban." />
+  <Card title="Reserve" href="/docs/reserve" description="@cavos/reserve — pay Stellar reserves and fees in a token." />
   <Card title="API reference" href="/docs/api-reference" description="Every public export." />
   <Card title="Concepts" href="/docs/concepts" description="Security model & determinism." />
   <Card title="Dashboard" href="/docs/dashboard" description="Console: roles, API keys, webhooks, sponsorship." />

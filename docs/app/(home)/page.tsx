@@ -52,6 +52,11 @@ const TOPICS: {
     href: '/docs/api-reference',
     desc: 'Every export in the package, with types and signatures.',
   },
+  {
+    label: 'Reserve',
+    href: '/docs/reserve',
+    desc: 'Pay Stellar reserves and fees in a token, from any G… wallet.',
+  },
 ];
 
 const VALUES: { term: string; desc: string }[] = [
