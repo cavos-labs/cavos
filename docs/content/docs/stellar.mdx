@@ -361,6 +361,40 @@ one signer via `setOptions` (weight 0). You cannot revoke the signer this
 device is using. Native Solana has no equivalent — `removeSigner` throws.
 </Callout>
 
+## Pay reserves and fees in a token
+
+The kit relayer (`appId`) sponsors **XLM** so the user never holds lumens —
+Cavos pays. That is the default for `execute`, trustlines, and fee-bumps.
+
+If the user should pay those same costs in USDC (or another allowlisted
+asset), use [`@cavos/reserve`](/docs/reserve) and sign with
+`wallet.signXdr`. Do not also call `wallet.execute` to create the account:
+that would take the relayer path instead.
+
+```ts title="TypeScript"
+import { Reserve } from "@cavos/reserve";
+
+const reserve = await Reserve.connect("testnet");
+
+if (wallet.chain === "stellar") {
+  await reserve.pay(
+    {
+      source: wallet.address,
+      destination,
+      amount: "10",
+      token: "USDC:GCKUFD5KAAM6DRSLODK55OVECMB5IJ5NSFQYFTBZRPOTJASUKTBZXGS2",
+      maxSend: "0.05",
+    },
+    (xdr) => wallet.signXdr(xdr),
+  );
+}
+```
+
+Reserve is wallet-agnostic (Freighter works the same way) and does not need
+a Cavos `appId`. Classic operations only — no Soroban. See
+[Reserve](/docs/reserve) for activate-from-a-claimable (a `G…` that holds
+0 XLM), verification, and the token allowlist.
+
 ## Gasless vs self-funded
 
 | Path | When | Who pays |
@@ -424,6 +458,7 @@ Networks: `"stellar-testnet"`, `"stellar-mainnet"`.
   the `TrustlessWorkEscrow` wrapper (fund → deliver → approve → release, plus
   disputes) with `getEscrow` live state reads.
 - ✅ **Enclave DEK wrap** and **passkey PRF** restore on the native path.
+- ✅ **Pay in a token** via [`@cavos/reserve`](/docs/reserve) (`wallet.signXdr`).
 
 For the cross-chain model and how this compares to the other chains, see
 [Chains](/docs/chains) and [Concepts](/docs/concepts).

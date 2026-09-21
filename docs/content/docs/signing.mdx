@@ -73,6 +73,11 @@ For Soroban, `invokeContract` simulates the call and re-signs the account's
 authorization entries with the local control key. A fee-bump relayer can pay the
 outer fee without becoming an account signer. See [Stellar](/docs/stellar).
 
+To have the **user** pay Stellar reserves and fees in a held token (USDC, not
+XLM sponsored by Cavos), use [`@cavos/reserve`](/docs/reserve) and sign the
+verified envelope with `wallet.signXdr`. That is a separate package and a
+separate sponsor from the kit relayer.
+
 ## Signing without submission
 
 Every adapter can sign a transaction without submitting it — useful when your

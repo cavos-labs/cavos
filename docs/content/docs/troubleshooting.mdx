@@ -123,6 +123,26 @@ cancel an unwanted recovery. The SDK persists the public `readyAt`, resumes
 after a refresh, and finalizes automatically when the delay expires. Surface
 `walletStatus.socialRecoveryReadyAt` so the user knows when to come back.
 
+## Reserve refused to sign, or `token_not_allowed`
+
+That is [`@cavos/reserve`](/docs/reserve), not the kit Stellar relayer. The SDK
+compares the built transaction against the request **you** made and refuses to
+sign on mismatch.
+
+Typical causes:
+
+- `maxSend` / `maxSendStroops` missing or too tight (`path_moved`, or
+  `ReserveError` from the client before a request is sent).
+- Fee token not on this host's allowlist — call `reserve.tokens()`. An asset
+  **code** is not an identity; use `CODE:ISSUER`.
+- Calling `/v1/build` and signing the bytes instead of `send`.
+- Quote expired (~60 seconds) — `quote_expired`.
+- Creating a new account while another bootstrap is in flight —
+  `503 bootstrap_busy`. Retry.
+
+Kit `wallet.execute` on Stellar still uses the Cavos XLM relayer. Do not mix
+the two paths for the same first-create.
+
 ## Still stuck
 
 Run the config checks and read what they say — they cover the mistakes above
