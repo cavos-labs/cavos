@@ -27,16 +27,36 @@ export const SAFE_CPI_PROGRAM_IDS: string[] = [
   'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL', // Associated Token
 ];
 
+/** Solana's per-transaction ceiling, and the default when none is requested. */
+const MAX_TX_COMPUTE_UNITS = 1_400_000;
+const DEFAULT_CU_PER_INSTRUCTION = 200_000;
+
 export const MAX_SPONSORED_COMPUTE_UNITS = 1_000_000;
+/** Priority fee is charged on the REQUESTED unit limit, so it is bounded up front. */
+export const MAX_SPONSORED_PRIORITY_FEE_LAMPORTS = 1_000_000;
+/** Each costs the relayer ~0.002 SOL of rent. */
+export const MAX_SPONSORED_ATA_CREATIONS = 2;
+
+const SYSTEM_PROGRAM_ID = '11111111111111111111111111111111';
+const ASSOCIATED_TOKEN_PROGRAM_ID = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL';
+
+// ComputeBudget encodes a 1-byte discriminant followed by a little-endian payload.
+const CU_LIMIT_IX = 2; // u32, 5 bytes total
+const CU_PRICE_IX = 3; // u64, 9 bytes total
 
 export interface ValidationResult {
   ok: boolean;
   reason?: string;
 }
 
-const SYSTEM_PROGRAM_ID = '11111111111111111111111111111111';
-const SYSTEM_TRANSFER_IX = 2;
-
+/**
+ * The relayer signs as fee payer, and a fee payer is always a signer — so any
+ * instruction naming it as authority is self-authorizing. Rather than enumerate
+ * the instructions that could spend it (the reason `CreateAccount` slipped past
+ * an earlier `Transfer`-only check), the relayer may not appear in an
+ * instruction at all, with one exception: funding a token account for someone
+ * else, which is what makes a zero-SOL user able to receive SPL tokens.
+ */
 export function validateNativeSponsoredTransaction(
   tx: Transaction,
   relayer: PublicKey,
@@ -48,6 +68,10 @@ export function validateNativeSponsoredTransaction(
   if (tx.instructions.length === 0) {
     return { ok: false, reason: 'empty transaction' };
   }
+  const userSigned = tx.signatures.some((s) => s.signature && !s.publicKey.equals(relayer));
+  if (!userSigned) {
+    return { ok: false, reason: 'native transaction is missing the user signature' };
+  }
 
   const allowed = new Set<string>([
     SYSTEM_PROGRAM_ID,
@@ -55,56 +79,77 @@ export function validateNativeSponsoredTransaction(
     ...SAFE_CPI_PROGRAM_IDS,
     ...appAllowedPrograms,
   ]);
-  let requestedCu = 0;
-  let userSigned = false;
 
-  for (const sig of tx.signatures) {
-    if (!sig.signature) continue;
-    if (!sig.publicKey.equals(relayer)) userSigned = true;
-  }
-  if (!userSigned) {
-    return { ok: false, reason: 'native transaction is missing the user signature' };
-  }
+  let requestedCu: number | null = null;
+  let unitPrice = 0n;
+  let ataCreations = 0;
 
   for (const ix of tx.instructions) {
     const pid = ix.programId.toBase58();
+
     if (pid === COMPUTE_BUDGET_PROGRAM_ID) {
-      const cu = parseComputeUnitLimit(ix.data);
-      if (cu !== null) requestedCu = Math.max(requestedCu, cu);
+      const data = Buffer.from(ix.data);
+      if (data.length === 5 && data[0] === CU_LIMIT_IX) requestedCu = data.readUInt32LE(1);
+      else if (data.length === 9 && data[0] === CU_PRICE_IX) unitPrice = data.readBigUInt64LE(1);
       continue;
     }
+
     if (!allowed.has(pid)) {
       return { ok: false, reason: `top-level instruction to non-whitelisted program ${pid}` };
     }
-    if (pid === SYSTEM_PROGRAM_ID && isSystemTransferFrom(ix, relayer)) {
-      return { ok: false, reason: 'native transaction must not transfer from the relayer' };
+
+    if (ix.keys.some((k) => k.pubkey.equals(relayer))) {
+      if (!isRelayerFundedTokenAccount(ix, pid, relayer)) {
+        return { ok: false, reason: 'instruction would spend from the relayer' };
+      }
+      if (++ataCreations > MAX_SPONSORED_ATA_CREATIONS) {
+        return {
+          ok: false,
+          reason: `more than ${MAX_SPONSORED_ATA_CREATIONS} relayer-funded token accounts`,
+        };
+      }
     }
   }
-  if (requestedCu > MAX_SPONSORED_COMPUTE_UNITS) {
+
+  const effectiveCu =
+    requestedCu ??
+    Math.min(tx.instructions.length * DEFAULT_CU_PER_INSTRUCTION, MAX_TX_COMPUTE_UNITS);
+  if (effectiveCu > MAX_SPONSORED_COMPUTE_UNITS) {
     return {
       ok: false,
-      reason: `requested compute units ${requestedCu} exceed sponsored cap ${MAX_SPONSORED_COMPUTE_UNITS}`,
+      reason: `requested compute units ${effectiveCu} exceed sponsored cap ${MAX_SPONSORED_COMPUTE_UNITS}`,
     };
   }
+
+  const priorityFee = (BigInt(effectiveCu) * unitPrice + 999_999n) / 1_000_000n;
+  if (priorityFee > BigInt(MAX_SPONSORED_PRIORITY_FEE_LAMPORTS)) {
+    return {
+      ok: false,
+      reason: `priority fee ${priorityFee} lamports exceeds sponsored cap ${MAX_SPONSORED_PRIORITY_FEE_LAMPORTS}`,
+    };
+  }
+
   return { ok: true };
 }
 
-function isSystemTransferFrom(
-  ix: { programId: PublicKey; data: Buffer; keys: { pubkey: PublicKey }[] },
+/**
+ * An Associated Token Account create, paid for by the relayer and owned by
+ * someone else. Data is empty (Create), [0] (Create) or [1] (CreateIdempotent);
+ * [2] is RecoverNested, which moves tokens and is never sponsored.
+ */
+function isRelayerFundedTokenAccount(
+  ix: { data: Buffer; keys: { pubkey: PublicKey }[] },
+  programId: string,
   relayer: PublicKey,
 ): boolean {
+  if (programId !== ASSOCIATED_TOKEN_PROGRAM_ID) return false;
   const data = Buffer.from(ix.data);
-  if (data.length < 4) return false;
-  if (data.readUInt32LE(0) !== SYSTEM_TRANSFER_IX) return false;
-  return ix.keys[0]?.pubkey.equals(relayer) ?? false;
-}
-
-const SET_CU_LIMIT_DISC = Buffer.from([0x20, 0xb5, 0xc0, 0x1c, 0xe2, 0x6e, 0x6d, 0xd6]);
-function parseComputeUnitLimit(data: Buffer): number | null {
-  if (data.length === 12 && data.subarray(0, 8).equals(SET_CU_LIMIT_DISC)) {
-    return data.readUInt32LE(8);
-  }
-  return null;
+  const isCreate = data.length === 0 || (data.length === 1 && (data[0] === 0 || data[0] === 1));
+  if (!isCreate) return false;
+  return (
+    (ix.keys[0]?.pubkey.equals(relayer) ?? false) &&
+    !ix.keys.slice(1).some((k) => k.pubkey.equals(relayer))
+  );
 }
 
 export function connectionFor(network: SolanaNetwork): Connection {
