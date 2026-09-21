@@ -8,7 +8,7 @@ The wallet SDK itself is not here — it is [`cavos-labs/kit`](https://github.co
 
 ## What is in here
 
-Three independent applications. Each has its own `package.json`, lockfile,
+Two independent applications. Each has its own `package.json`, lockfile,
 environment and build, so commands run from the directory, never from the root.
 
 ### `cavos-web/`
@@ -40,18 +40,6 @@ Fumadocs.
 ```bash
 cd docs && npm install && npm run dev
 ```
-
-### `confidential-recovery/`
-
-**Orphaned infrastructure, still live.** The recovery service moved to
-[`cavos-labs/cavos-recovery`](https://github.com/cavos-labs/cavos-recovery) and
-runs in an AWS Nitro Enclave now. What is left here is Terraform for the Google
-Cloud resources of the design it replaced: a KMS keyring, two service accounts,
-two workload identity pools, an Artifact Registry.
-
-Nothing points at them, but do not tear them down casually — the KMS key sealed
-the enrolment records of the old design and destroying it cannot be undone.
-Read that directory's README before touching it.
 
 ## What lives elsewhere
 
