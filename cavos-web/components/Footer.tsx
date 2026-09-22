@@ -31,6 +31,7 @@ export function Footer() {
                     <h5 className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/50">Company</h5>
                     <ul className="space-y-3 text-sm font-medium text-black/40">
                         <li><Link href="/stats" className="hover:text-black transition-colors">Stats</Link></li>
+                        <li><Link href="/custody" className="hover:text-black transition-colors">Custody</Link></li>
                         <li><Link href="mailto:hello@cavos.xyz" className="hover:text-black transition-colors">Contact</Link></li>
                         <li><Link href="https://twitter.com/cavosxyz" target="_blank" className="hover:text-black transition-colors">X / Twitter</Link></li>
                     </ul>
