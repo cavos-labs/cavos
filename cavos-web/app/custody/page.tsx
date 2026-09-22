@@ -7,14 +7,14 @@ import { Footer } from '@/components/Footer'
 export const metadata: Metadata = {
     title: 'When an Embedded Wallet Makes Your App a Custodian',
     description:
-        'Cited rules for crypto custody: MiCA capital and liability, FinCEN’s hosted-wallet test, the FCA’s UK safeguarding capital, and California’s Digital Financial Assets Law. Not legal advice.',
+        'Cited rules for crypto custody: MiCA, FinCEN, the FCA, California, and the regimes in Brazil, Argentina, Costa Rica, Mexico, Chile, and Colombia. Not legal advice.',
     alternates: {
         canonical: 'https://cavos.xyz/custody',
     },
     openGraph: {
         title: 'When an Embedded Wallet Makes Your App a Custodian',
         description:
-            'What MiCA, FinCEN, the FCA, and California’s DFAL actually require when a product holds or controls user crypto.',
+            'What MiCA, FinCEN, the FCA, California, and the main Latin American regimes require when a product holds or controls user crypto.',
         url: 'https://cavos.xyz/custody',
         type: 'article',
         images: ['/og-image.png'],
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
         card: 'summary_large_image',
         title: 'When an Embedded Wallet Makes Your App a Custodian',
         description:
-            'Custody rules cited to MiCA, FinCEN, the FCA, and California’s DFAL. Not legal advice.',
+            'Custody rules cited to MiCA, FinCEN, the FCA, California, Brazil, Argentina, Costa Rica, Mexico, Chile, and Colombia. Not legal advice.',
         images: ['/og-image.png'],
     },
 }
@@ -33,7 +33,7 @@ const UPDATED = '22 September 2026'
 const FAQ = [
     {
         question: 'Does calling a wallet non-custodial keep a product outside these rules?',
-        answer: 'No regulator cited on this page uses the marketing label as the test. MiCA Article 3(1)(17) covers safekeeping or controlling crypto-assets or the means of access to them, including private keys. FinCEN’s May 2019 guidance says a provider is a money transmitter if it has total independent control over the value, regardless of the label it applies to itself. California Financial Code section 3102 defines “store” as maintaining control of a digital financial asset on behalf of a resident.',
+        answer: 'No regulator cited on this page uses the marketing label as the test. MiCA Article 3(1)(17) covers safekeeping or controlling crypto-assets or the means of access to them, including private keys. FinCEN’s May 2019 guidance says a provider is a money transmitter if it has total independent control over the value, regardless of the label it applies to itself. Argentina writes the carve-out down: Resolución General CNV 1058/2025 says people who exclusively provide self-custody wallets are outside the virtual-asset service provider definition. Mexico’s anti-money-laundering statute, and Costa Rica’s Law 10961, do not copy that carve-out. Costa Rica covers a person who, as a business, has custody, deposit, administration, or control of virtual assets by any means.',
     },
     {
         question: 'What capital does MiCA require for crypto custody?',
@@ -46,6 +46,10 @@ const FAQ = [
     {
         question: 'Does California license crypto storage?',
         answer: 'From 1 July 2026, California’s Digital Financial Assets Law prohibits engaging in digital financial asset business activity with or on behalf of a California resident unless the person is licensed or otherwise permitted. “Store” means maintaining control of a digital financial asset on behalf of a resident by someone other than the resident. “Control” includes the power to execute a transaction unilaterally. The Department of Financial Protection and Innovation says it expects an initial tangible net worth of $100,000 on an application. The surety bond or trust account amount is set by the Department under Financial Code section 3207; the statute does not fix that amount at a published dollar figure.',
+    },
+    {
+        question: 'Is Latin America one custody rule?',
+        answer: 'No. Brazil’s Central Bank, from 2 February 2026, treats custody as guard or control of the instruments that affect rights in a virtual asset, including private keys, and requires prior authorization. Argentina’s securities regulator requires registration and a minimum net worth of USD 150,000 for custody, and excludes exclusive self-custody wallet providers. Costa Rica’s Law 10961, in force three months after its 19 June 2026 publication, requires SUGEF registration for a person who as a business custodies or controls virtual assets. That registration is not an operating authorization. Mexico bars licensed fintech institutions from custodying virtual assets for clients, and separately treats providing means to custody or transfer virtual assets as an anti-money-laundering vulnerable activity. Chile registers professional custody of financial instruments, a category that can include a virtual financial asset. Colombia’s 2025 bill to license virtual-asset service providers was archived; that bill did not become a license.',
     },
     {
         question: 'Does integrating Cavos mean an application needs no license?',
@@ -93,6 +97,56 @@ const SOURCES = [
         label: 'DFPI, Digital Financial Assets Law — Preparing for your Application',
         href: 'https://dfpi.ca.gov/regulated-industries/digital-financial-assets/digital-financial-assets-law-frequently-asked-questions/digital-financial-assets-law-preparing-for-your-application/',
         note: 'Initial tangible net worth of $100,000; bond amount set by DFPI',
+    },
+    {
+        label: 'Lei nº 14.478, de 21 de dezembro de 2022 (Brazil)',
+        href: 'https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2022/lei/l14478.htm',
+        note: 'Article 2, prior authorization. Article 5(IV), custody or administration of virtual assets or of instruments that enable control',
+    },
+    {
+        label: 'Resolução BCB nº 520, de 10 de novembro de 2025',
+        href: 'https://www.in.gov.br/en/web/dou/-/resolucao-bcb-n-520-de-10-de-novembro-de-2025-668059151',
+        note: 'Diário Oficial. In force 2 February 2026. Articles 8, 9, and 88',
+    },
+    {
+        label: 'Resolução Conjunta nº 14, de 3 de novembro de 2025',
+        href: 'https://www.bcb.gov.br/estabilidadefinanceira/exibenormativo?tipo=Resolu%C3%A7%C3%A3o%20Conjunta&numero=14',
+        note: 'Capital formula, articles 8 to 10',
+    },
+    {
+        label: 'Resolução BCB nº 517, de 3 de novembro de 2025',
+        href: 'https://www.bcb.gov.br/estabilidadefinanceira/exibenormativo?tipo=Resolu%C3%A7%C3%A3o%20BCB&numero=517',
+        note: 'Article 3(III) assigns a custodiante SPSAV to custody of third-party resources. Article 4 lists the computing services that add capital',
+    },
+    {
+        label: 'Resolución General CNV 1058/2025 (Argentina)',
+        href: 'https://www.argentina.gob.ar/normativa/nacional/resolucion-1058-2025-410635/texto',
+        note: '12 March 2025. Self-custody exclusion, category 4, and minimum net worth',
+    },
+    {
+        label: 'Decreto Legislativo nº 10961 (Costa Rica), Alcance nº 78 a La Gaceta nº 113',
+        href: 'https://www.imprentanacional.go.cr/pub/2026/06/19/ALCA78_19_06_2026.pdf',
+        note: 'Published 19 June 2026. Adds article 15 quater to Law 7786. In force three months after publication',
+    },
+    {
+        label: 'Ley Federal para la Prevención e Identificación de Operaciones con Recursos de Procedencia Ilícita, artículo 17, fracción XVI (Mexico)',
+        href: 'https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPIORPI.pdf',
+        note: 'Chamber of Deputies text. Fraction XVI amended DOF 16 July 2025',
+    },
+    {
+        label: 'Banxico Circular 4/2019, disposición 3a, texto compilado',
+        href: 'https://www.banxico.org.mx/marco-normativo/normativa-emitida-por-el-banco-de-mexico/circular-4-2019/circular-4-2019.html',
+        note: 'Published DOF 8 March 2019, as amended by Circular 37/2020, DOF 30 September 2020. Institutions may not be authorized to custody virtual assets for clients',
+    },
+    {
+        label: 'Ley nº 21.521 (Chile)',
+        href: 'https://www.bcn.cl/leychile/navegar?idNorma=1187323',
+        note: 'Published 4 January 2023. Articles 3, 5, and 10',
+    },
+    {
+        label: 'Cámara de Representantes de Colombia, Proyecto de Ley 510/2025C',
+        href: 'https://www.camara.gov.co/servicios-activos-virtuales-497/',
+        note: 'Recorded as archived under article 190 of Law 5 of 1992',
     },
     {
         label: 'FATF, Updated Guidance for a Risk-Based Approach to Virtual Assets and VASPs',
@@ -160,7 +214,7 @@ export default function CustodyPage() {
                 dateModified: '2026-09-22',
                 datePublished: '2026-09-22',
                 description:
-                    'Cited comparison of custody obligations under MiCA, FinCEN, the FCA, and California’s Digital Financial Assets Law.',
+                    'Cited comparison of custody obligations under MiCA, FinCEN, the FCA, California, and the Latin American texts cited on this page.',
                 author: { '@type': 'Organization', name: 'Cavos', url: 'https://cavos.xyz' },
                 publisher: { '@type': 'Organization', name: 'Cavos', url: 'https://cavos.xyz' },
                 mainEntityOfPage: 'https://cavos.xyz/custody',
@@ -197,9 +251,14 @@ export default function CustodyPage() {
                     <p className="mt-7 max-w-2xl text-lg leading-relaxed text-muted">
                         Custody of someone else’s crypto is a licensed financial service in the
                         European Union, under US federal money-transmission rules, in California,
-                        and, from 25 October 2027, in the United Kingdom. The trigger in each text
-                        below is control of the assets or of the keys, not the word printed on the
-                        wallet.
+                        and, from 25 October 2027, in the United Kingdom. Latin America does not
+                        share one rule. Argentina excludes exclusive self-custody wallet providers
+                        and still requires USD 150,000 of net worth to custody. Brazil requires
+                        prior authorization to guard or control the keys. Costa Rica, since 19
+                        September 2026, requires SUGEF registration to custody or control virtual
+                        assets as a business, and that registration is not an operating license.
+                        The trigger, where a text states one, is control of the assets or of the
+                        keys.
                     </p>
                 </header>
 
@@ -214,8 +273,9 @@ export default function CustodyPage() {
                 <section className="mt-16 max-w-3xl">
                     <h2 className="text-3xl font-medium tracking-[-0.03em]">The test is control</h2>
                     <p className="mt-5 text-base leading-relaxed text-muted">
-                        Four regimes, four formulations of the same question: can someone other
-                        than the owner safekeep the assets or cause them to move?
+                        These four texts ask the same question: can someone other than the owner
+                        safekeep the assets or cause them to move? Latin America answers it
+                        country by country, in the section below.
                     </p>
                     <ul className="mt-6 space-y-4 text-sm leading-relaxed">
                         <li>
@@ -263,7 +323,8 @@ export default function CustodyPage() {
                         “Embedded” describes where the wallet sits in the app. It does not say who
                         can sign. The middle column is the one most often mislabeled: a provider
                         that holds a key required to spend, or that can move funds on its own, is
-                        judged on that power.
+                        judged on that power. The Latin American texts do not fit one extra column,
+                        so they are cited on their own below.
                     </p>
                     <div className="mt-8 overflow-x-auto rounded-2xl border border-line">
                         <table className="w-full min-w-[960px] border-collapse text-left">
@@ -501,6 +562,245 @@ export default function CustodyPage() {
                             outside safeguarding. The capital figures apply to firms that have the
                             safeguarding permission.
                         </p>
+                    </div>
+                </section>
+
+                <section className="mt-20">
+                    <h2 className="text-3xl font-medium tracking-[-0.03em]">Latin America: six texts, not one rule</h2>
+                    <p className="mt-5 max-w-3xl text-sm leading-relaxed text-muted">
+                        A product with users in São Paulo, Buenos Aires, and San José is not under
+                        one custody statute. Argentina writes an exclusion for exclusive
+                        self-custody wallet providers. Brazil prices custody as a licensed
+                        activity with a capital formula. Costa Rica registers the activity for
+                        anti-money-laundering supervision and says that registration is not an
+                        operating authorization. None of the other texts below copies Argentina’s
+                        exclusion.
+                    </p>
+                    <div className="mt-8 overflow-x-auto rounded-2xl border border-line">
+                        <table className="w-full min-w-[880px] border-collapse text-left text-sm">
+                            <thead className="bg-brand text-white">
+                                <tr>
+                                    <th className="px-5 py-4 font-semibold">Country</th>
+                                    <th className="border-l border-white/10 px-5 py-4 font-semibold">What the text calls custody</th>
+                                    <th className="border-l border-white/10 px-5 py-4 font-semibold">What it requires</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr className="border-t border-line">
+                                    <th scope="row" className="px-5 py-5 align-top font-semibold">Argentina</th>
+                                    <td className="border-l border-line px-5 py-5 align-top leading-relaxed text-muted">Category 4: custody or administration of virtual assets or of instruments that allow control over them, “siempre y cuando no sean no custodiados.” Exclusive self-custody wallet providers are outside the definition.</td>
+                                    <td className="border-l border-line px-5 py-5 align-top leading-relaxed text-muted">Register before operating. Minimum net worth of USD 150,000, or 50% of that if custodied volume over the last 12 months is under USD 2,500,000.</td>
+                                </tr>
+                                <tr className="border-t border-line">
+                                    <th scope="row" className="px-5 py-5 align-top font-semibold">Brazil</th>
+                                    <td className="border-l border-line px-5 py-5 align-top leading-relaxed text-muted">Guard and control of the instruments that affect rights in the virtual asset, including private keys. The statute is custody or administration of assets or of instruments that enable control, done in the name of third parties.</td>
+                                    <td className="border-l border-line px-5 py-5 align-top leading-relaxed text-muted">Prior federal authorization. Capital is a formula. A custodiante is in the R$3,000,000 operational category, then scaled, plus a cost parcel. There is no single statutory minimum.</td>
+                                </tr>
+                                <tr className="border-t border-line">
+                                    <th scope="row" className="px-5 py-5 align-top font-semibold">Costa Rica</th>
+                                    <td className="border-l border-line px-5 py-5 align-top leading-relaxed text-muted">Custody, deposit, administration, or control, by any means, of virtual assets, done as a business for oneself or for a third party.</td>
+                                    <td className="border-l border-line px-5 py-5 align-top leading-relaxed text-muted">Register with SUGEF. The statute says the registration is not an operating authorization. In force 19 September 2026. No published capital floor in the decree.</td>
+                                </tr>
+                                <tr className="border-t border-line">
+                                    <th scope="row" className="px-5 py-5 align-top font-semibold">Mexico</th>
+                                    <td className="border-l border-line px-5 py-5 align-top leading-relaxed text-muted">Two perimeters. Licensed banks and fintech institutions cannot be authorized to custody virtual assets for clients. Separately, providing means to custody, store, or transfer virtual assets is an anti-money-laundering vulnerable activity.</td>
+                                    <td className="border-l border-line px-5 py-5 align-top leading-relaxed text-muted">Notices when a client’s operation reaches 210 times the daily UMA, and when the fee reaches 4 times the daily UMA. That is reporting, not a custody license.</td>
+                                </tr>
+                                <tr className="border-t border-line">
+                                    <th scope="row" className="px-5 py-5 align-top font-semibold">Chile</th>
+                                    <td className="border-l border-line px-5 py-5 align-top leading-relaxed text-muted">Professional custody of financial instruments. A financial instrument can be an incorporeal structured to represent a virtual financial asset. Custody means holding those instruments, money, or FX for third parties in the flows the statute describes.</td>
+                                    <td className="border-l border-line px-5 py-5 align-top leading-relaxed text-muted">Registration with the CMF before offering the service. A bank bond or insurance policy once the CMF’s volume or client threshold is met, for an amount the CMF sets.</td>
+                                </tr>
+                                <tr className="border-t border-line">
+                                    <th scope="row" className="px-5 py-5 align-top font-semibold">Colombia</th>
+                                    <td className="border-l border-line px-5 py-5 align-top leading-relaxed text-muted">Bill 510/2025C would have regulated virtual-asset service providers.</td>
+                                    <td className="border-l border-line px-5 py-5 align-top leading-relaxed text-muted">The Chamber of Representatives records the bill as archived under article 190 of Law 5 of 1992. That bill did not become a license. This page does not survey other Colombian rules.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div className="mt-10 max-w-3xl space-y-10 text-sm leading-relaxed text-muted">
+                        <div>
+                            <h3 className="text-xl font-medium tracking-[-0.02em] text-ink">Argentina</h3>
+                            <p className="mt-3">
+                                Resolución General CNV 1058/2025, of 12 March 2025, rewrites the
+                                registry rules for proveedores de servicios de activos virtuales.
+                                Article 1 says a person covered by the definition must register
+                                before carrying out the activity. The same article says the
+                                definition does not reach “quienes prestan servicios exclusivamente
+                                en carácter de proveedores de billeteras de autocustodia.” It also
+                                leaves out acting for oneself, receiving virtual assets as payment
+                                for one’s own goods or services, and a decentralized protocol with
+                                no identifiable provider.
+                            </p>
+                            <p className="mt-3">
+                                Category 4 is “custodia y/o administración de Activos Virtuales o
+                                instrumentos que permitan el control sobre los mismos (siempre y
+                                cuando no sean no custodiados).” Natural persons may only register
+                                for categories 1 and 2, exchange, not for custody. Article 9 sets
+                                minimum net worth for categories 1, 2, and 4 at USD 150,000. If
+                                custodied volume over the last 12 months is under USD 2,500,000,
+                                the minimum is 50% of that figure. A firm in more than one category
+                                meets the most demanding one. Exchange and transfer stay in
+                                categories 1 to 3 even when the wallet itself is outside category 4.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-medium tracking-[-0.02em] text-ink">Brazil</h3>
+                            <p className="mt-3">
+                                Lei 14.478/2022, article 2, says a virtual-asset service provider
+                                may operate in the country only with prior authorization from a
+                                federal body. Article 5 defines that provider as a legal person
+                                that, in the name of third parties, performs at least one listed
+                                service. Item IV is custody or administration of virtual assets or
+                                of instruments that enable control over them. The law does not copy
+                                Argentina’s self-custody exclusion.
+                            </p>
+                            <p className="mt-3">
+                                Resolução BCB 520, of 10 November 2025, is in force on 2 February
+                                2026 (article 92). Article 9 says custody comprises, among other
+                                activities, “a guarda e o controle dos instrumentos que afetam o
+                                exercício dos direitos,” and gives private keys as the example.
+                                Societies already performing those activities on the effective date
+                                must request authorization within 270 days counted from 2 February
+                                2026 (article 88). Adding 270 days to that date lands on 30 October
+                                2026. The resolution states the 270-day count and does not print
+                                that calendar date.
+                            </p>
+                            <p className="mt-3">
+                                Capital is Resolução Conjunta 14, articles 8 to 10, not a single
+                                published minimum. The minimum paid-in capital and net worth is a
+                                cost parcel plus an activity parcel. The cost parcel is R$2,000,000
+                                times the number of operational-activity categories. The activity
+                                parcel assigns R$3,000,000 to “custódia e administração de recursos
+                                de terceiros,” then multiplies the sum of operational categories by
+                                a funding factor: 60% for own resources, 80% for institutional
+                                resources, 120% for public resources other than deposits, and 200%
+                                for deposits. Classification uses the highest factor among funding
+                                sources the applicable regulation permits, even if unused.
+                                Resolução BCB 517, article 3(III), places a sociedade prestadora de
+                                serviços de ativos virtuais in the modalidade custodiante in the
+                                custody category associated with that R$3,000,000 line.
+                            </p>
+                            <p className="mt-3">
+                                An illustration, not a figure the statute prints as “the” minimum: a
+                                custodian in only that operational category, with no investment
+                                activity, has an activity parcel of R$3,000,000 times the funding
+                                factor, plus a cost parcel of R$2,000,000. At the 60% factor the
+                                activity parcel is R$1,800,000, and those two parcels sum to
+                                R$3,800,000. Article 9(II) adds R$5,000,000, and more for extra
+                                modalities up to R$10,000,000 on that sub-parcel, only when the
+                                institution provides a computing service listed in Resolução BCB
+                                517, article 4. Virtual-asset custody is not itself on that list.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-medium tracking-[-0.02em] text-ink">Costa Rica</h3>
+                            <p className="mt-3">
+                                Decreto Legislativo 10961, published in La Gaceta, Alcance 78, on
+                                19 June 2026, adds article 15 quater to Law 7786. Article 4 of the
+                                decree says it takes effect three months after publication, which
+                                is 19 September 2026, and gives up to three months to issue the
+                                regulation.
+                            </p>
+                            <p className="mt-3">
+                                A proveedor de servicios de activos virtuales is any natural or
+                                legal person who, as a business, does any of four things for
+                                themselves or in the name of a third party. Item iii is “custodia,
+                                depósito, administración o control, por cualquier medio, de activos
+                                virtuales.” The article also covers exchange, transfer, and
+                                services tied to issuance or sale. A virtual asset is a digital
+                                representation of value that can be traded or transferred and used
+                                for payments or investment. The same sentence says that does not
+                                make it legal tender or a currency of the Central Bank.
+                            </p>
+                            <p className="mt-3">
+                                Those providers must register with the Superintendencia General de
+                                Entidades Financieras. The statute says the registration “no
+                                representa una autorización de operación.” SUGEF supervises
+                                prevention of money laundering, terrorist financing, and
+                                proliferation financing. Customer due diligence applies when a
+                                transaction reaches the threshold CONASSIF sets by regulation. The
+                                decree does not print that threshold, and it does not print a
+                                minimum capital. Refusal to register is a ground for a fine of two
+                                to one hundred base salaries, as defined in article 2 of Law 7337.
+                                If the virtual-asset activity is also a matter another financial
+                                superintendency regulates, that supervision applies as well.
+                            </p>
+                            <p className="mt-3">
+                                Article 15 quater does not exclude self-custody wallet software.
+                                CONASSIF is the body that sets the scope of the listed activities
+                                by regulation. This page does not cite a published CONASSIF rule
+                                that carves that software out.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-medium tracking-[-0.02em] text-ink">Mexico</h3>
+                            <p className="mt-3">
+                                Banxico Circular 4/2019, disposición 3a of the compiled text
+                                (published in the Diario Oficial on 8 March 2019 and amended by
+                                Circular 37/2020 on 30 September 2020), applies to credit
+                                institutions and financial-technology institutions. Operations with
+                                virtual assets that those institutions may be authorized to do are
+                                internal operations. Operations through which they would directly
+                                provide clients with exchange, transmission, or custody of virtual
+                                assets are not eligible for that authorization.
+                            </p>
+                            <p className="mt-3">
+                                Outside that perimeter, article 17, fraction XVI, of the Ley
+                                Federal para la Prevención e Identificación de Operaciones con
+                                Recursos de Procedencia Ilícita treats as a vulnerable activity the
+                                habitual professional offering of virtual-asset exchange by persons
+                                other than financial entities, including those who provide means to
+                                custody, store, or transfer virtual assets that Banxico has not
+                                recognized under the fintech law. The text includes operations with
+                                Mexican citizens from another jurisdiction. A notice to the
+                                Secretariat is due when a client’s operation reaches 210 times the
+                                daily UMA, and, separately, when the consideration for the service
+                                reaches 4 times the daily UMA. Fraction XVI was amended in the
+                                Diario Oficial on 16 July 2025. That is an anti-money-laundering
+                                reporting duty. It is not a license to custody, and it does not
+                                exclude software that provides the means to store or transfer.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-medium tracking-[-0.02em] text-ink">Chile</h3>
+                            <p className="mt-3">
+                                Law 21.521, published on 4 January 2023, defines a criptoactivo as
+                                a digital representation of units of value, goods, or services,
+                                excluding money and foreign exchange. A financial instrument
+                                includes an incorporeal good designed, used, or structured to
+                                generate monetary income, or to represent an outstanding debt or a
+                                virtual financial asset. Public-offer securities, and money or
+                                foreign exchange, are not financial instruments under the law.
+                            </p>
+                            <p className="mt-3">
+                                Custody of financial instruments is holding, in one’s own name for
+                                third parties or in their name, financial instruments, money, or
+                                foreign exchange that come from the flows or the sale of instruments
+                                held in custody, or that were delivered to acquire instruments or
+                                to guarantee operations with them. Article 5 says only persons
+                                registered in the Registro de Prestadores de Servicios Financieros
+                                may professionally provide that custody. Article 10 requires a bank
+                                bond or insurance policy once the volume or number of clients set
+                                by the Comisión para el Mercado Financiero is reached. The amount
+                                is the one the Commission sets. The articles cited here do not
+                                publish a self-custody software exemption, and they do not publish
+                                a fixed capital number for crypto custody.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-medium tracking-[-0.02em] text-ink">Colombia</h3>
+                            <p className="mt-3">
+                                The Chamber of Representatives’ file for Proyecto de Ley 510/2025C,
+                                “por la cual se regulan los proveedores de servicios de activos
+                                virtuales,” records the bill as archived under article 190 of Law 5
+                                of 1992. Archiving means that bill did not become a custody
+                                license. This page does not treat that as a finding that no other
+                                Colombian rule applies.
+                            </p>
+                        </div>
                     </div>
                 </section>
 
