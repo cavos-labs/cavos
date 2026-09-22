@@ -36,7 +36,7 @@ const RESOURCES_MENU: Omit<MegaMenuProps, 'onOpenChange'> = {
         heading: 'Contact',
         items: [
             { title: 'Contact sales', description: 'Talk to us about your integration and pricing.', href: '/contact-sales' },
-            { title: 'Custody', description: 'When an embedded wallet makes an app a custodian, including the Latin American texts.', href: '/custody' },
+            { title: 'Custody', description: 'What it costs when your app can move a user’s crypto.', href: '/custody' },
             { title: 'Email us', description: 'adrianvrj@cavos.xyz', href: 'mailto:adrianvrj@cavos.xyz' },
         ],
     },

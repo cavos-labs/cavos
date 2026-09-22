@@ -28,32 +28,30 @@ export const metadata: Metadata = {
     },
 }
 
-const UPDATED = '22 September 2026'
-
 const FAQ = [
     {
         question: 'Does calling a wallet non-custodial keep a product outside these rules?',
-        answer: 'No regulator cited on this page uses the marketing label as the test. MiCA Article 3(1)(17) covers safekeeping or controlling crypto-assets or the means of access to them, including private keys. FinCEN’s May 2019 guidance says a provider is a money transmitter if it has total independent control over the value, regardless of the label it applies to itself. Argentina writes the carve-out down: Resolución General CNV 1058/2025 says people who exclusively provide self-custody wallets are outside the virtual-asset service provider definition. Mexico’s anti-money-laundering statute, and Costa Rica’s Law 10961, do not copy that carve-out. Costa Rica covers a person who, as a business, has custody, deposit, administration, or control of virtual assets by any means.',
+        answer: 'The name on the wallet is irrelevant. MiCA asks whether you safekeep the assets or the keys. FinCEN asks whether you can move the value on your own. Argentina writes the exception into the rule: a firm that only provides self-custody wallets is not a virtual-asset service provider. Mexico and Costa Rica never wrote that sentence.',
     },
     {
         question: 'What capital does MiCA require for crypto custody?',
-        answer: 'Annex IV of Regulation (EU) 2023/1114 sets a permanent minimum of EUR 125,000 for a crypto-asset service provider authorised for custody and administration of crypto-assets on behalf of clients. Article 67 requires prudential safeguards equal to the higher of that Annex IV amount and one quarter of the preceding year’s fixed overheads. Those safeguards may be own funds, an insurance policy, or a combination. Article 75(8) makes the custodian liable for loss of crypto-assets or of the means of access when the incident is attributable to it, capped at the market value at the time of the loss.',
+        answer: 'EUR 125,000. That is the Annex IV Class 2 floor for custody. Article 67 then takes the higher of that amount and a quarter of last year’s fixed overheads, in own funds, insurance, or both. If you lose client assets or keys and the loss is yours, Article 75(8) caps what you owe at the market value when the loss happened.',
     },
     {
         question: 'Are hosted crypto wallets money transmitters under FinCEN?',
-        answer: 'FinCEN guidance FIN-2019-G001 (9 May 2019), section 4.2.1, describes hosted wallet providers as account-based money transmitters that receive, store, and transmit convertible virtual currency on behalf of accountholders. In that model the host has total independent control over the value, even when it is contractually limited to acting on the owner’s instructions. Unhosted single-signature wallets, where the owner interacts with the payment system directly and has total independent control, are described differently: a person using one to buy goods or services on their own behalf is not a money transmitter.',
+        answer: 'Yes, when you hold the coins for customers. FIN-2019-G001 (9 May 2019) calls that an account-based money transmitter, even if the contract says you only move funds when the customer asks. Someone buying for themselves with a wallet only they can sign is not a money transmitter.',
     },
     {
         question: 'Does California license crypto storage?',
-        answer: 'From 1 July 2026, California’s Digital Financial Assets Law prohibits engaging in digital financial asset business activity with or on behalf of a California resident unless the person is licensed or otherwise permitted. “Store” means maintaining control of a digital financial asset on behalf of a resident by someone other than the resident. “Control” includes the power to execute a transaction unilaterally. The Department of Financial Protection and Innovation says it expects an initial tangible net worth of $100,000 on an application. The surety bond or trust account amount is set by the Department under Financial Code section 3207; the statute does not fix that amount at a published dollar figure.',
+        answer: 'From 1 July 2026, storing a digital financial asset for a California resident needs a license, unless an exemption fits. Store means you keep control for them. Control includes being able to send a transaction on your own. DFPI expects $100,000 of tangible net worth to open an application. The bond amount is whatever DFPI sets under Financial Code section 3207. The statute never prints a dollar figure for it.',
     },
     {
         question: 'Is Latin America one custody rule?',
-        answer: 'No. Brazil’s Central Bank, from 2 February 2026, treats custody as guard or control of the instruments that affect rights in a virtual asset, including private keys, and requires prior authorization. Argentina’s securities regulator requires registration and a minimum net worth of USD 150,000 for custody, and excludes exclusive self-custody wallet providers. Costa Rica’s Law 10961, in force three months after its 19 June 2026 publication, requires SUGEF registration for a person who as a business custodies or controls virtual assets. That registration is not an operating authorization. Mexico bars licensed fintech institutions from custodying virtual assets for clients, and separately treats providing means to custody or transfer virtual assets as an anti-money-laundering vulnerable activity. Chile registers professional custody of financial instruments, a category that can include a virtual financial asset. Colombia’s 2025 bill to license virtual-asset service providers was archived; that bill did not become a license.',
+        answer: 'No. Argentina wants USD 150,000 of net worth to custody, and takes exclusive self-custody wallets out. Brazil, from 2 February 2026, wants prior authorization to hold or control the keys, and prices that with a capital formula. Costa Rica wants a SUGEF registration and sets no capital. Mexico’s notices sit at MXN 24,635 per client operation and MXN 469 on the fee. Chile wants CMF registration for custody of financial instruments. Colombia’s 2025 bill to license these providers was archived.',
     },
     {
         question: 'Does integrating Cavos mean an application needs no license?',
-        answer: 'This page does not reach that conclusion. Cavos documents a model in which its backend does not hold a key that can spend user funds. Opt-in hardware-isolated recovery can wrap a spend key on Solana and Stellar, or schedule one add-signer on Starknet, and the docs describe that path as non-custodial and not trustless. Exchange, on-ramp, fiat payments, and any service that transfers crypto on behalf of clients are separate activities under the rules above. Whether a specific integration is licensed is a question for counsel in each jurisdiction where the product has users.',
+        answer: 'No. The Cavos backend is built so it cannot spend user funds or add itself as a signer. Recovery is a separate path: on Solana and Stellar an enclave can unwrap a spend key, and on Starknet it can schedule one add_signer. The docs call that non-custodial, and not trustless. Exchange, on-ramps, and sending crypto for a customer are licensed on their own. Ask counsel in each country where you have users.',
     },
 ]
 
@@ -134,6 +132,11 @@ const SOURCES = [
         note: 'Chamber of Deputies text. Fraction XVI amended DOF 16 July 2025',
     },
     {
+        label: 'INEGI, Unidad de Medida y Actualización 2026',
+        href: 'https://www.inegi.org.mx/temas/uma/',
+        note: 'Daily UMA MXN 117.31 from 1 February 2026. Used to convert the 210 UMA and 4 UMA notice thresholds',
+    },
+    {
         label: 'Banxico Circular 4/2019, disposición 3a, texto compilado',
         href: 'https://www.banxico.org.mx/marco-normativo/normativa-emitida-por-el-banco-de-mexico/circular-4-2019/circular-4-2019.html',
         note: 'Published DOF 8 March 2019, as amended by Circular 37/2020, DOF 30 September 2020. Institutions may not be authorized to custody virtual assets for clients',
@@ -181,7 +184,7 @@ const MODELS = [
         question: 'European Union',
         hosted: 'Custody under Article 3(1)(17). Annex IV Class 2 minimum of EUR 125,000, then Article 67 and Article 75.',
         shared: 'The same definition covers controlling the means of access, including private keys.',
-        device: 'Recital 83 says hardware or software providers of non-custodial wallets should fall outside MiCA. The operative test remains Article 3(1)(17).',
+        device: 'Recital 83 puts non-custodial wallet software outside MiCA. Article 3(1)(17) still applies if you control the keys.',
     },
     {
         question: 'United States, federal',
@@ -198,8 +201,8 @@ const MODELS = [
     {
         question: 'United Kingdom',
         hosted: 'Safeguarding qualifying cryptoassets is a regulated activity from 25 October 2027. Permanent minimum capital for that permission is £150,000, and K-RCS is 0.04% of average assets safeguarded.',
-        shared: 'PS26/12 prices the permission to safeguard. It does not publish a separate category for shared keys.',
-        device: 'PS26/12 does not state a general exemption for non-custodial software. Whether a design is “safeguarding” is a facts question.',
+        shared: 'PS26/12 prices safeguarding. It has no separate line for shared keys.',
+        device: 'No exemption for wallet software. The £150,000 is for firms that have the safeguarding permission.',
     },
 ]
 
@@ -242,40 +245,229 @@ export default function CustodyPage() {
 
             <article className="mx-auto max-w-6xl px-6 pb-24 pt-32 md:px-8">
                 <header className="max-w-3xl">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
-                        Last updated {UPDATED}
-                    </p>
-                    <h1 className="mt-4 text-balance text-[clamp(2.5rem,6vw,4.6rem)] font-medium leading-[0.98] tracking-[-0.045em]">
+                    <h1 className="text-balance text-[clamp(2.5rem,6vw,4.6rem)] font-medium leading-[0.98] tracking-[-0.045em]">
                         When an embedded wallet makes your app a custodian.
                     </h1>
                     <p className="mt-7 max-w-2xl text-lg leading-relaxed text-muted">
-                        Custody of someone else’s crypto is a licensed financial service in the
-                        European Union, under US federal money-transmission rules, in California,
-                        and, from 25 October 2027, in the United Kingdom. Latin America does not
-                        share one rule. Argentina excludes exclusive self-custody wallet providers
-                        and still requires USD 150,000 of net worth to custody. Brazil requires
-                        prior authorization to guard or control the keys. Costa Rica, since 19
-                        September 2026, requires SUGEF registration to custody or control virtual
-                        assets as a business, and that registration is not an operating license.
-                        The trigger, where a text states one, is control of the assets or of the
-                        keys.
+                        If your company can move a user’s crypto, you are holding it. The EU, US
+                        money-transmission rules, California, and the UK from 25 October 2027 put
+                        a price on that. Argentina writes exclusive self-custody wallets out of
+                        its registry. The figures are in the table. The statutes are under it.
                     </p>
                 </header>
 
                 <aside className="mt-10 max-w-3xl rounded-2xl border border-line bg-surface px-6 py-5 text-sm leading-relaxed text-muted">
-                    This page quotes and paraphrases public legal texts so a founder can see the
-                    cost of custody before talking to counsel. It is not legal advice, not a
-                    determination that any product — including Cavos — is inside or outside a
-                    license, and not a complete survey of every jurisdiction. Figures were checked
-                    against the sources at the bottom on {UPDATED}.
+                    Statutes and regulator texts. Not legal advice, and not an opinion on
+                    whether your Cavos integration needs a license.
                 </aside>
+
+                <section className="mt-16">
+                    <h2 className="text-3xl font-medium tracking-[-0.03em]">Cost, pros, and cons</h2>
+                    <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted">
+                        Hosted means your company can move the coins. The right column is a wallet
+                        the user signs, and you cannot. That is how Cavos is built. Exchange,
+                        on-ramps, and transfers for a customer are not in these numbers.
+                    </p>
+                    <dl className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                        {[
+                            ['EUR 125,000', 'EU, custody minimum'],
+                            ['£150,000', 'UK, safeguarding minimum'],
+                            ['USD 150,000', 'Argentina, custody net worth'],
+                            ['R$3.8–8 million', 'Brazil, worked example'],
+                            ['$1–3 million', 'US states, estimate'],
+                        ].map(([figure, label]) => (
+                            <div key={label} className="rounded-2xl border border-line px-4 py-4">
+                                <dt className="text-xl font-semibold tracking-[-0.03em] text-ink">{figure}</dt>
+                                <dd className="mt-1 text-xs leading-snug text-muted">{label}</dd>
+                            </div>
+                        ))}
+                    </dl>
+                    <div className="mt-8 overflow-x-auto rounded-2xl border border-line">
+                        <table className="w-full min-w-[880px] border-collapse text-left text-sm">
+                            <thead className="bg-brand text-white">
+                                <tr>
+                                    <th className="px-5 py-4 font-semibold">Where users are</th>
+                                    <th className="border-l border-white/10 px-5 py-4 font-semibold">Hosted custody</th>
+                                    <th className="border-l border-white/10 px-5 py-4 font-semibold">User signs; provider cannot spend</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr className="border-t border-line">
+                                    <th scope="row" className="px-5 py-4 align-top font-semibold">European Union</th>
+                                    <td className="border-l border-line px-5 py-4 align-top">
+                                        <p className="text-lg font-semibold tracking-[-0.02em]">EUR 125,000</p>
+                                        <p className="mt-1 text-xs leading-snug text-muted">Class 2 minimum. Then the higher of that or 1/4 of fixed overheads. Liability cap: market value at the time of loss.</p>
+                                    </td>
+                                    <td className="border-l border-line bg-brand/[0.035] px-5 py-4 align-top">
+                                        <p className="text-lg font-semibold tracking-[-0.02em]">Recital 83</p>
+                                        <p className="mt-1 text-xs leading-snug text-muted">Non-custodial wallet software should sit outside MiCA. If you control the keys, Article 3(1)(17) still applies.</p>
+                                    </td>
+                                </tr>
+                                <tr className="border-t border-line">
+                                    <th scope="row" className="px-5 py-4 align-top font-semibold">United States, federal</th>
+                                    <td className="border-l border-line px-5 py-4 align-top">
+                                        <p className="text-lg font-semibold tracking-[-0.02em]">USD 0</p>
+                                        <p className="mt-1 text-xs leading-snug text-muted">FinCEN Form 107 has no filing fee. The cost is being a money transmitter. State licenses are the next row.</p>
+                                    </td>
+                                    <td className="border-l border-line bg-brand/[0.035] px-5 py-4 align-top">
+                                        <p className="text-lg font-semibold tracking-[-0.02em]">Not an MSB</p>
+                                        <p className="mt-1 text-xs leading-snug text-muted">Buying for yourself, with a wallet only you can sign, is not money transmission. If you can move the coins alone, you register.</p>
+                                    </td>
+                                </tr>
+                                <tr className="border-t border-line">
+                                    <th scope="row" className="px-5 py-4 align-top font-semibold">United States, states</th>
+                                    <td className="border-l border-line px-5 py-4 align-top">
+                                        <p className="text-lg font-semibold tracking-[-0.02em]">$1–3 million</p>
+                                        <p className="mt-1 text-xs leading-snug text-muted">A law firm’s estimate, not a statute. 12–18 months. Fees about $25,000–$250,000. Bonds $25,000–$500,000 a state. Legal $500,000–$1 million. Ongoing $200,000–$500,000 a year.</p>
+                                    </td>
+                                    <td className="border-l border-line bg-brand/[0.035] px-5 py-4 align-top">
+                                        <p className="text-lg font-semibold tracking-[-0.02em]">Only if you transmit</p>
+                                        <p className="mt-1 text-xs leading-snug text-muted">That estimate is for money-transmitter licenses. Embedding a wallet does not put you in it.</p>
+                                    </td>
+                                </tr>
+                                <tr className="border-t border-line">
+                                    <th scope="row" className="px-5 py-4 align-top font-semibold">California</th>
+                                    <td className="border-l border-line px-5 py-4 align-top">
+                                        <p className="text-lg font-semibold tracking-[-0.02em]">$100,000</p>
+                                        <p className="mt-1 text-xs leading-snug text-muted">Tangible net worth DFPI expects on a license application, from 1 July 2026. Bond: set by DFPI. No dollar amount in the statute.</p>
+                                    </td>
+                                    <td className="border-l border-line bg-brand/[0.035] px-5 py-4 align-top">
+                                        <p className="text-lg font-semibold tracking-[-0.02em]">Only if you store</p>
+                                        <p className="mt-1 text-xs leading-snug text-muted">Store means you keep control for a resident. If you never have it, you are not storing.</p>
+                                    </td>
+                                </tr>
+                                <tr className="border-t border-line">
+                                    <th scope="row" className="px-5 py-4 align-top font-semibold">United Kingdom</th>
+                                    <td className="border-l border-line px-5 py-4 align-top">
+                                        <p className="text-lg font-semibold tracking-[-0.02em]">£150,000 + 0.04%</p>
+                                        <p className="mt-1 text-xs leading-snug text-muted">Permanent minimum from 25 October 2027, plus 0.04% of average assets safeguarded.</p>
+                                    </td>
+                                    <td className="border-l border-line bg-brand/[0.035] px-5 py-4 align-top">
+                                        <p className="text-lg font-semibold tracking-[-0.02em]">Only if you safeguard</p>
+                                        <p className="mt-1 text-xs leading-snug text-muted">The £150,000 is for firms with the safeguarding permission. PS26/12 has no exemption for wallet software.</p>
+                                    </td>
+                                </tr>
+                                <tr className="border-t border-line">
+                                    <th scope="row" className="px-5 py-4 align-top font-semibold">Argentina</th>
+                                    <td className="border-l border-line px-5 py-4 align-top">
+                                        <p className="text-lg font-semibold tracking-[-0.02em]">USD 150,000</p>
+                                        <p className="mt-1 text-xs leading-snug text-muted">Minimum net worth to custody. USD 75,000 if custodied volume over 12 months is under USD 2,500,000. Register before operating.</p>
+                                    </td>
+                                    <td className="border-l border-line bg-brand/[0.035] px-5 py-4 align-top">
+                                        <p className="text-lg font-semibold tracking-[-0.02em]">Out, if that is all you do</p>
+                                        <p className="mt-1 text-xs leading-snug text-muted">A firm that only offers self-custody wallets is not a PSAV. Exchange is still USD 150,000, or USD 75,000 under the volume test. Transfer is USD 75,000, or USD 37,500.</p>
+                                    </td>
+                                </tr>
+                                <tr className="border-t border-line">
+                                    <th scope="row" className="px-5 py-4 align-top font-semibold">Brazil</th>
+                                    <td className="border-l border-line px-5 py-4 align-top">
+                                        <p className="text-lg font-semibold tracking-[-0.02em]">R$3.8–8 million</p>
+                                        <p className="mt-1 text-xs leading-snug text-muted">Worked example for one custody category. The law prints a formula: R$2 million plus R$3 million × 60% to 200%. Authorization comes first.</p>
+                                    </td>
+                                    <td className="border-l border-line bg-brand/[0.035] px-5 py-4 align-top">
+                                        <p className="text-lg font-semibold tracking-[-0.02em]">Same formula</p>
+                                        <p className="mt-1 text-xs leading-snug text-muted">Custody includes holding or controlling the keys for someone else. The law has no self-custody exception.</p>
+                                    </td>
+                                </tr>
+                                <tr className="border-t border-line">
+                                    <th scope="row" className="px-5 py-4 align-top font-semibold">Costa Rica</th>
+                                    <td className="border-l border-line px-5 py-4 align-top">
+                                        <p className="text-lg font-semibold tracking-[-0.02em]">No capital in the law</p>
+                                        <p className="mt-1 text-xs leading-snug text-muted">SUGEF registration from 19 September 2026. It is not a license to operate. Refusing to register: a fine of 2–100 base salaries.</p>
+                                    </td>
+                                    <td className="border-l border-line bg-brand/[0.035] px-5 py-4 align-top">
+                                        <p className="text-lg font-semibold tracking-[-0.02em]">No second figure</p>
+                                        <p className="mt-1 text-xs leading-snug text-muted">You register if you custody or control assets as a business. The law never says a self-custody wallet is out, and it never says every wallet is in. CONASSIF still has to draw that line.</p>
+                                    </td>
+                                </tr>
+                                <tr className="border-t border-line">
+                                    <th scope="row" className="px-5 py-4 align-top font-semibold">Mexico</th>
+                                    <td className="border-l border-line px-5 py-4 align-top">
+                                        <p className="text-lg font-semibold tracking-[-0.02em]">MXN 24,635 / MXN 469</p>
+                                        <p className="mt-1 text-xs leading-snug text-muted">AML notices, not a custody license. 210 × and 4 × INEGI’s daily UMA of MXN 117.31, from 1 February 2026. Banks and fintech institutions cannot custody for clients.</p>
+                                    </td>
+                                    <td className="border-l border-line bg-brand/[0.035] px-5 py-4 align-top">
+                                        <p className="text-lg font-semibold tracking-[-0.02em]">MXN 24,635 / MXN 469</p>
+                                        <p className="mt-1 text-xs leading-snug text-muted">Offering a way to store or send virtual assets is the same notice.</p>
+                                    </td>
+                                </tr>
+                                <tr className="border-t border-line">
+                                    <th scope="row" className="px-5 py-4 align-top font-semibold">Chile</th>
+                                    <td className="border-l border-line px-5 py-4 align-top">
+                                        <p className="text-lg font-semibold tracking-[-0.02em]">Set by the CMF</p>
+                                        <p className="mt-1 text-xs leading-snug text-muted">Registration first. The guarantee is whatever the Commission sets once you pass its volume or client threshold.</p>
+                                    </td>
+                                    <td className="border-l border-line bg-brand/[0.035] px-5 py-4 align-top">
+                                        <p className="text-lg font-semibold tracking-[-0.02em]">Only that custody</p>
+                                        <p className="mt-1 text-xs leading-snug text-muted">Registration is for professional custody of financial instruments. The law has no software exemption and no peso amount.</p>
+                                    </td>
+                                </tr>
+                                <tr className="border-t border-line">
+                                    <th scope="row" className="px-5 py-4 align-top font-semibold">Colombia</th>
+                                    <td className="border-l border-line px-5 py-4 align-top">
+                                        <p className="text-lg font-semibold tracking-[-0.02em]">No license fee</p>
+                                        <p className="mt-1 text-xs leading-snug text-muted">Bill 510/2025C was archived. It never became law, so it set no fee.</p>
+                                    </td>
+                                    <td className="border-l border-line bg-brand/[0.035] px-5 py-4 align-top">
+                                        <p className="text-lg font-semibold tracking-[-0.02em]">No license fee</p>
+                                        <p className="mt-1 text-xs leading-snug text-muted">Same bill. DIAN and UIAF rules are not in this row.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div className="mt-8 overflow-x-auto rounded-2xl border border-line">
+                        <table className="w-full min-w-[880px] border-collapse text-left text-sm">
+                            <thead className="bg-brand text-white">
+                                <tr>
+                                    <th className="w-[16%] px-5 py-4 font-semibold">Tradeoff</th>
+                                    <th className="border-l border-white/10 px-5 py-4 font-semibold">Hosted custody</th>
+                                    <th className="border-l border-white/10 px-5 py-4 font-semibold">User signs; provider cannot spend</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr className="border-t border-line">
+                                    <th scope="row" className="px-5 py-5 align-top font-semibold">Pros</th>
+                                    <td className="border-l border-line px-5 py-5 align-top leading-relaxed text-muted">
+                                        <ul className="list-disc space-y-2 pl-4">
+                                            <li>You can pay someone out, keep an exchange balance, or run a treasury without waiting for the user’s signature.</li>
+                                        </ul>
+                                    </td>
+                                    <td className="border-l border-line bg-brand/[0.035] px-5 py-5 align-top leading-relaxed">
+                                        <ul className="list-disc space-y-2 pl-4">
+                                            <li>The EU, FinCEN, California, and Argentina price control. A provider that never has it sits outside the words of those tests.</li>
+                                            <li>The user holds the key that spends.</li>
+                                        </ul>
+                                    </td>
+                                </tr>
+                                <tr className="border-t border-line">
+                                    <th scope="row" className="px-5 py-5 align-top font-semibold">Cons</th>
+                                    <td className="border-l border-line px-5 py-5 align-top leading-relaxed text-muted">
+                                        <ul className="list-disc space-y-2 pl-4">
+                                            <li>You pay the rows above.</li>
+                                            <li>FinCEN still calls you a money transmitter if you can move the value alone, even when the contract says you only act on instructions.</li>
+                                            <li>If the keys are lost and it is your fault, MiCA makes you pay the client, up to the market value at the time.</li>
+                                        </ul>
+                                    </td>
+                                    <td className="border-l border-line bg-brand/[0.035] px-5 py-5 align-top leading-relaxed">
+                                        <ul className="list-disc space-y-2 pl-4">
+                                            <li>You cannot send a payout or move a treasury on your own.</li>
+                                            <li>Exchange, on-ramps, and transfers for a customer are licensed either way.</li>
+                                            <li>Brazil, Costa Rica, Mexico, and the UK never wrote Argentina’s exception.</li>
+                                            <li>Cavos recovery can unwrap a spend key on Solana and Stellar, or schedule one signer add on Starknet. The docs call that non-custodial, and not trustless.</li>
+                                        </ul>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
 
                 <section className="mt-16 max-w-3xl">
                     <h2 className="text-3xl font-medium tracking-[-0.03em]">The test is control</h2>
                     <p className="mt-5 text-base leading-relaxed text-muted">
-                        These four texts ask the same question: can someone other than the owner
-                        safekeep the assets or cause them to move? Latin America answers it
-                        country by country, in the section below.
+                        Each of these asks who can hold the assets, or make them move.
                     </p>
                     <ul className="mt-6 space-y-4 text-sm leading-relaxed">
                         <li>
@@ -318,13 +510,11 @@ export default function CustodyPage() {
                 </section>
 
                 <section className="mt-20">
-                    <h2 className="text-3xl font-medium tracking-[-0.03em]">Three builds, four regimes</h2>
+                    <h2 className="text-3xl font-medium tracking-[-0.03em]">Who can sign</h2>
                     <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted">
-                        “Embedded” describes where the wallet sits in the app. It does not say who
-                        can sign. The middle column is the one most often mislabeled: a provider
-                        that holds a key required to spend, or that can move funds on its own, is
-                        judged on that power. The Latin American texts do not fit one extra column,
-                        so they are cited on their own below.
+                        Embedded only says the wallet lives in the app. The middle column is the
+                        one teams misname: if you hold a key the spend needs, or you can move funds
+                        alone, the rule looks at that.
                     </p>
                     <div className="mt-8 overflow-x-auto rounded-2xl border border-line">
                         <table className="w-full min-w-[960px] border-collapse text-left">
@@ -408,20 +598,15 @@ export default function CustodyPage() {
                             of the services in Articles 75 to 79, which includes custody.
                         </p>
                         <p>
-                            Recital 83 states that hardware or software providers of non-custodial
-                            wallets should not fall within the scope of the Regulation. A recital
-                            guides interpretation. It does not rewrite Article 3(1)(17): a business
-                            that safekeeps or controls client assets or private keys is providing
-                            custody, whatever it calls the product.
+                            Recital 83 says providers of non-custodial wallet hardware or software
+                            should sit outside MiCA. A recital is not the article. If you safekeep
+                            client assets or private keys, Article 3(1)(17) still calls it custody.
                         </p>
                         <p>
-                            Custody is not the only in-scope service. Article 3(1)(26) defines
-                            transfer services on behalf of clients as transferring crypto-assets,
-                            on behalf of a person, from one distributed-ledger address or account
-                            to another. That service sits in Annex IV Class 1, with a EUR 50,000
-                            minimum, even when the provider is not a custodian. Whether a relayer
-                            that broadcasts a user-signed transaction is “providing” that service
-                            is a facts question the Regulation does not answer with an example.
+                            Moving crypto for a customer, from one address to another, is its own
+                            service under Article 3(1)(26). It sits in Class 1, at EUR 50,000, even
+                            if you are not the custodian. MiCA never says whether broadcasting a
+                            transaction the user already signed counts.
                         </p>
                     </div>
                 </section>
@@ -478,10 +663,9 @@ export default function CustodyPage() {
                         <li>A planning figure the guide calls reasonable: on the order of $1–3 million and 12–18 months for comprehensive coverage.</li>
                     </ul>
                     <p className="mt-4 text-sm leading-relaxed text-muted">
-                        Those dollar figures are the law firm’s estimates. Build a budget from
-                        current state requirements before relying on them. State statutes differ on
-                        when virtual-currency activity is money transmission; this page does not
-                        restate all fifty.
+                        Those ranges are the firm’s, not a fee schedule. Price the states you
+                        actually need. The fifty statutes do not agree on when virtual-currency
+                        activity is money transmission.
                     </p>
                 </section>
 
@@ -522,17 +706,14 @@ export default function CustodyPage() {
                                 behalf of residents is reasonably expected to be valued, in the
                                 aggregate, at $50,000 or less per year, measured by the US dollar
                                 equivalent of the digital financial assets (section 3103(b)(9)).
-                                That measure is the value of the assets, which is the statutory
-                                wording. It is not a revenue cap.
+                                The statute measures the assets, not your revenue.
                             </li>
                         </ul>
                         <p>
-                            DFPI’s application guide says the Department expects an initial tangible
-                            net worth of $100,000, and that it will set a final amount later under
-                            Financial Code section 3207(b). Applicants must obtain a surety bond or
-                            fund a trust account under section 3207(a). DFPI determines that amount.
-                            The statute and the DFPI pages checked for this article do not publish a
-                            single required bond figure.
+                            DFPI expects $100,000 of tangible net worth to open an application, and
+                            says it will set a final amount later under section 3207(b). You also
+                            need a surety bond or a trust account. DFPI picks that amount. Neither
+                            the statute nor the DFPI pages we checked print one number for it.
                         </p>
                     </div>
                 </section>
@@ -558,23 +739,19 @@ export default function CustodyPage() {
                             (CRYPTOPRU 4.5.1R).
                         </p>
                         <p>
-                            PS26/12 does not publish a rule that non-custodial wallet software is
-                            outside safeguarding. The capital figures apply to firms that have the
-                            safeguarding permission.
+                            PS26/12 never exempts non-custodial wallet software. The £150,000 and the
+                            0.04% apply to firms that hold the safeguarding permission.
                         </p>
                     </div>
                 </section>
 
                 <section className="mt-20">
-                    <h2 className="text-3xl font-medium tracking-[-0.03em]">Latin America: six texts, not one rule</h2>
+                    <h2 className="text-3xl font-medium tracking-[-0.03em]">Latin America</h2>
                     <p className="mt-5 max-w-3xl text-sm leading-relaxed text-muted">
-                        A product with users in São Paulo, Buenos Aires, and San José is not under
-                        one custody statute. Argentina writes an exclusion for exclusive
-                        self-custody wallet providers. Brazil prices custody as a licensed
-                        activity with a capital formula. Costa Rica registers the activity for
-                        anti-money-laundering supervision and says that registration is not an
-                        operating authorization. None of the other texts below copies Argentina’s
-                        exclusion.
+                        Argentina takes exclusive self-custody wallets out, and still wants USD
+                        150,000 to custody. Brazil wants authorization and a capital formula.
+                        Costa Rica wants a SUGEF registration and sets no capital. Mexico, Chile,
+                        and Colombia are different again.
                     </p>
                     <div className="mt-8 overflow-x-auto rounded-2xl border border-line">
                         <table className="w-full min-w-[880px] border-collapse text-left text-sm">
@@ -614,7 +791,7 @@ export default function CustodyPage() {
                                 <tr className="border-t border-line">
                                     <th scope="row" className="px-5 py-5 align-top font-semibold">Colombia</th>
                                     <td className="border-l border-line px-5 py-5 align-top leading-relaxed text-muted">Bill 510/2025C would have regulated virtual-asset service providers.</td>
-                                    <td className="border-l border-line px-5 py-5 align-top leading-relaxed text-muted">The Chamber of Representatives records the bill as archived under article 190 of Law 5 of 1992. That bill did not become a license. This page does not survey other Colombian rules.</td>
+                                    <td className="border-l border-line px-5 py-5 align-top leading-relaxed text-muted">Archived under article 190 of Law 5 of 1992. It never became a license.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -639,9 +816,10 @@ export default function CustodyPage() {
                                 instrumentos que permitan el control sobre los mismos (siempre y
                                 cuando no sean no custodiados).” Natural persons may only register
                                 for categories 1 and 2, exchange, not for custody. Article 9 sets
-                                minimum net worth for categories 1, 2, and 4 at USD 150,000. If
-                                custodied volume over the last 12 months is under USD 2,500,000,
-                                the minimum is 50% of that figure. A firm in more than one category
+                                minimum net worth for categories 1, 2, and 4 at USD 150,000. Category
+                                3, transfer, is USD 75,000. If volume over the last 12 months is
+                                under USD 2,500,000 — transacted for categories 1 to 3, custodied
+                                for category 4 — the minimum is half. A firm in more than one category
                                 meets the most demanding one. Exchange and transfer stay in
                                 categories 1 to 3 even when the wallet itself is outside category 4.
                             </p>
@@ -653,46 +831,38 @@ export default function CustodyPage() {
                                 may operate in the country only with prior authorization from a
                                 federal body. Article 5 defines that provider as a legal person
                                 that, in the name of third parties, performs at least one listed
-                                service. Item IV is custody or administration of virtual assets or
-                                of instruments that enable control over them. The law does not copy
-                                Argentina’s self-custody exclusion.
+                                service. Item IV is custody or administration of virtual assets, or of
+                                the instruments that let you control them. There is no self-custody
+                                exception.
                             </p>
                             <p className="mt-3">
                                 Resolução BCB 520, of 10 November 2025, is in force on 2 February
                                 2026 (article 92). Article 9 says custody comprises, among other
                                 activities, “a guarda e o controle dos instrumentos que afetam o
                                 exercício dos direitos,” and gives private keys as the example.
-                                Societies already performing those activities on the effective date
-                                must request authorization within 270 days counted from 2 February
-                                2026 (article 88). Adding 270 days to that date lands on 30 October
-                                2026. The resolution states the 270-day count and does not print
-                                that calendar date.
+                                Firms already doing this on that date have 270 days from 2 February
+                                2026 to ask for authorization (article 88). The resolution prints
+                                the 270 days, not a calendar date.
                             </p>
                             <p className="mt-3">
-                                Capital is Resolução Conjunta 14, articles 8 to 10, not a single
-                                published minimum. The minimum paid-in capital and net worth is a
-                                cost parcel plus an activity parcel. The cost parcel is R$2,000,000
-                                times the number of operational-activity categories. The activity
-                                parcel assigns R$3,000,000 to “custódia e administração de recursos
-                                de terceiros,” then multiplies the sum of operational categories by
-                                a funding factor: 60% for own resources, 80% for institutional
-                                resources, 120% for public resources other than deposits, and 200%
-                                for deposits. Classification uses the highest factor among funding
-                                sources the applicable regulation permits, even if unused.
-                                Resolução BCB 517, article 3(III), places a sociedade prestadora de
-                                serviços de ativos virtuais in the modalidade custodiante in the
-                                custody category associated with that R$3,000,000 line.
+                                Capital is a formula in Resolução Conjunta 14, articles 8 to 10. Paid-in
+                                capital and net worth are a cost piece plus an activity piece. Cost
+                                is R$2,000,000 times the number of operational categories. Activity
+                                puts R$3,000,000 on “custódia e administração de recursos de
+                                terceiros,” then multiplies by a funding factor: 60% own resources,
+                                80% institutional, 120% public money other than deposits, 200%
+                                deposits. The factor is the highest one among sources the institution
+                                is allowed to take, including sources it is not using. Resolução BCB 517, article
+                                3(III), puts a custodiante in that R$3,000,000 category.
                             </p>
                             <p className="mt-3">
-                                An illustration, not a figure the statute prints as “the” minimum: a
-                                custodian in only that operational category, with no investment
-                                activity, has an activity parcel of R$3,000,000 times the funding
-                                factor, plus a cost parcel of R$2,000,000. At the 60% factor the
-                                activity parcel is R$1,800,000, and those two parcels sum to
-                                R$3,800,000. Article 9(II) adds R$5,000,000, and more for extra
-                                modalities up to R$10,000,000 on that sub-parcel, only when the
-                                institution provides a computing service listed in Resolução BCB
-                                517, article 4. Virtual-asset custody is not itself on that list.
+                                One custody category and no investment activity works out to
+                                R$3,000,000 times the funding factor, plus R$2,000,000. At 60% that
+                                is R$1,800,000 plus R$2,000,000, so R$3,800,000. At 200% it is
+                                R$8,000,000. The statute never prints either total. Article 9(II)
+                                adds another R$5,000,000, up to R$10,000,000 if there are extra
+                                modalities, only for computing services listed in Resolução BCB 517,
+                                article 4. Custody of virtual assets is not on that list.
                             </p>
                         </div>
                         <div>
@@ -722,17 +892,19 @@ export default function CustodyPage() {
                                 prevention of money laundering, terrorist financing, and
                                 proliferation financing. Customer due diligence applies when a
                                 transaction reaches the threshold CONASSIF sets by regulation. The
-                                decree does not print that threshold, and it does not print a
-                                minimum capital. Refusal to register is a ground for a fine of two
-                                to one hundred base salaries, as defined in article 2 of Law 7337.
+                                decree leaves the due-diligence threshold to CONASSIF, and it sets no
+                                minimum capital. Refusing to register is a fine of two to one
+                                hundred base salaries, as Law 7337 defines them.
                                 If the virtual-asset activity is also a matter another financial
                                 superintendency regulates, that supervision applies as well.
                             </p>
                             <p className="mt-3">
-                                Article 15 quater does not exclude self-custody wallet software.
-                                CONASSIF is the body that sets the scope of the listed activities
-                                by regulation. This page does not cite a published CONASSIF rule
-                                that carves that software out.
+                                There is one capital answer: none. The duty turns on custody, deposit,
+                                administration, or control, done as a business. Argentina writes
+                                self-custody wallet providers out. Article 15 quater does not, and
+                                it also never says that software which never controls the assets is
+                                in. CONASSIF has to set that scope. We have not found a published
+                                rule that does.
                             </p>
                         </div>
                         <div>
@@ -759,9 +931,9 @@ export default function CustodyPage() {
                                 Secretariat is due when a client’s operation reaches 210 times the
                                 daily UMA, and, separately, when the consideration for the service
                                 reaches 4 times the daily UMA. Fraction XVI was amended in the
-                                Diario Oficial on 16 July 2025. That is an anti-money-laundering
-                                reporting duty. It is not a license to custody, and it does not
-                                exclude software that provides the means to store or transfer.
+                                Diario Oficial on 16 July 2025. This is an anti-money-laundering
+                                report, not a custody license. Software that lets someone store or
+                                send virtual assets is inside the same sentence.
                             </p>
                         </div>
                         <div>
@@ -784,10 +956,9 @@ export default function CustodyPage() {
                                 registered in the Registro de Prestadores de Servicios Financieros
                                 may professionally provide that custody. Article 10 requires a bank
                                 bond or insurance policy once the volume or number of clients set
-                                by the Comisión para el Mercado Financiero is reached. The amount
-                                is the one the Commission sets. The articles cited here do not
-                                publish a self-custody software exemption, and they do not publish
-                                a fixed capital number for crypto custody.
+                                by the Comisión para el Mercado Financiero is reached. The Commission
+                                sets the amount. These articles have no self-custody software
+                                exemption and no fixed peso figure for crypto custody.
                             </p>
                         </div>
                         <div>
@@ -796,63 +967,52 @@ export default function CustodyPage() {
                                 The Chamber of Representatives’ file for Proyecto de Ley 510/2025C,
                                 “por la cual se regulan los proveedores de servicios de activos
                                 virtuales,” records the bill as archived under article 190 of Law 5
-                                of 1992. Archiving means that bill did not become a custody
-                                license. This page does not treat that as a finding that no other
-                                Colombian rule applies.
+                                of 1992. The bill died there. It never became a custody license.
+                                That says nothing about DIAN, the UIAF, or any other Colombian rule.
                             </p>
                         </div>
                     </div>
                 </section>
 
                 <section className="mt-20 max-w-3xl">
-                    <h2 className="text-3xl font-medium tracking-[-0.03em]">The international AML frame</h2>
+                    <h2 className="text-3xl font-medium tracking-[-0.03em]">FATF</h2>
                     <div className="mt-5 space-y-4 text-sm leading-relaxed text-muted">
                         <p>
-                            FATF’s October 2021 guidance is the document national AML regimes
-                            implement, not a license by itself. Paragraph 41 says safekeeping and
-                            administration includes persons that have exclusive or independent
-                            control of the private key associated with virtual assets belonging to
-                            another person. Paragraph 48 says FATF does not seek to regulate, as
-                            virtual asset service providers, hardware wallet manufacturers and
-                            providers of non-custodial wallets, to the extent they do not also
-                            engage in or facilitate covered activities as a business on behalf of
-                            customers. Covered activities include exchange, transfer, and
-                            safekeeping.
+                            FATF’s October 2021 guidance is what national AML rules implement. It
+                            is not itself a license. Paragraph 41 treats safekeeping as exclusive
+                            or independent control of someone else’s private key. Paragraph 48
+                            leaves out hardware-wallet makers and non-custodial wallet providers,
+                            unless they also exchange, transfer, or safekeep for customers as a
+                            business.
                         </p>
                     </div>
                 </section>
 
                 <section className="mt-20 max-w-3xl">
-                    <h2 className="text-3xl font-medium tracking-[-0.03em]">What Cavos documents, and what this page does not decide</h2>
+                    <h2 className="text-3xl font-medium tracking-[-0.03em]">What Cavos holds</h2>
                     <div className="mt-5 space-y-4 text-sm leading-relaxed text-muted">
                         <p>
-                            Cavos’s concepts page states a product invariant: the Cavos backend
-                            must not possess authority that can move user funds or enroll itself as
-                            a signer. On Solana, the relayer is described as a fee payer and not a
-                            spender. Registries, recovery services, paymasters, and relayers
-                            coordinate, fund, or submit transactions. The docs say none of those
-                            roles substitutes for user authorization.
+                            The Cavos backend is not allowed to move user funds or enroll itself as
+                            a signer. On Solana the relayer pays fees. It does not spend. Registries,
+                            recovery, paymasters, and relayers can coordinate a transaction. They
+                            cannot authorize one.
                         </p>
                         <p>
-                            Opt-in hardware-isolated recovery is a different path, and the recovery
-                            page is explicit about it. On Solana and Stellar the enclave seals and
-                            unwraps a MasterDEK from which the spend key is derived. The page says
-                            compromise of that wrap means the spend key can be restored. On
-                            Starknet the enclave may schedule one <span className="font-mono text-[13px]">add_signer</span>,
-                            with the contract enforcing nonce, expiry, timelock, cancellation, and
+                            Recovery is opt-in, and it is a different path. On Solana and Stellar
+                            the enclave seals a MasterDEK and can unwrap it. If that wrap is
+                            compromised, the spend key can be restored. On Starknet the enclave may
+                            schedule one <span className="font-mono text-[13px]">add_signer</span>.
+                            The contract still enforces nonce, expiry, timelock, cancellation, and
                             finalization. The docs call this hardware-isolated and non-custodial,
-                            and they say it is not trustless: the measured enclave image and AWS
-                            attestation are part of what a user relies on. A Cavos employee is
-                            described as having no key to hand over, because the key material is
-                            sealed to the enclave measurement.
+                            and they say it is not trustless: the user is relying on the measured
+                            enclave image and on AWS attestation. A Cavos employee has no key to
+                            hand over. The key material is sealed to that measurement.
                         </p>
                         <p>
-                            A regulator applying Article 3(1)(17), FinCEN’s total-independent-control
-                            test, or California’s definition of control has to look at that recovery
-                            path as well as the ordinary spend path. This page does not conclude
-                            that either path, or an application that integrates Cavos, is outside
-                            any license. Exchange, fiat on-ramps, and payments remain their own
-                            activities even when the wallet itself is user-signed.
+                            Anyone applying MiCA, FinCEN, or California’s control test has to read
+                            that recovery path, not only the ordinary spend. Nothing here says a
+                            Cavos integration is unlicensed. Exchange, fiat on-ramps, and payments
+                            are their own activities even when the user signs the wallet.
                         </p>
                         <p>
                             Provider comparisons of signing models, chains, and recovery are on the{' '}
@@ -875,19 +1035,16 @@ export default function CustodyPage() {
                 <section className="mt-20 max-w-3xl">
                     <h2 className="text-3xl font-medium tracking-[-0.03em]">When the hosted model matches the product</h2>
                     <p className="mt-5 text-sm leading-relaxed text-muted">
-                        Hosted custody is the structure the texts above describe when the business
-                        must move a user’s assets without that user producing a signature: automated
-                        payouts, an exchange balance, or a treasury the company operates. Those
-                        products take on the capital, liability, segregation, and licensing duties
-                        quoted here. A wallet in which only an enrolled device can authorize a
-                        spend is a different structure, and it still leaves every other activity
-                        the company performs — exchange, on-ramp, transfer for clients — to be
-                        classified on its own facts.
+                        Use a host when the product has to move a user’s coins without their
+                        signature: payouts, an exchange balance, a treasury you operate. That is
+                        the capital, the liability, and the license quoted above. A wallet only an
+                        enrolled device can spend is a different build. Exchange, on-ramps, and
+                        transfers for customers still get classified on their own.
                     </p>
                 </section>
 
                 <section className="mt-20" id="faq">
-                    <h2 className="text-3xl font-medium tracking-[-0.03em]">Frequently asked</h2>
+                    <h2 className="text-3xl font-medium tracking-[-0.03em]">Questions</h2>
                     <div className="mt-8 grid gap-x-12 gap-y-10 md:grid-cols-2">
                         {FAQ.map((item) => (
                             <article key={item.question}>
@@ -901,9 +1058,8 @@ export default function CustodyPage() {
                 <section className="mt-20 max-w-3xl">
                     <h2 className="text-3xl font-medium tracking-[-0.03em]">Sources</h2>
                     <p className="mt-4 text-sm leading-relaxed text-muted">
-                        Primary texts first. The Astraea ranges are estimates from a law-firm
-                        article, included because teams ask what a US licensing effort costs, and
-                        labeled as estimates because they are not fees set by statute.
+                        The Astraea dollar ranges are a law firm’s estimates. They are not fees
+                        in a statute.
                     </p>
                     <ol className="mt-6 space-y-4 text-sm leading-relaxed">
                         {SOURCES.map((source) => (
@@ -924,10 +1080,10 @@ export default function CustodyPage() {
 
                 <section className="mt-20 flex flex-col items-start justify-between gap-6 rounded-2xl bg-brand px-8 py-10 text-white md:flex-row md:items-center">
                     <div>
-                        <h2 className="text-2xl font-medium">Read the signing model before you integrate.</h2>
+                        <h2 className="text-2xl font-medium">Read how signing works before you integrate.</h2>
                         <p className="mt-2 max-w-xl text-sm text-white/70">
-                            The quickstart shows the device signer. Counsel in each user
-                            jurisdiction still classifies the rest of the product.
+                            The quickstart is the device signer. A lawyer in each country where
+                            you have users still has to classify the rest.
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-3">
