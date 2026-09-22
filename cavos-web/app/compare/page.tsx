@@ -128,7 +128,12 @@ export default function ComparePage() {
                     <p className="mt-7 max-w-2xl text-lg leading-relaxed text-muted">
                         Cavos is device-native and chain-agnostic: one product integration, with an
                         explicit adapter for each blockchain. Compare that model with hosted key
-                        networks and traditional wallet extensions.
+                        networks and traditional wallet extensions. The licensing consequences of
+                        holding user keys are cited on the{' '}
+                        <Link href="/custody" className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
+                            custody page
+                        </Link>
+                        .
                     </p>
                 </header>
 
