@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input'
 import { Icon } from '@/components/ui/Icon'
 import { PageHeader } from '@/components/ui/PageHeader'
 import {
+  ASSET_HINT,
   DEFAULT_VAULT_POLICY,
   isValidAsset,
   type OverLimit,
@@ -41,9 +42,12 @@ const KNOWN_ASSETS: { chain: VaultChain; asset: string; label: string }[] = [
   { chain: 'stellar', asset: 'XLM', label: 'XLM' },
   { chain: 'stellar', asset: 'USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN', label: 'USDC' },
   { chain: 'stellar', asset: 'USDC:GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5', label: 'USDC (testnet)' },
+  { chain: 'starknet', asset: 'ETH', label: 'ETH' },
+  { chain: 'starknet', asset: 'STRK', label: 'STRK' },
+  { chain: 'starknet', asset: 'USDC', label: 'USDC' },
 ]
 
-const CHAIN_NAME: Record<VaultChain, string> = { solana: 'Solana', stellar: 'Stellar' }
+const CHAIN_NAME: Record<VaultChain, string> = { solana: 'Solana', stellar: 'Stellar', starknet: 'Starknet' }
 
 function knownLabel(limit: VaultLimit): string | undefined {
   return KNOWN_ASSETS.find((known) => known.chain === limit.chain && known.asset === limit.asset)?.label
@@ -83,7 +87,8 @@ export default function ApprovalsPage() {
   const save = async () => {
     const invalid = policy.limits.findIndex((limit) => !isValidAsset(limit.chain, limit.asset.trim()))
     if (invalid >= 0) {
-      setError(`Row ${invalid + 1}: enter SOL or a mint address on Solana, XLM or CODE:ISSUER on Stellar.`)
+      const { chain } = policy.limits[invalid]
+      setError(`Row ${invalid + 1}: on ${CHAIN_NAME[chain]}, enter ${ASSET_HINT[chain]}.`)
       return
     }
     setSaving(true)
@@ -121,7 +126,7 @@ export default function ApprovalsPage() {
     <div className="space-y-6 animate-fadeIn max-w-4xl">
       <PageHeader
         title="Transaction approvals"
-        subtitle="What the Cavos vault signs for your users without asking, on Solana and Stellar. Your site cannot change these; only this page can."
+        subtitle="What the Cavos vault signs for your users without asking, on Solana, Stellar and Starknet. Your site cannot change these; only this page can."
       />
 
       <Card className="space-y-4">
@@ -201,6 +206,7 @@ export default function ApprovalsPage() {
                         >
                           <option value="solana">Solana</option>
                           <option value="stellar">Stellar</option>
+                          <option value="starknet">Starknet</option>
                         </select>
                       </td>
                       <td className="py-2 pr-3">
@@ -208,7 +214,7 @@ export default function ApprovalsPage() {
                           aria-label={`Token for row ${index + 1}`}
                           value={limit.asset}
                           onChange={(e) => updateLimit(index, { asset: e.target.value })}
-                          placeholder={limit.chain === 'solana' ? 'SOL or mint address' : 'XLM or CODE:ISSUER'}
+                          placeholder={ASSET_HINT[limit.chain]}
                           className="font-mono text-xs h-9"
                         />
                         {label && <p className="text-xs text-muted mt-1">{label}</p>}
