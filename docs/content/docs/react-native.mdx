@@ -163,8 +163,9 @@ const wallet = await Cavos.connect({
 
 Starknet and Solana share passkey approval through one assertion with
 `approveDeviceEverywhere` **only on Starknet**. Native Solana/Stellar use
-`NativePasskeyPrf` / `approveDeviceWithPasskey()` so the PRF can derive the
-MasterDEK. If Android does not return PRF, use the enclave.
+`NativePasskeyPrf` / `approveDeviceWithPasskey()` so the PRF can open the
+passkey's encrypted copy of the MasterDEK. If Android does not return PRF, use
+the enclave.
 
 ## Logout, reinstall, and recovery
 

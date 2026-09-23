@@ -26,13 +26,13 @@ nothing."* A serious app wants at least one of each.
 ## What to offer
 
 **Start with a passkey or the enclave — not both as the same `deviceApproval`.**
-`deviceApproval: "passkey"` is one chain and the PRF *is* the Solana/Stellar
-spend key. `deviceApproval: "enclave"` wraps the MasterDEK for every native
-chain in the session. Login never asks for a passkey; call
-`enrollPasskeyDefault()` if you also want the credential.
+`deviceApproval: "passkey"` is one chain, and a passkey that was added can open
+the Solana/Stellar wallet. `deviceApproval: "enclave"` wraps the MasterDEK for
+every native chain in the session. Signing up never asks for a passkey; call
+`enrollPasskeyDefault()` when you want one.
 
 **Add a way back from nothing.** On Solana/Stellar that is the enclave (sign in
-again) or the passkey PRF. Recovery codes do **not** restore native Solana.
+again) or a passkey the user added. Recovery codes do **not** restore native Solana.
 On Starknet, recovery codes and the enclave's restricted `add_signer` still
 apply.
 
