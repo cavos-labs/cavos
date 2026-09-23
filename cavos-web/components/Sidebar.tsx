@@ -18,6 +18,7 @@ const appNav = [
     { name: 'Activity', suffix: '/activity', icon: Icon.Activity },
     { name: 'Emails', suffix: '/emails', icon: Icon.Mail },
     { name: 'Programs', suffix: '/programs', icon: Icon.Code },
+    { name: 'Approvals', suffix: '/approvals', icon: Icon.Shield },
     { name: 'Environments', suffix: '/environments', icon: Icon.Connect },
 ]
 

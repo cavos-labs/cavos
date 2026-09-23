@@ -3,7 +3,9 @@
   "version": "0.0.9",
   "private": true,
   "scripts": {
+    "predev": "node lib/vault/copyAssets.mjs",
     "dev": "next dev",
+    "prebuild": "node lib/vault/copyAssets.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
