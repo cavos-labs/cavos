@@ -10,7 +10,7 @@ program account.
 The spend key is HKDF of a **MasterDEK** (`cavos-ed25519-solana-v1`, salted by
 `appSalt`). The same DEK derives the Stellar `G…` in a multi-chain enclave
 session. A new device restores that DEK with the [enclave](/docs/hardware-isolated-recovery)
-or a [passkey PRF](/docs/passkeys). Login never asks for a passkey.
+or a [passkey](/docs/passkeys) the user added. Signing up never asks for a passkey.
 
 The Cavos relayer co-signs as **fee payer only**. It cannot spend. The user still
 needs SOL in the account to transfer; sponsorship covers the fee, not the
@@ -136,7 +136,7 @@ const sig = await wallet.signMessage("Hello, Cavos!");
 
 ## How keys work
 
-1. First device mints a random MasterDEK (or derives it from passkey PRF).
+1. First device mints a random MasterDEK.
 2. Solana seed = HKDF-SHA256(DEK, appSalt, `"cavos-ed25519-solana-v1"`).
 3. Address = Ed25519 public key of that seed. Registry claims
    `(userId, appId, chain, network)`.
@@ -173,11 +173,11 @@ There is no `DEVICE_ACCOUNT_PROGRAM_ID` and no `SolanaAdapter` in this release.
 | Path | What happens |
 |------|----------------|
 | **Enclave** | Sign in again. The enclave unwraps the MasterDEK onto this device. |
-| **Passkey** | `approveDeviceWithPasskey()` → `connect({ passkey: true })`. PRF is the KDF. |
+| **Passkey** | Sign in. If a passkey was added, the vault asks for it ("Verify it's you") and opens its encrypted copy of the MasterDEK. |
 | **Recovery code** | Not used. `setupRecovery` is a no-op; `CavosSolana.recover` throws. |
 
 See [Hardware-isolated recovery](/docs/hardware-isolated-recovery) and
-[Passkeys](/docs/passkeys). Login never prompts for the passkey.
+[Passkeys](/docs/passkeys). Signing up never prompts for a passkey.
 
 ## What's available
 
@@ -185,5 +185,5 @@ See [Hardware-isolated recovery](/docs/hardware-isolated-recovery) and
 - ✅ Relayer as fee payer.
 - ✅ `execute` / `executeInstructions` signed by the user key.
 - ✅ `signMessage` with `curve: "ed25519"`.
-- ✅ Enclave DEK wrap and passkey PRF restore.
+- ✅ Enclave DEK wrap and passkey restore.
 - ❌ PDA, secp256r1 precompile program, on-chain approvers, `addSigner`.

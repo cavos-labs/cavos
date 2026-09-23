@@ -42,8 +42,8 @@ if (walletStatus.needsDeviceApproval) {
 }
 ```
 
-On **native Solana/Stellar** that reconnects with `{ passkey: true }` so PRF
-derives the MasterDEK. On **Starknet** it submits `add_signer_via_passkey`.
+On **native Solana/Stellar** the vault opens the passkey's encrypted copy of
+the MasterDEK (it usually asked already at sign-in). On **Starknet** it submits `add_signer_via_passkey`.
 Grandfathered Stellar still `setOptions`s an extra Horizon signer.
 
 The hosted approval page below is the Starknet email fallback for users who

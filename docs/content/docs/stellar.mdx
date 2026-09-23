@@ -252,8 +252,8 @@ domain prefix before signing.
 
 ## Unlock factors & silent signing
 
-**Native DEK path (enclave / passkey):** one spend key, restored by unwrap or
-PRF. Signing in again with the enrolled Google/Apple identity **does** restore
+**Native DEK path (enclave / passkey):** one spend key, restored by an enclave
+unwrap or a passkey's encrypted copy. Signing in again with the enrolled Google/Apple identity **does** restore
 the account.
 
 **Grandfathered path:** extra Horizon signers.
@@ -261,20 +261,22 @@ the account.
 | Factor | Native DEK | Grandfathered |
 |--------|------------|---------------|
 | **Device** | Ed25519 imported from the DEK | Random WebCrypto key; first device's pubkey is the `G…` |
-| **Passkey** | PRF → MasterDEK (can spend) | Extra weight-1 signer |
+| **Passkey** | Encrypted copy of the MasterDEK (can spend) | Extra weight-1 signer |
 | **Enclave** | Seals / unwraps the DEK | Not used |
 | **Recovery code** | Not used | Extra weight-1 signer |
 
 On a returning device with a local wrap, `connect` is `ready` with no prompt.
-On a new device with no wrap, status is `needs-device-approval` until enclave
-login or `approveDeviceWithPasskey()`.
+On a new device with no wrap, the vault asks for the passkey if one was added;
+otherwise status is `needs-device-approval` until enclave login or
+`approveDeviceWithPasskey()`.
 
 ## Add a passkey (recommended)
 
-Login never asks for a passkey. After connect, call `enrollPasskeyDefault()`.
-On the native DEK path the WebAuthn **PRF is the MasterDEK KDF** — anyone with
-that synced credential can spend. It is *not* 2FA and *not* a Horizon extra
-signer. `wallet.enrollPasskey(...)` is a no-op on native accounts.
+Signing up never asks for a passkey. After connect, call `enrollPasskeyDefault()`.
+On the native DEK path the passkey stores an **encrypted copy of the
+MasterDEK** — anyone with that synced passkey can open the wallet. It is *not*
+2FA and *not* a Horizon extra signer. `wallet.enrollPasskey(...)` is a no-op on
+native accounts. See [Passkeys](/docs/passkeys) for how the copy is protected.
 
 <Callout type="warn">
 Use the enclave if you want Google/Apple restore without giving a synced
@@ -284,10 +286,11 @@ credential spending power by itself. `deviceApproval: "passkey"` is one chain.
 ```ts title="TypeScript"
 const { enrollPasskeyDefault, approveDeviceWithPasskey, walletStatus } = useCavos();
 
-await enrollPasskeyDefault(); // after login, when you want the credential
+await enrollPasskeyDefault(); // from a device that holds the wallet
 
-if (walletStatus.needsDeviceApproval) {
-  await approveDeviceWithPasskey(); // reconnects with { passkey: true }
+// A new device is asked on sign-in. If the user dismissed it:
+if (walletStatus.needsDeviceApproval && walletStatus.hasPasskey) {
+  await approveDeviceWithPasskey();
 }
 ```
 
@@ -418,7 +421,7 @@ On Stellar, the `G…` address is resolved via the **registry-first** model (see
 2. **If found**: that `G…` is returned. Native: unwrap the MasterDEK or land on
    `needs-device-approval`. Grandfathered: check whether this device already
    holds a Horizon signer.
-3. **If not found**: native mints (or PRF-derives) a MasterDEK and claims the
+3. **If not found**: native mints a random MasterDEK and claims the
    HKDF `G…`. Grandfathered mints a random control key whose pubkey *is* the
    `G…`. The first device to register wins.
 
@@ -459,7 +462,7 @@ Networks: `"stellar-testnet"`, `"stellar-mainnet"`.
 - ✅ **Trustless Work escrows** out of the box: `deployEscrow` (via factory) and
   the `TrustlessWorkEscrow` wrapper (fund → deliver → approve → release, plus
   disputes) with `getEscrow` live state reads.
-- ✅ **Enclave DEK wrap** and **passkey PRF** restore on the native path.
+- ✅ **Enclave DEK wrap** and **passkey** restore on the native path.
 - ✅ **Pay in a token** via [`@cavos/reserve`](/docs/reserve) (`wallet.signXdr`).
 
 For the cross-chain model and how this compares to the other chains, see

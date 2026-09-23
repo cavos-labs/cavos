@@ -56,7 +56,7 @@ interface ConnectOptions {
   // --- Solana-only ---
   relayer?: SolanaRelayer;                // gasless fee payer
   feePayer?: Keypair;                     // self-funded fallback
-  passkeyPrf?: PasskeyPrfProvider;        // PRF derives the MasterDEK (single-chain)
+  passkeyPrf?: PasskeyPrfProvider;        // restores from a passkey's DEK copy (single-chain)
 
   // --- Stellar-only (classic `G…`) ---
   stellarRelayer?: StellarRelayer;        // gasless sponsorship
@@ -180,7 +180,8 @@ MasterDEK. On Starknet it still schedules a restricted `add_signer`. See
 ## Passkeys
 
 On Starknet, a second factor for approving new devices. On Solana/Stellar
-native, PRF is the MasterDEK KDF (can spend). Login never prompts. See
+native, the passkey's PRF encrypts a copy of the MasterDEK that Cavos stores
+and cannot open (can spend). Signing up never prompts. See
 [Passkeys](/docs/passkeys).
 
 | Export | Description |
@@ -190,7 +191,7 @@ native, PRF is the MasterDEK KDF (can spend). Login never prompts. See
 | `PasskeyAssertion` | Parsed WebAuthn assertion. |
 | `approveDeviceEverywhere(wallets, passkey)` | Starknet on-chain assertion batch. Not native Solana. |
 | `PasskeyApprovable` | Interface implemented by Starknet `Cavos`. Native `CavosSolana` throws on approver APIs. |
-| `PasskeyPrf` | WebAuthn PRF helper. Native Solana/Stellar KDF. |
+| `PasskeyPrf` | WebAuthn PRF helper. Opens a passkey's DEK copy on native Solana/Stellar. |
 
 ## Signers
 
@@ -247,7 +248,7 @@ grandfathered wallets still use extra Horizon signers. See [Stellar](/docs/stell
 | `StellarRelayer`, `StellarRelayerOptions`, `StellarRelayKind` | Gasless relayer. |
 | `STELLAR_NETWORKS`, `StellarNetwork`, `HORIZON_URL`, `SOROBAN_RPC_URL`, `XLM_DECIMALS` | Network configs. |
 | `TrustlessWorkEscrow`, `deployEscrow`, `buildEscrowScVal` | Trustless Work escrow wrapper. |
-| `PasskeyPrf`, `PasskeyPrfOptions`, `PasskeyPrfEnrollParams` | WebAuthn PRF helper (MasterDEK KDF / grandfathered extra signer). |
+| `PasskeyPrf`, `PasskeyPrfOptions`, `PasskeyPrfEnrollParams` | WebAuthn PRF helper (passkey DEK copy / grandfathered extra signer). |
 | `generateControlKey`, `controlKeypairFromSeed` | Control key generation. |
 
 ### Shared interface types

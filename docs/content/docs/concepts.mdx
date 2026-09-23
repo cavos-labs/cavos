@@ -44,7 +44,7 @@ When you call `connect`:
 2. **If found**: The existing address is returned. On Starknet the device checks
    whether it is an authorized signer. On Solana/Stellar it unwraps the MasterDEK
    (local wrap, enclave, or passkey) or lands on `needs-device-approval`.
-3. **If not found**: The device mints a MasterDEK (or uses passkey PRF), derives
+3. **If not found**: The device mints a random MasterDEK, derives
    the address, and claims it. The first device to register wins.
 
 This design prevents a second wallet from being created silently when the same
@@ -52,7 +52,7 @@ user connects from a different device. The second device sees the existing
 address and enters device approval instead of minting a duplicate.
 
 <Callout type="info">
-**Why a registry?** The first device mints (or PRF-derives) a MasterDEK and
+**Why a registry?** The first device mints a MasterDEK and
 claims the derived address. A second device must unwrap that same DEK — it
 cannot invent a new one. The registry records which address belongs to which
 user so connect does not mint a duplicate.
@@ -138,7 +138,7 @@ one universal curve:
 
 - Starknet uses non-extractable P-256 device signers on the account contract.
 - Solana and Stellar use non-extractable Ed25519 spend keys derived from a
-  MasterDEK (enclave wrap or passkey PRF). Grandfathered Stellar wallets still
+  MasterDEK (enclave wrap or a passkey's encrypted copy). Grandfathered Stellar wallets still
   use extra Horizon signers.
 - On the web, all of these keys live in the [Cavos vault](/docs/vault), an
   iframe on a Cavos origin, and never in your page.
