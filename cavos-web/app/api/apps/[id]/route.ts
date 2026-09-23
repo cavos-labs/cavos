@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { parseVaultPolicy } from '@/lib/vault/policy'
 
 type RouteContext = {
   params: Promise<{ id: string }>
@@ -100,6 +101,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       email_device_approval_template_html,
       device_approval_url,
       allowed_solana_programs,
+      vault_policy,
     } = body
 
     const updates: Record<string, any> = {}
@@ -148,6 +150,14 @@ export async function PATCH(request: Request, context: RouteContext) {
         }
       }
       updates.allowed_solana_programs = list
+    }
+
+    if (vault_policy !== undefined) {
+      try {
+        updates.vault_policy = vault_policy === null ? null : parseVaultPolicy(vault_policy)
+      } catch (err) {
+        return NextResponse.json({ error: (err as Error).message }, { status: 400 })
+      }
     }
 
     if (Object.keys(updates).length === 0) {

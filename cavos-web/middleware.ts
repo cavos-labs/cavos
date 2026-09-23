@@ -2,6 +2,12 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  const isVaultPath = request.nextUrl.pathname.startsWith('/vault')
+  if (request.headers.get('host')?.startsWith('vault.')) {
+    return isVaultPath ? NextResponse.next() : new NextResponse(null, { status: 404 })
+  }
+  if (isVaultPath) return NextResponse.next()
+
   let supabaseResponse = NextResponse.next({
     request,
   })

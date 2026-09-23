@@ -23,10 +23,40 @@ const nextConfig: NextConfig = {
       { source: '/.well-known/jwks.json', destination: '/api/jwks/cavos-firebase' },
       // SEP-10 client_domain sign endpoint (canonical: /api/stellar/sep10/sign)
       { source: '/sign', destination: '/api/stellar/sep10/sign' },
+      { source: '/vault', destination: '/vault/index.html' },
+      { source: '/vault/confirm', destination: '/vault/confirm.html' },
     ];
   },
   async headers() {
     return [
+      {
+        source: "/vault/:path*",
+        headers: [
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+        ],
+      },
+      {
+        // Embedded by any app; the page itself checks the embedding origin.
+        source: "/vault/:page(index.html)?",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: "default-src 'none'; script-src 'self'; connect-src 'self' https:; base-uri 'none'; form-action 'none'; frame-ancestors *",
+          },
+        ],
+      },
+      {
+        // Top-level only: this is where the user decides, so nothing may draw over it.
+        source: "/vault/:page(confirm|confirm.html)",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: "default-src 'none'; script-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+          },
+        ],
+      },
       {
         source: "/.well-known/stellar.toml",
         headers: [

@@ -50,3 +50,6 @@ certificates*.pem
 # Supabase CLI local state: which project this checkout is linked to, and the
 # versions it saw there. Machine-specific and rewritten on every command.
 supabase/.temp/
+
+# Copied from @cavos/kit by lib/vault/copyAssets.mjs
+/public/vault/*.js
