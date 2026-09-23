@@ -2,7 +2,7 @@
 // here, so an app's own code cannot loosen it.
 
 export type OverLimit = 'ask' | 'block' | 'sign'
-export type VaultChain = 'solana' | 'stellar'
+export type VaultChain = 'solana' | 'stellar' | 'starknet'
 
 export interface VaultLimit {
   chain: VaultChain
@@ -25,6 +25,9 @@ export const DEFAULT_VAULT_POLICY: VaultPolicy = {
     { chain: 'stellar', asset: 'XLM', perTx: '100', perDay: '500' },
     { chain: 'stellar', asset: 'USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN', perTx: '25', perDay: '100' },
     { chain: 'stellar', asset: 'USDC:GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5', perTx: '25', perDay: '100' },
+    { chain: 'starknet', asset: 'ETH', perTx: '0.01', perDay: '0.05' },
+    { chain: 'starknet', asset: 'STRK', perTx: '20', perDay: '100' },
+    { chain: 'starknet', asset: 'USDC', perTx: '25', perDay: '100' },
   ],
 }
 
@@ -32,10 +35,19 @@ const MAX_LIMITS = 50
 const AMOUNT = /^\d{1,15}(\.\d{1,9})?$/
 const SOLANA_MINT = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/
 const STELLAR_ASSET = /^[A-Za-z0-9]{1,12}:G[A-Z2-7]{55}$/
+// The vault knows these tokens' contracts and decimals on Starknet.
+export const STARKNET_ASSETS = ['ETH', 'STRK', 'USDC']
 
 export function isValidAsset(chain: VaultChain, asset: string): boolean {
   if (chain === 'solana') return asset === 'SOL' || SOLANA_MINT.test(asset)
+  if (chain === 'starknet') return STARKNET_ASSETS.includes(asset)
   return asset === 'XLM' || STELLAR_ASSET.test(asset)
+}
+
+export const ASSET_HINT: Record<VaultChain, string> = {
+  solana: 'SOL or a mint address',
+  stellar: 'XLM or a CODE:ISSUER asset',
+  starknet: 'ETH, STRK or USDC',
 }
 
 /** Throws a message fit to show the developer. */
@@ -52,9 +64,11 @@ export function parseVaultPolicy(input: unknown): VaultPolicy {
   const parsed = limits.map((raw, index): VaultLimit => {
     const { chain, asset, perTx, perDay } = (raw ?? {}) as Record<string, unknown>
     const where = `Limit ${index + 1}`
-    if (chain !== 'solana' && chain !== 'stellar') throw new Error(`${where}: chain must be solana or stellar`)
+    if (chain !== 'solana' && chain !== 'stellar' && chain !== 'starknet') {
+      throw new Error(`${where}: chain must be solana, stellar or starknet`)
+    }
     if (typeof asset !== 'string' || !isValidAsset(chain, asset.trim())) {
-      throw new Error(`${where}: "${String(asset)}" is not a ${chain === 'solana' ? 'SOL or mint address' : 'XLM or CODE:ISSUER asset'}`)
+      throw new Error(`${where}: "${String(asset)}" is not ${ASSET_HINT[chain]}`)
     }
     if (typeof perTx !== 'string' || !AMOUNT.test(perTx)) throw new Error(`${where}: per-transaction amount is not a number`)
     if (typeof perDay !== 'string' || !AMOUNT.test(perDay)) throw new Error(`${where}: daily amount is not a number`)

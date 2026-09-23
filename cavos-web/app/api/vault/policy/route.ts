@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ origins: embeddingOrigins(app.allowed_web_origins, app.callback_urls), policy })
 }
 
-/** Null when the app registered none, which leaves the vault open to any site, as redirects are. */
+/** Null when the app registered none; the vault then refuses every site until one is added. */
 function embeddingOrigins(webOrigins: string[] | null, callbacks: string[] | null): string[] | null {
   const origins = new Set<string>()
   for (const url of [...(webOrigins ?? []), ...(callbacks ?? [])]) {
