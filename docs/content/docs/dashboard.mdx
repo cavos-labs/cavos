@@ -29,8 +29,9 @@ Each app then has its own tabs:
 | **Authentication** | Providers, OAuth client IDs, callback URLs, social-recovery config. |
 | **Emails** | Templates for magic link, OTP, device approval, and password reset. |
 | **Programs** | The Solana program allowlist (see below). |
+| **Approvals** | What the [Cavos vault](/docs/vault) signs without asking: per-token limits and what happens over them. |
 | **Environments** | Per-environment origins, keys, and social recovery. |
-| **Settings** | Name, logo, and the `device_approval_url` the emails link to. |
+| **Settings** | Name, logo, allowed web origins (the sites that may embed the [vault](/docs/vault)), and the `device_approval_url` the emails link to. |
 
 <Callout type="info">
 `appSalt` is **not** a dashboard value — it lives in your code. It names the

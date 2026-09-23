@@ -10,6 +10,7 @@
     "auth",
     "wallet-actions",
     "signing",
+    "vault",
     "---Access---",
     "recovery",
     "passkeys",

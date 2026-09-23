@@ -157,3 +157,28 @@ console.log(formatConfigProblems(validateCavosConfig(config)));
 `<CavosProvider>` already runs these in development. Calling them yourself is
 useful in a setup screen or in CI, where a misconfigured environment is cheaper
 to catch than in a user's first login.
+
+## The Cavos vault
+
+**`kit/vault: add <origin> to this app's allowed web origins in the Cavos dashboard`.**
+The page's origin is not registered for the app, so the vault refuses to load.
+Add it (scheme, host and port, e.g. `http://localhost:3000`) under the app's
+settings. An app with no origins registered cannot embed the vault at all.
+
+**`kit/vault: https://vault.cavos.xyz did not load`.** The iframe never
+answered within 15 seconds. Check that nothing on your page blocks framing
+`vault.cavos.xyz` (a Content Security Policy with `frame-src` or `child-src`
+that omits it), and that the page is served over HTTPS or `localhost`.
+
+**Transfers that used to sign silently now ask, or fail with `kit/vault: this
+app's policy does not allow this transaction`.** They are over the app's
+limits, or are not a transfer of a listed token (contract calls, token
+approvals, signer changes). Check the app's **Approvals** page. The daily total
+counts only what was signed without asking, per user, and resets at 00:00 UTC.
+
+**A returning user lands on `needs-device-approval` after upgrading to 0.2.0.**
+Keys created before the vault lived in your page's storage, which the vault
+cannot read. Solana and Stellar wallets restore through the enclave or the
+passkey, as on a new device; Starknet adds this browser as a new device. See
+[Cavos vault](/docs/vault#logout-and-storage).
+

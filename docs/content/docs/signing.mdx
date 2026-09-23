@@ -20,10 +20,14 @@ the user authority required to move funds.
 
 ## Local keys
 
-On the web, Cavos uses non-extractable WebCrypto keys stored through IndexedDB.
+On the web, signing keys live in the [Cavos vault](/docs/vault): non-extractable
+WebCrypto keys in the IndexedDB of an iframe on a Cavos origin, not your page.
 Native applications use Secure Enclave/Keychain or Android Keystore when the
-device supports them. “Non-extractable” means application code can ask the key
-to perform an operation but cannot export the private material.
+device supports them. “Non-extractable” means code can ask the key to perform
+an operation but cannot export the private material; the vault adds that your
+page can only ask, within the limits your app sets.
+
+The snippet below is the low-level signer, without the vault.
 
 ```ts title="TypeScript"
 import { WebCryptoSigner } from "@cavos/kit";
@@ -65,9 +69,9 @@ Stellar uses its native ed25519 account model. With enclave or passkey, the
 control key is HKDF of the MasterDEK (same wrap as Solana). Grandfathered
 wallets still use extra Horizon signers.
 
-On web, the control key is a non-extractable WebCrypto Ed25519 key.
-Application code (and XSS) cannot export the private bytes, but can still
-execute transactions while the session is unlocked.
+On web, the control key is a non-extractable WebCrypto Ed25519 key held by the
+[Cavos vault](/docs/vault). Your page cannot read it, and what it signs past
+your app's limits follows the rule you set in the dashboard.
 
 For Soroban, `invokeContract` simulates the call and re-signs the account's
 authorization entries with the local control key. A fee-bump relayer can pay the
@@ -90,9 +94,12 @@ for the call, the per-chain payloads, and how a backend verifies a signature.
 Silent signing removes a per-transaction biometric prompt. That improves
 embedded-wallet conversion but means application authorization and device
 security matter. Cavos places explicit user verification on device enrollment
-and recovery rather than every routine transaction. Use [Passkeys](/docs/passkeys),
-[Multi-device](/docs/multi-device), spending policy where available, and clear
-in-app transaction confirmation for high-risk actions.
+and recovery rather than every routine transaction. On the web the
+[Cavos vault](/docs/vault) bounds that: routine transfers under your app's
+limits sign silently, and anything larger or unrecognised follows your
+over-limit rule (ask the user, by default).
+Use [Passkeys](/docs/passkeys), [Multi-device](/docs/multi-device), and limits
+you would accept losing to a bug on your site.
 
 Every future chain adapter must document its authority, replay protection,
 transaction binding, recovery, and sponsor capabilities before it joins the
