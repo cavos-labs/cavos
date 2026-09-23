@@ -140,6 +140,8 @@ one universal curve:
 - Solana and Stellar use non-extractable Ed25519 spend keys derived from a
   MasterDEK (enclave wrap or passkey PRF). Grandfathered Stellar wallets still
   use extra Horizon signers.
+- On the web, all of these keys live in the [Cavos vault](/docs/vault), an
+  iframe on a Cavos origin, and never in your page.
 
 On mobile, Cavos prefers hardware-backed key storage and reports the actual
 capabilities of the device. Hardware claims must be validated on physical

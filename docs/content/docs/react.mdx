@@ -47,7 +47,7 @@ execute per chain — see [Concepts](/docs/concepts).
 
 | Prop | Description |
 |------|-------------|
-| `config` | Chains, network, `appSalt`, `deviceApproval` (`"enclave"` \| `"passkey"` — passkey is one chain), `socialRecovery`. |
+| `config` | Chains, network, `appSalt`, `deviceApproval` (`"enclave"` \| `"passkey"` — passkey is one chain), `socialRecovery`, `vault` (on by default with `appId`; see [Cavos vault](/docs/vault)). |
 | `modal` | Login modal appearance and providers. Omit to render no modal. |
 | `identity` | **Bring your own auth.** Pass your signed-in user and Cavos login turns off. `null` while your auth loads or after sign-out. See [Authentication](/docs/auth#in-react). |
 
@@ -192,7 +192,7 @@ for the capability details.
 | Method | Description |
 |--------|-------------|
 | `openModal()` / `closeModal()` | Open/close the built-in auth modal (the provider mounts it automatically when `modal` is set). |
-| `logout()` | Clears the persisted identity and session token only. IndexedDB MasterDEK wraps and device keys stay. Does **not** sign the user out of Google or Apple. |
+| `logout()` | Clears the persisted identity and session token, and tells the [vault](/docs/vault) to let go of the keys it unlocked. Stored keys stay, so the next login is silent. Does **not** sign the user out of Google or Apple. |
 | `clearAuthError()` | Clear `authError` (e.g. when the user starts a new login attempt). |
 
 ## `useCavosAuth()`

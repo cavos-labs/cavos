@@ -54,7 +54,8 @@ console.log(wallet.status);             // "undeployed" | "ready" | "needs-devic
 
 <Callout type="info">
 On the **native DEK** path, `connect` unwraps (or mints) the MasterDEK and
-imports the Ed25519 control key as a non-extractable WebCrypto key. The `G…`
+imports the Ed25519 control key as a non-extractable WebCrypto key, inside the
+[Cavos vault](/docs/vault) on the web. The `G…`
 is that key's public address. A returning device with a local wrap is `ready`
 with no prompt. Grandfathered wallets still mint a random control key whose
 pubkey *is* the `G…`.
@@ -447,7 +448,8 @@ Networks: `"stellar-testnet"`, `"stellar-mainnet"`.
 - ✅ Classic `G…` account. Native MasterDEK path shares the DEK with Solana.
 - ✅ Grandfathered per-device Horizon signers still load for older wallets.
 - ✅ **Lazy deploy** — first execute creates the account atomically.
-- ✅ Silent signing via a non-extractable ed25519 control key.
+- ✅ Silent signing via a non-extractable ed25519 control key, held by the
+  [Cavos vault](/docs/vault) within your app's limits.
 - ✅ **Sign messages off-chain while undeployed.**
 - ✅ Gasless create + execute via the Cavos relayer (reserves sponsored).
 - ✅ Native XLM transfer (`execute(amount, destination)`) + `balance()`.

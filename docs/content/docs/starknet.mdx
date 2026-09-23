@@ -85,7 +85,10 @@ wallet. Approve it from an already-registered device — see
 ## How signing works
 
 The device key is a **non-extractable secp256r1 key** held in IndexedDB via
-WebCrypto. When you call `execute`:
+WebCrypto, inside the [Cavos vault](/docs/vault) on the web. The vault reads the
+calls before signing: `transfer` on ETH, STRK and USDC counts against your
+app's limits, and calls into the account itself always go to your over-limit
+rule. When you call `execute`:
 
 1. starknet.js computes the v3 transaction hash.
 2. The device key signs `sha256(tx_hash)` — WebCrypto's ECDSA hashes the message

@@ -140,8 +140,9 @@ const sig = await wallet.signMessage("Hello, Cavos!");
 2. Solana seed = HKDF-SHA256(DEK, appSalt, `"cavos-ed25519-solana-v1"`).
 3. Address = Ed25519 public key of that seed. Registry claims
    `(userId, appId, chain, network)`.
-4. Local wrap of the DEK lives in IndexedDB (`cavos-kit-dek-wrap`), keyed by
-   `userId`. The enclave also seals it when `deviceApproval: "enclave"`.
+4. The local wrap of the DEK and the spend key live in the IndexedDB of the
+   [Cavos vault](/docs/vault) on the web, filed under your app. The enclave
+   also seals the DEK when `deviceApproval: "enclave"`.
 5. A reconnect that already has the local wrap **reseals** the enclave so a
    phone can recover even if the first enroll failed.
 

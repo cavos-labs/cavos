@@ -1,0 +1,160 @@
+---
+title: The Cavos vault
+description: On the web, signing keys live in an iframe on a Cavos origin. Your page asks for signatures; the vault signs within the limits you set in the dashboard and asks the user for the rest.
+---
+
+In the browser, every signing key (Solana, Stellar and Starknet) lives in the
+**Cavos vault**: an iframe on `vault.cavos.xyz`, not in your page. Your page
+asks for signatures and gets signatures back. A cross-site scripting bug or a
+compromised dependency on your site cannot take a key, and it cannot sign past
+your app's limits without the user seeing it.
+
+Available from `@cavos/kit` **0.2.0**. React Native has no iframe; keys stay in
+the platform's secure storage as before.
+
+## How it works
+
+1. `CavosProvider` (or `Cavos.connect`) mounts a hidden iframe from
+   `https://vault.cavos.xyz/vault` and opens a private channel to it.
+2. The vault checks that your page's origin is registered for your app, and
+   loads your app's approval policy from Cavos.
+3. Keys are created, unwrapped (enclave or passkey) and stored inside the
+   vault's own origin. Your page receives public keys and addresses only.
+4. To sign, the wallet hands the vault the whole payload: a Solana message, a
+   Stellar transaction or Soroban auth entry, a Starknet outside execution or
+   invoke. The vault never signs a bare hash. It reads the payload, computes the
+   hash itself, and checks it against your policy.
+5. Within the limits it signs silently. Otherwise it applies your app's rule:
+   ask the user, block, or sign anyway.
+
+Nothing changes in how you call the wallet: `execute`, `signTransaction`,
+`signMessage` and friends work as before.
+
+## Turning it on
+
+The vault is **on by default** when `appId` is set:
+
+```tsx title="app/providers.tsx"
+<CavosProvider
+  config={{
+    appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+    chains: ["solana", "stellar"],
+    network: "testnet",
+    appSalt: "my-app",
+    deviceApproval: "enclave",
+    // vault: false,                         // keep keys in the page (not recommended)
+    // vault: { url: "http://localhost:3003/vault" },   // a local cavos-web
+  }}
+>
+```
+
+`Cavos.connect` takes the same `vault` option (`true`, `false` or `{ url }`) and
+requires `appId` when it is set.
+
+<Callout type="warn">
+**Register your origins.** The vault loads only for sites listed in your app's
+allowed web origins or callback URLs in the dashboard, including
+`http://localhost:<port>` for development. An app with none registered cannot
+embed the vault; the connect fails with
+`kit/vault: add <origin> to this app's allowed web origins in the Cavos dashboard`.
+</Callout>
+
+## Limits and approvals
+
+Set them in the dashboard under **your app → Approvals**. They are read by the
+vault from Cavos, never from your page, so your own code cannot loosen them.
+
+**Over the limit** decides what happens to anything the limits do not cover:
+
+| Rule | Behaviour |
+|---|---|
+| **Ask the user** (default) | The vault shows the transaction and waits for the user. |
+| **Block it** | The transaction is not signed; the call rejects. |
+| **Sign without asking** | The vault signs it. Any script running on your site could then move a user's full balance. |
+
+**Limits** are per token, per transaction and per day, in whole units (`"0.5"`,
+`"25"`). They count per user, the day resets at 00:00 UTC, and transfers the
+user approves themselves do not use them up: the daily limit caps what is signed
+*without asking*.
+
+Defaults, used until you save a policy:
+
+| Chain | Token | Per transaction | Per day |
+|---|---|---|---|
+| Solana | SOL | 0.1 | 0.5 |
+| Solana | USDC (mainnet and devnet) | 25 | 100 |
+| Stellar | XLM | 100 | 500 |
+| Stellar | USDC (mainnet and testnet) | 25 | 100 |
+| Starknet | ETH | 0.01 | 0.05 |
+| Starknet | STRK | 20 | 100 |
+| Starknet | USDC | 25 | 100 |
+
+### What counts as a spend
+
+| Chain | Counted against the limits | Passes without counting |
+|---|---|---|
+| **Solana** | `SystemProgram.transfer` from the account (SOL), `TransferChecked` with the account as authority (by mint), the fee including priority fee when the account pays it, token-account rent | Compute budget, memo |
+| **Stellar** | `payment` (XLM or `CODE:ISSUER`), `createAccount` starting balance | `changeTrust`, `manageData`, `bumpSequence`, `endSponsoringFutureReserves` |
+| **Starknet** | `transfer` on ETH, STRK and USDC | — |
+
+Everything else is **over the limit**, whatever its value: contract and program
+calls, token approvals, signer or threshold changes (`setOptions`, `add_signer`),
+`accountMerge`, and the account appearing in a role the vault does not
+recognise. On Stellar and Solana, operations and instructions that do not use
+the account's signature are ignored.
+
+Starknet fee estimates are signed silently: they use a query version the
+network refuses to execute.
+
+## The approval modal
+
+When the rule is **Ask the user**, the vault shows its own modal over your page:
+the amount, the destination, your app's host, and the network the transaction
+is really for, read from what is being signed rather than from your app's
+config. **Approve** fills in over a short pause before it can be pressed, and
+only while the modal is visibly on screen, so a click aimed at something else
+cannot land on it. **Reject** or `Escape` declines.
+
+In browsers that cannot tell whether a page is covering the frame (no
+Intersection Observer v2, currently Safari and Firefox), the decision moves to
+a top-level Cavos window your page cannot draw over.
+
+The call rejects with a message you can match:
+
+| Message | Meaning |
+|---|---|
+| `kit/vault: the user rejected this transaction` | The user pressed Reject or closed the modal. |
+| `kit/vault: this app's policy does not allow this transaction` | The rule is **Block it**. |
+| `kit/vault: unknown Stellar network` / `unknown Starknet network` | The payload names a network the vault does not know. |
+
+## Passkeys
+
+Passkey ceremonies run inside the vault, so the passkey belongs to
+`vault.cavos.xyz`, not to your domain. Browsers that refuse passkeys in a
+cross-site frame fall back to the Cavos window.
+
+## Logout and storage
+
+`logout()` tells the vault to let go of the keys it has unlocked. Stored keys
+stay, so the next login is silent: deleting them is never the page's call,
+because a wallet with no recovery factor would be lost with them.
+
+Keys are filed under your app's id. Another app on the same site cannot reach
+them, even with a looser policy.
+
+When a Solana or Stellar key from before the vault is left in your page's
+storage, it is deleted after a vault connect once it provably opens the same
+address. Starknet device keys created before the vault stay registered on the
+account contract and in your page's storage.
+
+## What it protects against
+
+- **Your page's code** cannot read a key, and cannot sign past your limits
+  without the user seeing it. Within the limits, a script running on your page
+  can still ask for silent signatures, so set limits you would accept losing to
+  a bug on your site.
+- **Cavos serves the vault's code.** It cannot read keys either, but its code
+  decides what is signed, the same trust you place in the SDK.
+- **An account created without the enclave or a passkey** has its only key in
+  the vault's storage for your site. Clearing site data, or a new browser, loses
+  it. Use `deviceApproval: "enclave"` or enroll a passkey.

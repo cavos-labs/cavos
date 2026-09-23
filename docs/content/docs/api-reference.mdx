@@ -46,6 +46,7 @@ interface ConnectOptions {
   registry?: WalletRegistry;              // off-chain userId -> wallet map
   recovery?: RecoveryClient;              // device-approval relay (Starknet)
   createSigner?: (keyId: string) => Promise<DeviceSigner>; // native / tests
+  vault?: boolean | { url?: string };     // keys in the Cavos vault (needs appId); see /docs/vault
 
   // --- Starknet-only ---
   paymasterApiKey?: string;               // sponsors deploy + execute (required on Starknet)
@@ -195,9 +196,22 @@ native, PRF is the MasterDEK KDF (can spend). Login never prompts. See
 
 | Export | Description |
 |--------|-------------|
-| `WebCryptoSigner` | Browser silent device signer (non-extractable P-256 in IndexedDB). |
+| `WebCryptoSigner` | Browser silent device signer (non-extractable P-256 in IndexedDB). Low-level; with the vault, keys live on the Cavos origin instead. |
 | `PasskeySigner` | Browser WebAuthn passkey signer. |
 | `DeviceSigner`, `DevicePublicKey`, `DeviceSignature` | Signer types. |
+
+## Vault
+
+| Export | Description |
+|--------|-------------|
+| `VaultClient` | The page's side of the [Cavos vault](/docs/vault). `VaultClient.attach({ appId, url? })` mounts the iframe; used by `Cavos.connect` when `vault` is set. |
+| `startVaultHost`, `startVaultConfirm` | From `@cavos/kit/vault`: the code behind the vault's two pages. Cavos serves them; you do not need them to integrate. |
+
+Signers pass whole payloads so the vault can read them: `Ed25519SpendSigner`
+has `signTransaction(message)` and `signMessage(message)`, and a Stellar
+`ControlKey` has `signTransaction(xdr, networkPassphrase)`,
+`signAuthEntry(preimage)` and `signMessage(message)`. `signMessage` applies the
+Cavos message prefix itself.
 
 ## Chain adapters & constants
 
