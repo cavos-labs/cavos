@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { consumeOAuthCallbackCode } from '@/lib/oauth/callback-codes';
 import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier';
-import { validateAppRedirect } from '@/lib/oauth/redirects';
+import { checkRedirectAllowlist } from '@/lib/oauth/redirects';
 
 function corsHeaders(origin: string | null): Record<string, string> {
   return {
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     const resolved = await resolveAppIdentifier(appIdentifier);
     if (!resolved) return NextResponse.json({ error: 'invalid_request' }, { status: 400, headers });
-    await validateAppRedirect(resolved.appId, redirectUri, true);
+    checkRedirectAllowlist(resolved.callbackUrls, redirectUri, true);
 
     const target = new URL(redirectUri);
     if ((target.protocol === 'http:' || target.protocol === 'https:') && origin !== target.origin) {
