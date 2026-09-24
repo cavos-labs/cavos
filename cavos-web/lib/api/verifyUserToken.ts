@@ -32,6 +32,20 @@ const ISSUERS: Record<string, Issuer> = {
     },
 };
 
+/**
+ * Firebase's own ID token, which an email-link login returns (see
+ * magic-link/verify). Its issuer names the project, so it cannot be a fixed
+ * key above; without it every email-link user was refused by the registry.
+ */
+function firebaseIssuer(issuer: string): Issuer | undefined {
+    const projectId = process.env.FIREBASE_PROJECT_ID;
+    if (!projectId || issuer !== `https://securetoken.google.com/${projectId}`) return undefined;
+    return {
+        jwksUrl: 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com',
+        audience: () => projectId,
+    };
+}
+
 const keySets = new Map<string, ReturnType<typeof jose.createRemoteJWKSet>>();
 
 function keySet(url: string) {
@@ -70,7 +84,7 @@ export async function verifyUserToken(
     } catch {
         return null;
     }
-    const config = issuer ? ISSUERS[issuer] : undefined;
+    const config = issuer ? ISSUERS[issuer] ?? firebaseIssuer(issuer) : undefined;
     if (!config) return null;
 
     try {

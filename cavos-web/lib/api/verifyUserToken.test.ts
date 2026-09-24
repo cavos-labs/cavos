@@ -57,6 +57,18 @@ describe('verifyUserToken', () => {
     it('rejects garbage', async () => {
         assert.equal(await verifyUserToken(req('not-a-jwt'), () => keys), null);
     });
+
+    it("accepts Firebase's ID token from an email-link login", async () => {
+        process.env.FIREBASE_PROJECT_ID = 'cavos-test';
+        const token = await sign({ iss: 'https://securetoken.google.com/cavos-test', aud: 'cavos-test', sub: 'uid-1' });
+        assert.equal(await verifyUserToken(req(token), () => keys), 'uid-1');
+    });
+
+    it('rejects a Firebase token from another project', async () => {
+        process.env.FIREBASE_PROJECT_ID = 'cavos-test';
+        const token = await sign({ iss: 'https://securetoken.google.com/other', aud: 'other', sub: 'uid-1' });
+        assert.equal(await verifyUserToken(req(token), () => keys), null);
+    });
 });
 
 describe('bearerToken', () => {
