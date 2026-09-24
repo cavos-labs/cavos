@@ -131,6 +131,21 @@ const cavos = await Cavos.connect({
 
 `sendMagicLink(email)` is also available as an alternative to OTP.
 
+<Callout type="warn">
+**On the enclave, email means the magic link.** An email code returns a
+Cavos-signed token, which the recovery enclave never accepts, so it cannot
+create or restore a Solana or Stellar wallet protected by
+[hardware-isolated recovery](/docs/hardware-isolated-recovery). Such a login
+fails with `this wallet is protected by recovery. Sign in with Google, Apple or
+an email link to continue.` The magic link returns Firebase's own ID token,
+which the enclave and the wallet registry both verify. From `@cavos/kit`
+**0.2.3**, `CavosAuthModal` uses the magic link whenever the app runs the
+enclave, whatever `emailMode` says. Apps on passkeys can keep OTP.
+
+The link returns to the URL it was requested from, so that URL must be in
+**Dashboard → App → Callback URLs** like any OAuth callback.
+</Callout>
+
 ## React Native authentication
 
 React Native apps use `NativeCavosAuth` from `@cavos/kit/react-native`. It opens

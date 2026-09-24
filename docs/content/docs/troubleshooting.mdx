@@ -143,6 +143,27 @@ Typical causes:
 Kit `wallet.execute` on Stellar still uses the Cavos XLM relayer. Do not mix
 the two paths for the same first-create.
 
+## Email sign-in spins forever, or fails with `this wallet is protected by recovery`
+
+**The app runs the enclave and the user signed in with an email code.** A code
+returns a Cavos-signed token, which the enclave never accepts, so a Solana or
+Stellar wallet cannot be created or restored from it. Starknet still connects,
+which makes it look like email half-works. Use the magic link instead: from
+`@cavos/kit` **0.2.3** `CavosAuthModal` does so on its own whenever the app runs
+the enclave. If you call `sendOtp` / `verifyOtp` yourself, switch to
+`sendMagicLink`. See [Authentication](/docs/auth#email-otp).
+
+Before 0.2.3 the modal also hid this error: it stayed on "Connecting with…",
+then "This is taking longer than usual", with the real message only in
+`authError`. It now returns to the sign-in screen and shows the error, so
+upgrade first if all you see is the spinner. The same release fixes the
+connecting screen naming the provider used last time ("Connecting with Google")
+instead of email.
+
+If the magic link itself answers `redirect_uri is not registered for this app`,
+register the page it was requested from; see
+[above](#redirect_uri-is-not-registered-for-this-app).
+
 ## Still stuck
 
 Run the config checks and read what they say — they cover the mistakes above
