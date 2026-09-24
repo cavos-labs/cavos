@@ -139,6 +139,13 @@ export async function POST(request: Request) {
     const logger = ApiLogger.createRequestLogger('/api/wallets', 'POST');
     logger.info('Wallet save request');
 
+    // Every login claims its addresses here, so events are recorded after the
+    // response, in the order they happened (pending before its outcome).
+    const events: Parameters<typeof recordCavosEvent>[0][] = [];
+    after(async () => {
+        for (const event of events) await recordCavosEvent(event);
+    });
+
     try {
         // IP rate-limit (best-effort, per-process) — near-term quota-griefing cap
         // while the wallet routes are un-keyed. See lib/api/rateLimit.ts.
@@ -185,14 +192,14 @@ export async function POST(request: Request) {
         // Verify app ID
         const { valid, app, resolved } = await ApiMiddleware.verifyAppId(app_id, logger, requestedEnvironment);
         if (!valid || !app || !resolved) {
-            await recordCavosEvent({ appId: app_id, eventType: 'api.authentication_failed', status: 'failed', severity: 'warning', requestId: logger.requestId, errorCode: 'invalid_app_id' });
+            events.push({ appId: app_id, eventType: 'api.authentication_failed', status: 'failed', severity: 'warning', requestId: logger.requestId, errorCode: 'invalid_app_id' });
             return ApiResponse.unauthorized('Invalid App ID');
         }
         const canonicalAppId = app.id;
 
         // Only the end user may claim their own registry row.
         if (!isSubject(await verifyUserToken(request), user_social_id)) {
-            await recordCavosEvent({ appId: canonicalAppId, eventType: 'api.authentication_failed', status: 'failed', severity: 'warning', requestId: logger.requestId, errorCode: 'invalid_user_token' });
+            events.push({ appId: canonicalAppId, eventType: 'api.authentication_failed', status: 'failed', severity: 'warning', requestId: logger.requestId, errorCode: 'invalid_user_token' });
             return ApiResponse.unauthorized('Invalid user token');
         }
 
@@ -200,7 +207,7 @@ export async function POST(request: Request) {
             ? { id: resolved.environmentId, app_id: canonicalAppId, kind: resolved.environmentKind }
             : null;
         if (!environment) return ApiResponse.serverError('Production environment is not configured for this app');
-        await recordCavosEvent({ appId: canonicalAppId, environmentId: environment?.id, eventType: 'wallet.creation_requested', status: 'pending', requestId: logger.requestId, network });
+        events.push({ appId: canonicalAppId, environmentId: environment?.id, eventType: 'wallet.creation_requested', status: 'pending', requestId: logger.requestId, network });
 
         // ── Billing gate ────────────────────────────────────────────────────
         // Only the creation of NEW wallets is gated. Existing wallets are always
@@ -229,7 +236,7 @@ export async function POST(request: Request) {
                         // Resolve the dangling `wallet.creation_requested` (pending) recorded
                         // above with a terminal event, so blocked-by-limit attempts are visible
                         // in Activity and never leave an unresolved pending row.
-                        await recordCavosEvent({ appId: canonicalAppId, environmentId: environment?.id, eventType: 'wallet.creation_blocked', status: 'failed', severity: 'warning', requestId: logger.requestId, network, errorCode: 'wallet_limit_reached', metadata: { count: gate.count, limit: gate.limit } });
+                        events.push({ appId: canonicalAppId, environmentId: environment?.id, eventType: 'wallet.creation_blocked', status: 'failed', severity: 'warning', requestId: logger.requestId, network, errorCode: 'wallet_limit_reached', metadata: { count: gate.count, limit: gate.limit } });
                         logger.complete(false);
                         return ApiResponse.paymentRequired('wallet_limit_reached', {
                             count: gate.count,
@@ -282,7 +289,7 @@ export async function POST(request: Request) {
         );
 
         if (result.status === 'error') {
-            await recordCavosEvent({ appId: canonicalAppId, environmentId: environment?.id, eventType: 'wallet.creation_failed', status: 'failed', requestId: logger.requestId, network, errorCode: 'database_write_failed' });
+            events.push({ appId: canonicalAppId, environmentId: environment?.id, eventType: 'wallet.creation_failed', status: 'failed', requestId: logger.requestId, network, errorCode: 'database_write_failed' });
             logger.error('Database error', result.error);
             logger.complete(false);
             return ApiResponse.serverError('Failed to save wallet');
@@ -311,7 +318,7 @@ export async function POST(request: Request) {
         }
 
         logger.info('Wallet saved successfully');
-        await recordCavosEvent({ appId: canonicalAppId, environmentId: environment?.id, walletId: data.id, eventType: result.status === 'created' ? 'wallet.created' : 'wallet.updated', status: 'success', requestId: logger.requestId, network, metadata: { device_count: devices?.length ?? 0 } });
+        events.push({ appId: canonicalAppId, environmentId: environment?.id, walletId: data.id, eventType: result.status === 'created' ? 'wallet.created' : 'wallet.updated', status: 'success', requestId: logger.requestId, network, metadata: { device_count: devices?.length ?? 0 } });
         logger.complete(true);
         return ApiResponse.success({
             success: true,
