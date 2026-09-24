@@ -67,7 +67,9 @@ controls, and **recovery**, later, on a device that has nothing.
    authority**. Native Solana/Stellar have no extra on-chain recovery signer —
    the wrap **is** the restore path. Reconnect reseals if this device already
    has the DEK locally, so a first enroll that failed after claiming the
-   address still recovers.
+   address still recovers. From 0.2.2 that reseal runs in the background: the
+   wallet is ready before it finishes, and a reseal that fails is logged, never
+   a failed login.
 
 ### Recovery
 
@@ -197,8 +199,8 @@ the single login method shown.
 ```
 
 That is the whole integration. `<CavosProvider>` enrolls after a fresh login
-when this device has the DEK (Solana/Stellar reseal; Starknet still confirms
-on-chain) and unwraps on a device that does not. Watch
+when this device has the DEK (Solana/Stellar reseal in the background; Starknet
+still confirms on-chain) and unwraps on a device that does not. Watch
 `walletStatus.isSocialRecovering`. A 409 `not_enrolled` on a new phone means the
 creating device never sealed — open that wallet once more on the original
 device.

@@ -84,7 +84,7 @@ function Wallet() {
 | `configuredChains: Chain[]` | All chains configured for this session. |
 | `walletStatus: WalletStatus` | Deployment / device-approval / passkey flags (see below). |
 | `isLoading: boolean` | True during an in-flight login or connect. |
-| `authError: string \| null` | Last unrecoverable auth/connect error. Null while healthy. |
+| `authError: string \| null` | Last unrecoverable auth/connect error. Null while healthy. `CavosAuthModal` shows it on the sign-in screen; from 0.2.3 that includes a connect that fails while the "Connecting with…" spinner is up. |
 | `passkeySupported: boolean` | Whether this device/browser can use a platform passkey. |
 
 `WalletStatus`: `{ isDeploying, isReady, isUndeployed, needsDeviceApproval, awaitingApproval,
@@ -241,7 +241,7 @@ import { CavosAuthModal } from "@cavos/kit/react";
 | `appLogo` | `string?` | Image URL for the logo. If omitted, the Cavos star is shown. The provider also loads it from your app's dashboard config automatically; a local `appLogo` overrides that. |
 | `appLogoSize` | `number?` | Logo height in px. Defaults to `40` (image) / `34` (Cavos star). |
 | `providers` | `("google" \| "apple" \| "email")[]?` | Which login buttons to show. Defaults to all three. |
-| `emailMode` | `"magic-link" \| "otp"?` | How the email provider authenticates. Defaults to `magic-link`. |
+| `emailMode` | `"magic-link" \| "otp"?` | How the email provider authenticates. Defaults to `magic-link`. On the enclave (`deviceApproval: "enclave"`, the default with `socialRecovery`) the modal always uses `magic-link` from 0.2.3: an email code yields no token the enclave accepts. See [Authentication](/docs/auth#email-otp). |
 | `primaryColor` | `string?` | Accent color for buttons / focus rings (hex). |
 | `theme` | `"light" \| "dark"?` | Card theme. Defaults to `light`. |
 | `backgroundColor` | `string?` | Override the card background (defaults to white / `#111` per theme). |

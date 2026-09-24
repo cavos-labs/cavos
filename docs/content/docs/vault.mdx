@@ -14,8 +14,10 @@ the platform's secure storage as before.
 
 ## How it works
 
-1. `CavosProvider` (or `Cavos.connect`) mounts a hidden iframe from
-   `https://vault.cavos.xyz/vault` and opens a private channel to it.
+1. `CavosProvider` mounts a hidden iframe from
+   `https://vault.cavos.xyz/vault` as soon as it renders, and opens a private
+   channel to it. The vault loads while the user signs in, not after (from
+   0.2.2). `Cavos.connect` without the provider mounts it on first use.
 2. The vault checks that your page's origin is registered for your app, and
    loads your app's approval policy from Cavos.
 3. Keys are created, unwrapped (enclave or passkey) and stored inside the
