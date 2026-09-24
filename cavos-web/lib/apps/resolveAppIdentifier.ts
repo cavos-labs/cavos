@@ -5,6 +5,8 @@ const UUID_PATTERN =
 
 export interface ResolvedAppIdentifier {
   appId: string
+  appName: string
+  callbackUrls: string[]
   environmentId: string | null
   environmentKind: 'development' | 'production' | null
 }
@@ -25,7 +27,7 @@ export async function resolveAppIdentifier(
   if (UUID_PATTERN.test(identifier)) {
     const { data: app, error: appError } = await admin
       .from('apps')
-      .select('id,is_active')
+      .select('id,is_active,name,callback_urls')
       .eq('id', identifier)
       .maybeSingle()
 
@@ -50,6 +52,8 @@ export async function resolveAppIdentifier(
 
     return {
       appId: app.id,
+      appName: app.name,
+      callbackUrls: app.callback_urls ?? [],
       environmentId: environment?.is_active ? environment.id : null,
       environmentKind: environment?.is_active ? environment.kind : null,
     }
@@ -73,7 +77,7 @@ export async function resolveAppIdentifier(
 
   const { data: app, error: appError } = await admin
     .from('apps')
-    .select('id,is_active')
+    .select('id,is_active,name,callback_urls')
     .eq('id', environment.app_id)
     .maybeSingle()
 
@@ -81,6 +85,8 @@ export async function resolveAppIdentifier(
 
   return {
     appId: app.id,
+    appName: app.name,
+    callbackUrls: app.callback_urls ?? [],
     environmentId: environment.id,
     environmentKind: environment.kind,
   }

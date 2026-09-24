@@ -53,7 +53,24 @@ export async function validateAppRedirect(
     .eq('id', appId)
     .single();
   if (error || !app?.is_active) throw new Error('Invalid app_id');
-  const allowlist = app.callback_urls ?? [];
+  return checkRedirectAllowlist(app.callback_urls ?? [], redirectUri, requireRegistered);
+}
+
+/**
+ * The allowlist half of `validateAppRedirect`, for a caller that already holds
+ * the app's `callback_urls` and should not read the row a second time.
+ */
+export function checkRedirectAllowlist(
+  allowlist: string[],
+  redirectUri: string,
+  requireRegistered = false,
+): string {
+  let parsed: URL;
+  try { parsed = new URL(redirectUri); }
+  catch { throw new Error('Invalid redirect_uri'); }
+  if (!parsed.protocol || parsed.username || parsed.password || parsed.hash) {
+    throw new Error('Invalid redirect_uri');
+  }
   // Only enforce when the app has actually registered callbacks.
   if ((requireRegistered && allowlist.length === 0) || (allowlist.length > 0 && !allowlist.includes(redirectUri))) {
     throw new Error('redirect_uri is not registered for this app');

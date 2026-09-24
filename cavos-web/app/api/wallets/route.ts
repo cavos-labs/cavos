@@ -7,7 +7,7 @@
  */
 
 import { createAdminClient } from '@/lib/supabase/admin';
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { ApiLogger } from '@/lib/api/logger';
 import { ApiResponse } from '@/lib/api/response';
 import { ApiValidator } from '@/lib/api/validation';
@@ -60,17 +60,21 @@ export async function GET(request: Request) {
             });
         }
 
-        // Verify app ID
-        const { valid, app, resolved } = await ApiMiddleware.verifyAppId(app_id, logger, environmentId);
+        // Independent checks, so neither waits on the other. Every login reads
+        // this route once per chain; serial round-trips here are login latency.
+        const [{ valid, app, resolved }, subject] = await Promise.all([
+            ApiMiddleware.verifyAppId(app_id, logger, environmentId),
+            verifyUserToken(request),
+        ]);
         if (!valid || !app || !resolved) {
-            await recordCavosEvent({ appId: app_id, eventType: 'api.authentication_failed', status: 'failed', severity: 'warning', requestId: logger.requestId, errorCode: 'invalid_app_id' });
+            after(() => recordCavosEvent({ appId: app_id, eventType: 'api.authentication_failed', status: 'failed', severity: 'warning', requestId: logger.requestId, errorCode: 'invalid_app_id' }));
             return ApiResponse.unauthorized('Invalid App ID');
         }
         const canonicalAppId = app.id;
 
         // The registry names the user's wallet, so only that user may read it.
-        if (!isSubject(await verifyUserToken(request), user_social_id)) {
-            await recordCavosEvent({ appId: canonicalAppId, eventType: 'api.authentication_failed', status: 'failed', severity: 'warning', requestId: logger.requestId, errorCode: 'invalid_user_token' });
+        if (!isSubject(subject, user_social_id)) {
+            after(() => recordCavosEvent({ appId: canonicalAppId, eventType: 'api.authentication_failed', status: 'failed', severity: 'warning', requestId: logger.requestId, errorCode: 'invalid_user_token' }));
             return ApiResponse.unauthorized('Invalid user token');
         }
 
@@ -104,7 +108,9 @@ export async function GET(request: Request) {
         }
 
         logger.info('Wallet retrieved successfully');
-        await recordCavosEvent({ appId: canonicalAppId, environmentId: environment?.id, eventType: 'wallet.retrieved', status: 'success', requestId: logger.requestId, network });
+        // Bookkeeping, not part of the answer: recording it re-resolves the app
+        // and delivers webhooks, which the user must not wait on to log in.
+        after(() => recordCavosEvent({ appId: canonicalAppId, environmentId: environment?.id, eventType: 'wallet.retrieved', status: 'success', requestId: logger.requestId, network }));
         logger.complete(true);
         return ApiResponse.success({
             found: true,

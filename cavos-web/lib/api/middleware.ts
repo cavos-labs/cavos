@@ -3,7 +3,6 @@
  * Reusable middleware for common operations
  */
 
-import { createAdminClient } from '@/lib/supabase/admin';
 import { ApiResponse } from './response';
 import { ApiLogger } from './logger';
 import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier';
@@ -25,18 +24,7 @@ export class ApiMiddleware {
             return { valid: false, app: null, resolved: null };
         }
 
-        const adminSupabase = createAdminClient();
-        const { data: app, error } = await adminSupabase
-            .from('apps')
-            .select('id, name')
-            .eq('id', resolved.appId)
-            .single();
-
-        if (error || !app) {
-            logger.warn('Invalid app_id', { appId, error: error?.message });
-            return { valid: false, app: null, resolved: null };
-        }
-
+        const app = { id: resolved.appId, name: resolved.appName };
         logger.debug('App verified', { appName: app.name });
         return { valid: true, app, resolved };
     }
