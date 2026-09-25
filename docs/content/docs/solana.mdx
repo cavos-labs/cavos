@@ -1,6 +1,6 @@
 ---
 title: Solana
-description: Use @cavos/kit on Solana — a native Ed25519 system account whose spend key is HKDF of a MasterDEK. The relayer is only the fee payer.
+description: Use @cavos/kit on Solana — a native Ed25519 system account whose spend key is HKDF of a MasterDEK. The account pays its own fee, your relayer pays it, or the user pays in a token they hold.
 ---
 
 Solana in `@cavos/kit` is a **native system account**. The address is an
@@ -12,13 +12,15 @@ The spend key is HKDF of a **MasterDEK** (`cavos-ed25519-solana-v1`, salted by
 session. A new device restores that DEK with the [enclave](/docs/hardware-isolated-recovery)
 or a [passkey](/docs/passkeys) the user added. Signing up never asks for a passkey.
 
-The Cavos relayer co-signs as **fee payer only**. It cannot spend. The user still
-needs SOL in the account to transfer; sponsorship covers the fee, not the
-balance.
+The account signs its own transactions. Who is named **fee payer** is a
+per-call choice — itself, the Cavos relayer, or [Toll](/docs/toll) settling in
+a token the user already holds. None of them can spend: a co-signer cannot
+alter the instructions it signs.
 
 ## Connect
 
-Use `Cavos.connect` with `chains: ["solana"]`. An `appId` activates the relayer.
+Use `Cavos.connect` with `chains: ["solana"]`. An `appId` activates the
+relayer; `tollUrl` activates paying in a token.
 Connect resolves the address and unwraps the spend key on this device. It does
 **not** airdrop SOL and there is no `initialize` instruction.
 
@@ -63,9 +65,10 @@ to deploy: a system account appears when it first receives lamports. After
 connect, `isDeployed` is `true` once the spend key is present.
 
 <Callout type="info">
-**Fund the address, then spend.** The relayer pays fees on `execute`. It does
-not put SOL in the user account. Send devnet SOL to `wallet.address` (or use a
-faucet) before the first transfer.
+**Fund the address, then spend.** By default the account pays its own fee, so
+it needs SOL. Send devnet SOL to `wallet.address`, or pick a fee route that
+does not need it — see below. No route puts SOL in the account; sponsorship
+covers the fee, never the balance.
 </Callout>
 
 ## Execute a transfer
@@ -149,14 +152,34 @@ const sig = await wallet.signMessage("Hello, Cavos!");
 `appSalt` is part of the HKDF. Changing it derives a different address that will
 not match the registry row.
 
-## Gasless vs self-funded
+## Who pays the fee
 
-| Path | When | Who pays the fee |
-|------|------|------------------|
-| **Relayer (default)** | `appId` is set | Cavos relayer as fee payer |
-| **Self-funded** | `feePayer` Keypair, `{ sponsored: false }` | Your keypair |
+`fee` answers one question — who pays, and in what — so the three answers are
+one field rather than flags that look independent and are not.
 
-The relayer never becomes the source of a user transfer.
+```ts title="TypeScript"
+await wallet.execute(amount, dest);                            // the account pays, in SOL
+await wallet.execute(amount, dest, { fee: 'sponsored' });      // the Cavos relayer pays
+await wallet.execute(amount, dest, { fee: { token: USDC } });  // the user pays, in USDC
+```
+
+| Route | Needs | Who is fee payer |
+|-------|-------|------------------|
+| `'self'` **(default)** | SOL in the account | the account itself |
+| `'sponsored'` | `appId`, or a `relayer` | the Cavos relayer |
+| `{ token }` | `tollUrl` | [Toll](/docs/toll), settling in that token |
+
+`'self'` is the default here and not on Starknet or Stellar, where a fresh
+account cannot deploy itself or meet the base reserve without help. A Solana
+system account is signer and fee payer at once, so there was never a reason it
+could not pay its own way.
+
+No co-signer ever becomes the source of a user transfer.
+
+<Callout type="info">
+`sponsored: true` / `false` still works as a deprecated alias for
+`fee: 'sponsored'` / `'self'`. `fee` wins if both are passed.
+</Callout>
 
 ## Networks
 
@@ -182,7 +205,7 @@ See [Hardware-isolated recovery](/docs/hardware-isolated-recovery) and
 ## What's available
 
 - ✅ Native Ed25519 system account.
-- ✅ Relayer as fee payer.
+- ✅ Three fee routes: the account itself, the relayer, or a held token via Toll.
 - ✅ `execute` / `executeInstructions` signed by the user key.
 - ✅ `signMessage` with `curve: "ed25519"`.
 - ✅ Enclave DEK wrap and passkey restore.
