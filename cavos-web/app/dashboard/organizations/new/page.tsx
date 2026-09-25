@@ -1,18 +1,27 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Card } from '@/components/ui/Card'
+import { Panel } from '@/components/ui/Panel'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Icon } from '@/components/ui/Icon'
+import { useOrganization } from '@/lib/hooks/useOrganization'
+
 export default function NewOrganizationPage() {
     const router = useRouter()
+    const { setOrganizationId } = useOrganization()
     const [name, setName] = useState('')
     const [description, setDescription] = useState('')
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
+    // A new account lands here with nothing to go back to.
+    const [onboarding, setOnboarding] = useState(false)
+
+    useEffect(() => {
+        setOnboarding(new URLSearchParams(window.location.search).get('onboarding') === '1')
+    }, [])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -29,94 +38,93 @@ export default function NewOrganizationPage() {
             const data = await res.json()
 
             if (!res.ok) {
-                setError(data.error || 'Failed to create organization')
+                setError(data.error || 'Could not create the organization. Try again.')
                 setLoading(false)
                 return
             }
 
-            router.push('/dashboard/organizations')
+            if (data.organization?.id) setOrganizationId(data.organization.id)
+            router.push(onboarding ? '/dashboard?onboarding=1' : '/dashboard/organizations')
             router.refresh()
-        } catch (err) {
-            setError('An unexpected error occurred')
+        } catch {
+            setError('Could not reach Cavos. Check your connection and try again.')
             setLoading(false)
         }
     }
 
     return (
-        <div className="max-w-2xl mx-auto space-y-8 animate-fadeIn">
-            {/* Back Link */}
-            <Link
-                href="/dashboard/organizations"
-                className="inline-flex items-center text-sm text-black/60 hover:text-black transition-colors"
-            >
-                <Icon.ArrowLeft className="w-4 h-4 mr-1" />
-                Back to Organizations
-            </Link>
+        <div className={`mx-auto max-w-xl space-y-8 ${onboarding ? 'pt-6 lg:pt-16' : ''}`}>
+            {!onboarding && (
+                <Link
+                    href="/dashboard/organizations"
+                    className="inline-flex items-center text-sm text-muted transition-colors hover:text-ink"
+                >
+                    <Icon.ArrowLeft className="mr-1 h-4 w-4" />
+                    Back to organizations
+                </Link>
+            )}
 
-            {/* Header */}
             <div data-dash-header>
-                <h1 className="text-3xl font-semibold tracking-tight mb-2">
-                    Create Organization
+                {onboarding && <p className="mb-3 text-sm text-muted">Step 1 of 2</p>}
+                <h1 className="text-2xl font-semibold leading-tight tracking-[-0.03em] text-ink text-balance md:text-[28px]">
+                    {onboarding ? 'Create your organization' : 'New organization'}
                 </h1>
-                <p className="text-black/60">
-                    Organizations help you manage multiple applications
+                <p className="mt-2 max-w-prose text-sm text-muted text-pretty">
+                    {onboarding
+                        ? 'Your organization owns your apps, billing and team. Use your company or project name; you can change it later.'
+                        : 'Use a separate organization for a separate company, client or billing account.'}
                 </p>
             </div>
 
-            {/* Form */}
-            <Card data-dash-panel>
+            <Panel>
                 {error && (
-                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                    <div role="alert" className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600">
                         {error}
                     </div>
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-black/80 mb-2">
-                            Organization Name *
-                        </label>
-                        <Input
-                            id="name"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            placeholder="Acme Inc"
-                            required
-                            disabled={loading}
-                        />
-                    </div>
+                    <Input
+                        id="name"
+                        label="Name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Acme Inc"
+                        required
+                        autoFocus
+                        autoComplete="organization"
+                        disabled={loading}
+                    />
 
                     <div>
-                        <label htmlFor="description" className="block text-sm font-medium text-black/80 mb-2">
-                            Description
+                        <label htmlFor="description" className="mb-1.5 block text-sm font-medium text-black/80">
+                            Description <span className="font-normal text-muted">(optional)</span>
                         </label>
                         <textarea
                             id="description"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            placeholder="A brief description of your organization"
+                            placeholder="What you are building"
                             disabled={loading}
-                            rows={4}
-                            className="w-full px-4 py-3 bg-white border border-black/10 rounded-lg text-sm focus:outline-none focus:border-black/30 transition-colors disabled:opacity-50 resize-none"
+                            rows={3}
+                            className="w-full resize-none rounded-lg border border-black/10 bg-white px-4 py-2 text-sm transition-[border-color,box-shadow,opacity] duration-150 focus:border-black/30 focus:outline-none focus:ring-2 focus:ring-black/5 disabled:cursor-not-allowed disabled:opacity-50"
                         />
                     </div>
 
-                    <div className="flex gap-3 pt-2">
-                        <Button
-                            type="submit"
-                            loading={loading}
-                            className="flex-1"
-                        >
-                            Create Organization
+                    <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                        {!onboarding && (
+                            <Link href="/dashboard/organizations">
+                                <Button type="button" variant="outline" className="w-full sm:w-auto">
+                                    Cancel
+                                </Button>
+                            </Link>
+                        )}
+                        <Button type="submit" loading={loading} disabled={!name.trim()} className="w-full sm:w-auto">
+                            {onboarding ? 'Continue' : 'Create organization'}
                         </Button>
-                        <Link href="/dashboard/organizations" className="flex-1">
-                            <Button variant="outline" className="w-full">
-                                Cancel
-                            </Button>
-                        </Link>
                     </div>
                 </form>
-            </Card>
+            </Panel>
         </div>
     )
 }
