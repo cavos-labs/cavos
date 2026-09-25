@@ -1,17 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier'
 import { DEFAULT_VAULT_POLICY, parseVaultPolicy, type VaultPolicy } from '@/lib/vault/policy'
 
 // Read by the vault iframe when an app embeds it: which sites may embed it
 // for this app, and what it may sign without asking.
 export async function GET(request: NextRequest) {
-  const appId = request.nextUrl.searchParams.get('app_id')
-  if (!appId) return NextResponse.json({ error: 'Missing app_id' }, { status: 400 })
+  const identifier = request.nextUrl.searchParams.get('app_id')
+  if (!identifier) return NextResponse.json({ error: 'Missing app_id' }, { status: 400 })
+
+  // Both forms, like every other SDK-facing route: the UUID older integrations
+  // still send, and the `cav_...` environment id the dashboard hands out now.
+  // Matching on `apps.id` alone let an app sign in and then fail to embed the
+  // vault, behind an error that blamed its origins.
+  const resolved = await resolveAppIdentifier(identifier)
+  if (!resolved) return NextResponse.json({ error: 'Invalid app_id' }, { status: 404 })
 
   const { data: app, error } = await createAdminClient()
     .from('apps')
     .select('allowed_web_origins,callback_urls,vault_policy,is_active')
-    .eq('id', appId)
+    .eq('id', resolved.appId)
     .single()
   if (error || !app?.is_active) return NextResponse.json({ error: 'Invalid app_id' }, { status: 404 })
 

@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier';
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,11 +13,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Missing app_id' }, { status: 400 });
     }
 
+    // The SDK sends whatever the dashboard gave the integrator, which is a
+    // `cav_...` environment id on anything created recently. Matching on
+    // `apps.id` alone dropped those to the default branding, silently.
+    const resolved = await resolveAppIdentifier(appId);
+    if (!resolved) {
+      return NextResponse.json({ error: 'App not found' }, { status: 404 });
+    }
+
     const adminSupabase = createAdminClient();
     const { data: app, error } = await adminSupabase
       .from('apps')
       .select('name, logo_url')
-      .eq('id', appId)
+      .eq('id', resolved.appId)
       .single();
 
     if (error || !app) {
