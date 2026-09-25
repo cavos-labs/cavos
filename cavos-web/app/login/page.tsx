@@ -91,6 +91,12 @@ export default function LoginPage() {
 
                     {/* Form Card */}
                     <div className="bg-white border border-line rounded-2xl p-6 md:p-8 shadow-sm shadow-black/[0.03]">
+                        {notice && !error && (
+                            <p role="status" className="mb-5 flex items-center gap-2 rounded-lg border border-line bg-surface px-4 py-3 text-sm text-ink">
+                                <Icon.Check size={16} className="shrink-0" />
+                                {notice}
+                            </p>
+                        )}
                         <button
                             type="button"
                             onClick={signInWithPasskey}
@@ -101,12 +107,6 @@ export default function LoginPage() {
                             {passkeyLoading ? 'Waiting for passkey…' : 'Sign in with passkey'}
                         </button>
                         <div className="mb-5 flex items-center gap-3 text-xs text-black/35"><span className="h-px flex-1 bg-line" /><span>or use your password</span><span className="h-px flex-1 bg-line" /></div>
-                        {notice && !error && (
-                            <p role="status" className="mb-6 flex items-center gap-2 rounded-lg border border-line bg-surface px-4 py-3 text-sm text-ink">
-                                <Icon.Check size={16} className="shrink-0" />
-                                {notice}
-                            </p>
-                        )}
                         {error && (
                             <div role="alert" className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
                                 <p className="text-red-600 text-sm">{error}</p>
