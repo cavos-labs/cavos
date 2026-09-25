@@ -49,7 +49,7 @@ export function NewAppForm() {
                     <p className="text-black/60 mb-6">
                         You need to create an organization before you can create an application.
                     </p>
-                    <Link href="/dashboard/organizations/new">
+                    <Link href="/dashboard/organizations/new?onboarding=1">
                         <Button>Create Organization</Button>
                     </Link>
                 </Card>
