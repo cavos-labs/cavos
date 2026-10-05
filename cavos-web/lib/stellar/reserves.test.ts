@@ -14,6 +14,10 @@ describe('estimateReservedStroops', () => {
     assert.equal(estimateReservedStroops({ operations: [] } as never, 'fee-bump'), 0);
   });
 
+  it('locks nothing for a sponsored soroban invoke', () => {
+    assert.equal(estimateReservedStroops({ operations: [] } as never, 'soroban'), 0);
+  });
+
   it('counts createAccount as two entries', () => {
     const tx = { operations: [{ type: 'createAccount' }] } as never;
     assert.equal(estimateReservedStroops(tx, 'create'), 2 * BASE);

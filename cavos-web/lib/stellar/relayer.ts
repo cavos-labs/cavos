@@ -5,13 +5,16 @@
  * funds and is not a custodian. The account's control key (envelope-encrypted in
  * the account's own data entries) is the sole signer of value-moving transactions.
  *
- * Two gates (see `validateClassicCreate` / `validateClassicFeeBump` below):
+ * Gates (see the validators below):
  *   - CREATE: relayer is the tx source + sponsor; only sponsorship + account-setup
  *     ops, a 0-balance createAccount, and `cv:`-namespaced data. It cannot be
  *     drained into the new account.
  *   - FEE-BUMP: the user's control-signed inner tx (source = their `G…`) is wrapped
  *     in a fee-bump whose fee source is the relayer — it pays only the fee and is
  *     never a source of any inner op, so it can't move user funds.
+ *   - SOROBAN: the same fee-bump, restricted to one `invokeContract`. The relayer
+ *     pays the inclusion fee and the resource fee. This is a classic `G…` calling
+ *     a contract, not the removed `C…` device-account path.
  */
 import {
   Asset,
@@ -56,8 +59,7 @@ export interface ValidationResult {
 // ───────────────────────────── classic-G relayer ────────────────────────────
 //
 // The classic-Stellar (`G…`) multisig account (see @cavos/kit chains/stellar-
-// classic) is a *classic* account, not a contract, so the relayer plays two
-// roles, each with its own gate:
+// classic) is a *classic* account, not a contract, so each role has its own gate:
 //   - CREATE: relayer is the tx source + fee payer AND sponsors the new account's
 //     reserves. Only sponsorship + account-setup ops are allowed, the new account
 //     is created with a 0 starting balance (relayer can't be drained into it),
@@ -65,6 +67,8 @@ export interface ValidationResult {
 //   - FEE-BUMP: the user's control-signed inner tx (source = their `G…`) is
 //     wrapped in a fee-bump whose fee source is the relayer. The relayer pays only
 //     the fee; it is never a source of any inner op, so it can't move user funds.
+//   - SOROBAN: that same fee-bump, with the inner tx limited to one contract
+//     invocation. Resource fees ride in the outer fee; no classic reserve moves.
 
 /** Ops the relayer will sponsor inside a classic create. Anything else (payment,
  *  accountMerge, path payment, …) is rejected so the relayer can't be drained. */
@@ -201,6 +205,34 @@ export function validateClassicFeeBump(
     if (op.source === relayerPublicKey) {
       return { ok: false, reason: 'no inner operation may be sourced by the relayer' };
     }
+  }
+  return { ok: true };
+}
+
+/**
+ * Gate a sponsored Soroban invocation. Same safety property as a classic
+ * fee-bump — the relayer pays the fee and is never the spender — plus the
+ * shape `@cavos/kit` actually submits for `invokeContract`: one inner
+ * `invokeHostFunction` whose host function is `InvokeContract`.
+ *
+ * Wasm upload and contract creation stay out. They are a different cost, and
+ * the kit does not send them. Auth entries may be empty: some contracts
+ * authorize as the source account, and the network still checks signatures.
+ */
+export function validateSponsoredSoroban(
+  fb: FeeBumpTransaction,
+  relayerPublicKey: string,
+): ValidationResult {
+  const base = validateClassicFeeBump(fb, relayerPublicKey);
+  if (!base.ok) return base;
+
+  const ops = fb.innerTransaction.operations;
+  if (ops.length !== 1 || ops[0].type !== 'invokeHostFunction') {
+    return { ok: false, reason: 'a sponsored soroban tx must be a single invokeHostFunction' };
+  }
+  const func = (ops[0] as Operation.InvokeHostFunction).func;
+  if (func.switch().name !== 'hostFunctionTypeInvokeContract') {
+    return { ok: false, reason: 'only contract invocation may be sponsored' };
   }
   return { ok: true };
 }

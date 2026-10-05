@@ -7,7 +7,7 @@
  *      debit that org's available balance only.
  *
  * The relayer is a fee payer + reserve sponsor, never a custodian of user
- * funds. See lib/stellar/relayer.ts for the two gates.
+ * funds. See lib/stellar/relayer.ts for the gates.
  */
 import { NextResponse } from 'next/server';
 import { ApiLogger } from '@/lib/api/logger';
@@ -23,6 +23,7 @@ import {
   validateClassicFeeBump,
   validateClassicTrustline,
   validateSponsoredData,
+  validateSponsoredSoroban,
 } from '@/lib/stellar/relayer';
 import type { ValidationResult } from '@/lib/stellar/relayer';
 import { resolveOrgForApp } from '@/lib/billing/limits';
@@ -48,15 +49,15 @@ import {
 import { recordCavosEvent, resolveEnvironment } from '@/lib/operations/events';
 import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier';
 
-type RelayKind = 'create' | 'fee-bump' | 'sponsored-data' | 'trustline';
+type RelayKind = 'create' | 'fee-bump' | 'sponsored-data' | 'trustline' | 'soroban';
 
 interface ClassicRelayRequest {
   app_id: string;
   network: string;
   environment?: 'development' | 'production';
   kind: RelayKind;
-  /** base64 tx envelope: a master-signed create / sponsored-data, or a
-   *  control-signed fee-bump. */
+  /** base64 tx envelope: a master-signed create / sponsored-data / trustline,
+   *  or a control-signed fee-bump (classic payment or Soroban invoke). */
   transaction: string;
 }
 
@@ -127,7 +128,8 @@ export async function POST(request: Request) {
       body.kind !== 'create' &&
       body.kind !== 'fee-bump' &&
       body.kind !== 'sponsored-data' &&
-      body.kind !== 'trustline'
+      body.kind !== 'trustline' &&
+      body.kind !== 'soroban'
     ) {
       return ApiResponse.badRequest('Invalid kind', { kind: body.kind });
     }
@@ -172,10 +174,11 @@ export async function POST(request: Request) {
     }
 
     const isFeeBump = 'innerTransaction' in tx;
-    if (body.kind === 'fee-bump' && !isFeeBump) {
-      return ApiResponse.badRequest('kind=fee-bump requires a fee-bump transaction');
+    const expectsFeeBump = body.kind === 'fee-bump' || body.kind === 'soroban';
+    if (expectsFeeBump && !isFeeBump) {
+      return ApiResponse.badRequest(`kind=${body.kind} requires a fee-bump transaction`);
     }
-    if (body.kind !== 'fee-bump' && isFeeBump) {
+    if (!expectsFeeBump && isFeeBump) {
       return ApiResponse.badRequest(`kind=${body.kind} requires a plain transaction`);
     }
     let check: ValidationResult;
@@ -192,6 +195,9 @@ export async function POST(request: Request) {
       case 'fee-bump':
         check = validateClassicFeeBump(tx as FeeBumpTransaction, signer.publicKey());
         break;
+      case 'soroban':
+        check = validateSponsoredSoroban(tx as FeeBumpTransaction, signer.publicKey());
+        break;
     }
     if (!check.ok) {
       logger.warn('Classic relay rejected', { reason: check.reason, app_id: body.app_id, kind: body.kind });
@@ -203,9 +209,13 @@ export async function POST(request: Request) {
     const metered = body.network === 'stellar-mainnet';
     const baseReserve = await fetchBaseReserveStroops(server);
     const reserveEstimate = estimateReservedStroops(tx, body.kind, baseReserve);
+    // A Soroban fee-bump's `fee` is the max the sponsor can be charged
+    // (inclusion + resource). The 0.2 XLM buffer covers a classic fee; it does
+    // not cover a contract call.
+    const declaredFee = body.kind === 'soroban' ? Number((tx as FeeBumpTransaction).fee) : 0;
 
     if (metered) {
-      const need = reserveEstimate + FEE_BUFFER_STROOPS;
+      const need = Math.max(reserveEstimate + FEE_BUFFER_STROOPS, declaredFee);
       if (!(await hasGas(orgId, need))) {
         logger.warn('Classic relay blocked — org out of gas', { app_id: body.app_id, org_id: orgId, need });
         await recordCavosEvent({ appId, environmentId: environment?.id, eventType: 'sponsorship.rejected', status: 'failed', severity: 'warning', requestId: logger.requestId, network: body.network, errorCode: 'insufficient_gas' });
