@@ -48,7 +48,7 @@ export function Sidebar() {
     const [displayName, setDisplayName] = useState<string | null>(null)
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
     const { organizations, organizationId, setOrganizationId, loading: organizationsLoading } = useOrganization()
-    const { apps, app, appId, setAppId, loading: appsLoading } = useApp()
+    const { apps, app, appId, setAppId, hasApp, loading: appsLoading, error: appsError } = useApp()
 
     useEffect(() => {
         const loadAccount = async () => {
@@ -86,14 +86,17 @@ export function Sidebar() {
     }
 
     useEffect(() => {
-        if (appsLoading || !appId) return
+        if (appsLoading || appsError) return
         const match = pathname.match(/^\/dashboard\/apps\/([^/]+)/)
         const currentId = match?.[1]
         if (!currentId || currentId === 'new') return
-        if (!apps.some((item) => item.id === currentId)) {
+        if (apps.some((item) => item.id === currentId)) return
+        if (hasApp(currentId) && apps.some((item) => item.id === appId)) {
             router.replace(`/dashboard/apps/${appId}`)
+            return
         }
-    }, [appId, apps, appsLoading, pathname, router])
+        router.replace('/dashboard/apps')
+    }, [appId, apps, appsError, appsLoading, hasApp, pathname, router])
 
     const billingActive = pathname.startsWith('/dashboard/billing')
     const settingsHref = appId ? `/dashboard/apps/${appId}${appSettings.suffix}` : null

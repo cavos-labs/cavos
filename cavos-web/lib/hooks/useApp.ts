@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useConsoleData, type ConsoleApp } from '@/lib/hooks/consoleData'
 
 export type { ConsoleApp }
@@ -12,5 +12,6 @@ export function useApp() {
     [apps, organizationId],
   )
   const app = visible.find((item) => item.id === appId) ?? null
-  return { apps: visible, app, appId, setAppId, upsertApp, removeApp, loading, error: appsError }
+  const hasApp = useCallback((id: string) => apps.some((item) => item.id === id), [apps])
+  return { apps: visible, app, appId, setAppId, upsertApp, removeApp, hasApp, loading, error: appsError }
 }
