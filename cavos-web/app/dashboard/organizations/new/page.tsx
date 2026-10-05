@@ -11,7 +11,7 @@ import { useOrganization } from '@/lib/hooks/useOrganization'
 
 export default function NewOrganizationPage() {
     const router = useRouter()
-    const { setOrganizationId } = useOrganization()
+    const { setOrganizationId, upsertOrganization } = useOrganization()
     const [name, setName] = useState('')
     const [description, setDescription] = useState('')
     const [error, setError] = useState('')
@@ -35,17 +35,20 @@ export default function NewOrganizationPage() {
                 body: JSON.stringify({ name, description }),
             })
 
-            const data = await res.json()
+            const data: unknown = await res.json()
 
             if (!res.ok) {
-                setError(data.error || 'Could not create the organization. Try again.')
+                const message = typeof data === 'object' && data !== null && 'error' in data && typeof data.error === 'string'
+                    ? data.error
+                    : 'Could not create the organization. Try again.'
+                setError(message)
                 setLoading(false)
                 return
             }
 
-            if (data.organization?.id) setOrganizationId(data.organization.id)
+            const createdId = upsertOrganization(data)
+            if (createdId) setOrganizationId(createdId)
             router.push(onboarding ? '/dashboard?onboarding=1' : '/dashboard/organizations')
-            router.refresh()
         } catch {
             setError('Could not reach Cavos. Check your connection and try again.')
             setLoading(false)

@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { createClient } from '@/lib/supabase/client'
 import { Icon } from '@/components/ui/Icon'
+import { useApp } from '@/lib/hooks/useApp'
+import { useOrganization } from '@/lib/hooks/useOrganization'
 import Image from 'next/image'
 
 interface AppFormProps {
@@ -27,6 +29,8 @@ interface AppFormProps {
 
 export function AppForm({ initialData, organizations, mode, onSuccess, onCancel }: AppFormProps) {
     const router = useRouter()
+    const { upsertApp, setAppId } = useApp()
+    const { organizationId, setOrganizationId } = useOrganization()
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const [formData, setFormData] = useState({
@@ -93,17 +97,34 @@ export function AppForm({ initialData, organizations, mode, onSuccess, onCancel 
                 }),
             })
 
+            const payload: unknown = await res.json()
             if (!res.ok) {
-                const data = await res.json()
-                throw new Error(data.error || 'Failed to save application')
+                const message = typeof payload === 'object' && payload !== null && 'error' in payload && typeof payload.error === 'string'
+                    ? payload.error
+                    : 'Failed to save application'
+                throw new Error(message)
             }
 
-            if (onSuccess) {
-                onSuccess()
-            } else {
-                router.push('/dashboard/apps')
-                router.refresh()
+            if (typeof payload === 'object' && payload !== null && 'app' in payload) {
+                upsertApp(payload.app)
+                const created = payload.app
+                if (
+                    mode === 'create'
+                    && typeof created === 'object'
+                    && created !== null
+                    && 'id' in created
+                    && typeof created.id === 'string'
+                ) {
+                    const orgId = 'organization_id' in created && typeof created.organization_id === 'string'
+                        ? created.organization_id
+                        : organizationId
+                    if (orgId && orgId !== organizationId) setOrganizationId(orgId)
+                    if (orgId) setAppId(created.id, orgId)
+                }
             }
+
+            if (onSuccess) onSuccess()
+            else if (mode === 'create') router.push('/dashboard/apps')
         } catch (err: any) {
             setError(err.message)
         } finally {
