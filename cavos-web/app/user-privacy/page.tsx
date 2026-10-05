@@ -2,12 +2,13 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import { marketingPageMetadata } from '@/lib/marketing-seo'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = marketingPageMetadata({
     title: 'End-User Privacy Policy',
     description: 'Privacy policy for end users of applications powered by the Cavos SDK — what data is collected, where it is stored, and your rights.',
-    alternates: { canonical: 'https://cavos.xyz/user-privacy' },
-}
+    path: '/user-privacy',
+})
 
 const LAST_UPDATED = 'March 16, 2026'
 

@@ -2,12 +2,13 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import { marketingPageMetadata } from '@/lib/marketing-seo'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = marketingPageMetadata({
     title: 'Data Processing Agreement',
     description: 'Cavos Data Processing Agreement (DPA) — GDPR Art. 28 compliant agreement for developers integrating the Cavos SDK.',
-    alternates: { canonical: 'https://cavos.xyz/dpa' },
-}
+    path: '/dpa',
+})
 
 const DPA_VERSION = '1.1'
 const LAST_UPDATED = 'September 3, 2026'

@@ -5,6 +5,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { getAllPosts, getPostBySlug, formatDate, CATEGORY_COLORS, PostCategory } from '@/lib/blog';
 import { Metadata } from 'next';
+import { marketingPageMetadata } from '@/lib/marketing-seo';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -20,28 +21,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!post) return {};
   const isLegacyArchitecture = slug === 'v1-1-9-sdk-security';
 
-  return {
+  return marketingPageMetadata({
     title: `${post.meta.title} — Blog`,
     description: post.meta.excerpt,
-    alternates: { canonical: `https://cavos.xyz/blog/${slug}` },
-    openGraph: {
-      title: post.meta.title,
-      description: post.meta.excerpt,
-      url: `https://cavos.xyz/blog/${slug}`,
-      type: 'article',
-      publishedTime: post.meta.date,
-      images: ['/og-image.png'],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: post.meta.title,
-      description: post.meta.excerpt,
-      images: ['/og-image.png'],
-    },
+    path: `/blog/${slug}`,
+    type: 'article',
+    publishedTime: post.meta.date,
     robots: isLegacyArchitecture
       ? { index: false, follow: true }
       : { index: true, follow: true },
-  };
+  });
 }
 
 export default async function BlogPostPage({ params }: Props) {

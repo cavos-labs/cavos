@@ -10,6 +10,7 @@ import {
 import { getPublicStats } from '@/lib/stats'
 import { formatCount, formatTimestamp, UNREADABLE } from '@/lib/stats/format'
 import Script from 'next/script'
+import { marketingPageMetadata } from '@/lib/marketing-seo'
 
 export const revalidate = 3600
 
@@ -17,25 +18,11 @@ const TITLE = 'Cavos in Numbers'
 const DESCRIPTION =
     'Live usage figures for Cavos multichain embedded wallets across Starknet, Solana, and Stellar, straight from our own records and the public npm registry.'
 
-export const metadata = {
+export const metadata = marketingPageMetadata({
     title: TITLE,
     description: DESCRIPTION,
-    alternates: {
-        canonical: 'https://cavos.xyz/stats',
-    },
-    openGraph: {
-        title: `${TITLE} | Cavos`,
-        description: DESCRIPTION,
-        url: 'https://cavos.xyz/stats',
-        images: ['/og-image.png'],
-    },
-    twitter: {
-        card: 'summary_large_image',
-        title: `${TITLE} | Cavos`,
-        description: DESCRIPTION,
-        images: ['/og-image.png'],
-    },
-}
+    path: '/stats',
+})
 
 const SOURCES = [
     {

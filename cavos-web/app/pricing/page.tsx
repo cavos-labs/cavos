@@ -2,6 +2,7 @@ import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import Script from 'next/script'
 import Link from 'next/link'
+import { marketingPageMetadata } from '@/lib/marketing-seo'
 
 /* ── Bespoke feature icons (layered, multi-tone Cavos indigo) ───────────────
    Hand-built SVGs so the set feels tailored, not a generic icon-pack pull. */
@@ -51,25 +52,12 @@ function IcoShield() {
     )
 }
 
-export const metadata = {
-    title: "Embedded Wallet Pricing | Cavos",
-    description: "Flat monthly fees for multichain embedded wallets. Free up to 1,000 wallets. Essential $59/mo. Complete $139/mo with enclave recovery.",
-    alternates: {
-        canonical: "https://cavos.xyz/pricing",
-    },
-    openGraph: {
-        title: "Embedded Wallet Pricing | Cavos",
-        description: "Flat monthly org fees. Free up to 1,000 wallets. Essential $59/mo. Complete $139/mo.",
-        url: "https://cavos.xyz/pricing",
-        images: ["/og-image.png"],
-    },
-    twitter: {
-        card: "summary_large_image",
-        title: "Embedded Wallet Pricing | Cavos",
-        description: "Flat monthly org fees. Free up to 1,000 wallets. Essential $59/mo. Complete $139/mo.",
-        images: ["/og-image.png"],
-    },
-}
+export const metadata = marketingPageMetadata({
+    title: 'Embedded Wallet Pricing',
+    description:
+        'Flat monthly fees for multichain embedded wallets. Free up to 1,000 wallets. Essential $59/mo. Complete $139/mo with enclave recovery.',
+    path: '/pricing',
+})
 
 /* ── Domain model: one source of truth ── */
 type PlanId = 'free' | 'essential' | 'complete'

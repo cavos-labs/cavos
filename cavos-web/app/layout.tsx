@@ -43,9 +43,6 @@ export const metadata: Metadata = {
   creator: "Cavos Labs",
   publisher: "Cavos Labs",
   metadataBase: new URL("https://cavos.xyz"),
-  alternates: {
-    canonical: "https://cavos.xyz",
-  },
   openGraph: {
     title: "Multichain Embedded Wallet Infrastructure | Cavos",
     description: "Turn every sign-in into a self-custodial wallet. One SDK for seamless onboarding and sponsored transactions across chains.",
@@ -56,7 +53,7 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Cavos — device-native multichain embedded wallet infrastructure",
+        alt: "Cavos — device-native embedded wallet infrastructure for Starknet, Solana, and Stellar",
       },
     ],
     locale: "en_US",
@@ -67,7 +64,14 @@ export const metadata: Metadata = {
     title: "Multichain Embedded Wallet Infrastructure | Cavos",
     description: "Turn every sign-in into a self-custodial wallet. One SDK for seamless onboarding and sponsored transactions across chains.",
     creator: "@cavosxyz",
-    images: ["/og-image.png"],
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Cavos — device-native embedded wallet infrastructure for Starknet, Solana, and Stellar",
+      },
+    ],
   },
   robots: {
     index: true,
@@ -88,13 +92,15 @@ const globalJsonLd = {
     {
       "@type": "Organization",
       "@id": "https://cavos.xyz/#organization",
-      "name": "Cavos Labs",
+      "name": "Cavos",
+      "legalName": "Cavos, LLC",
+      "alternateName": ["Cavos Labs"],
       "url": "https://cavos.xyz",
       "logo": {
         "@type": "ImageObject",
         "url": "https://cavos.xyz/CavosLogo.png"
       },
-      "description": "Cavos Labs builds device-native, verifiable wallet infrastructure. Starknet, Solana, and Stellar adapters ship today.",
+      "description": "Cavos builds device-native, self-custodial embedded wallet infrastructure. Starknet, Solana, and Stellar adapters ship today.",
       "sameAs": [
         "https://twitter.com/cavosxyz",
         "https://github.com/cavos-labs"

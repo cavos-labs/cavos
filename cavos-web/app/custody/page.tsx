@@ -3,30 +3,15 @@ import Link from 'next/link'
 import Script from 'next/script'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import { marketingPageMetadata } from '@/lib/marketing-seo'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = marketingPageMetadata({
     title: 'When an Embedded Wallet Makes Your App a Custodian',
     description:
         'Cited rules for crypto custody: MiCA, FinCEN, the FCA, California, and the regimes in Brazil, Argentina, Costa Rica, Mexico, Chile, and Colombia. Not legal advice.',
-    alternates: {
-        canonical: 'https://cavos.xyz/custody',
-    },
-    openGraph: {
-        title: 'When an Embedded Wallet Makes Your App a Custodian',
-        description:
-            'What MiCA, FinCEN, the FCA, California, and the main Latin American regimes require when a product holds or controls user crypto.',
-        url: 'https://cavos.xyz/custody',
-        type: 'article',
-        images: ['/og-image.png'],
-    },
-    twitter: {
-        card: 'summary_large_image',
-        title: 'When an Embedded Wallet Makes Your App a Custodian',
-        description:
-            'Custody rules cited to MiCA, FinCEN, the FCA, California, Brazil, Argentina, Costa Rica, Mexico, Chile, and Colombia. Not legal advice.',
-        images: ['/og-image.png'],
-    },
-}
+    path: '/custody',
+    type: 'article',
+})
 
 const FAQ = [
     {

@@ -7,60 +7,17 @@ import { HeroOrb } from '@/components/HeroOrb'
 import { Footer } from '@/components/Footer'
 import { LandingMotion } from '@/components/LandingMotion'
 import Script from 'next/script'
+import { homepageJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
 
-export const metadata = {
-    title: "Multichain Embedded Wallet Infrastructure | Cavos",
-    description: "Turn every sign-in into a self-custodial wallet. One SDK for seamless onboarding and sponsored transactions across chains.",
-    alternates: {
-        canonical: "https://cavos.xyz",
-    },
-    openGraph: {
-        title: "Multichain Embedded Wallet Infrastructure | Cavos",
-        description: "Turn every sign-in into a self-custodial wallet. One SDK for seamless onboarding and sponsored transactions across chains.",
-        url: "https://cavos.xyz",
-        images: ["/og-image.png"],
-    },
-    twitter: {
-        card: "summary_large_image",
-        title: "Multichain Embedded Wallet Infrastructure | Cavos",
-        description: "Turn every sign-in into a self-custodial wallet. One SDK for seamless onboarding and sponsored transactions across chains.",
-        images: ["/og-image.png"],
-    },
-}
+export const metadata = marketingPageMetadata({
+    title: 'Multichain Embedded Wallet Infrastructure',
+    description:
+        'Turn every sign-in into a self-custodial wallet. One SDK for device-native onboarding and sponsored transactions on Starknet, Solana, and Stellar.',
+    path: '/',
+})
 
 export default function LandingPage() {
-    const jsonLd = {
-        "@context": "https://schema.org",
-        "@graph": [
-            {
-                "@type": "SoftwareApplication",
-                "@id": "https://cavos.xyz/#software",
-                "name": "Cavos",
-                "url": "https://cavos.xyz",
-                "operatingSystem": "Web, iOS, Android",
-                "applicationCategory": "DeveloperApplication",
-                "applicationSubCategory": "Multichain embedded wallet infrastructure",
-                "description": "Cavos is a device-native embedded wallet SDK for building verifiable, self-custodial accounts. Starknet, Solana, and Stellar adapters ship today; the architecture supports additional adapters.",
-                "offers": {
-                    "@type": "Offer",
-                    "price": "0",
-                    "priceCurrency": "USD",
-                    "description": "Free tier available. Start building at no cost."
-                },
-                "author": { "@id": "https://cavos.xyz/#organization" },
-                "featureList": [
-                    "Device-native P-256 signers",
-                    "Registry-first address resolution",
-                    "Device-controlled self-custody",
-                    "Gas sponsorship and relayers",
-                    "Starknet, Solana, and Stellar adapters",
-                    "React and React Native SDKs",
-                    "Multi-device authorization and recovery"
-                ],
-                "screenshot": "https://cavos.xyz/og-image.png"
-            }
-        ]
-    }
+    const jsonLd = homepageJsonLd()
 
     return (
         <main className="relative isolate min-h-screen w-full bg-white text-ink antialiased overflow-x-hidden">
@@ -85,14 +42,12 @@ export default function LandingPage() {
                     <section className="relative md:flex-1 flex items-start md:items-center px-6 md:px-16 lg:px-24 pt-20 pb-12 md:pt-20 md:pb-20">
                         <div className="space-y-10 md:space-y-14">
                             <div className="max-w-5xl">
-                                <h1 className="text-[clamp(1.625rem,2.6vw,2.375rem)] font-medium leading-[1.14] tracking-[-0.03em]">
-                                    <span className="block text-ink text-balance">
-                                        Your next million users shouldn&apos;t need to understand crypto.
-                                    </span>
-                                    <span className="mt-2 hidden max-w-4xl text-ink/45 text-balance sm:block">
-                                        Let them sign in, pay, earn, and own as naturally as they use any other product—while Cavos handles the wallet infrastructure underneath.
-                                    </span>
+                                <h1 className="text-[clamp(1.625rem,2.6vw,2.375rem)] font-medium leading-[1.14] tracking-[-0.03em] text-ink text-balance">
+                                    Your next million users shouldn&apos;t need to understand crypto.
                                 </h1>
+                                <p className="mt-3 max-w-4xl text-[clamp(1.05rem,1.6vw,1.25rem)] leading-snug tracking-[-0.02em] text-ink/45 text-balance">
+                                    Let them sign in, pay, earn, and own as naturally as they use any other product—while Cavos handles the wallet infrastructure underneath.
+                                </p>
                             </div>
 
                             <div data-hero className="grid w-full max-w-sm grid-cols-1 gap-3 sm:flex sm:max-w-none sm:items-center">

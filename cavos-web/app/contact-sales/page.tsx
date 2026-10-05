@@ -2,28 +2,14 @@ import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { HeroOrb } from '@/components/HeroOrb'
 import { ContactSalesForm } from '@/components/ContactSalesForm'
+import { marketingPageMetadata } from '@/lib/marketing-seo'
 
-export const metadata = {
+export const metadata = marketingPageMetadata({
     title: 'Contact Multichain Wallet Infrastructure Sales',
     description:
-        'Talk to Cavos about device-native embedded wallets, multichain smart accounts, gas sponsorship, recovery, and production integrations.',
-    alternates: {
-        canonical: 'https://cavos.xyz/contact-sales',
-    },
-    openGraph: {
-        title: 'Contact Multichain Wallet Infrastructure Sales | Cavos',
-        description:
-            'Plan a device-native wallet integration across Starknet, Solana, Stellar, or the next chain in your roadmap.',
-        url: 'https://cavos.xyz/contact-sales',
-        images: ['/og-image.png'],
-    },
-    twitter: {
-        card: 'summary_large_image',
-        title: 'Contact Multichain Wallet Infrastructure Sales | Cavos',
-        description: 'Plan a device-native wallet integration across Starknet, Solana, Stellar, or the next chain in your roadmap.',
-        images: ['/og-image.png'],
-    },
-}
+        'Talk to Cavos about device-native embedded wallets, gas sponsorship, recovery, and production integrations on Starknet, Solana, and Stellar.',
+    path: '/contact-sales',
+})
 
 export default function ContactSalesPage() {
     return (

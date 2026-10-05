@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { COMPETITORS, getCompetitor } from '@/lib/compare-data'
+import { marketingPageMetadata } from '@/lib/marketing-seo'
 
 export function generateStaticParams() {
     return COMPETITORS.map((c) => ({ slug: c.slug }))
@@ -21,26 +22,13 @@ export async function generateMetadata({
 
     const title = `Cavos vs ${competitor.name}: embedded wallet comparison`
     const description = `An honest comparison of Cavos and ${competitor.name} across custody, chain support, signing authority, gas sponsorship, and recovery — including when ${competitor.name} is the better choice.`
-    const url = `https://cavos.xyz/compare/${competitor.slug}`
 
-    return {
+    return marketingPageMetadata({
         title,
         description,
-        alternates: { canonical: url },
-        openGraph: {
-            title,
-            description,
-            url,
-            type: 'article',
-            images: ['/og-image.png'],
-        },
-        twitter: {
-            card: 'summary_large_image',
-            title,
-            description,
-            images: ['/og-image.png'],
-        },
-    }
+        path: `/compare/${competitor.slug}`,
+        type: 'article',
+    })
 }
 
 export default async function ComparisonPage({
