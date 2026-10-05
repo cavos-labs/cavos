@@ -40,8 +40,13 @@ export function marketingPageMetadata(input: {
     alt: OG_IMAGE.alt,
   }
 
+  const documentTitle =
+    input.path === '/'
+      ? { absolute: socialTitle(input.title) }
+      : input.title
+
   return {
-    title: input.title,
+    title: documentTitle,
     description: input.description,
     alternates: { canonical: url },
     openGraph: {

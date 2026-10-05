@@ -10,6 +10,7 @@ describe('marketing SEO', () => {
       path: '/pricing',
     })
 
+    assert.equal(meta.title, 'Embedded Wallet Pricing')
     assert.equal(meta.alternates?.canonical, 'https://cavos.xyz/pricing')
     assert.equal(meta.openGraph?.url, 'https://cavos.xyz/pricing')
     assert.equal(meta.openGraph?.type, 'website')
@@ -17,6 +18,17 @@ describe('marketing SEO', () => {
     assert.ok(Array.isArray(meta.openGraph?.images) && meta.openGraph.images.length > 0)
     assert.equal(meta.twitter?.card, 'summary_large_image')
     assert.equal(meta.twitter?.title, 'Embedded Wallet Pricing | Cavos')
+  })
+
+  it('uses an absolute homepage title so the layout template is not skipped', () => {
+    const home = marketingPageMetadata({
+      title: 'Multichain Embedded Wallet Infrastructure',
+      description: 'Device-native embedded wallets.',
+      path: '/',
+    })
+    assert.deepEqual(home.title, {
+      absolute: 'Multichain Embedded Wallet Infrastructure | Cavos',
+    })
   })
 
   it('does not invent a homepage canonical for other routes', () => {
