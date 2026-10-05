@@ -1,7 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/Button'
@@ -10,34 +8,13 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PageSkeleton } from '@/components/ui/Skeleton'
 import { useOrganization } from '@/lib/hooks/useOrganization'
+import { useApp } from '@/lib/hooks/useApp'
 
 export default function AppsPage() {
-    const router = useRouter()
-    const [apps, setApps] = useState<any[]>([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState('')
-    const { organizationId, loading: organizationLoading } = useOrganization()
+    const { organizationId } = useOrganization()
+    const { apps, loading, error } = useApp()
 
-    useEffect(() => { if (organizationId) fetchApps() }, [organizationId])
-
-    const fetchApps = async () => {
-        try {
-            setLoading(true)
-            const res = await fetch(`/api/apps?organization_id=${organizationId}`)
-            if (!res.ok) {
-                if (res.status === 401) { router.push('/login'); return }
-                throw new Error('Failed to fetch apps')
-            }
-            const data = await res.json()
-            setApps(data.apps || [])
-        } catch {
-            setError('Failed to load applications')
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    if (loading || organizationLoading) {
+    if (loading) {
         return <PageSkeleton />
     }
 
@@ -56,13 +33,11 @@ export default function AppsPage() {
                 }
             />
 
-            {error && (
+            {error ? (
                 <div role="alert" className="rounded-xl border border-danger/20 bg-danger-soft px-4 py-3 text-sm text-danger">
-                    {error}
+                    Failed to load applications
                 </div>
-            )}
-
-            {apps.length === 0 ? (
+            ) : apps.length === 0 ? (
                 <EmptyState
                     title="No applications yet"
                     description="Create an app to get an environment ID and start integrating device-native wallets."

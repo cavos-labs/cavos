@@ -10,6 +10,7 @@ import { EnvironmentBadge } from '@/components/EnvironmentBadge'
 import { Icon } from '@/components/ui/Icon'
 import { Badge } from '@/components/ui/Badge'
 import { Panel } from '@/components/ui/Panel'
+import { useApp } from '@/lib/hooks/useApp'
 
 type Breakdown = { key: string; total: number; failures: number }
 type Failure = { event_type: string; network: string | null; error_code: string | null; tx_reference: string | null; created_at: string }
@@ -24,32 +25,42 @@ type Overview = {
 
 export default function AppOverviewPage() {
   const { id } = useParams<{ id: string }>()
+  const { apps: listedApps } = useApp()
+  const listed = listedApps.find((item) => item.id === id)
   const [app, setApp] = useState<any>()
   const [envs, setEnvs] = useState<any[]>([])
   const [health, setHealth] = useState<any>()
+  const [healthLoading, setHealthLoading] = useState(true)
   const [data, setData] = useState<Overview | null>(null)
   const [range, setRange] = useState('7d')
   const [appLoading, setAppLoading] = useState(true)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
+  const [requestId, setRequestId] = useState(id)
+
+  if (requestId !== id) {
+    setRequestId(id)
+    setAppLoading(true)
+    setHealthLoading(true)
+    setApp(undefined)
+    setHealth(undefined)
+    setEnvs([])
+  }
 
   useEffect(() => {
     let cancelled = false
-    setAppLoading(true)
-    setApp(undefined)
+
     Promise.all([
-      fetch(`/api/apps/${id}`).then(async (r) => {
+      fetch(`/api/apps/${id}`, { cache: 'no-store' }).then(async (r) => {
         if (!r.ok) throw new Error()
         return r.json()
       }),
-      fetch(`/api/apps/${id}/environments`).then((r) => r.ok ? r.json() : { environments: [] }),
-      fetch(`/api/apps/${id}/health`).then((r) => r.ok ? r.json() : null),
+      fetch(`/api/apps/${id}/environments`, { cache: 'no-store' }).then((r) => r.ok ? r.json() : { environments: [] }),
     ])
-      .then(([a, e, h]) => {
+      .then(([a, e]) => {
         if (cancelled) return
         setApp(a.app ?? null)
         setEnvs(e.environments ?? [])
-        setHealth(h)
       })
       .catch(() => {
         if (cancelled) return
@@ -58,6 +69,19 @@ export default function AppOverviewPage() {
       .finally(() => {
         if (!cancelled) setAppLoading(false)
       })
+
+    fetch(`/api/apps/${id}/health`, { cache: 'no-store' })
+      .then((r) => r.ok ? r.json() : null)
+      .then((h) => {
+        if (!cancelled) setHealth(h)
+      })
+      .catch(() => {
+        if (!cancelled) setHealth(null)
+      })
+      .finally(() => {
+        if (!cancelled) setHealthLoading(false)
+      })
+
     return () => {
       cancelled = true
     }
@@ -82,20 +106,22 @@ export default function AppOverviewPage() {
   if (appLoading) return <PageSkeleton />
   if (!app) return <div role="alert" className="border-l-2 border-red-600 bg-white p-5 text-sm text-red-700">Application could not be loaded.</div>
 
+  const logoUrl = (listed ? listed.logo_url : app.logo_url) || null
   const production = envs.find((e) => e.kind === 'production')
   const passed = health?.passed ?? 0
   const total = health?.total ?? 0
   const percentage = total ? Math.round((passed / total) * 100) : 0
-  const healthy = passed === total
-  const degraded = !healthy && passed >= total - 2
-  const status = healthy ? 'Healthy' : degraded ? 'Degraded' : 'Action required'
+  const healthy = Boolean(health) && passed === total
+  const degraded = Boolean(health) && !healthy && passed >= total - 2
+  const status = healthLoading ? 'Checking' : !health ? 'Unavailable' : healthy ? 'Healthy' : degraded ? 'Degraded' : 'Action required'
+  const healthVariant = healthLoading || !health ? 'neutral' : healthy ? 'ok' : degraded ? 'warn' : 'danger'
 
   return (
     <div className="space-y-6">
       <PageHeader
         eyebrow="Application"
-        title={app.name}
-        subtitle={app.description || 'Operational state and configuration for this app.'}
+        title={listed?.name ?? app.name}
+        subtitle={(listed ? listed.description : app.description) || 'Operational state and configuration for this app.'}
         actions={
           <Link
             href={`/dashboard/apps/${id}/settings`}
@@ -110,7 +136,7 @@ export default function AppOverviewPage() {
       <div className="flex flex-wrap items-center gap-3 border-y border-line py-3">
         <div className="flex min-w-0 items-center gap-3">
           <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg border border-line bg-white">
-            {app.logo_url ? <Image src={app.logo_url} alt="" fill className="object-cover" /> : <div className="flex h-full items-center justify-center bg-surface"><Icon.Apps size={14} className="text-muted" /></div>}
+            {logoUrl ? <Image src={logoUrl} alt="" fill className="object-cover" /> : <div className="flex h-full items-center justify-center bg-surface"><Icon.Apps size={14} className="text-muted" /></div>}
           </div>
           <EnvironmentBadge kind="production" />
         </div>
@@ -136,7 +162,7 @@ export default function AppOverviewPage() {
         <Metric label="Success rate" value={data?.events.success_rate == null ? '—' : `${Math.round(data.events.success_rate * 100)}%`} note={`${data?.events.total ?? 0} Cavos events`} />
         <div className="p-5">
           <p className="text-xs font-medium text-muted">Integration health</p>
-          <Badge variant={healthy ? 'ok' : degraded ? 'warn' : 'danger'} className="mt-4 text-sm">{status}</Badge>
+          <Badge variant={healthVariant} className="mt-4 text-sm">{status}</Badge>
           <p className="mt-3 text-xs text-muted">Based on explicit configuration checks.</p>
         </div>
       </section>
@@ -224,9 +250,9 @@ export default function AppOverviewPage() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 className="text-sm font-semibold">Integration health</h2>
-            <p className="mt-1 text-sm text-muted">{passed} of {total} configuration checks passed</p>
+            <p className="mt-1 text-sm text-muted">{healthLoading ? 'Checking configuration.' : !health ? 'Configuration checks could not be loaded.' : `${passed} of ${total} configuration checks passed`}</p>
           </div>
-          <Badge variant={healthy ? 'ok' : degraded ? 'warn' : 'danger'}>{status}</Badge>
+          <Badge variant={healthVariant}>{status}</Badge>
         </div>
         <div className="mt-5 h-2 overflow-hidden rounded-full bg-black/[0.06]" role="progressbar" aria-label="Integration health" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percentage}>
           <div className="h-full rounded-full bg-brand" style={{ width: `${percentage}%` }} />
