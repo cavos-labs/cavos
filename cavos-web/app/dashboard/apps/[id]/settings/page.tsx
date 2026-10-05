@@ -89,8 +89,8 @@ export default function AppSettingsPage() {
         setDeleting(false)
         return
       }
-      const next = removeApp(id)
-      router.push(next ? `/dashboard/apps/${next}` : '/dashboard/apps')
+      removeApp(id)
+      router.push('/dashboard/apps')
     } catch {
       setDeleteError('Could not delete this application.')
       setDeleting(false)
