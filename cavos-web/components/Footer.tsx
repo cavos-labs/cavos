@@ -9,7 +9,7 @@ export function Footer() {
                     <Link href="/" className="inline-block hover:opacity-75 transition-opacity">
                         <Image
                             src="/cavos-black.png"
-                            alt="Cavos Logo"
+                            alt="Cavos"
                             width={100}
                             height={40}
                             className="h-8 w-auto"
@@ -21,14 +21,14 @@ export function Footer() {
                 </div>
 
                 <div className="space-y-5">
-                    <h5 className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/50">Product</h5>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/50">Product</p>
                     <ul className="space-y-3 text-sm font-medium text-black/40">
                         <li><Link href="https://docs.cavos.xyz" target="_blank" className="hover:text-black transition-colors">Documentation</Link></li>
                     </ul>
                 </div>
 
                 <div className="space-y-5">
-                    <h5 className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/50">Company</h5>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/50">Company</p>
                     <ul className="space-y-3 text-sm font-medium text-black/40">
                         <li><Link href="/stats" className="hover:text-black transition-colors">Stats</Link></li>
                         <li><Link href="/custody" className="hover:text-black transition-colors">Custody</Link></li>
@@ -38,7 +38,7 @@ export function Footer() {
                 </div>
 
                 <div className="space-y-5">
-                    <h5 className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/50">Legal</h5>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/50">Legal</p>
                     <ul className="space-y-3 text-sm font-medium text-black/25">
                         <li><Link href="/terms" className="hover:text-black transition-colors">Terms of Service</Link></li>
                         <li><Link href="/privacy" className="hover:text-black transition-colors">Privacy Policy</Link></li>
@@ -51,8 +51,8 @@ export function Footer() {
             <div className="max-w-[1400px] mx-auto mt-16 pt-8 border-t border-line flex flex-col md:flex-row justify-between items-center gap-6">
                 <p className="text-[10px] font-bold text-black/25 uppercase tracking-[0.2em]">© 2026 Cavos Labs. All rights reserved.</p>
                 <div className="flex items-center gap-8 opacity-30 hover:opacity-70 transition-opacity">
-                    <Link href="https://twitter.com/cavosxyz" target="_blank">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-black"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+                    <Link href="https://twitter.com/cavosxyz" target="_blank" aria-label="Cavos on X">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-black" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
                     </Link>
                 </div>
             </div>

@@ -2,12 +2,13 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import { marketingPageMetadata } from '@/lib/marketing-seo'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = marketingPageMetadata({
     title: 'Privacy Policy',
     description: 'Cavos privacy policy — how we collect, use, and protect your data.',
-    alternates: { canonical: 'https://cavos.xyz/privacy' },
-}
+    path: '/privacy',
+})
 
 const LAST_UPDATED = 'September 3, 2026'
 

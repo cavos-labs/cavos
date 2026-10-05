@@ -4,27 +4,14 @@ import Script from 'next/script'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { COMPETITORS } from '@/lib/compare-data'
+import { marketingPageMetadata } from '@/lib/marketing-seo'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = marketingPageMetadata({
     title: 'Cavos vs Embedded Wallet Providers',
-    description: 'Compare Cavos with hosted embedded wallets and wallet extensions across custody, chain support, signing, gas sponsorship, recovery, and developer experience.',
-    alternates: {
-        canonical: 'https://cavos.xyz/compare',
-    },
-    openGraph: {
-        title: 'Cavos vs Embedded Wallet Providers',
-        description: 'A clear comparison of device-native Cavos smart accounts, hosted embedded wallets, and traditional wallet extensions.',
-        url: 'https://cavos.xyz/compare',
-        type: 'website',
-        images: ['/og-image.png'],
-    },
-    twitter: {
-        card: 'summary_large_image',
-        title: 'Cavos vs Embedded Wallet Providers',
-        description: 'Compare custody, chain support, signing, sponsorship, recovery, and developer experience.',
-        images: ['/og-image.png'],
-    },
-}
+    description:
+        'Compare Cavos with hosted embedded wallets and wallet extensions across custody, chain support, signing, gas sponsorship, recovery, and developer experience.',
+    path: '/compare',
+})
 
 const COMPARISON = [
     {

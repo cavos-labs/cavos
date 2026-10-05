@@ -85,9 +85,8 @@ function JokersTile() {
         <div className="absolute inset-0 bg-black">
             <Image
                 src="/assets/jokers/boss_s3_1.png"
-                alt=""
+                alt="Jokers of Neon in-game character on a black backdrop"
                 fill
-                aria-hidden
                 sizes="(max-width: 768px) 100vw, 540px"
                 className="select-none object-contain object-bottom drop-shadow-[0_30px_70px_rgba(0,0,0,0.6)] transition-transform duration-[900ms] ease-out group-hover:scale-[1.04]"
             />

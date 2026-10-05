@@ -2,12 +2,13 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import { marketingPageMetadata } from '@/lib/marketing-seo'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = marketingPageMetadata({
     title: 'Terms of Service',
     description: 'Cavos Terms of Service — the contract governing your use of the Cavos developer platform, SDK, and APIs.',
-    alternates: { canonical: 'https://cavos.xyz/terms' },
-}
+    path: '/terms',
+})
 
 const LAST_UPDATED = 'September 3, 2026'
 

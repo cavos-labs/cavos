@@ -3,29 +3,15 @@ import Link from 'next/link'
 import Script from 'next/script'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import { marketingPageMetadata } from '@/lib/marketing-seo'
 
 const PAGE_URL = 'https://cavos.xyz/embedded-stellar-wallet'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = marketingPageMetadata({
     title: 'Embedded Stellar Wallet SDK',
     description: 'A device-native, self-custodial embedded wallet for Stellar. The signing key is created and used on the user\'s device — Cavos cannot see it, sign with it, or move funds. Classic G… account with per-device Horizon ed25519 signers.',
-    alternates: {
-        canonical: PAGE_URL,
-    },
-    openGraph: {
-        title: 'Embedded Stellar Wallet SDK',
-        description: 'Device-native self-custody for Stellar. Key lives on the device, not on a server. Classic G… account with silent signing and gasless transactions.',
-        url: PAGE_URL,
-        type: 'website',
-        images: ['/og-image.png'],
-    },
-    twitter: {
-        card: 'summary_large_image',
-        title: 'Embedded Stellar Wallet SDK',
-        description: 'Device-native self-custody for Stellar. Key lives on the device, not on a server.',
-        images: ['/og-image.png'],
-    },
-}
+    path: '/embedded-stellar-wallet',
+})
 
 const CODE_EXAMPLE = `import { Cavos } from "@cavos/kit";
 

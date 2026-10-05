@@ -117,8 +117,7 @@ function MockupGas() {
                 <p className="text-[11px] text-emerald-600">Sponsorable · gasless when funded</p>
             </div>
             <div className="absolute -bottom-5 left-7 right-7 rounded-xl border border-line bg-white p-4 shadow-[0_20px_44px_-26px_rgba(10,10,15,0.3)] md:left-9 md:right-9">
-                <p className="text-[11px] font-medium text-ink/40">Sponsored transactions · 30d</p>
-                <p className="text-[16px] font-semibold tracking-tight text-ink">128,400</p>
+                <p className="text-[11px] font-medium text-ink/40">Sponsored transactions</p>
                 <div className="mt-3 flex h-16 items-end gap-1">
                     {bars.map((h, i) => (
                         <div key={i} className="flex-1 rounded-[2px] bg-brand/85" style={{ height: `${h}%` }} />

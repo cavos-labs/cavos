@@ -2,11 +2,19 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  const isVaultPath = request.nextUrl.pathname.startsWith('/vault')
+  const { pathname } = request.nextUrl
+  const isVaultPath = pathname.startsWith('/vault')
   if (request.headers.get('host')?.startsWith('vault.')) {
     return isVaultPath ? NextResponse.next() : new NextResponse(null, { status: 404 })
   }
   if (isVaultPath) return NextResponse.next()
+
+  // Metadata files must not pass through the auth session refresh. Next.js
+  // documents that matching sitemap.xml / robots.txt in middleware can 500
+  // those routes and hide the marketing site from crawlers.
+  if (pathname === '/sitemap.xml' || pathname === '/robots.txt') {
+    return NextResponse.next()
+  }
 
   let supabaseResponse = NextResponse.next({
     request,
@@ -69,10 +77,10 @@ export const config = {
      * Match all request paths except:
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
+     * - favicon.ico, sitemap.xml, robots.txt (metadata files)
      * - public folder
      * - api routes (handled separately)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
