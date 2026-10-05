@@ -2,11 +2,14 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   Account,
+  Address,
   Asset,
   BASE_FEE,
   Keypair,
   Operation,
+  StrKey,
   TransactionBuilder,
+  xdr,
 } from '@stellar/stellar-sdk';
 import {
   passphraseFor,
@@ -14,6 +17,7 @@ import {
   validateClassicFeeBump,
   validateClassicTrustline,
   validateSponsoredData,
+  validateSponsoredSoroban,
 } from './relayer';
 
 const NETWORK = 'stellar-testnet' as const;
@@ -264,6 +268,102 @@ describe('validateClassicFeeBump', () => {
       PASSPHRASE,
     );
     const res = validateClassicFeeBump(fb, RELAYER);
+    assert.equal(res.ok, false);
+    assert.match(res.reason!, /inner transaction source cannot be the relayer/);
+  });
+});
+
+const CONTRACT = StrKey.encodeContract(Buffer.alloc(32, 9));
+
+function invokeContract(): xdr.HostFunction {
+  return xdr.HostFunction.hostFunctionTypeInvokeContract(
+    new xdr.InvokeContractArgs({
+      contractAddress: Address.fromString(CONTRACT).toScAddress(),
+      functionName: 'ping',
+      args: [],
+    }),
+  );
+}
+
+function createContract(): xdr.HostFunction {
+  return xdr.HostFunction.hostFunctionTypeCreateContract(
+    new xdr.CreateContractArgs({
+      contractIdPreimage: xdr.ContractIdPreimage.contractIdPreimageFromAddress(
+        new xdr.ContractIdPreimageFromAddress({
+          address: Address.fromString(ACCOUNT).toScAddress(),
+          salt: Buffer.alloc(32),
+        }),
+      ),
+      executable: xdr.ContractExecutable.contractExecutableWasm(Buffer.alloc(32, 1)),
+    }),
+  );
+}
+
+/** A classic tx whose operations are the given host function, plus any extras. */
+function hostTx(source: string, func: xdr.HostFunction, extra = false) {
+  const builder = new TransactionBuilder(new Account(source, '1'), {
+    fee: BASE_FEE,
+    networkPassphrase: PASSPHRASE,
+  }).addOperation(Operation.invokeHostFunction({ func, auth: [] }));
+  if (extra) {
+    builder.addOperation(
+      Operation.payment({ destination: OUTSIDER, asset: Asset.native(), amount: '1' }),
+    );
+  }
+  return builder.setTimeout(120).build();
+}
+
+function sorobanBump(source = ACCOUNT, func = invokeContract(), extra = false) {
+  return TransactionBuilder.buildFeeBumpTransaction(
+    RELAYER,
+    BASE_FEE,
+    hostTx(source, func, extra),
+    PASSPHRASE,
+  );
+}
+
+describe('validateSponsoredSoroban', () => {
+  it('sponsors a single contract invocation', () => {
+    assert.deepEqual(validateSponsoredSoroban(sorobanBump(), RELAYER), { ok: true });
+  });
+
+  it('refuses a payment wrapped as a soroban fee-bump', () => {
+    const inner = new TransactionBuilder(new Account(ACCOUNT, '1'), {
+      fee: BASE_FEE,
+      networkPassphrase: PASSPHRASE,
+    })
+      .addOperation(
+        Operation.payment({ destination: OUTSIDER, asset: Asset.native(), amount: '1' }),
+      )
+      .setTimeout(120)
+      .build();
+    const fb = TransactionBuilder.buildFeeBumpTransaction(RELAYER, BASE_FEE, inner, PASSPHRASE);
+    const res = validateSponsoredSoroban(fb, RELAYER);
+    assert.equal(res.ok, false);
+    assert.match(res.reason!, /single invokeHostFunction/);
+  });
+
+  it('refuses a wasm upload', () => {
+    const func = xdr.HostFunction.hostFunctionTypeUploadContractWasm(Buffer.from([1]));
+    const res = validateSponsoredSoroban(sorobanBump(ACCOUNT, func), RELAYER);
+    assert.equal(res.ok, false);
+    assert.match(res.reason!, /only contract invocation/);
+  });
+
+  it('refuses contract creation', () => {
+    const res = validateSponsoredSoroban(sorobanBump(ACCOUNT, createContract()), RELAYER);
+    assert.equal(res.ok, false);
+    assert.match(res.reason!, /only contract invocation/);
+  });
+
+  it('refuses more than one operation', () => {
+    const res = validateSponsoredSoroban(sorobanBump(ACCOUNT, invokeContract(), true), RELAYER);
+    assert.equal(res.ok, false);
+    assert.match(res.reason!, /single invokeHostFunction/);
+  });
+
+  it('refuses an inner transaction sourced by the relayer', () => {
+    const res = validateSponsoredSoroban(sorobanBump(RELAYER), RELAYER);
     assert.equal(res.ok, false);
     assert.match(res.reason!, /inner transaction source cannot be the relayer/);
   });

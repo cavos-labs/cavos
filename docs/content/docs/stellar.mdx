@@ -227,11 +227,10 @@ console.log(state.flags.released, state.milestones[0].approved);
 gasless by default; pass `{ sponsored: false }` to have the account pay its own fee.
 
 <Callout type="info">
-**Gasless status.** Native XLM `execute` and trustlines are sponsored by the
-relayer today. Soroban invocations (`invokeContract`, escrow methods) sign
-silently and route through the relayer for a fee-bump when available; backend
-co-signing of Soroban calls is still being wired, so on testnet you may run these
-with `{ sponsored: false }` against a self-funded account.
+**Gasless by default.** `invokeContract` and escrow methods are sponsored: the
+relayer signs the fee-bump (`kind: "soroban"`) and pays the inclusion fee and
+the resource fee. Pass `{ sponsored: false }` for the account to pay the fee
+itself.
 </Callout>
 
 ## Sign messages
@@ -368,7 +367,7 @@ device is using. Native Solana has no equivalent — `removeSigner` throws.
 ## Pay reserves and fees in a token
 
 The kit relayer (`appId`) sponsors **XLM** so the user never holds lumens —
-Cavos pays. That is the default for `execute`, trustlines, and fee-bumps.
+Cavos pays. That is the default for `execute`, trustlines, fee-bumps, and `invokeContract`.
 
 If the user should pay those same costs in USDC (or another allowlisted
 asset), use [`@cavos/reserve`](/docs/reserve) and sign with

@@ -39,15 +39,16 @@ export function stroopsFromXlm(amount: string | number): number {
 
 /**
  * Conservative reserve lock for a create or sponsored-data envelope.
- * Fee-bumps lock nothing (the inner source pays its own new subentries,
- * unless those are themselves sponsored — those go through sponsored-data).
+ * Fee-bumps and sponsored Soroban invokes lock nothing: contract rent is
+ * inside the resource fee, and a classic fee-bump does not add subentries
+ * on the sponsor (sponsored subentries go through sponsored-data / trustline).
  */
 export function estimateReservedStroops(
   tx: Transaction | FeeBumpTransaction,
-  kind: 'create' | 'fee-bump' | 'sponsored-data' | 'trustline',
+  kind: 'create' | 'fee-bump' | 'sponsored-data' | 'trustline' | 'soroban',
   baseReserveStroops: number = DEFAULT_BASE_RESERVE_STROOPS,
 ): number {
-  if (kind === 'fee-bump') return 0;
+  if (kind === 'fee-bump' || kind === 'soroban') return 0;
   if ('innerTransaction' in tx) return 0;
 
   let entries = 0;
