@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Script from 'next/script'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
-import { marketingPageMetadata } from '@/lib/marketing-seo'
+import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
 
 const PAGE_URL = 'https://cavos.xyz/embedded-starknet-wallet'
 
@@ -39,6 +39,13 @@ if (wallet.status !== "needs-device-approval") {
 }`
 
 export default function EmbeddedStarknetWalletPage() {
+    const breadcrumbs = {
+        '@context': 'https://schema.org',
+        ...breadcrumbListJsonLd([
+            { name: 'Home', path: '/' },
+            { name: 'Embedded Starknet Wallet', path: '/embedded-starknet-wallet' },
+        ]),
+    }
     const jsonLd = {
         '@context': 'https://schema.org',
         '@type': 'SoftwareApplication',
@@ -74,6 +81,11 @@ export default function EmbeddedStarknetWalletPage() {
                 id="embedded-starknet-wallet-json-ld"
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
+            <Script
+                id="embedded-starknet-wallet-breadcrumbs-json-ld"
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
             />
             <Header />
 

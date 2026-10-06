@@ -6,9 +6,15 @@ import { COMPETITORS } from './compare-data'
 import {
   MARKETING_ORIGIN,
   getMarketingSitemapEntries,
+  parseBlogFrontmatter,
+  publishedBlogPosts,
 } from './marketing-sitemap'
 
 const APP_DIR = path.join(process.cwd(), 'app')
+const SITEMAP_SOURCE = fs.readFileSync(
+  path.join(process.cwd(), 'lib/marketing-sitemap.ts'),
+  'utf8',
+)
 
 function hasPage(routePath: string): boolean {
   if (routePath === '/') {
@@ -31,6 +37,16 @@ describe('marketing sitemap', () => {
 
   it('does not invent duplicate URLs', () => {
     assert.equal(urls.length, new Set(urls).size)
+  })
+
+  it('only includes cavos.xyz URLs', () => {
+    for (const entry of entries) {
+      assert.match(entry.url, /^https:\/\/cavos\.xyz(\/|$)/)
+    }
+    assert.equal(
+      urls.some((url) => url.includes('demo.cavos.xyz') || url.includes('docs.cavos.xyz')),
+      false,
+    )
   })
 
   it('includes the public marketing pages that exist in the app router', () => {
@@ -76,6 +92,43 @@ describe('marketing sitemap', () => {
     }
   })
 
+  it('includes every blog post from the content source with a lastModified date', () => {
+    const posts = publishedBlogPosts()
+    assert.ok(posts.length > 0, 'expected blog MDX files on disk')
+    assert.ok(
+      posts.some((post) => post.slug === 'v1-1-9-sdk-security'),
+      'expected the existing blog post slug',
+    )
+
+    for (const post of posts) {
+      const entry = entries.find(
+        (item) => item.url === `${MARKETING_ORIGIN}/blog/${post.slug}`,
+      )
+      assert.ok(entry, `sitemap missing /blog/${post.slug}`)
+      assert.ok(entry.lastModified instanceof Date)
+      assert.equal(Number.isNaN(entry.lastModified.getTime()), false)
+    }
+  })
+
+  it('reads lastModified from frontmatter dates without an MDX parser', () => {
+    const parsed = parseBlogFrontmatter(`---
+title: "Example"
+date: "2025-03-30"
+slug: "example"
+---
+
+Hello
+`)
+    assert.equal(parsed.date, '2025-03-30')
+    assert.doesNotMatch(SITEMAP_SOURCE, /from ['"]gray-matter['"]|from ['"]next-mdx-remote/)
+
+    const post = publishedBlogPosts().find(
+      (item) => item.slug === 'v1-1-9-sdk-security',
+    )
+    assert.ok(post)
+    assert.equal(post.lastModified.toISOString().startsWith('2025-03-30'), true)
+  })
+
   it('omits auth, dashboard, and noindex utility routes', () => {
     const omitted = [
       '/login',
@@ -83,7 +136,6 @@ describe('marketing sitemap', () => {
       '/dashboard',
       '/forgot-password',
       '/verification-error',
-      '/blog/v1-1-9-sdk-security',
     ]
     for (const routePath of omitted) {
       assert.equal(

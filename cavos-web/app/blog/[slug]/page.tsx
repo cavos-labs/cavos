@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import Script from 'next/script';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { getAllPosts, getPostBySlug, formatDate, CATEGORY_COLORS, PostCategory } from '@/lib/blog';
 import { Metadata } from 'next';
-import { marketingPageMetadata } from '@/lib/marketing-seo';
+import { blogPostJsonLd, marketingPageMetadata } from '@/lib/marketing-seo';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -38,8 +39,26 @@ export default async function BlogPostPage({ params }: Props) {
   const post = getPostBySlug(slug);
   if (!post) notFound();
 
+  const jsonLd = blogPostJsonLd({
+    title: post.meta.title,
+    description: post.meta.excerpt,
+    path: `/blog/${slug}`,
+    datePublished: post.meta.date,
+    dateModified: post.meta.date,
+    crumbs: [
+      { name: 'Home', path: '/' },
+      { name: 'Blog', path: '/blog' },
+      { name: post.meta.title, path: `/blog/${slug}` },
+    ],
+  });
+
   return (
     <div className="min-h-screen font-[family-name:var(--font-geist)] bg-white">
+      <Script
+        id="blog-post-json-ld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Header />
 
       {/* Dark hero */}

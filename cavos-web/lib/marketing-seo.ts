@@ -8,9 +8,68 @@ export const OG_IMAGE = {
   alt: 'Cavos — device-native embedded wallet infrastructure for Starknet, Solana, and Stellar',
 } as const
 
-function pageUrl(path: string): string {
+export const ORGANIZATION_ID = `${MARKETING_ORIGIN}/#organization`
+
+export function pageUrl(path: string): string {
   if (path === '/') return MARKETING_ORIGIN
   return `${MARKETING_ORIGIN}${path}`
+}
+
+export type BreadcrumbCrumb = {
+  name: string
+  path: string
+}
+
+/** Absolute-URL BreadcrumbList node. Does not include @context (for @graph). */
+export function breadcrumbListJsonLd(crumbs: BreadcrumbCrumb[]) {
+  return {
+    '@type': 'BreadcrumbList',
+    itemListElement: crumbs.map((crumb, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: crumb.name,
+      item: pageUrl(crumb.path),
+    })),
+  }
+}
+
+export function blogPostJsonLd(input: {
+  title: string
+  description: string
+  path: string
+  datePublished: string
+  dateModified?: string
+  crumbs: BreadcrumbCrumb[]
+}) {
+  const url = pageUrl(input.path)
+  const datePublished = input.datePublished
+  const dateModified = input.dateModified ?? input.datePublished
+
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BlogPosting',
+        headline: input.title,
+        description: input.description,
+        datePublished,
+        dateModified,
+        author: {
+          '@type': 'Organization',
+          '@id': ORGANIZATION_ID,
+          name: 'Cavos',
+        },
+        image: OG_IMAGE.url,
+        url,
+        mainEntityOfPage: {
+          '@type': 'WebPage',
+          '@id': url,
+        },
+        publisher: { '@id': ORGANIZATION_ID },
+      },
+      breadcrumbListJsonLd(input.crumbs),
+    ],
+  }
 }
 
 function socialTitle(title: string): string {
