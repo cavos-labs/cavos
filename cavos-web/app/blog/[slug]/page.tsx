@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import Script from 'next/script';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -54,7 +53,7 @@ export default async function BlogPostPage({ params }: Props) {
 
   return (
     <div className="min-h-screen font-[family-name:var(--font-geist)] bg-white">
-      <Script
+      <script
         id="blog-post-json-ld"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

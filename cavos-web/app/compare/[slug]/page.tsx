@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import Script from 'next/script'
 import { notFound } from 'next/navigation'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
@@ -74,7 +73,7 @@ export default async function ComparisonPage({
 
     return (
         <main className="min-h-screen bg-white font-sans text-ink antialiased">
-            <Script
+            <script
                 id={`compare-${competitor.slug}-json-ld`}
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

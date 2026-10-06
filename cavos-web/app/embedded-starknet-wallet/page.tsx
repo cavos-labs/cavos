@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import Script from 'next/script'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
@@ -77,12 +76,12 @@ export default function EmbeddedStarknetWalletPage() {
 
     return (
         <main className="min-h-screen bg-white font-sans text-ink antialiased">
-            <Script
+            <script
                 id="embedded-starknet-wallet-json-ld"
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
-            <Script
+            <script
                 id="embedded-starknet-wallet-breadcrumbs-json-ld"
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
