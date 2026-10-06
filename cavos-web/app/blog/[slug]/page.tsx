@@ -6,6 +6,7 @@ import { Footer } from '@/components/Footer';
 import { getAllPosts, getPostBySlug, formatDate, CATEGORY_COLORS, PostCategory } from '@/lib/blog';
 import { Metadata } from 'next';
 import { blogPostJsonLd, marketingPageMetadata } from '@/lib/marketing-seo';
+import { isBlogPostNoindex } from '@/lib/marketing-sitemap';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -19,15 +20,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = getPostBySlug(slug);
   if (!post) return {};
-  const isLegacyArchitecture = slug === 'v1-1-9-sdk-security';
-
   return marketingPageMetadata({
     title: `${post.meta.title} — Blog`,
     description: post.meta.excerpt,
     path: `/blog/${slug}`,
     type: 'article',
     publishedTime: post.meta.date,
-    robots: isLegacyArchitecture
+    robots: isBlogPostNoindex(slug)
       ? { index: false, follow: true }
       : { index: true, follow: true },
   });

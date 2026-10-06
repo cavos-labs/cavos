@@ -6,6 +6,7 @@ import { COMPETITORS } from './compare-data'
 import {
   MARKETING_ORIGIN,
   getMarketingSitemapEntries,
+  isBlogPostNoindex,
   parseBlogFrontmatter,
   publishedBlogPosts,
 } from './marketing-sitemap'
@@ -92,15 +93,12 @@ describe('marketing sitemap', () => {
     }
   })
 
-  it('includes every blog post from the content source with a lastModified date', () => {
+  it('includes every indexable blog post from the content source with a lastModified date', () => {
     const posts = publishedBlogPosts()
     assert.ok(posts.length > 0, 'expected blog MDX files on disk')
-    assert.ok(
-      posts.some((post) => post.slug === 'v1-1-9-sdk-security'),
-      'expected the existing blog post slug',
-    )
 
-    for (const post of posts) {
+    const indexable = posts.filter((post) => !isBlogPostNoindex(post.slug))
+    for (const post of indexable) {
       const entry = entries.find(
         (item) => item.url === `${MARKETING_ORIGIN}/blog/${post.slug}`,
       )
@@ -108,6 +106,22 @@ describe('marketing sitemap', () => {
       assert.ok(entry.lastModified instanceof Date)
       assert.equal(Number.isNaN(entry.lastModified.getTime()), false)
     }
+  })
+
+  it('omits noindex blog posts using the same helper as robots meta', () => {
+    assert.equal(isBlogPostNoindex('v1-1-9-sdk-security'), true)
+    assert.equal(isBlogPostNoindex('a-future-indexable-post'), false)
+    assert.equal(
+      urls.includes(`${MARKETING_ORIGIN}/blog/v1-1-9-sdk-security`),
+      false,
+    )
+
+    const pageSource = fs.readFileSync(
+      path.join(process.cwd(), 'app/blog/[slug]/page.tsx'),
+      'utf8',
+    )
+    assert.match(pageSource, /isBlogPostNoindex/)
+    assert.doesNotMatch(pageSource, /slug === ['"]v1-1-9-sdk-security['"]/)
   })
 
   it('reads lastModified from frontmatter dates without an MDX parser', () => {

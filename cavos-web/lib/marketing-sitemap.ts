@@ -4,6 +4,14 @@ import { COMPETITORS } from './compare-data'
 
 export const MARKETING_ORIGIN = 'https://cavos.xyz'
 
+/**
+ * Blog posts that emit robots noindex. The sitemap skips the same slugs so
+ * Search Console does not see a listed URL that the page refuses to index.
+ */
+export function isBlogPostNoindex(slug: string): boolean {
+  return slug === 'v1-1-9-sdk-security'
+}
+
 export type SitemapChangeFrequency = 'weekly' | 'monthly' | 'yearly'
 
 export type SitemapEntry = {
@@ -115,9 +123,11 @@ export function getMarketingSitemapEntries(): SitemapEntry[] {
       page(`/compare/${competitor.slug}`, 'monthly', 0.8),
     )
 
-    const blogPages = publishedBlogPosts().map((post) =>
-      page(`/blog/${post.slug}`, 'monthly', 0.6, post.lastModified),
-    )
+    const blogPages = publishedBlogPosts()
+      .filter((post) => !isBlogPostNoindex(post.slug))
+      .map((post) =>
+        page(`/blog/${post.slug}`, 'monthly', 0.6, post.lastModified),
+      )
 
     return [...staticPages, ...comparePages, ...blogPages]
   } catch {
