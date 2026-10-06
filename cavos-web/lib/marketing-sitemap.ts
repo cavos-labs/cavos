@@ -4,8 +4,13 @@ import { COMPETITORS } from './compare-data'
 
 export const MARKETING_ORIGIN = 'https://cavos.xyz'
 
-/** Legacy architecture post: public URL exists but is noindex. */
-const EXCLUDED_BLOG_SLUGS = new Set(['v1-1-9-sdk-security'])
+/**
+ * Blog posts that emit robots noindex. The sitemap skips the same slugs so
+ * Search Console does not see a listed URL that the page refuses to index.
+ */
+export function isBlogPostNoindex(slug: string): boolean {
+  return slug === 'v1-1-9-sdk-security'
+}
 
 export type SitemapChangeFrequency = 'weekly' | 'monthly' | 'yearly'
 
@@ -25,29 +30,74 @@ function page(
   pathname: string,
   changeFrequency: SitemapChangeFrequency,
   priority: number,
+  lastModified?: Date,
 ): SitemapEntry {
-  const url = pathname.startsWith('http')
-    ? pathname
-    : pathname === '/'
-      ? MARKETING_ORIGIN
-      : `${MARKETING_ORIGIN}${pathname}`
-  return { url, changeFrequency, priority }
+  const url =
+    pathname === '/' ? MARKETING_ORIGIN : `${MARKETING_ORIGIN}${pathname}`
+  return lastModified
+    ? { url, changeFrequency, priority, lastModified }
+    : { url, changeFrequency, priority }
 }
 
-function publishedBlogSlugs(): string[] {
+/**
+ * YAML frontmatter without gray-matter / MDX. Importing the blog MDX loader
+ * into the sitemap metadata route previously made /sitemap.xml a runtime
+ * function that could 500 for crawlers.
+ */
+export function parseBlogFrontmatter(raw: string): Record<string, string> {
+  const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---/)
+  if (!match) return {}
+
+  const fields: Record<string, string> = {}
+  for (const line of match[1].split(/\r?\n/)) {
+    const kv = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/)
+    if (!kv) continue
+    fields[kv[1]] = kv[2].replace(/^['"]|['"]$/g, '').trim()
+  }
+  return fields
+}
+
+function parseFrontmatterDate(value: string | undefined): Date | undefined {
+  if (!value) return undefined
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed
+}
+
+export type PublishedBlogPost = {
+  slug: string
+  lastModified: Date
+}
+
+export function publishedBlogPosts(): PublishedBlogPost[] {
   const dir = BLOG_DIR_CANDIDATES.find((candidate) => fs.existsSync(candidate))
   if (!dir) return []
 
   return fs
     .readdirSync(dir)
     .filter((filename) => filename.endsWith('.mdx'))
-    .map((filename) => filename.replace(/\.mdx$/, ''))
-    .filter((slug) => !EXCLUDED_BLOG_SLUGS.has(slug))
+    .map((filename) => {
+      const filePath = path.join(dir, filename)
+      const raw = fs.readFileSync(filePath, 'utf8')
+      const frontmatter = parseBlogFrontmatter(raw)
+      const fileSlug = filename.replace(/\.mdx$/, '')
+      const lastModified =
+        parseFrontmatterDate(
+          frontmatter.updated ??
+            frontmatter.lastModified ??
+            frontmatter.dateModified ??
+            frontmatter.date,
+        ) ?? fs.statSync(filePath).mtime
+
+      return {
+        slug: frontmatter.slug || fileSlug,
+        lastModified,
+      }
+    })
 }
 
 /**
- * Public marketing URLs on cavos.xyz (plus the docs/demo hosts already linked
- * from the site). Auth, dashboard, and noindex utility routes are omitted.
+ * Public marketing URLs on cavos.xyz. Auth, dashboard, and noindex utility
+ * routes are omitted. Off-host docs/demo URLs belong in their own sitemaps.
  */
 export function getMarketingSitemapEntries(): SitemapEntry[] {
   try {
@@ -67,17 +117,17 @@ export function getMarketingSitemapEntries(): SitemapEntry[] {
       page('/user-privacy', 'yearly', 0.2),
       page('/user-terms', 'yearly', 0.2),
       page('/terms', 'yearly', 0.2),
-      page('https://demo.cavos.xyz', 'weekly', 0.9),
-      page('https://docs.cavos.xyz', 'weekly', 0.9),
     ]
 
     const comparePages = COMPETITORS.map((competitor) =>
       page(`/compare/${competitor.slug}`, 'monthly', 0.8),
     )
 
-    const blogPages = publishedBlogSlugs().map((slug) =>
-      page(`/blog/${slug}`, 'monthly', 0.6),
-    )
+    const blogPages = publishedBlogPosts()
+      .filter((post) => !isBlogPostNoindex(post.slug))
+      .map((post) =>
+        page(`/blog/${post.slug}`, 'monthly', 0.6, post.lastModified),
+      )
 
     return [...staticPages, ...comparePages, ...blogPages]
   } catch {

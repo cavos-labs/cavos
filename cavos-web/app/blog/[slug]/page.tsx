@@ -5,7 +5,8 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { getAllPosts, getPostBySlug, formatDate, CATEGORY_COLORS, PostCategory } from '@/lib/blog';
 import { Metadata } from 'next';
-import { marketingPageMetadata } from '@/lib/marketing-seo';
+import { blogPostJsonLd, marketingPageMetadata } from '@/lib/marketing-seo';
+import { isBlogPostNoindex } from '@/lib/marketing-sitemap';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -19,15 +20,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = getPostBySlug(slug);
   if (!post) return {};
-  const isLegacyArchitecture = slug === 'v1-1-9-sdk-security';
-
   return marketingPageMetadata({
     title: `${post.meta.title} — Blog`,
     description: post.meta.excerpt,
     path: `/blog/${slug}`,
     type: 'article',
     publishedTime: post.meta.date,
-    robots: isLegacyArchitecture
+    robots: isBlogPostNoindex(slug)
       ? { index: false, follow: true }
       : { index: true, follow: true },
   });
@@ -38,8 +37,26 @@ export default async function BlogPostPage({ params }: Props) {
   const post = getPostBySlug(slug);
   if (!post) notFound();
 
+  const jsonLd = blogPostJsonLd({
+    title: post.meta.title,
+    description: post.meta.excerpt,
+    path: `/blog/${slug}`,
+    datePublished: post.meta.date,
+    dateModified: post.meta.date,
+    crumbs: [
+      { name: 'Home', path: '/' },
+      { name: 'Blog', path: '/blog' },
+      { name: post.meta.title, path: `/blog/${slug}` },
+    ],
+  });
+
   return (
     <div className="min-h-screen font-[family-name:var(--font-geist)] bg-white">
+      <script
+        id="blog-post-json-ld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Header />
 
       {/* Dark hero */}

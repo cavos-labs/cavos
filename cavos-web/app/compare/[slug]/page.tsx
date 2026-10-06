@@ -1,11 +1,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import Script from 'next/script'
 import { notFound } from 'next/navigation'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { COMPETITORS, getCompetitor } from '@/lib/compare-data'
-import { marketingPageMetadata } from '@/lib/marketing-seo'
+import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
 
 export function generateStaticParams() {
     return COMPETITORS.map((c) => ({ slug: c.slug }))
@@ -53,12 +52,12 @@ export default async function ComparisonPage({
                 isPartOf: { '@id': 'https://cavos.xyz/#website' },
             },
             {
-                '@type': 'BreadcrumbList',
+                ...breadcrumbListJsonLd([
+                    { name: 'Home', path: '/' },
+                    { name: 'Compare', path: '/compare' },
+                    { name: `Cavos vs ${competitor.name}`, path: `/compare/${competitor.slug}` },
+                ]),
                 '@id': `${url}#breadcrumb`,
-                itemListElement: [
-                    { '@type': 'ListItem', position: 1, name: 'Compare', item: 'https://cavos.xyz/compare' },
-                    { '@type': 'ListItem', position: 2, name: `Cavos vs ${competitor.name}`, item: url },
-                ],
             },
             {
                 '@type': 'FAQPage',
@@ -74,7 +73,7 @@ export default async function ComparisonPage({
 
     return (
         <main className="min-h-screen bg-white font-sans text-ink antialiased">
-            <Script
+            <script
                 id={`compare-${competitor.slug}-json-ld`}
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
