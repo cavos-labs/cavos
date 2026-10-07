@@ -8,10 +8,8 @@ import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
-import {
-    FRAMEZZ_APP_URL,
-    FRAMEZZ_GALLERIES_URL,
-} from '@/lib/marketing-seo'
+const FRAMEZZ_APP_URL = 'https://app.studioframezz.com/en'
+const FRAMEZZ_GALLERIES_URL = 'https://galleries.studioframezz.com/'
 
 gsap.registerPlugin(useGSAP)
 
