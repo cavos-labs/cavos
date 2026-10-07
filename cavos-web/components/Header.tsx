@@ -35,6 +35,7 @@ const RESOURCES_MENU: Omit<MegaMenuProps, 'onOpenChange'> = {
     left: {
         heading: 'Contact',
         items: [
+            { title: 'What is an embedded wallet', description: 'Custody models, key management, and how to choose an SDK.', href: '/embedded-wallet' },
             { title: 'Contact sales', description: 'Talk to us about your integration and pricing.', href: '/contact-sales' },
             { title: 'Custody', description: 'What it costs when your app can move a user’s crypto.', href: '/custody' },
             { title: 'Email us', description: 'adrianvrj@cavos.xyz', href: 'mailto:adrianvrj@cavos.xyz' },
@@ -249,6 +250,7 @@ export function Header() {
                                     </Link>
                                 ))}
                                 <Link href="/pricing" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Pricing</Link>
+                                <Link href="/embedded-wallet" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">What is an embedded wallet</Link>
                                 <Link href="/custody" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Custody</Link>
                                 <a href="https://docs.cavos.xyz" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Docs</a>
                                 <a href="https://demo.cavos.xyz" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Playground</a>
@@ -258,6 +260,7 @@ export function Header() {
                             <>
                                 <Link href="/login" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black hover:bg-black/5 rounded-xl transition-colors">Log in</Link>
                                 <Link href="/pricing" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Pricing</Link>
+                                <Link href="/embedded-wallet" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">What is an embedded wallet</Link>
                                 <Link href="/custody" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Custody</Link>
                                 <a href="https://docs.cavos.xyz" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Docs</a>
                                 <a href="https://demo.cavos.xyz" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="block px-4 py-3.5 text-lg font-medium text-black/50 hover:bg-black/5 rounded-xl transition-colors">Playground</a>

@@ -102,6 +102,13 @@ export default function EmbeddedStellarWalletPage() {
                         primitives provide the hardware-backed isolation — the SDK does not enforce
                         non-extractability on Node or other server runtimes.
                     </p>
+                    <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted">
+                        New to the category?{' '}
+                        <Link href="/embedded-wallet" className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
+                            What is an embedded wallet
+                        </Link>
+                        {' '}covers custody models, key management, and how this Stellar adapter fits.
+                    </p>
                 </header>
 
                 <section className="mt-16">

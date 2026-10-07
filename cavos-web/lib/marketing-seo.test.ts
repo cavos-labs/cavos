@@ -4,9 +4,17 @@ import {
   ORGANIZATION_ID,
   blogPostJsonLd,
   breadcrumbListJsonLd,
+  guidePageJsonLd,
   homepageJsonLd,
   marketingPageMetadata,
 } from './marketing-seo'
+import {
+  EMBEDDED_WALLET_DESCRIPTION,
+  EMBEDDED_WALLET_FAQ,
+  EMBEDDED_WALLET_PATH,
+  EMBEDDED_WALLET_PUBLISHED,
+  EMBEDDED_WALLET_TITLE,
+} from './embedded-wallet-guide'
 
 describe('marketing SEO', () => {
   it('builds complete Open Graph and Twitter tags with a canonical URL', () => {
@@ -124,5 +132,52 @@ describe('marketing SEO', () => {
     ])
     assert.equal(chain.itemListElement[1].item, 'https://cavos.xyz/embedded-stellar-wallet')
     JSON.parse(JSON.stringify({ '@context': 'https://schema.org', ...chain }))
+  })
+
+  it('keeps the embedded-wallet guide title and description inside search limits', () => {
+    assert.ok(EMBEDDED_WALLET_TITLE.length > 0)
+    assert.ok(EMBEDDED_WALLET_TITLE.length <= 60)
+    assert.ok(EMBEDDED_WALLET_DESCRIPTION.length > 0)
+    assert.ok(EMBEDDED_WALLET_DESCRIPTION.length <= 155)
+    assert.equal(EMBEDDED_WALLET_PATH, '/embedded-wallet')
+    assert.ok(EMBEDDED_WALLET_FAQ.length >= 4 && EMBEDDED_WALLET_FAQ.length <= 6)
+  })
+
+  it('builds Article, BreadcrumbList, and FAQPage JSON-LD for the guide', () => {
+    const data = guidePageJsonLd({
+      title: EMBEDDED_WALLET_TITLE,
+      description: EMBEDDED_WALLET_DESCRIPTION,
+      path: EMBEDDED_WALLET_PATH,
+      datePublished: EMBEDDED_WALLET_PUBLISHED,
+      crumbs: [
+        { name: 'Home', path: '/' },
+        { name: 'What is an embedded wallet', path: EMBEDDED_WALLET_PATH },
+      ],
+      faq: [...EMBEDDED_WALLET_FAQ],
+    })
+
+    const json = JSON.stringify(data)
+    JSON.parse(json)
+
+    const article = data['@graph'][0]
+    assert.equal(article['@type'], 'Article')
+    assert.equal(article.headline, EMBEDDED_WALLET_TITLE)
+    assert.equal(article.description, EMBEDDED_WALLET_DESCRIPTION)
+    assert.equal(article.url, 'https://cavos.xyz/embedded-wallet')
+    assert.equal(article.mainEntityOfPage['@id'], 'https://cavos.xyz/embedded-wallet')
+    assert.equal(article.publisher['@id'], ORGANIZATION_ID)
+    assert.equal(article.author['@id'], ORGANIZATION_ID)
+    assert.equal(article.datePublished, EMBEDDED_WALLET_PUBLISHED)
+
+    const crumbs = data['@graph'][1]
+    assert.equal(crumbs['@type'], 'BreadcrumbList')
+    assert.equal(crumbs['@id'], 'https://cavos.xyz/embedded-wallet#breadcrumb')
+    assert.equal(crumbs.itemListElement[1].item, 'https://cavos.xyz/embedded-wallet')
+
+    const faq = data['@graph'][2]
+    assert.equal(faq['@type'], 'FAQPage')
+    assert.equal(faq.mainEntity.length, EMBEDDED_WALLET_FAQ.length)
+    assert.equal(faq.mainEntity[0].name, EMBEDDED_WALLET_FAQ[0].question)
+    assert.equal(faq.mainEntity[0].acceptedAnswer.text, EMBEDDED_WALLET_FAQ[0].answer)
   })
 })

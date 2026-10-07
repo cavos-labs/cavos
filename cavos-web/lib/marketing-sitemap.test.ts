@@ -53,6 +53,7 @@ describe('marketing sitemap', () => {
   it('includes the public marketing pages that exist in the app router', () => {
     const requiredPaths = [
       '/',
+      '/embedded-wallet',
       '/embedded-stellar-wallet',
       '/embedded-solana-wallet',
       '/embedded-starknet-wallet',
