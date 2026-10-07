@@ -20,10 +20,10 @@ export const FRAMEZZ_GALLERIES_URL = 'https://galleries.studioframezz.com/'
 export const ABOUT_PATH = '/about'
 export const ABOUT_TITLE = 'Software & SaaS Company'
 export const ABOUT_DESCRIPTION =
-  'Cavos, LLC is a software and SaaS company. The Cavos wallet is the main product. Framezz and Framezz Galleries come from the same factory.'
+  'Cavos, LLC is a software and SaaS company. The Cavos wallet is the main product. It also builds Framezz event photography software and Framezz Galleries.'
 
 export const ORGANIZATION_DESCRIPTION =
-  'Cavos, LLC is a software and SaaS company. The Cavos wallet is the main product. Framezz and Framezz Galleries come from the same factory.'
+  'Cavos, LLC is a software and SaaS company. The Cavos wallet is the main product. It also builds Framezz event photography software and Framezz Galleries.'
 
 export function pageUrl(path: string): string {
   if (path === '/') return MARKETING_ORIGIN
