@@ -21,7 +21,7 @@ export function Footer() {
                 </div>
 
                 <div className="space-y-5">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/50">Product</p>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/50">Resources</p>
                     <ul className="space-y-3 text-sm font-medium text-black/40">
                         <li><Link href="/embedded-wallet" className="hover:text-black transition-colors">What is an embedded wallet</Link></li>
                         <li><Link href="/compare" className="hover:text-black transition-colors">Compare providers</Link></li>

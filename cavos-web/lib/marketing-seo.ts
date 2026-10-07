@@ -17,7 +17,7 @@ export const FRAMEZZ_URL = 'https://studioframezz.com/en'
 export const FRAMEZZ_GALLERIES_URL = 'https://galleries.studioframezz.com/'
 
 export const ABOUT_PATH = '/about'
-export const ABOUT_TITLE = 'About Cavos'
+export const ABOUT_TITLE = 'Software & SaaS Company'
 export const ABOUT_DESCRIPTION =
   'Cavos is a software and SaaS company. It builds an embedded wallet SDK, Framezz event photography, and Framezz Galleries.'
 

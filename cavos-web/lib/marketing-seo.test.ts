@@ -156,8 +156,9 @@ describe('marketing SEO', () => {
       path: ABOUT_PATH,
     })
     assert.equal(meta.title, ABOUT_TITLE)
+    assert.equal(ABOUT_TITLE.includes('| Cavos'), false)
     assert.equal(meta.alternates?.canonical, 'https://cavos.xyz/about')
-    assert.equal(meta.openGraph?.title, 'About Cavos | Cavos')
+    assert.equal(meta.openGraph?.title, 'Software & SaaS Company | Cavos')
     assert.ok(ABOUT_TITLE.length > 0 && ABOUT_TITLE.length <= 60)
     assert.ok(ABOUT_DESCRIPTION.length > 0 && ABOUT_DESCRIPTION.length <= 155)
 
