@@ -62,6 +62,7 @@ describe('marketing sitemap', () => {
       '/pricing',
       '/stats',
       '/contact-sales',
+      '/about',
       '/blog',
       '/privacy',
       '/dpa',

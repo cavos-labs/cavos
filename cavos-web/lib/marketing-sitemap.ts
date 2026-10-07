@@ -112,6 +112,7 @@ export function getMarketingSitemapEntries(): SitemapEntry[] {
       page('/pricing', 'monthly', 0.9),
       page('/stats', 'weekly', 0.9),
       page('/contact-sales', 'monthly', 0.7),
+      page('/about', 'monthly', 0.8),
       page('/blog', 'weekly', 0.7),
       page('/privacy', 'yearly', 0.2),
       page('/dpa', 'yearly', 0.2),
