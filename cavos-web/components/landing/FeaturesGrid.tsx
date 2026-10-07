@@ -5,6 +5,8 @@
    Dependency-free server component.
    ────────────────────────────────────────────────────────────── */
 
+import Link from 'next/link'
+
 /* ── Tiny inline glyphs ──────────────────────────────────────── */
 function GoogleG() {
     return (
@@ -225,6 +227,16 @@ export function FeaturesGrid() {
                         behind one product integration.
                     </span>
                 </h2>
+                <p className="mt-5 max-w-[46ch] text-[15px] leading-relaxed text-muted">
+                    New to the category?{' '}
+                    <Link
+                        href="/embedded-wallet"
+                        className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                    >
+                        What is an embedded wallet
+                    </Link>
+                    {' '}covers custody models, key management, and how to choose an SDK.
+                </p>
             </div>
 
             {/* Framed bento — hairline gridlines, no gaps */}

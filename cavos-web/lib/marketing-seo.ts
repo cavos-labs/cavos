@@ -72,6 +72,68 @@ export function blogPostJsonLd(input: {
   }
 }
 
+export type GuideFaqItem = {
+  question: string
+  answer: string
+}
+
+/** Article + BreadcrumbList + FAQPage graph for a long-form marketing guide. */
+export function guidePageJsonLd(input: {
+  title: string
+  description: string
+  path: string
+  datePublished: string
+  dateModified?: string
+  crumbs: BreadcrumbCrumb[]
+  faq: GuideFaqItem[]
+}) {
+  const url = pageUrl(input.path)
+  const datePublished = input.datePublished
+  const dateModified = input.dateModified ?? input.datePublished
+
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Article',
+        '@id': `${url}#article`,
+        headline: input.title,
+        description: input.description,
+        datePublished,
+        dateModified,
+        author: {
+          '@type': 'Organization',
+          '@id': ORGANIZATION_ID,
+          name: 'Cavos',
+        },
+        image: OG_IMAGE.url,
+        url,
+        mainEntityOfPage: {
+          '@type': 'WebPage',
+          '@id': url,
+        },
+        publisher: { '@id': ORGANIZATION_ID },
+      },
+      {
+        ...breadcrumbListJsonLd(input.crumbs),
+        '@id': `${url}#breadcrumb`,
+      },
+      {
+        '@type': 'FAQPage',
+        '@id': `${url}#faq`,
+        mainEntity: input.faq.map((item) => ({
+          '@type': 'Question',
+          name: item.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: item.answer,
+          },
+        })),
+      },
+    ],
+  }
+}
+
 function socialTitle(title: string): string {
   return title.includes('| Cavos') ? title : `${title} | Cavos`
 }

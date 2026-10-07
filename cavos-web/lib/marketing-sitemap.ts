@@ -103,6 +103,7 @@ export function getMarketingSitemapEntries(): SitemapEntry[] {
   try {
     const staticPages: SitemapEntry[] = [
       page('/', 'weekly', 1),
+      page('/embedded-wallet', 'monthly', 0.9),
       page('/embedded-stellar-wallet', 'monthly', 0.9),
       page('/embedded-solana-wallet', 'monthly', 0.9),
       page('/embedded-starknet-wallet', 'monthly', 0.9),
