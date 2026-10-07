@@ -14,15 +14,16 @@ export const FRAMEZZ_ID = `${MARKETING_ORIGIN}/#framezz`
 export const FRAMEZZ_GALLERIES_ID = `${MARKETING_ORIGIN}/#framezz-galleries`
 
 export const FRAMEZZ_URL = 'https://studioframezz.com/en'
+export const FRAMEZZ_APP_URL = 'https://app.studioframezz.com/en'
 export const FRAMEZZ_GALLERIES_URL = 'https://galleries.studioframezz.com/'
 
 export const ABOUT_PATH = '/about'
 export const ABOUT_TITLE = 'Software & SaaS Company'
 export const ABOUT_DESCRIPTION =
-  'Cavos, LLC is a software and SaaS company. It builds an embedded wallet SDK, Framezz event photography software, and Framezz Galleries.'
+  'Cavos, LLC is a software and SaaS company. The Cavos wallet is the main product. Framezz and Framezz Galleries come from the same factory.'
 
 export const ORGANIZATION_DESCRIPTION =
-  'Cavos, LLC is a software and SaaS company. It builds an embedded wallet SDK, Framezz event photography software, and Framezz Galleries.'
+  'Cavos, LLC is a software and SaaS company. The Cavos wallet is the main product. Framezz and Framezz Galleries come from the same factory.'
 
 export function pageUrl(path: string): string {
   if (path === '/') return MARKETING_ORIGIN
