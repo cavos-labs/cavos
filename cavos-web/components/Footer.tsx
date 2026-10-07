@@ -21,20 +21,20 @@ export function Footer() {
                 </div>
 
                 <div className="space-y-5">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/50">Products</p>
+                    <ul className="space-y-3 text-sm font-medium text-black/40">
+                        <li><Link href="/" className="hover:text-black transition-colors">Embedded wallet</Link></li>
+                        <li><Link href="https://studioframezz.com/en" target="_blank" rel="noopener" className="hover:text-black transition-colors">Framezz</Link></li>
+                        <li><Link href="https://galleries.studioframezz.com/" target="_blank" rel="noopener" className="hover:text-black transition-colors">Framezz Galleries</Link></li>
+                    </ul>
+                </div>
+
+                <div className="space-y-5">
                     <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/50">Resources</p>
                     <ul className="space-y-3 text-sm font-medium text-black/40">
                         <li><Link href="/embedded-wallet" className="hover:text-black transition-colors">What is an embedded wallet</Link></li>
                         <li><Link href="/compare" className="hover:text-black transition-colors">Compare providers</Link></li>
                         <li><Link href="https://docs.cavos.xyz" target="_blank" className="hover:text-black transition-colors">Documentation</Link></li>
-                    </ul>
-                </div>
-
-                <div className="space-y-5">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/50">Products</p>
-                    <ul className="space-y-3 text-sm font-medium text-black/40">
-                        <li><Link href="/" className="hover:text-black transition-colors">Cavos wallet</Link></li>
-                        <li><Link href="https://studioframezz.com/en" target="_blank" rel="noopener" className="hover:text-black transition-colors">Framezz</Link></li>
-                        <li><Link href="https://galleries.studioframezz.com/" target="_blank" rel="noopener" className="hover:text-black transition-colors">Framezz Galleries</Link></li>
                     </ul>
                 </div>
 

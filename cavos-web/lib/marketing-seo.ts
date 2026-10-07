@@ -19,10 +19,10 @@ export const FRAMEZZ_GALLERIES_URL = 'https://galleries.studioframezz.com/'
 export const ABOUT_PATH = '/about'
 export const ABOUT_TITLE = 'Software & SaaS Company'
 export const ABOUT_DESCRIPTION =
-  'Cavos is a software and SaaS company. It builds an embedded wallet SDK, Framezz event photography, and Framezz Galleries.'
+  'Cavos, LLC is a software and SaaS company. It builds an embedded wallet SDK, Framezz event photography software, and Framezz Galleries.'
 
 export const ORGANIZATION_DESCRIPTION =
-  'Cavos is a software and SaaS company. It builds an embedded wallet SDK, Framezz event photography, and Framezz Galleries.'
+  'Cavos, LLC is a software and SaaS company. It builds an embedded wallet SDK, Framezz event photography software, and Framezz Galleries.'
 
 export function pageUrl(path: string): string {
   if (path === '/') return MARKETING_ORIGIN
@@ -298,7 +298,7 @@ export function cavosProductApplicationsJsonLd() {
       name: 'Framezz',
       url: FRAMEZZ_URL,
       description:
-        'Event photography. Attendees upload a selfie and get every photo they appear in, then download in high resolution.',
+        'Event photography software. A runner uploads a selfie to get every photo they appear in, then downloads the high-resolution originals.',
       author: { '@id': ORGANIZATION_ID },
       publisher: { '@id': ORGANIZATION_ID },
     },
@@ -308,7 +308,7 @@ export function cavosProductApplicationsJsonLd() {
       name: 'Framezz Galleries',
       url: FRAMEZZ_GALLERIES_URL,
       description:
-        'Marketplace and galleries for photographers covering races, tournaments, and graduations in Costa Rica. Photographers sell event photos under their own brand; clients find themselves via selfie or bib number and pay by card. Free to start.',
+        'Marketplace for event photographers of races, tournaments, and graduations. They sell photos under their own brand. Clients find themselves with a selfie or a bib number. Free plan available.',
       author: { '@id': ORGANIZATION_ID },
       publisher: { '@id': ORGANIZATION_ID },
     },
