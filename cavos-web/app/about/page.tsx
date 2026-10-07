@@ -41,8 +41,8 @@ export default function AboutPage() {
                         Cavos is a software and SaaS company.
                     </h1>
                     <p className="mt-7 max-w-[65ch] text-lg leading-relaxed text-muted">
-                        The Cavos wallet is the main product. We also build Framezz and
-                        Framezz Galleries.
+                        The Cavos wallet is the main product. We also build other software
+                        used by runners and photographers after an event.
                     </p>
                 </header>
 
@@ -79,7 +79,7 @@ export default function AboutPage() {
                 <section className="mt-20 border-t border-line pt-14 md:mt-24 md:pt-16">
                     <div className="grid gap-6 md:grid-cols-2 md:gap-12">
                         <h2 className="max-w-[18ch] text-[clamp(1.75rem,2.8vw,2.5rem)] font-medium leading-[1.12] tracking-[-0.03em] text-ink">
-                            We also build software for events.
+                            Framezz and Framezz Galleries.
                         </h2>
                         <p className="max-w-[44ch] self-end text-[15px] leading-relaxed text-muted">
                             Framezz is the product runners use to find their photos. Framezz
