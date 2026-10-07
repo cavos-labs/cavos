@@ -1,12 +1,23 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  ABOUT_DESCRIPTION,
+  ABOUT_PATH,
+  ABOUT_TITLE,
+  FRAMEZZ_GALLERIES_ID,
+  FRAMEZZ_GALLERIES_URL,
+  FRAMEZZ_ID,
+  FRAMEZZ_URL,
+  ORGANIZATION_DESCRIPTION,
   ORGANIZATION_ID,
+  SOFTWARE_ID,
+  aboutPageJsonLd,
   blogPostJsonLd,
   breadcrumbListJsonLd,
   guidePageJsonLd,
   homepageJsonLd,
   marketingPageMetadata,
+  organizationJsonLd,
 } from './marketing-seo'
 import {
   EMBEDDED_WALLET_DESCRIPTION,
@@ -55,7 +66,10 @@ describe('marketing SEO', () => {
   })
 
   it('exposes Organization and SoftwareApplication JSON-LD without ratings or traffic figures', () => {
-    const json = JSON.stringify(homepageJsonLd())
+    const data = homepageJsonLd()
+    const json = JSON.stringify(data)
+    JSON.parse(json)
+
     assert.match(json, /"@type":"Organization"/)
     assert.match(json, /"@type":"SoftwareApplication"/)
     assert.match(json, /Cavos, LLC/)
@@ -64,6 +78,106 @@ describe('marketing SEO', () => {
     assert.match(json, /Stellar/)
     assert.doesNotMatch(json, /aggregateRating/)
     assert.doesNotMatch(json, /userCount|ratingValue|downloadCount/i)
+
+    const org = data['@graph'][0]
+    assert.equal(org['@type'], 'Organization')
+    assert.equal(org['@id'], ORGANIZATION_ID)
+    assert.equal(org.description, ORGANIZATION_DESCRIPTION)
+    assert.match(org.description, /software and SaaS/i)
+    assert.equal(org.brand.length, 3)
+    assert.deepEqual(
+      org.brand.map((brand: { name: string; url: string }) => ({
+        type: 'Brand',
+        name: brand.name,
+        url: brand.url,
+      })),
+      [
+        { type: 'Brand', name: 'Cavos', url: 'https://cavos.xyz' },
+        { type: 'Brand', name: 'Framezz', url: FRAMEZZ_URL },
+        { type: 'Brand', name: 'Framezz Galleries', url: FRAMEZZ_GALLERIES_URL },
+      ],
+    )
+    assert.deepEqual(org.owns, [
+      { '@id': SOFTWARE_ID },
+      { '@id': FRAMEZZ_ID },
+      { '@id': FRAMEZZ_GALLERIES_ID },
+    ])
+    const ids = new Set(
+      data['@graph']
+        .map((node: { '@id'?: string }) => node['@id'])
+        .filter(Boolean),
+    )
+    for (const owned of org.owns) {
+      assert.equal(ids.has(owned['@id']), true, `owns target missing: ${owned['@id']}`)
+    }
+
+    const wallet = data['@graph'][1]
+    assert.equal(wallet['@type'], 'SoftwareApplication')
+    assert.equal(wallet['@id'], SOFTWARE_ID)
+    assert.equal(wallet.name, 'Cavos')
+    assert.equal(wallet.alternateName, '@cavos/kit')
+    assert.equal(wallet.url, 'https://cavos.xyz')
+    assert.equal(wallet.operatingSystem, 'Web, iOS, Android')
+    assert.equal(wallet.applicationCategory, 'DeveloperApplication')
+    assert.equal(wallet.applicationSubCategory, 'Embedded multichain wallet infrastructure')
+    assert.equal(wallet.offers.price, '0')
+    assert.equal(wallet.author['@id'], ORGANIZATION_ID)
+
+    const framezz = data['@graph'].find((node: { '@id'?: string }) => node['@id'] === FRAMEZZ_ID)
+    const galleries = data['@graph'].find(
+      (node: { '@id'?: string }) => node['@id'] === FRAMEZZ_GALLERIES_ID,
+    )
+    assert.ok(framezz)
+    assert.ok(galleries)
+    assert.deepEqual(framezz['@type'], ['SoftwareApplication', 'Product'])
+    assert.equal(framezz.name, 'Framezz')
+    assert.equal(framezz.url, FRAMEZZ_URL)
+    assert.deepEqual(galleries['@type'], ['SoftwareApplication', 'Product'])
+    assert.equal(galleries.name, 'Framezz Galleries')
+    assert.equal(galleries.url, FRAMEZZ_GALLERIES_URL)
+  })
+
+  it('keeps layout and homepage Organization nodes on the same @id', () => {
+    const layoutOrg = organizationJsonLd('customer support')
+    const homeOrg = organizationJsonLd('sales')
+    assert.equal(layoutOrg['@id'], ORGANIZATION_ID)
+    assert.equal(homeOrg['@id'], ORGANIZATION_ID)
+    assert.equal(layoutOrg.description, homeOrg.description)
+    assert.deepEqual(layoutOrg.brand, homeOrg.brand)
+    assert.deepEqual(layoutOrg.owns, homeOrg.owns)
+    assert.equal(layoutOrg.contactPoint.contactType, 'customer support')
+    assert.equal(homeOrg.contactPoint.contactType, 'sales')
+  })
+
+  it('builds AboutPage and BreadcrumbList JSON-LD for /about', () => {
+    const meta = marketingPageMetadata({
+      title: ABOUT_TITLE,
+      description: ABOUT_DESCRIPTION,
+      path: ABOUT_PATH,
+    })
+    assert.equal(meta.title, ABOUT_TITLE)
+    assert.equal(meta.alternates?.canonical, 'https://cavos.xyz/about')
+    assert.equal(meta.openGraph?.title, 'About Cavos | Cavos')
+    assert.ok(ABOUT_TITLE.length > 0 && ABOUT_TITLE.length <= 60)
+    assert.ok(ABOUT_DESCRIPTION.length > 0 && ABOUT_DESCRIPTION.length <= 155)
+
+    const data = aboutPageJsonLd()
+    const json = JSON.stringify(data)
+    JSON.parse(json)
+
+    const page = data['@graph'][0]
+    assert.equal(page['@type'], 'AboutPage')
+    assert.equal(page.url, 'https://cavos.xyz/about')
+    assert.equal(page.name, ABOUT_TITLE)
+    assert.equal(page.description, ABOUT_DESCRIPTION)
+    assert.equal(page.about['@id'], ORGANIZATION_ID)
+    assert.equal(page.mainEntity['@id'], ORGANIZATION_ID)
+
+    const crumbs = data['@graph'][1]
+    assert.equal(crumbs['@type'], 'BreadcrumbList')
+    assert.equal(crumbs.itemListElement[0].item, 'https://cavos.xyz')
+    assert.equal(crumbs.itemListElement[1].name, 'About')
+    assert.equal(crumbs.itemListElement[1].item, 'https://cavos.xyz/about')
   })
 
   it('builds BlogPosting JSON-LD that references the organization node by @id', () => {

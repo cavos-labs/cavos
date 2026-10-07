@@ -4,7 +4,7 @@ import Image from 'next/image'
 export function Footer() {
     return (
         <footer className="bg-surface border-t border-line py-20 px-8 md:px-12">
-            <div className="max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 md:gap-20">
+            <div className="max-w-[1400px] mx-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-12 md:gap-20">
                 <div className="col-span-2 space-y-6">
                     <Link href="/" className="inline-block hover:opacity-75 transition-opacity">
                         <Image
@@ -30,8 +30,18 @@ export function Footer() {
                 </div>
 
                 <div className="space-y-5">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/50">Products</p>
+                    <ul className="space-y-3 text-sm font-medium text-black/40">
+                        <li><Link href="/" className="hover:text-black transition-colors">Cavos wallet</Link></li>
+                        <li><Link href="https://studioframezz.com/en" target="_blank" rel="noopener" className="hover:text-black transition-colors">Framezz</Link></li>
+                        <li><Link href="https://galleries.studioframezz.com/" target="_blank" rel="noopener" className="hover:text-black transition-colors">Framezz Galleries</Link></li>
+                    </ul>
+                </div>
+
+                <div className="space-y-5">
                     <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/50">Company</p>
                     <ul className="space-y-3 text-sm font-medium text-black/40">
+                        <li><Link href="/about" className="hover:text-black transition-colors">About</Link></li>
                         <li><Link href="/stats" className="hover:text-black transition-colors">Stats</Link></li>
                         <li><Link href="/custody" className="hover:text-black transition-colors">Custody</Link></li>
                         <li><Link href="mailto:hello@cavos.xyz" className="hover:text-black transition-colors">Contact</Link></li>

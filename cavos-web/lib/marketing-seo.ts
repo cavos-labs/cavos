@@ -9,6 +9,20 @@ export const OG_IMAGE = {
 } as const
 
 export const ORGANIZATION_ID = `${MARKETING_ORIGIN}/#organization`
+export const SOFTWARE_ID = `${MARKETING_ORIGIN}/#software`
+export const FRAMEZZ_ID = `${MARKETING_ORIGIN}/#framezz`
+export const FRAMEZZ_GALLERIES_ID = `${MARKETING_ORIGIN}/#framezz-galleries`
+
+export const FRAMEZZ_URL = 'https://studioframezz.com/en'
+export const FRAMEZZ_GALLERIES_URL = 'https://galleries.studioframezz.com/'
+
+export const ABOUT_PATH = '/about'
+export const ABOUT_TITLE = 'About Cavos'
+export const ABOUT_DESCRIPTION =
+  'Cavos is a software and SaaS company. It builds an embedded wallet SDK, Framezz event photography, and Framezz Galleries.'
+
+export const ORGANIZATION_DESCRIPTION =
+  'Cavos is a software and SaaS company. It builds an embedded wallet SDK, Framezz event photography, and Framezz Galleries.'
 
 export function pageUrl(path: string): string {
   if (path === '/') return MARKETING_ORIGIN
@@ -193,66 +207,149 @@ export function marketingPageMetadata(input: {
   }
 }
 
-/** Homepage JSON-LD: Organization + SoftwareApplication. No ratings or traffic figures. */
-export function homepageJsonLd() {
-  const organizationId = `${MARKETING_ORIGIN}/#organization`
+export function organizationJsonLd(
+  contactType: 'sales' | 'customer support' = 'sales',
+) {
+  return {
+    '@type': 'Organization',
+    '@id': ORGANIZATION_ID,
+    name: 'Cavos',
+    legalName: 'Cavos, LLC',
+    alternateName: ['Cavos Labs'],
+    url: MARKETING_ORIGIN,
+    logo: {
+      '@type': 'ImageObject',
+      url: `${MARKETING_ORIGIN}/CavosLogo.png`,
+    },
+    description: ORGANIZATION_DESCRIPTION,
+    brand: [
+      {
+        '@type': 'Brand',
+        name: 'Cavos',
+        url: MARKETING_ORIGIN,
+      },
+      {
+        '@type': 'Brand',
+        name: 'Framezz',
+        url: FRAMEZZ_URL,
+      },
+      {
+        '@type': 'Brand',
+        name: 'Framezz Galleries',
+        url: FRAMEZZ_GALLERIES_URL,
+      },
+    ],
+    owns: [
+      { '@id': SOFTWARE_ID },
+      { '@id': FRAMEZZ_ID },
+      { '@id': FRAMEZZ_GALLERIES_ID },
+    ],
+    sameAs: [
+      'https://twitter.com/cavosxyz',
+      'https://github.com/cavos-labs',
+    ],
+    contactPoint: {
+      '@type': 'ContactPoint',
+      email: 'hello@cavos.xyz',
+      contactType,
+    },
+  }
+}
+
+export function walletSoftwareApplicationJsonLd() {
+  return {
+    '@type': 'SoftwareApplication',
+    '@id': SOFTWARE_ID,
+    name: 'Cavos',
+    alternateName: '@cavos/kit',
+    url: MARKETING_ORIGIN,
+    operatingSystem: 'Web, iOS, Android',
+    applicationCategory: 'DeveloperApplication',
+    applicationSubCategory: 'Embedded multichain wallet infrastructure',
+    description:
+      "A device-native embedded wallet SDK. Applications resolve a self-custodial account from a stable user identity. Signing keys are created and used on the user's device — Cavos cannot see them, sign with them, or move funds. Adapters ship today for Starknet, Solana, and Stellar.",
+    offers: {
+      '@type': 'Offer',
+      url: `${MARKETING_ORIGIN}/pricing`,
+      price: '0',
+      priceCurrency: 'USD',
+      description: 'Free tier covers the first 1,000 wallet creates.',
+    },
+    author: { '@id': ORGANIZATION_ID },
+    publisher: { '@id': ORGANIZATION_ID },
+    featureList: [
+      'Device-native P-256 signers',
+      'Self-custodial accounts — no provider-held signing key',
+      'Registry-first address resolution',
+      'Chain-specific gas sponsorship',
+      'Starknet, Solana, and Stellar adapters',
+      'React and React Native SDKs',
+      'Non-custodial recovery codes and optional multi-device approval',
+    ],
+    screenshot: OG_IMAGE.url,
+  }
+}
+
+export function cavosProductApplicationsJsonLd() {
+  return [
+    {
+      '@type': ['SoftwareApplication', 'Product'],
+      '@id': FRAMEZZ_ID,
+      name: 'Framezz',
+      url: FRAMEZZ_URL,
+      description:
+        'Event photography. Attendees upload a selfie and get every photo they appear in, then download in high resolution.',
+      author: { '@id': ORGANIZATION_ID },
+      publisher: { '@id': ORGANIZATION_ID },
+    },
+    {
+      '@type': ['SoftwareApplication', 'Product'],
+      '@id': FRAMEZZ_GALLERIES_ID,
+      name: 'Framezz Galleries',
+      url: FRAMEZZ_GALLERIES_URL,
+      description:
+        'Marketplace and galleries for photographers covering races, tournaments, and graduations in Costa Rica. Photographers sell event photos under their own brand; clients find themselves via selfie or bib number and pay by card. Free to start.',
+      author: { '@id': ORGANIZATION_ID },
+      publisher: { '@id': ORGANIZATION_ID },
+    },
+  ]
+}
+
+export function aboutPageJsonLd() {
+  const url = pageUrl(ABOUT_PATH)
   return {
     '@context': 'https://schema.org',
     '@graph': [
       {
-        '@type': 'Organization',
-        '@id': organizationId,
-        name: 'Cavos',
-        legalName: 'Cavos, LLC',
-        alternateName: ['Cavos Labs'],
-        url: MARKETING_ORIGIN,
-        logo: {
-          '@type': 'ImageObject',
-          url: `${MARKETING_ORIGIN}/CavosLogo.png`,
-        },
-        description:
-          'Cavos builds device-native, self-custodial embedded wallet infrastructure. Starknet, Solana, and Stellar adapters ship today.',
-        sameAs: [
-          'https://twitter.com/cavosxyz',
-          'https://github.com/cavos-labs',
-        ],
-        contactPoint: {
-          '@type': 'ContactPoint',
-          email: 'hello@cavos.xyz',
-          contactType: 'sales',
-        },
+        '@type': 'AboutPage',
+        '@id': `${url}#webpage`,
+        url,
+        name: ABOUT_TITLE,
+        description: ABOUT_DESCRIPTION,
+        isPartOf: { '@id': `${MARKETING_ORIGIN}/#website` },
+        about: { '@id': ORGANIZATION_ID },
+        mainEntity: { '@id': ORGANIZATION_ID },
+        breadcrumb: { '@id': `${url}#breadcrumb` },
       },
       {
-        '@type': 'SoftwareApplication',
-        '@id': `${MARKETING_ORIGIN}/#software`,
-        name: 'Cavos',
-        alternateName: '@cavos/kit',
-        url: MARKETING_ORIGIN,
-        operatingSystem: 'Web, iOS, Android',
-        applicationCategory: 'DeveloperApplication',
-        applicationSubCategory: 'Embedded multichain wallet infrastructure',
-        description:
-          "A device-native embedded wallet SDK. Applications resolve a self-custodial account from a stable user identity. Signing keys are created and used on the user's device — Cavos cannot see them, sign with them, or move funds. Adapters ship today for Starknet, Solana, and Stellar.",
-        offers: {
-          '@type': 'Offer',
-          url: `${MARKETING_ORIGIN}/pricing`,
-          price: '0',
-          priceCurrency: 'USD',
-          description: 'Free tier covers the first 1,000 wallet creates.',
-        },
-        author: { '@id': organizationId },
-        publisher: { '@id': organizationId },
-        featureList: [
-          'Device-native P-256 signers',
-          'Self-custodial accounts — no provider-held signing key',
-          'Registry-first address resolution',
-          'Chain-specific gas sponsorship',
-          'Starknet, Solana, and Stellar adapters',
-          'React and React Native SDKs',
-          'Non-custodial recovery codes and optional multi-device approval',
-        ],
-        screenshot: OG_IMAGE.url,
+        ...breadcrumbListJsonLd([
+          { name: 'Home', path: '/' },
+          { name: 'About', path: ABOUT_PATH },
+        ]),
+        '@id': `${url}#breadcrumb`,
       },
+    ],
+  }
+}
+
+/** Homepage JSON-LD: Organization + SoftwareApplication. No ratings or traffic figures. */
+export function homepageJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      organizationJsonLd('sales'),
+      walletSoftwareApplicationJsonLd(),
+      ...cavosProductApplicationsJsonLd(),
     ],
   }
 }

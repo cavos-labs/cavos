@@ -2,6 +2,11 @@ import type { Metadata, Viewport } from "next";
 import { romagothicbold, geist, geistMono } from "@/lib/fonts";
 import "./globals.css";
 import { AnalyticsConsent } from "@/components/AnalyticsConsent";
+import {
+  cavosProductApplicationsJsonLd,
+  organizationJsonLd,
+  walletSoftwareApplicationJsonLd,
+} from "@/lib/marketing-seo";
 
 export const viewport: Viewport = {
   themeColor: "#402AFF",
@@ -89,28 +94,7 @@ export const metadata: Metadata = {
 const globalJsonLd = {
   "@context": "https://schema.org",
   "@graph": [
-    {
-      "@type": "Organization",
-      "@id": "https://cavos.xyz/#organization",
-      "name": "Cavos",
-      "legalName": "Cavos, LLC",
-      "alternateName": ["Cavos Labs"],
-      "url": "https://cavos.xyz",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "https://cavos.xyz/CavosLogo.png"
-      },
-      "description": "Cavos builds device-native, self-custodial embedded wallet infrastructure. Starknet, Solana, and Stellar adapters ship today.",
-      "sameAs": [
-        "https://twitter.com/cavosxyz",
-        "https://github.com/cavos-labs"
-      ],
-      "contactPoint": {
-        "@type": "ContactPoint",
-        "email": "hello@cavos.xyz",
-        "contactType": "customer support"
-      }
-    },
+    organizationJsonLd("customer support"),
     {
       "@type": "WebSite",
       "@id": "https://cavos.xyz/#website",
@@ -118,7 +102,9 @@ const globalJsonLd = {
       "name": "Cavos",
       "description": "Embedded wallet infrastructure for Starknet, Solana, and Stellar — device-native and verifiable.",
       "publisher": { "@id": "https://cavos.xyz/#organization" }
-    }
+    },
+    walletSoftwareApplicationJsonLd(),
+    ...cavosProductApplicationsJsonLd(),
   ]
 }
 
