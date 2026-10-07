@@ -59,8 +59,8 @@ export default function AboutPage() {
 
             <article className="mx-auto max-w-6xl px-6 pb-24 pt-32 md:px-8">
                 <header className="max-w-3xl">
-                    <h1 className="text-balance text-[clamp(2.5rem,6vw,4.5rem)] font-medium leading-[0.98] tracking-[-0.045em]">
-                        Cavos puts a self-custodial wallet on the user&apos;s device.
+                    <h1 className="max-w-[18ch] text-balance text-[clamp(2.5rem,6vw,4.5rem)] font-medium leading-[0.98] tracking-[-0.045em]">
+                        Cavos puts a wallet on the user&apos;s device.
                     </h1>
                     <p className="mt-7 max-w-[65ch] text-lg leading-relaxed text-muted">
                         We built Cavos so a sign-in is enough to pay and sign inside your
@@ -144,9 +144,6 @@ export default function AboutPage() {
                         Cavos, LLC is the software and SaaS company behind the Cavos wallet,
                         Framezz, and Framezz Galleries.
                     </p>
-                    <div className="mt-8">
-                        <Ctas />
-                    </div>
                 </section>
             </article>
 
