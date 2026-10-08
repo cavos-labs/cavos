@@ -85,7 +85,7 @@ export default async function StatsPage() {
                     <h2 id="headline-heading" className="sr-only">
                         Headline figures
                     </h2>
-                    <MetricGrid columns={4}>
+                    <MetricGrid columns={3}>
                         <Metric
                             label="Sponsored operations"
                             value={formatCount(totals.sponsoredOperations)}
@@ -100,11 +100,6 @@ export default async function StatsPage() {
                             label="Apps built on Cavos"
                             value={formatCount(totals.apps)}
                             note={`Across ${formatCount(totals.organizations)} teams`}
-                        />
-                        <Metric
-                            label="Chains integrated"
-                            value="3"
-                            note="Starknet, Solana, and Stellar"
                         />
                     </MetricGrid>
                 </section>
