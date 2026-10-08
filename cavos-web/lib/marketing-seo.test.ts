@@ -8,9 +8,12 @@ import {
   FRAMEZZ_GALLERIES_URL,
   FRAMEZZ_ID,
   FRAMEZZ_URL,
+  HOME_DESCRIPTION,
+  HOME_TITLE,
   ORGANIZATION_DESCRIPTION,
   ORGANIZATION_ID,
   SOFTWARE_ID,
+  WEBSITE_ID,
   aboutPageJsonLd,
   blogPostJsonLd,
   breadcrumbListJsonLd,
@@ -45,15 +48,28 @@ describe('marketing SEO', () => {
     assert.equal(meta.twitter?.title, 'Embedded Wallet Pricing | Cavos')
   })
 
-  it('uses an absolute homepage title so the layout template is not skipped', () => {
+  it('uses an absolute homepage title so the layout template does not double Cavos', () => {
     const home = marketingPageMetadata({
-      title: 'Multichain Embedded Wallet Infrastructure',
-      description: 'Device-native embedded wallets.',
+      title: HOME_TITLE,
+      description: HOME_DESCRIPTION,
       path: '/',
     })
-    assert.deepEqual(home.title, {
-      absolute: 'Multichain Embedded Wallet Infrastructure | Cavos',
-    })
+    assert.deepEqual(home.title, { absolute: HOME_TITLE })
+    assert.equal(home.openGraph?.title, HOME_TITLE)
+    assert.equal(home.twitter?.title, HOME_TITLE)
+    assert.equal(home.description, HOME_DESCRIPTION)
+    assert.equal(home.openGraph?.description, HOME_DESCRIPTION)
+    assert.equal(home.twitter?.description, HOME_DESCRIPTION)
+    assert.equal(HOME_TITLE.includes('| Cavos'), false)
+  })
+
+  it('keeps a single Cavos in the homepage title within search limits', () => {
+    assert.ok(HOME_TITLE.length > 0 && HOME_TITLE.length <= 60)
+    assert.ok(HOME_DESCRIPTION.length > 0 && HOME_DESCRIPTION.length <= 155)
+    assert.match(HOME_TITLE, /^Cavos/)
+    assert.match(HOME_DESCRIPTION, /^Cavos/)
+    assert.equal((HOME_TITLE.match(/Cavos/g) ?? []).length, 1)
+    assert.doesNotMatch(HOME_DESCRIPTION, /—/)
   })
 
   it('does not invent a homepage canonical for other routes', () => {
@@ -71,6 +87,7 @@ describe('marketing SEO', () => {
     JSON.parse(json)
 
     assert.match(json, /"@type":"Organization"/)
+    assert.match(json, /"@type":"WebSite"/)
     assert.match(json, /"@type":"SoftwareApplication"/)
     assert.match(json, /Cavos, LLC/)
     assert.match(json, /Starknet/)
@@ -82,6 +99,15 @@ describe('marketing SEO', () => {
     const org = data['@graph'][0]
     assert.equal(org['@type'], 'Organization')
     assert.equal(org['@id'], ORGANIZATION_ID)
+
+    const website = data['@graph'].find(
+      (node: { '@type'?: string }) => node['@type'] === 'WebSite',
+    )
+    assert.ok(website)
+    assert.equal(website['@id'], WEBSITE_ID)
+    assert.equal(website.name, 'Cavos')
+    assert.equal(website.url, 'https://cavos.xyz')
+    assert.equal(website.publisher['@id'], ORGANIZATION_ID)
     assert.equal(org.description, ORGANIZATION_DESCRIPTION)
     assert.match(org.description, /software and SaaS/i)
     assert.equal(org.brand.length, 3)
@@ -111,7 +137,10 @@ describe('marketing SEO', () => {
       assert.equal(ids.has(owned['@id']), true, `owns target missing: ${owned['@id']}`)
     }
 
-    const wallet = data['@graph'][1]
+    const wallet = data['@graph'].find(
+      (node: { '@id'?: string }) => node['@id'] === SOFTWARE_ID,
+    )
+    assert.ok(wallet)
     assert.equal(wallet['@type'], 'SoftwareApplication')
     assert.equal(wallet['@id'], SOFTWARE_ID)
     assert.equal(wallet.name, 'Cavos')

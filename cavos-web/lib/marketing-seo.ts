@@ -10,8 +10,13 @@ export const OG_IMAGE = {
 
 export const ORGANIZATION_ID = `${MARKETING_ORIGIN}/#organization`
 export const SOFTWARE_ID = `${MARKETING_ORIGIN}/#software`
+export const WEBSITE_ID = `${MARKETING_ORIGIN}/#website`
 export const FRAMEZZ_ID = `${MARKETING_ORIGIN}/#framezz`
 export const FRAMEZZ_GALLERIES_ID = `${MARKETING_ORIGIN}/#framezz-galleries`
+
+export const HOME_TITLE = 'Cavos: Embedded Wallet SDK for Multichain Apps'
+export const HOME_DESCRIPTION =
+  'Cavos is an embedded, self-custodial wallet SDK with social login and no seed phrases. Live on Starknet, Solana, and Stellar.'
 
 export const FRAMEZZ_URL = 'https://studioframezz.com/en'
 export const FRAMEZZ_APP_URL = 'https://app.studioframezz.com/en'
@@ -156,7 +161,8 @@ function socialTitle(title: string): string {
 /**
  * Canonical URL plus complete Open Graph / Twitter tags for a public
  * cavos.xyz marketing page. Document titles omit the brand suffix so the
- * root layout template (`%s | Cavos`) is applied once.
+ * root layout template (`%s | Cavos`) is applied once. The homepage passes a
+ * brand-first title through `title.absolute` so the template cannot double it.
  */
 export function marketingPageMetadata(input: {
   title: string
@@ -168,7 +174,8 @@ export function marketingPageMetadata(input: {
 }): Metadata {
   const url = pageUrl(input.path)
   const type = input.type ?? 'website'
-  const title = socialTitle(input.title)
+  const isHome = input.path === '/'
+  const title = isHome ? input.title : socialTitle(input.title)
   const image = {
     url: OG_IMAGE.url,
     width: OG_IMAGE.width,
@@ -176,10 +183,7 @@ export function marketingPageMetadata(input: {
     alt: OG_IMAGE.alt,
   }
 
-  const documentTitle =
-    input.path === '/'
-      ? { absolute: socialTitle(input.title) }
-      : input.title
+  const documentTitle = isHome ? { absolute: input.title } : input.title
 
   return {
     title: documentTitle,
@@ -327,7 +331,7 @@ export function aboutPageJsonLd() {
         url,
         name: ABOUT_TITLE,
         description: ABOUT_DESCRIPTION,
-        isPartOf: { '@id': `${MARKETING_ORIGIN}/#website` },
+        isPartOf: { '@id': WEBSITE_ID },
         about: { '@id': ORGANIZATION_ID },
         mainEntity: { '@id': ORGANIZATION_ID },
         breadcrumb: { '@id': `${url}#breadcrumb` },
@@ -343,12 +347,23 @@ export function aboutPageJsonLd() {
   }
 }
 
-/** Homepage JSON-LD: Organization + SoftwareApplication. No ratings or traffic figures. */
+export function websiteJsonLd() {
+  return {
+    '@type': 'WebSite',
+    '@id': WEBSITE_ID,
+    name: 'Cavos',
+    url: MARKETING_ORIGIN,
+    publisher: { '@id': ORGANIZATION_ID },
+  }
+}
+
+/** Homepage JSON-LD: Organization + WebSite + SoftwareApplication. No ratings or traffic figures. */
 export function homepageJsonLd() {
   return {
     '@context': 'https://schema.org',
     '@graph': [
       organizationJsonLd('sales'),
+      websiteJsonLd(),
       walletSoftwareApplicationJsonLd(),
       ...cavosProductApplicationsJsonLd(),
     ],

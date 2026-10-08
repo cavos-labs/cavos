@@ -7,12 +7,16 @@ import { HeroOrb } from '@/components/HeroOrb'
 import { Footer } from '@/components/Footer'
 import { LandingMotion } from '@/components/LandingMotion'
 import Script from 'next/script'
-import { homepageJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
+import {
+    HOME_DESCRIPTION,
+    HOME_TITLE,
+    homepageJsonLd,
+    marketingPageMetadata,
+} from '@/lib/marketing-seo'
 
 export const metadata = marketingPageMetadata({
-    title: 'Multichain Embedded Wallet Infrastructure',
-    description:
-        'Turn every sign-in into a self-custodial wallet. One SDK for device-native onboarding and sponsored transactions on Starknet, Solana, and Stellar.',
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
     path: '/',
 })
 
