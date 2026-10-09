@@ -2,14 +2,20 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
-import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
+import {
+    STARKNET_WALLET_DESCRIPTION,
+    STARKNET_WALLET_PATH,
+    STARKNET_WALLET_TITLE,
+    breadcrumbListJsonLd,
+    marketingPageMetadata,
+} from '@/lib/marketing-seo'
 
 const PAGE_URL = 'https://cavos.xyz/embedded-starknet-wallet'
 
 export const metadata: Metadata = marketingPageMetadata({
-    title: 'Embedded Starknet Wallet SDK',
-    description: 'A device-native, self-custodial embedded wallet for Starknet. The signing key is created and used on the user\'s device — Cavos cannot see it, sign with it, or move funds. Cairo DeviceAccount with on-chain P-256 verification.',
-    path: '/embedded-starknet-wallet',
+    title: STARKNET_WALLET_TITLE,
+    description: STARKNET_WALLET_DESCRIPTION,
+    path: STARKNET_WALLET_PATH,
 })
 
 const CODE_EXAMPLE = `import { Cavos } from "@cavos/kit";

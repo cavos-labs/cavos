@@ -10,6 +10,7 @@ import {
   parseBlogFrontmatter,
   publishedBlogPosts,
 } from './marketing-sitemap'
+import { AUTH_NOINDEX_PATHS } from './marketing-seo'
 
 const APP_DIR = path.join(process.cwd(), 'app')
 const SITEMAP_SOURCE = fs.readFileSync(
@@ -145,13 +146,15 @@ Hello
     assert.equal(post.lastModified.toISOString().startsWith('2025-03-30'), true)
   })
 
+  it('keeps the existing 22 indexable marketing URLs', () => {
+    assert.equal(entries.length, 22)
+  })
+
   it('omits auth, dashboard, and noindex utility routes', () => {
     const omitted = [
-      '/login',
-      '/register',
+      ...AUTH_NOINDEX_PATHS,
       '/dashboard',
-      '/forgot-password',
-      '/verification-error',
+      '/apps',
     ]
     for (const routePath of omitted) {
       assert.equal(
@@ -160,5 +163,6 @@ Hello
         `sitemap should not include ${routePath}`,
       )
     }
+    assert.doesNotMatch(SITEMAP_SOURCE, /\/login|\/register|\/dashboard|\/forgot-password/)
   })
 })

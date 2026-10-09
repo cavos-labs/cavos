@@ -2,7 +2,7 @@ import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { HeroOrb } from '@/components/HeroOrb'
 import { ContactSalesForm } from '@/components/ContactSalesForm'
-import { marketingPageMetadata } from '@/lib/marketing-seo'
+import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
 
 export const metadata = marketingPageMetadata({
     title: 'Contact Multichain Wallet Infrastructure Sales',
@@ -12,8 +12,21 @@ export const metadata = marketingPageMetadata({
 })
 
 export default function ContactSalesPage() {
+    const breadcrumbs = {
+        '@context': 'https://schema.org',
+        ...breadcrumbListJsonLd([
+            { name: 'Home', path: '/' },
+            { name: 'Contact Sales', path: '/contact-sales' },
+        ]),
+    }
+
     return (
         <main className="relative isolate min-h-screen w-full overflow-x-hidden bg-white text-ink font-sans antialiased">
+            <script
+                id="contact-sales-breadcrumbs-json-ld"
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
+            />
             <Header />
 
             {/* Signature indigo orb — pinned to the viewport so it stays behind the

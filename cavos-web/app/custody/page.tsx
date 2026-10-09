@@ -1,9 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import Script from 'next/script'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
-import { marketingPageMetadata } from '@/lib/marketing-seo'
+import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
 
 export const metadata: Metadata = marketingPageMetadata({
     title: 'When an Embedded Wallet Makes Your App a Custodian',
@@ -208,6 +207,13 @@ export default function CustodyPage() {
                 mainEntityOfPage: 'https://cavos.xyz/custody',
             },
             {
+                ...breadcrumbListJsonLd([
+                    { name: 'Home', path: '/' },
+                    { name: 'Custody', path: '/custody' },
+                ]),
+                '@id': 'https://cavos.xyz/custody#breadcrumb',
+            },
+            {
                 '@type': 'FAQPage',
                 '@id': 'https://cavos.xyz/custody#faq',
                 mainEntity: FAQ.map((item) => ({
@@ -221,7 +227,7 @@ export default function CustodyPage() {
 
     return (
         <main className="min-h-screen bg-white font-sans text-ink antialiased">
-            <Script
+            <script
                 id="custody-json-ld"
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

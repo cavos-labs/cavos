@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
-import { marketingPageMetadata } from '@/lib/marketing-seo'
+import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
 
 export const metadata: Metadata = marketingPageMetadata({
     title: 'Data Processing Agreement',
@@ -62,8 +62,21 @@ function Table({ rows }: { rows: [string, string, string, string][] }) {
 }
 
 export default function DpaPage() {
+    const breadcrumbs = {
+        '@context': 'https://schema.org',
+        ...breadcrumbListJsonLd([
+            { name: 'Home', path: '/' },
+            { name: 'Data Processing Agreement', path: '/dpa' },
+        ]),
+    }
+
     return (
         <main className="min-h-screen bg-white">
+            <script
+                id="dpa-breadcrumbs-json-ld"
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
+            />
             <Header />
 
             <div className="max-w-3xl mx-auto px-6 md:px-8 pt-32 pb-24">

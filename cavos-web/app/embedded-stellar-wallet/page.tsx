@@ -2,14 +2,20 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
-import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
+import {
+    STELLAR_WALLET_DESCRIPTION,
+    STELLAR_WALLET_PATH,
+    STELLAR_WALLET_TITLE,
+    breadcrumbListJsonLd,
+    marketingPageMetadata,
+} from '@/lib/marketing-seo'
 
 const PAGE_URL = 'https://cavos.xyz/embedded-stellar-wallet'
 
 export const metadata: Metadata = marketingPageMetadata({
-    title: 'Embedded Stellar Wallet SDK',
-    description: 'A device-native, self-custodial embedded wallet for Stellar. The signing key is created and used on the user\'s device — Cavos cannot see it, sign with it, or move funds. Classic G… account with per-device Horizon ed25519 signers.',
-    path: '/embedded-stellar-wallet',
+    title: STELLAR_WALLET_TITLE,
+    description: STELLAR_WALLET_DESCRIPTION,
+    path: STELLAR_WALLET_PATH,
 })
 
 const CODE_EXAMPLE = `import { Cavos } from "@cavos/kit";

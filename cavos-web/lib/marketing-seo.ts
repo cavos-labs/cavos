@@ -30,6 +30,41 @@ export const ABOUT_DESCRIPTION =
 export const ORGANIZATION_DESCRIPTION =
   'Cavos, LLC is a software and SaaS company. The Cavos wallet is the main product. It also builds Framezz event photography software and Framezz Galleries.'
 
+export const STARKNET_WALLET_PATH = '/embedded-starknet-wallet'
+export const STARKNET_WALLET_TITLE = 'Embedded Starknet Wallet SDK'
+export const STARKNET_WALLET_DESCRIPTION =
+  'Starknet embedded wallet SDK: device-native and self-custodial. Signing key created and used on-device. Cairo DeviceAccount with on-chain P-256 verification.'
+
+export const SOLANA_WALLET_PATH = '/embedded-solana-wallet'
+export const SOLANA_WALLET_TITLE = 'Embedded Solana Wallet SDK'
+export const SOLANA_WALLET_DESCRIPTION =
+  'Solana embedded wallet SDK: device-native and self-custodial. Signing key created and used on-device. Device-account PDA with native secp256r1 precompile.'
+
+export const STELLAR_WALLET_PATH = '/embedded-stellar-wallet'
+export const STELLAR_WALLET_TITLE = 'Embedded Stellar Wallet SDK'
+export const STELLAR_WALLET_DESCRIPTION =
+  'Stellar embedded wallet SDK: device-native and self-custodial. Signing key created and used on-device. Classic G… account with Horizon ed25519 signers.'
+
+/** Auth, dashboard, and utility pages that must not appear in search results. */
+export const NOINDEX_FOLLOW = { index: false, follow: true } as const
+
+export const AUTH_NOINDEX_PATHS = [
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/update-password',
+  '/verification-error',
+  '/verification-success',
+  '/setup-passkey',
+] as const
+
+export function noindexFollowMetadata(title: string): Metadata {
+  return {
+    title,
+    robots: NOINDEX_FOLLOW,
+  }
+}
+
 export function pageUrl(path: string): string {
   if (path === '/') return MARKETING_ORIGIN
   return `${MARKETING_ORIGIN}${path}`

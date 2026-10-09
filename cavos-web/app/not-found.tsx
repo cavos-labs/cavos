@@ -1,11 +1,9 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Wordmark } from '@/components/Wordmark'
+import { noindexFollowMetadata } from '@/lib/marketing-seo'
 
-export const metadata: Metadata = {
-    title: 'Page not found',
-    robots: { index: false, follow: true },
-}
+export const metadata: Metadata = noindexFollowMetadata('Page not found')
 
 export default function NotFound() {
     return (
