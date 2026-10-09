@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
-import { marketingPageMetadata } from '@/lib/marketing-seo'
+import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
 
 export const metadata: Metadata = marketingPageMetadata({
     title: 'End-User Terms of Service',
@@ -24,8 +24,21 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export default function UserTermsPage() {
+    const breadcrumbs = {
+        '@context': 'https://schema.org',
+        ...breadcrumbListJsonLd([
+            { name: 'Home', path: '/' },
+            { name: 'End-User Terms of Service', path: '/user-terms' },
+        ]),
+    }
+
     return (
         <main className="min-h-screen bg-white">
+            <script
+                id="user-terms-breadcrumbs-json-ld"
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
+            />
             <Header />
 
             <div className="max-w-3xl mx-auto px-6 md:px-8 pt-32 pb-24">

@@ -2,14 +2,20 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
-import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
+import {
+    SOLANA_WALLET_DESCRIPTION,
+    SOLANA_WALLET_PATH,
+    SOLANA_WALLET_TITLE,
+    breadcrumbListJsonLd,
+    marketingPageMetadata,
+} from '@/lib/marketing-seo'
 
 const PAGE_URL = 'https://cavos.xyz/embedded-solana-wallet'
 
 export const metadata: Metadata = marketingPageMetadata({
-    title: 'Embedded Solana Wallet SDK',
-    description: 'A device-native, self-custodial embedded wallet for Solana. The signing key is created and used on the user\'s device — Cavos cannot see it, sign with it, or move funds. Device-account PDA with native secp256r1 precompile.',
-    path: '/embedded-solana-wallet',
+    title: SOLANA_WALLET_TITLE,
+    description: SOLANA_WALLET_DESCRIPTION,
+    path: SOLANA_WALLET_PATH,
 })
 
 const CODE_EXAMPLE = `import { Cavos } from "@cavos/kit";

@@ -1,8 +1,7 @@
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
-import Script from 'next/script'
 import Link from 'next/link'
-import { marketingPageMetadata } from '@/lib/marketing-seo'
+import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
 
 /* ── Bespoke feature icons (layered, multi-tone Cavos indigo) ───────────────
    Hand-built SVGs so the set feels tailored, not a generic icon-pack pull. */
@@ -180,6 +179,13 @@ export default function PricingPage() {
                 })),
             },
             {
+                ...breadcrumbListJsonLd([
+                    { name: 'Home', path: '/' },
+                    { name: 'Pricing', path: '/pricing' },
+                ]),
+                '@id': 'https://cavos.xyz/pricing#breadcrumb',
+            },
+            {
                 "@type": "FAQPage",
                 "mainEntity": FAQ.map((f) => ({
                     "@type": "Question",
@@ -192,7 +198,7 @@ export default function PricingPage() {
 
     return (
         <main className="bg-white min-h-screen text-ink font-sans antialiased">
-            <Script
+            <script
                 id="pricing-json-ld"
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

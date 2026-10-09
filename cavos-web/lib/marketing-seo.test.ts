@@ -1,18 +1,31 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
 import {
   ABOUT_DESCRIPTION,
   ABOUT_PATH,
   ABOUT_TITLE,
+  AUTH_NOINDEX_PATHS,
   FRAMEZZ_GALLERIES_ID,
   FRAMEZZ_GALLERIES_URL,
   FRAMEZZ_ID,
   FRAMEZZ_URL,
   HOME_DESCRIPTION,
   HOME_TITLE,
+  NOINDEX_FOLLOW,
   ORGANIZATION_DESCRIPTION,
   ORGANIZATION_ID,
   SOFTWARE_ID,
+  SOLANA_WALLET_DESCRIPTION,
+  SOLANA_WALLET_PATH,
+  SOLANA_WALLET_TITLE,
+  STARKNET_WALLET_DESCRIPTION,
+  STARKNET_WALLET_PATH,
+  STARKNET_WALLET_TITLE,
+  STELLAR_WALLET_DESCRIPTION,
+  STELLAR_WALLET_PATH,
+  STELLAR_WALLET_TITLE,
   WEBSITE_ID,
   aboutPageJsonLd,
   blogPostJsonLd,
@@ -20,6 +33,7 @@ import {
   guidePageJsonLd,
   homepageJsonLd,
   marketingPageMetadata,
+  noindexFollowMetadata,
   organizationJsonLd,
 } from './marketing-seo'
 import {
@@ -323,5 +337,129 @@ describe('marketing SEO', () => {
     assert.equal(faq.mainEntity.length, EMBEDDED_WALLET_FAQ.length)
     assert.equal(faq.mainEntity[0].name, EMBEDDED_WALLET_FAQ[0].question)
     assert.equal(faq.mainEntity[0].acceptedAnswer.text, EMBEDDED_WALLET_FAQ[0].answer)
+  })
+
+  it('keeps chain page titles unchanged and descriptions inside snippet bounds', () => {
+    const chains = [
+      {
+        title: STARKNET_WALLET_TITLE,
+        description: STARKNET_WALLET_DESCRIPTION,
+        path: STARKNET_WALLET_PATH,
+        name: 'Starknet',
+        expectedTitle: 'Embedded Starknet Wallet SDK',
+      },
+      {
+        title: SOLANA_WALLET_TITLE,
+        description: SOLANA_WALLET_DESCRIPTION,
+        path: SOLANA_WALLET_PATH,
+        name: 'Solana',
+        expectedTitle: 'Embedded Solana Wallet SDK',
+      },
+      {
+        title: STELLAR_WALLET_TITLE,
+        description: STELLAR_WALLET_DESCRIPTION,
+        path: STELLAR_WALLET_PATH,
+        name: 'Stellar',
+        expectedTitle: 'Embedded Stellar Wallet SDK',
+      },
+    ]
+
+    for (const chain of chains) {
+      assert.equal(chain.title, chain.expectedTitle)
+      assert.ok(
+        chain.description.length >= 140 && chain.description.length <= 158,
+        `${chain.name} description length ${chain.description.length} is outside 140-158`,
+      )
+      assert.match(chain.description, new RegExp(`^${chain.name}`))
+      assert.doesNotMatch(chain.description, /—/)
+      assert.doesNotMatch(
+        chain.description,
+        /seamless|powerful|unlock|revolutionary|next-gen|effortless|best-in-class/i,
+      )
+
+      const meta = marketingPageMetadata({
+        title: chain.title,
+        description: chain.description,
+        path: chain.path,
+      })
+      assert.equal(meta.title, chain.title)
+      assert.equal(meta.description, chain.description)
+      assert.equal(meta.openGraph?.description, chain.description)
+      assert.equal(meta.twitter?.description, chain.description)
+    }
+  })
+
+  it('marks auth, dashboard, and not-found routes as noindex, follow', () => {
+    const meta = noindexFollowMetadata('Register')
+    assert.deepEqual(meta.robots, NOINDEX_FOLLOW)
+    assert.equal(meta.robots?.index, false)
+    assert.equal(meta.robots?.follow, true)
+    assert.equal(meta.title, 'Register')
+
+    const layoutFiles = [
+      'app/register/layout.tsx',
+      'app/login/layout.tsx',
+      'app/forgot-password/layout.tsx',
+      'app/update-password/layout.tsx',
+      'app/verification-error/layout.tsx',
+      'app/verification-success/layout.tsx',
+      'app/setup-passkey/layout.tsx',
+      'app/apps/layout.tsx',
+      'app/dashboard/layout.tsx',
+      'app/not-found.tsx',
+    ]
+
+    for (const relative of layoutFiles) {
+      const source = fs.readFileSync(path.join(process.cwd(), relative), 'utf8')
+      assert.match(source, /noindexFollowMetadata/, `missing noindex helper in ${relative}`)
+      assert.doesNotMatch(source, /['"]use client['"]/)
+    }
+
+    assert.deepEqual([...AUTH_NOINDEX_PATHS], [
+      '/login',
+      '/register',
+      '/forgot-password',
+      '/update-password',
+      '/verification-error',
+      '/verification-success',
+      '/setup-passkey',
+    ])
+  })
+
+  it('emits BreadcrumbList JSON-LD on indexable marketing pages', () => {
+    const pagesWithBreadcrumbs = [
+      'app/compare/page.tsx',
+      'app/custody/page.tsx',
+      'app/pricing/page.tsx',
+      'app/stats/page.tsx',
+      'app/contact-sales/page.tsx',
+      'app/blog/page.tsx',
+      'app/privacy/page.tsx',
+      'app/dpa/page.tsx',
+      'app/user-privacy/page.tsx',
+      'app/user-terms/page.tsx',
+      'app/terms/page.tsx',
+      'app/embedded-starknet-wallet/page.tsx',
+      'app/embedded-solana-wallet/page.tsx',
+      'app/embedded-stellar-wallet/page.tsx',
+      'app/embedded-wallet/page.tsx',
+      'app/about/page.tsx',
+      'app/compare/[slug]/page.tsx',
+      'app/blog/[slug]/page.tsx',
+    ]
+
+    for (const relative of pagesWithBreadcrumbs) {
+      const source = fs.readFileSync(path.join(process.cwd(), relative), 'utf8')
+      assert.match(
+        source,
+        /breadcrumbListJsonLd|guidePageJsonLd|aboutPageJsonLd|blogPostJsonLd/,
+        `missing breadcrumb JSON-LD on ${relative}`,
+      )
+      assert.match(
+        source,
+        /application\/ld\+json/,
+        `missing JSON-LD script on ${relative}`,
+      )
+    }
   })
 })

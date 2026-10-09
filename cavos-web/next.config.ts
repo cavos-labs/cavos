@@ -76,16 +76,16 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/dashboard/:path*",
-        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+        headers: [{ key: "X-Robots-Tag", value: "noindex, follow" }],
       },
       {
         source: "/apps/:path*",
-        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+        headers: [{ key: "X-Robots-Tag", value: "noindex, follow" }],
       },
       {
         source:
-          "/:utility(login|register|forgot-password|update-password|verification-error|verification-success)",
-        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+          "/:utility(login|register|forgot-password|update-password|verification-error|verification-success|setup-passkey)",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, follow" }],
       },
       {
         source: "/auth/:path*",

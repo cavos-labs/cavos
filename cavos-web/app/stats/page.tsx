@@ -9,8 +9,7 @@ import {
 } from '@/components/stats/StatsCharts'
 import { getPublicStats } from '@/lib/stats'
 import { formatCount, formatTimestamp, UNREADABLE } from '@/lib/stats/format'
-import Script from 'next/script'
-import { marketingPageMetadata } from '@/lib/marketing-seo'
+import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
 
 export const revalidate = 3600
 
@@ -49,16 +48,28 @@ export default async function StatsPage() {
 
     const jsonLd = {
         '@context': 'https://schema.org',
-        '@type': 'WebPage',
-        name: TITLE,
-        description: DESCRIPTION,
-        url: 'https://cavos.xyz/stats',
-        isPartOf: { '@type': 'WebSite', name: 'Cavos', url: 'https://cavos.xyz' },
+        '@graph': [
+            {
+                '@type': 'WebPage',
+                name: TITLE,
+                description: DESCRIPTION,
+                url: 'https://cavos.xyz/stats',
+                isPartOf: { '@type': 'WebSite', name: 'Cavos', url: 'https://cavos.xyz' },
+                breadcrumb: { '@id': 'https://cavos.xyz/stats#breadcrumb' },
+            },
+            {
+                ...breadcrumbListJsonLd([
+                    { name: 'Home', path: '/' },
+                    { name: 'Stats', path: '/stats' },
+                ]),
+                '@id': 'https://cavos.xyz/stats#breadcrumb',
+            },
+        ],
     }
 
     return (
         <main className="min-h-screen bg-white font-sans text-ink antialiased">
-            <Script
+            <script
                 id="stats-json-ld"
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

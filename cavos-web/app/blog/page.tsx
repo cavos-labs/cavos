@@ -3,7 +3,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { getAllPosts, formatDate, CATEGORY_COLORS, PostCategory } from '@/lib/blog';
 import { Metadata } from 'next';
-import { marketingPageMetadata } from '@/lib/marketing-seo';
+import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo';
 
 export const metadata: Metadata = marketingPageMetadata({
   title: 'Changelog',
@@ -14,9 +14,21 @@ export const metadata: Metadata = marketingPageMetadata({
 
 export default function BlogIndexPage() {
   const posts = getAllPosts();
+  const breadcrumbs = {
+    '@context': 'https://schema.org',
+    ...breadcrumbListJsonLd([
+      { name: 'Home', path: '/' },
+      { name: 'Blog', path: '/blog' },
+    ]),
+  };
 
   return (
     <div className="min-h-screen font-[family-name:var(--font-geist)] bg-white">
+      <script
+        id="blog-breadcrumbs-json-ld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
+      />
       <Header />
 
       {/* Dark hero — matches landing page */}

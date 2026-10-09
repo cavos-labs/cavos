@@ -1,10 +1,9 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import Script from 'next/script'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { COMPETITORS } from '@/lib/compare-data'
-import { marketingPageMetadata } from '@/lib/marketing-seo'
+import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
 
 export const metadata: Metadata = marketingPageMetadata({
     title: 'Cavos vs Embedded Wallet Providers',
@@ -82,6 +81,14 @@ export default function ComparePage() {
                 name: 'Cavos vs Embedded Wallet Providers',
                 description: 'Comparison of multichain embedded wallet approaches across custody, signing, sponsorship, recovery, and developer experience.',
                 isPartOf: { '@id': 'https://cavos.xyz/#website' },
+                breadcrumb: { '@id': 'https://cavos.xyz/compare#breadcrumb' },
+            },
+            {
+                ...breadcrumbListJsonLd([
+                    { name: 'Home', path: '/' },
+                    { name: 'Compare', path: '/compare' },
+                ]),
+                '@id': 'https://cavos.xyz/compare#breadcrumb',
             },
             {
                 '@type': 'FAQPage',
@@ -100,7 +107,7 @@ export default function ComparePage() {
 
     return (
         <main className="min-h-screen bg-white font-sans text-ink antialiased">
-            <Script
+            <script
                 id="compare-json-ld"
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
