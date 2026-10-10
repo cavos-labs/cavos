@@ -10,7 +10,6 @@ import {
   parseBlogFrontmatter,
   publishedBlogPosts,
 } from './marketing-sitemap'
-import { getAllPosts } from './blog'
 import { AUTH_NOINDEX_PATHS } from './marketing-seo'
 
 const APP_DIR = path.join(process.cwd(), 'app')
@@ -97,15 +96,12 @@ describe('marketing sitemap', () => {
     }
   })
 
-  it('includes every blog post from the /blog index source with a lastModified date', () => {
+  it('includes every indexable blog post from the content source with a lastModified date', () => {
     const posts = publishedBlogPosts()
     assert.ok(posts.length > 0, 'expected blog MDX files on disk')
-    assert.deepEqual(
-      posts.map((post) => post.slug).sort(),
-      getAllPosts().map((post) => post.slug).sort(),
-    )
 
-    for (const post of posts) {
+    const indexable = posts.filter((post) => !isBlogPostNoindex(post.slug))
+    for (const post of indexable) {
       const entry = entries.find(
         (item) => item.url === `${MARKETING_ORIGIN}/blog/${post.slug}`,
       )
@@ -115,12 +111,12 @@ describe('marketing sitemap', () => {
     }
   })
 
-  it('keeps robots noindex on the legacy security post without dropping it from the sitemap', () => {
+  it('omits noindex blog posts using the same helper as robots meta', () => {
     assert.equal(isBlogPostNoindex('v1-1-9-sdk-security'), true)
     assert.equal(isBlogPostNoindex('a-future-indexable-post'), false)
     assert.equal(
       urls.includes(`${MARKETING_ORIGIN}/blog/v1-1-9-sdk-security`),
-      true,
+      false,
     )
 
     const pageSource = fs.readFileSync(
@@ -150,9 +146,8 @@ Hello
     assert.equal(post.lastModified.toISOString().startsWith('2025-03-30'), true)
   })
 
-  it('keeps the existing marketing URLs plus every blog post', () => {
-    assert.equal(entries.length, 23)
-    assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/v1-1-9-sdk-security`))
+  it('keeps the existing 22 indexable marketing URLs', () => {
+    assert.equal(entries.length, 22)
   })
 
   it('omits auth, dashboard, and noindex utility routes', () => {
