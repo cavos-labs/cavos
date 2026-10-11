@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
-import { validateAppRedirect, resolveAppIdForRedirect } from '@/lib/oauth/redirects';
+import { validateAppRedirect } from '@/lib/oauth/redirects';
+import { bindNonceToApp } from '@/lib/oauth/loginNonce';
 import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier';
 import { signOAuthState } from '@/lib/oauth/state';
 
 /**
- * Direct Google OAuth initiation for ZK Login
+ * Start a Google login for an app.
  *
- * This route bypasses Auth0 and uses Google OAuth directly,
- * allowing us to pass a custom nonce that will be embedded in the id_token.
- * The nonce is computed by the client as: Poseidon(eph_pubkey, max_block, randomness)
+ * Uses Google OAuth directly, so the nonce the provider signs into the
+ * id_token is ours to set. It names the app that asked and commits to a secret
+ * the client keeps; see lib/oauth/loginNonce.
  *
  * Required env vars:
  * - GOOGLE_CLIENT_ID: Google OAuth client ID
@@ -18,39 +19,32 @@ import { signOAuthState } from '@/lib/oauth/state';
 
 export async function GET(request: NextRequest) {
   try {
-    const callbackMode = request.nextUrl.searchParams.get('cavos_callback_mode') === 'code'
-      ? 'code'
-      : 'legacy';
     const nonce = request.nextUrl.searchParams.get('nonce');
     const redirectUri = request.nextUrl.searchParams.get('redirect_uri');
-    let appId = request.nextUrl.searchParams.get('app_id');
-
-    // Back-compat: older SDK clients omit app_id. Recover it from the redirect_uri.
-    if (!appId && redirectUri) appId = await resolveAppIdForRedirect(redirectUri);
-
-    // Validate required parameters
-    if (!nonce) {
+    const appIdentifier = request.nextUrl.searchParams.get('app_id');
+    if (!nonce || !redirectUri || !appIdentifier) {
       return NextResponse.json(
-        { error: 'Missing nonce parameter. Client must compute nonce = Poseidon(eph_pubkey, max_block, randomness)' },
+        { error: 'nonce, redirect_uri and app_id are required' },
         { status: 400 }
       );
     }
 
-    if (!redirectUri) {
-      return NextResponse.json(
-        { error: 'Missing redirect_uri parameter' },
-        { status: 400 }
-      );
-    }
     // Dashboard-facing IDs are environment public IDs (`cav_…`), while the
     // OAuth callback and database relations use the internal app UUID.
-    if (appId) {
-      const resolved = await resolveAppIdentifier(appId);
-      if (!resolved) throw new Error('Invalid app_id');
-      appId = resolved.appId;
+    const resolved = await resolveAppIdentifier(appIdentifier);
+    if (!resolved) throw new Error('Invalid app_id');
+    const appId = resolved.appId;
+    // A token is only ever returned to a redirect the app registered.
+    await validateAppRedirect(appId, redirectUri, true);
+
+    // The provider signs this into the id_token; see lib/oauth/loginNonce.
+    const boundNonce = bindNonceToApp(appId, nonce);
+    if (!boundNonce) {
+      return NextResponse.json(
+        { error: 'nonce must be the base64url SHA-256 of the login secret' },
+        { status: 400 }
+      );
     }
-    if (callbackMode === 'code' && !appId) throw new Error('Secure OAuth requires app_id');
-    await validateAppRedirect(appId, redirectUri, callbackMode === 'code');
 
     const googleClientId = process.env.GOOGLE_CLIENT_ID;
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
@@ -79,17 +73,15 @@ export async function GET(request: NextRequest) {
     // An ID token is sufficient. Never request a long-lived refresh token for
     // a device-login callback.
 
-    // CRITICAL: Pass nonce - this will be embedded in the id_token
-    // The ZK circuit will verify this nonce matches hash(eph_pubkey, max_block, randomness)
-    url.searchParams.set('nonce', nonce);
+    url.searchParams.set('nonce', boundNonce);
 
     // Encode final_redirect_uri and nonce in state for callback to use
     const statePayload = signOAuthState({
       csrf: csrfState,
       redirect_uri: redirectUri,
-      nonce: nonce, // Pass nonce through state for verification in callback
+      // The callback compares the token's nonce against this exact value.
+      nonce: boundNonce,
       app_id: appId,
-      callback_mode: callbackMode,
     });
     url.searchParams.set('state', statePayload);
 

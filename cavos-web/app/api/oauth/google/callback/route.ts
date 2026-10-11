@@ -27,7 +27,6 @@ interface StatePayload {
   nonce: string;
   app_id?: string | null;
   issued_at?: number;
-  callback_mode?: 'legacy' | 'code';
 }
 
 interface GoogleTokenResponse {
@@ -80,7 +79,6 @@ export async function GET(request: NextRequest) {
     }
 
     const { redirect_uri: finalRedirectUri, nonce: expectedNonce, app_id: appId } = statePayload;
-    const callbackMode = statePayload.callback_mode === 'code' ? 'code' : 'legacy';
 
     if (!finalRedirectUri) {
       return NextResponse.json(
@@ -88,8 +86,8 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
-    if (callbackMode === 'code' && !appId) throw new Error('Secure OAuth requires app_id');
-    await validateAppRedirect(appId, finalRedirectUri, callbackMode === 'code');
+    if (!appId) throw new Error('OAuth state names no app');
+    await validateAppRedirect(appId, finalRedirectUri, true);
 
     const googleClientId = process.env.GOOGLE_CLIENT_ID;
     const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -141,7 +139,9 @@ export async function GET(request: NextRequest) {
 
     const payload = JSON.parse(Buffer.from(idTokenParts[1], 'base64url').toString('utf-8'));
 
-    // Verify the nonce matches what we sent
+    // The nonce names the app this login was started for (lib/oauth/loginNonce).
+    // The state is signed and the authorization URL is not, so the token's
+    // nonce is checked against the state. This comparison must stay exact.
     if (payload.nonce !== expectedNonce) {
       console.error('[OAUTH-GOOGLE-CALLBACK] Nonce mismatch:', {
         expected: expectedNonce,
@@ -172,18 +172,12 @@ export async function GET(request: NextRequest) {
     // Store the JWT encrypted for two minutes and redirect with only a random,
     // one-time authorization code. Provider refresh/access tokens are discarded.
     const redirectUrl = new URL(finalRedirectUri);
-    if (callbackMode === 'code' && appId) {
-      const callbackCode = await issueOAuthCallbackCode({
-        appId,
-        redirectUri: finalRedirectUri,
-        payload: { jwt: tokens.id_token },
-      });
-      redirectUrl.searchParams.set('cavos_auth_code', callbackCode);
-    } else {
-      // v1 compatibility for already-deployed SDKs. No access or refresh token
-      // is included; only the JWT shape old clients already require.
-      redirectUrl.searchParams.set('auth_data', JSON.stringify({ jwt: tokens.id_token }));
-    }
+    const callbackCode = await issueOAuthCallbackCode({
+      appId,
+      redirectUri: finalRedirectUri,
+      payload: { jwt: tokens.id_token },
+    });
+    redirectUrl.searchParams.set('cavos_auth_code', callbackCode);
 
     console.log('[OAUTH-GOOGLE-CALLBACK] Success for user:', payload.sub);
 

@@ -9,21 +9,29 @@
  */
 
 import * as jose from 'jose';
+import { nonceNamesApp } from '../oauth/loginNonce';
 
 type Issuer = {
     jwksUrl: string;
     /** Expected `aud`. Undefined = accept any (issuer alone identifies us). */
     audience: () => string | undefined;
+    /**
+     * Every app shares this issuer's audience, so `aud` cannot tell their
+     * tokens apart; the nonce names the app instead (lib/oauth/loginNonce).
+     */
+    appInNonce?: true;
 };
 
 const ISSUERS: Record<string, Issuer> = {
     'https://accounts.google.com': {
         jwksUrl: 'https://www.googleapis.com/oauth2/v3/certs',
         audience: () => process.env.GOOGLE_CLIENT_ID,
+        appInNonce: true,
     },
     'https://appleid.apple.com': {
         jwksUrl: 'https://appleid.apple.com/auth/keys',
         audience: () => process.env.APPLE_CLIENT_ID,
+        appInNonce: true,
     },
     // Cavos-signed JWT for email/OTP logins (see lib/firebase-jwt.ts).
     'https://cavos.app/firebase': {
@@ -65,19 +73,28 @@ export function bearerToken(request: Request): string | null {
     return token.trim();
 }
 
+/** A caller whose provider token verified. */
+export interface VerifiedUser {
+    sub: string;
+    /**
+     * Whether this token was issued to a login `appId` started. Email tokens
+     * carry no nonce, so they name no app and are not checked here.
+     */
+    issuedTo(appId: string): boolean;
+}
+
 /**
- * Verify the caller's provider token. Returns its `sub`, or null when the token
- * is absent, from an unknown issuer, expired, or otherwise invalid.
+ * Verify the caller's provider token. Returns who it identifies, or null when
+ * the token is absent, from an unknown issuer, expired, or otherwise invalid.
  *
  * `resolveKeys` is injectable so tests can sign with a local key.
  */
 export async function verifyUserToken(
     request: Request,
     resolveKeys: (url: string) => jose.JWTVerifyGetKey = keySet,
-): Promise<string | null> {
+): Promise<VerifiedUser | null> {
     const token = bearerToken(request);
     if (!token) return null;
-
     let issuer: string | undefined;
     try {
         issuer = jose.decodeJwt(token).iss;
@@ -86,19 +103,27 @@ export async function verifyUserToken(
     }
     const config = issuer ? ISSUERS[issuer] ?? firebaseIssuer(issuer) : undefined;
     if (!config) return null;
-
     try {
         const { payload } = await jose.jwtVerify(token, resolveKeys(config.jwksUrl), {
             issuer,
             audience: config.audience(),
         });
-        return typeof payload.sub === 'string' && payload.sub ? payload.sub : null;
+        if (typeof payload.sub !== 'string' || !payload.sub) return null;
+        const { nonce } = payload;
+        return {
+            sub: payload.sub,
+            issuedTo: (appId) => !config.appInNonce || nonceNamesApp(nonce, appId),
+        };
     } catch {
         return null;
     }
 }
 
-/** True when the token identifies exactly the subject the request claims. */
-export function isSubject(sub: string | null, userSocialId: unknown): boolean {
-    return !!sub && typeof userSocialId === 'string' && sub === userSocialId;
+/**
+ * True when the token identifies exactly the user the request claims, and was
+ * issued to this app. The audience is shared by every app, so the nonce is what
+ * names the one that asked.
+ */
+export function isUserOfApp(user: VerifiedUser | null, userSocialId: unknown, appId: string): boolean {
+    return !!user && typeof userSocialId === 'string' && user.sub === userSocialId && user.issuedTo(appId);
 }

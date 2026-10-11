@@ -1,7 +1,7 @@
 import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import * as jose from 'jose';
-import { verifyUserToken, isSubject, bearerToken } from './verifyUserToken';
+import { verifyUserToken, isUserOfApp, bearerToken } from './verifyUserToken';
 
 const GOOGLE = 'https://accounts.google.com';
 
@@ -32,7 +32,7 @@ describe('verifyUserToken', () => {
 
     it('returns the subject of a valid provider token', async () => {
         const token = await sign({ iss: GOOGLE, aud: 'client-123', sub: 'user-1' });
-        assert.equal(await verifyUserToken(req(token), () => keys), 'user-1');
+        assert.equal((await verifyUserToken(req(token), () => keys))?.sub, 'user-1');
     });
 
     it('rejects a missing token', async () => {
@@ -61,7 +61,7 @@ describe('verifyUserToken', () => {
     it("accepts Firebase's ID token from an email-link login", async () => {
         process.env.FIREBASE_PROJECT_ID = 'cavos-test';
         const token = await sign({ iss: 'https://securetoken.google.com/cavos-test', aud: 'cavos-test', sub: 'uid-1' });
-        assert.equal(await verifyUserToken(req(token), () => keys), 'uid-1');
+        assert.equal((await verifyUserToken(req(token), () => keys))?.sub, 'uid-1');
     });
 
     it('rejects a Firebase token from another project', async () => {
@@ -79,11 +79,34 @@ describe('bearerToken', () => {
     });
 });
 
-describe('isSubject', () => {
-    it('requires an exact match', () => {
-        assert.equal(isSubject('user-1', 'user-1'), true);
-        assert.equal(isSubject('user-1', 'user-2'), false);
-        assert.equal(isSubject(null, 'user-1'), false);
-        assert.equal(isSubject('user-1', undefined), false);
+describe('isUserOfApp', () => {
+    const APP = '0f9d5a1c-3b2e-4c5a-8d7f-1a2b3c4d5e6f';
+    const OTHER_APP = '9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d';
+    const HASH = 'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM';
+    const google = (nonce?: string) =>
+        sign({ iss: GOOGLE, aud: 'client-123', sub: 'user-1', ...(nonce ? { nonce } : {}) })
+            .then((token) => verifyUserToken(req(token), () => keys));
+
+    it('requires the subject to match exactly', async () => {
+        const user = await google(`${APP}.${HASH}`);
+        assert.equal(isUserOfApp(user, 'user-1', APP), true);
+        assert.equal(isUserOfApp(user, 'user-2', APP), false);
+        assert.equal(isUserOfApp(user, undefined, APP), false);
+        assert.equal(isUserOfApp(null, 'user-1', APP), false);
+    });
+
+    it('refuses a Google token issued to another app, or to no app', async () => {
+        // The same person, the same audience, a login another app started.
+        assert.equal(isUserOfApp(await google(`${OTHER_APP}.${HASH}`), 'user-1', APP), false);
+        assert.equal(isUserOfApp(await google(), 'user-1', APP), false);
+        // The app id as a mere prefix of a longer first half is not the app.
+        assert.equal(isUserOfApp(await google(`${APP}0.${HASH}`), 'user-1', APP), false);
+        assert.equal(isUserOfApp(await google(HASH), 'user-1', APP), false);
+    });
+
+    it('does not check the app of an email token', async () => {
+        process.env.FIREBASE_PROJECT_ID = 'cavos-test';
+        const token = await sign({ iss: 'https://securetoken.google.com/cavos-test', aud: 'cavos-test', sub: 'uid-1' });
+        assert.equal(isUserOfApp(await verifyUserToken(req(token), () => keys), 'uid-1', APP), true);
     });
 });
