@@ -65,6 +65,13 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // IndexNow key file and llms.txt must be served as text/plain.
+        source: "/:file.txt",
+        headers: [
+          { key: "Content-Type", value: "text/plain; charset=utf-8" },
+        ],
+      },
+      {
         source: "/api/:path*",
         headers: [
           { key: "X-Robots-Tag", value: "noindex, nofollow" },

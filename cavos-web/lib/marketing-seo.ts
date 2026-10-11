@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { MARKETING_ORIGIN } from './marketing-sitemap'
+import { MARKETING_HOME_URL, MARKETING_ORIGIN } from './marketing-sitemap'
 
 export const OG_IMAGE = {
   url: `${MARKETING_ORIGIN}/og-image.png`,
@@ -66,7 +66,7 @@ export function noindexFollowMetadata(title: string): Metadata {
 }
 
 export function pageUrl(path: string): string {
-  if (path === '/') return MARKETING_ORIGIN
+  if (path === '/') return MARKETING_HOME_URL
   return `${MARKETING_ORIGIN}${path}`
 }
 

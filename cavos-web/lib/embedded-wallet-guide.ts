@@ -7,6 +7,25 @@ export const EMBEDDED_WALLET_DESCRIPTION =
 
 export const EMBEDDED_WALLET_PUBLISHED = '2026-10-07'
 
+export const EMBEDDED_WALLET_HOW_IT_WORKS = [
+  {
+    title: 'Sign in',
+    body: 'The user authenticates with an identity the product already owns: hosted login including email, or an identity you pass in from your own auth. Authentication selects which user this is. It does not, by itself, authorize a spend.',
+  },
+  {
+    title: 'Key creation',
+    body: 'A non-exportable signing key is created on the user’s device. In the browser that is a WebCrypto P-256 key. On React Native it uses the OS keystore. JavaScript cannot read the private material out. Cavos cannot see the key, sign with it, or move funds.',
+  },
+  {
+    title: 'Signing',
+    body: 'The device signs. The chain account lists that public key as an authorized signer. Approval happens in the product UI, not in a browser-extension popup. Gas is often sponsored so the user does not need a native token to start.',
+  },
+  {
+    title: 'Recovery',
+    body: 'A second device is added by an on-chain approval, not by reconstituting a master key on a server. Cavos ships non-custodial recovery codes on every chain, multi-device passkey approval, and opt-in hardware-isolated social recovery that is off by default.',
+  },
+] as const
+
 export const EMBEDDED_WALLET_FAQ = [
   {
     question: 'What is an embedded wallet?',

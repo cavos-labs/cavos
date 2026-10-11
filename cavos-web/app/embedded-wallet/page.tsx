@@ -2,9 +2,11 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import { embeddedWalletProviderRows } from '@/lib/compare-data'
 import {
     EMBEDDED_WALLET_DESCRIPTION,
     EMBEDDED_WALLET_FAQ,
+    EMBEDDED_WALLET_HOW_IT_WORKS,
     EMBEDDED_WALLET_PATH,
     EMBEDDED_WALLET_PUBLISHED,
     EMBEDDED_WALLET_TITLE,
@@ -23,6 +25,7 @@ export const metadata: Metadata = marketingPageMetadata({
 })
 
 export default function EmbeddedWalletGuidePage() {
+    const providers = embeddedWalletProviderRows()
     const jsonLd = guidePageJsonLd({
         title: EMBEDDED_WALLET_TITLE,
         description: EMBEDDED_WALLET_DESCRIPTION,
@@ -87,6 +90,24 @@ export default function EmbeddedWalletGuidePage() {
                             how honest it is about who can sign.
                         </p>
                     </div>
+                </section>
+
+                <section className="mt-16 max-w-3xl">
+                    <h2 className="text-2xl font-medium tracking-[-0.03em]">
+                        How an embedded wallet works
+                    </h2>
+                    <p className="mt-5 text-sm leading-relaxed text-muted">
+                        The product owns the wallet path. Four steps cover sign-in, key
+                        creation, signing, and recovery in this model.
+                    </p>
+                    <ol className="mt-6 list-decimal space-y-3 pl-5 text-sm leading-relaxed text-muted">
+                        {EMBEDDED_WALLET_HOW_IT_WORKS.map((step) => (
+                            <li key={step.title}>
+                                <span className="font-semibold text-ink">{step.title}.</span>{' '}
+                                {step.body}
+                            </li>
+                        ))}
+                    </ol>
                 </section>
 
                 <section className="mt-16">
@@ -430,6 +451,56 @@ export default function EmbeddedWalletGuidePage() {
                             Magic
                         </Link>
                         .
+                    </p>
+                </section>
+
+                <section className="mt-16">
+                    <h2 className="text-2xl font-medium tracking-[-0.03em]">
+                        How providers differ
+                    </h2>
+                    <p className="mt-5 max-w-3xl text-sm leading-relaxed text-muted">
+                        Privy, Dynamic, Turnkey, Web3Auth, and Magic all ship an embedded
+                        wallet. They do not share a signing model or the same native chain
+                        coverage. Each name opens the full comparison.
+                    </p>
+                    <div className="mt-8 overflow-x-auto rounded-2xl border border-line">
+                        <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+                            <thead className="bg-brand text-white">
+                                <tr>
+                                    <th className="px-5 py-4 font-semibold">Provider</th>
+                                    <th className="border-l border-white/10 px-5 py-4 font-semibold">
+                                        Signing
+                                    </th>
+                                    <th className="border-l border-white/10 px-5 py-4 font-semibold">
+                                        Chain coverage
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {providers.map((provider) => (
+                                    <tr key={provider.slug} className="border-t border-line">
+                                        <th scope="row" className="px-5 py-4 align-top font-semibold">
+                                            <Link href={provider.href} className={linkClass}>
+                                                {provider.name}
+                                            </Link>
+                                        </th>
+                                        <td className="border-l border-line px-5 py-4 align-top text-muted">
+                                            {provider.signing}
+                                        </td>
+                                        <td className="border-l border-line px-5 py-4 align-top text-muted">
+                                            {provider.chains}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <p className="mt-5 max-w-3xl text-sm leading-relaxed text-muted">
+                        Teams replacing Privy specifically can start with the{' '}
+                        <Link href="/privy-alternatives" className={linkClass}>
+                            Privy alternatives
+                        </Link>{' '}
+                        guide.
                     </p>
                 </section>
 

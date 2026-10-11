@@ -228,14 +228,21 @@ export function FeaturesGrid() {
                     </span>
                 </h2>
                 <p className="mt-5 max-w-[46ch] text-[15px] leading-relaxed text-muted">
-                    New to the category?{' '}
+                    New to the category? Start with{' '}
                     <Link
                         href="/embedded-wallet"
                         className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
                     >
-                        What is an embedded wallet
+                        what an embedded wallet is
                     </Link>
-                    {' '}covers custody models, key management, and how to choose an SDK.
+                    , then{' '}
+                    <Link
+                        href="/compare"
+                        className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                    >
+                        compare providers
+                    </Link>
+                    {' '}on custody, signing, and chain coverage.
                 </p>
             </div>
 

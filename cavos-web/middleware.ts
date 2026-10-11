@@ -11,8 +11,13 @@ export async function middleware(request: NextRequest) {
 
   // Metadata files must not pass through the auth session refresh. Next.js
   // documents that matching sitemap.xml / robots.txt in middleware can 500
-  // those routes and hide the marketing site from crawlers.
-  if (pathname === '/sitemap.xml' || pathname === '/robots.txt') {
+  // those routes and hide the marketing site from crawlers. The same applies
+  // to public *.txt files (llms.txt, IndexNow key).
+  if (
+    pathname === '/sitemap.xml' ||
+    pathname === '/robots.txt' ||
+    pathname.endsWith('.txt')
+  ) {
     return NextResponse.next()
   }
 
@@ -77,10 +82,10 @@ export const config = {
      * Match all request paths except:
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - favicon.ico, sitemap.xml, robots.txt (metadata files)
+     * - favicon.ico, sitemap.xml, robots.txt, *.txt (metadata / IndexNow key)
      * - public folder
      * - api routes (handled separately)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|txt)$).*)',
   ],
 }

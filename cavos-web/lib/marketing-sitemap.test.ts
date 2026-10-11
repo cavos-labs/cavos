@@ -4,11 +4,16 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { COMPETITORS } from './compare-data'
 import {
+  MARKETING_HOME_URL,
   MARKETING_ORIGIN,
+  SITEMAP_LASTMOD_FALLBACK,
   getMarketingSitemapEntries,
+  gitLastModifiedForFile,
   isBlogPostNoindex,
+  lastModifiedForPath,
   parseBlogFrontmatter,
   publishedBlogPosts,
+  sitemapPageFile,
 } from './marketing-sitemap'
 import { AUTH_NOINDEX_PATHS } from './marketing-seo'
 
@@ -75,11 +80,71 @@ describe('marketing sitemap', () => {
 
     for (const routePath of requiredPaths) {
       assert.equal(hasPage(routePath), true, `missing page for ${routePath}`)
-      assert.ok(
-        urls.includes(`${MARKETING_ORIGIN}${routePath === '/' ? '' : routePath}`),
-        `sitemap missing ${routePath}`,
-      )
+      const expected =
+        routePath === '/' ? MARKETING_HOME_URL : `${MARKETING_ORIGIN}${routePath}`
+      assert.ok(urls.includes(expected), `sitemap missing ${routePath}`)
     }
+  })
+
+  it('uses the trailing-slash homepage URL Google stores as canonical', () => {
+    assert.equal(MARKETING_HOME_URL, 'https://cavos.xyz/')
+    assert.equal(urls.includes(MARKETING_HOME_URL), true)
+    assert.equal(urls.includes(MARKETING_ORIGIN), false)
+    assert.equal(urls.includes(`${MARKETING_ORIGIN}/`), true)
+  })
+
+  it('gives every entry a real lastModified instead of a shared now() stamp', () => {
+    const stamps = entries.map((entry) => {
+      assert.ok(entry.lastModified instanceof Date, `missing lastModified for ${entry.url}`)
+      assert.equal(Number.isNaN(entry.lastModified.getTime()), false)
+      return entry.lastModified.toISOString()
+    })
+    assert.equal(new Set(stamps).size > 1, true)
+    assert.doesNotMatch(SITEMAP_SOURCE, /new Date\(\s*\)/)
+
+    const home = entries.find((entry) => entry.url === MARKETING_HOME_URL)
+    assert.ok(home)
+    assert.equal(
+      home.lastModified.toISOString(),
+      lastModifiedForPath('/').toISOString(),
+    )
+    assert.equal(
+      lastModifiedForPath('/embedded-wallet').toISOString(),
+      (
+        gitLastModifiedForFile(sitemapPageFile('/embedded-wallet')) ??
+        new Date(SITEMAP_LASTMOD_FALLBACK['/embedded-wallet'])
+      ).toISOString(),
+    )
+  })
+
+  it('maps each static route to a page file and a per-route fallback date', () => {
+    const staticPaths = [
+      '/',
+      '/embedded-wallet',
+      '/embedded-stellar-wallet',
+      '/embedded-solana-wallet',
+      '/embedded-starknet-wallet',
+      '/compare',
+      '/privy-alternatives',
+      '/custody',
+      '/pricing',
+      '/stats',
+      '/contact-sales',
+      '/about',
+      '/blog',
+      '/privacy',
+      '/dpa',
+      '/user-privacy',
+      '/user-terms',
+      '/terms',
+    ]
+    for (const routePath of staticPaths) {
+      assert.ok(SITEMAP_LASTMOD_FALLBACK[routePath], `missing fallback for ${routePath}`)
+      assert.equal(hasPage(routePath), true)
+      assert.ok(sitemapPageFile(routePath).endsWith('page.tsx'))
+    }
+    assert.equal(sitemapPageFile('/compare/privy'), 'app/compare/[slug]/page.tsx')
+    assert.ok(SITEMAP_LASTMOD_FALLBACK['/compare/[slug]'])
   })
 
   it('includes each competitor compare page from live data', () => {
