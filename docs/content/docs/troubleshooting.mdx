@@ -74,7 +74,8 @@ Three causes, in the order worth checking:
    feature cannot start. Flagged as `[social-recovery-without-app-id]`.
 3. **Your own auth, with no provider token supplied.** If you authenticate users
    yourself, enrolment and recovery do not happen automatically — the SDK never
-   sees a provider token. Call `submitSocialRecoveryToken(idToken)` yourself. See
+   sees a provider token. Call `submitSocialRecoveryToken(idToken)` yourself (not
+   accepted for Google and Apple tokens in 0.2.6). See
    [With your own auth](/docs/hardware-isolated-recovery#with-your-own-auth).
 4. **The creating device never sealed.** Mac logged in from IndexedDB; the phone
    got `not_enrolled`. Reconnect once on the device that has the wrap — enroll
@@ -115,13 +116,33 @@ Wallet state is not available during server rendering by design: the device key
 lives in the browser. Gate on `isLoading` for the first paint rather than
 expecting an address to be present immediately.
 
-## A user is stuck mid-recovery with a timelock
+## "This sign-in did not start here" or "does not match this sign-in"
 
-Expected, and not stuck. A non-zero timelock commits the new signer on-chain but
-keeps it inert until the delay passes — that window is what lets a real owner
-cancel an unwanted recovery. The SDK persists the public `readyAt`, resumes
-after a refresh, and finalizes automatically when the delay expires. Surface
-`walletStatus.socialRecoveryReadyAt` so the user knows when to come back.
+From 0.2.6 a Google or Apple login is tied to a one-time secret the SDK creates
+when it builds the sign-in URL, kept in `sessionStorage` on web and in memory on
+React Native. The callback has to land where that secret is:
+
+- **Web:** finish the login in the same tab and origin that started it. A
+  callback opened in another tab, another browser, or a different origin (a
+  preview domain, `localhost` vs. a tunnel) has no secret to match.
+- **React Native:** the app has to stay alive between opening the browser and
+  receiving the deep link. If the OS killed it, start the login again.
+- **A stale URL:** each sign-in URL is single-use. Call `getGoogleOAuthUrl()` /
+  `getAppleOAuthUrl()` right before redirecting rather than caching the result.
+
+## "This wallet has not been used on the device that created it yet"
+
+Starknet only. The account is created by the first transaction from the device
+that owns its address, and enclave recovery authorizes a new device against that
+account. A second device that signs in before the first one has transacted has
+nothing on-chain to be added to. Make one transaction on the original device,
+then sign in again on the new one.
+
+## Google or Apple login stopped working after a backend update
+
+The hosted sign-in endpoints now require the `nonce` that `@cavos/kit` 0.2.6
+sends, and no longer serve the legacy `@cavos/react` flow. Upgrade to
+`@cavos/kit` 0.2.6 or later.
 
 ## Reserve refused to sign, or `token_not_allowed`
 

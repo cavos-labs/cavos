@@ -88,8 +88,7 @@ function Wallet() {
 | `passkeySupported: boolean` | Whether this device/browser can use a platform passkey. |
 
 `WalletStatus`: `{ isDeploying, isReady, isUndeployed, needsDeviceApproval, awaitingApproval,
-pendingRequestId, hasPasskey, isNewAccount, isSocialRecovering,
-socialRecoveryReadyAt, recovery }`.
+pendingRequestId, hasPasskey, isNewAccount, isSocialRecovering, recovery }`.
 
 - `isUndeployed`: True when the account has not been deployed on-chain yet.
   First execute will deploy + run atomically.
@@ -173,7 +172,7 @@ the args differ per chain. See [Wallet actions](/docs/wallet-actions).
 | `enrollPasskeyDefault()` | Add a passkey **after** sign-up. Native Solana/Stellar: stores a PRF-encrypted copy of the MasterDEK. Starknet: on-chain `addApprover`. Sign-up never prompts. |
 | `approveDeviceWithPasskey()` | New device with no wrap, when the user dismissed the prompt: opens the passkey's DEK copy (native Solana/Stellar) or approves the Starknet / grandfathered-Stellar path. |
 | `setupRecovery()` | Starknet (and grandfathered Stellar). Native Solana/Stellar is a no-op. **Resolves with the code** when it applies. |
-| `submitSocialRecoveryToken(idToken)` | Drive enclave enroll/unwrap with the provider's raw `id_token`. Solana, Stellar, and Starknet. See [Hardware-isolated recovery](/docs/hardware-isolated-recovery#with-your-own-auth). |
+| `submitSocialRecoveryToken(idToken)` | Drive enclave enroll/unwrap with the provider's raw `id_token`. Solana, Stellar, and Starknet. Not accepted for Google and Apple tokens in 0.2.6. See [Hardware-isolated recovery](/docs/hardware-isolated-recovery#with-your-own-auth). |
 | `recover(code)` | Recover access after losing every device. **Starknet.** Native Solana/Stellar throw — restore with enclave login or `approveDeviceWithPasskey()`. |
 | `resendDeviceApproval()` | Re-request the device-approval email for the current pending request. **Starknet.** |
 
