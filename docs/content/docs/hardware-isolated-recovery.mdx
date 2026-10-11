@@ -284,7 +284,7 @@ somewhere underneath. **Your users never sign in twice:** you pass the provider
 token your login already obtained. Works on Solana, Stellar, and Starknet.
 
 <Callout type="warn">
-**Not available for Google and Apple in 0.2.6.** The enclave now requires the
+**Not available for Google and Apple in 0.3.0.** The enclave now requires the
 `nonce` described in [What the enclave verifies](#what-the-enclave-verifies),
 which only a sign-in started by the SDK carries. A token obtained by your own
 login does not, so `submitSocialRecoveryToken` is rejected for Google and Apple

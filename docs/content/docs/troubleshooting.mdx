@@ -75,7 +75,7 @@ Three causes, in the order worth checking:
 3. **Your own auth, with no provider token supplied.** If you authenticate users
    yourself, enrolment and recovery do not happen automatically — the SDK never
    sees a provider token. Call `submitSocialRecoveryToken(idToken)` yourself (not
-   accepted for Google and Apple tokens in 0.2.6). See
+   accepted for Google and Apple tokens in 0.3.0). See
    [With your own auth](/docs/hardware-isolated-recovery#with-your-own-auth).
 4. **The creating device never sealed.** Mac logged in from IndexedDB; the phone
    got `not_enrolled`. Reconnect once on the device that has the wrap — enroll
@@ -118,7 +118,7 @@ expecting an address to be present immediately.
 
 ## "This sign-in did not start here" or "does not match this sign-in"
 
-From 0.2.6 a Google or Apple login is tied to a one-time secret the SDK creates
+From 0.3.0 a Google or Apple login is tied to a one-time secret the SDK creates
 when it builds the sign-in URL, kept in `sessionStorage` on web and in memory on
 React Native. The callback has to land where that secret is:
 
@@ -140,9 +140,9 @@ then sign in again on the new one.
 
 ## Google or Apple login stopped working after a backend update
 
-The hosted sign-in endpoints now require the `nonce` that `@cavos/kit` 0.2.6
+The hosted sign-in endpoints now require the `nonce` that `@cavos/kit` 0.3.0
 sends, and no longer serve the legacy `@cavos/react` flow. Upgrade to
-`@cavos/kit` 0.2.6 or later.
+`@cavos/kit` 0.3.0 or later.
 
 ## Reserve refused to sign, or `token_not_allowed`
 
