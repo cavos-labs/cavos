@@ -89,6 +89,7 @@ This table describes architectural models, not a ranking. Providers such as Priv
 - Embedded Solana Wallet: https://cavos.xyz/embedded-solana-wallet
 - Embedded Starknet Wallet: https://cavos.xyz/embedded-starknet-wallet
 - Comparison: https://cavos.xyz/compare
+- Privy alternatives: https://cavos.xyz/privy-alternatives
 - Dashboard: https://cavos.xyz/dashboard
 - Website: https://cavos.xyz
 - Contact: hello@cavos.xyz

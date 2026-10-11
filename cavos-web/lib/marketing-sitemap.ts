@@ -108,6 +108,7 @@ export function getMarketingSitemapEntries(): SitemapEntry[] {
       page('/embedded-solana-wallet', 'monthly', 0.9),
       page('/embedded-starknet-wallet', 'monthly', 0.9),
       page('/compare', 'monthly', 0.9),
+      page('/privy-alternatives', 'monthly', 0.8),
       page('/custody', 'monthly', 0.8),
       page('/pricing', 'monthly', 0.9),
       page('/stats', 'weekly', 0.9),
