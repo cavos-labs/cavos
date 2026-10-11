@@ -21,7 +21,7 @@ import { ApiResponse } from '@/lib/api/response';
 import { ApiMiddleware } from '@/lib/api/middleware';
 import { recordCavosEvent } from '@/lib/operations/events';
 import { notifyDeviceAdded } from '@/lib/devices/removal';
-import { verifyUserToken, isSubject } from '@/lib/api/verifyUserToken';
+import { verifyUserToken, isUserOfApp } from '@/lib/api/verifyUserToken';
 
 interface AddedBody {
   app_id: string;
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
     }
 
     // Only the wallet's owner may mirror a signer onto it.
-    if (!isSubject(await verifyUserToken(request), wallet.user_social_id)) {
+    if (!isUserOfApp(await verifyUserToken(request), wallet.user_social_id, app.id)) {
       return ApiResponse.unauthorized('Invalid user token');
     }
 

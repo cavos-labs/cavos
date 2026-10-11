@@ -15,7 +15,7 @@ import { ApiMiddleware } from '@/lib/api/middleware';
 import { sendDeviceApprovalEmail } from '@/lib/email/device-approval';
 import { computeAppSalt } from '@/lib/crypto/appSalt';
 import { recordCavosEvent } from '@/lib/operations/events';
-import { verifyUserToken, isSubject } from '@/lib/api/verifyUserToken';
+import { verifyUserToken, isUserOfApp } from '@/lib/api/verifyUserToken';
 
 interface DeviceAdditionRequestBody {
   app_id: string;
@@ -143,7 +143,7 @@ export async function POST(request: Request) {
     }
 
     // The address comes from the client; only its owner may open an approval.
-    if (!isSubject(await verifyUserToken(request), wallet.user_social_id)) {
+    if (!isUserOfApp(await verifyUserToken(request), wallet.user_social_id, canonicalAppId)) {
       return ApiResponse.unauthorized('Invalid user token');
     }
 

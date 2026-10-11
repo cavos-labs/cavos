@@ -7,7 +7,6 @@ interface EnrollmentProof {
   recoveryPubkeyCompressedB64: string
   recoveryXHex: string
   recoveryYHex: string
-  delaySeconds: number
   policyHashHex: string
 }
 
@@ -74,7 +73,9 @@ async function verifyStarknetEnrollment(proof: EnrollmentProof): Promise<boolean
     recoveryX >> 128n,
     recoveryY & U128_MASK,
     recoveryY >> 128n,
-    BigInt(proof.delaySeconds),
+    // No recovery delay: the kit always enrols zero, and anything else is not
+    // an enrolment this control plane agreed.
+    0n,
     policyHash & U128_MASK,
     policyHash >> 128n,
   ]

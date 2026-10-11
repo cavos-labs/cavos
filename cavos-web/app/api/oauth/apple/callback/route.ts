@@ -36,7 +36,6 @@ interface StatePayload {
   nonce: string;
   app_id?: string | null;
   issued_at?: number;
-  callback_mode?: 'legacy' | 'code';
 }
 
 interface AppleTokenResponse {
@@ -130,7 +129,6 @@ export async function POST(request: NextRequest) {
     }
 
     const { redirect_uri: finalRedirectUri, nonce: expectedNonce, app_id: appId } = statePayload;
-    const callbackMode = statePayload.callback_mode === 'code' ? 'code' : 'legacy';
 
     if (!finalRedirectUri) {
       return NextResponse.json(
@@ -138,8 +136,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    if (callbackMode === 'code' && !appId) throw new Error('Secure OAuth requires app_id');
-    await validateAppRedirect(appId, finalRedirectUri, callbackMode === 'code');
+    if (!appId) throw new Error('OAuth state names no app');
+    await validateAppRedirect(appId, finalRedirectUri, true);
 
     const appleClientId = process.env.APPLE_CLIENT_ID;
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
@@ -212,7 +210,11 @@ export async function POST(request: NextRequest) {
 
     const payload = JSON.parse(Buffer.from(idTokenParts[1], 'base64url').toString('utf-8'));
 
-    // Apple may or may not hash the nonce with SHA256 depending on the flow
+    // The nonce names the app this login was started for (lib/oauth/loginNonce).
+    // The state is signed and the authorization URL is not, so the token's
+    // nonce is checked against the state. This comparison must stay exact.
+    //
+    // Apple may or may not hash the nonce with SHA256 depending on the flow.
     // Try both: direct match and SHA256 hash match
     const expectedNonceHash = hashNonce(expectedNonce);
     const nonceMatches = payload.nonce === expectedNonce || payload.nonce === expectedNonceHash;
@@ -259,16 +261,12 @@ export async function POST(request: NextRequest) {
     // causing Next.js to preserve the POST method at the client app.
     // JavaScript redirect converts POST -> GET automatically.
     const redirectUrl = new URL(finalRedirectUri);
-    if (callbackMode === 'code' && appId) {
-      const callbackCode = await issueOAuthCallbackCode({
-        appId,
-        redirectUri: finalRedirectUri,
-        payload: { jwt: finalIdToken },
-      });
-      redirectUrl.searchParams.set('cavos_auth_code', callbackCode);
-    } else {
-      redirectUrl.searchParams.set('auth_data', JSON.stringify({ jwt: finalIdToken }));
-    }
+    const callbackCode = await issueOAuthCallbackCode({
+      appId,
+      redirectUri: finalRedirectUri,
+      payload: { jwt: finalIdToken },
+    });
+    redirectUrl.searchParams.set('cavos_auth_code', callbackCode);
 
     console.log('[OAUTH-APPLE-CALLBACK] Success for user:', payload.sub);
 

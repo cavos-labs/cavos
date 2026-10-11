@@ -16,7 +16,6 @@ interface Environment {
   is_active: boolean
   social_recovery_enabled: boolean
   social_recovery_provider: Provider | null
-  social_recovery_delay_seconds: number
   social_recovery_audiences: Partial<Record<Provider, string>> | null
 }
 
@@ -68,7 +67,6 @@ export default function EnvironmentsPage() {
         body: JSON.stringify({
           environment_id: environment.id,
           social_recovery_enabled: environment.social_recovery_enabled,
-          social_recovery_delay_seconds: environment.social_recovery_delay_seconds,
           social_recovery_audiences: environment.social_recovery_audiences ?? {},
         }),
       })
@@ -164,28 +162,6 @@ export default function EnvironmentsPage() {
 
               {env.social_recovery_enabled && (
                 <div className="mt-4 space-y-4">
-                  <label className="block max-w-xs text-xs font-semibold">
-                    Timelock (seconds)
-                    <input
-                      type="number"
-                      min={0}
-                      max={2_592_000}
-                      step={1}
-                      value={env.social_recovery_delay_seconds}
-                      onChange={(event) =>
-                        updateLocal(env.id, {
-                          social_recovery_delay_seconds: Number(event.target.value),
-                        })
-                      }
-                      className="mt-2 w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm"
-                    />
-                    <p className="mt-2 text-xs font-normal text-muted">
-                      How long a recovery waits on-chain before it takes effect. This is the
-                      window in which a user can notice and cancel a recovery they did not
-                      start, so zero leaves them none.
-                    </p>
-                  </label>
-
                   <div className="rounded-lg border border-line p-4">
                     <p className="text-xs font-semibold">Bring your own auth</p>
                     <p className="mt-2 text-xs text-muted">

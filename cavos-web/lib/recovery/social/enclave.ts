@@ -112,7 +112,13 @@ export function openSession(sessionId: string): Promise<OpenedSession> {
 }
 
 export interface JobResult {
+  /** For this control plane to persist. Relayed in the clear. */
   result: Record<string, unknown>
+  /**
+   * The same result sealed by the enclave to the client's session key. Opaque
+   * here; it is what the client acts on, so it must reach it untouched.
+   */
+  sealed_result: { nonce_b64: string; ciphertext_b64: string }
 }
 
 /** Run one job and return its result, in the same request. */

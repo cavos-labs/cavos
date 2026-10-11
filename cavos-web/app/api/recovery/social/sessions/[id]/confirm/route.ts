@@ -47,7 +47,7 @@ export async function POST(
     admin
       .from('social_recovery_enrollments')
       .select(
-        'recovery_pubkey_compressed,recovery_pub_x,recovery_pub_y,delay_seconds,policy_hash,onchain_status',
+        'recovery_pubkey_compressed,recovery_pub_x,recovery_pub_y,policy_hash,onchain_status',
       )
       .eq('wallet_id', walletId)
       .maybeSingle(),
@@ -65,7 +65,6 @@ export async function POST(
       recoveryPubkeyCompressedB64: enrollment.recovery_pubkey_compressed,
       recoveryXHex: enrollment.recovery_pub_x,
       recoveryYHex: enrollment.recovery_pub_y,
-      delaySeconds: enrollment.delay_seconds,
       policyHashHex: enrollment.policy_hash,
     })
   } catch (error) {

@@ -17,7 +17,7 @@ import { canCreateWallet, resolveOrgForApp } from '@/lib/billing/limits';
 import { shouldBlock } from '@/lib/billing/enforce';
 import type { WalletSaveRequest } from '@/lib/api/types';
 import { recordCavosEvent } from '@/lib/operations/events';
-import { verifyUserToken, isSubject } from '@/lib/api/verifyUserToken';
+import { verifyUserToken, isUserOfApp } from '@/lib/api/verifyUserToken';
 import { insertWalletRow } from '@/lib/api/walletRow';
 import { StrKey } from '@stellar/stellar-sdk';
 import { PublicKey } from '@solana/web3.js';
@@ -73,7 +73,7 @@ export async function GET(request: Request) {
         const canonicalAppId = app.id;
 
         // The registry names the user's wallet, so only that user may read it.
-        if (!isSubject(subject, user_social_id)) {
+        if (!isUserOfApp(subject, user_social_id, canonicalAppId)) {
             after(() => recordCavosEvent({ appId: canonicalAppId, eventType: 'api.authentication_failed', status: 'failed', severity: 'warning', requestId: logger.requestId, errorCode: 'invalid_user_token' }));
             return ApiResponse.unauthorized('Invalid user token');
         }
@@ -198,7 +198,7 @@ export async function POST(request: Request) {
         const canonicalAppId = app.id;
 
         // Only the end user may claim their own registry row.
-        if (!isSubject(await verifyUserToken(request), user_social_id)) {
+        if (!isUserOfApp(await verifyUserToken(request), user_social_id, canonicalAppId)) {
             events.push({ appId: canonicalAppId, eventType: 'api.authentication_failed', status: 'failed', severity: 'warning', requestId: logger.requestId, errorCode: 'invalid_user_token' });
             return ApiResponse.unauthorized('Invalid user token');
         }
