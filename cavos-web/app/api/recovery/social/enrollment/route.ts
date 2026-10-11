@@ -3,6 +3,7 @@
  *   → { enrolled: boolean }
  *
  * GET /api/recovery/social/enrollment?app_id=&provider=&subject=[&environment=]
+ *   Authorization: Bearer <the subject's own provider token>
  *   → { enrolled: boolean, wallet_address?: string }
  *
  * Address lookup is the existing SDK check. Subject lookup finds a sealed
@@ -19,6 +20,7 @@ import {
   providerPolicy,
 } from '@/lib/recovery/social/config';
 import { identityCommitmentHex } from '@/lib/recovery/social/identityCommitment';
+import { isUserOfApp, verifyUserToken } from '@/lib/api/verifyUserToken';
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -59,6 +61,11 @@ export async function GET(request: Request) {
   const admin = createAdminClient();
 
   if (identityLookup && isSocialRecoveryProvider(provider) && subject) {
+    // This answers "which wallet does this person have here", so only that
+    // person may ask.
+    if (!isUserOfApp(await verifyUserToken(request), subject, resolved.appId)) {
+      return NextResponse.json({ error: 'invalid_user_token' }, { status: 401 });
+    }
     const { data: environmentPolicy } = await admin
       .from('app_environments')
       .select('social_recovery_audiences')

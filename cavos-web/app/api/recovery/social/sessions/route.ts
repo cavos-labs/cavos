@@ -9,6 +9,7 @@ import {
 import { openSession } from '@/lib/recovery/social/enclave'
 import type { SocialRecoveryAction } from '@/lib/recovery/social/types'
 import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier'
+import { checkRateLimit, clientIp } from '@/lib/api/rateLimit'
 
 /**
  * Start a recovery session.
@@ -70,6 +71,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'invalid_auth_challenge' }, { status: 400 })
   }
 
+  // Abuse control. Starting a session is unauthenticated and each one holds a
+  // slot in the enclave until it expires, so it is bounded per caller rather
+  // than per wallet: a wallet's allowance should be its owner's to spend.
+  const rateLimit = checkRateLimit(`social-session:${clientIp(request)}`, 30, 60_000)
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'recovery_rate_limited' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil(rateLimit.retryAfterMs / 1000)) } },
+    )
+  }
+
   const resolvedApp = await resolveAppIdentifier(
     body.app_id,
     body.environment_id || body.environment,
@@ -90,7 +102,7 @@ export async function POST(request: Request) {
   const { data: environmentPolicy } = await admin
     .from('app_environments')
     .select(
-      'id, social_recovery_enabled, social_recovery_provider, social_recovery_delay_seconds, social_recovery_audiences',
+      'id, social_recovery_enabled, social_recovery_provider, social_recovery_audiences',
     )
     .eq('id', environment.id)
     .eq('app_id', appId)
@@ -167,38 +179,18 @@ export async function POST(request: Request) {
 
   const { data: enrollment } = await admin
     .from('social_recovery_enrollments')
-    .select(
-      'id, onchain_status, provider, delay_seconds, policy_hash, recovery_pubkey_compressed, recovery_pub_x, recovery_pub_y',
-    )
+    .select('id, onchain_status, provider')
     .eq('wallet_id', wallet.id)
     .maybeSingle()
 
-  if (body.action === 'enroll' && enrollment?.onchain_status === 'active') {
-    return NextResponse.json(
-      { error: 'already_enrolled', wallet_address: body.wallet_address },
-      { status: 409 },
-    )
-  }
-  if (body.action === 'enroll' && enrollment?.onchain_status === 'pending') {
-    // The enclave finished a previous attempt before the browser submitted the
-    // on-chain transaction. Reuse that exact authority: minting a new one could
-    // strand the account if the original transaction later lands.
-    return NextResponse.json({
-      session_id: enrollment.id,
-      status: 'completed',
-      action: 'enroll',
-      provider: enrollment.provider,
-      policy,
-      delay_seconds: enrollment.delay_seconds,
-      resume_result: {
-        result: 'enrolled',
-        policy_hash_hex: enrollment.policy_hash,
-        recovery_pubkey_compressed_b64: enrollment.recovery_pubkey_compressed,
-        recovery_x_hex: enrollment.recovery_pub_x,
-        recovery_y_hex: enrollment.recovery_pub_y,
-      },
-    })
-  }
+  // A wallet that already has a record, pending or active, is not turned away
+  // and not answered from the database. The session below hands the client the
+  // sealed record, and the client asks the enclave what it holds: a resumed
+  // Starknet enrolment installs that public key on-chain permanently, and
+  // "already enrolled" is only worth saying if the enclave confirms it.
+  const existingEnrollment =
+    enrollment?.onchain_status === 'active' || enrollment?.onchain_status === 'pending'
+
   // Two different situations used to answer the same way, and the SDK retried
   // both for five minutes: a wallet mid-enrolment on another device, where
   // waiting is exactly right, and a wallet that never enrolled at all, where
@@ -242,16 +234,21 @@ export async function POST(request: Request) {
     )
   }
 
-  // Abuse control. The enclave costs nothing per request now, but a public app
-  // id should still not be able to drive unbounded work.
-  const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
-  const { count: walletStarts } = await admin
-    .from('social_recovery_sessions')
-    .select('id', { count: 'exact', head: true })
-    .eq('wallet_id', wallet.id)
-    .gte('created_at', hourAgo)
-  if ((walletStarts || 0) >= 10) {
-    return NextResponse.json({ error: 'recovery_rate_limited' }, { status: 429 })
+  // A recovery hands out an authorization or a wrapped DEK, so completed ones
+  // are bounded per wallet. Only completed: reaching that state takes the
+  // owner's own credential, so nobody else can spend the allowance.
+  if (body.action === 'recover') {
+    const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+    const { count: recoveries } = await admin
+      .from('social_recovery_sessions')
+      .select('id', { count: 'exact', head: true })
+      .eq('wallet_id', wallet.id)
+      .eq('action', 'recover')
+      .eq('status', 'completed')
+      .gte('created_at', hourAgo)
+    if ((recoveries || 0) >= 10) {
+      return NextResponse.json({ error: 'recovery_rate_limited' }, { status: 429 })
+    }
   }
 
   const sessionId = crypto.randomUUID()
@@ -266,7 +263,8 @@ export async function POST(request: Request) {
     // fallback. Recording the fallback here would make the session row disagree
     // with the policy the enclave was handed.
     provider,
-    delay_seconds: environmentPolicy.social_recovery_delay_seconds,
+    // The column outlived the recovery delay, which the product no longer has.
+    delay_seconds: 0,
     auth_challenge_hash: authChallengeHash,
     // Only send the column when it is true so a deploy that lands before the
     // dek_enroll migration does not reject every session insert.
@@ -297,7 +295,7 @@ export async function POST(request: Request) {
   }
 
   const sealedRecord =
-    body.action === 'recover'
+    body.action === 'recover' || existingEnrollment
       ? (
           await admin
             .from('social_recovery_enrollments')
@@ -319,7 +317,6 @@ export async function POST(request: Request) {
     // enclave rejected it as `request_failed` with nothing to say about why.
     provider,
     policy,
-    delay_seconds: environmentPolicy.social_recovery_delay_seconds,
     expires_at: expiresAt,
     ephemeral_public_key_b64: opened.ephemeral_public_key_b64,
     attestation_document_b64: opened.attestation_document_b64,

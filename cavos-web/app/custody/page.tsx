@@ -993,8 +993,8 @@ export default function CustodyPage() {
                             the enclave seals a MasterDEK and can unwrap it. If that wrap is
                             compromised, the spend key can be restored. On Starknet the enclave may
                             schedule one <span className="font-mono text-[13px]">add_signer</span>.
-                            The contract still enforces nonce, expiry, timelock, cancellation, and
-                            finalization. The docs call this hardware-isolated and non-custodial,
+                            The contract still enforces the nonce, the expiry and the exact signer
+                            being added. The docs call this hardware-isolated and non-custodial,
                             and they say it is not trustless: the user is relying on the measured
                             enclave image and on AWS attestation. A Cavos employee has no key to
                             hand over. The key material is sealed to that measurement.

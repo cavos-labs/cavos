@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   const { data } = await admin
     .from('app_environments')
     .select(
-      'id, social_recovery_enabled, social_recovery_provider, social_recovery_delay_seconds',
+      'id, social_recovery_enabled, social_recovery_provider',
     )
     .eq('id', resolved.environmentId)
     .eq('app_id', resolved.appId)
@@ -28,7 +28,6 @@ export async function GET(request: Request) {
     // they send no provider of their own, and the session falls back to it.
     providers: PROVIDERS,
     provider: data.social_recovery_provider,
-    delay_seconds: data.social_recovery_delay_seconds,
     // The configured audiences are deliberately absent. They are not secret,
     // but the client has no use for them — the policy is assembled server-side
     // precisely so a frontend cannot influence whose tokens are accepted.

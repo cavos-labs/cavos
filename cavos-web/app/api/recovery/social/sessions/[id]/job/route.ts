@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { runJob } from '@/lib/recovery/social/enclave'
+import {
+  isSocialRecoveryProvider,
+  providerAudiences,
+  providerPolicy,
+} from '@/lib/recovery/social/config'
+import { identityCommitmentHex } from '@/lib/recovery/social/identityCommitment'
 
 /**
  * Submit the encrypted job and return the enclave's result.
@@ -70,7 +76,7 @@ export async function POST(
   }
 
   try {
-    const { result } = await runJob({
+    const { result, sealed_result } = await runJob({
       sessionId: id,
       job: body as Required<EncryptedJob>,
       authChallengeHash: session.auth_challenge_hash,
@@ -78,7 +84,9 @@ export async function POST(
     // A successful enrolment has to be persisted here. The enclave's output is
     // the only copy of the sealed record, and losing it means the wallet can
     // never be recovered — so this runs before the session is marked complete.
-    if (session.action === 'enroll') {
+    // A `confirmed` result describes a record that already exists and writes
+    // nothing.
+    if (session.action === 'enroll' && result.result === 'enrolled') {
       await persistEnrollment(admin, session, result)
     }
 
@@ -86,7 +94,9 @@ export async function POST(
       .from('social_recovery_sessions')
       .update({ status: 'completed', result, completed_at: new Date().toISOString() })
       .eq('id', id)
-    return NextResponse.json({ status: 'completed', result })
+    // The client acts on `sealed_result`, which only it and the enclave can
+    // read or write; `result` is what was persisted above.
+    return NextResponse.json({ status: 'completed', result, sealed_result })
   } catch (error) {
     // The session is spent either way: the enclave discards the channel key as
     // soon as it claims a job, so this exact session can never succeed now.
@@ -101,14 +111,13 @@ export async function POST(
 }
 
 const SESSION_COLUMNS =
-  'wallet_id, app_id, environment_id, action, provider, delay_seconds, status, expires_at, auth_challenge_hash'
+  'wallet_id, app_id, environment_id, action, provider, status, expires_at, auth_challenge_hash'
 
 interface SessionRow {
   wallet_id: string
   app_id: string
   environment_id: string
   provider: string
-  delay_seconds: number
   action: string
   dek_enroll?: boolean
 }
@@ -163,10 +172,45 @@ async function persistEnrollment(
 
   const { data: wallet } = await admin
     .from('wallets')
-    .select('network')
+    .select('network, user_social_id')
     .eq('id', session.wallet_id)
     .single()
   if (!wallet) throw new Error('enrolment wallet is missing')
+
+  // The enclave seals whichever identity the token named and does not know
+  // whose wallet this is, so that it is the wallet owner's is checked here.
+  const { data: environment } = await admin
+    .from('app_environments')
+    .select('social_recovery_audiences')
+    .eq('id', session.environment_id)
+    .eq('app_id', session.app_id)
+    .single()
+  if (!environment || !isSocialRecoveryProvider(session.provider)) {
+    throw new Error('enrolment policy could not be rebuilt')
+  }
+  const expectedIdentity = identityCommitmentHex(
+    {
+      app_id: session.app_id,
+      environment_id: session.environment_id,
+      ...providerPolicy(session.provider, providerAudiences(environment.social_recovery_audiences)),
+    },
+    wallet.user_social_id,
+  )
+  if (result.identity_commitment_hex !== expectedIdentity) {
+    throw new Error('enrolment identity is not the wallet owner')
+  }
+
+  // One record per wallet. A session opened before another one finished must
+  // not replace what that one stored: on Starknet the first authority may
+  // already be on-chain, where it can never be changed.
+  const { data: existing } = await admin
+    .from('social_recovery_enrollments')
+    .select('onchain_status')
+    .eq('wallet_id', session.wallet_id)
+    .maybeSingle()
+  if (existing && existing.onchain_status !== 'disabled') {
+    throw new Error('wallet already has a recovery enrolment')
+  }
 
   const dekSealed = session.dek_enroll === true
   const { error } = await admin.from('social_recovery_enrollments').upsert(
@@ -175,7 +219,8 @@ async function persistEnrollment(
       app_id: session.app_id,
       environment_id: session.environment_id,
       provider: session.provider,
-      delay_seconds: session.delay_seconds,
+      // The column outlived the recovery delay; the kit enrols none on-chain.
+      delay_seconds: 0,
       identity_commitment: result.identity_commitment_hex,
       policy_hash: result.policy_hash_hex,
       recovery_pubkey_compressed: result.recovery_pubkey_compressed_b64,
