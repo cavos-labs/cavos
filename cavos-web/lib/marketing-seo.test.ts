@@ -462,4 +462,26 @@ describe('marketing SEO', () => {
       )
     }
   })
+
+  it('links ranking chain pages and the changelog from the shared footer', () => {
+    const footer = fs.readFileSync(
+      path.join(process.cwd(), 'components/Footer.tsx'),
+      'utf8',
+    )
+    const required = [
+      ['/embedded-starknet-wallet', 'Starknet wallet'],
+      ['/embedded-solana-wallet', 'Solana wallet'],
+      ['/embedded-stellar-wallet', 'Stellar wallet'],
+      ['/blog', 'Changelog'],
+    ] as const
+
+    for (const [href, label] of required) {
+      assert.match(
+        footer,
+        new RegExp(`href="${href}"[^>]*>${label}<`),
+        `footer missing ${label} -> ${href}`,
+      )
+    }
+    assert.match(footer, /hover:text-black transition-colors/)
+  })
 })
