@@ -11,8 +11,7 @@ The obvious way to build that would be for Cavos to hold a key and hand it over
 once a login checks out. That would make Cavos custodial and every Cavos
 employee a target. Instead the check runs inside an **AWS Nitro Enclave** — an
 isolated environment whose exact software is measured by hardware and attested
-by AWS — holding a key that the chain itself restricts to a single, delayed,
-cancellable action.
+by AWS — holding a key that the chain itself restricts to a single action.
 
 <Callout type="info">
 **Availability.** Hardware-isolated recovery is **opt-in per environment**, not
@@ -47,18 +46,22 @@ controls, and **recovery**, later, on a device that has nothing.
 
 ### Enrolment
 
-1. The user signs in. The provider's `id_token` stays **in memory only** — it is
-   never persisted, logged, or sent to Cavos in the clear.
+1. The user signs in. Before redirecting, the SDK generates a one-time **login
+   secret** that stays on this device and puts only its hash into the sign-in
+   request. The provider's `id_token` comes back carrying that hash, stays **in
+   memory only**, and is never persisted or logged by the SDK.
 2. The SDK asks for the enclave's **attestation document**: a statement signed by
    the AWS Nitro Attestation PKI describing exactly which image is running. It
    verifies the signature against [the AWS root certificate pinned in the
    SDK](#the-attestation-pin), checks the measurement against the ones this
    release accepts, and aborts if anything differs.
-3. Satisfied, the browser encrypts the token **directly to an ephemeral key
-   belonging to that enclave**. The key is read from *inside* the signed
+3. Satisfied, the browser encrypts the token and the login secret **directly to
+   an ephemeral key belonging to that enclave**. The key is read from *inside* the signed
    document rather than from the response that carried it, so there is nothing
    to cross-check: substituting a key would mean forging an AWS signature. The
-   Cavos control plane relays ciphertext it cannot read.
+   Cavos control plane relays ciphertext it cannot read. The enclave's answer
+   comes back sealed to the same session, so the control plane cannot rewrite it
+   either.
 4. Inside, the enclave verifies the token. On **Solana and Stellar** it seals
    the MasterDEK (`dek_enroll`) so a later device can unwrap it. On **Starknet**
    it generates a recovery keypair, seals the private half, and returns the
@@ -77,12 +80,23 @@ The user signs in on the new device and the same channel is established. The
 enclave verifies the token. On Solana/Stellar it unwraps the MasterDEK to this
 device's wrap key. On Starknet it signs **one** message: an authorization for
 this specific new device. The chain (Starknet) or the derived spend key
-(Solana/Stellar) does the rest.
+(Solana/Stellar) does the rest. Recovery completes immediately — there is no
+waiting period.
+
+<Callout type="warn">
+**Starknet: the first device has to transact once.** A Starknet account is
+created by the first transaction from the device that owns its address, and the
+recovery authority lives in that account. A second device that signs in before
+that first transaction has nothing on-chain to be authorized against, and
+recovery fails with *"This wallet has not been used on the device that created
+it yet."* Make one transaction on the original device, then sign in again on the
+new one. Solana and Stellar are not affected.
+</Callout>
 
 The result is worth stating plainly: an attacker who fully compromises the Cavos
 backend gets ciphertext they cannot decrypt and an on-chain authority they cannot
 use. An attacker who somehow ran code inside the enclave still could not act
-outside the single delayed action the contract permits.
+outside the single action the contract permits.
 
 ## What the enclave verifies
 
@@ -91,11 +105,18 @@ issuer, audience, token fingerprint, configured provider, and the enrolled
 subject — the recovery only proceeds for the identity that enrolled.
 
 The authentication must be **no more than five minutes old**. Google and Apple
-tokens must carry an OIDC `nonce`, which marks a token as minted for an
-interactive sign-in; what binds a token to *this* session is its SHA-256
-fingerprint, committed when the session opens and compared in constant time. The
-API stores only a second hash of that fingerprint, so a token can be used once
-and replays are rejected. Email requires a verified, recent Firebase email token
+tokens must carry an OIDC `nonce` of the form
+`<app id>.<BASE64URL(SHA-256(login secret))>`. The enclave recomputes it from
+the app the wallet belongs to and the login secret it received over the
+encrypted channel, and compares in constant time. A token is therefore only
+accepted for the app it was issued for, and only together with the secret held
+by the device that started that sign-in — the same construction as PKCE's
+`S256` challenge (RFC 7636), applied to the OIDC `nonce`. The SDK makes the same
+comparison before it uses a login at all.
+
+What binds a token to *this* session is its SHA-256 fingerprint, committed when
+the session opens and compared in constant time. The API stores only a second
+hash of that fingerprint, so a token can be used once and replays are rejected. Email requires a verified, recent Firebase email token
 obtained through the magic-link flow. OTP and Cavos-signed compatibility tokens
 are never accepted.
 
@@ -108,18 +129,16 @@ the account contract will listen to for exactly one purpose.
 |---|---|
 | **Solana** | Seals / unwraps the MasterDEK. The spend key is HKDF of that DEK. No recovery PDA, no `add_signer`. |
 | **Stellar** | Same MasterDEK wrap as Solana (`cavos-ed25519-stellar-v1`). A new device is the same `G…`, not an extra Horizon signer. |
-| **Starknet** | A separate P-256 authority may only schedule one exact `add_signer`; nonce, expiry, timelock, cancellation, and finalization are contract-enforced. |
+| **Starknet** | A separate P-256 authority may only authorize one exact `add_signer`; the device key, nonce, and expiry it signed are contract-enforced. |
 
-A non-zero timelock turns recovery into something the real owner can veto: the
-signer is committed on-chain but inert until the delay passes, and any other
-device can cancel it. The SDK stores only the public `readyAt` timestamp,
-resumes after a refresh, and permissionlessly finalizes when the delay expires.
-It never persists the social token.
+The authorization names the exact device key being added, so it cannot be
+replayed for a different one, and it expires after an hour. The SDK never
+persists the social token.
 
 ## Why this is still self-custodial
 
 "Someone else can restore my wallet" sounds like the opposite of self-custody,
-so it is worth being precise about what the enclave can and cannot do. Four
+so it is worth being precise about what the enclave can and cannot do. Three
 things hold, and each is enforced by something other than a Cavos promise.
 
 **Nobody can read the recovery key — not even the people who run it.** The
@@ -140,11 +159,6 @@ with a custodial provider, where the operator's key *is* the spending key.
 Native enroll is a wrap, not an extra on-chain authority. Starknet still
 registers the recovery role with a transaction the current device signs.
 
-**The real owner can veto a recovery.** With a non-zero timelock the scheduled
-signer is inert until the delay passes and any existing device can cancel it. So
-even in the worst case — a valid recovery for an identity that is not really the
-owner — the owner has a window to stop it, on-chain, without asking Cavos.
-
 Put together: the account contract remains the sole authority over who can sign,
 the enclave holds a narrow permission granted by the user, and the Cavos control
 plane only relays ciphertext it cannot read. That is what makes this
@@ -161,10 +175,15 @@ formality:
 - **AWS.** Attestation and KMS are what make the measurement meaningful
   and the sealed key openable.
 - **The image-upgrade policy.** A new digest is a new trust decision.
+- **The sign-in.** Recovery follows whoever completes a fresh sign-in as the
+  enrolled identity. That means the identity provider, and the service that
+  runs the sign-in flow — Cavos, when you use Cavos-hosted Google or Apple
+  login.
 - **Your Firebase project**, if you use the email provider.
 
-The honest summary: breaking this needs a compromised enclave image **and** the
-timelock to expire without the owner noticing. It never needs only Cavos.
+The honest summary: recovery is as strong as the measured enclave image and the
+sign-in behind it. Nobody — Cavos included — can take a sealed key out of the
+enclave or use one without a sign-in the enclave accepts.
 
 Classic Stellar **is** on this path when `deviceApproval` is `"enclave"`: the
 `G…` is HKDF of the sealed DEK. Grandfathered wallets that never enrolled still
@@ -264,6 +283,16 @@ Firebase, your own backend — as long as a real Google or Apple sign-in happens
 somewhere underneath. **Your users never sign in twice:** you pass the provider
 token your login already obtained. Works on Solana, Stellar, and Starknet.
 
+<Callout type="warn">
+**Not available for Google and Apple in 0.2.6.** The enclave now requires the
+`nonce` described in [What the enclave verifies](#what-the-enclave-verifies),
+which only a sign-in started by the SDK carries. A token obtained by your own
+login does not, so `submitSocialRecoveryToken` is rejected for Google and Apple
+until the SDK exposes the nonce for you to pass to your provider. Use
+Cavos-hosted sign-in for enclave recovery in the meantime. The rest of this
+section describes the intended flow.
+</Callout>
+
 Register your OAuth client ID once in **Dashboard → App → Environments → Your
 OAuth client ID**. The enclave then accepts tokens minted for your client
 instead of only Cavos's.
@@ -308,13 +337,6 @@ service, so enrolment and recovery are two synchronous requests.
 In practice the enclave accounts for **1–2 seconds**. The rest of what a user
 waits for is the on-chain transaction that installs the recovery authority or
 the new device signer, which is chain and congestion dependent.
-
-<Callout type="info">
-Adding a device is a single transaction when the environment's recovery delay is
-zero. With a delay configured it stays two — schedule now, finalize after
-`readyAt` — because that gap is the entire point of the timelock. The contract
-computes the deadline from its own clock, so nothing client-side can shorten it.
-</Callout>
 
 Earlier releases ran this on Google Confidential Space, which booted a
 confidential VM per session. That cost 49–134 seconds of boot for the same

@@ -173,7 +173,7 @@ MasterDEK. On Starknet it still schedules a restricted `add_signer`. See
 | `AttestationPolicy` | Which enclave you accept: `{ pcr0 }`, the SHA-384 measurement of the Nitro enclave image. |
 | `DEFAULT_SOCIAL_RECOVERY_ATTESTATION` | The policy for the enclave Cavos operates (AWS Nitro), pinned in this package. |
 | `enrollHardwareIsolatedRecovery`, `recoverHardwareIsolatedDevice` | Chain-aware coordinators. |
-| `CoordinatedRecoveryResult` | Result including `readyAt` when a timelock applies. |
+| `CoordinatedRecoveryResult` | `{ scheduleTransaction?, finalizeTransaction? }` — the Starknet transactions that added the device. Empty on Solana and Stellar. |
 | `SocialRecoveryCredential`, `createSocialRecoveryCredential` | The in-memory social credential. |
 | `SocialRecoveryProvider`, `SocialRecoveryAction`, `SocialRecoveryResult` | Types. |
 

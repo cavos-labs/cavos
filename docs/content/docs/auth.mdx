@@ -104,6 +104,11 @@ const cavos = await Cavos.connect({
 });
 ```
 
+Each sign-in URL carries the hash of a one-time secret the SDK keeps in
+`sessionStorage`, and `handleCallback` rejects a response that does not match
+it. Build the URL right before redirecting, and handle the callback in the same
+tab and origin that started the login.
+
 <Callout type="warn">
 Register every callback URL for your app in **Dashboard → App → Callback URLs**,
 one per line, matched **exactly** — scheme, host, path, no trailing slash, and no
