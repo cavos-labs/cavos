@@ -59,6 +59,7 @@ describe('marketing sitemap', () => {
       '/embedded-solana-wallet',
       '/embedded-starknet-wallet',
       '/compare',
+      '/privy-alternatives',
       '/custody',
       '/pricing',
       '/stats',
@@ -146,8 +147,8 @@ Hello
     assert.equal(post.lastModified.toISOString().startsWith('2025-03-30'), true)
   })
 
-  it('keeps the existing 22 indexable marketing URLs', () => {
-    assert.equal(entries.length, 22)
+  it('keeps the existing 23 indexable marketing URLs', () => {
+    assert.equal(entries.length, 23)
   })
 
   it('omits auth, dashboard, and noindex utility routes', () => {

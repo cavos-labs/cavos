@@ -180,6 +180,14 @@ export default function ComparePage() {
                     <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted">
                         Each page covers custody, chain support, signing authority, sponsorship, and
                         recovery — including the cases where the other provider is the better choice.
+                        Teams comparing replacements for Privy can start with the{' '}
+                        <Link
+                            href="/privy-alternatives"
+                            className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                        >
+                            Privy alternatives
+                        </Link>{' '}
+                        guide.
                     </p>
                     <div className="mt-8 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
                         {COMPETITORS.map((c) => (

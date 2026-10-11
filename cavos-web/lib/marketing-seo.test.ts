@@ -43,6 +43,12 @@ import {
   EMBEDDED_WALLET_PUBLISHED,
   EMBEDDED_WALLET_TITLE,
 } from './embedded-wallet-guide'
+import {
+  PRIVY_ALTERNATIVES_DESCRIPTION,
+  PRIVY_ALTERNATIVES_FAQ,
+  PRIVY_ALTERNATIVES_PATH,
+  PRIVY_ALTERNATIVES_TITLE,
+} from './privy-alternatives'
 
 describe('marketing SEO', () => {
   it('builds complete Open Graph and Twitter tags with a canonical URL', () => {
@@ -284,6 +290,14 @@ describe('marketing SEO', () => {
     assert.equal(compare.itemListElement[1].item, 'https://cavos.xyz/compare')
     assert.equal(compare.itemListElement[2].item, 'https://cavos.xyz/compare/privy')
 
+    const alternatives = breadcrumbListJsonLd([
+      { name: 'Home', path: '/' },
+      { name: 'Compare', path: '/compare' },
+      { name: 'Privy alternatives', path: '/privy-alternatives' },
+    ])
+    assert.equal(alternatives.itemListElement[2].item, 'https://cavos.xyz/privy-alternatives')
+    assert.equal(alternatives.itemListElement[2].name, 'Privy alternatives')
+
     const chain = breadcrumbListJsonLd([
       { name: 'Home', path: '/' },
       { name: 'Embedded Stellar Wallet', path: '/embedded-stellar-wallet' },
@@ -299,6 +313,34 @@ describe('marketing SEO', () => {
     assert.ok(EMBEDDED_WALLET_DESCRIPTION.length <= 155)
     assert.equal(EMBEDDED_WALLET_PATH, '/embedded-wallet')
     assert.ok(EMBEDDED_WALLET_FAQ.length >= 4 && EMBEDDED_WALLET_FAQ.length <= 6)
+  })
+
+  it('keeps the Privy alternatives title and description inside search limits', () => {
+    assert.equal(PRIVY_ALTERNATIVES_PATH, '/privy-alternatives')
+    assert.equal(PRIVY_ALTERNATIVES_TITLE.includes('| Cavos'), false)
+    const fullTitle = `${PRIVY_ALTERNATIVES_TITLE} | Cavos`
+    assert.ok(fullTitle.length >= 50 && fullTitle.length <= 60, fullTitle)
+    assert.ok(
+      PRIVY_ALTERNATIVES_DESCRIPTION.length >= 140 &&
+        PRIVY_ALTERNATIVES_DESCRIPTION.length <= 160,
+      String(PRIVY_ALTERNATIVES_DESCRIPTION.length),
+    )
+    assert.ok(PRIVY_ALTERNATIVES_FAQ.length >= 3 && PRIVY_ALTERNATIVES_FAQ.length <= 4)
+
+    const meta = marketingPageMetadata({
+      title: PRIVY_ALTERNATIVES_TITLE,
+      description: PRIVY_ALTERNATIVES_DESCRIPTION,
+      path: PRIVY_ALTERNATIVES_PATH,
+      type: 'article',
+    })
+    assert.equal(meta.title, PRIVY_ALTERNATIVES_TITLE)
+    assert.equal(meta.alternates?.canonical, 'https://cavos.xyz/privy-alternatives')
+    assert.equal(meta.openGraph?.title, fullTitle)
+    assert.equal(meta.openGraph?.url, 'https://cavos.xyz/privy-alternatives')
+    assert.equal(meta.openGraph?.type, 'article')
+    assert.equal(meta.twitter?.card, 'summary_large_image')
+    assert.equal(meta.twitter?.title, fullTitle)
+    assert.equal(meta.twitter?.description, PRIVY_ALTERNATIVES_DESCRIPTION)
   })
 
   it('builds Article, BreadcrumbList, and FAQPage JSON-LD for the guide', () => {
@@ -429,6 +471,7 @@ describe('marketing SEO', () => {
   it('emits BreadcrumbList JSON-LD on indexable marketing pages', () => {
     const pagesWithBreadcrumbs = [
       'app/compare/page.tsx',
+      'app/privy-alternatives/page.tsx',
       'app/custody/page.tsx',
       'app/pricing/page.tsx',
       'app/stats/page.tsx',

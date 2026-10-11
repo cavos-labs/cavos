@@ -163,6 +163,14 @@ export default async function ComparisonPage({
                                 Cavos vs {c.name}
                             </Link>
                         ))}
+                        {competitor.slug === 'privy' ? (
+                            <Link
+                                href="/privy-alternatives"
+                                className="rounded-md border border-line px-4 py-2 text-sm font-medium transition-colors hover:border-ink"
+                            >
+                                Privy alternatives
+                            </Link>
+                        ) : null}
                     </div>
                 </section>
 
