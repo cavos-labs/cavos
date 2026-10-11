@@ -1,8 +1,12 @@
+import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { COMPETITORS } from './compare-data'
 
 export const MARKETING_ORIGIN = 'https://cavos.xyz'
+
+/** Homepage URL as Google stores the canonical, including the trailing slash. */
+export const MARKETING_HOME_URL = `${MARKETING_ORIGIN}/`
 
 /**
  * Blog posts that emit robots noindex. The sitemap skips the same slugs so
@@ -18,13 +22,86 @@ export type SitemapEntry = {
   url: string
   changeFrequency: SitemapChangeFrequency
   priority: number
-  lastModified?: Date
+  lastModified: Date
 }
 
 const BLOG_DIR_CANDIDATES = [
   path.join(process.cwd(), 'content/blog'),
   path.join(process.cwd(), 'cavos-web/content/blog'),
 ]
+
+/**
+ * Per-route lastmod used when `git log` cannot see the page file (shallow
+ * clones, missing .git). Dates match the last known content commit of that
+ * route's page file. Never a shared `new Date()`.
+ */
+export const SITEMAP_LASTMOD_FALLBACK: Record<string, string> = {
+  '/': '2026-10-08',
+  '/embedded-wallet': '2026-10-07',
+  '/embedded-stellar-wallet': '2026-10-09',
+  '/embedded-solana-wallet': '2026-10-09',
+  '/embedded-starknet-wallet': '2026-10-09',
+  '/compare': '2026-10-11',
+  '/compare/[slug]': '2026-10-11',
+  '/privy-alternatives': '2026-10-11',
+  '/custody': '2026-10-11',
+  '/pricing': '2026-10-09',
+  '/stats': '2026-10-09',
+  '/contact-sales': '2026-10-09',
+  '/about': '2026-10-07',
+  '/blog': '2026-10-09',
+  '/privacy': '2026-10-09',
+  '/dpa': '2026-10-09',
+  '/user-privacy': '2026-10-09',
+  '/user-terms': '2026-10-09',
+  '/terms': '2026-10-09',
+}
+
+export function sitemapPageFile(pathname: string): string {
+  if (pathname === '/') return 'app/page.tsx'
+  if (/^\/compare\/[^/]+$/.test(pathname)) return 'app/compare/[slug]/page.tsx'
+  return `app${pathname}/page.tsx`
+}
+
+function fallbackLastModifiedKey(pathname: string): string {
+  if (/^\/compare\/[^/]+$/.test(pathname)) return '/compare/[slug]'
+  return pathname
+}
+
+function parseStableDate(value: string): Date | undefined {
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed
+}
+
+export function gitLastModifiedForFile(pageFile: string): Date | undefined {
+  const pathspecs = [path.posix.join('cavos-web', pageFile), pageFile]
+  for (const spec of pathspecs) {
+    try {
+      const output = execFileSync(
+        'git',
+        ['log', '-1', '--format=%cI', '--', spec],
+        { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] },
+      ).trim()
+      const parsed = parseStableDate(output)
+      if (parsed) return parsed
+    } catch {
+      // Shallow clones and missing git are expected; use the per-route fallback.
+    }
+  }
+  return undefined
+}
+
+export function lastModifiedForPath(pathname: string): Date {
+  const fromGit = gitLastModifiedForFile(sitemapPageFile(pathname))
+  if (fromGit) return fromGit
+
+  const fallback = SITEMAP_LASTMOD_FALLBACK[fallbackLastModifiedKey(pathname)]
+  const parsed = fallback ? parseStableDate(fallback) : undefined
+  if (!parsed) {
+    throw new Error(`Missing sitemap lastModified fallback for ${pathname}`)
+  }
+  return parsed
+}
 
 function page(
   pathname: string,
@@ -33,10 +110,13 @@ function page(
   lastModified?: Date,
 ): SitemapEntry {
   const url =
-    pathname === '/' ? MARKETING_ORIGIN : `${MARKETING_ORIGIN}${pathname}`
-  return lastModified
-    ? { url, changeFrequency, priority, lastModified }
-    : { url, changeFrequency, priority }
+    pathname === '/' ? MARKETING_HOME_URL : `${MARKETING_ORIGIN}${pathname}`
+  return {
+    url,
+    changeFrequency,
+    priority,
+    lastModified: lastModified ?? lastModifiedForPath(pathname),
+  }
 }
 
 /**
@@ -59,8 +139,7 @@ export function parseBlogFrontmatter(raw: string): Record<string, string> {
 
 function parseFrontmatterDate(value: string | undefined): Date | undefined {
   if (!value) return undefined
-  const parsed = new Date(value)
-  return Number.isNaN(parsed.getTime()) ? undefined : parsed
+  return parseStableDate(value)
 }
 
 export type PublishedBlogPost = {

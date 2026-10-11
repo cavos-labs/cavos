@@ -39,10 +39,12 @@ import {
 import {
   EMBEDDED_WALLET_DESCRIPTION,
   EMBEDDED_WALLET_FAQ,
+  EMBEDDED_WALLET_HOW_IT_WORKS,
   EMBEDDED_WALLET_PATH,
   EMBEDDED_WALLET_PUBLISHED,
   EMBEDDED_WALLET_TITLE,
 } from './embedded-wallet-guide'
+import { COMPETITORS, embeddedWalletProviderRows } from './compare-data'
 import {
   PRIVY_ALTERNATIVES_DESCRIPTION,
   PRIVY_ALTERNATIVES_FAQ,
@@ -81,6 +83,8 @@ describe('marketing SEO', () => {
     assert.equal(home.openGraph?.description, HOME_DESCRIPTION)
     assert.equal(home.twitter?.description, HOME_DESCRIPTION)
     assert.equal(HOME_TITLE.includes('| Cavos'), false)
+    assert.equal(home.alternates?.canonical, 'https://cavos.xyz/')
+    assert.equal(home.openGraph?.url, 'https://cavos.xyz/')
   })
 
   it('keeps a single Cavos in the homepage title within search limits', () => {
@@ -225,7 +229,7 @@ describe('marketing SEO', () => {
 
     const crumbs = data['@graph'][1]
     assert.equal(crumbs['@type'], 'BreadcrumbList')
-    assert.equal(crumbs.itemListElement[0].item, 'https://cavos.xyz')
+    assert.equal(crumbs.itemListElement[0].item, 'https://cavos.xyz/')
     assert.equal(crumbs.itemListElement[1].name, 'About')
     assert.equal(crumbs.itemListElement[1].item, 'https://cavos.xyz/about')
   })
@@ -269,7 +273,7 @@ describe('marketing SEO', () => {
         item: item.item,
       })),
       [
-        { position: 1, name: 'Home', item: 'https://cavos.xyz' },
+        { position: 1, name: 'Home', item: 'https://cavos.xyz/' },
         { position: 2, name: 'Blog', item: 'https://cavos.xyz/blog' },
         {
           position: 3,
@@ -286,7 +290,7 @@ describe('marketing SEO', () => {
       { name: 'Compare', path: '/compare' },
       { name: 'Cavos vs Privy', path: '/compare/privy' },
     ])
-    assert.equal(compare.itemListElement[0].item, 'https://cavos.xyz')
+    assert.equal(compare.itemListElement[0].item, 'https://cavos.xyz/')
     assert.equal(compare.itemListElement[1].item, 'https://cavos.xyz/compare')
     assert.equal(compare.itemListElement[2].item, 'https://cavos.xyz/compare/privy')
 
@@ -309,10 +313,59 @@ describe('marketing SEO', () => {
   it('keeps the embedded-wallet guide title and description inside search limits', () => {
     assert.ok(EMBEDDED_WALLET_TITLE.length > 0)
     assert.ok(EMBEDDED_WALLET_TITLE.length <= 60)
+    assert.match(EMBEDDED_WALLET_TITLE, /What Is an Embedded Wallet\?/)
     assert.ok(EMBEDDED_WALLET_DESCRIPTION.length > 0)
     assert.ok(EMBEDDED_WALLET_DESCRIPTION.length <= 155)
     assert.equal(EMBEDDED_WALLET_PATH, '/embedded-wallet')
     assert.ok(EMBEDDED_WALLET_FAQ.length >= 4 && EMBEDDED_WALLET_FAQ.length <= 6)
+  })
+
+  it('keeps a single H1 and adds how-it-works plus a compare-data provider table', () => {
+    assert.deepEqual(
+      EMBEDDED_WALLET_HOW_IT_WORKS.map((step) => step.title),
+      ['Sign in', 'Key creation', 'Signing', 'Recovery'],
+    )
+
+    const rows = embeddedWalletProviderRows()
+    assert.deepEqual(
+      rows.map((row) => row.slug),
+      COMPETITORS.map((competitor) => competitor.slug),
+    )
+    assert.deepEqual(
+      rows.map((row) => row.href),
+      ['/compare/privy', '/compare/dynamic', '/compare/turnkey', '/compare/web3auth', '/compare/magic'],
+    )
+
+    const pageSource = fs.readFileSync(
+      path.join(process.cwd(), 'app/embedded-wallet/page.tsx'),
+      'utf8',
+    )
+    assert.equal((pageSource.match(/<h1[\s>]/g) ?? []).length, 1)
+    assert.match(pageSource, /How an embedded wallet works/)
+    assert.match(pageSource, /embeddedWalletProviderRows/)
+    assert.match(pageSource, /\/privy-alternatives/)
+    assert.match(pageSource, /guidePageJsonLd/)
+    const headings = [...pageSource.matchAll(/<h[12][^>]*>\s*([^<]+)/g)].map(
+      (match) => match[1].trim(),
+    )
+    assert.ok(headings.includes('What is an embedded wallet?'))
+    assert.ok(headings.includes('How an embedded wallet works'))
+    for (const heading of headings) {
+      assert.doesNotMatch(heading, /—/)
+    }
+  })
+
+  it('links the homepage body copy to the embedded-wallet guide and compare index', () => {
+    const features = fs.readFileSync(
+      path.join(process.cwd(), 'components/landing/FeaturesGrid.tsx'),
+      'utf8',
+    )
+    assert.match(features, /href="\/embedded-wallet"/)
+    assert.match(features, /what an embedded wallet is/)
+    assert.match(features, /href="\/compare"/)
+    const home = fs.readFileSync(path.join(process.cwd(), 'app/page.tsx'), 'utf8')
+    assert.match(home, /path: '\/'/)
+    assert.doesNotMatch(home, /<h1[\s\S]*embedded wallet/i)
   })
 
   it('keeps the Privy alternatives title and description inside search limits', () => {

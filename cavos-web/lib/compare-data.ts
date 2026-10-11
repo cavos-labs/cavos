@@ -185,3 +185,25 @@ export const COMPETITORS: Competitor[] = [
 export function getCompetitor(slug: string): Competitor | undefined {
     return COMPETITORS.find((c) => c.slug === slug)
 }
+
+function rowMatching(competitor: Competitor, pattern: RegExp): CompareRow | undefined {
+    return competitor.rows.find((row) => pattern.test(row.feature))
+}
+
+/** Compact provider rows for the embedded-wallet guide table. Source: COMPETITORS only. */
+export function embeddedWalletProviderRows() {
+    return COMPETITORS.map((competitor) => {
+        const signing = rowMatching(
+            competitor,
+            /signing authority|key architecture|where keys live/i,
+        )
+        const chains = rowMatching(competitor, /chain coverage/i)
+        return {
+            slug: competitor.slug,
+            name: competitor.name,
+            href: `/compare/${competitor.slug}`,
+            signing: signing?.them ?? competitor.summary,
+            chains: chains?.them ?? competitor.summary,
+        }
+    })
+}
