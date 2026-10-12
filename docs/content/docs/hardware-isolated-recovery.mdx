@@ -5,7 +5,7 @@ description: Restore a Solana or Stellar MasterDEK — or schedule a Starknet ad
 
 A recovery code works, but it asks the user to keep a secret safe forever, and
 most will not. **Hardware-isolated recovery** lets them recover the way they
-expect to: by signing in again with Google, Apple, or an email link.
+expect to: by signing in again with Google, Apple, or an email code.
 
 The obvious way to build that would be for Cavos to hold a key and hand it over
 once a login checks out. That would make Cavos custodial and every Cavos
@@ -25,8 +25,8 @@ recovery path in [Recovery](/docs/recovery) works without it.
 <Callout type="warn">
 Call this **hardware-isolated, non-custodial** recovery, never *trustless*
 recovery. No Cavos employee holds a key that can move funds, but the measured
-enclave, AWS's attestation and KMS, the approved image-upgrade policy,
-and — for the email provider — your Firebase identity project all remain inside
+enclave, AWS's attestation and KMS, and the approved image-upgrade policy
+all remain inside
 the trust model. Section [Why this is still self-custodial](#why-this-is-still-self-custodial)
 is explicit about both halves.
 </Callout>
@@ -116,9 +116,10 @@ comparison before it uses a login at all.
 
 What binds a token to *this* session is its SHA-256 fingerprint, committed when
 the session opens and compared in constant time. The API stores only a second
-hash of that fingerprint, so a token can be used once and replays are rejected. Email requires a verified, recent Firebase email token
-obtained through the magic-link flow. OTP and Cavos-signed compatibility tokens
-are never accepted.
+hash of that fingerprint, so a token can be used once and replays are rejected. Email uses the enclave's own signed token
+(issuer `https://enclave.cavos.xyz`), issued after the user enters the emailed
+code and bound to the same login secret. Cavos-signed compatibility tokens are
+never accepted.
 
 ## What the chain enforces
 
@@ -179,7 +180,6 @@ formality:
   enrolled identity. That means the identity provider, and the service that
   runs the sign-in flow — Cavos, when you use Cavos-hosted Google or Apple
   login.
-- **Your Firebase project**, if you use the email provider.
 
 The honest summary: recovery is as strong as the measured enclave image and the
 sign-in behind it. Nobody — Cavos included — can take a sealed key out of the
@@ -326,8 +326,9 @@ enclave enforces the policy sealed at enrolment, so the setting only applies to
 enrolments made after it changes.
 </Callout>
 
-The email provider still uses the Cavos Firebase project: its audience is the
-project id and its issuer embeds it, so it is not a per-app value.
+The email provider has no per-app client ID: its tokens are issued by the
+enclave itself. The dashboard's email "Firebase project ID" field no longer
+affects email sign-in codes.
 
 ## How long it takes
 
