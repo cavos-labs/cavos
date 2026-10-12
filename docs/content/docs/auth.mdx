@@ -1,6 +1,6 @@
 ---
 title: Authentication
-description: Use Cavos hosted login (Google / Apple / OTP) or bring your own identity.
+description: Use Cavos hosted login (Google / Apple / email code) or bring your own identity.
 ---
 
 Authentication exists for **one reason**: to produce a stable `userId` (plus
@@ -67,7 +67,7 @@ Grandfathered Stellar wallets still need a passkey or recovery code.
 
 ## Option B — Cavos hosted auth (`CavosAuth`)
 
-`CavosAuth` provides Google, Apple, and email OTP / magic-link login that resolves
+`CavosAuth` provides Google, Apple, and email-code login that resolves
 to a Cavos `Identity` you pass straight into `connect`.
 
 ```ts title="TypeScript"
@@ -119,7 +119,7 @@ asked for it. Remember to add tunnel or preview domains while developing, since
 each one is a distinct origin.
 </Callout>
 
-### Email OTP
+### Email code
 
 ```ts title="TypeScript"
 await auth.sendOtp(email);
@@ -134,28 +134,37 @@ const cavos = await Cavos.connect({
 });
 ```
 
-`sendMagicLink(email)` is also available as an alternative to OTP.
+The code is 9 characters (lowercase letters and digits). The Cavos recovery
+enclave, running in AWS Nitro, generates it, mails it directly to the user's
+mail server, and verifies it. The user enters the code in your app, and the SDK
+sends it to the enclave encrypted to its attested key. The enclave answers with
+its own signed token (issuer `https://enclave.cavos.xyz`, keys at
+`https://enclave.cavos.xyz/.well-known/jwks.json`), bound to a login secret the
+SDK keeps, the same binding Google and Apple tokens have. Email users therefore
+get [hardware-isolated recovery](/docs/hardware-isolated-recovery) like Google
+and Apple users. The user id of an email login is derived from the address.
 
-<Callout type="warn">
-**On the enclave, email means the magic link.** An email code returns a
-Cavos-signed token, which the recovery enclave never accepts, so it cannot
-create or restore a Solana or Stellar wallet protected by
-[hardware-isolated recovery](/docs/hardware-isolated-recovery). Such a login
-fails with `this wallet is protected by recovery. Sign in with Google, Apple or
-an email link to continue.` The magic link returns Firebase's own ID token,
-which the enclave and the wallet registry both verify. From `@cavos/kit`
-**0.2.3**, `CavosAuthModal` uses the magic link whenever the app runs the
-enclave, whatever `emailMode` says. Apps on passkeys can keep OTP.
+- **Lifetime.** A code expires after 5 minutes and allows 3 attempts. A new code
+  for the same address can be requested after 60 seconds.
+- **Sender.** The mail comes from `no-reply@cavos.xyz`, shows your app's name as
+  the sender, and has the subject `Your {App} sign-in code`. Its design is
+  fixed; per-app email templates do not apply to sign-in codes.
+- **Supported addresses.** Providers whose domain publishes an MTA-STS policy,
+  for example Gmail, Outlook / Hotmail, and Proton Mail (Yahoo publishes one in
+  testing mode). Other domains get `This email provider is not supported yet.`
+  (error code `email_undeliverable`).
+- **React Native.** Email sign-in is not available yet: `sendOtp` and
+  `verifyOtp` throw an `unsupported` error there. Use Google or Apple.
 
-The link returns to the URL it was requested from, so that URL must be in
-**Dashboard → App → Callback URLs** like any OAuth callback.
-</Callout>
+`CavosAuthModal` shows a 9-character code screen and accepts a pasted code with
+spaces or hyphens. For the errors the code flow can return, see
+[Troubleshooting](/docs/troubleshooting#email-sign-in-errors).
 
 ## React Native authentication
 
 React Native apps use `NativeCavosAuth` from `@cavos/kit/react-native`. It opens
 Google or Apple in the system browser and returns through the registered
-`redirectUri`; OTP and magic links use the same app ID and callback validation.
+`redirectUri`; email sign-in is not available on React Native yet.
 
 ```ts
 import { NativeCavosAuth } from "@cavos/kit/react-native";

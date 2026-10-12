@@ -30,7 +30,7 @@ const TOPICS: {
   {
     label: 'Authentication',
     href: '/docs/auth',
-    desc: 'Bring your own identity, or use hosted Google / Apple / OTP login.',
+    desc: 'Bring your own identity, or use hosted Google / Apple / email code login.',
   },
   {
     label: 'Signing & gasless',

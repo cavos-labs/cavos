@@ -28,11 +28,12 @@ apart:
 - **Social recovery** — enable or disable [hardware-isolated
   recovery](/docs/hardware-isolated-recovery) for **Starknet, Solana, and
   native Stellar** wallets in that environment, choose exactly one of Google,
-  Apple, or email magic link, and register
+  Apple, or email code, and register
   your own OAuth client ID if you authenticate users yourself. Grandfathered
   Stellar wallets are unaffected. All independent per environment, so you can
   rehearse recovery in development against a different provider than production
-  uses.
+  uses. The email provider's "Firebase project ID" field no longer affects email
+  sign-in codes, which the enclave issues itself.
 
 <Callout type="info">
 **Callback URLs are per app, not per environment.** A URL you add so a tunnel

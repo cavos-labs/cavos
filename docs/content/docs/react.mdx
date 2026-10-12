@@ -141,9 +141,8 @@ is active. The session keeps all chains connected.
 | Method | Description |
 |--------|-------------|
 | `login(provider)` | OAuth social login (`"google" \| "apple"`) — opens the hosted flow. |
-| `sendOtp(email)` | Send an email OTP code. |
-| `verifyOtp(email, code)` | Verify an OTP / complete a magic link and deploy the wallet. |
-| `sendMagicLink(email)` | Send a passwordless magic-link email. |
+| `sendOtp(email)` | Email a 9-character sign-in code. |
+| `verifyOtp(email, code)` | Verify the emailed code and deploy the wallet. |
 | `handleCallback(authData, redirectUri?)` | Resolve identity from an OAuth callback (`?cavos_auth_code=…`) and deploy. Pass the callback URL as `redirectUri` if it differs from the current one. |
 
 ### Transactions
@@ -222,7 +221,6 @@ import { CavosAuthModal } from "@cavos/kit/react";
   appLogo="https://myapp.com/logo.png"
   appLogoSize={56}
   providers={["email", "google", "apple"]}
-  emailMode="otp"
   primaryColor="#402AFF"
   theme="light"
   radius={16}
@@ -240,7 +238,6 @@ import { CavosAuthModal } from "@cavos/kit/react";
 | `appLogo` | `string?` | Image URL for the logo. If omitted, the Cavos star is shown. The provider also loads it from your app's dashboard config automatically; a local `appLogo` overrides that. |
 | `appLogoSize` | `number?` | Logo height in px. Defaults to `40` (image) / `34` (Cavos star). |
 | `providers` | `("google" \| "apple" \| "email")[]?` | Which login buttons to show. Defaults to all three. |
-| `emailMode` | `"magic-link" \| "otp"?` | How the email provider authenticates. Defaults to `magic-link`. On the enclave (`deviceApproval: "enclave"`, the default with `socialRecovery`) the modal always uses `magic-link` from 0.2.3: an email code yields no token the enclave accepts. See [Authentication](/docs/auth#email-otp). |
 | `primaryColor` | `string?` | Accent color for buttons / focus rings (hex). |
 | `theme` | `"light" \| "dark"?` | Card theme. Defaults to `light`. |
 | `backgroundColor` | `string?` | Override the card background (defaults to white / `#111` per theme). |

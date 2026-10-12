@@ -164,26 +164,24 @@ Typical causes:
 Kit `wallet.execute` on Stellar still uses the Cavos XLM relayer. Do not mix
 the two paths for the same first-create.
 
-## Email sign-in spins forever, or fails with `this wallet is protected by recovery`
+## Email sign-in errors
 
-**The app runs the enclave and the user signed in with an email code.** A code
-returns a Cavos-signed token, which the enclave never accepts, so a Solana or
-Stellar wallet cannot be created or restored from it. Starknet still connects,
-which makes it look like email half-works. Use the magic link instead: from
-`@cavos/kit` **0.2.3** `CavosAuthModal` does so on its own whenever the app runs
-the enclave. If you call `sendOtp` / `verifyOtp` yourself, switch to
-`sendMagicLink`. See [Authentication](/docs/auth#email-otp).
+`sendOtp` and `verifyOtp` (and `CavosAuthModal`) surface these messages. A code
+expires after 5 minutes and allows 3 attempts; a new one for the same address
+can be requested after 60 seconds.
 
-Before 0.2.3 the modal also hid this error: it stayed on "Connecting with…",
-then "This is taking longer than usual", with the real message only in
-`authError`. It now returns to the sign-in screen and shows the error, so
-upgrade first if all you see is the spinner. The same release fixes the
-connecting screen naming the provider used last time ("Connecting with Google")
-instead of email.
+| Message | Code | Meaning |
+|---|---|---|
+| `Enter a valid email address.` | `invalid_request` | The address is malformed. |
+| `kit/auth: this app is not registered with Cavos.` | `app_not_found` | The `appId` is wrong or unknown. |
+| `This email provider is not supported yet.` | `email_undeliverable` | Sign-in codes are delivered to providers whose domain publishes an MTA-STS policy, such as Gmail, Outlook / Hotmail, and Proton Mail. |
+| `A code was just sent to this address. Wait a minute before requesting another.` | `code_cooldown` | A code was requested less than 60 seconds ago. |
+| `Too many attempts. Try again in a few minutes.` | `rate_limited` | Rate limit reached. |
+| `Email sign-in is unavailable right now. Try again later.` | `email_unavailable` / `enclave_unavailable` | The code service or the enclave could not be reached. |
+| `That code is wrong or has expired. Request a new one.` | `code_rejected` | Wrong code, expired code, or attempts used up. |
 
-If the magic link itself answers `redirect_uri is not registered for this app`,
-register the page it was requested from; see
-[above](#redirect_uri-is-not-registered-for-this-app).
+On React Native, `sendOtp` and `verifyOtp` throw an `unsupported` error; use
+Google or Apple there. See [Authentication](/docs/auth#email-code).
 
 ## Still stuck
 
