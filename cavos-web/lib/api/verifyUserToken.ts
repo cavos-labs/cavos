@@ -33,26 +33,17 @@ const ISSUERS: Record<string, Issuer> = {
         audience: () => process.env.APPLE_CLIENT_ID,
         appInNonce: true,
     },
-    // Cavos-signed JWT for email/OTP logins (see lib/firebase-jwt.ts).
+    'https://enclave.cavos.xyz': {
+        jwksUrl: 'https://enclave.cavos.xyz/.well-known/jwks.json',
+        audience: () => 'cavos-email',
+        appInNonce: true,
+    },
+    /** Cavos-signed JWT for password logins (see lib/firebase-jwt.ts). */
     'https://cavos.app/firebase': {
         jwksUrl: 'https://cavos.xyz/.well-known/jwks.json',
         audience: () => 'cavos-starknet',
     },
 };
-
-/**
- * Firebase's own ID token, which an email-link login returns (see
- * magic-link/verify). Its issuer names the project, so it cannot be a fixed
- * key above; without it every email-link user was refused by the registry.
- */
-function firebaseIssuer(issuer: string): Issuer | undefined {
-    const projectId = process.env.FIREBASE_PROJECT_ID;
-    if (!projectId || issuer !== `https://securetoken.google.com/${projectId}`) return undefined;
-    return {
-        jwksUrl: 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com',
-        audience: () => projectId,
-    };
-}
 
 const keySets = new Map<string, ReturnType<typeof jose.createRemoteJWKSet>>();
 
@@ -77,8 +68,9 @@ export function bearerToken(request: Request): string | null {
 export interface VerifiedUser {
     sub: string;
     /**
-     * Whether this token was issued to a login `appId` started. Email tokens
-     * carry no nonce, so they name no app and are not checked here.
+     * Whether this token was issued to a login `appId` started. Google, Apple
+     * and enclave email tokens name the app in their nonce; password tokens
+     * carry none and are not checked here.
      */
     issuedTo(appId: string): boolean;
 }
@@ -101,7 +93,7 @@ export async function verifyUserToken(
     } catch {
         return null;
     }
-    const config = issuer ? ISSUERS[issuer] ?? firebaseIssuer(issuer) : undefined;
+    const config = issuer ? ISSUERS[issuer] : undefined;
     if (!config) return null;
     try {
         const { payload } = await jose.jwtVerify(token, resolveKeys(config.jwksUrl), {

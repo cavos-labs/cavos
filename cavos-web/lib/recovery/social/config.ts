@@ -56,10 +56,8 @@ export function providerAudiences(raw: unknown): ProviderAudiences {
  *   google, apple  the app's own OAuth client id, replacing the audience. The
  *                  issuer is fixed — Google and Apple sign either way, so this
  *                  widens which client a token was minted for, not who can mint.
- *   email          the app's own Firebase project id, which sets the audience
- *                  *and* the issuer, since Firebase issues under a per-project
- *                  URL. Substituting only the audience would build a policy
- *                  that can never verify.
+ *   email          none. The enclave issues email tokens itself under a fixed
+ *                  issuer and audience, so there is no client to substitute.
  */
 export function providerPolicy(
   provider: SocialRecoveryProvider,
@@ -83,13 +81,11 @@ export function providerPolicy(
       jwks_uri: 'https://appleid.apple.com/auth/keys',
     }
   }
-  const projectId = override || required('FIREBASE_PROJECT_ID')
   return {
     provider,
-    issuer: `https://securetoken.google.com/${projectId}`,
-    audience: projectId,
-    jwks_uri:
-      'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com',
+    issuer: 'https://enclave.cavos.xyz',
+    audience: 'cavos-email',
+    jwks_uri: 'https://enclave.cavos.xyz/.well-known/jwks.json',
   }
 }
 
