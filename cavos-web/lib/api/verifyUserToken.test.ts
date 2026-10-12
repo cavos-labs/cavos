@@ -4,9 +4,12 @@ import * as jose from 'jose';
 import { verifyUserToken, isUserOfApp, bearerToken } from './verifyUserToken';
 
 const GOOGLE = 'https://accounts.google.com';
+const ENCLAVE = 'https://enclave.cavos.xyz';
 
 let sign: (claims: jose.JWTPayload, opts?: { expired?: boolean }) => Promise<string>;
 let keys: jose.JWTVerifyGetKey;
+let signEnclave: (claims: jose.JWTPayload) => Promise<string>;
+let enclaveKeys: jose.JWTVerifyGetKey;
 
 before(async () => {
     const { publicKey, privateKey } = await jose.generateKeyPair('RS256');
@@ -17,6 +20,15 @@ before(async () => {
             .setIssuedAt()
             .setExpirationTime(opts?.expired ? '-1h' : '1h')
             .sign(privateKey);
+
+    const enclavePair = await jose.generateKeyPair('ES256');
+    enclaveKeys = (() => enclavePair.publicKey) as unknown as jose.JWTVerifyGetKey;
+    signEnclave = (claims) =>
+        new jose.SignJWT(claims)
+            .setProtectedHeader({ alg: 'ES256', typ: 'JWT', kid: 'enclave-test' })
+            .setIssuedAt()
+            .setExpirationTime('1h')
+            .sign(enclavePair.privateKey);
 });
 
 function req(token?: string): Request {
@@ -58,15 +70,24 @@ describe('verifyUserToken', () => {
         assert.equal(await verifyUserToken(req('not-a-jwt'), () => keys), null);
     });
 
-    it("accepts Firebase's ID token from an email-link login", async () => {
-        process.env.FIREBASE_PROJECT_ID = 'cavos-test';
-        const token = await sign({ iss: 'https://securetoken.google.com/cavos-test', aud: 'cavos-test', sub: 'uid-1' });
-        assert.equal((await verifyUserToken(req(token), () => keys))?.sub, 'uid-1');
+    it('accepts an enclave-issued email token', async () => {
+        const token = await signEnclave({ iss: ENCLAVE, aud: 'cavos-email', sub: 'a'.repeat(64) });
+        assert.equal((await verifyUserToken(req(token), () => enclaveKeys))?.sub, 'a'.repeat(64));
     });
 
-    it('rejects a Firebase token from another project', async () => {
+    it('rejects an enclave token minted for another audience', async () => {
+        const token = await signEnclave({ iss: ENCLAVE, aud: 'someone-else', sub: 'a'.repeat(64) });
+        assert.equal(await verifyUserToken(req(token), () => enclaveKeys), null);
+    });
+
+    it('rejects an enclave token signed by another key', async () => {
+        const token = await signEnclave({ iss: ENCLAVE, aud: 'cavos-email', sub: 'a'.repeat(64) });
+        assert.equal(await verifyUserToken(req(token), () => keys), null);
+    });
+
+    it("rejects Firebase's securetoken ID token", async () => {
         process.env.FIREBASE_PROJECT_ID = 'cavos-test';
-        const token = await sign({ iss: 'https://securetoken.google.com/other', aud: 'other', sub: 'uid-1' });
+        const token = await sign({ iss: 'https://securetoken.google.com/cavos-test', aud: 'cavos-test', sub: 'uid-1' });
         assert.equal(await verifyUserToken(req(token), () => keys), null);
     });
 });
@@ -104,9 +125,13 @@ describe('isUserOfApp', () => {
         assert.equal(isUserOfApp(await google(HASH), 'user-1', APP), false);
     });
 
-    it('does not check the app of an email token', async () => {
-        process.env.FIREBASE_PROJECT_ID = 'cavos-test';
-        const token = await sign({ iss: 'https://securetoken.google.com/cavos-test', aud: 'cavos-test', sub: 'uid-1' });
-        assert.equal(isUserOfApp(await verifyUserToken(req(token), () => keys), 'uid-1', APP), true);
+    it('checks the app of an enclave email token by its nonce', async () => {
+        const email = (nonce?: string) =>
+            signEnclave({ iss: ENCLAVE, aud: 'cavos-email', sub: 'a'.repeat(64), ...(nonce ? { nonce } : {}) })
+                .then((token) => verifyUserToken(req(token), () => enclaveKeys));
+        const user = await email(`${APP}.${HASH}`);
+        assert.equal(isUserOfApp(user, 'a'.repeat(64), APP), true);
+        assert.equal(isUserOfApp(user, 'a'.repeat(64), OTHER_APP), false);
+        assert.equal(isUserOfApp(await email(), 'a'.repeat(64), APP), false);
     });
 });

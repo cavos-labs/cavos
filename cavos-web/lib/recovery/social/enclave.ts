@@ -14,6 +14,7 @@
  */
 
 const REQUEST_TIMEOUT_MS = 15_000
+const SEND_CODE_TIMEOUT_MS = 30_000
 
 export interface OpenedSession {
   /** Uncompressed SEC1 P-256 channel key, relayed for convenience. */
@@ -36,6 +37,8 @@ export class EnclaveError extends Error {
   constructor(
     message: string,
     readonly status: number,
+    /** The enclave's refusal code, when it gave one. */
+    readonly code?: string,
   ) {
     super(message)
     this.name = 'EnclaveError'
@@ -53,7 +56,11 @@ function config() {
   return { baseUrl, sharedSecret }
 }
 
-async function call<T>(path: string, body: unknown): Promise<T> {
+async function call<T>(
+  path: string,
+  body: unknown,
+  timeoutMs = REQUEST_TIMEOUT_MS,
+): Promise<T> {
   const { baseUrl, sharedSecret } = config()
   const response = await fetch(new URL(path, baseUrl), {
     method: 'POST',
@@ -63,7 +70,7 @@ async function call<T>(path: string, body: unknown): Promise<T> {
     },
     body: JSON.stringify(body),
     cache: 'no-store',
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    signal: AbortSignal.timeout(timeoutMs),
   })
   if (!response.ok) {
     throw new EnclaveError(
@@ -77,7 +84,11 @@ async function call<T>(path: string, body: unknown): Promise<T> {
   // decided on — a bad credential, an expired session — and is deliberately
   // coarse so the relay learns nothing from it.
   if (result.response === 'error') {
-    throw new EnclaveError(`enclave refused the request: ${result.code ?? 'unknown'}`, 422)
+    throw new EnclaveError(
+      `enclave refused the request: ${result.code ?? 'unknown'}`,
+      422,
+      result.code,
+    )
   }
   return result
 }
@@ -111,6 +122,24 @@ export function openSession(sessionId: string): Promise<OpenedSession> {
   return call<OpenedSession>('/sessions', { session_id: sessionId })
 }
 
+/**
+ * Ask the enclave to generate a sign-in code and mail it straight to `email`.
+ *
+ * The code never passes through this process. Delivery can take a while (MX
+ * lookup, MTA-STS policy fetch, TLS), hence the longer timeout.
+ */
+export async function sendCode(params: {
+  email: string
+  appId: string
+  appName: string
+}): Promise<void> {
+  await call<{ response: 'code_sent' }>(
+    '/codes',
+    { email: params.email, app_id: params.appId, app_name: params.appName },
+    SEND_CODE_TIMEOUT_MS,
+  )
+}
+
 export interface JobResult {
   /** For this control plane to persist. Relayed in the clear. */
   result: Record<string, unknown>
@@ -121,11 +150,14 @@ export interface JobResult {
   sealed_result: { nonce_b64: string; ciphertext_b64: string }
 }
 
-/** Run one job and return its result, in the same request. */
+/**
+ * Run one job and return its result, in the same request. Jobs bound to a
+ * recovery session pass a challenge hash; the email verification job has none.
+ */
 export function runJob(params: {
   sessionId: string
   job: EncryptedJob
-  authChallengeHash: string
+  authChallengeHash?: string
 }): Promise<JobResult> {
   return call<JobResult>('/jobs', {
     session_id: params.sessionId,
