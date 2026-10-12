@@ -36,7 +36,9 @@ export function Footer() {
                     <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/50">Resources</p>
                     <ul className="space-y-3 text-sm font-medium text-black/40">
                         <li><Link href="/embedded-wallet" className="hover:text-black transition-colors">What is an embedded wallet</Link></li>
+                        <li><Link href="/blog/how-to-add-an-embedded-wallet" className="hover:text-black transition-colors">How to add an embedded wallet</Link></li>
                         <li><Link href="/compare" className="hover:text-black transition-colors">Compare providers</Link></li>
+                        <li><Link href="/privy-alternatives" className="hover:text-black transition-colors">Privy alternatives</Link></li>
                         <li><Link href="/blog" className="hover:text-black transition-colors">Changelog</Link></li>
                         <li><Link href="https://docs.cavos.xyz" target="_blank" className="hover:text-black transition-colors">Documentation</Link></li>
                     </ul>

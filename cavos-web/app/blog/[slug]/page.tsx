@@ -43,6 +43,8 @@ export default async function BlogPostPage({ params }: Props) {
     path: `/blog/${slug}`,
     datePublished: post.meta.date,
     dateModified: post.meta.date,
+    type: post.meta.faq?.length ? 'Article' : 'BlogPosting',
+    faq: post.meta.faq,
     crumbs: [
       { name: 'Home', path: '/' },
       { name: 'Blog', path: '/blog' },
@@ -86,11 +88,13 @@ export default async function BlogPostPage({ params }: Props) {
           </Link>
 
           <div className="flex items-center gap-3 mb-5">
-            <span
-              className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-[0.15em] ${CATEGORY_COLORS[post.meta.category as PostCategory]}`}
-            >
-              {post.meta.category}
-            </span>
+            {post.meta.category !== 'Guide' ? (
+              <span
+                className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-[0.15em] ${CATEGORY_COLORS[post.meta.category as PostCategory]}`}
+              >
+                {post.meta.category}
+              </span>
+            ) : null}
             <span className="text-[11px] uppercase tracking-[0.18em] text-white/30">
               {formatDate(post.meta.date)}
             </span>
@@ -110,6 +114,24 @@ export default async function BlogPostPage({ params }: Props) {
         <div className="max-w-2xl blog-prose">
           <MDXRemote source={post.content} />
         </div>
+
+        {post.meta.faq && post.meta.faq.length > 0 ? (
+          <div className="max-w-2xl mt-16 pt-8 border-t border-black/[0.06]">
+            <h2 className="text-2xl font-semibold text-[#0A0908] tracking-tight">
+              Frequently asked
+            </h2>
+            <div className="mt-8 space-y-10">
+              {post.meta.faq.map((item) => (
+                <article key={item.question}>
+                  <h3 className="font-semibold text-[#0A0908]">{item.question}</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-black/55">
+                    {item.answer}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         <div className="max-w-2xl mt-16 pt-8 border-t border-black/[0.06]">
           <Link

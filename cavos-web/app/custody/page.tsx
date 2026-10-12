@@ -198,7 +198,7 @@ export default function CustodyPage() {
                 '@type': 'Article',
                 '@id': 'https://cavos.xyz/custody#article',
                 headline: 'When an embedded wallet makes your app a custodian',
-                dateModified: '2026-09-22',
+                dateModified: '2026-10-12',
                 datePublished: '2026-09-22',
                 description:
                     'Cited comparison of custody obligations under MiCA, FinCEN, the FCA, California, and the Latin American texts cited on this page.',
@@ -243,7 +243,12 @@ export default function CustodyPage() {
                         If your company can move a user’s crypto, you are holding it. The EU, US
                         money-transmission rules, California, and the UK from 25 October 2027 put
                         a price on that. Argentina writes exclusive self-custody wallets out of
-                        its registry. The figures are in the table. The statutes are under it.
+                        its registry. A{' '}
+                        <Link href="/embedded-wallet" className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
+                            self-custodial embedded wallet
+                        </Link>{' '}
+                        is the design where you cannot move the funds. The figures are in the
+                        table. The statutes are under it.
                     </p>
                 </header>
 

@@ -75,6 +75,11 @@ export type BreadcrumbCrumb = {
   path: string
 }
 
+export type GuideFaqItem = {
+  question: string
+  answer: string
+}
+
 /** Absolute-URL BreadcrumbList node. Does not include @context (for @graph). */
 export function breadcrumbListJsonLd(crumbs: BreadcrumbCrumb[]) {
   return {
@@ -95,41 +100,72 @@ export function blogPostJsonLd(input: {
   datePublished: string
   dateModified?: string
   crumbs: BreadcrumbCrumb[]
+  type?: 'BlogPosting' | 'Article'
+  faq?: GuideFaqItem[]
 }) {
   const url = pageUrl(input.path)
   const datePublished = input.datePublished
   const dateModified = input.dateModified ?? input.datePublished
+  const type = input.type ?? 'BlogPosting'
+
+  const graph: Record<string, unknown>[] = [
+    {
+      '@type': type,
+      '@id': `${url}#article`,
+      headline: input.title,
+      description: input.description,
+      datePublished,
+      dateModified,
+      author: {
+        '@type': 'Organization',
+        '@id': ORGANIZATION_ID,
+        name: 'Cavos',
+      },
+      image: OG_IMAGE.url,
+      url,
+      mainEntityOfPage: {
+        '@type': 'WebPage',
+        '@id': url,
+      },
+      publisher: { '@id': ORGANIZATION_ID },
+    },
+    {
+      ...breadcrumbListJsonLd(input.crumbs),
+      '@id': `${url}#breadcrumb`,
+    },
+  ]
+
+  if (input.faq && input.faq.length > 0) {
+    graph.push({
+      '@type': 'FAQPage',
+      '@id': `${url}#faq`,
+      mainEntity: input.faq.map((item) => ({
+        '@type': 'Question',
+        name: item.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: item.answer,
+        },
+      })),
+    })
+  }
 
   return {
     '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@type': 'BlogPosting',
-        headline: input.title,
-        description: input.description,
-        datePublished,
-        dateModified,
-        author: {
-          '@type': 'Organization',
-          '@id': ORGANIZATION_ID,
-          name: 'Cavos',
-        },
-        image: OG_IMAGE.url,
-        url,
-        mainEntityOfPage: {
-          '@type': 'WebPage',
-          '@id': url,
-        },
-        publisher: { '@id': ORGANIZATION_ID },
-      },
-      breadcrumbListJsonLd(input.crumbs),
-    ],
+    '@graph': graph,
   }
 }
 
-export type GuideFaqItem = {
-  question: string
-  answer: string
+export type GuideHowToStep = {
+  name: string
+  text: string
+  url?: string
+}
+
+export type GuideHowTo = {
+  name: string
+  description: string
+  steps: readonly GuideHowToStep[]
 }
 
 /** Article + BreadcrumbList + FAQPage graph for a long-form marketing guide. */
@@ -141,51 +177,70 @@ export function guidePageJsonLd(input: {
   dateModified?: string
   crumbs: BreadcrumbCrumb[]
   faq: GuideFaqItem[]
+  howTo?: GuideHowTo
 }) {
   const url = pageUrl(input.path)
   const datePublished = input.datePublished
   const dateModified = input.dateModified ?? input.datePublished
 
+  const graph: Record<string, unknown>[] = [
+    {
+      '@type': 'Article',
+      '@id': `${url}#article`,
+      headline: input.title,
+      description: input.description,
+      datePublished,
+      dateModified,
+      author: {
+        '@type': 'Organization',
+        '@id': ORGANIZATION_ID,
+        name: 'Cavos',
+      },
+      image: OG_IMAGE.url,
+      url,
+      mainEntityOfPage: {
+        '@type': 'WebPage',
+        '@id': url,
+      },
+      publisher: { '@id': ORGANIZATION_ID },
+    },
+    {
+      ...breadcrumbListJsonLd(input.crumbs),
+      '@id': `${url}#breadcrumb`,
+    },
+    {
+      '@type': 'FAQPage',
+      '@id': `${url}#faq`,
+      mainEntity: input.faq.map((item) => ({
+        '@type': 'Question',
+        name: item.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: item.answer,
+        },
+      })),
+    },
+  ]
+
+  if (input.howTo) {
+    graph.push({
+      '@type': 'HowTo',
+      '@id': `${url}#howto`,
+      name: input.howTo.name,
+      description: input.howTo.description,
+      step: input.howTo.steps.map((step, index) => ({
+        '@type': 'HowToStep',
+        position: index + 1,
+        name: step.name,
+        text: step.text,
+        ...(step.url ? { url: step.url } : {}),
+      })),
+    })
+  }
+
   return {
     '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@type': 'Article',
-        '@id': `${url}#article`,
-        headline: input.title,
-        description: input.description,
-        datePublished,
-        dateModified,
-        author: {
-          '@type': 'Organization',
-          '@id': ORGANIZATION_ID,
-          name: 'Cavos',
-        },
-        image: OG_IMAGE.url,
-        url,
-        mainEntityOfPage: {
-          '@type': 'WebPage',
-          '@id': url,
-        },
-        publisher: { '@id': ORGANIZATION_ID },
-      },
-      {
-        ...breadcrumbListJsonLd(input.crumbs),
-        '@id': `${url}#breadcrumb`,
-      },
-      {
-        '@type': 'FAQPage',
-        '@id': `${url}#faq`,
-        mainEntity: input.faq.map((item) => ({
-          '@type': 'Question',
-          name: item.question,
-          acceptedAnswer: {
-            '@type': 'Answer',
-            text: item.answer,
-          },
-        })),
-      },
-    ],
+    '@graph': graph,
   }
 }
 
@@ -205,6 +260,7 @@ export function marketingPageMetadata(input: {
   path: string
   type?: 'website' | 'article'
   publishedTime?: string
+  modifiedTime?: string
   robots?: Metadata['robots']
 }): Metadata {
   const url = pageUrl(input.path)
@@ -234,6 +290,9 @@ export function marketingPageMetadata(input: {
       images: [image],
       ...(type === 'article' && input.publishedTime
         ? { publishedTime: input.publishedTime }
+        : {}),
+      ...(type === 'article' && input.modifiedTime
+        ? { modifiedTime: input.modifiedTime }
         : {}),
     },
     twitter: {

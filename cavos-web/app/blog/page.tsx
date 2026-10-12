@@ -1,19 +1,67 @@
 import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { getAllPosts, formatDate, CATEGORY_COLORS, PostCategory } from '@/lib/blog';
+import { getAllPosts, formatDate } from '@/lib/blog';
 import { Metadata } from 'next';
 import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo';
+import {
+  EMBEDDED_WALLET_INTEGRATION_PATH,
+  EMBEDDED_WALLET_INTEGRATION_TITLE,
+} from '@/lib/embedded-wallet-guide';
 
 export const metadata: Metadata = marketingPageMetadata({
-  title: 'Changelog',
+  title: 'Embedded Wallet Guides & Product Updates',
   description:
-    'Release notes, security updates, and technical deep dives on Cavos multichain embedded wallet infrastructure.',
+    'How to add an embedded wallet to a React app, plus Cavos product updates for the self-custodial SDK on Starknet, Solana, and Stellar.',
   path: '/blog',
 });
 
+const GUIDES = [
+  {
+    href: '/embedded-wallet',
+    title: 'What is an embedded wallet?',
+    body: 'Custody models, key management, and how to choose an SDK.',
+  },
+  {
+    href: EMBEDDED_WALLET_INTEGRATION_PATH,
+    title: EMBEDDED_WALLET_INTEGRATION_TITLE,
+    body: 'Install @cavos/kit, wrap CavosProvider, sign in, and send a sponsored transaction.',
+  },
+  {
+    href: '/compare',
+    title: 'Compare embedded wallet providers',
+    body: 'Cavos vs hosted wallets and extensions across custody, chains, and recovery.',
+  },
+  {
+    href: '/custody',
+    title: 'When an embedded wallet makes you a custodian',
+    body: 'The control test under MiCA, FinCEN, California, and related regimes.',
+  },
+  {
+    href: '/privy-alternatives',
+    title: 'Privy alternatives',
+    body: 'When teams look past Privy, and which architecture actually fits.',
+  },
+  {
+    href: '/embedded-starknet-wallet',
+    title: 'Embedded Starknet wallet',
+    body: 'Cairo DeviceAccount with on-chain P-256 verification.',
+  },
+  {
+    href: '/embedded-solana-wallet',
+    title: 'Embedded Solana wallet',
+    body: 'Device-account PDA with native secp256r1 precompile.',
+  },
+  {
+    href: '/embedded-stellar-wallet',
+    title: 'Embedded Stellar wallet',
+    body: 'Classic G… account with Horizon ed25519 signers.',
+  },
+] as const;
+
 export default function BlogIndexPage() {
   const posts = getAllPosts();
+  const changelogPosts = posts.filter((post) => post.category !== 'Guide');
   const breadcrumbs = {
     '@context': 'https://schema.org',
     ...breadcrumbListJsonLd([
@@ -31,9 +79,7 @@ export default function BlogIndexPage() {
       />
       <Header />
 
-      {/* Dark hero — matches landing page */}
       <section className="relative bg-brand pt-[4.5rem] overflow-hidden">
-        {/* Radial glow */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -41,7 +87,6 @@ export default function BlogIndexPage() {
               'radial-gradient(ellipse 80% 60% at 50% 100%, rgba(234,229,220,0.07) 0%, transparent 70%)',
           }}
         />
-        {/* Dot grid */}
         <div
           className="absolute inset-0 pointer-events-none opacity-[0.04]"
           style={{
@@ -52,54 +97,84 @@ export default function BlogIndexPage() {
         />
 
         <div className="relative max-w-[1400px] mx-auto px-6 md:px-12 py-20 md:py-28">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div className="flex flex-col gap-6 max-w-3xl">
             <h1
               className="text-[clamp(3rem,8vw,5.5rem)] font-[family-name:var(--font-geist)] font-bold text-white leading-[0.9] tracking-tighter"
             >
               Changelog
             </h1>
-            <p className="text-white/40 text-sm sm:text-base mb-1 sm:mb-2">
-              Release notes, deep dives &amp; more
+            <p className="text-white/55 text-sm sm:text-base leading-relaxed max-w-xl">
+              Product updates for the Cavos embedded wallet SDK, plus guides for
+              adding a self-custodial wallet to your app on Starknet, Solana, and
+              Stellar.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Post list */}
+      <section className="max-w-[1400px] mx-auto px-6 md:px-12 pt-16 md:pt-20">
+        <h2 className="text-2xl font-semibold text-[#0A0908] tracking-tight">
+          Guides
+        </h2>
+        <p className="mt-3 max-w-2xl text-sm text-black/45 leading-relaxed">
+          Start with what an embedded wallet is, then the React integration, then
+          a provider comparison if you already have a shortlist.
+        </p>
+        <ul className="mt-8 divide-y divide-black/[0.06] border-y border-black/[0.06]">
+          {GUIDES.map((guide) => (
+            <li key={guide.href}>
+              <Link
+                href={guide.href}
+                className="group flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-8 py-7 hover:bg-[#F7F5F2] -mx-4 px-4 rounded-xl transition-colors duration-150"
+              >
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base md:text-lg font-semibold text-[#0A0908] leading-snug mb-1.5 group-hover:underline underline-offset-2">
+                    {guide.title}
+                  </h3>
+                  <p className="text-sm text-black/45 leading-relaxed">
+                    {guide.body}
+                  </p>
+                </div>
+                <span className="shrink-0 hidden sm:flex items-center text-black/20 group-hover:text-black/60 transition-colors mt-1 text-lg">
+                  →
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
+
       <section className="max-w-[1400px] mx-auto px-6 md:px-12 py-16 md:py-20">
-        {posts.length === 0 ? (
-          <p className="text-black/40 text-sm">No posts yet.</p>
+        <h2 className="text-2xl font-semibold text-[#0A0908] tracking-tight">
+          Product updates
+        </h2>
+        <p className="mt-3 max-w-2xl text-sm text-black/45 leading-relaxed">
+          Release notes and security write-ups. Individual changelog entries are
+          kept out of the search index.
+        </p>
+        {changelogPosts.length === 0 ? (
+          <p className="mt-8 text-black/40 text-sm">No posts yet.</p>
         ) : (
-          <ul className="divide-y divide-black/[0.06]">
-            {posts.map((post) => (
+          <ul className="mt-8 divide-y divide-black/[0.06]">
+            {changelogPosts.map((post) => (
               <li key={post.slug}>
                 <Link
                   href={`/blog/${post.slug}`}
                   className="group flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-8 py-7 hover:bg-[#F7F5F2] -mx-4 px-4 rounded-xl transition-colors duration-150"
                 >
-                  {/* Date */}
                   <span className="shrink-0 text-[11px] uppercase tracking-[0.2em] text-black/35 sm:w-28 sm:pt-[3px]">
                     {formatDate(post.date)}
                   </span>
 
-                  {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-[0.15em] ${CATEGORY_COLORS[post.category as PostCategory]}`}
-                      >
-                        {post.category}
-                      </span>
-                    </div>
-                    <h2 className="text-base md:text-lg font-semibold text-[#0A0908] leading-snug mb-1.5 group-hover:underline underline-offset-2">
+                    <h3 className="text-base md:text-lg font-semibold text-[#0A0908] leading-snug mb-1.5 group-hover:underline underline-offset-2">
                       {post.title}
-                    </h2>
+                    </h3>
                     <p className="text-sm text-black/45 leading-relaxed line-clamp-2">
                       {post.excerpt}
                     </p>
                   </div>
 
-                  {/* Arrow */}
                   <span className="shrink-0 hidden sm:flex items-center text-black/20 group-hover:text-black/60 transition-colors mt-1 text-lg">
                     →
                   </span>
