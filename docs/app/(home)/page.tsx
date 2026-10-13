@@ -35,17 +35,17 @@ const TOPICS: {
   {
     label: 'Signing & gasless',
     href: '/docs/signing',
-    desc: 'Silent secp256r1 signing and paymaster-sponsored execution.',
+    desc: 'Silent signing and paymaster-sponsored execution.',
   },
   {
     label: 'Multi-device',
     href: '/docs/multi-device',
-    desc: 'Add a new device to an existing wallet with on-chain approval.',
+    desc: 'Open an existing wallet on a new device by restoring its MasterDEK.',
   },
   {
     label: 'Recovery',
     href: '/docs/recovery',
-    desc: 'Passkey, enclave sign-in, or a recovery code. Non-custodial after device loss.',
+    desc: 'Passkey or enclave sign-in. Non-custodial after device loss.',
   },
   {
     label: 'API reference',
@@ -90,7 +90,7 @@ export default function HomePage() {
 
             <p className="mt-6 max-w-md text-pretty text-[1.05rem] leading-relaxed text-muted">
               Build self-custodial embedded wallets across blockchains with one
-              chain-configurable SDK — a Cairo smart account on Starknet, native
+              chain-configurable SDK — an OpenZeppelin account on Starknet, native
               Ed25519 accounts on Solana and Stellar. Every chain that comes
               next joins through an adapter.
             </p>

@@ -361,7 +361,7 @@ await wallet.removeDevice({
 <Callout type="warn">
 **Revocation is surgical** on grandfathered accounts. `removeDevice` drops that
 one signer via `setOptions` (weight 0). You cannot revoke the signer this
-device is using. Native Solana has no equivalent — `removeSigner` throws.
+device is using. Native Solana and Starknet have no equivalent: one key, restored from the MasterDEK.
 </Callout>
 
 ## Pay reserves and fees in a token

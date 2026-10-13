@@ -15,7 +15,7 @@ export const metadata: Metadata = marketingPageMetadata({
 const COMPARISON = [
     {
         feature: 'Signing authority',
-        cavos: 'A non-exportable device signer controlled by the user',
+        cavos: 'An account key derived on the user\'s device from a MasterDEK that only their devices can open',
         hosted: 'Provider-specific key management or MPC model',
         extension: 'A key managed in a separate wallet application',
     },

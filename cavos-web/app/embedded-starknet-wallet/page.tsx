@@ -60,7 +60,7 @@ export default function EmbeddedStarknetWalletPage() {
         operatingSystem: 'Web, iOS, Android',
         applicationCategory: 'DeveloperApplication',
         applicationSubCategory: 'Embedded Starknet Wallet SDK',
-        description: 'A device-native, self-custodial embedded wallet SDK for Starknet. The signing key is created and used on the user\'s device. Cairo DeviceAccount with on-chain secp256r1 verification and paymaster-sponsored execution.',
+        description: 'A device-native, self-custodial embedded wallet SDK for Starknet. The signing key is created and used on the user\'s device. Standard upgradeable OpenZeppelin account with a stark key derived on the device, and paymaster-sponsored execution.',
         offers: {
             '@type': 'Offer',
             price: '0',
@@ -69,12 +69,11 @@ export default function EmbeddedStarknetWalletPage() {
         },
         author: { '@id': 'https://cavos.xyz/#organization' },
         featureList: [
-            'Device-native P-256 signing key',
-            'Cairo DeviceAccount smart contract',
-            'On-chain secp256r1 verification',
+            'Native stark key derived from the user\'s MasterDEK',
+            'Upgradeable OpenZeppelin account',
             'Paymaster-sponsored transactions',
             'Arbitrary multicalls',
-            'Passkey device approval',
+            'Passkey and enclave restore on new devices',
             'React and React Native SDKs',
         ],
         screenshot: 'https://cavos.xyz/og-image.png',
@@ -107,9 +106,10 @@ export default function EmbeddedStarknetWalletPage() {
                         mobile (Expo Development Builds, EAS, or bare React Native — Expo Go is not supported).
                     </p>
                     <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted">
-                        In the browser, the device key is a non-extractable P-256 key stored via WebCrypto.
-                        On React Native, it uses the OS keystore. These platform primitives provide the
-                        hardware-backed isolation — the SDK does not enforce non-extractability on Node
+                        The stark key is derived from a MasterDEK that stays protected at rest by the
+                        device&apos;s non-extractable key (WebCrypto in the browser, the OS keystore on React
+                        Native). WebCrypto cannot hold a stark key, so outside the Cavos vault it is re-derived
+                        into memory for the session. The SDK does not enforce non-extractability on Node
                         or other server runtimes.
                     </p>
                     <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted">
@@ -125,22 +125,23 @@ export default function EmbeddedStarknetWalletPage() {
                     <h2 className="text-2xl font-medium tracking-[-0.03em]">Account model</h2>
                     <div className="mt-6 rounded-2xl border border-line bg-surface/50 p-8">
                         <p className="text-sm leading-relaxed text-muted">
-                            Cavos provisions a <strong>Cairo DeviceAccount</strong> — a smart contract account
-                            with on-chain secp256r1 (P-256) verification. The device key signs transactions,
-                            and the contract validates the signature before execution.
+                            Cavos provisions the standard <strong>OpenZeppelin AccountUpgradeable</strong> — an
+                            upgradeable smart contract account controlled by a stark key. The key is derived from
+                            the user&apos;s MasterDEK, signs transactions, and the account validates the signature
+                            before execution.
                         </p>
                         <ul className="mt-5 space-y-3 text-sm leading-relaxed text-muted">
                             <li className="flex gap-3">
                                 <span aria-hidden="true" className="mt-[0.55em] h-1 w-1 shrink-0 rounded-full bg-brand" />
-                                <span>The <strong>DeviceAccount contract</strong> implements <code className="text-xs bg-white px-1 py-0.5 rounded border border-line">__validate__</code> to recover the secp256r1 signer from the transaction signature.</span>
+                                <span>The account&apos;s <code className="text-xs bg-white px-1 py-0.5 rounded border border-line">__validate__</code> checks the stark signature. There is no on-chain device list: a new device restores the MasterDEK and derives the same key.</span>
                             </li>
                             <li className="flex gap-3">
                                 <span aria-hidden="true" className="mt-[0.55em] h-1 w-1 shrink-0 rounded-full bg-brand" />
-                                <span>Execution routes through the <strong>Cavos paymaster</strong> (SNIP-9 execute_from_outside) — users pay no gas.</span>
+                                <span>Execution routes through the <strong>Cavos paymaster</strong> (SNIP-29, SRC-9 outside execution) — users pay no gas.</span>
                             </li>
                             <li className="flex gap-3">
                                 <span aria-hidden="true" className="mt-[0.55em] h-1 w-1 shrink-0 rounded-full bg-brand" />
-                                <span><strong>Passkey:</strong> On Starknet, the passkey is an <strong>on-chain approver</strong> that authorizes adding new devices — it never signs transactions. Passkey approval works on both Sepolia and mainnet.</span>
+                                <span><strong>Passkey:</strong> a synced passkey holds an encrypted copy of the MasterDEK, so a new device can open the same wallet. Works on both Sepolia and mainnet.</span>
                             </li>
                         </ul>
                     </div>
@@ -171,11 +172,11 @@ export default function EmbeddedStarknetWalletPage() {
                     <h2 className="text-2xl font-medium tracking-[-0.03em]">What you get</h2>
                     <div className="mt-6 grid gap-px overflow-hidden rounded-2xl border border-line bg-line md:grid-cols-2">
                         {[
-                            ['Self-custodial', 'Cavos never holds a key that can move user funds. The on-chain account is the sole authority over signers.'],
-                            ['Cairo smart account', 'DeviceAccount contract with native secp256r1 signature validation in __validate__.'],
+                            ['Self-custodial', 'Cavos never holds a key that can move user funds. The account key is derived from a MasterDEK that only the user\'s devices can open.'],
+                            ['OpenZeppelin account', 'The standard upgradeable AccountUpgradeable contract, validating a stark key derived from the MasterDEK.'],
                             ['Gasless execution', 'The Cavos paymaster sponsors deployment and every transaction — users never need ETH or STRK.'],
                             ['Arbitrary multicalls', 'Execute any contract calls: token transfers, DeFi interactions, NFT mints — all in one transaction.'],
-                            ['Passkey approval', 'Passkeys authorize adding new devices on-chain. They never sign transactions — device approval only.'],
+                            ['Passkey and enclave restore', 'A synced passkey or an enclave sign-in restores the MasterDEK on a new device, so the same wallet opens everywhere.'],
                             ['Lazy deploy', 'Connect derives the address immediately. The account is deployed on first execute, atomically.'],
                         ].map(([title, body]) => (
                             <article key={title} className="bg-white p-7">

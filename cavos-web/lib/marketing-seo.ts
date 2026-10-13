@@ -33,12 +33,12 @@ export const ORGANIZATION_DESCRIPTION =
 export const STARKNET_WALLET_PATH = '/embedded-starknet-wallet'
 export const STARKNET_WALLET_TITLE = 'Embedded Starknet Wallet SDK'
 export const STARKNET_WALLET_DESCRIPTION =
-  'Starknet embedded wallet SDK: device-native and self-custodial. Signing key created and used on-device. Cairo DeviceAccount with on-chain P-256 verification.'
+  'Starknet embedded wallet SDK: device-native and self-custodial. Signing key derived and used on-device. Standard upgradeable OpenZeppelin account.'
 
 export const SOLANA_WALLET_PATH = '/embedded-solana-wallet'
 export const SOLANA_WALLET_TITLE = 'Embedded Solana Wallet SDK'
 export const SOLANA_WALLET_DESCRIPTION =
-  'Solana embedded wallet SDK: device-native and self-custodial. Signing key created and used on-device. Device-account PDA with native secp256r1 precompile.'
+  'Solana embedded wallet SDK: device-native and self-custodial. Signing key derived and used on-device. Native Ed25519 system account.'
 
 export const STELLAR_WALLET_PATH = '/embedded-stellar-wallet'
 export const STELLAR_WALLET_TITLE = 'Embedded Stellar Wallet SDK'
@@ -377,13 +377,13 @@ export function walletSoftwareApplicationJsonLd() {
     author: { '@id': ORGANIZATION_ID },
     publisher: { '@id': ORGANIZATION_ID },
     featureList: [
-      'Device-native P-256 signers',
+      'Account keys derived on-device from a MasterDEK',
       'Self-custodial accounts — no provider-held signing key',
       'Registry-first address resolution',
       'Chain-specific gas sponsorship',
       'Starknet, Solana, and Stellar adapters',
       'React and React Native SDKs',
-      'Non-custodial recovery codes and optional multi-device approval',
+      'Passkey and enclave restore on new devices',
     ],
     screenshot: OG_IMAGE.url,
   }

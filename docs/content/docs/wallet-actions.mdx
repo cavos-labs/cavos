@@ -141,19 +141,19 @@ if (passkeySupported && !walletStatus.hasPasskey) {
 
 ### Recovery code
 
-Starknet (and grandfathered Stellar). Native Solana/Stellar: `setupRecovery` is
-a no-op — restore with the enclave or `approveDeviceWithPasskey()`.
+Grandfathered Stellar only. Starknet, Solana, and native Stellar have nothing to
+register — restore with the enclave or `approveDeviceWithPasskey()`.
 
 ```ts title="TypeScript"
 const { setupRecovery } = useCavos();
 
-const code = await setupRecovery(); // string | undefined — show it ONCE when present
+const code = await setupRecovery(); // Stellar only — show it ONCE
 ```
 
 <Callout type="warn">
 The recovery code is returned **once**. Display it immediately and tell the
-user to store it somewhere safe. Only its derived public key is registered
-on-chain — the code itself never leaves the device.
+user to store it somewhere safe. Only its derived key is registered on-chain —
+the code itself never leaves the device.
 </Callout>
 
 ### Approve a new device
@@ -185,38 +185,42 @@ no gas is paid, no state changes. Returns a uniform `MessageSignature`:
 
 ```ts
 const { signMessage } = useCavos();               // or wallet.signMessage(...)
-const { signature, publicKey, curve } = await signMessage("Sign in to dapp.com");
+const { signature, publicKey, curve, typedData } = await signMessage("Sign in to dapp.com");
 ```
 
 | Field | Meaning |
 |-------|---------|
-| `signature` | 64-byte signature (`r‖s` for secp256r1, ed25519 raw). |
-| `publicKey` | The verifier input — Starknet: device P-256 hex; Solana/Stellar: the account address (base58 / `G…`). |
-| `curve` | `"secp256r1"` (Starknet) or `"ed25519"` (Solana, Stellar). |
+| `signature` | 64-byte signature (`r‖s` for stark, ed25519 raw). |
+| `publicKey` | The verifier input — Starknet: the stark public key; Solana/Stellar: the account address (base58 / `G…`). |
+| `curve` | `"stark"` (Starknet) or `"ed25519"` (Solana, Stellar). |
+| `typedData` | Starknet only: the SNIP-12 typed data that was signed. |
 
 **Per-chain details:**
 
-- **Starknet** — signs `sha256("Cavos Signed Message:\n<len>\n" + message)` with the device P-256 key. `publicKey` is the uncompressed `04‖x‖y` hex.
+- **Starknet** — signs SNIP-12 revision 1 typed data (domain `Cavos` / `1` / chain id / revision `1`, type `Message { content: string }`) with the stark key. `publicKey` is the stark public key. Verify with the deployed account's `is_valid_signature`, or off-chain by recomputing the typed-data hash.
 - **Solana** — signs the prefixed message with the **Ed25519** spend key. `publicKey` is the base58 address. `curve` is `"ed25519"`.
 - **Stellar** — the signing key is the **ed25519 control key** (not P-256), so `curve` is `"ed25519"` and `publicKey` is the `G…` control address.
 
 **Verifying off-chain** (what a third party / backend does):
 
 ```ts title="TypeScript"
-import { p256 } from "@noble/curves/p256";
-import { sha256 } from "@noble/hashes/sha256";
-import { Keypair } from "@stellar/stellar-sdk";
+import { ec, typedData as snTypedData } from "starknet";
 
-if (curve === "secp256r1") {
-  // Starknet — verify the P-256 signature over sha256(prefixedMessage).
-  const valid = p256.verify(signature, sha256(prefixedMessage), publicKeyHex);
+if (curve === "stark") {
+  // Starknet — recompute the SNIP-12 hash and verify the stark signature.
+  // `publicKey` is the x-coordinate only, so try both y parities.
+  const hash = snTypedData.getMessageHash(typedData, accountAddress);
+  const hex = Buffer.from(signature).toString("hex");
+  const sig = new ec.starkCurve.Signature(BigInt(`0x${hex.slice(0, 64)}`), BigInt(`0x${hex.slice(64)}`));
+  const x = publicKey.replace(/^0x/, "").padStart(64, "0");
+  const valid = ["02", "03"].some((prefix) => ec.starkCurve.verify(sig, hash, prefix + x));
 } else {
   // Solana / Stellar — ed25519.
 }
 ```
 
-The verifier must reconstruct the same prefixed message the signer used (see
-the prefix per chain above). For Sign-In-with-X flows, embed a nonce + domain
+On Solana and Stellar the verifier must reconstruct the same prefixed message
+the signer used (see the prefix per chain above). For Sign-In-with-X flows, embed a nonce + domain
 in the message string.
 
 ### `signTransaction` — sign without submit
@@ -237,7 +241,7 @@ if (wallet?.chain === "starknet") {
 
 What you get back, and what to do with it:
 
-- **Starknet** — the signed invoke (`calldata`, the 5-felt device `signature`, `nonce`, `resourceBounds`, `version`). A relayer broadcasts it via the account's `invokeFunction`.
+- **Starknet** — the signed invoke (`calldata`, the 2-felt stark `signature`, `nonce`, `resourceBounds`, `version`). A relayer broadcasts it via the account's `invokeFunction`.
 - **Stellar** — the control-signed inner transaction as base64 **XDR**. Submit it directly via Horizon, or hand it to a relayer to fee-bump (the control signature stays valid through the wrap).
 - **Solana** — `{ message, signature, publicKey }` where `signature` is Ed25519 over the Solana message. A relayer can fee-pay; it must not replace the user signature.
 

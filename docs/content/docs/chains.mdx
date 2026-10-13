@@ -27,7 +27,7 @@ Each implemented chain has its own page with a quickstart and the chain-specific
 details:
 
 <Cards>
-  <Card title="Starknet" href="/docs/starknet" description="Cairo DeviceAccount, 5-felt signatures, Cavos paymaster." />
+  <Card title="Starknet" href="/docs/starknet" description="Native stark key, OpenZeppelin account, Cavos paymaster." />
   <Card title="Solana" href="/docs/solana" description="Native Ed25519 system account, Cavos relayer as fee payer." />
   <Card title="Stellar" href="/docs/stellar" description="Classic G… account, MasterDEK or extra Horizon signers." />
   <Card title="Reserve" href="/docs/reserve" description="Pay Stellar reserves and fees in a token, from any G… wallet." />
@@ -39,12 +39,12 @@ Three layers keep Cavos portable:
 
 - **The product contract is the constant.** Stable identity, local authority,
   self-custody, recovery, and optional sponsorship are required of every adapter.
-- **Device-native keys stay local.** Starknet uses P-256 on the account contract. Solana and Stellar use Ed25519 spend keys derived from a MasterDEK.
-- **A `ChainAdapter` per chain** still exists for Starknet (`StarknetAdapter`) and Stellar (`StellarAdapter`). Solana is `CavosSolana` over a native system account — there is no `SolanaAdapter` in this release.
+- **Device-native keys stay local.** Every chain derives its account key from a MasterDEK: a stark key on Starknet, Ed25519 on Solana and Stellar.
+- **A `ChainAdapter` per chain** is a native client per chain: `CavosStarknet` (OpenZeppelin account), `CavosSolana` (system account), and `CavosStellar` (classic `G…` account).
 
 Curves differ across ecosystems, and each adapter resolves that:
 
-- **Starknet** — on-chain secp256r1 verification in the Cairo `DeviceAccount`.
+- **Starknet** — the standard upgradeable OpenZeppelin account, validating a stark key derived from the MasterDEK.
 - **Solana** — native Ed25519 system account. The user key signs the Solana message; the relayer is fee payer only.
 - **Stellar** — classic `G…`. With enclave or passkey, the address is HKDF of the same MasterDEK as Solana. Older wallets still use extra Horizon signers.
 

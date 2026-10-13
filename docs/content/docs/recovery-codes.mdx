@@ -1,12 +1,13 @@
 ---
 title: Recovery codes
-description: A stored code that restores Starknet (and grandfathered Stellar). Native Solana and Stellar restore the MasterDEK instead.
+description: A stored code that restores grandfathered Stellar wallets. Starknet, Solana, and native Stellar restore the MasterDEK instead.
 ---
 
 Cavos cannot reset a wallet or authorize a replacement device by itself. The
-baseline recovery path costs nothing and involves no server: a high-entropy
-**recovery code**, generated on a device the user already controls, which
-derives a backup authority the account recognizes.
+recovery code costs nothing and involves no server: a high-entropy code,
+generated on a device the user already controls, which derives a backup
+authority the account recognizes. Today that applies to grandfathered Stellar
+wallets only.
 
 The trade-off is the one every code-based scheme has — the user has to keep it.
 For recovery that works by signing in again instead, see
@@ -16,7 +17,7 @@ For recovery that works by signing in again instead, see
 
 | Chain | Recovery code role | Restore path |
 |---|---|---|
-| **Starknet** | Derives a backup P-256 signer registered on the account | `Cavos.recover(...)` authorizes the fresh device |
+| **Starknet** | **Not used.** Native accounts have one stark key | Enclave login or `approveDeviceWithPasskey()` |
 | **Solana** | **Not used.** Native accounts have one spend key | Enclave login or `approveDeviceWithPasskey()` |
 | **Stellar (enclave)** | Same MasterDEK wrap as Solana | Sign in again |
 | **Stellar (grandfathered)** | Extra ed25519 Horizon signer | Reconnect, then `approveThisDeviceWithRecovery(code)` |
@@ -35,10 +36,8 @@ await wallet.setupRecovery(code);
 // Display `code` once. Never send it to analytics, logs, or your backend.
 ```
 
-`setupRecovery` is adapter-specific. Native Solana/Stellar ignore it. On
-Starknet it is idempotent for the same factor and works on both `undeployed`
-and `ready` wallets. For `undeployed` Starknet wallets, the recovery factor is
-stored pending and included when the account is created on first `execute`.
+`setupRecovery` is chain-specific. Starknet, Solana, and native Stellar have
+nothing to register and ignore it. Only grandfathered Stellar wallets use it.
 
 <Callout type="warn">
 Anyone with the recovery code may be able to restore wallet authority. Treat it
@@ -46,27 +45,9 @@ like a private key: never log it, never email it in plaintext, and never persist
 it in application storage.
 </Callout>
 
-## Restore Starknet
+## Restore Starknet and Solana
 
-```ts title="TypeScript"
-import { Cavos } from "@cavos/kit";
-
-const wallet = await Cavos.recover({
-  code,
-  identity: { userId: user.id, email: user.email },
-  network: "testnet",
-  appSalt: "my-app",
-  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
-  paymasterApiKey, // obtain through your trusted sponsorship integration
-});
-```
-
-The derived backup signer authorizes the new local device signer. Cavos
-coordinates submission but cannot manufacture that authorization.
-
-## Restore Solana
-
-Do not call `CavosSolana.recover`. Native Solana restores the MasterDEK:
+There is no recovery-code restore. Native accounts restore the MasterDEK:
 
 ```ts title="TypeScript"
 // Enclave: the same Google/Apple login on the new device unwraps the DEK.
@@ -109,7 +90,7 @@ device's ed25519 key onto the account.
 
 ## Product guidance
 
-- Encourage a second device or synced passkey before relying on a recovery code.
+- Encourage a synced passkey or the enclave before relying on a recovery code.
 - Verify recovery on physical iOS and Android devices before production release.
 - Treat the code as one factor among several, not the plan. Most users will not
   keep it, which is the problem [hardware-isolated
@@ -117,8 +98,9 @@ device's ed25519 key onto the account.
   Solana, and native Stellar. Grandfathered Stellar wallets still use the code
   (or a synced passkey extra signer) as the way back from nothing.
 - If the user loses every device and every recovery factor, and — on Starknet,
-  Solana, or native Stellar — social recovery was never enrolled, Cavos cannot
-  restore access. That is the cost of the guarantee, not a gap in it.
+  Solana, or native Stellar — neither the enclave nor a passkey was enrolled,
+  Cavos cannot restore access. That is the cost of the guarantee, not a gap in
+  it.
 
 See [Multi-device](/docs/multi-device), [Passkeys](/docs/passkeys), and the
 selected [chain guide](/docs/chains).

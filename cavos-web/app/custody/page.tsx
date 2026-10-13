@@ -35,7 +35,7 @@ const FAQ = [
     },
     {
         question: 'Does integrating Cavos mean an application needs no license?',
-        answer: 'No. The Cavos backend is built so it cannot spend user funds or add itself as a signer. Recovery is a separate path: on Solana and Stellar an enclave can unwrap a spend key, and on Starknet it can schedule one add_signer. The docs call that non-custodial, and not trustless. Exchange, on-ramps, and sending crypto for a customer are licensed on their own. Ask counsel in each country where you have users.',
+        answer: 'No. The Cavos backend is built so it cannot spend user funds or add itself as a signer. Recovery is a separate path: on Starknet, Solana, and Stellar an enclave can unwrap a MasterDEK. The docs call that non-custodial, and not trustless. Exchange, on-ramps, and sending crypto for a customer are licensed on their own. Ask counsel in each country where you have users.',
     },
 ]
 
@@ -994,12 +994,9 @@ export default function CustodyPage() {
                             cannot authorize one.
                         </p>
                         <p>
-                            Recovery is opt-in, and it is a different path. On Solana and Stellar
-                            the enclave seals a MasterDEK and can unwrap it. If that wrap is
-                            compromised, the spend key can be restored. On Starknet the enclave may
-                            schedule one <span className="font-mono text-[13px]">add_signer</span>.
-                            The contract still enforces the nonce, the expiry and the exact signer
-                            being added. The docs call this hardware-isolated and non-custodial,
+                            Recovery is opt-in, and it is a different path. On Starknet, Solana,
+                            and Stellar the enclave seals a MasterDEK and can unwrap it. If that
+                            wrap is compromised, the account key can be restored. The docs call this hardware-isolated and non-custodial,
                             and they say it is not trustless: the user is relying on the measured
                             enclave image and on AWS attestation. A Cavos employee has no key to
                             hand over. The key material is sealed to that measurement.

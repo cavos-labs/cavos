@@ -35,7 +35,7 @@ export const EMBEDDED_WALLET_HOW_IT_WORKS = [
   },
   {
     title: 'Key creation',
-    body: 'A non-exportable signing key is created on the user’s device. In the browser that is a WebCrypto P-256 key. On React Native it uses the OS keystore. JavaScript cannot read the private material out. Cavos cannot see the key, sign with it, or move funds.',
+    body: 'The wallet’s account key is derived on the user’s device from a MasterDEK that stays protected at rest by the platform’s non-extractable key: WebCrypto in the browser, the OS keystore on React Native. Cavos cannot see the key, sign with it, or move funds.',
   },
   {
     title: 'Signing',
@@ -43,7 +43,7 @@ export const EMBEDDED_WALLET_HOW_IT_WORKS = [
   },
   {
     title: 'Recovery',
-    body: 'A second device is added by an on-chain approval, not by reconstituting a master key on a server. Cavos ships non-custodial recovery codes on every chain, multi-device passkey approval, and opt-in hardware-isolated social recovery that is off by default.',
+    body: 'A new device restores the wallet’s MasterDEK, not by reconstituting a master key on a server. Cavos ships passkey restore and opt-in hardware-isolated social recovery that is off by default; recovery codes remain only for grandfathered Stellar wallets.',
   },
 ] as const
 
@@ -68,7 +68,7 @@ export const EMBEDDED_WALLET_HOW_TO_INTEGRATE = [
   },
   {
     name: 'Set up recovery',
-    text: 'Add a second authority before it is needed: a passkey, another device, a recovery code, or opt-in hardware-isolated social recovery. None of those paths can be arranged after every device is gone.',
+    text: 'Add a second authority before it is needed: a passkey or opt-in hardware-isolated social recovery. None of those paths can be arranged after every device is gone.',
     url: DOCS_URLS.recovery,
     docsLabel: 'Recovery docs',
   },

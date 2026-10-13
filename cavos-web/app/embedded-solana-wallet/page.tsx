@@ -56,7 +56,7 @@ export default function EmbeddedSolanaWalletPage() {
         operatingSystem: 'Web, iOS, Android',
         applicationCategory: 'DeveloperApplication',
         applicationSubCategory: 'Embedded Solana Wallet SDK',
-        description: 'A device-native, self-custodial embedded wallet SDK for Solana. The signing key is created and used on the user\'s device. Device-account PDA with native secp256r1 precompile verification and gasless transactions.',
+        description: 'A device-native, self-custodial embedded wallet SDK for Solana. The signing key is created and used on the user\'s device. Native Ed25519 system account with a spend key derived on the device, and gasless transactions.',
         offers: {
             '@type': 'Offer',
             price: '0',
@@ -65,12 +65,11 @@ export default function EmbeddedSolanaWalletPage() {
         },
         author: { '@id': 'https://cavos.xyz/#organization' },
         featureList: [
-            'Device-native P-256 signing key',
-            'Deterministic device-account PDA',
-            'Native secp256r1 precompile verification',
+            'Native Ed25519 spend key derived from the user\'s MasterDEK',
+            'Native system account (same shape as Phantom)',
             'Gasless transactions via relayer',
             'Arbitrary program calls (SPL tokens, swaps)',
-            'Passkey device approval',
+            'Passkey and enclave restore on new devices',
             'React and React Native SDKs',
         ],
         screenshot: 'https://cavos.xyz/og-image.png',
@@ -103,10 +102,10 @@ export default function EmbeddedSolanaWalletPage() {
                         mobile (Expo Development Builds, EAS, or bare React Native — Expo Go is not supported).
                     </p>
                     <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted">
-                        In the browser, the device key is a non-extractable P-256 key stored via WebCrypto.
-                        On React Native, it uses the OS keystore. These platform primitives provide the
-                        hardware-backed isolation — the SDK does not enforce non-extractability on Node
-                        or other server runtimes.
+                        The spend key is derived from a MasterDEK that stays protected at rest by the
+                        device&apos;s non-extractable key (WebCrypto in the browser, the OS keystore on React
+                        Native). The SDK does not enforce non-extractability on Node or other server
+                        runtimes.
                     </p>
                     <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted">
                         New to the category?{' '}
@@ -121,22 +120,21 @@ export default function EmbeddedSolanaWalletPage() {
                     <h2 className="text-2xl font-medium tracking-[-0.03em]">Account model</h2>
                     <div className="mt-6 rounded-2xl border border-line bg-surface/50 p-8">
                         <p className="text-sm leading-relaxed text-muted">
-                            Cavos provisions a <strong>device-account PDA</strong> controlled by a P-256 (secp256r1)
-                            device key. Every guarded action pairs Solana&apos;s <strong>native secp256r1 precompile</strong> with
-                            the Cavos device-account program.
+                            Cavos provisions a <strong>native Ed25519 system account</strong> — an ordinary Solana
+                            address, not a PDA. Its spend key is derived from the user&apos;s MasterDEK.
                         </p>
                         <ul className="mt-5 space-y-3 text-sm leading-relaxed text-muted">
                             <li className="flex gap-3">
                                 <span aria-hidden="true" className="mt-[0.55em] h-1 w-1 shrink-0 rounded-full bg-brand" />
-                                <span>The <strong>secp256r1 precompile</strong> instruction records the device&apos;s P-256 signature, making it observable to the next instruction.</span>
+                                <span>The user&apos;s Ed25519 key signs the Solana transaction message; Solana verifies it natively.</span>
                             </li>
                             <li className="flex gap-3">
                                 <span aria-hidden="true" className="mt-[0.55em] h-1 w-1 shrink-0 rounded-full bg-brand" />
-                                <span>The <strong>program instruction</strong> reads the verified signer and checks it is authorized before acting.</span>
+                                <span>The relayer can be named fee payer, but a co-signer cannot alter the instructions it signs.</span>
                             </li>
                             <li className="flex gap-3">
                                 <span aria-hidden="true" className="mt-[0.55em] h-1 w-1 shrink-0 rounded-full bg-brand" />
-                                <span><strong>Passkey:</strong> On Solana, the passkey is an <strong>on-chain approver</strong> that authorizes adding new devices — it never signs transactions. Use it for device approval across devices.</span>
+                                <span><strong>Passkey:</strong> a synced passkey holds an encrypted copy of the MasterDEK, so a new device can open the same wallet.</span>
                             </li>
                         </ul>
                     </div>
@@ -167,11 +165,11 @@ export default function EmbeddedSolanaWalletPage() {
                     <h2 className="text-2xl font-medium tracking-[-0.03em]">What you get</h2>
                     <div className="mt-6 grid gap-px overflow-hidden rounded-2xl border border-line bg-line md:grid-cols-2">
                         {[
-                            ['Self-custodial', 'Cavos never holds a key that can move user funds. The on-chain account is the sole authority over signers.'],
-                            ['Native precompile', 'Uses Solana\u2019s native secp256r1 signature verification — no custom cryptographic code.'],
+                            ['Self-custodial', 'Cavos never holds a key that can move user funds. The spend key is derived from a MasterDEK that only the user\'s devices can open.'],
+                            ['Native account', 'A plain Ed25519 system account — no custom on-chain program.'],
                             ['Gasless transactions', 'The Cavos relayer co-signs as fee payer — users hold no SOL to get started.'],
                             ['Arbitrary programs', 'Beyond SOL transfers: SPL tokens, swaps, staking via executeInstructions (allowlisted programs).'],
-                            ['Passkey approval', 'Passkeys authorize adding new devices on-chain. They never sign transactions — device approval only.'],
+                            ['Passkey and enclave restore', 'A synced passkey or an enclave sign-in restores the MasterDEK on a new device.'],
                             ['Lazy deploy', 'Connect derives the address immediately. The account is initialized on first execute, atomically.'],
                         ].map(([title, body]) => (
                             <article key={title} className="bg-white p-7">

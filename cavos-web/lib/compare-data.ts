@@ -26,7 +26,7 @@ const CAVOS_CHAINS =
 const CAVOS_GAS =
     'Chain-specific: Starknet paymaster, Solana relayer as fee payer, Stellar sponsored reserves and fee bumps.'
 const CAVOS_RECOVERY =
-    'Non-custodial recovery codes on every chain, multi-device passkey approval, and opt-in hardware-isolated social recovery.'
+    'Passkey restore on a new device and opt-in hardware-isolated social recovery, both non-custodial.'
 
 export const COMPETITORS: Competitor[] = [
     {
@@ -44,7 +44,7 @@ export const COMPETITORS: Competitor[] = [
         chooseCavos: [
             'You are building on Starknet, Solana, or Stellar and want each chain’s native account model rather than an abstraction over it.',
             'Your security or compliance review requires that no provider-side key material can reconstruct a signing key.',
-            'You want device-bound authority with passkey-based device approval as an explicit, documented model.',
+            'You want device-derived authority with passkey-based restore as an explicit, documented model.',
         ],
         rows: [
             { feature: 'Signing authority', cavos: CAVOS_CUSTODY, them: 'Embedded wallet keys are managed through Privy’s key management infrastructure, with configurable self-custody and recovery options.' },
@@ -111,7 +111,7 @@ export const COMPETITORS: Competitor[] = [
             { feature: 'Layer', cavos: 'Complete embedded wallet SDK: auth, wallet, recovery, sponsorship.', them: 'Key management infrastructure and signing API; you build the wallet experience.' },
             { feature: 'Where keys live', cavos: 'On the end user’s device, non-exportable.', them: 'In hardware-backed secure enclaves operated as infrastructure.' },
             { feature: 'Time to integrate', cavos: 'Quickstart to sponsored transaction with one SDK.', them: 'Longer: you assemble the product layer yourself.' },
-            { feature: 'Server-side signing', cavos: 'Not a general capability; the on-chain account is the sole authority over signers.', them: 'A core capability with policy controls.' },
+            { feature: 'Server-side signing', cavos: 'Not a general capability; the account key is derived on the user’s device and Cavos holds no key that can spend.', them: 'A core capability with policy controls.' },
             { feature: 'Chain coverage', cavos: CAVOS_CHAINS, them: 'Broad cryptographic curve and chain support at the signing primitive level.' },
             { feature: 'Recovery', cavos: CAVOS_RECOVERY, them: 'You design recovery on top of the provided primitives.' },
         ],
@@ -126,7 +126,7 @@ export const COMPETITORS: Competitor[] = [
         summary:
             'Web3Auth provides social-login wallets using multi-party computation, splitting key shares across the user’s device, the provider’s network, and recovery factors.',
         positioning:
-            'This is the clearest architectural contrast in the category. Web3Auth reconstructs a private key from distributed shares; Cavos never reconstructs a key at all, because the device key signs directly and the on-chain account decides which signers are authorized.',
+            'This is the clearest architectural contrast in the category. Web3Auth reconstructs a private key from distributed shares; Cavos never reconstructs a key at all, because the device derives the account key and signs directly.',
         chooseThem: [
             'You need very broad chain coverage from a single social-login wallet layer.',
             'You want a key you can export and use in other tooling.',
@@ -134,20 +134,20 @@ export const COMPETITORS: Competitor[] = [
         ],
         chooseCavos: [
             'Your threat model rules out any architecture where a provider holds a reconstructable key share.',
-            'You want signer authority enforced on-chain rather than by off-chain share distribution.',
+            'You want the account key derived on the user’s device rather than assembled from off-chain shares.',
             'You are targeting Starknet, Solana, or Stellar specifically.',
         ],
         rows: [
-            { feature: 'Key architecture', cavos: 'No key reconstruction. A non-exportable device key signs; the on-chain account authorizes signers.', them: 'MPC / threshold shares combined to reconstruct a private key.' },
+            { feature: 'Key architecture', cavos: 'No key reconstruction. The device derives the account key from a MasterDEK and signs.', them: 'MPC / threshold shares combined to reconstruct a private key.' },
             { feature: 'Provider role in signing', cavos: 'None. Cavos cannot produce a valid signature for a user.', them: 'The provider network holds a share used in reconstruction.' },
             { feature: 'Key export', cavos: 'Not exportable by design.', them: 'Export is supported.' },
-            { feature: 'Adding a new device', cavos: 'Explicit on-chain device approval via passkey or recovery code.', them: 'Reassembling shares on the new device.' },
+            { feature: 'Adding a new device', cavos: 'The new device restores the MasterDEK with a passkey or the enclave.', them: 'Reassembling shares on the new device.' },
             { feature: 'Chain coverage', cavos: CAVOS_CHAINS, them: 'Broad multi-chain coverage.' },
             { feature: 'Gas sponsorship', cavos: CAVOS_GAS, them: 'Depends on the chain and any account abstraction layer you add.' },
         ],
         faq: [
             { question: 'Is MPC insecure?', answer: 'No. MPC is a legitimate and widely deployed design, and Web3Auth is a serious implementation of it. The difference is the trust surface: MPC requires trusting that shares are not combined improperly, while Cavos removes key reconstruction from the design entirely. Which trade-off is right depends on your threat model.' },
-            { question: 'Can I export my key from Cavos?', answer: 'No. The device key is non-exportable, which is the property that makes the model work. Portability is handled through multi-device approval and non-custodial recovery codes instead of key export.' },
+            { question: 'Can I export my key from Cavos?', answer: 'No. The device key is non-exportable, which is the property that makes the model work. Portability is handled through passkey and enclave restore instead of key export.' },
         ],
     },
     {
@@ -165,13 +165,13 @@ export const COMPETITORS: Competitor[] = [
         chooseCavos: [
             'You want the signing key to be device-bound and non-exportable rather than provider-delegated.',
             'You need Starknet, Solana, or Stellar with native account and execution semantics.',
-            'You need documented, non-custodial recovery and explicit multi-device approval.',
+            'You need documented, non-custodial recovery and passkey restore on new devices.',
         ],
         rows: [
             { feature: 'Signing authority', cavos: CAVOS_CUSTODY, them: 'Delegated key management backed by hardware security modules operated by the provider.' },
             { feature: 'Onboarding', cavos: 'Sign in with an identity you already own; the account is resolved registry-first.', them: 'Email magic link and social login.' },
             { feature: 'Chain coverage', cavos: CAVOS_CHAINS, them: 'EVM-focused with additional chain support.' },
-            { feature: 'Account model', cavos: 'Native smart accounts and device-account programs per chain.', them: 'Primarily EOA-style wallets.' },
+            { feature: 'Account model', cavos: 'Native accounts per chain: an OpenZeppelin account on Starknet, system accounts on Solana, classic accounts on Stellar.', them: 'Primarily EOA-style wallets.' },
             { feature: 'Gas sponsorship', cavos: CAVOS_GAS, them: 'Available through account abstraction integrations.' },
             { feature: 'Recovery', cavos: CAVOS_RECOVERY, them: 'Tied to the authentication factor and provider-side key infrastructure.' },
         ],

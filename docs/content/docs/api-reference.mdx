@@ -35,7 +35,7 @@ interface ConnectOptions {
   chain?: Chain;                          // treated as chains: [chain], defaultChain: chain
 
   network: "testnet" | "mainnet";         // resolves to each chain's concrete network
-  appSalt: string;                        // device-key slot; HKDF salt on Solana/Stellar native
+  appSalt: string;                        // HKDF salt for the account key — never change it
   auth?: AuthProvider;                    // pass `auth` OR `identity`
   identity?: Identity;
   appId?: string;                         // hosted registry + relayers
@@ -44,14 +44,11 @@ interface ConnectOptions {
   rpcUrl?: string;                        // single-chain only; use rpcUrls for multi-chain
   rpcUrls?: Partial<Record<Chain, string>>; // per-chain RPC overrides
   registry?: WalletRegistry;              // off-chain userId -> wallet map
-  recovery?: RecoveryClient;              // device-approval relay (Starknet)
-  createSigner?: (keyId: string) => Promise<DeviceSigner>; // native / tests
   vault?: boolean | { url?: string };     // keys in the Cavos vault (needs appId); see /docs/vault
 
   // --- Starknet-only ---
   paymasterApiKey?: string;               // sponsors deploy + execute (required on Starknet)
   paymasterUrl?: string;
-  classHash?: string;
 
   // --- Solana-only ---
   relayer?: SolanaRelayer;                // gasless fee payer
@@ -65,7 +62,7 @@ interface ConnectOptions {
   createStellarDeviceKey?: (keyId: string) => Promise<DeviceUnwrapKey>;
 }
 
-type CavosWallet = Cavos | CavosSolana | CavosStellar;
+type CavosWallet = CavosStarknet | CavosSolana | CavosStellar;
 
 interface CavosSession {
   chains: Chain[];                        // configured chains
@@ -73,8 +70,6 @@ interface CavosSession {
   wallet(chain: Chain): CavosWallet;      // get wallet for a chain
   chainStatus(chain: Chain): ChainStatus; // get status for a chain
   chainAddress(chain: Chain): string;     // get address for a chain
-  enrollPasskeySession(passkey, params): Promise<{ publicKey }>;
-  setupRecoverySession(code): Promise<void>;
 }
 
 type ChainStatus = "undeployed" | "ready" | "needs-device-approval";
@@ -82,63 +77,35 @@ type ChainStatus = "undeployed" | "ready" | "needs-device-approval";
 
 - `status === "undeployed"` → Address derived, no on-chain account. Can execute
   (first execute deploys). Can signMessage.
-- `status === "ready"` → Account deployed, this device authorized. Can execute.
-- `status === "needs-device-approval"` → Account deployed, this device not
-  authorized. Cannot execute.
+- `status === "ready"` → This device holds the account key. Can execute.
+- `status === "needs-device-approval"` → This device holds no key yet. Cannot
+  execute; restore the MasterDEK with the enclave or a passkey.
 
 ### Instance members (Starknet)
 
-Members on the `Cavos` instance (`wallet.chain === "starknet"`).
+Members on the `CavosStarknet` instance (`wallet.chain === "starknet"`).
+Starknet is the standard OpenZeppelin `AccountUpgradeable` (v3.0.0) controlled
+by a stark key derived from the MasterDEK.
 
 | Member | Description |
 |--------|-------------|
-| `cavos.address: string` | The smart account address. |
-| `cavos.status: ChainStatus` | `"undeployed" \| "ready" \| "needs-device-approval"` |
-| `cavos.isDeployed: boolean` | Whether the account exists on-chain. |
-| `cavos.pendingRequestId: string \| null` | Device-addition request id when `status` is `needs-device-approval`. |
-| `cavos.identity: Identity` | The authenticated identity. |
-| `cavos.publicKey: DevicePublicKey` | This device's public key. |
-| `cavos.execute(calls, opts?): Promise<{ transactionHash }>` | Sign + submit calls, gasless. Works on `undeployed` (deploys first) and `ready`. |
-| `cavos.signMessage(message): Promise<MessageSignature>` | Sign an arbitrary message off-chain. Works on `undeployed` and `ready`. |
-| `cavos.signTransaction(calls): Promise<StarknetSignedTransaction>` | Build + sign a multicall WITHOUT submitting. |
-| `cavos.addSigner(pubkey, opts?): Promise<{ transactionHash }>` | Authorize another device's key on-chain. |
-| `cavos.removeSigner(pubkey, opts?): Promise<{ transactionHash }>` | Revoke a device key on-chain. |
-| `cavos.upgrade(classHash, opts?): Promise<{ transactionHash }>` | Migrate the account to a newer class. |
-| `cavos.enrollPasskey(passkey, params, opts?): Promise<{ publicKey, transactionHash? }>` | Create a passkey + register it as an approver. Works on `undeployed` (pending until first execute). |
-| `cavos.addApprover(pubkey, opts?): Promise<{ transactionHash? }>` | Register an already-enrolled passkey pubkey as an approver. Works on `undeployed`. |
-| `cavos.hasPasskey(): Promise<boolean>` | Whether this account has a passkey approver. |
-| `cavos.isApprover(pubkey): Promise<boolean>` | Whether `pubkey` is a registered approver. |
-| `cavos.isReady(): Promise<boolean>` | Re-check if this device is authorized (polls chain). |
-| `cavos.approveThisDeviceWithPasskey(opts): Promise<{ transactionHash }>` | Use a synced passkey to authorize this device. |
-| `cavos.passkeyLeafForThisDevice(): Promise<{ leaf, nonce }>` | This device's passkey leaf + on-chain nonce. |
-| `cavos.submitPasskeyApproval(assertion, leaves, leafIndex, nonce, submit?): Promise<{ transactionHash }>` | Submit `add_signer_via_passkey`. |
-| `cavos.setupRecovery(code, opts?): Promise<{ transactionHash } \| undefined>` | Register a backup signer. Works on `undeployed` (pending until first execute). |
-| `cavos.onStatusChange(listener): () => void` | Subscribe to status changes. Returns unsubscribe. |
+| `wallet.address: string` | The account address. |
+| `wallet.status: ChainStatus` | `"undeployed" \| "ready" \| "needs-device-approval"` |
+| `wallet.isDeployed: boolean` | Whether the account exists on-chain. |
+| `wallet.identity: Identity` | The authenticated identity. |
+| `wallet.publicKey: string` | The stark public key (hex) the account was deployed with. |
+| `wallet.account: Account` | The starknet.js account. Throws on a device that holds no key. |
+| `wallet.execute(calls, opts?): Promise<{ transactionHash }>` | Sign + submit calls, gasless by default. Works on `undeployed` (deploys first) and `ready`. `fee: 'self'` works after deploy. Refuses `set_public_key` on the account itself. |
+| `wallet.signMessage(message): Promise<MessageSignature>` | Sign SNIP-12 revision 1 typed data off-chain (`curve: "stark"`, with `typedData`). Works on `undeployed` and `ready`. |
+| `wallet.signTransaction(calls): Promise<StarknetSignedTransaction>` | Build + sign a multicall WITHOUT submitting. 2-felt stark signature. |
+| `wallet.upgrade(classHash, opts?): Promise<{ transactionHash }>` | Migrate the account to a newer class; the address is kept. |
+| `wallet.hasPasskey(): Promise<boolean>` | Whether this device was restored with a passkey. |
+| `wallet.isReady(): Promise<boolean>` | Whether this device holds the stark key. |
+| `wallet.onStatusChange(listener): () => void` | Subscribe to status changes. Returns unsubscribe. |
 
-### `Cavos.recover(options): Promise<Cavos>`
-
-Recover after losing every device using a saved recovery code. **Starknet only.**
-Native Solana restores by connecting (enclave or passkey). On grandfathered
-Stellar, reconnect and call `wallet.approveThisDeviceWithRecovery(code)`.
-
-```ts title="TypeScript"
-interface RecoveryOptions {
-  code: string;
-  identity: Identity;
-  network: "testnet" | "mainnet";
-  appSalt: string;
-  paymasterApiKey: string;
-  appId?: string;
-  backendUrl?: string;
-  rpcUrl?: string;
-  paymasterUrl?: string;
-  classHash?: string;
-  address?: string;                       // optional when appId set (registry lookup)
-  registry?: WalletRegistry;
-  auth?: AuthProvider;
-  createSigner?: (keyId: string) => Promise<DeviceSigner>;
-}
-```
+On a new device there is no on-chain device list to update: it restores the
+MasterDEK (enclave or passkey) and derives the same key. See
+[Multi-device](/docs/multi-device).
 
 ## Authentication
 
@@ -152,18 +119,14 @@ interface RecoveryOptions {
 
 | Export | Description |
 |--------|-------------|
-| `RecoveryClient`, `PendingDeviceRequest` | Interface for the non-custodial device-approval relay. |
-| `HttpRecoveryClient` | HTTP implementation talking to the Cavos backend. |
 | `WalletRegistry`, `RegisteredWallet`, `RegisterResult` | Off-chain `userId` → wallet map (cross-device recognition). |
 | `InMemoryWalletRegistry`, `HttpWalletRegistry` | Registry implementations. |
-| `BackupSigner` | Passphrase-derived signer (`DeviceSigner`). |
-| `generateRecoveryCode()` | New high-entropy recovery code. |
-| `deriveBackupKey(code)` | Deterministic keypair from a recovery code. |
+| `generateRecoveryCode()` | New high-entropy recovery code. Used by grandfathered Stellar only. |
 
 ### Hardware-isolated social recovery
 
-Optional, opt-in per environment. On Solana/Stellar the enclave seals the
-MasterDEK. On Starknet it still schedules a restricted `add_signer`. See
+Optional, opt-in per environment. On every chain the enclave seals the
+MasterDEK. See
 [Hardware-isolated recovery](/docs/hardware-isolated-recovery).
 
 | Export | Description |
@@ -172,34 +135,18 @@ MasterDEK. On Starknet it still schedules a restricted `add_signer`. See
 | `SocialRecoveryClientOptions` | `{ baseUrl, appId, attestation, environment? }`. |
 | `AttestationPolicy` | Which enclave you accept: `{ pcr0 }`, the SHA-384 measurement of the Nitro enclave image. |
 | `DEFAULT_SOCIAL_RECOVERY_ATTESTATION` | The policy for the enclave Cavos operates (AWS Nitro), pinned in this package. |
-| `enrollHardwareIsolatedRecovery`, `recoverHardwareIsolatedDevice` | Chain-aware coordinators. |
-| `CoordinatedRecoveryResult` | `{ scheduleTransaction?, finalizeTransaction? }` — the Starknet transactions that added the device. Empty on Solana and Stellar. |
 | `SocialRecoveryCredential`, `createSocialRecoveryCredential` | The in-memory social credential. |
 | `SocialRecoveryProvider`, `SocialRecoveryAction`, `SocialRecoveryResult` | Types. |
 
 ## Passkeys
 
-On Starknet, a second factor for approving new devices. On Solana/Stellar
-native, the passkey's PRF encrypts a copy of the MasterDEK that Cavos stores
-and cannot open (can spend). Signing up never prompts. See
-[Passkeys](/docs/passkeys).
+The passkey's PRF encrypts a copy of the MasterDEK that Cavos stores and cannot
+open (can spend). Signing up never prompts. See [Passkeys](/docs/passkeys).
 
 | Export | Description |
 |--------|-------------|
-| `PasskeySigner` | Browser WebAuthn signer. `static isSupported()`, `enroll(...)`, `assert(...)`. |
-| `PasskeySignerOptions`, `PasskeyEnrollParams`, `EnrolledPasskey` | Types. |
-| `PasskeyAssertion` | Parsed WebAuthn assertion. |
-| `approveDeviceEverywhere(wallets, passkey)` | Starknet on-chain assertion batch. Not native Solana. |
-| `PasskeyApprovable` | Interface implemented by Starknet `Cavos`. Native `CavosSolana` throws on approver APIs. |
-| `PasskeyPrf` | WebAuthn PRF helper. Opens a passkey's DEK copy on native Solana/Stellar. |
-
-## Signers
-
-| Export | Description |
-|--------|-------------|
-| `WebCryptoSigner` | Browser silent device signer (non-extractable P-256 in IndexedDB). Low-level; with the vault, keys live on the Cavos origin instead. |
-| `PasskeySigner` | Browser WebAuthn passkey signer. |
-| `DeviceSigner`, `DevicePublicKey`, `DeviceSignature` | Signer types. |
+| `PasskeyPrfProvider`, `PasskeyEnrollParams`, `PasskeyPrfEnrollResult` | Types for a passkey PRF provider. |
+| `PasskeyPrf` | WebAuthn PRF helper. Opens a passkey's DEK copy (grandfathered Stellar uses it as an extra signer). |
 
 ## Vault
 
@@ -220,16 +167,19 @@ Cavos message prefix itself.
 
 | Export | Description |
 |--------|-------------|
-| `StarknetAdapter` | Computes addresses, builds calls, serializes signatures. |
+| `CavosStarknet` | Native Starknet client over the OpenZeppelin account. `connect`, `execute(calls)`, `signMessage` (`stark`), `signTransaction`, `upgrade`. |
+| `ConnectStarknetOptions` | Option type for `CavosStarknet.connect`. |
 | `STARKNET_NETWORKS`, `StarknetNetwork` | Network configs (`sepolia`, `mainnet`). |
-| `DEVICE_ACCOUNT_CLASS_HASH`, `UDC_ADDRESS` | Deployed class hash + Universal Deployer. |
-| `StarknetDeviceSigner` | Drop-in starknet.js `SignerInterface`. |
+| `OZ_ACCOUNT_CLASS_HASH` | The pinned OpenZeppelin `AccountUpgradeable` v3.0.0 class hash, declared on mainnet and Sepolia. |
+| `CAVOS_PAYMASTER_URL` | Cavos-hosted SNIP-29 paymaster URL per network. |
+| `starkKeyFromSeed`, `starkPublicKey` | Derive the stark key (`grindKey(HKDF(DEK, appSalt, "cavos-stark-starknet-v1"))`) and its public key. |
+| `starknetAddressFromPublicKey`, `starknetAddressFromSeed` | The account address for a stark public key or seed. |
 
 ### Solana
 
 | Export | Description |
 |--------|-------------|
-| `CavosSolana` | Native Ed25519 system account. `connect`, `execute(amount, dest)`, `executeInstructions(...)`, `signMessage` (`ed25519`). `addSigner` / `recover` throw. |
+| `CavosSolana` | Native Ed25519 system account. `connect`, `execute(amount, dest)`, `executeInstructions(...)`, `signMessage` (`ed25519`). |
 | `ConnectSolanaOptions`, `RecoverSolanaOptions` | Option types (`RecoverSolanaOptions` is deprecated). |
 | `InstructionData`, `InstructionAccount` | Serializable instruction shape. |
 | `SolanaRelayer`, `SolanaRelayerOptions` | Fee-payer relayer. |
@@ -261,9 +211,9 @@ grandfathered wallets still use extra Horizon signers. See [Stellar](/docs/stell
 | `CavosWallet` | Union of all wallet types. |
 | `CavosSession` | Multi-chain session interface. |
 | `ChainStatus` | `"undeployed" \| "ready" \| "needs-device-approval"` |
-| `MessageSignature` | `{ signature, publicKey, curve }` |
+| `MessageSignature` | `{ signature, publicKey, curve, typedData? }` |
 | `SignedTransaction`, `StarknetSignedTransaction`, `StellarSignedTransaction`, `SolanaSignedTransaction` | Sign-without-submit results. |
-| `SignatureCurve` | `"secp256r1" \| "ed25519"` |
+| `SignatureCurve` | `"stark" \| "ed25519"` (and `"secp256r1"`, no longer produced by Starknet) |
 | `CAVOS_MESSAGE_PREFIX`, `prefixedMessageBytes(message)` | Off-chain message prefix scheme. |
 
 ## React Native exports (`@cavos/kit/react-native`)
@@ -273,13 +223,12 @@ grandfathered wallets still use extra Horizon signers. See [Stellar](/docs/stell
 | `CavosProvider`, `useCavos`, `CavosAuthModal` | React Native context, hook, and native auth UI. |
 | `Cavos` | Native connect entry point. |
 | `NativeCavosAuth`, `NativeCavosAuthError` | Native auth adapters. |
-| `NativeDeviceSigner` | Secure Enclave/Keystore P-256 signer (**Starknet**). |
-| `NativeControlSigner` | Native ed25519 control key. Used on grandfathered Stellar; native MasterDEK imports Ed25519 into the native signer. |
-| `NativePasskeySigner`, `NativePasskeyPrf` | Native passkey adapters. |
+| `NativeDeviceUnwrapKey` | Secure Enclave/Keystore key that protects the MasterDEK at rest. |
+| `NativeControlSigner` | Native ed25519 control key, used on grandfathered Stellar. |
+| `NativePasskeyPrf` | Native passkey PRF adapter. |
 | `getNativeCapabilities()` | Reports signing, passkey, and PRF support. |
 | `getCavosNativeModule()` | Underlying Expo native module. |
 | `deleteDeviceKeys(keyId)` | Remove native device keys. |
-| `approveDeviceEverywhere` | Shared passkey approval helper. |
 
 See [React Native](/docs/react-native) for installation.
 
@@ -295,10 +244,6 @@ React bindings shipped under the `/react` subpath. See [React](/docs/react).
 | `formatConfigProblems(problems)` | Render problems as console lines. |
 | `useCavos()` | Primary hook — full wallet surface including `setChain`, `session`, `configuredChains`. |
 | `useCavosAuth()` | Thin subset for modal/auth only. |
-| `ApproveDevicePage`, `RevokeDevicePage` | Device lifecycle pages. |
-| `DeviceFlowState`, `DeviceFlowStatus` | Types for device flow render props. |
-| `chainForNetwork(network)` | Map concrete network to `Chain`. |
-| `configForNetwork(network, configs)` | Pick config for a network. |
 | `CavosAuthModal` | Customizable login modal. |
 | `CavosConfig`, `CavosModalConfig`, `CavosAuthModalProps`, `CavosProviderProps`, `CavosContextValue`, `UserInfo`, `WalletStatus` | Types. |
 
@@ -311,7 +256,4 @@ React bindings shipped under the `/react` subpath. See [React](/docs/react).
 
 | Export | Description |
 |--------|-------------|
-| `signatureToFelts`, `recoverYParity` | secp256r1 signature ↔ 5-felt Starknet encoding. |
 | `u256ToFelts`, `bytesToBigInt`, `bytesToHex`, `hexToBytes`, `bigIntTo32Bytes` | Encoding helpers. |
-| `base64urlEncode`, `webauthnDigest`, `recoverCandidatePublicKeys`, `batchChallenge`, `lowS` | WebAuthn helpers. |
-| `appNamespace`, `appNamespaceFelt` | App namespacing helpers. |

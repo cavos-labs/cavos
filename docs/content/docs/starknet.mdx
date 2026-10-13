@@ -1,19 +1,27 @@
 ---
 title: Starknet
-description: Use @cavos/kit on Starknet — silent device signing, gasless execution via paymaster, and the Cairo DeviceAccount.
+description: Use @cavos/kit on Starknet — a native OpenZeppelin account whose stark key is HKDF of a MasterDEK, with gasless execution via the Cavos paymaster.
 ---
 
-Starknet is one of the current adapters in Cavos' every-chain architecture. A
-deterministic address derived from the user's identity is controlled by a
-silent secp256r1 (P-256) device key, validated on-chain by the Cairo
-`DeviceAccount` account contract. Deploy and execution are sponsored by the
-Cavos paymaster, so the user pays no gas.
+Starknet in `@cavos/kit` is a **native account**, the same model as Solana and
+Stellar. The account is the standard, upgradeable OpenZeppelin
+`AccountUpgradeable` (v3.0.0) controlled by a stark key — the same shape as
+Argent or Braavos, not a custom contract.
+
+The stark key is `grindKey(HKDF(MasterDEK, appSalt, "cavos-stark-starknet-v1"))`.
+It is derived from the same **MasterDEK** that Solana and Stellar use, sealed in
+the [enclave](/docs/hardware-isolated-recovery) or restored from a
+[passkey](/docs/passkeys) the user added. A new device restores that DEK
+off-chain and derives the same key. There is no on-chain device list.
+
+Deploy and execution are sponsored by the Cavos paymaster, so the user pays no
+gas.
 
 ## Connect
 
 `Cavos.connect` with `chain: "starknet"` (or `chains: ["starknet"]`) does
-everything: authenticate, derive the deterministic address, create/load the
-silent device key, and wire up the gas sponsor. **Connect never deploys**. The
+everything: authenticate, derive the deterministic address, unwrap the stark
+key on this device, and wire up the gas sponsor. **Connect never deploys**. The
 account is created lazily on the first `execute`.
 
 ```ts title="TypeScript"
@@ -23,7 +31,7 @@ const session = await Cavos.connect({
   chains: ["starknet"],
   defaultChain: "starknet",
   network: "testnet",                   // "testnet" (sepolia) | "mainnet"
-  appSalt: "my-app",                    // device-key namespace
+  appSalt: "my-app",                    // HKDF salt — never change it
   identity: {                           // from your login (see Authentication)
     userId: user.id,
     email: user.email,
@@ -38,16 +46,19 @@ console.log(wallet.status);             // "undeployed" | "ready" | "needs-devic
 ```
 
 `wallet.chain` narrows to `"starknet"`. The instance members (`address`,
-`status`, `execute`, `addSigner`, `setupRecovery`) are documented in the
+`status`, `execute`, `signMessage`) are documented in the
 [API reference](/docs/api-reference).
+
+`appSalt` is part of the HKDF. Changing it derives a different key and address
+that will not match the registry row.
 
 ## Status values
 
 | Status | Meaning | Can execute? |
 |--------|---------|--------------|
 | `undeployed` | Address derived, no on-chain account yet | Yes — first execute deploys + runs atomically |
-| `ready` | Account deployed and this device authorized | Yes |
-| `needs-device-approval` | Account deployed but this device not authorized | No — route to device approval |
+| `ready` | Account deployed and this device holds the stark key | Yes |
+| `needs-device-approval` | The registry has an address, but this device holds no key | No — restore with enclave login or `approveDeviceWithPasskey()` |
 
 <Callout type="info">
 **Lazy deploy**: An `undeployed` wallet can sign messages and execute. The
@@ -78,120 +89,136 @@ executes the calls — atomically in a single paymaster-sponsored transaction.
 
 <Callout type="info">
 If `status` is `"needs-device-approval"`, this device is new to an existing
-wallet. Approve it from an already-registered device — see
-[Multi-device](/docs/multi-device) or [Passkeys](/docs/passkeys).
+wallet and holds no key yet. Restore it by signing in again with the
+[enclave](/docs/hardware-isolated-recovery) or with a [passkey](/docs/passkeys)
+the user added. See [Multi-device](/docs/multi-device).
 </Callout>
 
 ## How signing works
 
-The device key is a **non-extractable secp256r1 key** held in IndexedDB via
-WebCrypto, inside the [Cavos vault](/docs/vault) on the web. The vault reads the
-calls before signing: `transfer` on ETH, STRK and USDC counts against your
-app's limits, and calls into the account itself always go to your over-limit
-rule. When you call `execute`:
+The stark key is derived from the MasterDEK and signs silently — there is no
+user interaction. When you call `execute`:
 
 1. starknet.js computes the v3 transaction hash.
-2. The device key signs `sha256(tx_hash)` — WebCrypto's ECDSA hashes the message
-   internally, so there is no user interaction.
-3. The signature is serialized as **5 felts**:
-   `[r_low, r_high, s_low, s_high, y_parity]`.
-4. On-chain, `DeviceAccount.__validate__` recomputes `sha256(tx_hash)`,
-   normalizes high-`s`, recovers the secp256r1 signer, and checks it is
-   authorized.
+2. The stark key signs it, producing a standard **2-felt** `[r, s]` signature.
+3. On-chain, the OpenZeppelin account's `__validate__` checks the signature
+   against the account's public key.
 
-This 5-felt encoding is byte-compatible with the contract and covered by a
-cross-checked test in the `account-contracts` repo.
+On the web the key lives inside the [Cavos vault](/docs/vault), which reads the
+calls before signing: `transfer` on ETH, STRK and USDC counts against your
+app's limits, and calls into the account itself always go to your over-limit
+rule.
+
+<Callout type="info">
+**One trade-off.** WebCrypto cannot hold a stark key, so outside the Cavos
+vault the Starknet key is re-derived into memory for the session; the DEK at
+rest stays protected by the device's non-extractable key. Use the vault.
+</Callout>
+
+The kit refuses `set_public_key` calls on the account itself: a rotated key
+would no longer be controlled by the DEK.
 
 ## Gasless execution
 
-`execute` routes through the **Cavos paymaster** (SNIP-9 `execute_from_outside`),
-so the user pays no gas. Both **account deployment** (first execute) and
-**every subsequent execution** are sponsored — the user never needs ETH or STRK.
+`execute` routes through the **Cavos paymaster** (SNIP-29, with SRC-9 outside
+execution), so the user pays no gas. Both **account deployment** (first execute)
+and **every subsequent execution** are sponsored — the user never needs ETH or
+STRK.
+
+After the account is deployed, `fee: 'self'` pays from the account's own
+balance instead. A self-funded first execute is refused, because an undeployed
+account has no balance to deploy itself with.
 
 ## Sign messages
 
-Sign arbitrary messages off-chain with the device key. Works on both
+Sign arbitrary messages off-chain with the stark key. Works on both
 `undeployed` and `ready` wallets:
 
 ```ts title="TypeScript"
 const sig = await wallet.signMessage("Hello, Cavos!");
 // sig.signature: Uint8Array (64 bytes, r||s)
-// sig.publicKey: "04..." (uncompressed secp256r1)
-// sig.curve: "secp256r1"
+// sig.publicKey: the stark public key
+// sig.curve: "stark"
+// sig.typedData: the SNIP-12 typed data that was signed
 ```
 
-The message is prefixed with `"Cavos Signed Message:\n<len>\n"` before signing.
+The message is signed as **SNIP-12 revision 1** typed data: domain
+`{ name: "Cavos", version: "1", chainId, revision: "1" }` and a
+`Message { content: string }` type. Verify it by calling the deployed
+account's `is_valid_signature`, or off-chain by recomputing the typed-data hash
+from `typedData` and the account address and checking the stark signature.
 
-## Recovery and passkeys
+`wallet.signTransaction(calls)` builds and signs a multicall without submitting
+it and returns a 2-felt stark signature. The signature binds to the nonce and
+resource bounds at sign time, so broadcast it promptly.
 
-Set up recovery factors so the user can regain access from a new device:
+## Recovery and new devices
+
+Recovery on Starknet works exactly like Solana and Stellar. The new device
+restores the MasterDEK off-chain and derives the same stark key:
+
+| Path | What happens |
+|------|----------------|
+| **Enclave** | Sign in again. The enclave unwraps the MasterDEK onto this device. |
+| **Passkey** | Sign in. If a passkey was added, the vault asks for it and opens its encrypted copy of the MasterDEK. |
+
+See [Recovery](/docs/recovery), [Hardware-isolated recovery](/docs/hardware-isolated-recovery)
+and [Passkeys](/docs/passkeys). Signing up never prompts for a passkey.
+
+## Upgrades
+
+The account class hash is pinned: the address derives from it. Later
+implementation changes go through the account's `upgrade` entrypoint, which
+keeps the address.
 
 ```ts title="TypeScript"
-// On a ready or undeployed wallet
-const code = generateRecoveryCode();
-await wallet.setupRecovery(code);      // registers backup signer (pending if undeployed)
-// Show `code` to the user once — the kit never persists it
+await wallet.upgrade(newClassHash);
 ```
 
-For undeployed wallets, `setupRecovery` stores the backup signer pending. It
-gets included in the first deploy transaction automatically.
+## Key helpers
 
-See [Recovery](/docs/recovery) and [Passkeys](/docs/passkeys) for the full model.
-
-## Advanced: a plain starknet.js Account
-
-`StarknetDeviceSigner` is a drop-in starknet.js `SignerInterface`, so you can
-plug the device key into a standard `Account` and your own paymaster flow:
+When you hold the seed yourself (your own relayer, tests), the same derivation
+is exported:
 
 ```ts title="TypeScript"
-import { Account, RpcProvider } from "starknet";
-import { StarknetDeviceSigner, WebCryptoSigner } from "@cavos/kit";
-
-const provider = new RpcProvider({ nodeUrl: "https://api.cartridge.gg/x/starknet/sepolia" });
-const signer = await WebCryptoSigner.loadOrCreate({ keyId: address });
-const account = new Account({
-  provider,
-  address,
-  signer: new StarknetDeviceSigner(signer),
-  cairoVersion: "1",
-});
+import {
+  starkKeyFromSeed,
+  starkPublicKey,
+  starknetAddressFromPublicKey,
+  starknetAddressFromSeed,
+} from "@cavos/kit";
 ```
 
-<Callout type="warn">
-**Gas estimation gotcha (self-funded path).** secp256r1 validation is heavy
-(~27M L2 gas). Default fee estimation uses `SKIP_VALIDATE`, which under-bounds
-and causes "Out of gas". Estimate with validation on and pass those bounds:
-
-```ts title="TypeScript"
-const fee = await account.estimateInvokeFee(calls, { skipValidate: false });
-await account.execute(calls, { resourceBounds: fee.resourceBounds });
-```
-
-The Cavos paymaster path handles this for you — this only matters when you
-submit transactions yourself.
-</Callout>
+`starknetAddressFromPublicKey(publicKey)` is
+`calculateContractAddressFromHash(publicKey, OZ_ACCOUNT_CLASS_HASH, [publicKey], 0)`.
 
 ## Networks & constants
 
 ```ts title="TypeScript"
-import { STARKNET_NETWORKS, DEVICE_ACCOUNT_CLASS_HASH } from "@cavos/kit";
+import {
+  STARKNET_NETWORKS,
+  CAVOS_PAYMASTER_URL,
+  OZ_ACCOUNT_CLASS_HASH,
+} from "@cavos/kit";
 
 STARKNET_NETWORKS.sepolia;            // RPC + chain config
-DEVICE_ACCOUNT_CLASS_HASH.sepolia;    // deployed DeviceAccount class hash
+CAVOS_PAYMASTER_URL.sepolia;          // Cavos-hosted SNIP-29 paymaster
+OZ_ACCOUNT_CLASS_HASH;                // OpenZeppelin AccountUpgradeable v3.0.0
 ```
 
-`network` accepts `"testnet"` (resolves to `sepolia`) and `"mainnet"`. The class
-hash is the declared `DeviceAccount` contract; the kit ships the current values.
+`network` accepts `"testnet"` (resolves to `sepolia`) and `"mainnet"`. The
+class hash is `0x01d1777db36cdd06dd62cfde77b1b6ae06412af95d57a13dc40ac77b8a702381`,
+declared on mainnet and Sepolia.
 
 ## What's available
 
-- ✅ Silent secp256r1 device signer, deterministic address.
+- ✅ Native stark key from the MasterDEK, deterministic address.
+- ✅ Standard, upgradeable OpenZeppelin account.
 - ✅ Lazy deploy — first execute creates the account atomically.
-- ✅ Gasless execute + deployment via the Cavos paymaster.
-- ✅ Sign messages off-chain while undeployed.
-- ✅ [Multi-device](/docs/multi-device) approval + [recovery](/docs/recovery)
-  (recovery-code backup) — non-custodial.
-- ✅ [Passkeys](/docs/passkeys) as approvers for new-device authorization.
+- ✅ Gasless execute + deployment via the Cavos paymaster; `fee: 'self'` after deploy.
+- ✅ Sign messages off-chain (SNIP-12) while undeployed.
+- ✅ Enclave DEK wrap and [passkey](/docs/passkeys) restore on a new device.
+- ❌ On-chain device list, `add_signer`, P-256 device keys, on-chain approvers.
 
 For the cross-chain model and how Solana and Stellar compare, see
 [Chains](/docs/chains), [Solana](/docs/solana), and [Stellar](/docs/stellar).

@@ -1,21 +1,19 @@
 ---
 title: Passkeys
-description: Add a passkey after sign-up so a new device can open the wallet. On Solana and Stellar it carries an encrypted copy of the wallet's key; on Starknet it is an on-chain approver. Signing up never asks for one.
+description: Add a passkey after sign-up so a new device can open the wallet. It carries an encrypted copy of the wallet's key, on Starknet, Solana, and Stellar alike. Signing up never asks for one.
 ---
 
 Signing up with Google / Apple / email **never** asks for a passkey. The wallet
 exists without one. The app decides when to add it (`enrollPasskeyDefault`), and
 from then on a new device asks for it when it needs the wallet's key.
 
-The passkey's role depends on the chain:
-
-| Chain | What the passkey does | Can it spend? |
-|-------|----------------------|----------------|
-| **Solana / Stellar (native)** | Holds an **encrypted copy of the wallet's key**. Cavos stores the ciphertext; only the passkey can open it. | **Yes.** Anyone with a synced passkey that was added can open the wallet. Not 2FA. |
-| **Starknet** | Registered **on-chain as an approver**. It authorizes adding a new device's P-256 key. It never signs transactions. | No. Device-approval step-up. |
+On **Starknet, Solana, and native Stellar** the passkey holds an **encrypted
+copy of the wallet's key** (the MasterDEK). Cavos stores the ciphertext; only
+the passkey can open it. It **can spend**: anyone with a synced passkey that was
+added can open the wallet. This is not 2FA.
 
 `deviceApproval: "passkey"` is **one chain**. Use `deviceApproval: "enclave"`
-when Solana, Stellar, and Starknet share a login.
+when Starknet, Solana, and Stellar share a login.
 
 <Callout type="info">
 **Default:** `secureStep` is `'off'`. The built-in modal will not show "Secure
@@ -67,15 +65,10 @@ works on a new device.
 
 ## On a new device
 
-The user signs in as usual. What happens next depends on the chain:
-
-- **Solana / Stellar:** if a passkey was added, the vault shows **"Verify it's
-  you"** and asks for it. The wallet opens with the same address. If no passkey
-  was added, nothing is asked and the device stays signed in without the key
-  (`walletStatus.needsDeviceApproval`).
-- **Starknet:** if the account has a passkey approver, the auth modal shows
-  **"Verify it's you"**. Confirming submits a sponsored `add_signer_via_passkey`
-  that adds this device's key on-chain.
+The user signs in as usual. If a passkey was added, the vault shows **"Verify
+it's you"** and asks for it. The wallet opens with the same address. If no
+passkey was added, nothing is asked and the device stays signed in without the
+key (`walletStatus.needsDeviceApproval`).
 
 If the user dismissed the prompt, ask again with:
 
@@ -91,7 +84,7 @@ A send from a device that is not authorized yet opens the passkey screen and
 rejects with *"Verify it's you with your passkey to use this device, then try
 again."*
 
-## Solana / Stellar — how the copy is protected
+## How the copy is protected
 
 The wallet's key comes from a random 32-byte MasterDEK. Adding a passkey stores
 a copy of it encrypted under a key only the passkey can produce, its WebAuthn
@@ -115,50 +108,23 @@ a passkey so you can open this wallet on any device"*, not as 2FA. Use the
 [enclave](/docs/hardware-isolated-recovery) if you want Google/Apple restore
 without giving a synced credential that power.
 
-Do not call `wallet.enrollPasskey(PasskeySigner)` on native Solana — it throws.
-
-## Starknet — on-chain approver
-
-Once `status === "ready"`, enroll with `PasskeySigner` (or `enrollPasskeyDefault`,
-which registers `addApprover` on Starknet wallets in the session):
-
-```ts title="TypeScript"
-import { PasskeySigner } from "@cavos/kit";
-
-if (await PasskeySigner.isSupported()) {
-  const passkey = new PasskeySigner();
-  await cavos.enrollPasskey(passkey, {
-    userId: identity.userId,
-    userName: identity.email ?? identity.userId,
-  });
-}
-```
-
-On a new browser, outside React:
-
-```ts title="TypeScript"
-if (cavos.status === "needs-device-approval") {
-  await cavos.approveThisDeviceWithPasskey({ passkey: new PasskeySigner() });
-}
-```
-
-`approveDeviceEverywhere` is Starknet-only in practice (on-chain assertion).
+On Starknet and Solana there is no on-chain approver and no `enrollPasskey` on the
+wallet; use `enrollPasskeyDefault()` from the hook.
 
 ## Prerequisites
 
-- **A PRF-capable passkey provider** for Solana/Stellar: iCloud Keychain,
+- **A PRF-capable passkey provider**: iCloud Keychain,
   Google Password Manager, Windows Hello, 1Password and most others. Providers
-  without PRF cannot add a passkey there.
+  without PRF cannot add a passkey.
 - **HTTPS or `http://localhost`.** A LAN IP fails WebAuthn. Use a tunnel for
   phones.
-- Gate on `PasskeySigner.isSupported()` / platform authenticator.
+- Gate on `passkeySupported` from `useCavos()`.
 
 ### React Native
 
 ```ts
-import { NativePasskeySigner, NativePasskeyPrf } from "@cavos/kit/react-native";
+import { NativePasskeyPrf } from "@cavos/kit/react-native";
 
-const starknetApprover = new NativePasskeySigner({ rpId: "auth.example.com" });
 const nativePrf = new NativePasskeyPrf({ rpId: "auth.example.com" });
 ```
 
@@ -170,5 +136,4 @@ than changing the account model.
 - [Hardware-isolated recovery](/docs/hardware-isolated-recovery) — Google/Apple
   unwrap of the same MasterDEK, and it **can** cover several chains at once.
 - [Vault](/docs/vault) — where passkeys and keys live on the web.
-- [Multi-device](/docs/multi-device) — Starknet still approves extra P-256
-  signers from an existing device.
+- [Multi-device](/docs/multi-device) — opening a wallet on a new device.

@@ -58,8 +58,8 @@ methods. `session.wallet("solana")` returns the Solana wallet;
 | Status | Meaning | Can execute? |
 |--------|---------|--------------|
 | `undeployed` | Address derived but no on-chain account yet. | Yes — first execute deploys + runs atomically. |
-| `ready` | Account deployed and this device is authorized. | Yes |
-| `needs-device-approval` | Account deployed but this device is not a signer. | No — route to [device approval](#handle-device-approval). |
+| `ready` | This device holds the account key. | Yes |
+| `needs-device-approval` | The wallet exists but this device holds no key. | No — route to [device approval](#handle-device-approval). |
 
 <Callout type="info">
 **Lazy deploy**: An `undeployed` wallet can sign messages (`signMessage`) and
@@ -111,13 +111,14 @@ Use the dedicated [Starknet](/docs/starknet), [Solana](/docs/solana), or
 ## 5. Handle device approval
 
 `status === "needs-device-approval"` means the identity already owns a wallet
-but this device is not enrolled. Do not create a second wallet. Route the user
-through [Passkeys](/docs/passkeys) (recommended), [Multi-device](/docs/multi-device),
-or the adapter's [Recovery](/docs/recovery) path.
+but this device holds no key yet. Do not create a second wallet. Restore the
+MasterDEK through [Passkeys](/docs/passkeys) (recommended), the enclave
+([Multi-device](/docs/multi-device)), or the adapter's [Recovery](/docs/recovery)
+path.
 
 <Callout type="info">
-Passkeys and recovery share a product goal across chains, but their cryptographic
-implementation differs. Use the high-level wallet methods and follow the
+Starknet, Solana, and native Stellar restore the same way: the MasterDEK is
+unwrapped on the new device. Use the high-level wallet methods and follow the
 selected adapter's capability notes.
 </Callout>
 
