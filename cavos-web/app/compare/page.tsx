@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { COMPETITORS } from '@/lib/compare-data'
-import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
+import { compareIndexJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
 
 export const metadata: Metadata = marketingPageMetadata({
     title: 'Cavos vs Embedded Wallet Providers',
@@ -71,39 +71,17 @@ const FAQ = [
 ]
 
 export default function ComparePage() {
-    const jsonLd = {
-        '@context': 'https://schema.org',
-        '@graph': [
-            {
-                '@type': 'WebPage',
-                '@id': 'https://cavos.xyz/compare#webpage',
-                url: 'https://cavos.xyz/compare',
-                name: 'Cavos vs Embedded Wallet Providers',
-                description: 'Comparison of multichain embedded wallet approaches across custody, signing, sponsorship, recovery, and developer experience.',
-                isPartOf: { '@id': 'https://cavos.xyz/#website' },
-                breadcrumb: { '@id': 'https://cavos.xyz/compare#breadcrumb' },
-            },
-            {
-                ...breadcrumbListJsonLd([
-                    { name: 'Home', path: '/' },
-                    { name: 'Compare', path: '/compare' },
-                ]),
-                '@id': 'https://cavos.xyz/compare#breadcrumb',
-            },
-            {
-                '@type': 'FAQPage',
-                '@id': 'https://cavos.xyz/compare#faq',
-                mainEntity: FAQ.map((item) => ({
-                    '@type': 'Question',
-                    name: item.question,
-                    acceptedAnswer: {
-                        '@type': 'Answer',
-                        text: item.answer,
-                    },
-                })),
-            },
-        ],
-    }
+    const jsonLd = compareIndexJsonLd({
+        title: 'Cavos vs Embedded Wallet Providers',
+        description:
+            'Comparison of multichain embedded wallet approaches across custody, signing, sponsorship, recovery, and developer experience.',
+        faq: FAQ,
+        comparisons: COMPETITORS.map((c) => ({
+            name: c.name,
+            slug: c.slug,
+            summary: c.summary,
+        })),
+    })
 
     return (
         <main className="min-h-screen bg-white font-sans text-ink antialiased">

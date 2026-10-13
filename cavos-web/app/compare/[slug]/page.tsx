@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { COMPETITORS, getCompetitor } from '@/lib/compare-data'
-import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
+import { compareCompetitorPageJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
 
 const linkClass =
     'font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink'
@@ -45,39 +45,7 @@ export default async function ComparisonPage({
     const competitor = getCompetitor(slug)
     if (!competitor) notFound()
 
-    const url = `https://cavos.xyz/compare/${competitor.slug}`
-    const jsonLd = {
-        '@context': 'https://schema.org',
-        '@graph': [
-            {
-                '@type': 'WebPage',
-                '@id': `${url}#webpage`,
-                url,
-                name: competitor.pageH1 ?? `Cavos vs ${competitor.name}`,
-                description:
-                    competitor.pageDescription ??
-                    `Comparison of Cavos and ${competitor.name} across custody, signing authority, chain support, sponsorship, and recovery.`,
-                isPartOf: { '@id': 'https://cavos.xyz/#website' },
-            },
-            {
-                ...breadcrumbListJsonLd([
-                    { name: 'Home', path: '/' },
-                    { name: 'Compare', path: '/compare' },
-                    { name: `Cavos vs ${competitor.name}`, path: `/compare/${competitor.slug}` },
-                ]),
-                '@id': `${url}#breadcrumb`,
-            },
-            {
-                '@type': 'FAQPage',
-                '@id': `${url}#faq`,
-                mainEntity: competitor.faq.map((item) => ({
-                    '@type': 'Question',
-                    name: item.question,
-                    acceptedAnswer: { '@type': 'Answer', text: item.answer },
-                })),
-            },
-        ],
-    }
+    const jsonLd = compareCompetitorPageJsonLd(competitor)
 
     return (
         <main className="min-h-screen bg-white font-sans text-ink antialiased">

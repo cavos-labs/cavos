@@ -1,7 +1,7 @@
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import Link from 'next/link'
-import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
+import { marketingPageMetadata, pricingPageJsonLd } from '@/lib/marketing-seo'
 
 /* ── Bespoke feature icons (layered, multi-tone Cavos indigo) ───────────────
    Hand-built SVGs so the set feels tailored, not a generic icon-pack pull. */
@@ -163,38 +163,7 @@ function formatPlanRow(plan: Plan): { name: string; desc: string; price: string;
 }
 
 export default function PricingPage() {
-    const jsonLd = {
-        "@context": "https://schema.org",
-        "@graph": [
-            {
-                "@type": "Product",
-                "name": "Cavos Embedded Wallet SDK",
-                "description": "Device-native multichain embedded wallet SDK with flat monthly pricing.",
-                "offers": PLANS.map((p) => ({
-                    "@type": "Offer",
-                    "name": p.name,
-                    "price": String(p.feeUsdPerMonth),
-                    "priceCurrency": "USD",
-                    "description": p.createCap === 1000 ? 'Up to 1,000 wallet creates.' : `${p.name} plan, billed monthly.`,
-                })),
-            },
-            {
-                ...breadcrumbListJsonLd([
-                    { name: 'Home', path: '/' },
-                    { name: 'Pricing', path: '/pricing' },
-                ]),
-                '@id': 'https://cavos.xyz/pricing#breadcrumb',
-            },
-            {
-                "@type": "FAQPage",
-                "mainEntity": FAQ.map((f) => ({
-                    "@type": "Question",
-                    "name": f.q,
-                    "acceptedAnswer": { "@type": "Answer", "text": f.a },
-                })),
-            },
-        ],
-    }
+    const jsonLd = pricingPageJsonLd({ plans: PLANS, faq: FAQ })
 
     return (
         <main className="bg-white min-h-screen text-ink font-sans antialiased">

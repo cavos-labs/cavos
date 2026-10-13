@@ -93,6 +93,20 @@ export function pageUrl(path: string): string {
   return `${MARKETING_ORIGIN}${path}`
 }
 
+/**
+ * Documented Cavos free tier: first 1,000 wallet creates at USD 0 (`/pricing`).
+ * Google Product / Software App rich results require Offer.price + priceCurrency.
+ */
+export function freeTierOfferJsonLd(extra?: { url?: string; description?: string }) {
+  return {
+    '@type': 'Offer' as const,
+    price: '0',
+    priceCurrency: 'USD',
+    ...(extra?.url ? { url: extra.url } : {}),
+    ...(extra?.description ? { description: extra.description } : {}),
+  }
+}
+
 export type BreadcrumbCrumb = {
   name: string
   path: string
@@ -306,12 +320,9 @@ export function chainWalletPageJsonLd(input: {
         applicationCategory: 'DeveloperApplication',
         applicationSubCategory: input.applicationSubCategory,
         description: input.softwareDescription,
-        offers: {
-          '@type': 'Offer',
-          price: '0',
-          priceCurrency: 'USD',
-          description: 'Free tier available.',
-        },
+        offers: freeTierOfferJsonLd({
+          description: 'Free tier covers the first 1,000 wallet creates.',
+        }),
         author: { '@id': ORGANIZATION_ID },
         image: OG_IMAGE.url,
         screenshot: OG_IMAGE.url,
@@ -465,13 +476,10 @@ export function walletSoftwareApplicationJsonLd() {
     applicationSubCategory: 'Embedded multichain wallet infrastructure',
     description:
       "A device-native embedded wallet SDK. Applications resolve a self-custodial account from a stable user identity. Signing keys are created and used on the user's device — Cavos cannot see them, sign with them, or move funds. Adapters ship today for Starknet, Solana, and Stellar.",
-    offers: {
-      '@type': 'Offer',
-      url: `${MARKETING_ORIGIN}/pricing`,
-      price: '0',
-      priceCurrency: 'USD',
+    offers: freeTierOfferJsonLd({
+      url: pageUrl('/pricing'),
       description: 'Free tier covers the first 1,000 wallet creates.',
-    },
+    }),
     author: { '@id': ORGANIZATION_ID },
     publisher: { '@id': ORGANIZATION_ID },
     featureList: [
@@ -487,27 +495,29 @@ export function walletSoftwareApplicationJsonLd() {
   }
 }
 
+/**
+ * Framezz products are Brands, not Product/SoftwareApplication.
+ * There is no documented USD price in this repo for Framezz itself, and
+ * emitting Product nodes without Offer.price + priceCurrency fails Google
+ * Product snippets site-wide (including /compare/*).
+ */
 export function cavosProductApplicationsJsonLd() {
   return [
     {
-      '@type': ['SoftwareApplication', 'Product'],
+      '@type': 'Brand',
       '@id': FRAMEZZ_ID,
       name: 'Framezz',
       url: FRAMEZZ_URL,
       description:
         'Event photography software. A runner uploads a selfie to get every photo they appear in, then downloads the high-resolution originals.',
-      author: { '@id': ORGANIZATION_ID },
-      publisher: { '@id': ORGANIZATION_ID },
     },
     {
-      '@type': ['SoftwareApplication', 'Product'],
+      '@type': 'Brand',
       '@id': FRAMEZZ_GALLERIES_ID,
       name: 'Framezz Galleries',
       url: FRAMEZZ_GALLERIES_URL,
       description:
         'Marketplace for event photographers of races, tournaments, and graduations. They sell photos under their own brand. Clients find themselves with a selfie or a bib number. Free plan available.',
-      author: { '@id': ORGANIZATION_ID },
-      publisher: { '@id': ORGANIZATION_ID },
     },
   ]
 }
@@ -558,6 +568,212 @@ export function homepageJsonLd() {
       websiteJsonLd(),
       walletSoftwareApplicationJsonLd(),
       ...cavosProductApplicationsJsonLd(),
+    ],
+  }
+}
+
+/** Site-wide graph emitted from the root layout on every public page, including /compare/*. */
+export function sitewideJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      organizationJsonLd('customer support'),
+      {
+        ...websiteJsonLd(),
+        description:
+          'Embedded wallet infrastructure for Starknet, Solana, and Stellar — device-native and verifiable.',
+      },
+      walletSoftwareApplicationJsonLd(),
+      ...cavosProductApplicationsJsonLd(),
+    ],
+  }
+}
+
+export type CompareFaqItem = GuideFaqItem
+
+export type CompareListEntry = {
+  name: string
+  slug: string
+  summary: string
+}
+
+export type CompareCompetitorJsonLdInput = CompareListEntry & {
+  pageH1?: string
+  pageDescription?: string
+  faq: CompareFaqItem[]
+}
+
+function comparisonItemListElement(entries: CompareListEntry[]) {
+  return entries.map((entry, index) => ({
+    '@type': 'ListItem' as const,
+    position: index + 1,
+    name: `Cavos vs ${entry.name}`,
+    url: pageUrl(`/compare/${entry.slug}`),
+    description: entry.summary,
+  }))
+}
+
+/** /compare index: WebPage + breadcrumbs + FAQ + ItemList of comparison pages. No Product nodes. */
+export function compareIndexJsonLd(input: {
+  title: string
+  description: string
+  faq: CompareFaqItem[]
+  comparisons: CompareListEntry[]
+}) {
+  const url = pageUrl('/compare')
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebPage',
+        '@id': `${url}#webpage`,
+        url,
+        name: input.title,
+        description: input.description,
+        isPartOf: { '@id': WEBSITE_ID },
+        breadcrumb: { '@id': `${url}#breadcrumb` },
+        about: { '@id': SOFTWARE_ID },
+      },
+      {
+        ...breadcrumbListJsonLd([
+          { name: 'Home', path: '/' },
+          { name: 'Compare', path: '/compare' },
+        ]),
+        '@id': `${url}#breadcrumb`,
+      },
+      {
+        '@type': 'FAQPage',
+        '@id': `${url}#faq`,
+        mainEntity: input.faq.map((item) => ({
+          '@type': 'Question',
+          name: item.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: item.answer,
+          },
+        })),
+      },
+      {
+        '@type': 'ItemList',
+        '@id': `${url}#comparisons`,
+        name: 'Cavos vs embedded wallet providers',
+        itemListElement: comparisonItemListElement(input.comparisons),
+      },
+    ],
+  }
+}
+
+/**
+ * /compare/[slug]: WebPage + breadcrumbs + FAQ + ItemList of the two names.
+ * Competitor products are ListItem names only — never Product/SoftwareApplication.
+ */
+export function compareCompetitorPageJsonLd(competitor: CompareCompetitorJsonLdInput) {
+  const path = `/compare/${competitor.slug}`
+  const url = pageUrl(path)
+  const name = competitor.pageH1 ?? `Cavos vs ${competitor.name}`
+  const description =
+    competitor.pageDescription ??
+    `Comparison of Cavos and ${competitor.name} across custody, signing authority, chain support, sponsorship, and recovery.`
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebPage',
+        '@id': `${url}#webpage`,
+        url,
+        name,
+        description,
+        isPartOf: { '@id': WEBSITE_ID },
+        breadcrumb: { '@id': `${url}#breadcrumb` },
+        about: { '@id': SOFTWARE_ID },
+      },
+      {
+        ...breadcrumbListJsonLd([
+          { name: 'Home', path: '/' },
+          { name: 'Compare', path: '/compare' },
+          { name: `Cavos vs ${competitor.name}`, path },
+        ]),
+        '@id': `${url}#breadcrumb`,
+      },
+      {
+        '@type': 'FAQPage',
+        '@id': `${url}#faq`,
+        mainEntity: competitor.faq.map((item) => ({
+          '@type': 'Question',
+          name: item.question,
+          acceptedAnswer: { '@type': 'Answer', text: item.answer },
+        })),
+      },
+      {
+        '@type': 'ItemList',
+        '@id': `${url}#compared`,
+        name,
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Cavos',
+            url: MARKETING_ORIGIN,
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: competitor.name,
+          },
+        ],
+      },
+    ],
+  }
+}
+
+export type PricingPlanJsonLd = {
+  name: string
+  feeUsdPerMonth: number
+  createCap: number | 'unlimited'
+}
+
+/** /pricing Product node: every Offer includes price + priceCurrency from published plan fees. */
+export function pricingPageJsonLd(input: {
+  plans: PricingPlanJsonLd[]
+  faq: { q: string; a: string }[]
+}) {
+  const url = pageUrl('/pricing')
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Product',
+        name: 'Cavos Embedded Wallet SDK',
+        description: 'Device-native multichain embedded wallet SDK with flat monthly pricing.',
+        url,
+        image: OG_IMAGE.url,
+        brand: { '@id': ORGANIZATION_ID },
+        offers: input.plans.map((plan) => ({
+          '@type': 'Offer',
+          name: plan.name,
+          price: String(plan.feeUsdPerMonth),
+          priceCurrency: 'USD',
+          description:
+            plan.createCap === 1000
+              ? 'Up to 1,000 wallet creates.'
+              : `${plan.name} plan, billed monthly.`,
+        })),
+      },
+      {
+        ...breadcrumbListJsonLd([
+          { name: 'Home', path: '/' },
+          { name: 'Pricing', path: '/pricing' },
+        ]),
+        '@id': `${url}#breadcrumb`,
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: input.faq.map((item) => ({
+          '@type': 'Question',
+          name: item.q,
+          acceptedAnswer: { '@type': 'Answer', text: item.a },
+        })),
+      },
     ],
   }
 }
