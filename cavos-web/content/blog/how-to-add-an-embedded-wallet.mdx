@@ -117,8 +117,8 @@ Connect derives the address and checks whether the account exists on-chain. It *
 | Status | Meaning | Can execute? |
 |--------|---------|--------------|
 | `undeployed` | Address derived but no on-chain account yet. | Yes — first execute deploys and runs atomically. |
-| `ready` | Account deployed and this device is authorized. | Yes |
-| `needs-device-approval` | Account deployed but this device is not a signer. | No — route to device approval. |
+| `ready` | Account deployed and this device holds the key. | Yes |
+| `needs-device-approval` | This device has no key yet. Restore the MasterDEK. | No — restore with a passkey or the enclave. |
 
 Both `undeployed` and `ready` wallets can execute. Only `needs-device-approval` blocks transactions. An undeployed wallet can also sign messages.
 
@@ -128,7 +128,7 @@ Narrow on `wallet.chain` so TypeScript exposes the correct native method. On Sol
 const { wallet } = useCavos();
 
 if (wallet?.status === "needs-device-approval") {
-  throw new Error("This device must be approved first");
+  throw new Error("This device has no key yet. Restore the MasterDEK.");
 }
 
 if (wallet?.chain === "solana") {
@@ -151,7 +151,7 @@ When the account is `undeployed`, `execute` deploys it first, then runs the oper
 
 For arbitrary execution, Starknet accepts multicalls, Solana exposes `executeInstructions`, and Stellar exposes `invokeContract`. Each path has adapter-specific validation and sponsorship rules. See [wallet actions](https://docs.cavos.xyz/docs/wallet-actions).
 
-If `status === "needs-device-approval"`, do not create a second wallet. Route the user through a [passkey](https://docs.cavos.xyz/docs/passkeys), [multi-device](https://docs.cavos.xyz/docs/multi-device), or the adapter’s [recovery](https://docs.cavos.xyz/docs/recovery) path.
+If `status === "needs-device-approval"`, do not create a second wallet. This device has no key yet. Restore the MasterDEK with a [passkey](https://docs.cavos.xyz/docs/passkeys), the [enclave](https://docs.cavos.xyz/docs/hardware-isolated-recovery), or the adapter’s [recovery](https://docs.cavos.xyz/docs/recovery) path. There is no on-chain device approval on Starknet.
 
 ## Recovery before the first lost phone
 
@@ -197,13 +197,13 @@ const stellar = session.wallet("stellar");
 const starknet = session.wallet("starknet");
 ```
 
-In React, `setChain(chain)` switches the active chain without remounting. Each chain has its own address, deployment status, and device authorization. One chain might be `ready` while another is `undeployed` or `needs-device-approval`.
+In React, `setChain(chain)` switches the active chain without remounting. Each chain has its own address, deployment status, and whether this device holds the key. One chain might be `ready` while another is `undeployed` or `needs-device-approval`.
 
 ## A short signing-model chooser
 
 Before you ship, write down who can produce a valid signature without the user present.
 
-**Device-native (Cavos).** A non-exportable key is created on the device. The chain account lists that public key as an authorized signer. The provider cannot reconstruct a master key. New devices are added by an on-chain approval.
+**Device-native (Cavos).** A non-exportable key is created on the device. On Starknet that key controls an audited OpenZeppelin AccountUpgradeable. The provider cannot reconstruct a master key. A new device restores the MasterDEK off-chain; it is not added by an on-chain approval.
 
 **MPC.** Shares are distributed so that no single party should reconstruct the key alone. In practice you trust the share holders and the reconstruction protocol. Export is often supported. Broad chain coverage is the usual reason to pick it.
 

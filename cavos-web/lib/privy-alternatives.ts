@@ -3,13 +3,13 @@ import { getCompetitor } from './compare-data'
 export const PRIVY_ALTERNATIVES_PATH = '/privy-alternatives'
 
 export const PRIVY_ALTERNATIVES_TITLE =
-  'Privy Alternatives for Embedded Wallets (2026)'
+  'Privy Wallet Alternative for Embedded Wallets'
 
-/** 149 characters. Document title omits "| Cavos"; the layout template adds it. */
+/** 153 characters. Document title omits "| Cavos"; the layout template adds it. */
 export const PRIVY_ALTERNATIVES_DESCRIPTION =
-  'Compare Privy alternatives for embedded wallets. See how Cavos, Dynamic, Turnkey, Web3Auth, and Magic differ on custody, chain support, and recovery.'
+  'Privy wallet alternatives for embedded crypto wallets, not the Shopify popup. Compare Cavos, Dynamic, Turnkey, Web3Auth, and Magic on custody and chains.'
 
-export const PRIVY_ALTERNATIVES_H1 = 'Privy alternatives for embedded wallets'
+export const PRIVY_ALTERNATIVES_H1 = 'Privy wallet alternative for embedded wallets'
 
 export type AlternativeSection = {
   name: string

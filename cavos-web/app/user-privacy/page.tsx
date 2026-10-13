@@ -10,7 +10,7 @@ export const metadata: Metadata = marketingPageMetadata({
     path: '/user-privacy',
 })
 
-const LAST_UPDATED = 'March 16, 2026'
+const LAST_UPDATED = 'October 13, 2026'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
     return (
@@ -97,7 +97,7 @@ export default function UserPrivacyPage() {
 
                     <Section title="1. Who we are">
                         <p>
-                            Cavos Labs (&ldquo;Cavos&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;) provides the infrastructure that lets applications create self-custodial Starknet wallets for their users via OAuth sign-in (Google, Apple, or email magic link). Our contact for privacy matters is{' '}
+                            Cavos Labs (&ldquo;Cavos&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;) provides the infrastructure that lets applications create self-custodial wallets on Starknet, Solana, and Stellar via OAuth sign-in (Google, Apple, or email magic link) or the application&rsquo;s own auth. On Starknet each wallet is an audited OpenZeppelin AccountUpgradeable. Our contact for privacy matters is{' '}
                             <a href="mailto:hello@cavos.xyz" className="underline underline-offset-2 hover:text-black transition-colors">hello@cavos.xyz</a>.
                         </p>
                         <p>
@@ -109,16 +109,16 @@ export default function UserPrivacyPage() {
                         <Sub title="OAuth identity claims (from your sign-in provider)">
                             <p>When you sign in via Google, Apple, or email, your identity provider issues a signed token containing claims about you. Cavos processes the following claims to create and authenticate your wallet:</p>
                             <ul className="list-disc pl-4 mt-2 space-y-1">
-                                <li><strong className="text-black/80">Provider user ID (<code>sub</code>)</strong> — a unique, opaque identifier assigned to you by Google, Apple, or Firebase. Used to derive your wallet address deterministically. Stored in our database.</li>
+                                <li><strong className="text-black/80">Provider user ID (<code>sub</code>)</strong> — a unique, opaque identifier assigned to you by Google, Apple, or Firebase. Used with the application and network to look up or claim your wallet in our registry. Stored in our database.</li>
                                 <li><strong className="text-black/80">Email address</strong> — only collected if you sign in via email magic link. Stored temporarily during the verification flow (up to 24 hours), then deleted.</li>
                                 <li><strong className="text-black/80">Name &amp; profile picture</strong> — if provided by your sign-in provider (Google / Apple). Displayed in the wallet UI. <strong className="text-black/80">Never stored on our servers</strong> — kept only in your browser session storage.</li>
                             </ul>
                         </Sub>
                         <Sub title="Wallet address">
-                            <p>Your Starknet wallet address is derived from your provider user ID and stored in our database to associate it with the developer&rsquo;s application and the network (mainnet / testnet). This is a pseudonymous blockchain address — it is not directly linked to your name or email in our database.</p>
+                            <p>Your wallet address is stored in our registry so the application can resolve the same account on a later login. On Starknet that address is an audited OpenZeppelin AccountUpgradeable. The address is not derived from your provider user ID. This is a pseudonymous blockchain address — it is not directly linked to your name or email in our database.</p>
                         </Sub>
-                        <Sub title="Session key (generated locally)">
-                            <p>A cryptographic session key pair is generated in your browser for each login. The private key <strong className="text-black/80">never leaves your device</strong> and is never transmitted to our servers. It lives only in your browser&rsquo;s <code>sessionStorage</code> and is automatically cleared when you close the browser tab.</p>
+                        <Sub title="Signing key (generated on your device)">
+                            <p>The account&rsquo;s signing key is derived on your device from a MasterDEK. The private key <strong className="text-black/80">never leaves your device</strong> and is never transmitted to our servers. On Starknet there is no on-chain session key and no zero-knowledge proof registered for login.</p>
                         </Sub>
                         <Sub title="Anonymous usage metrics">
                             <p>We record anonymized usage metrics (wallet address + app + network) to calculate billing for the developer. We do <strong className="text-black/80">not</strong> store transaction hashes, transaction contents, or any PII alongside these metrics.</p>
@@ -127,23 +127,21 @@ export default function UserPrivacyPage() {
 
                     <Section title="3. Data at a glance">
                         <Table rows={[
-                            ['Provider user ID (sub)', 'Our database', 'Yes', 'Wallet address derivation & deduplication'],
+                            ['Provider user ID (sub)', 'Our database', 'Yes', 'Registry lookup & deduplication'],
                             ['Email address', 'Our database (temp)', 'Only during email verification (≤24 h)', 'Magic link authentication'],
                             ['Name & profile picture', 'Your browser only', 'No', 'Displayed in wallet UI'],
-                            ['Wallet address', 'Our database + Starknet', 'Yes', 'Wallet identity & analytics'],
-                            ['Session private key', 'Your browser only', 'No', 'Transaction signing'],
-                            ['Session public key', 'Starknet (on-chain)', 'Yes (blockchain)', 'On-chain session verification'],
-                            ['ZK proof (sub, nonce, exp, iss, aud)', 'Starknet (on-chain)', 'Yes (blockchain)', 'Trustless wallet ownership proof'],
+                            ['Wallet address', 'Our database + chain', 'Yes', 'Wallet identity & analytics'],
+                            ['Signing key / MasterDEK', 'Your device only', 'No', 'Transaction signing'],
                         ]} />
                         <p className="text-xs text-black/40 mt-2">
-                            Data stored on the Starknet blockchain is public and permanent by nature. This includes your wallet address, session public keys, and zero-knowledge proofs.
+                            Data stored on a public blockchain is permanent by nature. On Starknet this includes the OpenZeppelin account address and the stark public key in that contract&rsquo;s storage. Cavos does not register session keys or zero-knowledge proofs on-chain.
                         </p>
                     </Section>
 
                     <Section title="4. What we do NOT collect">
                         <ul className="list-disc pl-4 space-y-2">
                             <li>We do <strong className="text-black/80">not</strong> store your OAuth password or any credentials.</li>
-                            <li>We do <strong className="text-black/80">not</strong> store your session private key — it never leaves your browser.</li>
+                            <li>We do <strong className="text-black/80">not</strong> store your signing key or MasterDEK — they never leave your device.</li>
                             <li>We do <strong className="text-black/80">not</strong> link your email or name to your wallet address in our database (as of March 16, 2026).</li>
                             <li>We do <strong className="text-black/80">not</strong> store transaction hashes or the contents of transactions you submit.</li>
                             <li>We do <strong className="text-black/80">not</strong> use advertising trackers or sell your data to third parties.</li>
@@ -163,7 +161,7 @@ export default function UserPrivacyPage() {
                             <li><strong className="text-black/80">Provider user ID &amp; wallet address</strong> — retained while your wallet exists in the application. You can request deletion at any time (see §8).</li>
                             <li><strong className="text-black/80">Email address</strong> — deleted automatically within 24 hours of the magic link verification flow completing or expiring.</li>
                             <li><strong className="text-black/80">Usage metrics</strong> — retained for 13 months then aggregated and anonymized.</li>
-                            <li><strong className="text-black/80">On-chain data</strong> — your wallet address and session public keys on Starknet are permanent and cannot be deleted (this is the nature of public blockchains).</li>
+                            <li><strong className="text-black/80">On-chain data</strong> — your wallet address (and on Starknet the OpenZeppelin account public key) is permanent and cannot be deleted (this is the nature of public blockchains).</li>
                         </ul>
                     </Section>
 
@@ -173,7 +171,7 @@ export default function UserPrivacyPage() {
                             <li><strong className="text-black/80">Supabase</strong> (EU, AWS eu-west-1) — database storage for wallet records.</li>
                             <li><strong className="text-black/80">Google Firebase</strong> (US, with SCCs) — email magic link delivery and authentication.</li>
                             <li><strong className="text-black/80">Vercel</strong> (US, with SCCs) — hosting of the Cavos API and dashboard.</li>
-                            <li><strong className="text-black/80">Starknet network</strong> — public blockchain where your wallet address and session keys are registered on-chain.</li>
+                            <li><strong className="text-black/80">Public blockchains</strong> — Starknet, Solana, and Stellar, where the account address exists on-chain. Starknet wallets use an audited OpenZeppelin AccountUpgradeable; Cavos does not register session keys on-chain.</li>
                         </ul>
                         <p className="text-xs text-black/40 mt-1">SCCs = Standard Contractual Clauses (EU mechanism for lawful data transfers).</p>
                     </Section>
@@ -196,7 +194,7 @@ export default function UserPrivacyPage() {
 
                     <Section title="9. Security">
                         <p>
-                            We use TLS for all data in transit, row-level security in our database, and restrict access to production systems. Your session private key is never transmitted to our servers — it is generated and stored exclusively in your browser. In the event of a data breach, we will notify the relevant supervisory authority within 72 hours (GDPR Art. 33).
+                            We use TLS for all data in transit, row-level security in our database, and restrict access to production systems. Your signing key is never transmitted to our servers — it is derived and used on your device. In the event of a data breach, we will notify the relevant supervisory authority within 72 hours (GDPR Art. 33).
                         </p>
                     </Section>
 

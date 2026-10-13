@@ -42,7 +42,7 @@ export default function PrivyAlternativesPage() {
                 ...breadcrumbListJsonLd([
                     { name: 'Home', path: '/' },
                     { name: 'Compare', path: '/compare' },
-                    { name: 'Privy alternatives', path: PRIVY_ALTERNATIVES_PATH },
+                    { name: 'Privy wallet alternatives', path: PRIVY_ALTERNATIVES_PATH },
                 ]),
                 '@id': `${url}#breadcrumb`,
             },
@@ -76,14 +76,16 @@ export default function PrivyAlternativesPage() {
                         {PRIVY_ALTERNATIVES_H1}
                     </h1>
                     <p className="mt-7 max-w-2xl text-lg leading-relaxed text-muted">
-                        Privy is a widely adopted{' '}
+                        This page is about Privy the{' '}
                         <Link href="/embedded-wallet" className={linkClass}>
                             embedded wallet
-                        </Link>{' '}
-                        and authentication provider focused primarily on EVM chains, offering
-                        both embedded wallets and external wallet connection. Teams look for a
-                        Privy alternative when that custody model, chain coverage, commercial
-                        terms, or switching cost no longer match the product they are shipping.
+                        </Link>
+                        , not the Shopify popup tool of the same name. Privy is a widely
+                        adopted embedded crypto wallet and authentication provider focused
+                        primarily on EVM chains, offering both embedded wallets and external
+                        wallet connection. Teams look for a Privy wallet alternative when that
+                        custody model, chain coverage, commercial terms, or switching cost no
+                        longer match the product they are shipping.
                     </p>
                     <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
                         This guide uses the same facts as the{' '}

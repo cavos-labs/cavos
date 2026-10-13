@@ -4,6 +4,7 @@ import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import {
     STARKNET_WALLET_DESCRIPTION,
+    STARKNET_WALLET_FAQ,
     STARKNET_WALLET_PATH,
     STARKNET_WALLET_TITLE,
     breadcrumbListJsonLd,
@@ -53,30 +54,43 @@ export default function EmbeddedStarknetWalletPage() {
     }
     const jsonLd = {
         '@context': 'https://schema.org',
-        '@type': 'SoftwareApplication',
-        '@id': `${PAGE_URL}#software`,
-        name: 'Cavos Embedded Starknet Wallet',
-        url: PAGE_URL,
-        operatingSystem: 'Web, iOS, Android',
-        applicationCategory: 'DeveloperApplication',
-        applicationSubCategory: 'Embedded Starknet Wallet SDK',
-        description: 'A device-native, self-custodial embedded wallet SDK for Starknet. The signing key is created and used on the user\'s device. Standard upgradeable OpenZeppelin account with a stark key derived on the device, and paymaster-sponsored execution.',
-        offers: {
-            '@type': 'Offer',
-            price: '0',
-            priceCurrency: 'USD',
-            description: 'Free tier available.',
-        },
-        author: { '@id': 'https://cavos.xyz/#organization' },
-        featureList: [
-            'Native stark key derived from the user\'s MasterDEK',
-            'Upgradeable OpenZeppelin account',
-            'Paymaster-sponsored transactions',
-            'Arbitrary multicalls',
-            'Passkey and enclave restore on new devices',
-            'React and React Native SDKs',
+        '@graph': [
+            {
+                '@type': 'SoftwareApplication',
+                '@id': `${PAGE_URL}#software`,
+                name: 'Cavos Embedded Starknet Wallet',
+                url: PAGE_URL,
+                operatingSystem: 'Web, iOS, Android',
+                applicationCategory: 'DeveloperApplication',
+                applicationSubCategory: 'Embedded Starknet Wallet SDK',
+                description: 'A device-native, self-custodial embedded wallet SDK for Starknet. The signing key is created and used on the user\'s device. Audited OpenZeppelin AccountUpgradeable v3.0.0 with a stark key derived on the device, and paymaster-sponsored execution.',
+                offers: {
+                    '@type': 'Offer',
+                    price: '0',
+                    priceCurrency: 'USD',
+                    description: 'Free tier available.',
+                },
+                author: { '@id': 'https://cavos.xyz/#organization' },
+                featureList: [
+                    'Native stark key derived from the user\'s MasterDEK',
+                    'Audited OpenZeppelin AccountUpgradeable v3.0.0',
+                    'Paymaster-sponsored transactions',
+                    'Arbitrary multicalls',
+                    'Passkey and enclave restore on new devices',
+                    'React and React Native SDKs',
+                ],
+                screenshot: 'https://cavos.xyz/og-image.png',
+            },
+            {
+                '@type': 'FAQPage',
+                '@id': `${PAGE_URL}#faq`,
+                mainEntity: STARKNET_WALLET_FAQ.map((item) => ({
+                    '@type': 'Question',
+                    name: item.question,
+                    acceptedAnswer: { '@type': 'Answer', text: item.answer },
+                })),
+            },
         ],
-        screenshot: 'https://cavos.xyz/og-image.png',
     }
 
     return (
@@ -125,10 +139,10 @@ export default function EmbeddedStarknetWalletPage() {
                     <h2 className="text-2xl font-medium tracking-[-0.03em]">Account model</h2>
                     <div className="mt-6 rounded-2xl border border-line bg-surface/50 p-8">
                         <p className="text-sm leading-relaxed text-muted">
-                            Cavos provisions the standard <strong>OpenZeppelin AccountUpgradeable</strong> — an
-                            upgradeable smart contract account controlled by a stark key. The key is derived from
-                            the user&apos;s MasterDEK, signs transactions, and the account validates the signature
-                            before execution.
+                            Cavos provisions an <strong>audited OpenZeppelin account contract</strong> —
+                            AccountUpgradeable v3.0.0 — controlled by one stark key. The key is derived from
+                            the user&apos;s MasterDEK and app salt, signs transactions, and the account validates the
+                            signature before execution. The audit covers OpenZeppelin&apos;s contract, not Cavos.
                         </p>
                         <ul className="mt-5 space-y-3 text-sm leading-relaxed text-muted">
                             <li className="flex gap-3">
@@ -161,7 +175,7 @@ export default function EmbeddedStarknetWalletPage() {
                         Connect never deploys the account — it&apos;s created lazily on first execute.
                         You can call <code className="text-xs bg-surface px-1.5 py-0.5 rounded">execute</code> when
                         status is <code className="text-xs bg-surface px-1.5 py-0.5 rounded">&quot;undeployed&quot;</code> or <code className="text-xs bg-surface px-1.5 py-0.5 rounded">&quot;ready&quot;</code>.
-                        Only <code className="text-xs bg-surface px-1.5 py-0.5 rounded">&quot;needs-device-approval&quot;</code> blocks execution.
+                        Only <code className="text-xs bg-surface px-1.5 py-0.5 rounded">&quot;needs-device-approval&quot;</code> blocks execution: this device has no key yet and must restore the MasterDEK.
                     </p>
                     <div className="mt-6 overflow-x-auto rounded-xl border border-line bg-[#1a1a1a] p-5 text-sm">
                         <pre className="text-white/90 whitespace-pre-wrap"><code>{CODE_EXAMPLE}</code></pre>
@@ -173,7 +187,7 @@ export default function EmbeddedStarknetWalletPage() {
                     <div className="mt-6 grid gap-px overflow-hidden rounded-2xl border border-line bg-line md:grid-cols-2">
                         {[
                             ['Self-custodial', 'Cavos never holds a key that can move user funds. The account key is derived from a MasterDEK that only the user\'s devices can open.'],
-                            ['OpenZeppelin account', 'The standard upgradeable AccountUpgradeable contract, validating a stark key derived from the MasterDEK.'],
+                            ['Audited OpenZeppelin account', 'AccountUpgradeable v3.0.0 (class hash 0x01d1777db36cdd06dd62cfde77b1b6ae06412af95d57a13dc40ac77b8a702381). The audit covers OpenZeppelin’s contract, not Cavos.'],
                             ['Gasless execution', 'The Cavos paymaster sponsors deployment and every transaction — users never need ETH or STRK.'],
                             ['Arbitrary multicalls', 'Execute any contract calls: token transfers, DeFi interactions, NFT mints — all in one transaction.'],
                             ['Passkey and enclave restore', 'A synced passkey or an enclave sign-in restores the MasterDEK on a new device, so the same wallet opens everywhere.'],
@@ -182,6 +196,22 @@ export default function EmbeddedStarknetWalletPage() {
                             <article key={title} className="bg-white p-7">
                                 <h3 className="font-semibold">{title}</h3>
                                 <p className="mt-3 text-sm leading-relaxed text-muted">{body}</p>
+                            </article>
+                        ))}
+                    </div>
+                </section>
+
+                <section className="mt-16" id="faq">
+                    <h2 className="text-2xl font-medium tracking-[-0.03em]">
+                        Frequently asked
+                    </h2>
+                    <div className="mt-8 grid gap-x-12 gap-y-10 md:grid-cols-2">
+                        {STARKNET_WALLET_FAQ.map((item) => (
+                            <article key={item.question}>
+                                <h3 className="font-semibold">{item.question}</h3>
+                                <p className="mt-3 text-sm leading-relaxed text-muted">
+                                    {item.answer}
+                                </p>
                             </article>
                         ))}
                     </div>

@@ -33,7 +33,30 @@ export const ORGANIZATION_DESCRIPTION =
 export const STARKNET_WALLET_PATH = '/embedded-starknet-wallet'
 export const STARKNET_WALLET_TITLE = 'Embedded Starknet Wallet SDK'
 export const STARKNET_WALLET_DESCRIPTION =
-  'Starknet embedded wallet SDK: device-native and self-custodial. Signing key derived and used on-device. Standard upgradeable OpenZeppelin account.'
+  'Starknet embedded wallet SDK: device-native and self-custodial. Signing key derived and used on-device. Audited OpenZeppelin AccountUpgradeable v3.0.0.'
+
+export const STARKNET_WALLET_FAQ = [
+  {
+    question: 'What account contract does Cavos use on Starknet?',
+    answer:
+      'Each Starknet wallet is an audited OpenZeppelin account contract: AccountUpgradeable v3.0.0, class hash 0x01d1777db36cdd06dd62cfde77b1b6ae06412af95d57a13dc40ac77b8a702381. The audit covers OpenZeppelin’s contract, not Cavos. One stark key, derived from the MasterDEK and app salt, controls the account.',
+  },
+  {
+    question: 'How do new devices recover a Starknet wallet?',
+    answer:
+      'Recovery is off-chain. A new device restores the MasterDEK with a Nitro enclave or a synced passkey and derives the same stark key. There are no on-chain device signers, no on-chain device approval, and no on-chain social recovery, backup signer, or recovery delay.',
+  },
+  {
+    question: 'What does needs-device-approval mean on Starknet?',
+    answer:
+      'This device has no key yet. Restore the MasterDEK with a passkey or the enclave, then it can spend. The status is not an on-chain approval queue.',
+  },
+  {
+    question: 'How does gas and deployment work?',
+    answer:
+      'The Cavos paymaster sponsors deployment and execution, so the user pays no gas. Connect never deploys; the first execute deploys the OpenZeppelin account lazily and runs the calls atomically. Off-chain signatures use SNIP-12.',
+  },
+] as const
 
 export const SOLANA_WALLET_PATH = '/embedded-solana-wallet'
 export const SOLANA_WALLET_TITLE = 'Embedded Solana Wallet SDK'
@@ -344,8 +367,10 @@ export function organizationJsonLd(
       { '@id': FRAMEZZ_GALLERIES_ID },
     ],
     sameAs: [
+      'https://x.com/cavosxyz',
       'https://twitter.com/cavosxyz',
       'https://github.com/cavos-labs',
+      'https://docs.cavos.xyz',
     ],
     contactPoint: {
       '@type': 'ContactPoint',

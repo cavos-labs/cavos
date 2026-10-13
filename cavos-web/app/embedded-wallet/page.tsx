@@ -2,7 +2,11 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
-import { embeddedWalletProviderRows } from '@/lib/compare-data'
+import {
+    EMBEDDED_WALLET_MARKET_NOTE,
+    PROVIDER_PRICING_AS_OF,
+    embeddedWalletProviderRows,
+} from '@/lib/compare-data'
 import {
     DOCS_URLS,
     EMBEDDED_WALLET_DESCRIPTION,
@@ -246,7 +250,7 @@ export default function EmbeddedWalletGuidePage() {
                             ],
                             [
                                 'Self-custodial, device-native',
-                                'The signing key is created on the user\u2019s device and does not leave it. The provider cannot see it, cannot sign with it, and cannot move funds. New devices are added by an on-chain approval, not by reconstituting a master key on a server.',
+                                'The signing key is created on the user\u2019s device and does not leave it. The provider cannot see it, cannot sign with it, and cannot move funds. A new device restores the MasterDEK off-chain with a passkey or the Nitro enclave; it is not added by an on-chain approval.',
                             ],
                         ].map(([title, body]) => (
                             <article key={title} className="bg-white p-7">
@@ -378,11 +382,11 @@ export default function EmbeddedWalletGuidePage() {
                         <article className="bg-white p-7">
                             <h3 className="text-lg font-semibold">Starknet</h3>
                             <p className="mt-3 text-sm leading-relaxed text-muted">
-                                Accounts are smart contracts. Cavos provisions the standard
-                                upgradeable OpenZeppelin account, controlled by a stark key
-                                derived from the user&apos;s MasterDEK. Execution routes through a
-                                paymaster (SNIP-29, SRC-9 outside execution) so users pay no gas. The account is derived on connect and
-                                deployed lazily on first execute.
+                                Each wallet is an audited OpenZeppelin AccountUpgradeable
+                                v3.0.0, controlled by one stark key derived from the
+                                MasterDEK and app salt. There is no on-chain device list.
+                                Execution is paymaster-sponsored (SNIP-29); the account
+                                deploys lazily on first execute. Signatures are SNIP-12.
                             </p>
                             <p className="mt-4">
                                 <Link href="/embedded-starknet-wallet" className={linkClass}>
@@ -518,39 +522,55 @@ export default function EmbeddedWalletGuidePage() {
 
                 <section className="mt-16">
                     <h2 className="text-2xl font-medium tracking-[-0.03em]">
-                        How providers differ
+                        Embedded wallet provider comparison
                     </h2>
                     <p className="mt-5 max-w-3xl text-sm leading-relaxed text-muted">
-                        Privy, Dynamic, Turnkey, Web3Auth, and Magic all ship an embedded
-                        wallet. They do not share a signing model or the same native chain
-                        coverage. Each name opens the full comparison.
+                        Cavos, Privy, Dynamic, Turnkey, Web3Auth / MetaMask Embedded Wallets,
+                        and Magic all ship an embedded wallet. They do not share a key model,
+                        the same native chain coverage, or the same pricing. Each name opens
+                        the full comparison except Cavos, which links to published fees.
                     </p>
                     <div className="mt-8 overflow-x-auto rounded-2xl border border-line">
-                        <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+                        <table className="w-full min-w-[860px] border-collapse text-left text-sm">
                             <thead className="bg-brand text-white">
                                 <tr>
                                     <th className="px-5 py-4 font-semibold">Provider</th>
                                     <th className="border-l border-white/10 px-5 py-4 font-semibold">
-                                        Signing
+                                        Pricing and free tier
                                     </th>
                                     <th className="border-l border-white/10 px-5 py-4 font-semibold">
-                                        Chain coverage
+                                        Chains
+                                    </th>
+                                    <th className="border-l border-white/10 px-5 py-4 font-semibold">
+                                        Key model
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {providers.map((provider) => (
                                     <tr key={provider.slug} className="border-t border-line">
-                                        <th scope="row" className="px-5 py-4 align-top font-semibold">
+                                        <th
+                                            scope="row"
+                                            className={`px-5 py-4 align-top font-semibold ${provider.slug === 'cavos' ? 'bg-brand/[0.035]' : ''}`}
+                                        >
                                             <Link href={provider.href} className={linkClass}>
                                                 {provider.name}
                                             </Link>
                                         </th>
-                                        <td className="border-l border-line px-5 py-4 align-top text-muted">
-                                            {provider.signing}
+                                        <td
+                                            className={`border-l border-line px-5 py-4 align-top text-muted ${provider.slug === 'cavos' ? 'bg-brand/[0.035]' : ''}`}
+                                        >
+                                            {provider.pricing}
                                         </td>
-                                        <td className="border-l border-line px-5 py-4 align-top text-muted">
+                                        <td
+                                            className={`border-l border-line px-5 py-4 align-top text-muted ${provider.slug === 'cavos' ? 'bg-brand/[0.035]' : ''}`}
+                                        >
                                             {provider.chains}
+                                        </td>
+                                        <td
+                                            className={`border-l border-line px-5 py-4 align-top text-muted ${provider.slug === 'cavos' ? 'bg-brand/[0.035]' : ''}`}
+                                        >
+                                            {provider.keyModel}
                                         </td>
                                     </tr>
                                 ))}
@@ -558,9 +578,14 @@ export default function EmbeddedWalletGuidePage() {
                         </table>
                     </div>
                     <p className="mt-5 max-w-3xl text-sm leading-relaxed text-muted">
+                        Cavos fees are from this site. Other fees are from each vendor&apos;s
+                        public pricing page as of {PROVIDER_PRICING_AS_OF} and can change.{' '}
+                        {EMBEDDED_WALLET_MARKET_NOTE}
+                    </p>
+                    <p className="mt-5 max-w-3xl text-sm leading-relaxed text-muted">
                         Teams replacing Privy specifically can start with the{' '}
                         <Link href="/privy-alternatives" className={linkClass}>
-                            Privy alternatives
+                            Privy wallet alternatives
                         </Link>{' '}
                         guide.
                     </p>

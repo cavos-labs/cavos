@@ -22,8 +22,11 @@ export async function generateMetadata({
     const competitor = getCompetitor(slug)
     if (!competitor) return {}
 
-    const title = `Cavos vs ${competitor.name}: embedded wallet comparison`
-    const description = `An honest comparison of Cavos and ${competitor.name} across custody, chain support, signing authority, gas sponsorship, and recovery — including when ${competitor.name} is the better choice.`
+    const title =
+        competitor.pageTitle ?? `Cavos vs ${competitor.name}: embedded wallet comparison`
+    const description =
+        competitor.pageDescription ??
+        `An honest comparison of Cavos and ${competitor.name} across custody, chain support, signing authority, gas sponsorship, and recovery — including when ${competitor.name} is the better choice.`
 
     return marketingPageMetadata({
         title,
@@ -50,8 +53,10 @@ export default async function ComparisonPage({
                 '@type': 'WebPage',
                 '@id': `${url}#webpage`,
                 url,
-                name: `Cavos vs ${competitor.name}`,
-                description: `Comparison of Cavos and ${competitor.name} across custody, signing authority, chain support, sponsorship, and recovery.`,
+                name: competitor.pageH1 ?? `Cavos vs ${competitor.name}`,
+                description:
+                    competitor.pageDescription ??
+                    `Comparison of Cavos and ${competitor.name} across custody, signing authority, chain support, sponsorship, and recovery.`,
                 isPartOf: { '@id': 'https://cavos.xyz/#website' },
             },
             {
@@ -86,9 +91,12 @@ export default async function ComparisonPage({
             <div className="mx-auto max-w-6xl px-6 pb-24 pt-32 md:px-8">
                 <header className="max-w-3xl">
                     <h1 className="text-balance text-[clamp(2.5rem,6vw,4.5rem)] font-medium leading-[0.98] tracking-[-0.045em]">
-                        Cavos vs {competitor.name}
+                        {competitor.pageH1 ?? `Cavos vs ${competitor.name}`}
                     </h1>
                     <p className="mt-7 max-w-2xl text-lg leading-relaxed text-muted">
+                        {competitor.slug === 'privy'
+                            ? 'This comparison is about Privy the embedded crypto wallet, not the Shopify popup tool of the same name. '
+                            : null}
                         {competitor.summary}
                     </p>
                     <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
@@ -179,7 +187,7 @@ export default async function ComparisonPage({
                                 href="/privy-alternatives"
                                 className="rounded-md border border-line px-4 py-2 text-sm font-medium transition-colors hover:border-ink"
                             >
-                                Privy alternatives
+                                Privy wallet alternatives
                             </Link>
                         ) : null}
                     </div>
