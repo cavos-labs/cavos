@@ -224,6 +224,15 @@ Hello
     )
   })
 
+  it('keeps legal pages at low priority and omits noindex routes from the list', () => {
+    const legal = ['/privacy', '/dpa', '/user-privacy', '/user-terms', '/terms']
+    for (const routePath of legal) {
+      const entry = entries.find((item) => item.url === `${MARKETING_ORIGIN}${routePath}`)
+      assert.ok(entry, `sitemap missing legal page ${routePath}`)
+      assert.ok(entry.priority <= 0.3, `${routePath} priority ${entry.priority} is not low`)
+    }
+  })
+
   it('omits auth, dashboard, and noindex utility routes', () => {
     const omitted = [
       ...AUTH_NOINDEX_PATHS,

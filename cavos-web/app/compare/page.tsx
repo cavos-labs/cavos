@@ -185,7 +185,7 @@ export default function ComparePage() {
                             href="/privy-alternatives"
                             className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
                         >
-                            Privy alternatives
+                            Privy wallet alternatives
                         </Link>{' '}
                         guide.
                     </p>

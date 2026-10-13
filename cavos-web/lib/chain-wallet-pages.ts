@@ -105,7 +105,7 @@ export const STARKNET_FAQ: GuideFaqItem[] = [
   {
     question: 'Does Cavos use a custom Starknet account contract?',
     answer:
-      'No. Cavos provisions the standard upgradeable OpenZeppelin AccountUpgradeable (v3.0.0). The account is controlled by a stark key derived from the user’s MasterDEK. There is no on-chain device list and no custom Cavos account class.',
+      'No. Each Starknet wallet is an audited OpenZeppelin account contract: AccountUpgradeable v3.0.0, class hash 0x01d1777db36cdd06dd62cfde77b1b6ae06412af95d57a13dc40ac77b8a702381. The audit covers OpenZeppelin’s contract, not Cavos. One stark key, derived from the MasterDEK and app salt, controls the account. There is no on-chain device list and no custom Cavos account class.',
   },
   {
     question: 'How does gas work on a Starknet embedded wallet?',
@@ -120,7 +120,7 @@ export const STARKNET_FAQ: GuideFaqItem[] = [
   {
     question: 'How does recovery work on a Starknet embedded wallet?',
     answer:
-      'A new device restores the MasterDEK off-chain and derives the same stark key. After login, enrollPasskeyDefault() stores an encrypted copy of that DEK under a passkey. Hardware-isolated recovery, opt-in per environment, unwraps the DEK when the user signs in again with Google, Apple, or an enclave-verified email code. Recovery codes do not restore Starknet wallets.',
+      'Recovery is off-chain. A new device restores the MasterDEK with a Nitro enclave or a synced passkey and derives the same stark key. There are no on-chain device signers and no on-chain social recovery, backup signer, or recovery delay. After login, enrollPasskeyDefault() stores an encrypted copy of that DEK under a passkey. Hardware-isolated recovery, opt-in per environment, unwraps the DEK when the user signs in again with Google, Apple, or an enclave-verified email code. Recovery codes do not restore Starknet wallets.',
   },
   {
     question: 'What is Starknet-specific versus shared across chains?',
@@ -201,8 +201,8 @@ export const STARKNET_FEATURES: [string, string][] = [
     "Cavos never holds a key that can move user funds. The account key is derived from a MasterDEK that only the user's devices can open.",
   ],
   [
-    'OpenZeppelin account',
-    'The standard upgradeable AccountUpgradeable contract (v3.0.0), validating a stark key derived from the MasterDEK.',
+    'Audited OpenZeppelin account',
+    'AccountUpgradeable v3.0.0 (class hash 0x01d1777db36cdd06dd62cfde77b1b6ae06412af95d57a13dc40ac77b8a702381). The audit covers OpenZeppelin’s contract, not Cavos.',
   ],
   [
     'Gasless execution',
@@ -280,10 +280,10 @@ export const STARKNET_SOFTWARE = {
   name: 'Cavos Embedded Starknet Wallet',
   subCategory: 'Embedded Starknet Wallet SDK',
   description:
-    "A device-native, self-custodial embedded wallet SDK for Starknet. The signing key is created and used on the user's device. Standard upgradeable OpenZeppelin account with a stark key derived on the device, and paymaster-sponsored execution.",
+    "A device-native, self-custodial embedded wallet SDK for Starknet. The signing key is created and used on the user's device. Audited OpenZeppelin AccountUpgradeable v3.0.0 with a stark key derived on the device, and paymaster-sponsored execution.",
   featureList: [
     "Native stark key derived from the user's MasterDEK",
-    'Upgradeable OpenZeppelin AccountUpgradeable v3.0.0',
+    'Audited OpenZeppelin AccountUpgradeable v3.0.0',
     'Paymaster-sponsored transactions',
     'Arbitrary multicalls',
     'Passkey and enclave restore on new devices',

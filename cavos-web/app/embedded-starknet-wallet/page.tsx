@@ -132,10 +132,12 @@ export default function EmbeddedStarknetWalletPage() {
                     </h2>
                     <div className="mt-5 space-y-4 text-sm leading-relaxed text-muted">
                         <p>
-                            Cavos provisions the standard{' '}
-                            <strong>OpenZeppelin AccountUpgradeable</strong> (v3.0.0) — an
-                            upgradeable smart contract account controlled by a stark key. It is
-                            the same shape as Argent or Braavos, not a custom Cavos contract. The
+                            Cavos provisions an{' '}
+                            <strong>audited OpenZeppelin account contract</strong> —
+                            AccountUpgradeable v3.0.0. The audit covers OpenZeppelin&apos;s
+                            contract, not Cavos. It is an upgradeable smart contract account
+                            controlled by one stark key, the same shape as Argent or Braavos, not
+                            a custom Cavos contract. The
                             key is{' '}
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
                                 grindKey(HKDF(MasterDEK, appSalt, &quot;cavos-stark-starknet-v1&quot;))

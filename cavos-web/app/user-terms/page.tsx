@@ -10,7 +10,7 @@ export const metadata: Metadata = marketingPageMetadata({
     path: '/user-terms',
 })
 
-const LAST_UPDATED = 'September 3, 2026'
+const LAST_UPDATED = 'October 13, 2026'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
     return (
@@ -76,7 +76,7 @@ export default function UserTermsPage() {
 
                     <Section title="2. Your wallet is self-custodial">
                         <p>
-                            You are solely in control of your wallet. Cavos does not hold, store, or have access to your private keys. Signing keys are created and used on your device. Where the App uses a session key, that key is generated in your browser or on your device and is not transmitted to our servers as a key we can use to move funds.
+                            You are solely in control of your wallet. Cavos does not hold, store, or have access to your private keys. Signing keys are created and used on your device. On Starknet the account is an audited OpenZeppelin AccountUpgradeable controlled by one stark key derived from a MasterDEK; Cavos cannot spend with that key.
                         </p>
                         <p>
                             This means:
@@ -109,19 +109,13 @@ export default function UserTermsPage() {
 
                     <Section title="5. Blockchain transactions are irreversible">
                         <p>
-                            All transactions signed with your key (including a session key) and submitted to the relevant blockchain (Starknet, Solana, or Stellar) are final and irreversible. Cavos has no ability to reverse, block, or modify transactions once they have been submitted. Review all transaction details carefully before confirming.
+                            All transactions signed with your key and submitted to the relevant blockchain (Starknet, Solana, or Stellar) are final and irreversible. Cavos has no ability to reverse, block, or modify transactions once they have been submitted. Review all transaction details carefully before confirming.
                         </p>
                     </Section>
 
-                    <Section title="6. Session keys, device keys, and security">
+                    <Section title="6. Device keys and security">
                         <p>
-                            Each time you log in, the Cavos SDK may generate a temporary session key in your browser or on your device. This key is used to sign transactions on your behalf during your session and is automatically deleted when you close the browser tab or log out, or as otherwise configured by the App.
-                        </p>
-                        <p>
-                            Session keys may be authorized on-chain with configurable policies set by the developer (for example, limiting which contracts can be called or capping spending). You can revoke a session key at any time from within the application where the App provides that control.
-                        </p>
-                        <p>
-                            Device-native signing keys, where used, remain on your device. Cavos cannot see them, sign with them, or move funds with them.
+                            Signing keys are derived on your device from a MasterDEK. They remain on your device. Cavos cannot see them, sign with them, or move funds with them. On Starknet there is no on-chain session key and no on-chain device-signer list; a new device restores the MasterDEK off-chain with a passkey or the recovery enclave.
                         </p>
                         <p>
                             You are responsible for the security of the device and browser you use to access your wallet. Do not use your wallet on shared or untrusted devices.

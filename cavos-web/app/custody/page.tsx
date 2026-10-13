@@ -35,7 +35,7 @@ const FAQ = [
     },
     {
         question: 'Does integrating Cavos mean an application needs no license?',
-        answer: 'No. The Cavos backend is built so it cannot spend user funds or add itself as a signer. Recovery is a separate path: on Starknet, Solana, and Stellar an enclave can unwrap a MasterDEK. The docs call that non-custodial, and not trustless. Exchange, on-ramps, and sending crypto for a customer are licensed on their own. Ask counsel in each country where you have users.',
+        answer: 'No. The Cavos backend is built so it cannot spend user funds. On Starknet there is no on-chain device-signer list to join; recovery unwraps a MasterDEK off-chain via a Nitro enclave or a synced passkey. The docs call that non-custodial, and not trustless. Exchange, on-ramps, and sending crypto for a customer are licensed on their own. Ask counsel in each country where you have users.',
     },
 ]
 
@@ -451,7 +451,7 @@ export default function CustodyPage() {
                                             <li>You cannot send a payout or move a treasury on your own.</li>
                                             <li>Exchange, on-ramps, and transfers for a customer are licensed either way.</li>
                                             <li>Brazil, Costa Rica, Mexico, and the UK never wrote Argentina’s exception.</li>
-                                            <li>Cavos recovery can unwrap a spend key on Solana and Stellar, or schedule one signer add on Starknet. The docs call that non-custodial, and not trustless.</li>
+                                            <li>Cavos recovery unwraps a MasterDEK on Starknet, Solana, and Stellar off-chain (Nitro enclave or synced passkey). There is no on-chain signer add. The docs call that non-custodial, and not trustless.</li>
                                         </ul>
                                     </td>
                                 </tr>
@@ -988,8 +988,9 @@ export default function CustodyPage() {
                     <h2 className="text-3xl font-medium tracking-[-0.03em]">What Cavos holds</h2>
                     <div className="mt-5 space-y-4 text-sm leading-relaxed text-muted">
                         <p>
-                            The Cavos backend is not allowed to move user funds or enroll itself as
-                            a signer. On Solana the relayer pays fees. It does not spend. Registries,
+                            The Cavos backend is not allowed to move user funds. On Starknet the
+                            account is an audited OpenZeppelin AccountUpgradeable with one stark
+                            key; there is no on-chain device-signer list to enroll into. On Solana the relayer pays fees. It does not spend. Registries,
                             recovery, paymasters, and relayers can coordinate a transaction. They
                             cannot authorize one.
                         </p>
@@ -1075,7 +1076,7 @@ export default function CustodyPage() {
                     <div>
                         <h2 className="text-2xl font-medium">Read how signing works before you integrate.</h2>
                         <p className="mt-2 max-w-xl text-sm text-white/70">
-                            The quickstart is the device signer. A lawyer in each country where
+                            The quickstart is device-native signing. A lawyer in each country where
                             you have users still has to classify the rest.
                         </p>
                     </div>

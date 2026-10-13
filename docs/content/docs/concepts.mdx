@@ -20,7 +20,7 @@ end-to-end validation are complete.
 The Cavos backend must not possess authority that can move user funds or enroll
 itself as a signer.
 
-- **Starknet:** the standard OpenZeppelin account, controlled by a stark key derived from the MasterDEK.
+- **Starknet:** the audited OpenZeppelin `AccountUpgradeable` v3.0.0, controlled by a stark key derived from the MasterDEK.
 - **Solana:** a native Ed25519 system account. The relayer is fee payer, never a spender.
 - **Stellar:** the classic account's Ed25519 control key (MasterDEK, or extra Horizon signers on grandfathered wallets).
 
@@ -49,7 +49,8 @@ When you call `connect`:
 
 This design prevents a second wallet from being created silently when the same
 user connects from a different device. The second device sees the existing
-address and enters device approval instead of minting a duplicate.
+address and lands on `needs-device-approval` until it restores the MasterDEK
+— it does not mint a duplicate.
 
 <Callout type="info">
 **Why a registry?** The first device mints a MasterDEK and
@@ -77,7 +78,7 @@ Fund it, then spend — there is no `initialize`.
 |----------------|--------------|
 | User has no wallet | Address is computed and claimed in registry. Starknet/Stellar: `undeployed`. Solana: `ready` once the spend key is unwrapped. |
 | User has a wallet, this device can sign | `status: "ready"`. |
-| User has a wallet, this device has no wrap / is not a signer | `status: "needs-device-approval"`. |
+| User has a wallet, this device holds no key | `status: "needs-device-approval"`. |
 
 An `undeployed` wallet can:
 - **Sign messages** (`signMessage`) — the signature comes from the local device
@@ -95,8 +96,8 @@ Every wallet has a `status` property:
 | Status | Meaning | Can execute? | Can signMessage? |
 |--------|---------|--------------|------------------|
 | `undeployed` | Address derived, no on-chain account yet | Yes (first execute deploys) | Yes |
-| `ready` | Account deployed, this device authorized | Yes | Yes |
-| `needs-device-approval` | Account deployed, this device not authorized | No | No |
+| `ready` | Account deployed, this device holds the key | Yes | Yes |
+| `needs-device-approval` | This device holds no key yet; restore the MasterDEK | No | No |
 
 The only status that blocks execution is `needs-device-approval`. Both
 `undeployed` and `ready` can execute.
@@ -128,8 +129,8 @@ session.chainAddress("stellar");
 ```
 
 Each chain has its own address (derived from the same identity), its own
-deployment status, and its own device authorization state. They are independent
-accounts sharing one login.
+deployment status, and whether this device holds that chain's key. They are
+independent accounts sharing one login.
 
 ## Device-native authority
 

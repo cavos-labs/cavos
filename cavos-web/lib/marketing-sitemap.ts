@@ -37,14 +37,14 @@ const BLOG_DIR_CANDIDATES = [
  */
 export const SITEMAP_LASTMOD_FALLBACK: Record<string, string> = {
   '/': '2026-10-08',
-  '/embedded-wallet': '2026-10-12',
+  '/embedded-wallet': '2026-10-13',
   '/embedded-stellar-wallet': '2026-10-13',
   '/embedded-solana-wallet': '2026-10-13',
   '/embedded-starknet-wallet': '2026-10-13',
-  '/compare': '2026-10-12',
-  '/compare/[slug]': '2026-10-12',
-  '/privy-alternatives': '2026-10-12',
-  '/custody': '2026-10-12',
+  '/compare': '2026-10-13',
+  '/compare/[slug]': '2026-10-13',
+  '/privy-alternatives': '2026-10-13',
+  '/custody': '2026-10-13',
   '/pricing': '2026-10-12',
   '/stats': '2026-10-09',
   '/contact-sales': '2026-10-09',
@@ -52,8 +52,8 @@ export const SITEMAP_LASTMOD_FALLBACK: Record<string, string> = {
   '/blog': '2026-10-12',
   '/privacy': '2026-10-09',
   '/dpa': '2026-10-09',
-  '/user-privacy': '2026-10-09',
-  '/user-terms': '2026-10-09',
+  '/user-privacy': '2026-10-13',
+  '/user-terms': '2026-10-13',
   '/terms': '2026-10-09',
 }
 
