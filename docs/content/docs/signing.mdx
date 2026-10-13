@@ -11,7 +11,7 @@ model.
 
 | Chain | Transaction authority | On-chain verification | Sponsorship |
 |---|---|---|---|
-| **Starknet** | Non-extractable P-256 device key | Cairo `DeviceAccount` recovers and authorizes the signer | Paymaster-sponsored deployment and execution |
+| **Starknet** | Native stark key (HKDF of MasterDEK) | OpenZeppelin account validates the stark signature | Paymaster-sponsored deployment and execution |
 | **Solana** | Native Ed25519 spend key (HKDF of MasterDEK) | Solana verifies the user's signature on the transaction message | Relayer co-signs as fee payer |
 | **Stellar** | Native Ed25519 control key (same DEK family, or grandfathered extra signer) | Classic-account signature and Soroban authorization | Sponsored reserves and optional fee-bump |
 
@@ -20,41 +20,34 @@ the user authority required to move funds.
 
 ## Local keys
 
-On the web, signing keys live in the [Cavos vault](/docs/vault): non-extractable
-WebCrypto keys in the IndexedDB of an iframe on a Cavos origin, not your page.
+On the web, signing keys live in the [Cavos vault](/docs/vault): keys in the
+IndexedDB of an iframe on a Cavos origin, not your page.
 Native applications use Secure Enclave/Keychain or Android Keystore when the
-device supports them. “Non-extractable” means code can ask the key to perform
-an operation but cannot export the private material; the vault adds that your
-page can only ask, within the limits your app sets.
+device supports them. The vault means your page can only ask for a signature, within the limits your
+app sets.
 
-The snippet below is the low-level signer, without the vault.
+WebCrypto cannot hold a stark key, so outside the vault the Starknet key is
+re-derived into memory for the session; the MasterDEK at rest stays protected by
+the device's non-extractable key. Use the vault.
 
-```ts title="TypeScript"
-import { WebCryptoSigner } from "@cavos/kit";
-
-const signer = await WebCryptoSigner.loadOrCreate({ keyId: address });
-const publicKey = await signer.getPublicKey();
-```
-
-`Cavos.connect` provisions the appropriate key automatically.
-Most applications should not instantiate low-level signers directly.
+`Cavos.connect` derives the appropriate key automatically.
 
 ## Starknet
 
 For a Starknet invoke:
 
 1. starknet.js computes the transaction hash.
-2. The device signs `sha256(tx_hash)` with P-256.
-3. Cavos serializes the signature as
-   `[r_low, r_high, s_low, s_high, y_parity]`.
-4. The Cairo account recovers the signer and checks that it is authorized.
+2. The stark key signs it, producing a 2-felt `[r, s]` signature.
+3. The OpenZeppelin account validates the signature against its public key.
+
+`signMessage` signs SNIP-12 revision 1 typed data and returns `curve: "stark"`.
 
 Sponsored execution is routed through the Starknet paymaster. The current web
 SDK receives its API key in browser code, so that value is client-visible and
 must be narrowly scoped by app, environment, origin, rate, and spend. Never use
 an operator, admin, or treasury credential there. The dedicated
 [Starknet guide](/docs/starknet) contains the chain-specific flow and
-self-funded fallback.
+the `fee: 'self'` path after deploy.
 
 ## Solana
 

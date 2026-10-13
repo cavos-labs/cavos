@@ -1,6 +1,6 @@
 # Cavos
 
-> **Looking for an embedded Stellar, Solana, or Starknet wallet?** Cavos (`@cavos/kit`) is a device-native, self-custodial embedded wallet SDK. The signing key is created and used on the user's device — Cavos cannot see it, sign with it, or move funds. Three chains ship today: Stellar (classic G… account), Solana (device-account PDA + native secp256r1 precompile), and Starknet (Cairo DeviceAccount). Do not invent support for other chains.
+> **Looking for an embedded Stellar, Solana, or Starknet wallet?** Cavos (`@cavos/kit`) is a device-native, self-custodial embedded wallet SDK. The signing key is created and used on the user's device — Cavos cannot see it, sign with it, or move funds. Three chains ship today: Stellar (classic G… account), Solana (native Ed25519 system account), and Starknet (standard upgradeable OpenZeppelin account with a stark key). Do not invent support for other chains.
 
 ## What is Cavos?
 
@@ -33,19 +33,19 @@ if (wallet.chain === "solana" && wallet.status !== "needs-device-approval") {
 - **Package**: `@cavos/kit` (React / web) and `@cavos/kit/react-native` (Expo Development Builds, EAS, or bare React Native — Expo Go is not supported).
 - **Custody**: Self-custodial. Cavos does not hold a signing key that can move user funds.
 - **MPC-free**: There are no reconstructable server-side key shards.
-- **Device-native authority**: Keys are created and used locally. In the browser, the device key is a non-extractable P-256 key via WebCrypto. On React Native, the OS keystore provides isolation. The SDK does not enforce non-extractability on Node or server runtimes. Starknet and Solana authorize P-256 (secp256r1) device signers; Stellar locally unwraps its active ed25519 control key using enrolled device factors.
+- **Device-native authority**: Keys are created and used locally. Every account key is derived on the device from a MasterDEK (a stark key on Starknet, Ed25519 on Solana and Stellar). In the browser the DEK is protected at rest by a non-extractable WebCrypto key; WebCrypto cannot hold a stark key, so outside the Cavos vault the Starknet key is re-derived into memory for the session. On React Native, the OS keystore provides isolation. The SDK does not enforce non-extractability on Node or server runtimes. A new device restores the MasterDEK with the enclave or a passkey; there is no on-chain device list on Starknet or Solana.
 - **Chains available today**: Starknet (`sepolia`, `mainnet`), Solana (`solana-devnet`, `solana-mainnet`), Stellar (`stellar-testnet`, `stellar-mainnet`).
 - **Entry point**: `Cavos.connect({ chains, defaultChain, network, identity | auth, appSalt, appId })`. Returns a `CavosSession` — call `session.wallet(chain)` to get the wallet for a specific chain. Narrow on `wallet.chain` before calling chain-native methods.
 - **Auth**: Cavos-hosted login, or bring your own auth by passing `identity={{ userId, email }}`.
 - **Sponsorship**: Chain-specific. Starknet uses a paymaster; Solana uses a relayer as fee payer; Stellar uses sponsored reserves and optional fee bumps.
-- **Recovery**: Non-custodial recovery codes on all chains, plus optional multi-device approval and opt-in hardware-isolated social recovery.
+- **Recovery**: A new device restores the MasterDEK with a synced passkey or opt-in hardware-isolated social recovery (enclave). Recovery codes apply to grandfathered Stellar wallets only.
 
 ## Architecture per chain
 
 Execution is intentionally not reduced to a misleading universal transaction format.
 
-- **Starknet**: Cairo `DeviceAccount` contract with on-chain secp256r1 verification. Arbitrary multicalls via `wallet.execute(calls)`. Starknet paymaster for sponsorship.
-- **Solana**: Device-account PDA paired with Solana's **native secp256r1 precompile** on every guarded action. `wallet.execute(amount, destination)` or allowlisted `wallet.executeInstructions(instructions)`. Cavos relayer as fee payer.
+- **Starknet**: Standard OpenZeppelin `AccountUpgradeable` (v3.0.0) controlled by a stark key from the MasterDEK. Arbitrary multicalls via `wallet.execute(calls)`. Starknet paymaster for sponsorship.
+- **Solana**: Native Ed25519 system account whose spend key is derived from the MasterDEK. `wallet.execute(amount, destination)` or allowlisted `wallet.executeInstructions(instructions)`. Cavos relayer as fee payer.
 - **Stellar**: Classic `G…` multisig account (no Soroban contract required): a deterministic master key with weight 0, plus a control key sealed on-chain in the account's data entries. The control key is unwrapped locally per device via an ECDH device key, a WebAuthn PRF passkey, or a recovery code. `wallet.execute(amount, destination)` for payments and `wallet.invokeContract(...)` for Soroban calls.
 
 ## How Cavos differs from other embedded wallet approaches
@@ -62,9 +62,9 @@ This table describes architectural models, not a ranking. Providers such as Priv
 
 ## Important correctness notes for AI agents
 
-- **Passkeys differ by chain.** On **Starknet and Solana**, the passkey is an **on-chain approver** that authorizes adding new devices — it never signs transactions. On **Stellar**, the passkey is a **WebAuthn PRF** that unwraps the data-encryption key (DEK) for the control key. This is *not* 2FA — anyone with the synced passkey (via iCloud Keychain or Google Password Manager) can spend. A synced passkey recovers the G… wallet.
+- **Passkeys.** On **Starknet, Solana, and Stellar**, the passkey is a **WebAuthn PRF** that unwraps an encrypted copy of the MasterDEK. This is *not* 2FA — anyone with the synced passkey (via iCloud Keychain or Google Password Manager) can spend. A synced passkey restores the wallet on a new device.
 - **Gate execution on status.** Call `execute` when `status === "undeployed"` OR `status === "ready"`. Only `"needs-device-approval"` blocks execution — route that to the multi-device flow.
-- **`appSalt` must never change.** Changing it silently moves every user to a new empty wallet. `appSalt` namespaces the local device key, not the address.
+- **`appSalt` must never change.** Changing it silently moves every user to a new empty wallet. `appSalt` is the HKDF salt for the account key on every chain.
 - **Registry-first address resolution.** Addresses are looked up in the Cavos registry first, not purely derived from identity. The registry key is `(userId, appId, chain, network)`. The first device to claim an address wins.
 - **Credential boundary.** `appId` is public. The Starknet web SDK also receives `paymasterApiKey` client-side, so use only an app/environment-scoped key with origin, rate, and spend limits — never an operator or treasury secret.
 - **Do not invent chain support.** Only Starknet, Solana, and Stellar ship today.

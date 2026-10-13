@@ -130,7 +130,7 @@ function MockupGas() {
     )
 }
 
-/* 3 · Device signers */
+/* 3 · Device-derived key */
 function MockupDeviceSigners() {
     return (
         <div className="relative h-[250px]">
@@ -140,13 +140,13 @@ function MockupDeviceSigners() {
                         <svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden><path d="M160 16a80 80 0 0 0-78 99L21 176a8 8 0 0 0-5 8v40a8 8 0 0 0 8 8h40a8 8 0 0 0 8-8v-16h16a8 8 0 0 0 8-8v-16h16a8 8 0 0 0 6-3l16-19A80 80 0 1 0 160 16Zm20 76a20 20 0 1 1 20-20 20 20 0 0 1-20 20Z" /></svg>
                     </span>
                     <div className="leading-tight">
-                        <p className="text-[12.5px] font-medium text-ink">Device signer</p>
-                        <p className="font-mono text-[10px] text-ink/40">P-256 · device-bound</p>
+                        <p className="text-[12.5px] font-medium text-ink">Device key</p>
+                        <p className="font-mono text-[10px] text-ink/40">Derived from MasterDEK</p>
                     </div>
                     <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-surface px-2.5 py-0.5 text-[10px] font-semibold text-ink/70 ring-1 ring-line"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />Active</span>
                 </div>
                 <div className="mt-3 space-y-1.5">
-                    {[['Key storage', 'Non-exportable'], ['Authorization', 'On-chain'], ['Recovery', 'Multi-device']].map(([k, v]) => (
+                    {[['Key storage', 'Non-exportable'], ['Authorization', 'Device-derived'], ['Recovery', 'Passkey / enclave']].map(([k, v]) => (
                         <div key={k} className="flex items-center justify-between rounded-lg bg-surface px-3 py-1.5 text-[11.5px] ring-1 ring-line">
                             <span className="text-ink/45">{k}</span>
                             <span className="font-medium text-ink">{v}</span>

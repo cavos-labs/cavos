@@ -8,8 +8,8 @@ Ed25519 public key — the same shape as Phantom — not a PDA and not a P-256
 program account.
 
 The spend key is HKDF of a **MasterDEK** (`cavos-ed25519-solana-v1`, salted by
-`appSalt`). The same DEK derives the Stellar `G…` in a multi-chain enclave
-session. A new device restores that DEK with the [enclave](/docs/hardware-isolated-recovery)
+`appSalt`). The same DEK derives the Stellar `G…` and the Starknet stark key in
+a multi-chain enclave session. A new device restores that DEK with the [enclave](/docs/hardware-isolated-recovery)
 or a [passkey](/docs/passkeys) the user added. Signing up never asks for a passkey.
 
 The account signs its own transactions. Who is named **fee payer** is a
@@ -124,9 +124,7 @@ Programs) **plus** System, SPL Token, Token-2022, and Associated Token. A
 1,000,000 CU cap also applies.
 </Callout>
 
-`addSigner`, `removeSigner`, `enrollPasskey` (as an on-chain approver), and
-`CavosSolana.recover` **throw**. `setupRecovery` is a **no-op**. A native
-account has one spend key. Restore it; do not add a second signer.
+A native account has one spend key. Restore it; do not add a second signer.
 
 ## Sign messages
 
@@ -189,7 +187,7 @@ import { SOLANA_NETWORKS } from "@cavos/kit";
 SOLANA_NETWORKS["solana-devnet"];   // https://api.devnet.solana.com
 ```
 
-There is no `DEVICE_ACCOUNT_PROGRAM_ID` and no `SolanaAdapter` in this release.
+There is no on-chain program and no `SolanaAdapter`: the account is a plain system account.
 
 ## Recovery
 
@@ -197,7 +195,7 @@ There is no `DEVICE_ACCOUNT_PROGRAM_ID` and no `SolanaAdapter` in this release.
 |------|----------------|
 | **Enclave** | Sign in again. The enclave unwraps the MasterDEK onto this device. |
 | **Passkey** | Sign in. If a passkey was added, the vault asks for it ("Verify it's you") and opens its encrypted copy of the MasterDEK. |
-| **Recovery code** | Not used. `setupRecovery` is a no-op; `CavosSolana.recover` throws. |
+| **Recovery code** | Not used. There is no recovery code on Solana. |
 
 See [Hardware-isolated recovery](/docs/hardware-isolated-recovery) and
 [Passkeys](/docs/passkeys). Signing up never prompts for a passkey.
@@ -209,4 +207,4 @@ See [Hardware-isolated recovery](/docs/hardware-isolated-recovery) and
 - ✅ `execute` / `executeInstructions` signed by the user key.
 - ✅ `signMessage` with `curve: "ed25519"`.
 - ✅ Enclave DEK wrap and passkey restore.
-- ❌ PDA, secp256r1 precompile program, on-chain approvers, `addSigner`.
+- ❌ PDA, secp256r1 precompile program, on-chain approvers, extra signers.

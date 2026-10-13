@@ -1,37 +1,41 @@
 ---
 title: Multi-device
-description: Add a new device to an existing wallet via approval from a registered device.
+description: Open an existing wallet on a new device by restoring its MasterDEK, with the enclave or a passkey.
 ---
 
 A wallet's address is looked up in the registry by `(userId, appId, chain, network)`,
 so the **same user on a new device lands on the same wallet**.
 
-On **Starknet**, that new device has its own P-256 key, which must be added as a
-signer. On **native Solana and Stellar**, there is one spend key: the new device
-unwraps the MasterDEK (enclave or passkey). It does not `add_signer`.
+On **Starknet, Solana, and native Stellar**, there is one account key, derived
+from the MasterDEK. A new device does not get a key of its own and there is no
+on-chain device list: it **restores the MasterDEK** (enclave or passkey) and
+derives the same key. Nothing is added on-chain.
 
 ## Detecting a new device
 
 When `Cavos.connect` runs on a device that cannot spend yet, it returns
-`status: "needs-device-approval"`.
-
-On **Starknet**, the kit can file a hosted device-addition request
-(`pendingRequestId`) and email the owner:
+`status: "needs-device-approval"`: the registry has an address, but this device
+holds no key.
 
 ```ts title="TypeScript"
 const cavos = await Cavos.connect({ /* ... */ });
 
 if (cavos.status === "needs-device-approval") {
-  console.log(cavos.pendingRequestId); // Starknet email flow
+  // restore the MasterDEK: enclave login or a passkey
 }
 ```
 
-Native **Solana/Stellar** do not use that email path. Unwrap the MasterDEK with
-enclave login or `approveDeviceWithPasskey()`.
+In React, read `walletStatus.needsDeviceApproval`.
 
-## Approve with a passkey instead
+## Restore with the enclave
 
-If the user [enrolled a passkey](/docs/passkeys) after signup, they can restore
+With `deviceApproval: "enclave"`, signing in again with the same Google, Apple,
+or email identity unwraps the MasterDEK onto this device. See
+[Hardware-isolated recovery](/docs/hardware-isolated-recovery).
+
+## Restore with a passkey
+
+If the user [added a passkey](/docs/passkeys) after signup, they can restore
 this device with **one prompt** — no email round-trip, no second device:
 
 ```ts title="TypeScript"
@@ -42,113 +46,26 @@ if (walletStatus.needsDeviceApproval) {
 }
 ```
 
-On **native Solana/Stellar** the vault opens the passkey's encrypted copy of
-the MasterDEK (it usually asked already at sign-in). On **Starknet** it submits `add_signer_via_passkey`.
-Grandfathered Stellar still `setOptions`s an extra Horizon signer.
+The vault opens the passkey's encrypted copy of the MasterDEK (it usually asked
+already at sign-in). The same prompt works on every chain in the session.
 
-The hosted approval page below is the Starknet email fallback for users who
-never enrolled a passkey.
+## Stellar grandfathered wallets
 
-## Host the approval and revocation pages
+Grandfathered Stellar wallets that never enrolled still use Horizon signer
+keys. Manage them on the wallet after narrowing on `wallet.chain === "stellar"`:
 
-<Callout type="warning">
-**Cavos does not host these pages.** Each integrating app serves its own
-`/approve-device` and `/revoke-device` routes and registers the origin in the
-dashboard. Approving a device signs an on-chain `add_signer` paid for with **the
-app's own paymaster key** — Cavos never sponsors gas for third-party apps.
-</Callout>
-
-When a device-addition request is filed, the backend emails the owner a link to
-`${device_approval_url}/approve-device?request=<id>`. The "a new device was
-added" notice links to `/revoke-device?request=<id>` the same way. Set
-`device_approval_url` in your app's dashboard (or `website_url` as a fallback) —
-if neither is configured, device addition is rejected.
-
-Both pages ship in the SDK:
-
-```tsx title="app/revoke-device/page.tsx"
-'use client';
-
-import { RevokeDevicePage } from '@cavos/kit/react';
-import { starknetConfig, solanaConfig, stellarConfig } from './config';
-
-export default function Page() {
-  return <RevokeDevicePage configs={[starknetConfig, solanaConfig, stellarConfig]} />;
-}
+```ts title="Devices.tsx"
+const devices = await wallet.listDevices();
+await wallet.removeDevice({ slotId });
 ```
 
-`ApproveDevicePage` is identical in shape. Pass every chain your app supports:
-a device signer lives on exactly one chain, and the component selects the config
-matching the request rather than guessing. Hand it only one and a request for a
-different chain fails loudly instead of asking the wrong ledger.
-
-### Bringing your own UI
-
-The default markup is plain semantic HTML with no styles, so it inherits your
-CSS. Pass a function as `children` to replace it entirely and keep the wiring:
-
-```tsx title="app/revoke-device/page.tsx"
-<RevokeDevicePage configs={[starknetConfig, solanaConfig, stellarConfig]}>
-  {({ status, request, isSelf, error, signIn, submit }) => (
-    /* your markup */
-  )}
-</RevokeDevicePage>
-```
-
-`status` moves through `loading → error | needs-signin → ready → submitting →
-done`. `isSelf` is true when the request targets the device being used, which
-cannot be revoked from itself — surface it before the button rather than as a
-failure after.
+See [Stellar → Manage devices](/docs/stellar#manage-devices). Starknet and
+native Solana/Stellar have one key, so there is nothing to list or remove.
 
 <Callout type="info">
-The component owns three things that are easy to get wrong by hand: it stashes
-the request id so it survives the sign-in redirect (which replaces the query
-string), it mounts the provider for the request's own chain, and it handles the
-expired and already-completed states. If you write these pages yourself, those
-are the parts to get right.
-</Callout>
-
-
-## Build a device manager
-
-The two pages cover the email-link flows. For an in-app "your devices" screen,
-read and revoke directly from `useCavos()`:
-
-```tsx title="Devices.tsx"
-const { listDevices, removeSigner } = useCavos();
-
-const devices = await listDevices();            // [{ x, y }] — authorized device keys
-await removeSigner(devices[1]);                 // sponsored remove_signer
-```
-
-`removeSigner` must run from a device that is already authorized and cannot
-revoke itself — the same rule the revocation page surfaces as `isSelf`.
-
-<Callout type="info">
-**Stellar grandfathered wallets** still use Horizon signer keys, so
-`listDevices()` / `removeSigner()` on the hook throw there. Call
-`wallet.listDevices()` and `wallet.removeDevice({ slotId })` after narrowing on
-`wallet.chain === "stellar"`. Native Solana has one spend key — those APIs
-throw. See [Stellar → Manage devices](/docs/stellar#manage-devices).
-</Callout>
-
-## The non-custodial guarantee
-
-The backend can **request, notify, and relay** a device addition — it can never
-**authorize** one. The account contract gates `add_signer` so it only succeeds
-when called by the account itself, which requires a valid signature from an
-existing on-chain signer. The backend holds no keys and has no privileged
-contract role.
-
-The `newSigner` pubkey in a pending request is only a **proposal** for the UI. The
-approving device's signature commits to the actual pubkey passed to `add_signer`,
-so tampering with the request produces an inert, unsigned record. Always show the
-user the device label and a pubkey fingerprint before they approve.
-
-<Callout type="info">
-**Encourage multiple devices early.** If a user only ever has one device and
-loses it, they fall back to [recovery codes](/docs/recovery-codes). Adding a second
-device at onboarding makes recovery effortless.
+**Encourage a way back early.** If a user only ever has one device and loses
+it, they need the enclave or a passkey to restore the MasterDEK. Offering a
+passkey at onboarding makes recovery effortless.
 </Callout>
 
 See [Concepts → non-custodial model](/docs/concepts) for the full security

@@ -3,7 +3,7 @@ title: React Native
 description: Use @cavos/kit on iOS and Android with Expo Development Builds or bare React Native.
 ---
 
-`@cavos/kit` includes native P-256 keys, passkeys, authentication, and all three
+`@cavos/kit` includes native key protection, passkeys, authentication, and all three
 chain adapters in the `@cavos/kit/react-native` entrypoint. It supports React
 Native's New Architecture, Expo Development Builds/EAS, and bare React Native.
 
@@ -120,11 +120,11 @@ React Native yet.
 
 ## Keys and security levels
 
-`NativeDeviceSigner` uses Secure Enclave on iOS when available, and StrongBox →
-TEE → OS-protected Android Keystore on Android. That P-256 key is the Starknet
-device signer. **Native Solana/Stellar** spend with Ed25519 derived from the
-MasterDEK (imported into the native signer). Grandfathered Stellar still uses
-`NativeControlSigner` per device. The default policy is
+The device key that protects the MasterDEK at rest uses Secure Enclave on iOS
+when available, and StrongBox → TEE → OS-protected Android Keystore on Android.
+**Starknet, Solana, and Stellar** derive their account keys from the MasterDEK:
+a stark key on Starknet, Ed25519 on Solana and Stellar. Grandfathered Stellar
+still uses `NativeControlSigner` per device. The default policy is
 `minimumKeySecurity: "os-protected"`; use `"hardware"` to reject a software
 fallback.
 
@@ -162,10 +162,8 @@ const wallet = await Cavos.connect({
 });
 ```
 
-Starknet and Solana share passkey approval through one assertion with
-`approveDeviceEverywhere` **only on Starknet**. Native Solana/Stellar use
-`NativePasskeyPrf` / `approveDeviceWithPasskey()` so the PRF can open the
-passkey's encrypted copy of the MasterDEK. If Android does not return PRF, use
+Every chain uses `NativePasskeyPrf` / `approveDeviceWithPasskey()` so the PRF
+can open the passkey's encrypted copy of the MasterDEK. If Android does not return PRF, use
 the enclave.
 
 ## Logout, reinstall, and recovery
@@ -175,4 +173,4 @@ Secure Enclave/Keychain or Keystore so the user can reconnect. It does not sign
 the user out of Google or Apple. Reinstalling the app creates a new device that
 must unwrap the MasterDEK (enclave or passkey) or, on grandfathered Stellar,
 use a recovery code. Recovery codes are generated and displayed once; store
-them outside the app. They are not used on native Solana/Stellar.
+them outside the app. They are not used on Starknet, Solana, or native Stellar.

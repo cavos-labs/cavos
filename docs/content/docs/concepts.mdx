@@ -10,8 +10,8 @@ must provide stable identity, local user authority, typed execution,
 non-custodial recovery, and a documented sponsorship path. The implementation
 remains native to the selected network.
 
-`StarknetAdapter` and `StellarAdapter` ship today. Solana is a native Ed25519
-system account (`CavosSolana`); there is no `SolanaAdapter` in this release.
+Each chain ships as a native client: `CavosStarknet` (OpenZeppelin account),
+`CavosSolana` (Ed25519 system account), and `CavosStellar` (classic account).
 Future chains are roadmap adapters until their code, security review, and
 end-to-end validation are complete.
 
@@ -20,7 +20,7 @@ end-to-end validation are complete.
 The Cavos backend must not possess authority that can move user funds or enroll
 itself as a signer.
 
-- **Starknet:** the Cairo account authorizes P-256 device signers.
+- **Starknet:** the standard OpenZeppelin account, controlled by a stark key derived from the MasterDEK.
 - **Solana:** a native Ed25519 system account. The relayer is fee payer, never a spender.
 - **Stellar:** the classic account's Ed25519 control key (MasterDEK, or extra Horizon signers on grandfathered wallets).
 
@@ -41,9 +41,9 @@ When you call `connect`:
 
 1. **Registry lookup**: The kit asks the Cavos registry: does this user already
    have a wallet for this app and chain?
-2. **If found**: The existing address is returned. On Starknet the device checks
-   whether it is an authorized signer. On Solana/Stellar it unwraps the MasterDEK
-   (local wrap, enclave, or passkey) or lands on `needs-device-approval`.
+2. **If found**: The existing address is returned. The device unwraps
+   the MasterDEK (local wrap, enclave, or passkey) or lands on
+   `needs-device-approval`.
 3. **If not found**: The device mints a random MasterDEK, derives
    the address, and claims it. The first device to register wins.
 
@@ -136,10 +136,13 @@ accounts sharing one login.
 "Device-native" describes where sensitive authority is created or unlocked, not
 one universal curve:
 
-- Starknet uses non-extractable P-256 device signers on the account contract.
-- Solana and Stellar use non-extractable Ed25519 spend keys derived from a
-  MasterDEK (enclave wrap or a passkey's encrypted copy). Grandfathered Stellar wallets still
-  use extra Horizon signers.
+- Starknet, Solana, and Stellar derive their account keys from a MasterDEK
+  (enclave wrap or a passkey's encrypted copy): a stark key on Starknet,
+  Ed25519 on Solana and Stellar. Grandfathered Stellar wallets still use extra
+  Horizon signers.
+- WebCrypto cannot hold a stark key, so outside the Cavos vault the Starknet
+  key is re-derived into memory for the session; the DEK at rest stays
+  protected by the device's non-extractable key.
 - On the web, all of these keys live in the [Cavos vault](/docs/vault), an
   iframe on a Cavos origin, and never in your page.
 

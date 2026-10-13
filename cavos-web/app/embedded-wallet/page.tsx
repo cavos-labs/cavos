@@ -280,26 +280,24 @@ export default function EmbeddedWalletGuidePage() {
                         Device-native keys
                     </h3>
                     <p className="mt-3 text-sm leading-relaxed text-muted">
-                        A non-exportable key is generated in the platform&apos;s secure store:
-                        WebCrypto in the browser, the OS keystore on iOS and Android. JavaScript
-                        cannot read the private material out. The device signs; the chain
-                        account lists that public key as an authorized signer. This is the Cavos
-                        default. In the browser the device key is a non-extractable P-256 key.
-                        On React Native it uses the OS keystore. Those platform primitives
-                        provide the isolation — the SDK does not enforce non-extractability on
-                        Node or other server runtimes.
+                        The wallet&apos;s account key is derived on the device from a MasterDEK,
+                        which the platform&apos;s secure store keeps protected at rest: WebCrypto
+                        in the browser, the OS keystore on iOS and Android. The device signs, and a
+                        new device restores the same MasterDEK instead of being added on-chain.
+                        This is the Cavos default. Those platform primitives provide the
+                        isolation — WebCrypto cannot hold a stark key, so outside the Cavos vault
+                        the Starknet key is re-derived into memory for the session, and the SDK
+                        does not enforce non-extractability on Node or other server runtimes.
                     </p>
 
                     <h3 className="mt-10 text-xl font-medium tracking-[-0.02em]">Passkeys</h3>
                     <p className="mt-3 text-sm leading-relaxed text-muted">
                         Passkeys (WebAuthn) are often described as &ldquo;the wallet.&rdquo; They
-                        are not one thing. On Starknet and Solana in Cavos, the passkey is an
-                        on-chain approver that authorizes adding a new device. It never signs
-                        transactions; device keys still spend. On Stellar, a WebAuthn PRF
-                        credential derives an ed25519 key added as a Horizon signer. That is not
-                        2FA: anyone with the synced passkey (iCloud Keychain or Google Password
-                        Manager) can spend, which is also how a synced passkey recovers the G…
-                        wallet. When a vendor says &ldquo;passkey wallet,&rdquo; ask whether the
+                        are not one thing. On Starknet, Solana, and Stellar in Cavos, a WebAuthn PRF
+                        credential encrypts a copy of the wallet&apos;s MasterDEK, which Cavos
+                        stores and cannot open. That is not 2FA: anyone with the synced passkey
+                        (iCloud Keychain or Google Password Manager) can spend, which is also how
+                        a synced passkey recovers the wallet on a new device. When a vendor says &ldquo;passkey wallet,&rdquo; ask whether the
                         passkey signs spends, approves devices, or unwraps a key the vendor also
                         holds.
                     </p>
@@ -329,10 +327,8 @@ export default function EmbeddedWalletGuidePage() {
                         signing in remote hardware. Remote enclaves are not the user&apos;s
                         device. Server-side signing is the point of that design. Cavos uses an
                         enclave only for opt-in hardware-isolated social recovery: an AWS Nitro
-                        Enclave with pinned attestation, off by default, which can unwrap a
-                        spend key on Solana and Stellar or schedule at most one bounded{' '}
-                        <code className="text-xs bg-surface px-1.5 py-0.5 rounded">add_signer</code>{' '}
-                        on Starknet. It is not general server-side signing. The docs call that
+                        Enclave with pinned attestation, off by default, which can only unwrap a
+                        wallet&apos;s MasterDEK on Starknet, Solana, and Stellar. It is not general server-side signing. The docs call that
                         path non-custodial, and not trustless.
                     </p>
                 </section>
@@ -382,13 +378,10 @@ export default function EmbeddedWalletGuidePage() {
                         <article className="bg-white p-7">
                             <h3 className="text-lg font-semibold">Starknet</h3>
                             <p className="mt-3 text-sm leading-relaxed text-muted">
-                                Accounts are smart contracts. Cavos provisions a Cairo
-                                DeviceAccount with on-chain secp256r1 (P-256) verification.
-                                Execution routes through a paymaster (SNIP-9{' '}
-                                <code className="text-xs bg-surface px-1 py-0.5 rounded">
-                                    execute_from_outside
-                                </code>
-                                ) so users pay no gas. The account is derived on connect and
+                                Accounts are smart contracts. Cavos provisions the standard
+                                upgradeable OpenZeppelin account, controlled by a stark key
+                                derived from the user&apos;s MasterDEK. Execution routes through a
+                                paymaster (SNIP-29, SRC-9 outside execution) so users pay no gas. The account is derived on connect and
                                 deployed lazily on first execute.
                             </p>
                             <p className="mt-4">
@@ -400,9 +393,8 @@ export default function EmbeddedWalletGuidePage() {
                         <article className="bg-white p-7">
                             <h3 className="text-lg font-semibold">Solana</h3>
                             <p className="mt-3 text-sm leading-relaxed text-muted">
-                                Cavos provisions a device-account PDA controlled by a P-256
-                                device key. Guarded actions pair Solana&apos;s native secp256r1
-                                precompile with the device-account program. A relayer co-signs as
+                                Cavos provisions a native Ed25519 system account whose spend key
+                                is derived from the user&apos;s MasterDEK. A relayer co-signs as
                                 fee payer so users hold no SOL to start. Arbitrary program calls
                                 (SPL, swaps) go through allowlisted programs.
                             </p>

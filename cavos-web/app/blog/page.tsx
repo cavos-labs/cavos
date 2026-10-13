@@ -45,12 +45,12 @@ const GUIDES = [
   {
     href: '/embedded-starknet-wallet',
     title: 'Embedded Starknet wallet',
-    body: 'Cairo DeviceAccount with on-chain P-256 verification.',
+    body: 'Standard upgradeable OpenZeppelin account with a native stark key.',
   },
   {
     href: '/embedded-solana-wallet',
     title: 'Embedded Solana wallet',
-    body: 'Device-account PDA with native secp256r1 precompile.',
+    body: 'Native Ed25519 system account with a relayer as fee payer.',
   },
   {
     href: '/embedded-stellar-wallet',
