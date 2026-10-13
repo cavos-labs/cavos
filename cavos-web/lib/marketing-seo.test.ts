@@ -30,12 +30,20 @@ import {
   aboutPageJsonLd,
   blogPostJsonLd,
   breadcrumbListJsonLd,
+  chainWalletPageJsonLd,
   guidePageJsonLd,
   homepageJsonLd,
   marketingPageMetadata,
   noindexFollowMetadata,
   organizationJsonLd,
 } from './marketing-seo'
+import {
+  CHAIN_WALLET_MODIFIED,
+  CHAIN_WALLET_PUBLISHED,
+  SOLANA_FAQ,
+  STARKNET_FAQ,
+  STELLAR_FAQ,
+} from './chain-wallet-pages'
 import {
   DOCS_URLS,
   EMBEDDED_WALLET_DESCRIPTION,
@@ -576,7 +584,7 @@ describe('marketing SEO', () => {
       const source = fs.readFileSync(path.join(process.cwd(), relative), 'utf8')
       assert.match(
         source,
-        /breadcrumbListJsonLd|guidePageJsonLd|aboutPageJsonLd|blogPostJsonLd/,
+        /breadcrumbListJsonLd|guidePageJsonLd|aboutPageJsonLd|blogPostJsonLd|chainWalletPageJsonLd/,
         `missing breadcrumb JSON-LD on ${relative}`,
       )
       assert.match(
@@ -711,5 +719,101 @@ describe('marketing SEO', () => {
       path: '/blog',
     })
     assert.equal(meta.alternates?.canonical, 'https://cavos.xyz/blog')
+  })
+
+  it('deepens chain landing pages with FAQPage JSON-LD and cluster links', () => {
+    const chains = [
+      {
+        name: 'Starknet',
+        relative: 'app/embedded-starknet-wallet/page.tsx',
+        path: STARKNET_WALLET_PATH,
+        title: STARKNET_WALLET_TITLE,
+        description: STARKNET_WALLET_DESCRIPTION,
+        faq: STARKNET_FAQ,
+        otherChains: ['/embedded-solana-wallet', '/embedded-stellar-wallet'],
+        requiredClaims: [/OpenZeppelin/, /MasterDEK/, /paymaster/],
+      },
+      {
+        name: 'Solana',
+        relative: 'app/embedded-solana-wallet/page.tsx',
+        path: SOLANA_WALLET_PATH,
+        title: SOLANA_WALLET_TITLE,
+        description: SOLANA_WALLET_DESCRIPTION,
+        faq: SOLANA_FAQ,
+        otherChains: ['/embedded-starknet-wallet', '/embedded-stellar-wallet'],
+        requiredClaims: [/Ed25519/, /MasterDEK/, /executeInstructions/],
+      },
+      {
+        name: 'Stellar',
+        relative: 'app/embedded-stellar-wallet/page.tsx',
+        path: STELLAR_WALLET_PATH,
+        title: STELLAR_WALLET_TITLE,
+        description: STELLAR_WALLET_DESCRIPTION,
+        faq: STELLAR_FAQ,
+        otherChains: ['/embedded-starknet-wallet', '/embedded-solana-wallet'],
+        requiredClaims: [/MasterDEK/, /classic G/, /invokeContract/],
+      },
+    ] as const
+
+    for (const chain of chains) {
+      const source = fs.readFileSync(path.join(process.cwd(), chain.relative), 'utf8')
+      assert.match(source, /chainWalletPageJsonLd/)
+      assert.match(source, /type: 'article'/)
+      assert.match(source, /CHAIN_WALLET_MODIFIED/)
+      assert.match(
+        source,
+        /href=["']\/embedded-wallet["'][^>]*>\s*embedded wallet\s*</,
+        `${chain.name} missing embedded wallet hub link`,
+      )
+      assert.match(source, /href=["']\/blog\/how-to-add-an-embedded-wallet["']/)
+      assert.match(source, /href=["']\/compare["']/)
+      assert.match(source, /href=["']\/pricing["']/)
+      for (const href of chain.otherChains) {
+        assert.match(source, new RegExp(`href=["']${href}["']`))
+      }
+      assert.doesNotMatch(source, /needs-device-approval/)
+      assert.doesNotMatch(source, /DeviceAccount|add_signer|removeDevice|sendMagicLink/)
+      assert.doesNotMatch(source, /Cavos custom account/)
+      for (const claim of chain.requiredClaims) {
+        assert.match(source, claim, `${chain.name} missing ${claim}`)
+      }
+
+      assert.ok(chain.faq.length >= 4 && chain.faq.length <= 6)
+      const data = chainWalletPageJsonLd({
+        title: chain.title,
+        description: chain.description,
+        path: chain.path,
+        softwareName: `Cavos Embedded ${chain.name} Wallet`,
+        softwareDescription: chain.description,
+        applicationSubCategory: `Embedded ${chain.name} Wallet SDK`,
+        featureList: ['React and React Native SDKs'],
+        datePublished: CHAIN_WALLET_PUBLISHED,
+        dateModified: CHAIN_WALLET_MODIFIED,
+        crumbName: `Embedded ${chain.name} Wallet`,
+        faq: [...chain.faq],
+      })
+      const graph = data['@graph']
+      assert.equal(graph[0]['@type'], 'WebPage')
+      assert.equal(graph[0].dateModified, CHAIN_WALLET_MODIFIED)
+      assert.equal(graph[1]['@type'], 'SoftwareApplication')
+      assert.equal(graph[2]['@type'], 'BreadcrumbList')
+      assert.equal(graph[3]['@type'], 'FAQPage')
+      assert.deepEqual(
+        graph[3].mainEntity.map((item: { name: string; acceptedAnswer: { text: string } }) => ({
+          question: item.name,
+          answer: item.acceptedAnswer.text,
+        })),
+        chain.faq,
+      )
+    }
+
+    const hub = fs.readFileSync(
+      path.join(process.cwd(), 'app/embedded-wallet/page.tsx'),
+      'utf8',
+    )
+    assert.match(hub, /href=["']\/embedded-starknet-wallet["']/)
+    assert.match(hub, /href=["']\/embedded-solana-wallet["']/)
+    assert.match(hub, /href=["']\/embedded-stellar-wallet["']/)
+    assert.match(hub, /Chain considerations/)
   })
 })
