@@ -39,13 +39,13 @@ const GUIDES = [
   },
   {
     href: '/privy-alternatives',
-    title: 'Privy alternatives',
-    body: 'When teams look past Privy, and which architecture actually fits.',
+    title: 'Privy wallet alternatives',
+    body: 'When teams look past Privy the embedded crypto wallet, and which architecture actually fits.',
   },
   {
     href: '/embedded-starknet-wallet',
     title: 'Embedded Starknet wallet',
-    body: 'Standard upgradeable OpenZeppelin account with a native stark key.',
+    body: 'Audited OpenZeppelin AccountUpgradeable v3.0.0 with a native stark key.',
   },
   {
     href: '/embedded-solana-wallet',

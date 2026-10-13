@@ -15,7 +15,7 @@ const DEVELOPER_MENU: Omit<MegaMenuProps, 'onOpenChange'> = {
     left: {
         heading: 'Developer',
         items: [
-            { title: 'Documentation', description: 'Guides, architecture and the device-signer model.', href: 'https://docs.cavos.xyz' },
+            { title: 'Documentation', description: 'Guides, architecture and device-native signing.', href: 'https://docs.cavos.xyz' },
             { title: 'API Reference', description: 'Endpoints, authentication and chain configuration.', href: 'https://docs.cavos.xyz' },
             { title: 'SDKs & Libraries', description: 'Install @cavos/kit and start integrating.', href: 'https://docs.cavos.xyz' },
         ],

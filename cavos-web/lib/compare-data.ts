@@ -7,6 +7,12 @@ export type CompareRow = {
 export type Competitor = {
     slug: string
     name: string
+    /** Optional longer label for the embedded-wallet comparison table. */
+    tableName?: string
+    /** Optional compare-page document title (without the layout `| Cavos` suffix). */
+    pageTitle?: string
+    pageH1?: string
+    pageDescription?: string
     /** Short neutral description of what the other product is. */
     summary: string
     /** How Cavos frames the honest, architectural difference. */
@@ -23,15 +29,45 @@ const CAVOS_CUSTODY =
     'Self-custodial. A non-exportable device key is the signing authority; Cavos holds no key that can move user funds and uses no MPC shares.'
 const CAVOS_CHAINS =
     'One SDK with chain-native adapters. Starknet, Solana, and Stellar available today.'
+const CAVOS_ACCOUNT_MODEL =
+    'Audited OpenZeppelin AccountUpgradeable v3.0.0 on Starknet, native Ed25519 system account on Solana, classic G-account on Stellar.'
 const CAVOS_GAS =
     'Chain-specific: Starknet paymaster, Solana relayer as fee payer, Stellar sponsored reserves and fee bumps.'
 const CAVOS_RECOVERY =
     'Passkey restore on a new device and opt-in hardware-isolated social recovery, both non-custodial.'
+const CAVOS_PRICING =
+    'Free for the first 1,000 wallet creates. Essential $59/mo. Complete $139/mo.'
+
+/**
+ * Public vendor pricing as of October 2026. Cavos fees are from this site
+ * (`/pricing`). Other figures are from each vendor's public pricing page:
+ * privy.io/pricing, dynamic.xyz/pricing, turnkey.com/pricing,
+ * metamask.io/developer/embedded-wallets, magic.link/pricing.
+ */
+const PRIVY_PRICING =
+    'Free (0–499 MAU) with 50K signatures and $1M volume/mo. Core $299/mo. Scale $499/mo.'
+const DYNAMIC_PRICING =
+    'Free up to 1,000 MAUs. $249/mo for 1,000–5,000 MAUs. Then $0.05 per extra MAU.'
+const TURNKEY_PRICING =
+    'Pay as you go: 1,000 wallets and 25 free signatures/mo, then $0.10/signature. Pro $99/mo.'
+const WEB3AUTH_PRICING =
+    'Free 1,000 monthly active wallets. Growth $69/mo. Scale $399/mo.'
+const MAGIC_PRICING =
+    'Free 1,000 monthly active wallets and 50K signatures. $99/mo includes 2,500 MAWs.'
+
+export const PROVIDER_PRICING_AS_OF = 'October 2026'
+
+export const EMBEDDED_WALLET_MARKET_NOTE =
+    'The category has consolidated. Stripe acquired Privy in 2025. Fireblocks acquired Dynamic in 2025. Consensys acquired Web3Auth in 2025 and now ships it as MetaMask Embedded Wallets. In 2026 Payward, the parent of Kraken, acquired Magic Labs wallet infrastructure.'
 
 export const COMPETITORS: Competitor[] = [
     {
         slug: 'privy',
         name: 'Privy',
+        pageTitle: 'Cavos vs Privy: a Privy wallet alternative',
+        pageH1: 'Cavos vs Privy: a Privy wallet alternative',
+        pageDescription:
+            'Cavos vs Privy as a Privy embedded wallet alternative for crypto apps, not the Shopify popup. Compare custody, chains, signing, gas, and recovery.',
         summary:
             'Privy is a widely adopted embedded wallet and authentication provider focused primarily on EVM chains, offering both embedded wallets and external wallet connection.',
         positioning:
@@ -49,7 +85,7 @@ export const COMPETITORS: Competitor[] = [
         rows: [
             { feature: 'Signing authority', cavos: CAVOS_CUSTODY, them: 'Embedded wallet keys are managed through Privy’s key management infrastructure, with configurable self-custody and recovery options.' },
             { feature: 'Chain coverage', cavos: CAVOS_CHAINS, them: 'Broad EVM support plus Solana; coverage and feature parity vary by chain.' },
-            { feature: 'Account model', cavos: 'Smart account on Starknet, device-account PDA on Solana, classic multisig G-account on Stellar.', them: 'EOA-style embedded wallets, with smart account support through integrations.' },
+            { feature: 'Account model', cavos: CAVOS_ACCOUNT_MODEL, them: 'EOA-style embedded wallets, with smart account support through integrations.' },
             { feature: 'Gas sponsorship', cavos: CAVOS_GAS, them: 'Available through paymaster and bundler integrations, typically on EVM smart accounts.' },
             { feature: 'Recovery', cavos: CAVOS_RECOVERY, them: 'Provider-defined recovery options including password and cloud-backup based flows.' },
             { feature: 'Maturity', cavos: 'Newer product; three adapters shipped and documented.', them: 'Established provider with large production adoption.' },
@@ -117,12 +153,13 @@ export const COMPETITORS: Competitor[] = [
         ],
         faq: [
             { question: 'Is Turnkey a competitor or a building block?', answer: 'Mostly a building block. Teams frequently use Turnkey to build something similar to what Cavos ships as a product. The decision is usually build-versus-buy rather than a feature comparison.' },
-            { question: 'Does Cavos ever use enclaves?', answer: 'Only for opt-in hardware-isolated social recovery, which runs in an AWS Nitro Enclave with pinned attestation measurements and can schedule at most one bounded add-signer operation. It is off by default and is not a general server-side signing capability.' },
+            { question: 'Does Cavos ever use enclaves?', answer: 'Only for opt-in hardware-isolated social recovery, which runs in an AWS Nitro Enclave with pinned attestation measurements and unwraps a MasterDEK onto a new device. It is off by default and is not a general server-side signing capability. On Starknet the account is the standard OpenZeppelin AccountUpgradeable; the enclave has no on-chain recovery role.' },
         ],
     },
     {
         slug: 'web3auth',
         name: 'Web3Auth',
+        tableName: 'Web3Auth / MetaMask Embedded Wallets',
         summary:
             'Web3Auth provides social-login wallets using multi-party computation, splitting key shares across the user’s device, the provider’s network, and recovery factors.',
         positioning:
@@ -171,7 +208,7 @@ export const COMPETITORS: Competitor[] = [
             { feature: 'Signing authority', cavos: CAVOS_CUSTODY, them: 'Delegated key management backed by hardware security modules operated by the provider.' },
             { feature: 'Onboarding', cavos: 'Sign in with an identity you already own; the account is resolved registry-first.', them: 'Email magic link and social login.' },
             { feature: 'Chain coverage', cavos: CAVOS_CHAINS, them: 'EVM-focused with additional chain support.' },
-            { feature: 'Account model', cavos: 'Native accounts per chain: an OpenZeppelin account on Starknet, system accounts on Solana, classic accounts on Stellar.', them: 'Primarily EOA-style wallets.' },
+            { feature: 'Account model', cavos: CAVOS_ACCOUNT_MODEL, them: 'Primarily EOA-style wallets.' },
             { feature: 'Gas sponsorship', cavos: CAVOS_GAS, them: 'Available through account abstraction integrations.' },
             { feature: 'Recovery', cavos: CAVOS_RECOVERY, them: 'Tied to the authentication factor and provider-side key infrastructure.' },
         ],
@@ -190,9 +227,36 @@ function rowMatching(competitor: Competitor, pattern: RegExp): CompareRow | unde
     return competitor.rows.find((row) => pattern.test(row.feature))
 }
 
-/** Compact provider rows for the embedded-wallet guide table. Source: COMPETITORS only. */
-export function embeddedWalletProviderRows() {
-    return COMPETITORS.map((competitor) => {
+export type EmbeddedWalletProviderRow = {
+    slug: string
+    name: string
+    href: string
+    pricing: string
+    chains: string
+    keyModel: string
+}
+
+const COMPETITOR_PRICING: Record<string, string> = {
+    privy: PRIVY_PRICING,
+    dynamic: DYNAMIC_PRICING,
+    turnkey: TURNKEY_PRICING,
+    web3auth: WEB3AUTH_PRICING,
+    magic: MAGIC_PRICING,
+}
+
+/** Compact provider rows for the embedded-wallet guide table. Cavos plus COMPETITORS. */
+export function embeddedWalletProviderRows(): EmbeddedWalletProviderRow[] {
+    const cavos: EmbeddedWalletProviderRow = {
+        slug: 'cavos',
+        name: 'Cavos',
+        href: '/pricing',
+        pricing: CAVOS_PRICING,
+        chains: 'Starknet, Solana, and Stellar.',
+        keyModel:
+            'Device-native. One stark key from MasterDEK and app salt. No MPC. Starknet uses an audited OpenZeppelin AccountUpgradeable v3.0.0.',
+    }
+
+    const others = COMPETITORS.map((competitor) => {
         const signing = rowMatching(
             competitor,
             /signing authority|key architecture|where keys live/i,
@@ -200,10 +264,13 @@ export function embeddedWalletProviderRows() {
         const chains = rowMatching(competitor, /chain coverage/i)
         return {
             slug: competitor.slug,
-            name: competitor.name,
+            name: competitor.tableName ?? competitor.name,
             href: `/compare/${competitor.slug}`,
-            signing: signing?.them ?? competitor.summary,
+            pricing: COMPETITOR_PRICING[competitor.slug] ?? 'See the vendor pricing page.',
             chains: chains?.them ?? competitor.summary,
+            keyModel: signing?.them ?? competitor.summary,
         }
     })
+
+    return [cavos, ...others]
 }
