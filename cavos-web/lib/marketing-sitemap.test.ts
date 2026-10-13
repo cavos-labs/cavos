@@ -180,9 +180,14 @@ describe('marketing sitemap', () => {
   it('omits noindex blog posts using the same helper as robots meta', () => {
     assert.equal(isBlogPostNoindex('v1-1-9-sdk-security'), true)
     assert.equal(isBlogPostNoindex('a-future-indexable-post'), false)
+    assert.equal(isBlogPostNoindex('how-to-add-an-embedded-wallet'), false)
     assert.equal(
       urls.includes(`${MARKETING_ORIGIN}/blog/v1-1-9-sdk-security`),
       false,
+    )
+    assert.equal(
+      urls.includes(`${MARKETING_ORIGIN}/blog/how-to-add-an-embedded-wallet`),
+      true,
     )
 
     const pageSource = fs.readFileSync(
@@ -212,8 +217,11 @@ Hello
     assert.equal(post.lastModified.toISOString().startsWith('2025-03-30'), true)
   })
 
-  it('keeps the existing 23 indexable marketing URLs', () => {
-    assert.equal(entries.length, 23)
+  it('keeps the indexable marketing URLs including the React integration guide', () => {
+    assert.equal(entries.length, 24)
+    assert.ok(
+      urls.includes(`${MARKETING_ORIGIN}/blog/how-to-add-an-embedded-wallet`),
+    )
   })
 
   it('omits auth, dashboard, and noindex utility routes', () => {

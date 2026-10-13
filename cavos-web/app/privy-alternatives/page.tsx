@@ -76,11 +76,14 @@ export default function PrivyAlternativesPage() {
                         {PRIVY_ALTERNATIVES_H1}
                     </h1>
                     <p className="mt-7 max-w-2xl text-lg leading-relaxed text-muted">
-                        Privy is a widely adopted embedded wallet and authentication provider
-                        focused primarily on EVM chains, offering both embedded wallets and
-                        external wallet connection. Teams look for a Privy alternative when that
-                        custody model, chain coverage, commercial terms, or switching cost no
-                        longer match the product they are shipping.
+                        Privy is a widely adopted{' '}
+                        <Link href="/embedded-wallet" className={linkClass}>
+                            embedded wallet
+                        </Link>{' '}
+                        and authentication provider focused primarily on EVM chains, offering
+                        both embedded wallets and external wallet connection. Teams look for a
+                        Privy alternative when that custody model, chain coverage, commercial
+                        terms, or switching cost no longer match the product they are shipping.
                     </p>
                     <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
                         This guide uses the same facts as the{' '}

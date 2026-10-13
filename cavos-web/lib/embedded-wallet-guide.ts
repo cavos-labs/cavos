@@ -7,6 +7,27 @@ export const EMBEDDED_WALLET_DESCRIPTION =
 
 export const EMBEDDED_WALLET_PUBLISHED = '2026-10-07'
 
+export const EMBEDDED_WALLET_MODIFIED = '2026-10-12'
+
+export const EMBEDDED_WALLET_INTEGRATION_PATH =
+  '/blog/how-to-add-an-embedded-wallet'
+
+export const EMBEDDED_WALLET_INTEGRATION_TITLE =
+  'How to Add an Embedded Wallet to a React App'
+
+export const DOCS_ORIGIN = 'https://docs.cavos.xyz'
+
+export const DOCS_URLS = {
+  home: DOCS_ORIGIN,
+  docs: `${DOCS_ORIGIN}/docs`,
+  quickstart: `${DOCS_ORIGIN}/docs/quickstart`,
+  auth: `${DOCS_ORIGIN}/docs/auth`,
+  walletActions: `${DOCS_ORIGIN}/docs/wallet-actions`,
+  recovery: `${DOCS_ORIGIN}/docs/recovery`,
+  concepts: `${DOCS_ORIGIN}/docs/concepts`,
+  react: `${DOCS_ORIGIN}/docs/react`,
+} as const
+
 export const EMBEDDED_WALLET_HOW_IT_WORKS = [
   {
     title: 'Sign in',
@@ -25,6 +46,40 @@ export const EMBEDDED_WALLET_HOW_IT_WORKS = [
     body: 'A second device is added by an on-chain approval, not by reconstituting a master key on a server. Cavos ships non-custodial recovery codes on every chain, multi-device passkey approval, and opt-in hardware-isolated social recovery that is off by default.',
   },
 ] as const
+
+export const EMBEDDED_WALLET_HOW_TO_INTEGRATE = [
+  {
+    name: 'Sign in',
+    text: 'Authenticate the user with Cavos hosted login (Google, Apple, or email) or pass a stable userId from your own auth. Login selects which user this is. It never signs a transaction.',
+    url: DOCS_URLS.auth,
+    docsLabel: 'Authentication docs',
+  },
+  {
+    name: 'Resolve the wallet',
+    text: 'Call Cavos.connect or mount CavosProvider. The kit looks up (userId, appId, chain) in the registry and returns the existing address, or claims a new one. Connect never deploys Starknet or Stellar.',
+    url: DOCS_URLS.quickstart,
+    docsLabel: 'Quickstart',
+  },
+  {
+    name: 'Sign and send',
+    text: 'Narrow on wallet.chain, then execute. Undeployed and ready wallets can send; the first execute deploys and runs atomically. needs-device-approval cannot spend until this device is enrolled.',
+    url: DOCS_URLS.walletActions,
+    docsLabel: 'Wallet actions',
+  },
+  {
+    name: 'Set up recovery',
+    text: 'Add a second authority before it is needed: a passkey, another device, a recovery code, or opt-in hardware-isolated social recovery. None of those paths can be arranged after every device is gone.',
+    url: DOCS_URLS.recovery,
+    docsLabel: 'Recovery docs',
+  },
+] as const
+
+export const EMBEDDED_WALLET_HOW_TO = {
+  name: 'How to integrate an embedded wallet',
+  description:
+    'Sign in, resolve a self-custodial embedded wallet with @cavos/kit, sign and send a sponsored transaction, then enroll recovery.',
+  steps: EMBEDDED_WALLET_HOW_TO_INTEGRATE,
+} as const
 
 export const EMBEDDED_WALLET_FAQ = [
   {
@@ -56,5 +111,20 @@ export const EMBEDDED_WALLET_FAQ = [
     question: 'How should I choose an embedded wallet SDK?',
     answer:
       'Ask who can produce a valid signature without the user, where the key lives, which chains are native rather than compatibility layers, how a second device is authorized, and what recovery actually does. Then match that to the product: provision new accounts, or connect existing ones. Worked comparisons live on the Cavos compare pages.',
+  },
+  {
+    question: 'What is an embedded wallet SDK?',
+    answer:
+      'An embedded wallet SDK is the library that provisions the wallet and signs from inside your application. It is not a wallet app or a browser extension the user installs. Authentication selects the user; the SDK looks up or creates an on-chain account; a signer bound to the session or the device authorizes transactions in your UI. Cavos ships that as @cavos/kit on web and @cavos/kit/react-native on mobile.',
+  },
+  {
+    question: 'Which chains does Cavos support for embedded wallets?',
+    answer:
+      'Cavos currently ships native adapters for Starknet, Solana, and Stellar. It is not an EVM-wide wallet layer. Each adapter uses that chain’s account model, signatures, and fee path. Cavos, LLC is a software and SaaS company; the wallet is the main product.',
+  },
+  {
+    question: 'How do I add an embedded wallet to a React app?',
+    answer:
+      'Install @cavos/kit, create an app in the Cavos dashboard for an App ID, wrap the tree in CavosProvider, sign the user in, then execute. Connect never deploys Starknet or Stellar; the first execute deploys and runs atomically when the account is still undeployed. The step-by-step integration guide on this site walks through that path.',
   },
 ] as const

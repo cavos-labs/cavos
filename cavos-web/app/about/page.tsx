@@ -53,8 +53,15 @@ export default function AboutPage() {
                     <div className="mt-5 space-y-4 text-[15px] leading-relaxed text-muted md:text-base">
                         <p>
                             Add the SDK to your app. After sign-in, it looks up or creates a
-                            self-custodial account. Signing keys stay on the user&apos;s device.
-                            Cavos cannot see them or move funds.
+                            self-custodial account — an{' '}
+                            <Link
+                                href="/embedded-wallet"
+                                className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                            >
+                                embedded wallet
+                            </Link>{' '}
+                            that lives in the product. Signing keys stay on the user&apos;s
+                            device. Cavos cannot see them or move funds.
                         </p>
                         <p>
                             Adapters ship today for Starknet, Solana, and Stellar. The first

@@ -33,23 +33,23 @@ const BLOG_DIR_CANDIDATES = [
 /**
  * Per-route lastmod used when `git log` cannot see the page file (shallow
  * clones, missing .git). Dates match the last known content commit of that
- * route's page file. Never a shared `new Date()`.
+ * route's page file. Never a shared current-time stamp.
  */
 export const SITEMAP_LASTMOD_FALLBACK: Record<string, string> = {
   '/': '2026-10-08',
-  '/embedded-wallet': '2026-10-07',
+  '/embedded-wallet': '2026-10-12',
   '/embedded-stellar-wallet': '2026-10-09',
   '/embedded-solana-wallet': '2026-10-09',
   '/embedded-starknet-wallet': '2026-10-09',
-  '/compare': '2026-10-11',
-  '/compare/[slug]': '2026-10-11',
-  '/privy-alternatives': '2026-10-11',
-  '/custody': '2026-10-11',
-  '/pricing': '2026-10-09',
+  '/compare': '2026-10-12',
+  '/compare/[slug]': '2026-10-12',
+  '/privy-alternatives': '2026-10-12',
+  '/custody': '2026-10-12',
+  '/pricing': '2026-10-12',
   '/stats': '2026-10-09',
   '/contact-sales': '2026-10-09',
-  '/about': '2026-10-07',
-  '/blog': '2026-10-09',
+  '/about': '2026-10-12',
+  '/blog': '2026-10-12',
   '/privacy': '2026-10-09',
   '/dpa': '2026-10-09',
   '/user-privacy': '2026-10-09',

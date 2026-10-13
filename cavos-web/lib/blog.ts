@@ -11,7 +11,12 @@ const BLOG_DIR =
   BLOG_DIR_CANDIDATES.find((dir) => fs.existsSync(dir)) ??
   BLOG_DIR_CANDIDATES[0];
 
-export type PostCategory = 'Release' | 'Security' | 'Deep Dive' | 'Announcement';
+export type PostCategory = 'Release' | 'Security' | 'Deep Dive' | 'Announcement' | 'Guide';
+
+export type PostFaqItem = {
+  question: string;
+  answer: string;
+};
 
 export interface PostMeta {
   slug: string;
@@ -19,11 +24,40 @@ export interface PostMeta {
   date: string;
   excerpt: string;
   category: PostCategory;
+  faq?: PostFaqItem[];
 }
 
 export interface Post {
   meta: PostMeta;
   content: string;
+}
+
+function parsePostFaq(value: unknown): PostFaqItem[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const items = value.filter(
+    (item): item is PostFaqItem =>
+      Boolean(item) &&
+      typeof item === 'object' &&
+      typeof (item as PostFaqItem).question === 'string' &&
+      typeof (item as PostFaqItem).answer === 'string',
+  );
+  return items.length > 0 ? items : undefined;
+}
+
+function postMetaFromData(
+  data: Record<string, unknown>,
+  fallbackSlug: string,
+): PostMeta {
+  return {
+    slug: (typeof data.slug === 'string' && data.slug) || fallbackSlug,
+    title: typeof data.title === 'string' ? data.title : '',
+    date: typeof data.date === 'string' ? data.date : '',
+    excerpt: typeof data.excerpt === 'string' ? data.excerpt : '',
+    category: (typeof data.category === 'string'
+      ? data.category
+      : 'Announcement') as PostCategory,
+    faq: parsePostFaq(data.faq),
+  };
 }
 
 export function getAllPosts(): PostMeta[] {
@@ -34,13 +68,7 @@ export function getAllPosts(): PostMeta[] {
   const posts = files.map((filename) => {
     const raw = fs.readFileSync(path.join(BLOG_DIR, filename), 'utf-8');
     const { data } = matter(raw);
-    return {
-      slug: data.slug ?? filename.replace(/\.mdx$/, ''),
-      title: data.title ?? '',
-      date: data.date ?? '',
-      excerpt: data.excerpt ?? '',
-      category: (data.category ?? 'Announcement') as PostCategory,
-    };
+    return postMetaFromData(data, filename.replace(/\.mdx$/, ''));
   });
 
   return posts.sort((a, b) => (a.date < b.date ? 1 : -1));
@@ -54,13 +82,7 @@ export function getPostBySlug(slug: string): Post | null {
   const { data, content } = matter(raw);
 
   return {
-    meta: {
-      slug: data.slug ?? slug,
-      title: data.title ?? '',
-      date: data.date ?? '',
-      excerpt: data.excerpt ?? '',
-      category: (data.category ?? 'Announcement') as PostCategory,
-    },
+    meta: postMetaFromData(data, slug),
     content,
   };
 }
@@ -79,4 +101,5 @@ export const CATEGORY_COLORS: Record<PostCategory, string> = {
   Security: 'bg-[#FFF0E8] text-[#A84A00]',
   'Deep Dive': 'bg-[#EAE5DC] text-[#5C4F3A]',
   Announcement: 'bg-[#E8EEF7] text-[#1E3A6B]',
+  Guide: 'bg-[#402AFF] text-white',
 };

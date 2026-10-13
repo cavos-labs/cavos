@@ -4,9 +4,14 @@ import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { embeddedWalletProviderRows } from '@/lib/compare-data'
 import {
+    DOCS_URLS,
     EMBEDDED_WALLET_DESCRIPTION,
     EMBEDDED_WALLET_FAQ,
     EMBEDDED_WALLET_HOW_IT_WORKS,
+    EMBEDDED_WALLET_HOW_TO,
+    EMBEDDED_WALLET_HOW_TO_INTEGRATE,
+    EMBEDDED_WALLET_INTEGRATION_PATH,
+    EMBEDDED_WALLET_MODIFIED,
     EMBEDDED_WALLET_PATH,
     EMBEDDED_WALLET_PUBLISHED,
     EMBEDDED_WALLET_TITLE,
@@ -22,6 +27,7 @@ export const metadata: Metadata = marketingPageMetadata({
     path: EMBEDDED_WALLET_PATH,
     type: 'article',
     publishedTime: EMBEDDED_WALLET_PUBLISHED,
+    modifiedTime: EMBEDDED_WALLET_MODIFIED,
 })
 
 export default function EmbeddedWalletGuidePage() {
@@ -31,11 +37,13 @@ export default function EmbeddedWalletGuidePage() {
         description: EMBEDDED_WALLET_DESCRIPTION,
         path: EMBEDDED_WALLET_PATH,
         datePublished: EMBEDDED_WALLET_PUBLISHED,
+        dateModified: EMBEDDED_WALLET_MODIFIED,
         crumbs: [
             { name: 'Home', path: '/' },
             { name: 'What is an embedded wallet', path: EMBEDDED_WALLET_PATH },
         ],
         faq: [...EMBEDDED_WALLET_FAQ],
+        howTo: EMBEDDED_WALLET_HOW_TO,
     })
 
     return (
@@ -88,6 +96,37 @@ export default function EmbeddedWalletGuidePage() {
                             understand seed phrases. The tradeoff is that the application now
                             owns the wallet experience — including recovery, device changes, and
                             how honest it is about who can sign.
+                        </p>
+                    </div>
+                </section>
+
+                <section className="mt-16 max-w-3xl" id="embedded-wallet-sdk">
+                    <h2 className="text-2xl font-medium tracking-[-0.03em]">
+                        Embedded wallet SDK
+                    </h2>
+                    <div className="mt-5 space-y-4 text-sm leading-relaxed text-muted">
+                        <p>
+                            An embedded wallet SDK is the library that provisions that wallet
+                            inside your application. It is not a wallet app, and it is not a
+                            browser extension. The user never installs a second program. Your
+                            product owns sign-in, account resolution, approval UI, and recovery.
+                        </p>
+                        <p>
+                            A wallet app or extension keeps keys in software the user manages.
+                            The dapp requests access; it does not create the account. An
+                            embedded wallet SDK inverts that: authentication selects the user,
+                            the SDK looks up or creates an on-chain address, and a signer bound
+                            to the device authorizes transactions from inside the app.
+                        </p>
+                        <p>
+                            The SDK label still does not decide custody. Ask who can produce a
+                            valid signature without the user, which chains are native, how a
+                            lost device is recovered, and whether approval happens in your UI
+                            or in someone else&apos;s. Cavos ships that SDK as{' '}
+                            <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
+                                @cavos/kit
+                            </code>
+                            .
                         </p>
                     </div>
                 </section>
@@ -401,6 +440,37 @@ export default function EmbeddedWalletGuidePage() {
                     </p>
                 </section>
 
+                <section className="mt-16 max-w-3xl" id="how-to-integrate">
+                    <h2 className="text-2xl font-medium tracking-[-0.03em]">
+                        How to integrate an embedded wallet
+                    </h2>
+                    <p className="mt-5 text-sm leading-relaxed text-muted">
+                        The product path is sign-in, wallet resolve, sign and send, then
+                        recovery. The{' '}
+                        <Link href={EMBEDDED_WALLET_INTEGRATION_PATH} className={linkClass}>
+                            step-by-step integration guide
+                        </Link>{' '}
+                        walks a React app through{' '}
+                        <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
+                            @cavos/kit
+                        </code>
+                        . The numbered steps below are that same contract, with the kit docs
+                        for each stage.
+                    </p>
+                    <ol className="mt-6 list-decimal space-y-3 pl-5 text-sm leading-relaxed text-muted">
+                        {EMBEDDED_WALLET_HOW_TO_INTEGRATE.map((step) => (
+                            <li key={step.name}>
+                                <span className="font-semibold text-ink">{step.name}.</span>{' '}
+                                {step.text}{' '}
+                                <a href={step.url} className={linkClass}>
+                                    {step.docsLabel}
+                                </a>
+                                .
+                            </li>
+                        ))}
+                    </ol>
+                </section>
+
                 <section className="mt-16 max-w-3xl">
                     <h2 className="text-2xl font-medium tracking-[-0.03em]">
                         How to choose a provider
@@ -543,10 +613,7 @@ export default function EmbeddedWalletGuidePage() {
                             </Link>{' '}
                             and the Complete plan&apos;s enclave recovery are documented there.
                             The security write-up is in the{' '}
-                            <a
-                                href="https://docs.cavos.xyz/docs/concepts"
-                                className={linkClass}
-                            >
+                            <a href={DOCS_URLS.concepts} className={linkClass}>
                                 concepts
                             </a>{' '}
                             and{' '}
@@ -556,7 +623,11 @@ export default function EmbeddedWalletGuidePage() {
                             >
                                 hardware-isolated recovery
                             </a>{' '}
-                            docs.
+                            docs. To add the wallet to a React app, follow the{' '}
+                            <Link href={EMBEDDED_WALLET_INTEGRATION_PATH} className={linkClass}>
+                                step-by-step integration guide
+                            </Link>
+                            .
                         </p>
                     </div>
                 </section>
@@ -583,17 +654,17 @@ export default function EmbeddedWalletGuidePage() {
                             Pick a chain, then the signing model.
                         </h2>
                         <p className="mt-2 max-w-xl text-sm text-white/70">
-                            Start with the quickstart, or compare Cavos with the provider you
-                            already have on a shortlist.
+                            Follow the step-by-step integration guide, or compare Cavos with
+                            the provider you already have on a shortlist.
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-3">
-                        <a
-                            href="https://docs.cavos.xyz/docs/quickstart"
+                        <Link
+                            href={EMBEDDED_WALLET_INTEGRATION_PATH}
                             className="rounded-md bg-white px-5 py-3 text-sm font-semibold text-ink"
                         >
-                            Read the quickstart
-                        </a>
+                            Step-by-step integration guide
+                        </Link>
                         <Link
                             href="/compare"
                             className="rounded-md border border-white/20 px-5 py-3 text-sm font-semibold text-white"

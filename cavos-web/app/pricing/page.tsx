@@ -213,8 +213,15 @@ export default function PricingPage() {
                         Flat org fees. Unlimited after the first 1,000.
                     </h1>
                     <p className="mt-4 text-[16px] md:text-[17px] text-muted leading-relaxed max-w-xl">
-                        Three plans with predictable monthly costs. Free gets you started.
-                        Paid plans unlock unlimited creates and advanced recovery.
+                        Three plans with predictable monthly costs for a{' '}
+                        <Link
+                            href="/embedded-wallet"
+                            className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                        >
+                            self-custodial embedded wallet
+                        </Link>
+                        . Free gets you started. Paid plans unlock unlimited creates and
+                        advanced recovery.
                     </p>
                 </header>
 

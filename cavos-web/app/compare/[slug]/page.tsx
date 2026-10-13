@@ -6,6 +6,9 @@ import { Footer } from '@/components/Footer'
 import { COMPETITORS, getCompetitor } from '@/lib/compare-data'
 import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
 
+const linkClass =
+    'font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink'
+
 export function generateStaticParams() {
     return COMPETITORS.map((c) => ({ slug: c.slug }))
 }
@@ -90,6 +93,14 @@ export default async function ComparisonPage({
                     </p>
                     <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
                         {competitor.positioning}
+                    </p>
+                    <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
+                        For the category itself — custody, key models, and what the SDK
+                        actually does — start with{' '}
+                        <Link href="/embedded-wallet" className={linkClass}>
+                            how embedded wallets work
+                        </Link>
+                        .
                     </p>
                 </header>
 
