@@ -409,10 +409,10 @@ export default function EmbeddedWalletGuidePage() {
                             <p className="mt-3 text-sm leading-relaxed text-muted">
                                 Cavos provisions a classic G… account — not a Soroban contract —
                                 so exchanges and existing tools already understand the address.
-                                Each device&apos;s ed25519 public key is a weight-1 Horizon
-                                signer. Extra devices, a passkey, and a recovery code are
-                                additional signers, not wraps of a shared seed. The relayer
-                                sponsors reserves and fee bumps.
+                                On the current path the spend key is HKDF of the same MasterDEK
+                                as Solana. A new device restores that DEK; it does not add a
+                                second Horizon signer. The relayer sponsors reserves and fee
+                                bumps.
                             </p>
                             <p className="mt-4">
                                 <Link href="/embedded-stellar-wallet" className={linkClass}>

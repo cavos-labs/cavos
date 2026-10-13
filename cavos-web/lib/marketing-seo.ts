@@ -38,12 +38,12 @@ export const STARKNET_WALLET_DESCRIPTION =
 export const SOLANA_WALLET_PATH = '/embedded-solana-wallet'
 export const SOLANA_WALLET_TITLE = 'Embedded Solana Wallet SDK'
 export const SOLANA_WALLET_DESCRIPTION =
-  'Solana embedded wallet SDK: device-native and self-custodial. Signing key derived and used on-device. Native Ed25519 system account, gasless.'
+  'Solana embedded wallet SDK: device-native and self-custodial. Signing key derived and used on-device. Native Ed25519 system account. Relayer can pay fees.'
 
 export const STELLAR_WALLET_PATH = '/embedded-stellar-wallet'
 export const STELLAR_WALLET_TITLE = 'Embedded Stellar Wallet SDK'
 export const STELLAR_WALLET_DESCRIPTION =
-  'Stellar embedded wallet SDK: device-native and self-custodial. Signing key created and used on-device. Classic G… account with Horizon ed25519 signers.'
+  'Stellar embedded wallet SDK: device-native and self-custodial. Signing key created and used on-device. Classic G… account. Relayer sponsors reserves.'
 
 /** Auth, dashboard, and utility pages that must not appear in search results. */
 export const NOINDEX_FOLLOW = { index: false, follow: true } as const
@@ -241,6 +241,79 @@ export function guidePageJsonLd(input: {
   return {
     '@context': 'https://schema.org',
     '@graph': graph,
+  }
+}
+
+/** WebPage + SoftwareApplication + BreadcrumbList + FAQPage for a chain landing page. */
+export function chainWalletPageJsonLd(input: {
+  title: string
+  description: string
+  path: string
+  softwareName: string
+  softwareDescription: string
+  applicationSubCategory: string
+  featureList: string[]
+  datePublished: string
+  dateModified: string
+  crumbName: string
+  faq: GuideFaqItem[]
+}) {
+  const url = pageUrl(input.path)
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebPage',
+        '@id': `${url}#webpage`,
+        url,
+        name: input.title,
+        description: input.description,
+        datePublished: input.datePublished,
+        dateModified: input.dateModified,
+        isPartOf: { '@id': WEBSITE_ID },
+        primaryTopic: { '@id': `${url}#software` },
+        breadcrumb: { '@id': `${url}#breadcrumb` },
+      },
+      {
+        '@type': 'SoftwareApplication',
+        '@id': `${url}#software`,
+        name: input.softwareName,
+        url,
+        operatingSystem: 'Web, iOS, Android',
+        applicationCategory: 'DeveloperApplication',
+        applicationSubCategory: input.applicationSubCategory,
+        description: input.softwareDescription,
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'USD',
+          description: 'Free tier available.',
+        },
+        author: { '@id': ORGANIZATION_ID },
+        image: OG_IMAGE.url,
+        screenshot: OG_IMAGE.url,
+        featureList: input.featureList,
+      },
+      {
+        ...breadcrumbListJsonLd([
+          { name: 'Home', path: '/' },
+          { name: input.crumbName, path: input.path },
+        ]),
+        '@id': `${url}#breadcrumb`,
+      },
+      {
+        '@type': 'FAQPage',
+        '@id': `${url}#faq`,
+        mainEntity: input.faq.map((item) => ({
+          '@type': 'Question',
+          name: item.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: item.answer,
+          },
+        })),
+      },
+    ],
   }
 }
 
