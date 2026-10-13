@@ -98,8 +98,6 @@ export async function PATCH(request: Request, context: RouteContext) {
       email_password_reset_template_html,
       email_magic_link_template_html,
       email_otp_template_html,
-      email_device_approval_template_html,
-      device_approval_url,
       allowed_solana_programs,
       vault_policy,
     } = body
@@ -135,8 +133,6 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (email_password_reset_template_html !== undefined) updates.email_password_reset_template_html = email_password_reset_template_html || null
     if (email_magic_link_template_html !== undefined) updates.email_magic_link_template_html = email_magic_link_template_html || null
     if (email_otp_template_html !== undefined) updates.email_otp_template_html = email_otp_template_html || null
-    if (email_device_approval_template_html !== undefined) updates.email_device_approval_template_html = email_device_approval_template_html || null
-    if (device_approval_url !== undefined) updates.device_approval_url = device_approval_url || null
     if (allowed_solana_programs !== undefined) {
       // Validate it's an array of valid base58 Solana program ids, so a bad input
       // can't silently widen what the relayer will sponsor.

@@ -3,14 +3,13 @@
 import Link from 'next/link'
 import { MobileNavigationMenu } from '@/components/MobileNavigationMenu'
 
-export type EmailTemplateKey = 'verification' | 'magic-link' | 'otp' | 'password-reset' | 'device-approval'
+export type EmailTemplateKey = 'verification' | 'magic-link' | 'otp' | 'password-reset'
 
 const templates: { key: EmailTemplateKey; label: string; description: string; path: string }[] = [
   { key: 'verification', label: 'Verification', description: 'Confirm new accounts', path: '' },
   { key: 'magic-link', label: 'Magic link', description: 'Passwordless sign-in', path: '/magic-link' },
   { key: 'otp', label: 'OTP', description: 'One-time login code', path: '/otp' },
   { key: 'password-reset', label: 'Password reset', description: 'Recover access', path: '/password-reset' },
-  { key: 'device-approval', label: 'Device approval', description: 'Authorize a new device', path: '/device-approval' },
 ]
 
 export function EmailTemplateNavigation({ appId, active }: { appId: string; active: EmailTemplateKey }) {
