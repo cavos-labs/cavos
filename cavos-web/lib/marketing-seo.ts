@@ -38,7 +38,7 @@ export const STARKNET_WALLET_DESCRIPTION =
 export const SOLANA_WALLET_PATH = '/embedded-solana-wallet'
 export const SOLANA_WALLET_TITLE = 'Embedded Solana Wallet SDK'
 export const SOLANA_WALLET_DESCRIPTION =
-  'Solana embedded wallet SDK: device-native and self-custodial. Signing key derived and used on-device. Native Ed25519 system account.'
+  'Solana embedded wallet SDK: device-native and self-custodial. Signing key derived and used on-device. Native Ed25519 system account, gasless.'
 
 export const STELLAR_WALLET_PATH = '/embedded-stellar-wallet'
 export const STELLAR_WALLET_TITLE = 'Embedded Stellar Wallet SDK'
