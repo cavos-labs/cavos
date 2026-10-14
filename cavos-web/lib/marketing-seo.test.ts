@@ -33,10 +33,17 @@ import {
   breadcrumbListJsonLd,
   chainWalletPageJsonLd,
   guidePageJsonLd,
+  cavosProductApplicationsJsonLd,
+  compareCompetitorPageJsonLd,
+  compareIndexJsonLd,
+  freeTierOfferJsonLd,
   homepageJsonLd,
   marketingPageMetadata,
   noindexFollowMetadata,
   organizationJsonLd,
+  pricingPageJsonLd,
+  sitewideJsonLd,
+  walletSoftwareApplicationJsonLd,
 } from './marketing-seo'
 import {
   CHAIN_WALLET_MODIFIED,
@@ -71,6 +78,51 @@ import {
   PRIVY_ALTERNATIVES_PATH,
   PRIVY_ALTERNATIVES_TITLE,
 } from './privy-alternatives'
+
+const PRODUCT_LIKE_TYPES = new Set(['Product', 'SoftwareApplication'])
+
+function jsonLdTypes(node: { '@type'?: string | string[] }): string[] {
+  const type = node['@type']
+  if (!type) return []
+  return Array.isArray(type) ? type : [type]
+}
+
+function walkJsonLdNodes(
+  value: unknown,
+  out: Record<string, unknown>[] = [],
+): Record<string, unknown>[] {
+  if (!value || typeof value !== 'object') return out
+  if (Array.isArray(value)) {
+    for (const item of value) walkJsonLdNodes(item, out)
+    return out
+  }
+  const rec = value as Record<string, unknown>
+  if (rec['@type']) out.push(rec)
+  for (const [key, child] of Object.entries(rec)) {
+    if (key === '@context') continue
+    walkJsonLdNodes(child, out)
+  }
+  return out
+}
+
+function assertProductLikeOffers(node: Record<string, unknown>, label: string) {
+  const types = jsonLdTypes(node)
+  if (!types.some((type) => PRODUCT_LIKE_TYPES.has(type))) return
+  if (!('offers' in node) || node.offers == null) return
+  const offers = Array.isArray(node.offers) ? node.offers : [node.offers]
+  assert.ok(offers.length > 0, `${label} has empty offers`)
+  for (const offer of offers) {
+    assert.equal(typeof offer, 'object', `${label} offer is not an object`)
+    assert.ok(offer && typeof offer === 'object')
+    const fields = offer as Record<string, unknown>
+    assert.ok(
+      fields.price !== undefined && fields.price !== '',
+      `${label} missing offers.price`,
+    )
+    assert.equal(typeof fields.priceCurrency, 'string', `${label} missing offers.priceCurrency`)
+    assert.ok(String(fields.priceCurrency).length > 0, `${label} empty offers.priceCurrency`)
+  }
+}
 
 describe('marketing SEO', () => {
   it('builds complete Open Graph and Twitter tags with a canonical URL', () => {
@@ -200,6 +252,7 @@ describe('marketing SEO', () => {
     assert.equal(wallet.applicationCategory, 'DeveloperApplication')
     assert.equal(wallet.applicationSubCategory, 'Embedded multichain wallet infrastructure')
     assert.equal(wallet.offers.price, '0')
+    assert.equal(wallet.offers.priceCurrency, 'USD')
     assert.equal(wallet.author['@id'], ORGANIZATION_ID)
 
     const framezz = data['@graph'].find((node: { '@id'?: string }) => node['@id'] === FRAMEZZ_ID)
@@ -208,12 +261,14 @@ describe('marketing SEO', () => {
     )
     assert.ok(framezz)
     assert.ok(galleries)
-    assert.deepEqual(framezz['@type'], ['SoftwareApplication', 'Product'])
+    assert.equal(framezz['@type'], 'Brand')
     assert.equal(framezz.name, 'Framezz')
     assert.equal(framezz.url, FRAMEZZ_URL)
-    assert.deepEqual(galleries['@type'], ['SoftwareApplication', 'Product'])
+    assert.equal(galleries['@type'], 'Brand')
     assert.equal(galleries.name, 'Framezz Galleries')
     assert.equal(galleries.url, FRAMEZZ_GALLERIES_URL)
+    assert.equal('offers' in framezz, false)
+    assert.equal('offers' in galleries, false)
   })
 
   it('keeps layout and homepage Organization nodes on the same @id', () => {
@@ -670,7 +725,7 @@ describe('marketing SEO', () => {
       const source = fs.readFileSync(path.join(process.cwd(), relative), 'utf8')
       assert.match(
         source,
-        /breadcrumbListJsonLd|guidePageJsonLd|aboutPageJsonLd|blogPostJsonLd|chainWalletPageJsonLd/,
+        /breadcrumbListJsonLd|guidePageJsonLd|aboutPageJsonLd|blogPostJsonLd|chainWalletPageJsonLd|compareIndexJsonLd|compareCompetitorPageJsonLd|pricingPageJsonLd/,
         `missing breadcrumb JSON-LD on ${relative}`,
       )
       assert.match(
@@ -903,5 +958,145 @@ describe('marketing SEO', () => {
     assert.match(hub, /href=["']\/embedded-solana-wallet["']/)
     assert.match(hub, /href=["']\/embedded-stellar-wallet["']/)
     assert.match(hub, /Chain considerations/)
+  })
+
+  it('gives each Product/SoftwareApplication node offers.price and priceCurrency, or no offers', () => {
+    const offer = freeTierOfferJsonLd({
+      url: 'https://cavos.xyz/pricing',
+      description: 'Free tier covers the first 1,000 wallet creates.',
+    })
+    assert.equal(offer.price, '0')
+    assert.equal(offer.priceCurrency, 'USD')
+
+    const pricing = pricingPageJsonLd({
+      plans: [
+        { name: 'Free', feeUsdPerMonth: 0, createCap: 1000 },
+        { name: 'Essential', feeUsdPerMonth: 59, createCap: 'unlimited' },
+        { name: 'Complete', feeUsdPerMonth: 139, createCap: 'unlimited' },
+      ],
+      faq: [{ q: 'Can I cancel anytime?', a: 'Yes. Paid plans are month-to-month.' }],
+    })
+
+    const graphs: unknown[] = [
+      homepageJsonLd(),
+      sitewideJsonLd(),
+      walletSoftwareApplicationJsonLd(),
+      ...cavosProductApplicationsJsonLd(),
+      compareIndexJsonLd({
+        title: 'Cavos vs Embedded Wallet Providers',
+        description: 'Compare embedded wallet approaches.',
+        faq: [{ question: 'Does Cavos use MPC?', answer: 'No.' }],
+        comparisons: COMPETITORS.map((competitor) => ({
+          name: competitor.name,
+          slug: competitor.slug,
+          summary: competitor.summary,
+        })),
+      }),
+      ...COMPETITORS.map((competitor) => compareCompetitorPageJsonLd(competitor)),
+      chainWalletPageJsonLd({
+        title: STARKNET_WALLET_TITLE,
+        description: STARKNET_WALLET_DESCRIPTION,
+        path: STARKNET_WALLET_PATH,
+        softwareName: 'Cavos Embedded Starknet Wallet',
+        softwareDescription: STARKNET_WALLET_DESCRIPTION,
+        applicationSubCategory: 'Embedded Starknet Wallet SDK',
+        featureList: ['React and React Native SDKs'],
+        datePublished: CHAIN_WALLET_PUBLISHED,
+        dateModified: CHAIN_WALLET_MODIFIED,
+        crumbName: 'Embedded Starknet Wallet',
+        faq: [...STARKNET_FAQ],
+      }),
+      pricing,
+    ]
+
+    let productLikeCount = 0
+    for (const graph of graphs) {
+      const nodes = walkJsonLdNodes(graph)
+      for (const node of nodes) {
+        const types = jsonLdTypes(node)
+        const label = `${types.join(',')} ${String(node.name ?? node['@id'] ?? '')}`
+        assertProductLikeOffers(node, label)
+        if (!types.some((type) => PRODUCT_LIKE_TYPES.has(type))) continue
+        productLikeCount += 1
+        assert.equal('aggregateRating' in node, false, `${label} must not invent aggregateRating`)
+        assert.equal('review' in node, false, `${label} must not invent review`)
+        const names = [node.name, ...(Array.isArray(node.alternateName) ? node.alternateName : [node.alternateName])]
+          .filter(Boolean)
+          .map(String)
+        for (const competitor of COMPETITORS) {
+          assert.equal(
+            names.includes(competitor.name),
+            false,
+            `competitor ${competitor.name} must not be a Product/SoftwareApplication`,
+          )
+        }
+      }
+    }
+    assert.ok(productLikeCount > 0)
+
+    const product = pricing['@graph'][0]
+    assert.equal(product['@type'], 'Product')
+    assert.equal(product.offers.length, 3)
+    assert.equal(product.offers[0].price, '0')
+    assert.equal(product.offers[0].priceCurrency, 'USD')
+    assert.equal(product.offers[1].price, '59')
+    assert.equal(product.offers[2].price, '139')
+  })
+
+  it('lists comparison subjects as ItemList entries without Product fields', () => {
+    const privy = getCompetitor('privy')
+    assert.ok(privy)
+    const page = compareCompetitorPageJsonLd(privy)
+    const json = JSON.stringify(page)
+    JSON.parse(json)
+    assert.doesNotMatch(json, /"@type":"Product"/)
+    assert.doesNotMatch(json, /aggregateRating/)
+    assert.doesNotMatch(json, /"@type":"Review"/)
+
+    const list = page['@graph'].find(
+      (node: { '@type'?: string }) => node['@type'] === 'ItemList',
+    )
+    assert.ok(list)
+    assert.equal(list.itemListElement[0].name, 'Cavos')
+    assert.equal(list.itemListElement[1].name, 'Privy')
+    assert.equal('offers' in list.itemListElement[1], false)
+    assert.equal('@type' in (list.itemListElement[1].item ?? {}), false)
+
+    const index = compareIndexJsonLd({
+      title: 'Cavos vs Embedded Wallet Providers',
+      description: 'Compare providers.',
+      faq: [{ question: 'Which blockchains does Cavos support?', answer: 'Starknet, Solana, and Stellar.' }],
+      comparisons: COMPETITORS.map((competitor) => ({
+        name: competitor.name,
+        slug: competitor.slug,
+        summary: competitor.summary,
+      })),
+    })
+    const indexList = index['@graph'].find(
+      (node: { '@type'?: string }) => node['@type'] === 'ItemList',
+    )
+    assert.ok(indexList)
+    assert.deepEqual(
+      indexList.itemListElement.map((item: { name: string; url: string }) => item.url),
+      COMPETITORS.map((competitor) => `https://cavos.xyz/compare/${competitor.slug}`),
+    )
+    for (const item of indexList.itemListElement) {
+      assert.equal(item['@type'], 'ListItem')
+      assert.equal(item.item, undefined)
+    }
+
+    const compareIndexSource = fs.readFileSync(
+      path.join(process.cwd(), 'app/compare/page.tsx'),
+      'utf8',
+    )
+    const compareSlugSource = fs.readFileSync(
+      path.join(process.cwd(), 'app/compare/[slug]/page.tsx'),
+      'utf8',
+    )
+    const layoutSource = fs.readFileSync(path.join(process.cwd(), 'app/layout.tsx'), 'utf8')
+    assert.match(compareIndexSource, /compareIndexJsonLd/)
+    assert.match(compareSlugSource, /compareCompetitorPageJsonLd/)
+    assert.match(layoutSource, /sitewideJsonLd/)
+    assert.doesNotMatch(layoutSource, /SoftwareApplication.*Product|Product.*SoftwareApplication/)
   })
 })

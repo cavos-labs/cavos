@@ -2,11 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { romagothicbold, geist, geistMono } from "@/lib/fonts";
 import "./globals.css";
 import { AnalyticsConsent } from "@/components/AnalyticsConsent";
-import {
-  cavosProductApplicationsJsonLd,
-  organizationJsonLd,
-  walletSoftwareApplicationJsonLd,
-} from "@/lib/marketing-seo";
+import { sitewideJsonLd } from "@/lib/marketing-seo";
 
 export const viewport: Viewport = {
   themeColor: "#402AFF",
@@ -90,22 +86,7 @@ export const metadata: Metadata = {
   },
 };
 
-const globalJsonLd = {
-  "@context": "https://schema.org",
-  "@graph": [
-    organizationJsonLd("customer support"),
-    {
-      "@type": "WebSite",
-      "@id": "https://cavos.xyz/#website",
-      "url": "https://cavos.xyz",
-      "name": "Cavos",
-      "description": "Embedded wallet infrastructure for Starknet, Solana, and Stellar — device-native and verifiable.",
-      "publisher": { "@id": "https://cavos.xyz/#organization" }
-    },
-    walletSoftwareApplicationJsonLd(),
-    ...cavosProductApplicationsJsonLd(),
-  ]
-}
+const globalJsonLd = sitewideJsonLd()
 
 export default function RootLayout({
   children,
