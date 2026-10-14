@@ -172,7 +172,7 @@ Cavos is an [embedded wallet](/embedded-wallet), not an extension, and not a con
 
 Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds. Login produces a stable identity for a registry lookup; it never signs a transaction. There is no MPC. There is no hosted spend key. Device-native self-custody is the product, not a mode.
 
-On Starknet the on-chain account is an **audited OpenZeppelin AccountUpgradeable** v3.0.0, controlled by one stark key derived from the wallet’s MasterDEK and app salt. There is no custom Cavos account contract and no on-chain device-signer list. A new device restores the MasterDEK off-chain; it does not `add_signer`. Execution is paymaster-sponsored; connect does not deploy — the first execute deploys and runs atomically.
+On Starknet the on-chain account is an **audited OpenZeppelin AccountUpgradeable** v3.0.0, controlled by one stark key derived from the wallet’s MasterDEK and app salt. Cavos does not ship its own account implementation, and there is no on-chain device-signer list. A new device restores the MasterDEK off-chain; it does not `add_signer`. Execution is paymaster-sponsored; connect does not deploy — the first execute deploys and runs atomically.
 
 Solana and Stellar are native adapters, not EVM compatibility. Solana provisions a native Ed25519 system account; a relayer co-signs as fee payer. Stellar provisions a classic G… account so existing tools already understand the address; the relayer can sponsor reserves and fee-bumps. Both restore the same MasterDEK on a new device rather than adding a second on-chain signer. Cavos is not an EVM-wide wallet layer. If the product is EVM-first, other vendors cover ground this one does not.
 
