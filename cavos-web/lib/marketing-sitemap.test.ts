@@ -181,12 +181,19 @@ describe('marketing sitemap', () => {
     assert.equal(isBlogPostNoindex('v1-1-9-sdk-security'), true)
     assert.equal(isBlogPostNoindex('a-future-indexable-post'), false)
     assert.equal(isBlogPostNoindex('how-to-add-an-embedded-wallet'), false)
+    assert.equal(isBlogPostNoindex('embedded-wallet-vs-browser-extension'), false)
     assert.equal(
       urls.includes(`${MARKETING_ORIGIN}/blog/v1-1-9-sdk-security`),
       false,
     )
     assert.equal(
       urls.includes(`${MARKETING_ORIGIN}/blog/how-to-add-an-embedded-wallet`),
+      true,
+    )
+    assert.equal(
+      urls.includes(
+        `${MARKETING_ORIGIN}/blog/embedded-wallet-vs-browser-extension`,
+      ),
       true,
     )
 
@@ -218,9 +225,18 @@ Hello
   })
 
   it('keeps the indexable marketing URLs including the React integration guide', () => {
-    assert.equal(entries.length, 24)
+    assert.equal(entries.length, 25)
     assert.ok(
       urls.includes(`${MARKETING_ORIGIN}/blog/how-to-add-an-embedded-wallet`),
+    )
+    assert.ok(
+      urls.includes(
+        `${MARKETING_ORIGIN}/blog/embedded-wallet-vs-browser-extension`,
+      ),
+    )
+    assert.equal(
+      urls.includes(`${MARKETING_ORIGIN}/blog/v1-1-9-sdk-security`),
+      false,
     )
   })
 

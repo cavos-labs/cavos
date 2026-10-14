@@ -64,6 +64,8 @@ import {
   EMBEDDED_WALLET_PATH,
   EMBEDDED_WALLET_PUBLISHED,
   EMBEDDED_WALLET_TITLE,
+  EMBEDDED_WALLET_VS_EXTENSION_PATH,
+  EMBEDDED_WALLET_VS_EXTENSION_TITLE,
 } from './embedded-wallet-guide'
 import {
   COMPETITORS,
@@ -473,6 +475,8 @@ describe('marketing SEO', () => {
     assert.ok(headings.includes('How to integrate an embedded wallet'))
     assert.ok(headings.includes('Embedded wallet provider comparison'))
     assert.match(pageSource, /EMBEDDED_WALLET_INTEGRATION_PATH/)
+    assert.match(pageSource, /EMBEDDED_WALLET_VS_EXTENSION_PATH/)
+    assert.match(pageSource, /embedded wallet vs browser extension/)
     assert.match(pageSource, /step-by-step integration guide/)
     for (const heading of headings) {
       assert.doesNotMatch(heading, /—/)
@@ -806,10 +810,13 @@ describe('marketing SEO', () => {
     assert.match(source, /embedded-stellar-wallet/)
     assert.match(source, /CavosProvider/)
     assert.match(source, /@cavos\/kit/)
+    assert.match(source, /@cavos\/kit` 0\.4\.2/)
     assert.match(source, /npm install @cavos\/kit/)
+    assert.doesNotMatch(source, /0\.3\.\d/)
     assert.doesNotMatch(source, /category:\s*"Release"/)
     assert.doesNotMatch(source, /This device must be approved first/)
     assert.doesNotMatch(source, /on-chain approval/)
+    assert.doesNotMatch(source, /audited Cavos/)
 
     const data = blogPostJsonLd({
       title: EMBEDDED_WALLET_INTEGRATION_TITLE,
@@ -840,6 +847,81 @@ describe('marketing SEO', () => {
     )
   })
 
+  it('indexes the embedded-wallet vs extension guide as an Article with FAQ JSON-LD', () => {
+    const postPath = path.join(
+      process.cwd(),
+      'content/blog/embedded-wallet-vs-browser-extension.mdx',
+    )
+    assert.equal(fs.existsSync(postPath), true)
+    const source = fs.readFileSync(postPath, 'utf8')
+    assert.equal(
+      (source.match(/\]\(\/embedded-wallet\)/g) ?? []).length >= 3,
+      true,
+    )
+    assert.match(source, /\]\(\/blog\/how-to-add-an-embedded-wallet\)/)
+    assert.match(source, /embedded-starknet-wallet/)
+    assert.match(source, /\]\(\/compare\)|\]\(\/compare\/dynamic\)/)
+    assert.match(source, /\]\(\/custody\)/)
+    assert.match(
+      source,
+      /What is the difference between an embedded wallet and a browser extension\?/,
+    )
+    assert.match(
+      source,
+      /When should an app use an embedded wallet instead of MetaMask-style extensions\?/,
+    )
+    assert.match(source, /audited OpenZeppelin AccountUpgradeable/)
+    assert.match(source, /device-native/)
+    assert.match(source, /Cavos, LLC/)
+    assert.doesNotMatch(source, /audited Cavos/)
+    assert.doesNotMatch(source, /custom Cavos account/)
+    assert.doesNotMatch(source, /category:\s*"Release"/)
+    assert.doesNotMatch(source, /robots:\s*noindex/)
+    assert.equal(EMBEDDED_WALLET_VS_EXTENSION_PATH, '/blog/embedded-wallet-vs-browser-extension')
+    assert.equal(
+      EMBEDDED_WALLET_VS_EXTENSION_TITLE,
+      'Embedded Wallet vs Browser Extension: Where Should Users Sign?',
+    )
+
+    const data = blogPostJsonLd({
+      title: EMBEDDED_WALLET_VS_EXTENSION_TITLE,
+      description:
+        'When users should sign in an embedded wallet versus a browser extension.',
+      path: EMBEDDED_WALLET_VS_EXTENSION_PATH,
+      datePublished: '2026-10-14',
+      type: 'Article',
+      faq: [
+        {
+          question:
+            'What is the difference between an embedded wallet and a browser extension?',
+          answer:
+            'A browser extension is a separate program the user installs. An embedded wallet is provisioned inside the application.',
+        },
+      ],
+      crumbs: [
+        { name: 'Home', path: '/' },
+        { name: 'Blog', path: '/blog' },
+        {
+          name: EMBEDDED_WALLET_VS_EXTENSION_TITLE,
+          path: EMBEDDED_WALLET_VS_EXTENSION_PATH,
+        },
+      ],
+    })
+    const json = JSON.stringify(data)
+    JSON.parse(json)
+    assert.equal(data['@graph'][0]['@type'], 'Article')
+    assert.equal(data['@graph'][1]['@type'], 'BreadcrumbList')
+    assert.equal(data['@graph'][2]['@type'], 'FAQPage')
+    assert.equal(
+      data['@graph'][0].url,
+      'https://cavos.xyz/blog/embedded-wallet-vs-browser-extension',
+    )
+    assert.equal(
+      data['@graph'][0].mainEntityOfPage['@id'],
+      'https://cavos.xyz/blog/embedded-wallet-vs-browser-extension',
+    )
+  })
+
   it('makes /blog an indexable landing page with crawlable guide links', () => {
     const source = fs.readFileSync(
       path.join(process.cwd(), 'app/blog/page.tsx'),
@@ -849,6 +931,7 @@ describe('marketing SEO', () => {
     assert.match(source, /href: '\/embedded-wallet'/)
     assert.match(source, /What is an embedded wallet\?/)
     assert.match(source, /EMBEDDED_WALLET_INTEGRATION_PATH/)
+    assert.match(source, /EMBEDDED_WALLET_VS_EXTENSION_PATH/)
     assert.match(source, /href: '\/compare'/)
     assert.match(source, /href: '\/custody'/)
     assert.match(source, /href: '\/privy-alternatives'/)

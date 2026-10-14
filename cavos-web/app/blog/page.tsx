@@ -7,6 +7,8 @@ import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo
 import {
   EMBEDDED_WALLET_INTEGRATION_PATH,
   EMBEDDED_WALLET_INTEGRATION_TITLE,
+  EMBEDDED_WALLET_VS_EXTENSION_PATH,
+  EMBEDDED_WALLET_VS_EXTENSION_TITLE,
 } from '@/lib/embedded-wallet-guide';
 
 export const metadata: Metadata = marketingPageMetadata({
@@ -26,6 +28,11 @@ const GUIDES = [
     href: EMBEDDED_WALLET_INTEGRATION_PATH,
     title: EMBEDDED_WALLET_INTEGRATION_TITLE,
     body: 'Install @cavos/kit, wrap CavosProvider, sign in, and send a sponsored transaction.',
+  },
+  {
+    href: EMBEDDED_WALLET_VS_EXTENSION_PATH,
+    title: EMBEDDED_WALLET_VS_EXTENSION_TITLE,
+    body: 'When users should sign in an embedded wallet versus a MetaMask-style browser extension.',
   },
   {
     href: '/compare',

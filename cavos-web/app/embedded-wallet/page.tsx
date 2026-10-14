@@ -19,6 +19,7 @@ import {
     EMBEDDED_WALLET_PATH,
     EMBEDDED_WALLET_PUBLISHED,
     EMBEDDED_WALLET_TITLE,
+    EMBEDDED_WALLET_VS_EXTENSION_PATH,
 } from '@/lib/embedded-wallet-guide'
 import { guidePageJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
 
@@ -225,7 +226,12 @@ export default function EmbeddedWalletGuidePage() {
                         <Link href="/compare/dynamic" className={linkClass}>
                             Cavos vs Dynamic
                         </Link>{' '}
-                        page.
+                        page. For signing UX, key custody, recovery, gas, and how to migrate an
+                        extension-first product, read{' '}
+                        <Link href={EMBEDDED_WALLET_VS_EXTENSION_PATH} className={linkClass}>
+                            embedded wallet vs browser extension
+                        </Link>
+                        .
                     </p>
                 </section>
 

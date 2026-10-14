@@ -16,6 +16,12 @@ export const EMBEDDED_WALLET_INTEGRATION_PATH =
 export const EMBEDDED_WALLET_INTEGRATION_TITLE =
   'How to Add an Embedded Wallet to a React App'
 
+export const EMBEDDED_WALLET_VS_EXTENSION_PATH =
+  '/blog/embedded-wallet-vs-browser-extension'
+
+export const EMBEDDED_WALLET_VS_EXTENSION_TITLE =
+  'Embedded Wallet vs Browser Extension: Where Should Users Sign?'
+
 export const DOCS_ORIGIN = 'https://docs.cavos.xyz'
 
 export const DOCS_URLS = {
