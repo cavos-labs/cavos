@@ -5,7 +5,10 @@ description: Use @cavos/kit on Solana — a native Ed25519 system account whose 
 
 Solana in `@cavos/kit` is a **native system account**. The address is an
 Ed25519 public key — the same shape as Phantom — not a PDA and not a P-256
-program account.
+program account. This is the Solana adapter for the Cavos
+[embedded wallet](https://cavos.xyz/embedded-wallet). The same account model
+is described for a product audience on the
+[Solana embedded wallet](https://cavos.xyz/embedded-solana-wallet) page.
 
 The spend key is HKDF of a **MasterDEK** (`cavos-ed25519-solana-v1`, salted by
 `appSalt`). The same DEK derives the Stellar `G…` and the Starknet stark key in
@@ -208,3 +211,8 @@ See [Hardware-isolated recovery](/docs/hardware-isolated-recovery) and
 - ✅ `signMessage` with `curve: "ed25519"`.
 - ✅ Enclave DEK wrap and passkey restore.
 - ❌ PDA, secp256r1 precompile program, on-chain approvers, extra signers.
+
+A React install lives in
+[how to add an embedded wallet](https://cavos.xyz/blog/how-to-add-an-embedded-wallet).
+If users currently sign in Phantom, read
+[embedded wallet vs browser extension](https://cavos.xyz/blog/embedded-wallet-vs-browser-extension).

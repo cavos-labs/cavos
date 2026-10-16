@@ -7,7 +7,10 @@ Stellar is a **classic `G…` account** — the same address format wallets,
 exchanges, and every Stellar tool already understand. With
 `deviceApproval: "enclave"` or a passkey (the current path), that `G…` is HKDF
 of the same **MasterDEK** as Solana (`cavos-ed25519-stellar-v1`). A new device
-unwraps the DEK. It does not add a second Horizon signer.
+unwraps the DEK. It does not add a second Horizon signer. This is the Stellar
+adapter for the Cavos [embedded wallet](https://cavos.xyz/embedded-wallet). The
+same account model is described for a product audience on the
+[Stellar embedded wallet](https://cavos.xyz/embedded-stellar-wallet) page.
 
 It's a native Stellar account (not a Soroban contract), so it interoperates with
 the whole ecosystem — and it can still **sign Soroban contract invocations**, so
@@ -465,4 +468,7 @@ Networks: `"stellar-testnet"`, `"stellar-mainnet"`.
 - ✅ **Pay in a token** via [`@cavos/reserve`](/docs/reserve) (`wallet.signXdr`).
 
 For the cross-chain model and how this compares to the other chains, see
-[Chains](/docs/chains) and [Concepts](/docs/concepts).
+[Chains](/docs/chains) and [Concepts](/docs/concepts). A React install lives in
+[how to add an embedded wallet](https://cavos.xyz/blog/how-to-add-an-embedded-wallet).
+If users currently sign in Freighter, read
+[embedded wallet vs browser extension](https://cavos.xyz/blog/embedded-wallet-vs-browser-extension).

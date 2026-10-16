@@ -95,13 +95,17 @@ export function pageUrl(path: string): string {
 
 /**
  * Documented Cavos free tier: first 1,000 wallet creates at USD 0 (`/pricing`).
- * Google Product / Software App rich results require Offer.price + priceCurrency.
+ * Google Product / Software App rich results require Offer.price + priceCurrency
+ * and Offer.availability.
  */
+export const OFFER_AVAILABILITY = 'https://schema.org/InStock'
+
 export function freeTierOfferJsonLd(extra?: { url?: string; description?: string }) {
   return {
     '@type': 'Offer' as const,
     price: '0',
     priceCurrency: 'USD',
+    availability: OFFER_AVAILABILITY,
     ...(extra?.url ? { url: extra.url } : {}),
     ...(extra?.description ? { description: extra.description } : {}),
   }
@@ -753,6 +757,7 @@ export function pricingPageJsonLd(input: {
           name: plan.name,
           price: String(plan.feeUsdPerMonth),
           priceCurrency: 'USD',
+          availability: OFFER_AVAILABILITY,
           description:
             plan.createCap === 1000
               ? 'Up to 1,000 wallet creates.'

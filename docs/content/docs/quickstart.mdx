@@ -3,7 +3,8 @@ title: Quickstart
 description: Install @cavos/kit, connect to one or more chains, and execute your first sponsored transaction.
 ---
 
-The onboarding contract is shared across every Cavos adapter: authenticate,
+The onboarding contract is shared across every Cavos
+[embedded wallet](https://cavos.xyz/embedded-wallet) adapter: authenticate,
 connect, then execute. Connect derives addresses and checks deployment status
 but **never deploys**. The first `execute` triggers deployment atomically with
 the user's operation.
@@ -106,7 +107,11 @@ adapter-specific validation and sponsorship rules.
 | **Stellar** | App ID, network, app salt, identity | Hosted relayer can sponsor reserves and fee-bump submission. |
 
 Use the dedicated [Starknet](/docs/starknet), [Solana](/docs/solana), or
-[Stellar](/docs/stellar) guide for production configuration.
+[Stellar](/docs/stellar) guide for production configuration. The matching
+product pages are the
+[Starknet](https://cavos.xyz/embedded-starknet-wallet),
+[Solana](https://cavos.xyz/embedded-solana-wallet), and
+[Stellar](https://cavos.xyz/embedded-stellar-wallet) landings.
 
 ## 5. Handle device approval
 
@@ -187,6 +192,10 @@ The provider gives you `setChain(chain)` to switch the active chain without
 re-mounting or re-authenticating. See [React](/docs/react) for the full guide.
 
 Continue with [React](/docs/react), [React Native](/docs/react-native), or the
-full [API reference](/docs/api-reference).
+full [API reference](/docs/api-reference). The
+[React integration guide](https://cavos.xyz/blog/how-to-add-an-embedded-wallet)
+covers the same install on the marketing site. If you are deciding between an
+in-app wallet and a browser extension, read
+[embedded wallet vs browser extension](https://cavos.xyz/blog/embedded-wallet-vs-browser-extension).
 
 If something does not behave as described here, [Troubleshooting](/docs/troubleshooting) lists the symptoms integrators hit most and what actually causes them.
