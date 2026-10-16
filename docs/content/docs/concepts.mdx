@@ -5,15 +5,20 @@ description: The every-chain architecture, non-custodial invariant, registry-fir
 
 ## Every-chain, not one account model everywhere
 
-Cavos standardizes the integration contract, not the blockchain. Every adapter
-must provide stable identity, local user authority, typed execution,
-non-custodial recovery, and a documented sponsorship path. The implementation
-remains native to the selected network.
+Cavos standardizes the [embedded wallet](https://cavos.xyz/embedded-wallet)
+integration contract, not the blockchain. Every adapter must provide stable
+identity, local user authority, typed execution, non-custodial recovery, and a
+documented sponsorship path. The implementation remains native to the selected
+network.
 
 Each chain ships as a native client: `CavosStarknet` (OpenZeppelin account),
 `CavosSolana` (Ed25519 system account), and `CavosStellar` (classic account).
-Future chains are roadmap adapters until their code, security review, and
-end-to-end validation are complete.
+Product pages for those adapters live at
+[Starknet](https://cavos.xyz/embedded-starknet-wallet),
+[Solana](https://cavos.xyz/embedded-solana-wallet), and
+[Stellar](https://cavos.xyz/embedded-stellar-wallet). Future chains are
+roadmap adapters until their code, security review, and end-to-end validation
+are complete.
 
 ## Non-custodial invariant
 
@@ -195,3 +200,8 @@ if (wallet.chain === "starknet") {
 
 That same rule applies to every future adapter: extend the discriminated union,
 document capabilities, and preserve native semantics.
+
+For a React install, see
+[how to add an embedded wallet](https://cavos.xyz/blog/how-to-add-an-embedded-wallet).
+The UX fork versus an extension is covered in
+[embedded wallet vs browser extension](https://cavos.xyz/blog/embedded-wallet-vs-browser-extension).

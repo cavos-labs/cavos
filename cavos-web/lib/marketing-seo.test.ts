@@ -15,6 +15,7 @@ import {
   HOME_TITLE,
   NOINDEX_FOLLOW,
   ORGANIZATION_DESCRIPTION,
+  OFFER_AVAILABILITY,
   ORGANIZATION_ID,
   SOFTWARE_ID,
   SOLANA_WALLET_DESCRIPTION,
@@ -123,6 +124,11 @@ function assertProductLikeOffers(node: Record<string, unknown>, label: string) {
     )
     assert.equal(typeof fields.priceCurrency, 'string', `${label} missing offers.priceCurrency`)
     assert.ok(String(fields.priceCurrency).length > 0, `${label} empty offers.priceCurrency`)
+    assert.ok(
+      fields.availability === 'https://schema.org/InStock' ||
+        fields.availability === 'https://schema.org/OnlineOnly',
+      `${label} missing offers.availability (InStock or OnlineOnly)`,
+    )
   }
 }
 
@@ -255,6 +261,7 @@ describe('marketing SEO', () => {
     assert.equal(wallet.applicationSubCategory, 'Embedded multichain wallet infrastructure')
     assert.equal(wallet.offers.price, '0')
     assert.equal(wallet.offers.priceCurrency, 'USD')
+    assert.equal(wallet.offers.availability, OFFER_AVAILABILITY)
     assert.equal(wallet.author['@id'], ORGANIZATION_ID)
 
     const framezz = data['@graph'].find((node: { '@id'?: string }) => node['@id'] === FRAMEZZ_ID)
@@ -488,8 +495,11 @@ describe('marketing SEO', () => {
       path.join(process.cwd(), 'components/landing/FeaturesGrid.tsx'),
       'utf8',
     )
-    assert.match(features, /href="\/embedded-wallet"/)
-    assert.match(features, /what an embedded wallet is/)
+    assert.match(
+      features,
+      /href="\/embedded-wallet"[^>]*>\s*embedded wallet\s*</,
+    )
+    assert.match(features, /Start with what an/)
     assert.match(features, /href="\/compare"/)
     const home = fs.readFileSync(path.join(process.cwd(), 'app/page.tsx'), 'utf8')
     assert.match(home, /path: '\/'/)
@@ -1051,6 +1061,7 @@ describe('marketing SEO', () => {
     })
     assert.equal(offer.price, '0')
     assert.equal(offer.priceCurrency, 'USD')
+    assert.equal(offer.availability, OFFER_AVAILABILITY)
 
     const pricing = pricingPageJsonLd({
       plans: [
@@ -1123,8 +1134,11 @@ describe('marketing SEO', () => {
     assert.equal(product.offers.length, 3)
     assert.equal(product.offers[0].price, '0')
     assert.equal(product.offers[0].priceCurrency, 'USD')
+    assert.equal(product.offers[0].availability, OFFER_AVAILABILITY)
     assert.equal(product.offers[1].price, '59')
+    assert.equal(product.offers[1].availability, OFFER_AVAILABILITY)
     assert.equal(product.offers[2].price, '139')
+    assert.equal(product.offers[2].availability, OFFER_AVAILABILITY)
   })
 
   it('lists comparison subjects as ItemList entries without Product fields', () => {
@@ -1183,4 +1197,85 @@ describe('marketing SEO', () => {
     assert.match(layoutSource, /sitewideJsonLd/)
     assert.doesNotMatch(layoutSource, /SoftwareApplication.*Product|Product.*SoftwareApplication/)
   })
+
+  it('adds crawlable docs links to the embedded-wallet cluster', () => {
+    const docsRoot = path.join(process.cwd(), '..', 'docs')
+    const shared = [
+      ['[embedded wallet](https://cavos.xyz/embedded-wallet)', 'embedded wallet hub'],
+      [
+        '](https://cavos.xyz/blog/how-to-add-an-embedded-wallet)',
+        'React integration guide',
+      ],
+      [
+        '](https://cavos.xyz/blog/embedded-wallet-vs-browser-extension)',
+        'vs-extension guide',
+      ],
+    ] as const
+    const pages = [
+      {
+        relative: 'content/docs/index.mdx',
+        extras: [
+          'https://cavos.xyz/embedded-starknet-wallet',
+          'https://cavos.xyz/embedded-solana-wallet',
+          'https://cavos.xyz/embedded-stellar-wallet',
+        ],
+      },
+      {
+        relative: 'content/docs/quickstart.mdx',
+        extras: [
+          'https://cavos.xyz/embedded-starknet-wallet',
+          'https://cavos.xyz/embedded-solana-wallet',
+          'https://cavos.xyz/embedded-stellar-wallet',
+        ],
+      },
+      {
+        relative: 'content/docs/concepts.mdx',
+        extras: [
+          'https://cavos.xyz/embedded-starknet-wallet',
+          'https://cavos.xyz/embedded-solana-wallet',
+          'https://cavos.xyz/embedded-stellar-wallet',
+        ],
+      },
+      {
+        relative: 'content/docs/starknet.mdx',
+        extras: ['https://cavos.xyz/embedded-starknet-wallet'],
+      },
+      {
+        relative: 'content/docs/solana.mdx',
+        extras: ['https://cavos.xyz/embedded-solana-wallet'],
+      },
+      {
+        relative: 'content/docs/stellar.mdx',
+        extras: ['https://cavos.xyz/embedded-stellar-wallet'],
+      },
+    ] as const
+
+    for (const page of pages) {
+      const source = fs.readFileSync(path.join(docsRoot, page.relative), 'utf8')
+      for (const [needle, label] of shared) {
+        assert.match(source, new RegExp(escapeRegExp(needle)), `${page.relative} missing ${label}`)
+      }
+      for (const href of page.extras) {
+        assert.match(source, new RegExp(escapeRegExp(href)), `${page.relative} missing ${href}`)
+      }
+      assert.doesNotMatch(source, /audited Cavos/)
+    }
+
+    const home = fs.readFileSync(path.join(docsRoot, 'app/(home)/page.tsx'), 'utf8')
+    assert.match(home, /href="https:\/\/cavos\.xyz\/embedded-wallet"/)
+    assert.match(home, />\s*embedded wallet\s*</)
+    assert.match(home, /href="https:\/\/cavos\.xyz\/embedded-starknet-wallet"/)
+    assert.match(home, /href="https:\/\/cavos\.xyz\/embedded-solana-wallet"/)
+    assert.match(home, /href="https:\/\/cavos\.xyz\/embedded-stellar-wallet"/)
+    assert.match(home, /href="https:\/\/cavos\.xyz\/blog\/how-to-add-an-embedded-wallet"/)
+    assert.match(home, /href="https:\/\/cavos\.xyz\/blog\/embedded-wallet-vs-browser-extension"/)
+    assert.doesNotMatch(home, /<h1[\s\S]*href="https:\/\/cavos\.xyz\/embedded-wallet"/)
+
+    const layout = fs.readFileSync(path.join(docsRoot, 'app/layout.tsx'), 'utf8')
+    assert.match(layout, /availability:\s*'https:\/\/schema\.org\/InStock'/)
+  })
 })
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}

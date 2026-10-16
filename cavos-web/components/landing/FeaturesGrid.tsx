@@ -228,14 +228,14 @@ export function FeaturesGrid() {
                     </span>
                 </h2>
                 <p className="mt-5 max-w-[46ch] text-[15px] leading-relaxed text-muted">
-                    New to the category? Start with{' '}
+                    New to the category? Start with what an{' '}
                     <Link
                         href="/embedded-wallet"
                         className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
                     >
-                        what an embedded wallet is
+                        embedded wallet
                     </Link>
-                    , then{' '}
+                    {' '}is, then{' '}
                     <Link
                         href="/compare"
                         className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"

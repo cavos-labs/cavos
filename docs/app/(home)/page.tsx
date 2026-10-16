@@ -89,10 +89,36 @@ export default function HomePage() {
             </h1>
 
             <p className="mt-6 max-w-md text-pretty text-[1.05rem] leading-relaxed text-muted">
-              Build self-custodial embedded wallets across blockchains with one
-              chain-configurable SDK — an OpenZeppelin account on Starknet, native
-              Ed25519 accounts on Solana and Stellar. Every chain that comes
-              next joins through an adapter.
+              Build a self-custodial{' '}
+              <a
+                href="https://cavos.xyz/embedded-wallet"
+                className="text-ink underline decoration-ink/25 underline-offset-4 hover:decoration-ink"
+              >
+                embedded wallet
+              </a>{' '}
+              across blockchains with one chain-configurable SDK — an
+              OpenZeppelin account on{' '}
+              <a
+                href="https://cavos.xyz/embedded-starknet-wallet"
+                className="text-ink underline decoration-ink/25 underline-offset-4 hover:decoration-ink"
+              >
+                Starknet
+              </a>
+              , native Ed25519 accounts on{' '}
+              <a
+                href="https://cavos.xyz/embedded-solana-wallet"
+                className="text-ink underline decoration-ink/25 underline-offset-4 hover:decoration-ink"
+              >
+                Solana
+              </a>{' '}
+              and{' '}
+              <a
+                href="https://cavos.xyz/embedded-stellar-wallet"
+                className="text-ink underline decoration-ink/25 underline-offset-4 hover:decoration-ink"
+              >
+                Stellar
+              </a>
+              . Every chain that comes next joins through an adapter.
             </p>
 
             <div className="mt-9 flex flex-wrap items-center gap-3">
@@ -160,7 +186,21 @@ export default function HomePage() {
               <span className="font-mono text-[0.9em] text-brand">
                 @cavos/kit
               </span>
-              .
+              . The{' '}
+              <a
+                href="https://cavos.xyz/blog/how-to-add-an-embedded-wallet"
+                className="text-ink underline decoration-ink/25 underline-offset-4 hover:decoration-ink"
+              >
+                React integration guide
+              </a>{' '}
+              is the install path;{' '}
+              <a
+                href="https://cavos.xyz/blog/embedded-wallet-vs-browser-extension"
+                className="text-ink underline decoration-ink/25 underline-offset-4 hover:decoration-ink"
+              >
+                embedded wallet vs browser extension
+              </a>{' '}
+              compares where users should sign.
             </p>
           </div>
           <Link

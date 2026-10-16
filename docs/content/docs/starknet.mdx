@@ -6,7 +6,10 @@ description: Use @cavos/kit on Starknet — a native OpenZeppelin account whose 
 Starknet in `@cavos/kit` is a **native account**, the same model as Solana and
 Stellar. The account is the standard, upgradeable OpenZeppelin
 `AccountUpgradeable` (v3.0.0) controlled by a stark key — the same shape as
-Argent or Braavos, not a custom contract.
+Argent or Braavos, not a custom contract. This is the Starknet adapter for the
+Cavos [embedded wallet](https://cavos.xyz/embedded-wallet). The same account
+model is described for a product audience on the
+[Starknet embedded wallet](https://cavos.xyz/embedded-starknet-wallet) page.
 
 The stark key is `grindKey(HKDF(MasterDEK, appSalt, "cavos-stark-starknet-v1"))`.
 It is derived from the same **MasterDEK** that Solana and Stellar use, sealed in
@@ -222,3 +225,7 @@ declared on mainnet and Sepolia.
 
 For the cross-chain model and how Solana and Stellar compare, see
 [Chains](/docs/chains), [Solana](/docs/solana), and [Stellar](/docs/stellar).
+A React install lives in
+[how to add an embedded wallet](https://cavos.xyz/blog/how-to-add-an-embedded-wallet).
+If users currently sign in Argent X or Braavos, read
+[embedded wallet vs browser extension](https://cavos.xyz/blog/embedded-wallet-vs-browser-extension).

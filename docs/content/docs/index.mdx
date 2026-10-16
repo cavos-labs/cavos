@@ -3,14 +3,18 @@ title: Overview
 description: Device-native, self-custodial embedded wallets across every chain, from one SDK.
 ---
 
-`@cavos/kit` gives applications one wallet integration across chains without
-flattening their differences. Users authenticate with a familiar identity and
-control a deterministic wallet through device-native key material—no seed
-phrase, MPC cluster, or browser extension.
+`@cavos/kit` gives applications one [embedded wallet](https://cavos.xyz/embedded-wallet)
+integration across chains without flattening their differences. Users
+authenticate with a familiar identity and control a deterministic wallet
+through device-native key material—no seed phrase, MPC cluster, or browser
+extension.
 
-**Starknet, Solana, and Stellar are available today.** Cavos is designed to
-reach every chain through adapters that preserve the same product contract while
-using each network's native account, signing, execution, and fee model.
+**[Starknet](https://cavos.xyz/embedded-starknet-wallet),
+[Solana](https://cavos.xyz/embedded-solana-wallet), and
+[Stellar](https://cavos.xyz/embedded-stellar-wallet) are available today.**
+Cavos is designed to reach every chain through adapters that preserve the same
+product contract while using each network's native account, signing, execution,
+and fee model.
 
 ```ts title="TypeScript"
 import { Cavos } from "@cavos/kit";
@@ -60,6 +64,11 @@ Narrow on `wallet.chain` before calling chain-native methods. See
   the same wallet for that adapter.
 - **Recoverable:** each adapter exposes non-custodial device approval and
   recovery appropriate to its account model.
+
+The [React integration guide](https://cavos.xyz/blog/how-to-add-an-embedded-wallet)
+walks through install and a first sponsored transaction. If you are still
+choosing where users should sign, start with
+[embedded wallet vs browser extension](https://cavos.xyz/blog/embedded-wallet-vs-browser-extension).
 
 ## Where to next
 
