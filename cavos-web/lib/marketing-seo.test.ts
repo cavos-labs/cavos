@@ -1269,7 +1269,9 @@ describe('marketing SEO', () => {
     assert.match(home, /href="https:\/\/cavos\.xyz\/embedded-stellar-wallet"/)
     assert.match(home, /href="https:\/\/cavos\.xyz\/blog\/how-to-add-an-embedded-wallet"/)
     assert.match(home, /href="https:\/\/cavos\.xyz\/blog\/embedded-wallet-vs-browser-extension"/)
-    assert.doesNotMatch(home, /<h1[\s\S]*href="https:\/\/cavos\.xyz\/embedded-wallet"/)
+    const homeH1 = home.match(/<h1[\s\S]*?<\/h1>/)
+    assert.ok(homeH1)
+    assert.doesNotMatch(homeH1[0], /href=/)
 
     const layout = fs.readFileSync(path.join(docsRoot, 'app/layout.tsx'), 'utf8')
     assert.match(layout, /availability:\s*'https:\/\/schema\.org\/InStock'/)
