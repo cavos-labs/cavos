@@ -19,6 +19,15 @@ describe('bindNonceToApp', () => {
         assert.equal(bindNonceToApp(APP, `${HASH}=`), null);
         assert.equal(bindNonceToApp(APP, ''), null);
     });
+
+    it('passes a legacy Poseidon nonce through unbound', () => {
+        const poseidon = '0x2f0d8840bcf3bc629598d8a6cc80cb7c0d9e52d93dab244bbf9cd0dca0ad082';
+        assert.equal(bindNonceToApp(APP, poseidon), poseidon);
+        assert.equal(nonceNamesApp(poseidon, APP), false);
+        assert.equal(bindNonceToApp(APP, `${poseidon}0`), null);
+        assert.equal(bindNonceToApp(APP, `${APP}.${poseidon}`), null);
+        assert.equal(bindNonceToApp(APP, '0x'), null);
+    });
 });
 
 describe('nonceNamesApp', () => {
