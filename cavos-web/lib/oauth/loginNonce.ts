@@ -18,9 +18,19 @@
  */
 const CLIENT_NONCE = /^[A-Za-z0-9_-]{43}$/;
 
+/**
+ * What `@cavos/react` sends: Poseidon(session key, valid_until, randomness) as
+ * hex. The legacy account contract parses the token's nonce as exactly this
+ * value, so it cannot carry the app, and is sent to the provider unchanged.
+ * Such a token names no app, so `nonceNamesApp` refuses it everywhere it is
+ * checked. Remove once no legacy account signs in.
+ */
+const LEGACY_STARKNET_NONCE = /^0x[0-9a-f]{1,63}$/;
+
 /** The nonce to send to the provider, or null when the client's half is malformed. */
 export function bindNonceToApp(appId: string, clientNonce: string): string | null {
-  return CLIENT_NONCE.test(clientNonce) ? `${appId}.${clientNonce}` : null;
+  if (CLIENT_NONCE.test(clientNonce)) return `${appId}.${clientNonce}`;
+  return LEGACY_STARKNET_NONCE.test(clientNonce) ? clientNonce : null;
 }
 
 /** Whether a token's nonce says it was issued to a login started by `appId`. */
