@@ -47,7 +47,7 @@ const CAVOS_PRICING =
 const PRIVY_PRICING =
     'Free (0–499 MAU) with 50K signatures and $1M volume/mo. Core $299/mo. Scale $499/mo.'
 const DYNAMIC_PRICING =
-    'Free up to 1,000 MAUs. $249/mo for 1,000–5,000 MAUs. Then $0.05 per extra MAU.'
+    '$249/mo for up to 5,000 MAUs. Then $0.05 per extra MAU. Sandbox is free.'
 const TURNKEY_PRICING =
     'Pay as you go: 1,000 wallets and 25 free signatures/mo, then $0.10/signature. Pro $99/mo.'
 const WEB3AUTH_PRICING =

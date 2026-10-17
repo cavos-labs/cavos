@@ -62,9 +62,17 @@ export default async function ComparisonPage({
                         {competitor.pageH1 ?? `Cavos vs ${competitor.name}`}
                     </h1>
                     <p className="mt-7 max-w-2xl text-lg leading-relaxed text-muted">
-                        {competitor.slug === 'privy'
-                            ? 'This comparison is about Privy the embedded crypto wallet, not the Shopify popup tool of the same name. '
-                            : null}
+                        {competitor.slug === 'privy' ? (
+                            <>
+                                This comparison is about Privy the embedded crypto wallet, not
+                                the Shopify popup tool of the same name. For a multi-vendor
+                                shortlist, see{' '}
+                                <Link href="/privy-alternatives" className={linkClass}>
+                                    Privy alternatives
+                                </Link>
+                                .{' '}
+                            </>
+                        ) : null}
                         {competitor.summary}
                     </p>
                     <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">

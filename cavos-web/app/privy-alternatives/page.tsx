@@ -2,14 +2,24 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
-import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
+import {
+    EMBEDDED_WALLET_MARKET_NOTE,
+    PROVIDER_PRICING_AS_OF,
+    embeddedWalletProviderRows,
+} from '@/lib/compare-data'
+import { guidePageJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
 import {
     PRIVY_ALTERNATIVE_SECTIONS,
+    PRIVY_ALTERNATIVES_CRUMB,
     PRIVY_ALTERNATIVES_DESCRIPTION,
     PRIVY_ALTERNATIVES_FAQ,
     PRIVY_ALTERNATIVES_H1,
+    PRIVY_ALTERNATIVES_MODIFIED,
     PRIVY_ALTERNATIVES_PATH,
+    PRIVY_ALTERNATIVES_PUBLISHED,
     PRIVY_ALTERNATIVES_TITLE,
+    PRIVY_HOW_TO_CHOOSE,
+    PRIVY_WHY_LOOK,
     privyChooseThem,
 } from '@/lib/privy-alternatives'
 
@@ -21,45 +31,26 @@ export const metadata: Metadata = marketingPageMetadata({
     description: PRIVY_ALTERNATIVES_DESCRIPTION,
     path: PRIVY_ALTERNATIVES_PATH,
     type: 'article',
+    publishedTime: PRIVY_ALTERNATIVES_PUBLISHED,
+    modifiedTime: PRIVY_ALTERNATIVES_MODIFIED,
 })
 
 export default function PrivyAlternativesPage() {
-    const url = `https://cavos.xyz${PRIVY_ALTERNATIVES_PATH}`
     const chooseThem = privyChooseThem()
-    const jsonLd = {
-        '@context': 'https://schema.org',
-        '@graph': [
-            {
-                '@type': 'WebPage',
-                '@id': `${url}#webpage`,
-                url,
-                name: PRIVY_ALTERNATIVES_TITLE,
-                description: PRIVY_ALTERNATIVES_DESCRIPTION,
-                isPartOf: { '@id': 'https://cavos.xyz/#website' },
-                breadcrumb: { '@id': `${url}#breadcrumb` },
-            },
-            {
-                ...breadcrumbListJsonLd([
-                    { name: 'Home', path: '/' },
-                    { name: 'Compare', path: '/compare' },
-                    { name: 'Privy wallet alternatives', path: PRIVY_ALTERNATIVES_PATH },
-                ]),
-                '@id': `${url}#breadcrumb`,
-            },
-            {
-                '@type': 'FAQPage',
-                '@id': `${url}#faq`,
-                mainEntity: PRIVY_ALTERNATIVES_FAQ.map((item) => ({
-                    '@type': 'Question',
-                    name: item.question,
-                    acceptedAnswer: {
-                        '@type': 'Answer',
-                        text: item.answer,
-                    },
-                })),
-            },
+    const providers = embeddedWalletProviderRows()
+    const jsonLd = guidePageJsonLd({
+        title: PRIVY_ALTERNATIVES_TITLE,
+        description: PRIVY_ALTERNATIVES_DESCRIPTION,
+        path: PRIVY_ALTERNATIVES_PATH,
+        datePublished: PRIVY_ALTERNATIVES_PUBLISHED,
+        dateModified: PRIVY_ALTERNATIVES_MODIFIED,
+        crumbs: [
+            { name: 'Home', path: '/' },
+            { name: 'Compare', path: '/compare' },
+            { name: PRIVY_ALTERNATIVES_CRUMB, path: PRIVY_ALTERNATIVES_PATH },
         ],
-    }
+        faq: [...PRIVY_ALTERNATIVES_FAQ],
+    })
 
     return (
         <main className="min-h-screen bg-white font-sans text-ink antialiased">
@@ -79,43 +70,126 @@ export default function PrivyAlternativesPage() {
                         This page is about Privy the{' '}
                         <Link href="/embedded-wallet" className={linkClass}>
                             embedded wallet
-                        </Link>
-                        , not the Shopify popup tool of the same name. Privy is a widely
-                        adopted embedded crypto wallet and authentication provider focused
-                        primarily on EVM chains, offering both embedded wallets and external
-                        wallet connection. Teams look for a Privy wallet alternative when that
-                        custody model, chain coverage, commercial terms, or switching cost no
-                        longer match the product they are shipping.
+                        </Link>{' '}
+                        and authentication provider, not the Shopify popup tool of the same
+                        name. Privy is widely adopted for embedded crypto wallets on EVM
+                        chains, with Solana coverage and external wallet connection. Teams
+                        searching for Privy alternatives are usually comparing custody,
+                        native chain coverage, and whether they need a finished SDK or
+                        key-management infrastructure.
                     </p>
                     <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
-                        This guide uses the same facts as the{' '}
+                        The sections below use the same facts as the{' '}
                         <Link href="/compare" className={linkClass}>
                             compare pages
                         </Link>
-                        . It does not invent competitor pricing. Cavos publishes its own fees on
-                        the{' '}
+                        . Cavos publishes its own fees on the{' '}
                         <Link href="/pricing" className={linkClass}>
                             pricing page
                         </Link>
-                        ; other vendors set theirs independently. Migration is a project, not a
-                        config change: wallet addresses are derived differently, so accounts do
-                        not transfer automatically.
+                        ; other vendors set theirs independently. Migration is a project, not
+                        a config change: wallet addresses are derived differently, so
+                        accounts do not transfer automatically.
                     </p>
                 </header>
 
                 <section className="mt-24">
                     <h2 className="text-3xl font-medium tracking-[-0.03em]">
-                        Alternatives to evaluate
+                        Why teams look for a Privy alternative
                     </h2>
                     <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted">
-                        Each section is an architectural sketch. The linked comparison covers
-                        custody, chain support, signing authority, sponsorship, and recovery —
-                        including when the other product is the better choice.
+                        Privy is not the weaker product. It covers ground several of these
+                        alternatives do not, especially on EVM. Teams still shortlist
+                        replacements when one of the following no longer matches the product
+                        they are shipping.
                     </p>
-                    <div className="mt-8 grid gap-px overflow-hidden rounded-2xl border border-line bg-line">
-                        {PRIVY_ALTERNATIVE_SECTIONS.map((alt) => (
+                    <div className="mt-8 grid gap-px overflow-hidden rounded-2xl border border-line bg-line md:grid-cols-2">
+                        {PRIVY_WHY_LOOK.map((item) => (
+                            <article key={item.title} className="bg-white p-7">
+                                <h3 className="text-lg font-semibold">{item.title}</h3>
+                                <p className="mt-3 text-sm leading-relaxed text-muted">
+                                    {item.body}
+                                </p>
+                            </article>
+                        ))}
+                    </div>
+                    <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted">
+                        {EMBEDDED_WALLET_MARKET_NOTE}
+                    </p>
+                </section>
+
+                <section className="mt-24">
+                    <h2 className="text-3xl font-medium tracking-[-0.03em]">
+                        Privy alternatives compared
+                    </h2>
+                    <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted">
+                        Cavos, Privy, Dynamic, Turnkey, Web3Auth / MetaMask Embedded
+                        Wallets, and Magic all ship an embedded wallet. They do not share a
+                        key model, the same native chain coverage, or the same pricing. Each
+                        name opens the full comparison except Cavos, which links to
+                        published fees.
+                    </p>
+                    <div className="mt-8 overflow-x-auto rounded-2xl border border-line">
+                        <table className="w-full min-w-[860px] border-collapse text-left text-sm">
+                            <thead className="bg-brand text-white">
+                                <tr>
+                                    <th className="px-5 py-4 font-semibold">Provider</th>
+                                    <th className="border-l border-white/10 px-5 py-4 font-semibold">
+                                        Pricing and free tier
+                                    </th>
+                                    <th className="border-l border-white/10 px-5 py-4 font-semibold">
+                                        Chains
+                                    </th>
+                                    <th className="border-l border-white/10 px-5 py-4 font-semibold">
+                                        Key model
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {providers.map((provider) => (
+                                    <tr key={provider.slug} className="border-t border-line">
+                                        <th
+                                            scope="row"
+                                            className={`px-5 py-4 align-top font-semibold ${provider.slug === 'cavos' ? 'bg-brand/[0.035]' : ''}`}
+                                        >
+                                            <Link href={provider.href} className={linkClass}>
+                                                {provider.name}
+                                            </Link>
+                                        </th>
+                                        <td
+                                            className={`border-l border-line px-5 py-4 align-top text-muted ${provider.slug === 'cavos' ? 'bg-brand/[0.035]' : ''}`}
+                                        >
+                                            {provider.pricing}
+                                        </td>
+                                        <td
+                                            className={`border-l border-line px-5 py-4 align-top text-muted ${provider.slug === 'cavos' ? 'bg-brand/[0.035]' : ''}`}
+                                        >
+                                            {provider.chains}
+                                        </td>
+                                        <td
+                                            className={`border-l border-line px-5 py-4 align-top text-muted ${provider.slug === 'cavos' ? 'bg-brand/[0.035]' : ''}`}
+                                        >
+                                            {provider.keyModel}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <p className="mt-5 max-w-3xl text-sm leading-relaxed text-muted">
+                        Cavos fees are from this site. Other fees are from each
+                        vendor&apos;s public pricing page as of {PROVIDER_PRICING_AS_OF} and
+                        can change.
+                    </p>
+                </section>
+
+                <section className="mt-24">
+                    <div className="grid gap-px overflow-hidden rounded-2xl border border-line bg-line">
+                        {PRIVY_ALTERNATIVE_SECTIONS.map((alt) => {
+                            const relatedLinks = alt.relatedLinks ?? []
+                            return (
                             <article key={alt.name} className="bg-white p-7">
-                                <h3 className="text-xl font-semibold">{alt.name}</h3>
+                                <h2 className="text-xl font-semibold">{alt.name}</h2>
                                 {alt.paragraphs.map((paragraph) => (
                                     <p
                                         key={paragraph}
@@ -124,6 +198,39 @@ export default function PrivyAlternativesPage() {
                                         {paragraph}
                                     </p>
                                 ))}
+                                {alt.chooseWhen.length > 0 ? (
+                                    <ul className="mt-5 space-y-3">
+                                        {alt.chooseWhen.map((item) => (
+                                            <li
+                                                key={item}
+                                                className="flex gap-3 text-sm leading-relaxed text-muted"
+                                            >
+                                                <span
+                                                    aria-hidden="true"
+                                                    className="mt-[0.55em] h-1 w-1 shrink-0 rounded-full bg-muted"
+                                                />
+                                                {item}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : null}
+                                {relatedLinks.length > 0 ? (
+                                    <p className="mt-4 text-sm leading-relaxed text-muted">
+                                        {relatedLinks.map((link, index) => (
+                                            <span key={link.href}>
+                                                {index > 0
+                                                    ? index === relatedLinks.length - 1
+                                                        ? ', and '
+                                                        : ', '
+                                                    : null}
+                                                <Link href={link.href} className={linkClass}>
+                                                    {link.label}
+                                                </Link>
+                                            </span>
+                                        ))}
+                                        .
+                                    </p>
+                                ) : null}
                                 <p className="mt-4">
                                     <Link href={alt.href} className={linkClass}>
                                         {alt.linkLabel}
@@ -131,8 +238,29 @@ export default function PrivyAlternativesPage() {
                                     </Link>
                                 </p>
                             </article>
-                        ))}
+                            )
+                        })}
                     </div>
+                </section>
+
+                <section className="mt-24 max-w-3xl">
+                    <h2 className="text-3xl font-medium tracking-[-0.03em]">
+                        How to choose a Privy alternative
+                    </h2>
+                    <p className="mt-4 text-sm leading-relaxed text-muted">
+                        Ask the custody question first, then the chain question, then
+                        whether you are buying a wallet product or signing infrastructure.
+                    </p>
+                    <ol className="mt-6 list-decimal space-y-3 pl-5 text-sm leading-relaxed text-muted">
+                        {PRIVY_HOW_TO_CHOOSE.map((item) => (
+                            <li key={item}>{item}</li>
+                        ))}
+                    </ol>
+                    <p className="mt-5 text-sm leading-relaxed text-muted">
+                        Worked one-to-one comparisons live on the compare pages. For the
+                        category itself — what an embedded wallet is, and how extension,
+                        MPC, and device-native models differ — start with the pillar guide.
+                    </p>
                 </section>
 
                 <section className="mt-24 overflow-hidden rounded-2xl border border-line">
