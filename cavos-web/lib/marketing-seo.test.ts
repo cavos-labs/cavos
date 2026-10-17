@@ -75,11 +75,17 @@ import {
   getCompetitor,
 } from './compare-data'
 import {
+  PRIVY_ALTERNATIVE_SECTIONS,
+  PRIVY_ALTERNATIVES_CRUMB,
   PRIVY_ALTERNATIVES_DESCRIPTION,
   PRIVY_ALTERNATIVES_FAQ,
   PRIVY_ALTERNATIVES_H1,
+  PRIVY_ALTERNATIVES_MODIFIED,
   PRIVY_ALTERNATIVES_PATH,
+  PRIVY_ALTERNATIVES_PUBLISHED,
   PRIVY_ALTERNATIVES_TITLE,
+  PRIVY_HOW_TO_CHOOSE,
+  PRIVY_WHY_LOOK,
 } from './privy-alternatives'
 
 const PRODUCT_LIKE_TYPES = new Set(['Product', 'SoftwareApplication'])
@@ -509,9 +515,11 @@ describe('marketing SEO', () => {
   it('keeps the Privy alternatives title and description inside search limits', () => {
     assert.equal(PRIVY_ALTERNATIVES_PATH, '/privy-alternatives')
     assert.equal(PRIVY_ALTERNATIVES_TITLE.includes('| Cavos'), false)
-    assert.match(PRIVY_ALTERNATIVES_TITLE, /Privy Wallet Alternative/)
-    assert.match(PRIVY_ALTERNATIVES_H1, /Privy wallet alternative/)
+    assert.match(PRIVY_ALTERNATIVES_TITLE, /Privy Alternatives/)
+    assert.match(PRIVY_ALTERNATIVES_TITLE, /2026/)
+    assert.match(PRIVY_ALTERNATIVES_H1, /Privy alternatives/)
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Shopify/)
+    assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Privy alternatives/)
     const fullTitle = `${PRIVY_ALTERNATIVES_TITLE} | Cavos`
     assert.ok(fullTitle.length >= 50 && fullTitle.length <= 60, fullTitle)
     assert.ok(
@@ -519,22 +527,105 @@ describe('marketing SEO', () => {
         PRIVY_ALTERNATIVES_DESCRIPTION.length <= 160,
       String(PRIVY_ALTERNATIVES_DESCRIPTION.length),
     )
-    assert.ok(PRIVY_ALTERNATIVES_FAQ.length >= 3 && PRIVY_ALTERNATIVES_FAQ.length <= 4)
+    assert.ok(PRIVY_ALTERNATIVES_FAQ.length >= 6 && PRIVY_ALTERNATIVES_FAQ.length <= 8)
+    assert.ok(PRIVY_WHY_LOOK.length >= 4)
+    assert.ok(PRIVY_HOW_TO_CHOOSE.length >= 5)
+    assert.deepEqual(
+      PRIVY_ALTERNATIVE_SECTIONS.map((section) => section.name),
+      ['Cavos', 'Dynamic', 'Turnkey', 'Web3Auth', 'Magic'],
+    )
+    assert.deepEqual(
+      PRIVY_ALTERNATIVE_SECTIONS.map((section) => section.href),
+      [
+        '/compare/privy',
+        '/compare/dynamic',
+        '/compare/turnkey',
+        '/compare/web3auth',
+        '/compare/magic',
+      ],
+    )
+    assert.equal(PRIVY_ALTERNATIVES_PUBLISHED, '2026-10-11')
+    assert.equal(PRIVY_ALTERNATIVES_MODIFIED, '2026-10-17')
+    assert.equal(PRIVY_ALTERNATIVES_CRUMB, 'Privy alternatives')
 
     const meta = marketingPageMetadata({
       title: PRIVY_ALTERNATIVES_TITLE,
       description: PRIVY_ALTERNATIVES_DESCRIPTION,
       path: PRIVY_ALTERNATIVES_PATH,
       type: 'article',
+      publishedTime: PRIVY_ALTERNATIVES_PUBLISHED,
+      modifiedTime: PRIVY_ALTERNATIVES_MODIFIED,
     })
     assert.equal(meta.title, PRIVY_ALTERNATIVES_TITLE)
     assert.equal(meta.alternates?.canonical, 'https://cavos.xyz/privy-alternatives')
     assert.equal(meta.openGraph?.title, fullTitle)
     assert.equal(meta.openGraph?.url, 'https://cavos.xyz/privy-alternatives')
     assert.equal(meta.openGraph?.type, 'article')
+    assert.equal(meta.openGraph?.modifiedTime, PRIVY_ALTERNATIVES_MODIFIED)
     assert.equal(meta.twitter?.card, 'summary_large_image')
     assert.equal(meta.twitter?.title, fullTitle)
     assert.equal(meta.twitter?.description, PRIVY_ALTERNATIVES_DESCRIPTION)
+
+    const jsonLd = guidePageJsonLd({
+      title: PRIVY_ALTERNATIVES_TITLE,
+      description: PRIVY_ALTERNATIVES_DESCRIPTION,
+      path: PRIVY_ALTERNATIVES_PATH,
+      datePublished: PRIVY_ALTERNATIVES_PUBLISHED,
+      dateModified: PRIVY_ALTERNATIVES_MODIFIED,
+      crumbs: [
+        { name: 'Home', path: '/' },
+        { name: 'Compare', path: '/compare' },
+        { name: PRIVY_ALTERNATIVES_CRUMB, path: PRIVY_ALTERNATIVES_PATH },
+      ],
+      faq: [...PRIVY_ALTERNATIVES_FAQ],
+    })
+    JSON.parse(JSON.stringify(jsonLd))
+    assert.equal(jsonLd['@graph'][0]['@type'], 'Article')
+    assert.equal(jsonLd['@graph'][0].dateModified, PRIVY_ALTERNATIVES_MODIFIED)
+    assert.equal(jsonLd['@graph'][1]['@type'], 'BreadcrumbList')
+    assert.equal(jsonLd['@graph'][1].itemListElement[2].name, 'Privy alternatives')
+    assert.equal(jsonLd['@graph'][2]['@type'], 'FAQPage')
+    assert.equal(jsonLd['@graph'][2].mainEntity.length, PRIVY_ALTERNATIVES_FAQ.length)
+
+    const pageSource = fs.readFileSync(
+      path.join(process.cwd(), 'app/privy-alternatives/page.tsx'),
+      'utf8',
+    )
+    const dataSource = fs.readFileSync(
+      path.join(process.cwd(), 'lib/privy-alternatives.ts'),
+      'utf8',
+    )
+    assert.match(pageSource, /guidePageJsonLd/)
+    assert.match(pageSource, /embeddedWalletProviderRows/)
+    assert.match(pageSource, /Why teams look for a Privy alternative/)
+    assert.match(pageSource, /How to choose a Privy alternative/)
+    assert.match(pageSource, /relatedLinks/)
+    assert.equal((pageSource.match(/<h1[\s>]/g) ?? []).length, 1)
+
+    const cavos = PRIVY_ALTERNATIVE_SECTIONS[0]
+    assert.deepEqual(
+      (cavos.relatedLinks ?? []).map((link) => link.href),
+      [
+        '/embedded-starknet-wallet',
+        '/embedded-solana-wallet',
+        '/embedded-stellar-wallet',
+        '/blog/how-to-add-an-embedded-wallet',
+      ],
+    )
+    assert.match(dataSource, /audited OpenZeppelin account contract/)
+    assert.match(dataSource, /Privy vs Turnkey/)
+    assert.doesNotMatch(dataSource, /audited Cavos/)
+    assert.doesNotMatch(dataSource, /on-chain device approval/)
+    assert.doesNotMatch(dataSource, /Cavos custom/)
+
+    const compareSource = fs.readFileSync(
+      path.join(process.cwd(), 'app/compare/[slug]/page.tsx'),
+      'utf8',
+    )
+    assert.match(
+      compareSource,
+      /href="\/privy-alternatives"[^>]*>\s*Privy alternatives\s*</,
+    )
 
     const privy = getCompetitor('privy')
     assert.ok(privy)

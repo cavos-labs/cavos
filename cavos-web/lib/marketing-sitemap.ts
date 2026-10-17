@@ -43,7 +43,7 @@ export const SITEMAP_LASTMOD_FALLBACK: Record<string, string> = {
   '/embedded-starknet-wallet': '2026-10-13',
   '/compare': '2026-10-13',
   '/compare/[slug]': '2026-10-13',
-  '/privy-alternatives': '2026-10-13',
+  '/privy-alternatives': '2026-10-17',
   '/custody': '2026-10-13',
   '/pricing': '2026-10-12',
   '/stats': '2026-10-09',
