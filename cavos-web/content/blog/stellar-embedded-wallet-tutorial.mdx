@@ -152,7 +152,7 @@ if (wallet?.chain === "stellar") {
 
 | Status | Meaning | Can execute? |
 |--------|---------|--------------|
-| `undeployed` | Address resolved, no on-chain account yet. | Yes — first execute creates + runs atomically. |
+| `undeployed` | Address resolved, no on-chain account yet. | Yes — first execute creates, then runs the payment. |
 | `ready` | Account exists and this device can sign. | Yes |
 | `needs-device-approval` | This device has no key yet. Restore the MasterDEK. | No — restore with a passkey or the enclave. |
 
@@ -179,9 +179,9 @@ if (wallet?.chain === "stellar") {
 }
 ```
 
-When status is `undeployed`, this call creates the account first (sponsored, 0 XLM cost to the user) and then performs the payment. After that, status is `ready`. `execute(amount, destination)` moves `amount` stroops of native XLM out of the account.
+When status is `undeployed`, this call creates the account first (sponsored, 0 XLM cost to the user), then performs the payment in a follow-up transaction. Native XLM cannot ride the create transaction — the account has to exist before it can send. After that, status is `ready`. `execute(amount, destination)` moves `amount` stroops of native XLM out of the account.
 
-The relayer’s create path is a 0-balance `CreateAccount` plus Cavos `cv:` data. The relayer is not drained into the new account. The user pays no reserve and no fee for that create. A later payment still moves stroops the account holds — share the `G…`, fund it, then execute if the transfer is non-zero.
+The relayer’s create path is a 0-balance `CreateAccount` plus Cavos `cv:` data. The relayer is not drained into the new account. The user pays no reserve and no fee for that create. The payment that follows still moves stroops the account holds, which is why the chain page says share the `G…`, fund it, then execute.
 
 Pass `{ sponsored: false }` to submit directly from the account’s own XLM instead of the relayer:
 
@@ -230,7 +230,7 @@ const sig = await wallet.signMessage("Hello, Cavos!");
 // sig.curve: "ed25519"
 ```
 
-The message is prefixed with the Cavos domain prefix before signing. Reconstruct that prefix with `prefixedMessageBytes` from `@cavos/kit` before verifying. A verifier calls `Keypair.fromPublicKey(controlAddress).verify(messageBytes, signature)` — standard ed25519 math. Nothing is submitted; no fee is paid.
+The message is prefixed with `Cavos Signed Message:\n<len>\n` before signing. Reconstruct that prefix with `prefixedMessageBytes` from `@cavos/kit` before verifying. A verifier calls `Keypair.fromPublicKey(controlAddress).verify(messageBytes, signature)` — standard ed25519 math. Nothing is submitted; no fee is paid.
 
 ## How keys, recovery, and the relayer work
 
