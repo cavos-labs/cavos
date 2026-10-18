@@ -67,6 +67,8 @@ import {
   EMBEDDED_WALLET_TITLE,
   EMBEDDED_WALLET_VS_EXTENSION_PATH,
   EMBEDDED_WALLET_VS_EXTENSION_TITLE,
+  STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
+  STELLAR_EMBEDDED_WALLET_TUTORIAL_TITLE,
 } from './embedded-wallet-guide'
 import {
   COMPETITORS,
@@ -1024,6 +1026,108 @@ describe('marketing SEO', () => {
     )
   })
 
+  it('indexes the Stellar embedded wallet tutorial as an Article with FAQ JSON-LD', () => {
+    const postPath = path.join(
+      process.cwd(),
+      'content/blog/stellar-embedded-wallet-tutorial.mdx',
+    )
+    assert.equal(fs.existsSync(postPath), true)
+    const source = fs.readFileSync(postPath, 'utf8')
+    assert.match(source, /\[embedded wallet\]\(\/embedded-wallet\)/)
+    assert.match(source, /\]\(\/embedded-stellar-wallet\)/)
+    assert.match(source, /\]\(\/blog\/how-to-add-an-embedded-wallet\)/)
+    assert.match(source, /\]\(\/pricing\)/)
+    assert.match(source, /docs\.cavos\.xyz\/docs\/stellar/)
+    assert.match(source, /@cavos\/kit` 0\.4\.2/)
+    assert.match(source, /npm install @cavos\/kit/)
+    assert.match(source, /login\("google"\)/)
+    assert.match(source, /sendOtp/)
+    assert.match(source, /verifyOtp/)
+    assert.match(source, /10_000_000n/)
+    assert.match(source, /wallet\.balance\(\)/)
+    assert.match(source, /signMessage/)
+    assert.match(source, /Expo Go is not supported/)
+    assert.match(source, /classic G/)
+    assert.match(source, /cavos-ed25519-stellar-v1/)
+    assert.match(source, /HKDF/)
+    assert.match(source, /sponsored, 0 XLM/)
+    assert.match(source, /never a custodian/)
+    assert.match(source, /audited OpenZeppelin account contract/)
+    assert.match(source, /not a Soroban contract/)
+    assert.match(source, /no on-chain device-signer list/)
+    assert.match(source, /no on-chain social recovery/)
+    assert.doesNotMatch(source, /audited Cavos/)
+    assert.doesNotMatch(source, /adds a second Horizon signer/)
+    assert.doesNotMatch(source, /on-chain device approval/)
+    assert.doesNotMatch(source, /category:\s*"Release"/)
+    assert.doesNotMatch(source, /This device must be approved first/)
+    assert.equal(
+      STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
+      '/blog/stellar-embedded-wallet-tutorial',
+    )
+    assert.equal(
+      STELLAR_EMBEDDED_WALLET_TUTORIAL_TITLE,
+      'How to Add an Embedded Stellar Wallet to Your App',
+    )
+    assert.ok(STELLAR_EMBEDDED_WALLET_TUTORIAL_TITLE.length <= 60)
+
+    const hub = fs.readFileSync(
+      path.join(process.cwd(), 'app/embedded-wallet/page.tsx'),
+      'utf8',
+    )
+    assert.match(hub, /STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH/)
+    assert.match(
+      hub,
+      /How to add an embedded Stellar wallet/,
+    )
+
+    const stellarPage = fs.readFileSync(
+      path.join(process.cwd(), 'app/embedded-stellar-wallet/page.tsx'),
+      'utf8',
+    )
+    assert.match(
+      stellarPage,
+      /href=["']\/blog\/stellar-embedded-wallet-tutorial["']/,
+    )
+
+    const data = blogPostJsonLd({
+      title: STELLAR_EMBEDDED_WALLET_TUTORIAL_TITLE,
+      description:
+        'Install @cavos/kit, sign in with Google, Apple, or email, and send a sponsored Stellar payment.',
+      path: STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
+      datePublished: '2026-10-18',
+      type: 'Article',
+      faq: [
+        {
+          question: 'What is a Stellar embedded wallet SDK?',
+          answer:
+            'A library that provisions a classic G… account inside your application.',
+        },
+      ],
+      crumbs: [
+        { name: 'Home', path: '/' },
+        { name: 'Blog', path: '/blog' },
+        {
+          name: STELLAR_EMBEDDED_WALLET_TUTORIAL_TITLE,
+          path: STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
+        },
+      ],
+    })
+    const json = JSON.stringify(data)
+    JSON.parse(json)
+    assert.equal(data['@graph'][0]['@type'], 'Article')
+    assert.equal(data['@graph'][1]['@type'], 'BreadcrumbList')
+    assert.equal(data['@graph'][2]['@type'], 'FAQPage')
+    assert.equal(
+      data['@graph'][0].url,
+      'https://cavos.xyz/blog/stellar-embedded-wallet-tutorial',
+    )
+    assert.equal(
+      data['@graph'][0].mainEntityOfPage['@id'],
+      'https://cavos.xyz/blog/stellar-embedded-wallet-tutorial',
+    )
+  })
+
   it('makes /blog an indexable landing page with crawlable guide links', () => {
     const source = fs.readFileSync(
       path.join(process.cwd(), 'app/blog/page.tsx'),
@@ -1034,6 +1138,7 @@ describe('marketing SEO', () => {
     assert.match(source, /What is an embedded wallet\?/)
     assert.match(source, /EMBEDDED_WALLET_INTEGRATION_PATH/)
     assert.match(source, /EMBEDDED_WALLET_VS_EXTENSION_PATH/)
+    assert.match(source, /STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH/)
     assert.match(source, /href: '\/compare'/)
     assert.match(source, /href: '\/custody'/)
     assert.match(source, /href: '\/privy-alternatives'/)

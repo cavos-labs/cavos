@@ -22,6 +22,12 @@ export const EMBEDDED_WALLET_VS_EXTENSION_PATH =
 export const EMBEDDED_WALLET_VS_EXTENSION_TITLE =
   'Embedded Wallet vs Browser Extension: Where Should Users Sign?'
 
+export const STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH =
+  '/blog/stellar-embedded-wallet-tutorial'
+
+export const STELLAR_EMBEDDED_WALLET_TUTORIAL_TITLE =
+  'How to Add an Embedded Stellar Wallet to Your App'
+
 export const DOCS_ORIGIN = 'https://docs.cavos.xyz'
 
 export const DOCS_URLS = {
