@@ -330,6 +330,17 @@ export default function EmbeddedStellarWalletPage() {
                         >
                             How to add an embedded wallet
                         </Link>
+                        . The Stellar-only path — social login, the{' '}
+                        <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
+                            G…
+                        </code>{' '}
+                        before create, and the first sponsored execute — is in{' '}
+                        <Link
+                            href="/blog/stellar-embedded-wallet-tutorial"
+                            className={MARKETING_PROSE_LINK}
+                        >
+                            How to add an embedded Stellar wallet
+                        </Link>
                         .
                     </p>
                     <div className="mt-6 overflow-x-auto rounded-xl border border-line bg-[#1a1a1a] p-5 text-sm">

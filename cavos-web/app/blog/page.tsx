@@ -9,6 +9,8 @@ import {
   EMBEDDED_WALLET_INTEGRATION_TITLE,
   EMBEDDED_WALLET_VS_EXTENSION_PATH,
   EMBEDDED_WALLET_VS_EXTENSION_TITLE,
+  STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
+  STELLAR_EMBEDDED_WALLET_TUTORIAL_TITLE,
 } from '@/lib/embedded-wallet-guide';
 
 export const metadata: Metadata = marketingPageMetadata({
@@ -33,6 +35,11 @@ const GUIDES = [
     href: EMBEDDED_WALLET_VS_EXTENSION_PATH,
     title: EMBEDDED_WALLET_VS_EXTENSION_TITLE,
     body: 'When users should sign in an embedded wallet versus a MetaMask-style browser extension.',
+  },
+  {
+    href: STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
+    title: STELLAR_EMBEDDED_WALLET_TUTORIAL_TITLE,
+    body: 'Install @cavos/kit, sign in with Google, Apple, or email, and send a sponsored Stellar payment.',
   },
   {
     href: '/compare',

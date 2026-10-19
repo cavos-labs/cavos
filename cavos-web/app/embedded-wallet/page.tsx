@@ -20,6 +20,7 @@ import {
     EMBEDDED_WALLET_PUBLISHED,
     EMBEDDED_WALLET_TITLE,
     EMBEDDED_WALLET_VS_EXTENSION_PATH,
+    STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
 } from '@/lib/embedded-wallet-guide'
 import { guidePageJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
 
@@ -427,6 +428,14 @@ export default function EmbeddedWalletGuidePage() {
                             <p className="mt-4">
                                 <Link href="/embedded-stellar-wallet" className={linkClass}>
                                     Embedded Stellar wallet
+                                </Link>
+                            </p>
+                            <p className="mt-2">
+                                <Link
+                                    href={STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH}
+                                    className={linkClass}
+                                >
+                                    How to add an embedded Stellar wallet
                                 </Link>
                             </p>
                         </article>

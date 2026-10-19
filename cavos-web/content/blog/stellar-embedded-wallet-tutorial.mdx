@@ -1,0 +1,297 @@
+---
+title: "How to Add an Embedded Stellar Wallet to Your App"
+date: "2026-10-18"
+excerpt: "Install @cavos/kit, sign in with Google, Apple, or email, and send a sponsored Stellar payment from a classic G… embedded wallet — no Freighter."
+category: "Guide"
+slug: "stellar-embedded-wallet-tutorial"
+faq:
+  - question: "What is a Stellar embedded wallet SDK?"
+    answer: "A Stellar embedded wallet SDK is a library that provisions a classic G… account inside your application and signs from the user’s device. The user signs in; the SDK looks up or claims an address; approval happens in your UI. It is not a wallet app and not a Freighter connect flow. Cavos ships that SDK as @cavos/kit for React and @cavos/kit/react-native for mobile."
+  - question: "How do I create a Stellar wallet for users without Freighter?"
+    answer: 'Install @cavos/kit, create an App ID, wrap the tree in CavosProvider with chains: ["stellar"], and sign the user in with Google, Apple, or an enclave-verified email code. Connect returns a G… address before the account exists on-chain. The first execute creates the account (sponsored, 0 XLM cost to the user) and runs the payment. Users do not install Freighter or paste a seed.'
+  - question: "Does connect create the Stellar account?"
+    answer: "No. Connect looks up (userId, appId, chain, network) in the registry and returns a G… address, or claims a new one. It never creates the on-chain account. An undeployed wallet already has that address. The first execute creates the account and runs the operation in a sponsored transaction. After that, status is ready."
+  - question: "What is a sponsored Stellar account in Cavos?"
+    answer: 'When an App ID is set, the Cavos relayer is the transaction source and fee payer and sponsors the account’s XLM reserves, so the user locks no lumens to start. CreateAccount starts at 0 XLM; the relayer is not drained into the new account. Pass { sponsored: false } to have the account pay its own fee. The relayer cannot move funds or squat an address.'
+  - question: "Is a Cavos Stellar wallet a Soroban contract account?"
+    answer: "No. Cavos provisions a classic G… Stellar account, the same address format wallets, exchanges, and Horizon already understand. The same G… can still invoke Soroban contracts and satisfy require_auth after the account exists (status ready). invokeContract and addTrustline require that deployed account; native XLM transfers can create it on first execute."
+  - question: "Who can sign and move funds?"
+    answer: "Signing is local. With enclave or passkey the G… key is derived via HKDF from the MasterDEK (cavos-ed25519-stellar-v1, salted by appSalt). Cavos cannot see the key, cannot sign with it, and cannot move funds. Login selects which user this is; it never authorizes a spend by itself. If every device and every restore factor is gone, Cavos cannot recover the wallet."
+---
+
+An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain Stellar account they can pay, receive, and sign with — no browser extension, no seed phrase, no trip to [Freighter](/blog/embedded-wallet-vs-browser-extension).
+
+This guide is the Stellar path for that model using `@cavos/kit` 0.4.2. It is the how-to companion to the [Stellar embedded wallet](/embedded-stellar-wallet) page. The chain page is the account model. This post is the install: App ID, Google / Apple / email login, the `G…` address before the account exists, the first sponsored `execute`, `balance`, `signMessage`, and React Native notes. The cross-chain React walkthrough is [how to add an embedded wallet](/blog/how-to-add-an-embedded-wallet).
+
+Cavos, LLC is a software and SaaS company. The wallet is the main product: a device-native, self-custodial embedded wallet. Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds. The Stellar adapter provisions a **classic `G…` account**, not a Soroban contract account and not a Freighter connect flow.
+
+[Pricing](/pricing) publishes the free 1,000 wallet creates and paid recovery options.
+
+## What you are installing
+
+`@cavos/kit` is a **Stellar wallet SDK** for apps that should never show a wallet picker. Authentication selects which user this is. The kit looks up `(userId, appId, chain, network)` in the registry and returns that `G…`, or claims a new one. The first device to register wins. A signer bound to the device authorizes transactions from inside your UI.
+
+That is the opposite of connecting Freighter. Freighter is a browser extension the user installed. You request an account that already exists. Cavos **creates a Stellar wallet for users** who have never used crypto: they sign in, you get an address, you send.
+
+Custody is separate from that UX. Some embedded wallets hold a key, split one with MPC, or delegate signing to an HSM. Cavos does not. On the current path the `G…` is HKDF of a MasterDEK that stays on the device. Evaluate any SDK on custody before you write the first `connect`.
+
+## 1. Install @cavos/kit
+
+```bash
+npm install @cavos/kit
+```
+
+The React bindings live on the same package, under `@cavos/kit/react`. You do not install a second library. Mobile uses `@cavos/kit/react-native` — covered in the React Native section below. Expo Go is not supported.
+
+## 2. Create an app and copy the App ID
+
+Create an app in the [Cavos dashboard](https://cavos.xyz/dashboard) and copy its App ID. The kit reads it in the browser as `NEXT_PUBLIC_CAVOS_APP_ID`. On Stellar the App ID is what activates the gasless relayer: it sponsors reserves and fee-bumps so the user holds no XLM to start.
+
+Register every callback URL for the app in **Dashboard → App → Callback URLs**, one per line, matched exactly — scheme, host, path, no trailing slash, and no wildcards. OAuth rejects a `redirect_uri` that is not registered. Add tunnel or preview domains while developing; each one is a distinct origin.
+
+Never change `appSalt` after users exist. On Stellar it is the HKDF salt for the spend key, so changing it derives a different `G…` that will not match the registry row.
+
+New apps should use enclave or passkey. That is the native MasterDEK path (`wallet.nativeDek` is true). Grandfathered wallets that connected with neither still load with extra weight-1 Horizon signers; that path is load-only.
+
+## 3. Wrap the tree in CavosProvider
+
+For UI applications, use the bindings from `@cavos/kit/react`. Wrap the app once. Every descendant can call `useCavos()`.
+
+```tsx
+import { CavosProvider } from "@cavos/kit/react";
+
+export function Providers({ children }) {
+  return (
+    <CavosProvider
+      config={{
+        chains: ["stellar"],
+        defaultChain: "stellar",
+        network: "testnet",
+        appSalt: "my-app",
+        appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+        deviceApproval: "enclave",
+        socialRecovery: true,
+      }}
+      modal={{ appName: "My App" }}
+    >
+      {children}
+    </CavosProvider>
+  );
+}
+```
+
+`network: "testnet"` resolves to `stellar-testnet`; `"mainnet"` resolves to `stellar-mainnet`. Passing `modal={{ appName: "My App" }}` mounts the hosted login modal. Omit `modal` if you will drive auth yourself.
+
+`deviceApproval: "enclave"` (with `socialRecovery`) is the current multi-factor path: the `G…` is HKDF of the MasterDEK (`cavos-ed25519-stellar-v1`, salted by `appSalt`). `deviceApproval: "passkey"` is one chain — fine for a Stellar-only app, not for a shared login across Starknet, Solana, and Stellar.
+
+If you already authenticate users (Clerk, Auth0, your own session), pass a stable `userId` as `identity`. Cavos login turns off: the modal is not mounted and `login()` throws. Pass `null` while your auth is loading and once the user signs out. Use an immutable primary key, not an email that can change. If `userId` changes, the registry lookup is for a different user — a different wallet.
+
+Do not pass a Starknet `paymasterApiKey` on a Stellar-only config. That key is for the Starknet paymaster; a paymaster key on a chain that ignores it is a config error.
+
+See the [React](https://docs.cavos.xyz/docs/react) and [authentication](https://docs.cavos.xyz/docs/auth) docs for `identity`, `deviceApproval`, and `socialRecovery`.
+
+## 4. Sign the user in (Google, Apple, email)
+
+Hosted login is Google, Apple, or an enclave-verified 9-character email code. Authentication exists for one reason: to produce a stable `userId` (plus optional email) that the registry keys on. **The login never signs transactions.** That is always the device key.
+
+```tsx
+import { useCavos } from "@cavos/kit/react";
+
+function Wallet() {
+  const { address, isAuthenticated, walletStatus, openModal, login, logout } =
+    useCavos();
+  if (!isAuthenticated) {
+    return (
+      <>
+        <button onClick={openModal}>Sign in</button>
+        <button onClick={() => login("google")}>Continue with Google</button>
+        <button onClick={() => login("apple")}>Continue with Apple</button>
+      </>
+    );
+  }
+  return (
+    <div>
+      {address} · undeployed={walletStatus.isUndeployed} ·
+      ready={walletStatus.isReady}
+    </div>
+  );
+}
+```
+
+`openModal()` opens the hosted flow. `login("google")` and `login("apple")` start OAuth. Email uses `sendOtp(email)` / `verifyOtp(email, code)`:
+
+```ts
+const { sendOtp, verifyOtp } = useCavos();
+
+await sendOtp(email);
+await verifyOtp(email, code); // 9 characters, lowercase letters and digits
+```
+
+The Cavos recovery enclave, running in AWS Nitro, generates that code, mails it, and verifies it. A code expires after 5 minutes and allows 3 attempts. Email sign-in is not available on React Native yet; use Google or Apple there.
+
+When you connect, the kit looks up the address:
+
+```
+(userId, appId, chain, network) → registry lookup → G…
+```
+
+If the registry has an entry, that address is returned. If not, this device computes a candidate `G…` and claims it. The registry is insert-only.
+
+## 5. Read the G… before the account exists
+
+Connect **never creates** the Stellar account. After login you already have a `G…`:
+
+```ts
+const { wallet } = useCavos();
+
+if (wallet?.chain === "stellar") {
+  console.log(wallet.address); // G… available while status is "undeployed"
+  console.log(wallet.status);  // "undeployed" | "ready" | "needs-device-approval"
+}
+```
+
+| Status | Meaning | Can execute? |
+|--------|---------|--------------|
+| `undeployed` | Address resolved, no on-chain account yet. | Yes — first execute creates, then runs the payment. |
+| `ready` | Account exists and this device can sign. | Yes |
+| `needs-device-approval` | This device has no key yet. Restore the MasterDEK. | No — restore with a passkey or the enclave. |
+
+Both `undeployed` and `ready` wallets can execute and `signMessage`. Only `needs-device-approval` blocks transactions. That status means this device holds no key yet. It is not an on-chain device list. Do not create a second wallet for the same login.
+
+Share the `G…` with your backend, your UI, or a counterparty while it is still `undeployed`. The [Stellar docs](https://docs.cavos.xyz/docs/stellar) call this lazy deploy: the address is real; the Horizon account is created on first `execute`.
+
+## 6. First sponsored execute (creates the account)
+
+Narrow on `wallet.chain === "stellar"` so TypeScript exposes the Stellar methods. In React, call `wallet.execute` on the Stellar handle; the context `execute` is Starknet-only.
+
+```ts
+const { wallet } = useCavos();
+
+if (wallet?.status === "needs-device-approval") {
+  throw new Error("This device has no key yet. Restore the MasterDEK.");
+}
+
+if (wallet?.chain === "stellar") {
+  const hash = await wallet.execute(
+    10_000_000n,              // 1 XLM, in stroops (1 XLM = 10,000,000 stroops)
+    "GDESTINATION...ADDRESS",
+  );
+}
+```
+
+When status is `undeployed`, this call creates the account first (sponsored, 0 XLM cost to the user), then performs the payment in a follow-up transaction. Native XLM cannot ride the create transaction — the account has to exist before it can send. After that, status is `ready`. `execute(amount, destination)` moves `amount` stroops of native XLM out of the account.
+
+The relayer’s create path is a 0-balance `CreateAccount` plus Cavos `cv:` data. The relayer is not drained into the new account. The user pays no reserve and no fee for that create. The payment that follows still moves stroops the account holds, which is why the chain page says share the `G…`, fund it, then execute.
+
+Pass `{ sponsored: false }` to submit directly from the account’s own XLM instead of the relayer:
+
+```ts
+await wallet.execute(10_000_000n, destination, { sponsored: false });
+```
+
+Without an App ID, a funded `stellarSourceKeypair` can fund reserves and pay fees. The App ID path is the one this tutorial uses.
+
+Imperative connect, if you are not using the provider:
+
+```ts
+import { Cavos } from "@cavos/kit";
+
+const session = await Cavos.connect({
+  chains: ["stellar"],
+  defaultChain: "stellar",
+  network: "testnet",
+  appSalt: "my-app",
+  identity,
+  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+});
+
+const wallet = session.wallet("stellar");
+```
+
+`network: "testnet"` is the right default until you have sponsorship limits and callback URLs for production. See [wallet actions](https://docs.cavos.xyz/docs/wallet-actions) for amounts and [Stellar](https://docs.cavos.xyz/docs/stellar) for the adapter.
+
+## 7. Balance and signMessage
+
+Native balance is stroops, as a `bigint`:
+
+```ts
+if (wallet?.chain === "stellar") {
+  const stroops = await wallet.balance(); // bigint, native XLM
+  const xlm = Number(stroops) / 10_000_000;
+}
+```
+
+`signMessage` works on both `undeployed` and `ready` wallets — the control key exists at connect time, before Horizon has the account:
+
+```ts
+const sig = await wallet.signMessage("Hello, Cavos!");
+// sig.signature: Uint8Array
+// sig.publicKey: "G..." (control key's G address)
+// sig.curve: "ed25519"
+```
+
+The message is prefixed with `Cavos Signed Message:\n<len>\n` before signing. Reconstruct that prefix with `prefixedMessageBytes` from `@cavos/kit` before verifying. A verifier calls `Keypair.fromPublicKey(controlAddress).verify(messageBytes, signature)` — standard ed25519 math. Nothing is submitted; no fee is paid.
+
+## How keys, recovery, and the relayer work
+
+With enclave or passkey, the spend key is one Ed25519 key derived via HKDF from the MasterDEK (`cavos-ed25519-stellar-v1`, salted by `appSalt`). In the browser that control key is a non-extractable WebCrypto key held by the Cavos vault. On React Native it uses the OS keystore. The SDK does not enforce non-extractability on Node or other server runtimes.
+
+A new device unwraps the MasterDEK. It does **not** add a second Horizon signer. There is no on-chain device-signer list for new wallets, and there is no on-chain social recovery.
+
+After login, call `enrollPasskeyDefault()`. Signing up never prompts. The passkey stores an encrypted copy of the MasterDEK; it is not 2FA and not an extra Horizon signer. Anyone with that synced passkey can open the wallet. `wallet.enrollPasskey(...)` is a no-op on native accounts.
+
+Hardware-isolated recovery is opt-in per environment. When it is on, signing in again with Google, Apple, or an enclave-verified email code unwraps the same DEK. Recovery codes restore grandfathered wallets only. Do not use a recovery code to restore a `nativeDek` wallet. If every device and every restore factor is gone, Cavos cannot recover the wallet.
+
+The relayer is only a fee payer and reserve sponsor — never a custodian or identity authority. Every Stellar account locks XLM reserves (a base reserve plus about 0.5 XLM per subentry). With the relayer those reserves and all fees are sponsored, so the user locks no XLM. A bad or absent relayer can cost fees; it cannot move funds or squat an address. Signing stays on the device.
+
+See [recovery](https://docs.cavos.xyz/docs/recovery) and [hardware-isolated recovery](https://docs.cavos.xyz/docs/hardware-isolated-recovery).
+
+## 8. React Native notes
+
+Use `@cavos/kit/react-native` with Expo Development Builds, EAS, or bare React Native. **Expo Go is not supported** — custom native modules require a development build. Minimum platforms are iOS 16 and Android 9 (API 28). Email sign-in is not available on React Native yet; use Google or Apple.
+
+The native provider keeps the same configuration shape, with native-only `redirectUri`, `rpId`, and `minimumKeySecurity`. The chain field is singular (`chain`, not `chains`):
+
+```tsx
+import { CavosProvider } from "@cavos/kit/react-native";
+
+export function Providers({ children }) {
+  return (
+    <CavosProvider
+      config={{
+        appId: process.env.EXPO_PUBLIC_CAVOS_APP_ID,
+        appSalt: "my-app",
+        chain: "stellar",
+        network: "testnet",
+        redirectUri: "myapp://auth",
+        rpId: "auth.example.com",
+        minimumKeySecurity: "os-protected",
+      }}
+    >
+      {children}
+    </CavosProvider>
+  );
+}
+```
+
+Register the exact `redirectUri` in Callback URLs. Import `@cavos/kit/react-native` before any chain entrypoint so the Hermes polyfills run first; a missing shim shows up as `crypto.getRandomValues must be defined` or a relayer rejection for invalid Stellar XDR. Full setup is in the [React Native](https://docs.cavos.xyz/docs/react-native) docs.
+
+## Beyond the first payment
+
+The same `G…` is a real Stellar signer. After `status === "ready"` you can:
+
+- `invokeContract({ contractId, method, args })` — simulate, re-sign only this account’s Soroban auth entry, submit (sponsored by default).
+- `addTrustline({ code, issuer })` / `tokenBalance({ code, issuer })` — classic assets such as USDC. A trustline adds a subentry (reserve), sponsored by default.
+- `signXdr(unsignedXdr)` — sign an unsigned envelope without submitting it.
+
+`invokeContract` and `addTrustline` require a deployed account. Native XLM `execute` is what creates it. Paying reserves in a held token (USDC, not sponsored XLM) is a separate package, `@cavos/reserve`, signed with `wallet.signXdr`.
+
+If you also configure Starknet on the same login, that adapter uses an **audited OpenZeppelin account contract**, not a Cavos-written one. Each chain still has its own address.
+
+## What to read next
+
+- [Embedded Stellar wallet](/embedded-stellar-wallet) — classic `G…`, HKDF, relayer, Soroban.
+- [What is an embedded wallet?](/embedded-wallet) — custody, key models, and how to choose an SDK.
+- [How to add an embedded wallet to a React app](/blog/how-to-add-an-embedded-wallet) — the same kit across Starknet, Solana, and Stellar.
+- [Stellar adapter](https://docs.cavos.xyz/docs/stellar), [quickstart](https://docs.cavos.xyz/docs/quickstart), and [wallet actions](https://docs.cavos.xyz/docs/wallet-actions).
+- [Pricing](/pricing) for the free 1,000 creates and paid recovery options.
