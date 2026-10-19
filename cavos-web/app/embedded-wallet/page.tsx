@@ -19,6 +19,8 @@ import {
     EMBEDDED_WALLET_PATH,
     EMBEDDED_WALLET_PUBLISHED,
     EMBEDDED_WALLET_TITLE,
+    EMBEDDED_WALLET_PROVIDERS_PATH,
+    EMBEDDED_WALLET_PROVIDERS_TITLE,
     EMBEDDED_WALLET_VS_EXTENSION_PATH,
     STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
 } from '@/lib/embedded-wallet-guide'
@@ -602,7 +604,12 @@ export default function EmbeddedWalletGuidePage() {
                         <Link href="/privy-alternatives" className={linkClass}>
                             Privy wallet alternatives
                         </Link>{' '}
-                        guide.
+                        guide. The longer listicle — pricing, chains, and key models for
+                        the same vendors — is{' '}
+                        <Link href={EMBEDDED_WALLET_PROVIDERS_PATH} className={linkClass}>
+                            {EMBEDDED_WALLET_PROVIDERS_TITLE}
+                        </Link>
+                        .
                     </p>
                 </section>
 
