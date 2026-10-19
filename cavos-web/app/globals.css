@@ -316,6 +316,7 @@ button:disabled {
   color: #0A0908;
   line-height: 1.75;
   font-size: 1rem;
+  overflow-x: auto;
 }
 .blog-prose h2 {
   font-family: var(--font-geist), sans-serif;
@@ -411,4 +412,26 @@ button:disabled {
   margin: 1.5rem 0;
   color: rgba(10,9,8,0.5);
   font-style: italic;
+}
+.blog-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  margin: 0 0 1.5rem 0;
+}
+.blog-prose th,
+.blog-prose td {
+  border: 1px solid rgba(10,9,8,0.08);
+  padding: 0.7rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+  word-break: break-word;
+}
+.blog-prose th {
+  font-weight: 600;
+  color: #0A0908;
+}
+.blog-prose td {
+  color: rgba(10,9,8,0.75);
 }

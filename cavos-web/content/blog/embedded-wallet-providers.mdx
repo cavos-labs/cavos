@@ -50,14 +50,54 @@ The [compare](/compare) hub is the model-level table (device-native vs hosted vs
 
 Figures below are from each vendor’s public pricing and product pages as of October 2026. They can change. Where a cell would require an unpublished number, it says to see the vendor page. Cavos fees are from this site’s [pricing](/pricing) page.
 
-| Provider | Pricing / free tier | Chains | Key / custody model |
-|---|---|---|---|
-| [Cavos](/pricing) | Free for the first 1,000 wallet creates. Essential $59/mo. Complete $139/mo. | Starknet, Solana, and Stellar. Not EVM-wide. | Device-native. No MPC. On Starknet: one stark key on an audited OpenZeppelin AccountUpgradeable v3.0.0. |
-| [Privy](/compare/privy) | Free 0–499 MAU, 50K signatures and $1M volume/mo. Core $299/mo. Scale $499/mo. | Managed send on Ethereum/EVM, Solana/SVM, Tempo, TRON. Additional sign-only chains. | TEE key infrastructure. Non-custodial embedded wallets; optional custodial wallets (starting with Bridge). |
-| [Dynamic](/compare/dynamic) | Growth $249/mo up to 5,000 MAUs, then $0.005/MAU. Sandbox is free. | Native embedded wallets on EVM, Solana, Bitcoin, Sui, TON, Stellar, Tempo, Arc. | TSS-MPC (default 2-of-2). User share on device; server share in a TEE. Export supported. |
-| [Turnkey](/compare/turnkey) | Pay as you go: 1,000 wallets and 25 free signatures/mo, then $0.10/signature. Pro $99/mo. | Broad multi-chain at the signing-primitive level. See Turnkey docs for the current list. | Keys decrypt only in AWS Nitro Enclaves. Custody is who holds the authorizing credentials. |
-| [Web3Auth / MetaMask Embedded Wallets](/compare/web3auth) | Free 1,000 MAWs. Growth $69/mo (3,000 MAWs). Scale $399/mo (10,000 MAWs). | Native EVM and Solana; product page also lists Bitcoin, StarkNet, and other networks. | MPC with threshold signatures and Shamir’s Secret Sharing. Export is part of the model. |
-| [Magic](/compare/magic) | Free 1,000 MAWs and 50K signatures. Next listed team plan $99/mo (2,500 MAWs). | EVM-focused; Magic’s public docs also describe Solana and Bitcoin and 30+ networks. | TEE Key Management System (TKMS) for embedded wallets. Key export is listed. |
+<table>
+<thead>
+<tr>
+<th>Provider</th>
+<th>Pricing / free tier</th>
+<th>Chains</th>
+<th>Key / custody model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/pricing">Cavos</a></td>
+<td>Free for the first 1,000 wallet creates. Essential $59/mo. Complete $139/mo.</td>
+<td>Starknet, Solana, and Stellar. Not EVM-wide.</td>
+<td>Device-native. No MPC. On Starknet: one stark key on an audited OpenZeppelin AccountUpgradeable v3.0.0.</td>
+</tr>
+<tr>
+<td><a href="/compare/privy">Privy</a></td>
+<td>Free 0–499 MAU, 50K signatures and $1M volume/mo. Core $299/mo. Scale $499/mo.</td>
+<td>Managed send on Ethereum/EVM, Solana/SVM, Tempo, TRON. Additional sign-only chains.</td>
+<td>TEE key infrastructure. Non-custodial embedded wallets; optional custodial wallets (starting with Bridge).</td>
+</tr>
+<tr>
+<td><a href="/compare/dynamic">Dynamic</a></td>
+<td>Growth $249/mo up to 5,000 MAUs, then $0.005/MAU. Sandbox is free.</td>
+<td>Native embedded wallets on EVM, Solana, Bitcoin, Sui, TON, Stellar, Tempo, Arc.</td>
+<td>TSS-MPC (default 2-of-2). User share on device; server share in a TEE. Export supported.</td>
+</tr>
+<tr>
+<td><a href="/compare/turnkey">Turnkey</a></td>
+<td>Pay as you go: 1,000 wallets and 25 free signatures/mo, then $0.10/signature. Pro $99/mo.</td>
+<td>Broad multi-chain at the signing-primitive level. See Turnkey docs for the current list.</td>
+<td>Keys decrypt only in AWS Nitro Enclaves. Custody is who holds the authorizing credentials.</td>
+</tr>
+<tr>
+<td><a href="/compare/web3auth">Web3Auth / MetaMask Embedded Wallets</a></td>
+<td>Free 1,000 MAWs. Growth $69/mo (3,000 MAWs). Scale $399/mo (10,000 MAWs).</td>
+<td>Native EVM and Solana; product page also lists Bitcoin, StarkNet, and other networks.</td>
+<td>MPC with threshold signatures and Shamir’s Secret Sharing. Export is part of the model.</td>
+</tr>
+<tr>
+<td><a href="/compare/magic">Magic</a></td>
+<td>Free 1,000 MAWs and 50K signatures. Next listed team plan $99/mo (2,500 MAWs).</td>
+<td>EVM-focused; Magic’s public docs also describe Solana and Bitcoin and 30+ networks.</td>
+<td>TEE Key Management System (TKMS) for embedded wallets. Key export is listed.</td>
+</tr>
+</tbody>
+</table>
 
 Read the one-to-one pages for the cases where the other product is the better pick: [Cavos vs Privy](/compare/privy), [Cavos vs Dynamic](/compare/dynamic), [Cavos vs Turnkey](/compare/turnkey), [Cavos vs Web3Auth](/compare/web3auth), [Cavos vs Magic](/compare/magic).
 
