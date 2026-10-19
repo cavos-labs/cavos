@@ -28,6 +28,12 @@ export const STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH =
 export const STELLAR_EMBEDDED_WALLET_TUTORIAL_TITLE =
   'How to Add an Embedded Stellar Wallet to Your App'
 
+export const EMBEDDED_WALLET_PROVIDERS_PATH =
+  '/blog/embedded-wallet-providers'
+
+export const EMBEDDED_WALLET_PROVIDERS_TITLE =
+  'Embedded Wallet Providers Compared (2026)'
+
 export const DOCS_ORIGIN = 'https://docs.cavos.xyz'
 
 export const DOCS_URLS = {

@@ -1,6 +1,8 @@
 import {
   EMBEDDED_WALLET_INTEGRATION_PATH,
   EMBEDDED_WALLET_INTEGRATION_TITLE,
+  EMBEDDED_WALLET_PROVIDERS_PATH,
+  EMBEDDED_WALLET_PROVIDERS_TITLE,
 } from './embedded-wallet-guide'
 import { getCompetitor } from './compare-data'
 
@@ -53,6 +55,10 @@ export const PRIVY_ALTERNATIVE_SECTIONS: AlternativeSection[] = [
       {
         href: EMBEDDED_WALLET_INTEGRATION_PATH,
         label: EMBEDDED_WALLET_INTEGRATION_TITLE,
+      },
+      {
+        href: EMBEDDED_WALLET_PROVIDERS_PATH,
+        label: EMBEDDED_WALLET_PROVIDERS_TITLE,
       },
     ],
   },

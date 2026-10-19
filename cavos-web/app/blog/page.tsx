@@ -7,6 +7,8 @@ import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo
 import {
   EMBEDDED_WALLET_INTEGRATION_PATH,
   EMBEDDED_WALLET_INTEGRATION_TITLE,
+  EMBEDDED_WALLET_PROVIDERS_PATH,
+  EMBEDDED_WALLET_PROVIDERS_TITLE,
   EMBEDDED_WALLET_VS_EXTENSION_PATH,
   EMBEDDED_WALLET_VS_EXTENSION_TITLE,
   STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
@@ -35,6 +37,11 @@ const GUIDES = [
     href: EMBEDDED_WALLET_VS_EXTENSION_PATH,
     title: EMBEDDED_WALLET_VS_EXTENSION_TITLE,
     body: 'When users should sign in an embedded wallet versus a MetaMask-style browser extension.',
+  },
+  {
+    href: EMBEDDED_WALLET_PROVIDERS_PATH,
+    title: EMBEDDED_WALLET_PROVIDERS_TITLE,
+    body: 'Pricing, chains, and key models for Cavos, Privy, Dynamic, Turnkey, Magic, and Web3Auth.',
   },
   {
     href: STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,

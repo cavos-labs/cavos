@@ -3,6 +3,10 @@ import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { COMPETITORS } from '@/lib/compare-data'
+import {
+    EMBEDDED_WALLET_PROVIDERS_PATH,
+    EMBEDDED_WALLET_PROVIDERS_TITLE,
+} from '@/lib/embedded-wallet-guide'
 import { compareIndexJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
 
 export const metadata: Metadata = marketingPageMetadata({
@@ -165,7 +169,15 @@ export default function ComparePage() {
                         >
                             Privy wallet alternatives
                         </Link>{' '}
-                        guide.
+                        guide. For a single pricing, chain, and key-model table of the
+                        same vendors, see{' '}
+                        <Link
+                            href={EMBEDDED_WALLET_PROVIDERS_PATH}
+                            className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                        >
+                            {EMBEDDED_WALLET_PROVIDERS_TITLE}
+                        </Link>
+                        .
                     </p>
                     <div className="mt-8 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
                         {COMPETITORS.map((c) => (
