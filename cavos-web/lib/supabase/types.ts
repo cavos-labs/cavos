@@ -196,6 +196,7 @@ export interface Database {
           allowed_logout_urls: string[] | null
           allowed_web_origins: string[] | null
           vault_policy: Json | null
+          vault_privacy: Json | null
           logo_url: string | null
           website_url: string | null
           is_active: boolean
@@ -214,6 +215,7 @@ export interface Database {
           allowed_logout_urls?: string[] | null
           allowed_web_origins?: string[] | null
           vault_policy?: Json | null
+          vault_privacy?: Json | null
           logo_url?: string | null
           website_url?: string | null
           is_active?: boolean
@@ -232,6 +234,7 @@ export interface Database {
           allowed_logout_urls?: string[] | null
           allowed_web_origins?: string[] | null
           vault_policy?: Json | null
+          vault_privacy?: Json | null
           logo_url?: string | null
           website_url?: string | null
           is_active?: boolean

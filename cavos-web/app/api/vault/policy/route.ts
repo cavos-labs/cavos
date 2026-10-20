@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier'
 import { DEFAULT_VAULT_POLICY, parseVaultPolicy, type VaultPolicy } from '@/lib/vault/policy'
+import { readStoredPrivacy, toVaultPrivacyConfig } from '@/lib/vault/privacy'
 
 // Read by the vault iframe when an app embeds it: which sites may embed it
 // for this app, and what it may sign without asking.
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest) {
 
   const { data: app, error } = await createAdminClient()
     .from('apps')
-    .select('allowed_web_origins,callback_urls,vault_policy,is_active')
+    .select('allowed_web_origins,callback_urls,vault_policy,vault_privacy,is_active')
     .eq('id', resolved.appId)
     .single()
   if (error || !app?.is_active) return NextResponse.json({ error: 'Invalid app_id' }, { status: 404 })
@@ -32,7 +33,13 @@ export async function GET(request: NextRequest) {
       policy = { overLimit: 'ask', limits: [] }
     }
   }
-  return NextResponse.json({ origins: embeddingOrigins(app.allowed_web_origins, app.callback_urls), policy })
+  const stored = readStoredPrivacy(app.vault_privacy)
+  const privacy = stored ? toVaultPrivacyConfig(stored) : {}
+  return NextResponse.json({
+    origins: embeddingOrigins(app.allowed_web_origins, app.callback_urls),
+    policy,
+    ...(Object.keys(privacy).length ? { privacy } : {}),
+  })
 }
 
 /** Null when the app registered none; the vault then refuses every site until one is added. */

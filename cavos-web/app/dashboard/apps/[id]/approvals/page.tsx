@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Icon } from '@/components/ui/Icon'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { PrivacyFields } from './PrivacyFields'
 import {
   ASSET_HINT,
   DEFAULT_VAULT_POLICY,
@@ -16,6 +17,23 @@ import {
   type VaultLimit,
   type VaultPolicy,
 } from '@/lib/vault/policy'
+import {
+  PRIVACY_NETWORKS,
+  emptyNetworkPrivacy,
+  type NetworkPrivacySettings,
+  type PrivacyNetwork,
+  type VaultPrivacy,
+} from '@/lib/vault/privacy'
+
+type PrivacyForm = Record<PrivacyNetwork, NetworkPrivacySettings>
+
+function toPrivacyForm(stored: VaultPrivacy | null | undefined): PrivacyForm {
+  const form = {} as PrivacyForm
+  for (const network of PRIVACY_NETWORKS) {
+    form[network] = { ...emptyNetworkPrivacy(), ...stored?.[network] }
+  }
+  return form
+}
 
 const OVER_LIMIT: { value: OverLimit; title: string; detail: string }[] = [
   {
@@ -62,12 +80,16 @@ export default function ApprovalsPage() {
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
   const [policy, setPolicy] = useState<VaultPolicy>(DEFAULT_VAULT_POLICY)
+  const [privacy, setPrivacy] = useState<PrivacyForm>(toPrivacyForm(null))
 
   useEffect(() => {
     if (!appId) return
     fetch(`/api/apps/${appId}`)
       .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then((data) => setPolicy((data.app.vault_policy as VaultPolicy | null) ?? DEFAULT_VAULT_POLICY))
+      .then((data) => {
+        setPolicy((data.app.vault_policy as VaultPolicy | null) ?? DEFAULT_VAULT_POLICY)
+        setPrivacy(toPrivacyForm(data.app.vault_privacy as VaultPrivacy | null))
+      })
       .catch(() => setError('Could not load this app.'))
       .finally(() => setLoading(false))
   }, [appId])
@@ -79,6 +101,11 @@ export default function ApprovalsPage() {
 
   const updateLimit = (index: number, patch: Partial<VaultLimit>) =>
     update({ limits: policy.limits.map((limit, i) => (i === index ? { ...limit, ...patch } : limit)) })
+
+  const updatePrivacy = (network: PrivacyNetwork, patch: Partial<NetworkPrivacySettings>) => {
+    setSaved(false)
+    setPrivacy((current) => ({ ...current, [network]: { ...current[network], ...patch } }))
+  }
 
   const addLimit = (limit: VaultLimit) => update({ limits: [...policy.limits, limit] })
 
@@ -97,11 +124,12 @@ export default function ApprovalsPage() {
       const res = await fetch(`/api/apps/${appId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vault_policy: policy }),
+        body: JSON.stringify({ vault_policy: policy, vault_privacy: privacy }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Could not save the policy.')
       setPolicy(data.app.vault_policy ?? DEFAULT_VAULT_POLICY)
+      setPrivacy(toPrivacyForm(data.app.vault_privacy))
       setSaved(true)
     } catch (err) {
       setError((err as Error).message)
@@ -275,6 +303,24 @@ export default function ApprovalsPage() {
             Other token
           </Button>
         </div>
+      </Card>
+
+      <Card className="space-y-4">
+        <div>
+          <h2 className="text-sm font-semibold text-ink">Private transfers (STRK20)</h2>
+          <p className="text-sm text-muted mt-1">
+            Lets your users send STRK20 tokens on Starknet without revealing sender, receiver or amount. The prover and
+            discovery services see each user’s viewing key, so use services you operate or trust.
+          </p>
+        </div>
+        {PRIVACY_NETWORKS.map((network) => (
+          <PrivacyFields
+            key={network}
+            network={network}
+            settings={privacy[network]}
+            onChange={(patch) => updatePrivacy(network, patch)}
+          />
+        ))}
       </Card>
 
       <div className="flex items-center justify-between gap-4">

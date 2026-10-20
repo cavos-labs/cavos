@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { hashApiKey } from '@/lib/api-key'
 import { NextResponse } from 'next/server'
+import { sponsorsPrivacy, type PrivacyNetwork } from '@/lib/vault/privacy'
 
 // GET /api/gas/webhook — Paymaster webhook to validate API key and return org_felt_id
 // Called by the paymaster service with x-paymaster-api-key header.
@@ -52,12 +53,16 @@ export async function GET(request: Request) {
     // If SEPOLIA_FREE_POOL_FELT_ID is set, the paymaster deducts from that pool.
     // If not set, sponsor_metadata is empty and no gas tank deduction happens
     // (the relayer absorbs the cost, which is fine for testnet).
+    const sponsorsPools = await orgSponsorsPrivacy(supabase, keyRecord.org_id, isSepolia ? 'sepolia' : 'mainnet')
+    const poolFee = sponsorsPools ? { allow_pool_fee_sponsoring: true } : {}
+
     if (isSepolia) {
       const poolFeltId = process.env.SEPOLIA_FREE_POOL_FELT_ID
       return NextResponse.json({
         is_valid: true,
         sponsor_metadata: poolFeltId ? [poolFeltId] : [],
         validity_duration: 30,
+        ...poolFee,
       })
     }
 
@@ -81,9 +86,25 @@ export async function GET(request: Request) {
       is_valid: true,
       sponsor_metadata: [gasBalance.org_felt_id],
       validity_duration: 30,
+      ...poolFee,
     })
   } catch (error) {
     console.error('Webhook error:', error)
     return NextResponse.json({ is_valid: false, reason: 'Internal error' }, { status: 500 })
   }
+}
+
+async function orgSponsorsPrivacy(
+  supabase: ReturnType<typeof createAdminClient>,
+  orgId: string,
+  network: PrivacyNetwork,
+): Promise<boolean> {
+  const { data: apps, error } = await supabase
+    .from('apps')
+    .select('vault_privacy')
+    .eq('organization_id', orgId)
+    .eq('is_active', true)
+    .not('vault_privacy', 'is', null)
+  if (error || !apps) return false
+  return apps.some((app) => sponsorsPrivacy(app.vault_privacy, network))
 }

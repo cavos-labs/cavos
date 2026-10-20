@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { parseVaultPolicy } from '@/lib/vault/policy'
+import { parseVaultPrivacy } from '@/lib/vault/privacy'
 
 type RouteContext = {
   params: Promise<{ id: string }>
@@ -100,6 +101,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       email_otp_template_html,
       allowed_solana_programs,
       vault_policy,
+      vault_privacy,
     } = body
 
     const updates: Record<string, any> = {}
@@ -151,6 +153,14 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (vault_policy !== undefined) {
       try {
         updates.vault_policy = vault_policy === null ? null : parseVaultPolicy(vault_policy)
+      } catch (err) {
+        return NextResponse.json({ error: (err as Error).message }, { status: 400 })
+      }
+    }
+
+    if (vault_privacy !== undefined) {
+      try {
+        updates.vault_privacy = vault_privacy === null ? null : parseVaultPrivacy(vault_privacy)
       } catch (err) {
         return NextResponse.json({ error: (err as Error).message }, { status: 400 })
       }
