@@ -34,6 +34,11 @@ export const EMBEDDED_WALLET_PROVIDERS_PATH =
 export const EMBEDDED_WALLET_PROVIDERS_TITLE =
   'Embedded Wallet Providers Compared (2026)'
 
+export const PRIVY_VS_TURNKEY_PATH = '/blog/privy-vs-turnkey'
+
+export const PRIVY_VS_TURNKEY_TITLE =
+  'Privy vs Turnkey: Embedded Wallet SDKs Compared (2026)'
+
 export const DOCS_ORIGIN = 'https://docs.cavos.xyz'
 
 export const DOCS_URLS = {

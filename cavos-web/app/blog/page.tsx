@@ -11,6 +11,8 @@ import {
   EMBEDDED_WALLET_PROVIDERS_TITLE,
   EMBEDDED_WALLET_VS_EXTENSION_PATH,
   EMBEDDED_WALLET_VS_EXTENSION_TITLE,
+  PRIVY_VS_TURNKEY_PATH,
+  PRIVY_VS_TURNKEY_TITLE,
   STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
   STELLAR_EMBEDDED_WALLET_TUTORIAL_TITLE,
 } from '@/lib/embedded-wallet-guide';
@@ -42,6 +44,11 @@ const GUIDES = [
     href: EMBEDDED_WALLET_PROVIDERS_PATH,
     title: EMBEDDED_WALLET_PROVIDERS_TITLE,
     body: 'Pricing, chains, and key models for Cavos, Privy, Dynamic, Turnkey, Magic, and Web3Auth.',
+  },
+  {
+    href: PRIVY_VS_TURNKEY_PATH,
+    title: PRIVY_VS_TURNKEY_TITLE,
+    body: 'Finished auth and embedded wallets versus low-level key management and signing infrastructure.',
   },
   {
     href: STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,

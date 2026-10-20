@@ -3,6 +3,8 @@ import {
   EMBEDDED_WALLET_INTEGRATION_TITLE,
   EMBEDDED_WALLET_PROVIDERS_PATH,
   EMBEDDED_WALLET_PROVIDERS_TITLE,
+  PRIVY_VS_TURNKEY_PATH,
+  PRIVY_VS_TURNKEY_TITLE,
 } from './embedded-wallet-guide'
 import { getCompetitor } from './compare-data'
 
@@ -19,7 +21,7 @@ export const PRIVY_ALTERNATIVES_H1 = 'Privy alternatives for embedded wallets'
 
 export const PRIVY_ALTERNATIVES_PUBLISHED = '2026-10-11'
 
-export const PRIVY_ALTERNATIVES_MODIFIED = '2026-10-17'
+export const PRIVY_ALTERNATIVES_MODIFIED = '2026-10-20'
 
 export const PRIVY_ALTERNATIVES_CRUMB = 'Privy alternatives'
 
@@ -83,6 +85,12 @@ export const PRIVY_ALTERNATIVE_SECTIONS: AlternativeSection[] = [
       'Choose Turnkey when you are building your own wallet or custody product. Choose a finished SDK when you want login, recovery, and sponsorship already wired. Turnkey’s public Pay as you go tier includes 1,000 wallets and 25 free signatures per month, then $0.10 per signature. Pro is $99/mo.',
     ],
     chooseWhen: getCompetitor('turnkey')?.chooseThem ?? [],
+    relatedLinks: [
+      {
+        href: PRIVY_VS_TURNKEY_PATH,
+        label: PRIVY_VS_TURNKEY_TITLE,
+      },
+    ],
   },
   {
     name: 'Web3Auth',
