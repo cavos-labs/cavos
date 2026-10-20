@@ -7,6 +7,7 @@ import {
     PROVIDER_PRICING_AS_OF,
     embeddedWalletProviderRows,
 } from '@/lib/compare-data'
+import { PRIVY_VS_TURNKEY_PATH } from '@/lib/embedded-wallet-guide'
 import { guidePageJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
 import {
     PRIVY_ALTERNATIVE_SECTIONS,
@@ -76,7 +77,12 @@ export default function PrivyAlternativesPage() {
                         chains, with Solana coverage and external wallet connection. Teams
                         searching for Privy alternatives are usually comparing custody,
                         native chain coverage, and whether they need a finished SDK or
-                        key-management infrastructure.
+                        key-management infrastructure. If that last fork is the question,
+                        start with{' '}
+                        <Link href={PRIVY_VS_TURNKEY_PATH} className={linkClass}>
+                            Privy vs Turnkey
+                        </Link>
+                        .
                     </p>
                     <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
                         The sections below use the same facts as the{' '}

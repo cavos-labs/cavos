@@ -69,6 +69,8 @@ import {
   EMBEDDED_WALLET_PROVIDERS_TITLE,
   EMBEDDED_WALLET_VS_EXTENSION_PATH,
   EMBEDDED_WALLET_VS_EXTENSION_TITLE,
+  PRIVY_VS_TURNKEY_PATH,
+  PRIVY_VS_TURNKEY_TITLE,
   STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
   STELLAR_EMBEDDED_WALLET_TUTORIAL_TITLE,
 } from './embedded-wallet-guide'
@@ -549,7 +551,7 @@ describe('marketing SEO', () => {
       ],
     )
     assert.equal(PRIVY_ALTERNATIVES_PUBLISHED, '2026-10-11')
-    assert.equal(PRIVY_ALTERNATIVES_MODIFIED, '2026-10-17')
+    assert.equal(PRIVY_ALTERNATIVES_MODIFIED, '2026-10-20')
     assert.equal(PRIVY_ALTERNATIVES_CRUMB, 'Privy alternatives')
 
     const meta = marketingPageMetadata({
@@ -630,6 +632,15 @@ describe('marketing SEO', () => {
     assert.match(
       compareSource,
       /href="\/privy-alternatives"[^>]*>\s*Privy alternatives\s*</,
+    )
+    assert.match(compareSource, /PRIVY_VS_TURNKEY_PATH/)
+    assert.match(pageSource, /PRIVY_VS_TURNKEY_PATH/)
+    assert.match(dataSource, /PRIVY_VS_TURNKEY_PATH/)
+    const turnkey = PRIVY_ALTERNATIVE_SECTIONS.find((section) => section.name === 'Turnkey')
+    assert.ok(turnkey)
+    assert.deepEqual(
+      (turnkey.relatedLinks ?? []).map((link) => link.href),
+      [PRIVY_VS_TURNKEY_PATH],
     )
 
     const privy = getCompetitor('privy')
@@ -1223,6 +1234,80 @@ describe('marketing SEO', () => {
     )
   })
 
+  it('indexes the Privy vs Turnkey guide as an Article with FAQ JSON-LD', () => {
+    const postPath = path.join(process.cwd(), 'content/blog/privy-vs-turnkey.mdx')
+    assert.equal(fs.existsSync(postPath), true)
+    const source = fs.readFileSync(postPath, 'utf8')
+    assert.match(source, /\[embedded wallet\]\(\/embedded-wallet\)/)
+    assert.match(source, /\]\(\/compare\/privy\)/)
+    assert.match(source, /\]\(\/compare\/turnkey\)/)
+    assert.match(source, /\]\(\/privy-alternatives\)/)
+    assert.match(source, /\]\(\/blog\/embedded-wallet-providers\)/)
+    assert.match(source, /<table>/)
+    assert.doesNotMatch(source, /\|---/)
+    assert.match(source, /audited OpenZeppelin account contract/)
+    assert.match(source, /device-native/)
+    assert.match(source, /Cavos, LLC/)
+    assert.match(source, /no on-chain device-signer list/)
+    assert.match(source, /no on-chain social recovery/)
+    assert.match(source, /does not ship its own account implementation/)
+    assert.match(source, /Stripe/)
+    assert.match(source, /Bridge/)
+    assert.match(source, /AWS Nitro Enclaves/)
+    assert.match(source, /Embedded Wallet Kit/)
+    assert.doesNotMatch(source, /audited Cavos/)
+    assert.doesNotMatch(source, /Cavos custom account/)
+    assert.doesNotMatch(source, /on-chain device approval/)
+    assert.doesNotMatch(source, /category:\s*"Release"/)
+    assert.doesNotMatch(source, /robots:\s*noindex/)
+    assert.equal(PRIVY_VS_TURNKEY_PATH, '/blog/privy-vs-turnkey')
+    assert.equal(
+      PRIVY_VS_TURNKEY_TITLE,
+      'Privy vs Turnkey: Embedded Wallet SDKs Compared (2026)',
+    )
+
+    const compareSource = fs.readFileSync(
+      path.join(process.cwd(), 'app/compare/[slug]/page.tsx'),
+      'utf8',
+    )
+    assert.match(compareSource, /PRIVY_VS_TURNKEY_PATH/)
+    assert.match(compareSource, /slug === 'turnkey'/)
+
+    const data = blogPostJsonLd({
+      title: PRIVY_VS_TURNKEY_TITLE,
+      description:
+        'A 2026 comparison of Privy and Turnkey as embedded wallet SDKs.',
+      path: PRIVY_VS_TURNKEY_PATH,
+      datePublished: '2026-10-20',
+      type: 'Article',
+      faq: [
+        {
+          question: 'What is the difference between Privy and Turnkey?',
+          answer:
+            'Privy is a finished authentication and embedded wallet product. Turnkey is lower-level key-management and signing infrastructure.',
+        },
+      ],
+      crumbs: [
+        { name: 'Home', path: '/' },
+        { name: 'Blog', path: '/blog' },
+        {
+          name: PRIVY_VS_TURNKEY_TITLE,
+          path: PRIVY_VS_TURNKEY_PATH,
+        },
+      ],
+    })
+    const json = JSON.stringify(data)
+    JSON.parse(json)
+    assert.equal(data['@graph'][0]['@type'], 'Article')
+    assert.equal(data['@graph'][1]['@type'], 'BreadcrumbList')
+    assert.equal(data['@graph'][2]['@type'], 'FAQPage')
+    assert.equal(data['@graph'][0].url, 'https://cavos.xyz/blog/privy-vs-turnkey')
+    assert.equal(
+      data['@graph'][0].mainEntityOfPage['@id'],
+      'https://cavos.xyz/blog/privy-vs-turnkey',
+    )
+  })
+
   it('makes /blog an indexable landing page with crawlable guide links', () => {
     const source = fs.readFileSync(
       path.join(process.cwd(), 'app/blog/page.tsx'),
@@ -1235,6 +1320,7 @@ describe('marketing SEO', () => {
     assert.match(source, /EMBEDDED_WALLET_VS_EXTENSION_PATH/)
     assert.match(source, /STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH/)
     assert.match(source, /EMBEDDED_WALLET_PROVIDERS_PATH/)
+    assert.match(source, /PRIVY_VS_TURNKEY_PATH/)
     assert.match(source, /href: '\/compare'/)
     assert.match(source, /href: '\/custody'/)
     assert.match(source, /href: '\/privy-alternatives'/)

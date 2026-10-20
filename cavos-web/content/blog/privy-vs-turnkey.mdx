@@ -1,0 +1,260 @@
+---
+title: "Privy vs Turnkey: Embedded Wallet SDKs Compared (2026)"
+date: "2026-10-20"
+excerpt: "A 2026 comparison of Privy and Turnkey as embedded wallet SDKs: product scope, key model, chains, developer experience, pricing, and when each — or Cavos — fits."
+category: "Guide"
+slug: "privy-vs-turnkey"
+faq:
+  - question: "What is the difference between Privy and Turnkey?"
+    answer: "Privy is a finished authentication and embedded wallet product: unified login, in-app wallets, and connectors for wallets users already hold. Turnkey is lower-level key-management and signing infrastructure in secure enclaves. You configure custody and policy, then assemble more of the wallet experience — or start from Turnkey’s Embedded Wallet Kit. Privy vs Turnkey is usually build-versus-buy, not a like-for-like SDK swap."
+  - question: "Is Turnkey an embedded wallet SDK?"
+    answer: "Turnkey’s docs describe it as wallet infrastructure and also publish an embedded-wallet solution. The Embedded Wallet Kit is a React path with pre-built auth and wallet UI. The core product is still enclave-hosted keys, a policy engine, and a signing API. Privy ships login, embedded wallets, and external wallet connectors as one product."
+  - question: "Are Privy and Turnkey non-custodial?"
+    answer: "Both support more than one custody model. Privy’s user-wallet path says neither Privy nor the application sees the user’s keys; secrets are reconstituted in a TEE under the user’s control, and users can export the key. Privy also documents optional custodial wallets backed by Bridge, a Stripe company. Turnkey says private keys never leave the enclave and custody is who holds the credentials that can authorize a signature: the user (non-custodial), your API key (custodial), or both under policy (hybrid)."
+  - question: "Which chains do Privy and Turnkey support?"
+    answer: "Privy’s published send tier is Ethereum/EVM, Solana/SVM, Tempo, and TRON. A sign-transaction tier includes XRPL, Sui, Stellar, Aptos, and Near. A sign-only tier includes Bitcoin, Cosmos, TON, Starknet, and other supported curves. Turnkey works at the curve level — secp256k1, Ed25519, and P-256 — and documents all EVM and SVM chains, with deeper transaction parsing and policies on a shorter list. Read each vendor’s current chain page before you promise a network."
+  - question: "How do Privy and Turnkey price embedded wallets?"
+    answer: "They bill different units. Privy’s public Developer free tier is 0–499 monthly active users with 50,000 signatures and $1M volume per month; Core is $299/mo and Scale is $499/mo. Turnkey’s public Pay as you go tier includes 1,000 wallets and 25 free signatures per month, then $0.10 per signature; Pro is $99/mo. Those figures are from each vendor’s public pricing page as of October 2026 and can change."
+  - question: "When should I choose Privy vs Turnkey?"
+    answer: "Choose Privy when you want one vendor for login, an in-app wallet, and connecting MetaMask or Phantom — especially on EVM. Choose Turnkey when you are building a wallet or custody product and want policy, quorums, server-side signing, and enclave-hosted keys. Choose neither when the product is Starknet, Solana, or Stellar and the review requires a device-native key the vendor cannot reconstruct."
+  - question: "Where does Cavos fit against Privy and Turnkey?"
+    answer: "Cavos is a finished embedded wallet SDK, not signing infrastructure. Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds. It ships native adapters for Starknet, Solana, and Stellar only. On Starknet the account is an audited OpenZeppelin account contract. Cavos does not connect existing extensions and is not an EVM-wide wallet layer."
+  - question: "Does Cavos replace Privy or Turnkey?"
+    answer: "Not as a drop-in. Addresses are derived differently, so accounts do not transfer as a config change. Cavos does not cover EVM-wide send, WalletConnect, or organizational enclave signing. Use the Cavos vs Privy and Cavos vs Turnkey pages when the chain and custody model match; otherwise stay with the vendor that owns that layer."
+---
+
+An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain account they can pay, receive, and sign with. **Privy vs Turnkey** is the question Search Console keeps sending at that category: one vendor is a finished auth and wallet product, the other is lower-level signing infrastructure. This guide is that comparison — product scope, key model, chains, developer experience, pricing, and who each is for.
+
+Cavos, LLC is a software and SaaS company. Positioning for Cavos comes after the table is fair. If the honest answer is Privy or Turnkey, that is the answer. One-to-one pages live at [Cavos vs Privy](/compare/privy) and [Cavos vs Turnkey](/compare/turnkey). Teams leaving Privy for a broader shortlist can start at [Privy alternatives](/privy-alternatives). The multi-vendor listicle is [embedded wallet providers](/blog/embedded-wallet-providers).
+
+## Product scope
+
+The usual mistake is treating these as two SDKs with different logos. They sit at different layers.
+
+**Privy** is a finished authentication and [embedded wallet](/embedded-wallet) product. The public pricing page lists unified login (email, SMS, socials, passkeys), embedded wallets, JWT-based authentication (Auth0, Firebase, or homegrown), and wallet connectors for EVM and Solana. Privy’s own embedded-wallet docs describe user wallets (no separate extension or mobile wallet app), organization and treasury wallets, agent wallets, and the option to connect external wallets such as MetaMask or Phantom. In 2026 Privy also documents optional [custodial wallets](https://docs.privy.io/wallets/custodial-wallets/overview) backed by Bridge, a Stripe company, chosen per wallet. Stripe [announced it was acquiring Privy](https://privy.io/blog/announcing-our-acquisition-by-stripe) in June 2025. Acquisition is a vendor-risk input. It does not change who can produce a signature.
+
+**Turnkey** is key-management and signing infrastructure. Private keys persist as ciphertext and decrypt only inside a trusted execution environment. Turnkey’s [embedded-wallet overview](https://docs.turnkey.com/solutions/embedded-wallets/overview) is explicit that you are buying wallet infrastructure: authenticate a user, create keys, configure custodial, non-custodial, or hybrid custody, enforce a programmable policy engine, and get a signature back. You can broadcast through another provider or with Turnkey Transaction Management. The recommended React start is the Embedded Wallet Kit — pre-built auth and wallet UI, hook-based, no backend of your own. That kit does not turn Turnkey into Privy. The core surface is still the enclave, the policy engine, and the API.
+
+Privy vs Turnkey is usually **build-versus-buy**. Buy Privy when login, an in-app wallet, and connectors should arrive as one product. Build on Turnkey when policy, quorums, and server-side signing primitives *are* the product.
+
+## Key model and custody
+
+Write down who can produce a valid signature without the user present. The [custody](/custody) page is the control test. This section is what each vendor publishes.
+
+**Privy** combines TEEs with distributed key sharding. Official security docs say Privy uses AWS Nitro Enclaves; keys exist as encrypted shares; shares are combined only inside the enclave. A wallet is a 2-of-2 Shamir split: an enclave share that can be decrypted only in the TEE, and an auth share that Privy stores encrypted and releases with valid authentication credentials. Privy’s [user-wallet docs](https://docs.privy.io/wallets/overview/embedded) say neither Privy nor the application sees the user’s keys on that path; secrets are reconstituted in a secure environment under the user’s control. Users can export the key. Separately, Privy ships **custodial** wallets backed by a licensed custodian — today Bridge — on the same authorization and policy framework.
+
+**Turnkey** never returns the private key as part of signing. Official docs: keys live in TEEs; derivation and signing happen inside verifiable infrastructure; only the signature leaves. [Custody is who holds the credentials](https://docs.turnkey.com/solutions/embedded-wallets/overview) that can authorize the enclave:
+
+- **Non-custodial.** Only the user’s authenticator (passkey, email, biometric) can authorize a signature. Users can export keys.
+- **Custodial.** Your application holds signing authority via API key and can authorize transactions without per-action user approval.
+- **Hybrid.** Both hold credentials; policy decides what each party can authorize.
+
+Turnkey recommends a sub-organization per end user so wallets, credentials, and policies stay isolated. Import and export are documented. A breach of your app or backend is not supposed to expose key material; the enclave still has to approve the request.
+
+Neither design is device-native in the Cavos sense. Both reconstruct or use a key inside an enclave the vendor operates. The difference is product wrapping (Privy) versus policy-gated primitives (Turnkey), plus Privy’s optional licensed-custodian path.
+
+## Chains supported
+
+Coverage is not a boolean. Both vendors publish tiers.
+
+**Privy** documents three wallet tiers on its [chain support](https://docs.privy.io/wallets/overview/chains) page. Higher tiers include the ones below.
+
+<table>
+<thead>
+<tr>
+<th>Privy tier</th>
+<th>What Privy manages</th>
+<th>Published networks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Send (tier 3)</td>
+<td>Construct, sign, broadcast, and track</td>
+<td>Ethereum and other EVM, Solana and other SVM, Tempo, TRON</td>
+</tr>
+<tr>
+<td>Sign transactions (tier 2)</td>
+<td>Decode and sign a transaction</td>
+<td>XRPL, Sui, Stellar, Aptos, Near</td>
+</tr>
+<tr>
+<td>Sign (tier 1)</td>
+<td>Create a wallet and produce a signature</td>
+<td>Bitcoin, Cosmos, TON, Starknet, Pearl, and other supported secp256k1 / Ed25519 chains</td>
+</tr>
+</tbody>
+</table>
+
+Gas sponsorship, smart wallets, batching, and wallet actions are called out as additional, chain-dependent capabilities on the send tier. Feature parity still varies by network. Privy’s own page says to confirm current coverage before you promise a chain.
+
+**Turnkey** works at the [cryptographic-curve level](https://docs.turnkey.com/features/networks/overview): secp256k1, Ed25519, and P-256. Official copy: asset-agnostic as long as the curve is supported; all EVM and SVM chains; you do not wait for a per-network integration to sign. Deeper tiers add address derivation, SDK construction, then transaction parsing and policies. The published parsing-and-policy list is shorter than the curve list — EVM, SVM, Bitcoin, and TRON are called out at that depth; Cosmos, Sui, Aptos, TON, XRP, and Sei are listed at curve and address tiers. Starknet is not on that table. If you need transaction-aware policy on a specific chain, read the current Turnkey network page.
+
+The practical fork: Privy is stronger when you want **managed send** on EVM and Solana. Turnkey is stronger when you want **curve-level signing** and will handle broadcast and chain semantics yourself — or when Turnkey’s higher tier already covers that chain.
+
+## Developer experience
+
+**Privy** is the shorter path to a consumer wallet in a React or mobile app. You get hosted or JWT login, an embedded wallet bound to that user, optional connectors for wallets they already hold, UI components or bare APIs, and SDKs listed for web, mobile, and gaming. Pregenerating a wallet for an email or phone before first login is documented. Export is the documented escape hatch. You are integrating a product.
+
+**Turnkey** is the shorter path to policy-gated keys. Every sensitive operation is an authenticated request the enclave evaluates. Auth includes passkeys / WebAuthn, email or SMS OTP, OAuth (Google, Apple, Twitter, Discord, GitHub, LinkedIn, and others), API keys, and sign-in with an external Ethereum or Solana wallet. Client SDKs exist for React (Embedded Wallet Kit), React Native, Swift, Kotlin, and Flutter; fully custom work calls the API. Gas sponsorship is listed on Turnkey’s public pricing page as an Enterprise feature. You are integrating infrastructure, even when you start from the kit.
+
+Time-to-first-signature is not the same as time-to-product. Privy collapses login, wallet, and connectors. Turnkey collapses key lifecycle, policy, and signing; auth and UI are available, but broadcast, recovery UX, and chain adapters are still your design unless you adopt Transaction Management and the kit.
+
+## Pricing, at a high level
+
+They do not sell the same unit. A cheap free tier on one side is not a cheaper bill on the other. Figures below are from each vendor’s public pricing page as of October 2026 and can change. Where a number is unpublished (Turnkey Transaction Management per-transaction fees, Enterprise volume rates), this page does not invent it.
+
+**Privy** bills monthly active users, with a signature and volume allowance on Developer plans. A MAU is a Privy-authenticated user with at least one session in the last 30 days. A signature is a cryptographic signature request from a Privy embedded wallet in that window.
+
+<table>
+<thead>
+<tr>
+<th>Privy plan</th>
+<th>Public list price</th>
+<th>Published allowance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Developer — Free</td>
+<td>$0</td>
+<td>0–499 MAU; 50,000 signatures and $1M volume / month</td>
+</tr>
+<tr>
+<td>Developer — Core</td>
+<td>$299 / month</td>
+<td>500–2,499 MAU</td>
+</tr>
+<tr>
+<td>Developer — Scale</td>
+<td>$499 / month</td>
+<td>2,500–9,999 MAU</td>
+</tr>
+<tr>
+<td>Enterprise</td>
+<td>Custom</td>
+<td>Per-transaction or per-transacting-wallet; volume discounts</td>
+</tr>
+</tbody>
+</table>
+
+Privy’s public FAQ states that exceeding 10,000 MAU or 50,000 signatures in a month moves Developer usage to pay-as-you-go. Stay on the list prices above; do not treat overage as a quote.
+
+**Turnkey** bills signatures, with a wallet cap per tier. The Pay as you go tier is free until you exceed the included signatures.
+
+<table>
+<thead>
+<tr>
+<th>Turnkey plan</th>
+<th>Public list price</th>
+<th>Published inclusion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pay as you go</td>
+<td>$0.10 / signature after the free allotment</td>
+<td>1,000 wallets; 25 free signatures / month</td>
+</tr>
+<tr>
+<td>Pro</td>
+<td>$99 / month</td>
+<td>$0.05 / signature; 2,000 wallets</td>
+</tr>
+<tr>
+<td>Enterprise</td>
+<td>Custom</td>
+<td>As low as $0.0015 / signature; unlimited wallets; gas sponsorship listed here</td>
+</tr>
+</tbody>
+</table>
+
+Turnkey Transaction Management, swaps, and Earn are priced separately. Contact Turnkey for those rates.
+
+**Cavos** publishes fees on this site: free for the first 1,000 wallet creates, Essential at $59/month, Complete at $139/month. See [pricing](/pricing). The unit is wallet creates, not MAU or signatures.
+
+## Privy vs Turnkey, side by side
+
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Privy</th>
+<th>Turnkey</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Product scope</td>
+<td>Finished auth + embedded wallets + external wallet connectors. Optional custodial wallets (Bridge).</td>
+<td>Key-management and signing infrastructure. Embedded Wallet Kit is the opinionated React path.</td>
+</tr>
+<tr>
+<td>Key / custody model</td>
+<td>Shamir 2-of-2 shares; reconstruct in AWS Nitro Enclaves. User wallets described as non-custodial with key export. Separate custodial path via Bridge.</td>
+<td>Keys decrypt only in a TEE. Custody is who can authorize the enclave: user, your API key, or both under policy. Import and export documented.</td>
+</tr>
+<tr>
+<td>Chains</td>
+<td>Managed send on EVM, Solana/SVM, Tempo, TRON. Sign-transaction and sign-only tiers for additional networks, including Starknet at sign-only.</td>
+<td>Curve-level (secp256k1, Ed25519, P-256). All EVM and SVM. Deeper policy/parsing on a shorter published list.</td>
+</tr>
+<tr>
+<td>Developer experience</td>
+<td>Login, wallet, and connectors as one product. Web, mobile, and gaming SDKs. UI components or APIs.</td>
+<td>Enclave + policy + API. React Embedded Wallet Kit, plus React Native, Swift, Kotlin, Flutter, or raw API.</td>
+</tr>
+<tr>
+<td>Auth</td>
+<td>Email, SMS, socials, passkeys; JWT from Auth0, Firebase, or your own stack.</td>
+<td>Passkeys, email/SMS OTP, OAuth, API keys, Sign-In With Ethereum or Solana.</td>
+</tr>
+<tr>
+<td>Pricing model</td>
+<td>MAU tiers. Free 0–499 MAU with 50K signatures and $1M volume/mo. Core $299/mo. Scale $499/mo.</td>
+<td>Per signature. 1,000 wallets and 25 free signatures/mo, then $0.10/signature. Pro $99/mo.</td>
+</tr>
+<tr>
+<td>Best for</td>
+<td>Teams that want one vendor for login, an in-app wallet, and connecting wallets users already hold — especially on EVM.</td>
+<td>Teams building a wallet or custody product that need policy, quorums, and server-side signing primitives.</td>
+</tr>
+</tbody>
+</table>
+
+Worked Cavos comparisons: [Cavos vs Privy](/compare/privy), [Cavos vs Turnkey](/compare/turnkey). The rest of the shortlist is on [embedded wallet providers](/blog/embedded-wallet-providers) and [Privy alternatives](/privy-alternatives).
+
+## Who each is best for
+
+**Choose Privy** when the user should get an in-app wallet from a login you already understand, and you also need to connect MetaMask, Phantom, or WalletConnect for people who already hold assets. EVM-first consumer apps, games, and anything that wants one vendor for auth plus wallet sit here. The optional Bridge custodial path matters if counsel wants a licensed custodian on some wallets and a non-custodial embedded wallet on others.
+
+**Choose Turnkey** when you are building the wallet or the custody layer. Server-side signing, organizational quorums, per-user sub-organizations, and a policy engine that runs inside the enclave are the reason to pick it. The Embedded Wallet Kit is there if you want a faster React start; it does not remove the need to own broadcast, chain semantics, and recovery UX if you go below that kit.
+
+**Choose neither** when the requirement is a device-native key on Starknet, Solana, or Stellar, or when the review says the vendor must not be able to reconstruct a signing key in its infrastructure. That is a different product shape. The next section is that shape, not a third row pretending to be the same layer.
+
+## Where Cavos fits
+
+Cavos is an [embedded wallet](/embedded-wallet), not an extension, and not signing infrastructure.
+
+Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds. Login produces a stable identity for a registry lookup; it never signs a transaction. There is no MPC. There is no hosted spend key.
+
+On Starknet the on-chain account is an **audited OpenZeppelin account contract** (AccountUpgradeable v3.0.0), controlled by one stark key derived from the wallet’s MasterDEK and app salt. Cavos does not ship its own account implementation. There is no on-chain device-signer list and no on-chain social recovery. A new device restores the MasterDEK off-chain with a passkey or an opt-in AWS Nitro Enclave; it does not add a signer on-chain. Execution is paymaster-sponsored. Connect does not deploy — the first execute deploys and runs atomically.
+
+Solana and Stellar are native adapters, not EVM compatibility. Solana provisions a native Ed25519 system account; a relayer co-signs as fee payer. Stellar provisions a classic G… account so existing tools already understand the address; the relayer can sponsor reserves and fee-bumps. Both restore the same MasterDEK on a new device rather than adding a second on-chain signer.
+
+Auth is hosted Google, Apple, or email, or an identity you pass in from your own stack. The React path is `@cavos/kit`; mobile is `@cavos/kit/react-native`. [Pricing](/pricing) publishes the free 1,000 wallet creates, Essential at $59/mo, and Complete at $139/mo.
+
+**Choose Cavos** when the user should never see a wallet picker, the chain is Starknet, Solana, or Stellar, and the review requires that the vendor cannot reconstruct a signing key.
+
+**Stay with Privy or Turnkey** when the product is EVM-first, when you must connect an existing extension, when you need server-side signing or organizational quorums as a product feature, or when you want a single vendor across dozens of EVM networks. Cavos does not inject into `window.ethereum` and does not speak WalletConnect. Those are honest gaps, not a smaller feature set.
+
+## What to read next
+
+- [What is an embedded wallet?](/embedded-wallet) — definitions, key models, and how to choose an SDK.
+- [Embedded wallet providers](/blog/embedded-wallet-providers) — Cavos, Privy, Dynamic, Turnkey, Magic, and Web3Auth in one table.
+- [Cavos vs Privy](/compare/privy) and [Cavos vs Turnkey](/compare/turnkey) — when the other product is the better pick.
+- [Privy wallet alternatives](/privy-alternatives) — the same vendors, framed as replacements for Privy.
+- [How to add an embedded wallet](/blog/how-to-add-an-embedded-wallet) — `@cavos/kit` install and the first sponsored transaction.
+- [Embedded Starknet wallet](/embedded-starknet-wallet) — audited OpenZeppelin account contract, paymaster, SNIP-12. Also [Solana](/embedded-solana-wallet) and [Stellar](/embedded-stellar-wallet).
+- [Pricing](/pricing) — Cavos fees. Privy and Turnkey set theirs independently.
+- [Custody](/custody) — the control test, not the UX label.

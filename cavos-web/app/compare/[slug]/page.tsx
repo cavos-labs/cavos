@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { COMPETITORS, getCompetitor } from '@/lib/compare-data'
+import { PRIVY_VS_TURNKEY_PATH } from '@/lib/embedded-wallet-guide'
 import { compareCompetitorPageJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
 
 const linkClass =
@@ -69,6 +70,21 @@ export default async function ComparisonPage({
                                 shortlist, see{' '}
                                 <Link href="/privy-alternatives" className={linkClass}>
                                     Privy alternatives
+                                </Link>
+                                . For finished auth and wallets versus signing
+                                infrastructure, see{' '}
+                                <Link href={PRIVY_VS_TURNKEY_PATH} className={linkClass}>
+                                    Privy vs Turnkey
+                                </Link>
+                                .{' '}
+                            </>
+                        ) : null}
+                        {competitor.slug === 'turnkey' ? (
+                            <>
+                                For how Turnkey’s key-management layer differs from Privy’s
+                                finished embedded wallet product, see{' '}
+                                <Link href={PRIVY_VS_TURNKEY_PATH} className={linkClass}>
+                                    Privy vs Turnkey
                                 </Link>
                                 .{' '}
                             </>
