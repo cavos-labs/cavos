@@ -59,11 +59,32 @@ Coverage is not a boolean. Both vendors publish tiers.
 
 **Privy** documents three wallet tiers on its [chain support](https://docs.privy.io/wallets/overview/chains) page. Higher tiers include the ones below.
 
-| Privy tier | What Privy manages | Published networks |
-|---|---|---|
-| Send (tier 3) | Construct, sign, broadcast, and track | Ethereum and other EVM, Solana and other SVM, Tempo, TRON |
-| Sign transactions (tier 2) | Decode and sign a transaction | XRPL, Sui, Stellar, Aptos, Near |
-| Sign (tier 1) | Create a wallet and produce a signature | Bitcoin, Cosmos, TON, Starknet, Pearl, and other supported secp256k1 / Ed25519 chains |
+<table>
+<thead>
+<tr>
+<th>Privy tier</th>
+<th>What Privy manages</th>
+<th>Published networks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Send (tier 3)</td>
+<td>Construct, sign, broadcast, and track</td>
+<td>Ethereum and other EVM, Solana and other SVM, Tempo, TRON</td>
+</tr>
+<tr>
+<td>Sign transactions (tier 2)</td>
+<td>Decode and sign a transaction</td>
+<td>XRPL, Sui, Stellar, Aptos, Near</td>
+</tr>
+<tr>
+<td>Sign (tier 1)</td>
+<td>Create a wallet and produce a signature</td>
+<td>Bitcoin, Cosmos, TON, Starknet, Pearl, and other supported secp256k1 / Ed25519 chains</td>
+</tr>
+</tbody>
+</table>
 
 Gas sponsorship, smart wallets, batching, and wallet actions are called out as additional, chain-dependent capabilities on the send tier. Feature parity still varies by network. Privy’s own page says to confirm current coverage before you promise a chain.
 
@@ -85,22 +106,68 @@ They do not sell the same unit. A cheap free tier on one side is not a cheaper b
 
 **Privy** bills monthly active users, with a signature and volume allowance on Developer plans. A MAU is a Privy-authenticated user with at least one session in the last 30 days. A signature is a cryptographic signature request from a Privy embedded wallet in that window.
 
-| Privy plan | Public list price | Published allowance |
-|---|---|---|
-| Developer — Free | $0 | 0–499 MAU; 50,000 signatures and $1M volume / month |
-| Developer — Core | $299 / month | 500–2,499 MAU |
-| Developer — Scale | $499 / month | 2,500–9,999 MAU |
-| Enterprise | Custom | Per-transaction or per-transacting-wallet; volume discounts |
+<table>
+<thead>
+<tr>
+<th>Privy plan</th>
+<th>Public list price</th>
+<th>Published allowance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Developer — Free</td>
+<td>$0</td>
+<td>0–499 MAU; 50,000 signatures and $1M volume / month</td>
+</tr>
+<tr>
+<td>Developer — Core</td>
+<td>$299 / month</td>
+<td>500–2,499 MAU</td>
+</tr>
+<tr>
+<td>Developer — Scale</td>
+<td>$499 / month</td>
+<td>2,500–9,999 MAU</td>
+</tr>
+<tr>
+<td>Enterprise</td>
+<td>Custom</td>
+<td>Per-transaction or per-transacting-wallet; volume discounts</td>
+</tr>
+</tbody>
+</table>
 
 Privy’s public FAQ states that exceeding 10,000 MAU or 50,000 signatures in a month moves Developer usage to pay-as-you-go. Stay on the list prices above; do not treat overage as a quote.
 
 **Turnkey** bills signatures, with a wallet cap per tier. The Pay as you go tier is free until you exceed the included signatures.
 
-| Turnkey plan | Public list price | Published inclusion |
-|---|---|---|
-| Pay as you go | $0.10 / signature after the free allotment | 1,000 wallets; 25 free signatures / month |
-| Pro | $99 / month | $0.05 / signature; 2,000 wallets |
-| Enterprise | Custom | As low as $0.0015 / signature; unlimited wallets; gas sponsorship listed here |
+<table>
+<thead>
+<tr>
+<th>Turnkey plan</th>
+<th>Public list price</th>
+<th>Published inclusion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pay as you go</td>
+<td>$0.10 / signature after the free allotment</td>
+<td>1,000 wallets; 25 free signatures / month</td>
+</tr>
+<tr>
+<td>Pro</td>
+<td>$99 / month</td>
+<td>$0.05 / signature; 2,000 wallets</td>
+</tr>
+<tr>
+<td>Enterprise</td>
+<td>Custom</td>
+<td>As low as $0.0015 / signature; unlimited wallets; gas sponsorship listed here</td>
+</tr>
+</tbody>
+</table>
 
 Turnkey Transaction Management, swaps, and Earn are priced separately. Contact Turnkey for those rates.
 

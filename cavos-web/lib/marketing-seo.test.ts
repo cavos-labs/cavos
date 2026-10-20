@@ -1244,6 +1244,7 @@ describe('marketing SEO', () => {
     assert.match(source, /\]\(\/privy-alternatives\)/)
     assert.match(source, /\]\(\/blog\/embedded-wallet-providers\)/)
     assert.match(source, /<table>/)
+    assert.doesNotMatch(source, /\|---/)
     assert.match(source, /audited OpenZeppelin account contract/)
     assert.match(source, /device-native/)
     assert.match(source, /Cavos, LLC/)
