@@ -1,13 +1,11 @@
-// Mirrors StarknetPrivacyConfig in @cavos/kit (chains/starknet/privacy). The
-// vault only ever reads it from here, so an app's own code cannot change it.
-
 export type PrivacyNetwork = 'sepolia' | 'mainnet'
 
+/** Per network. Prover, discovery and RPC are optional overrides of the StarkWare-hosted defaults. */
 export interface NetworkPrivacySettings {
   enabled: boolean
   sponsor: boolean
-  prover: string
-  discovery: string
+  prover?: string
+  discovery?: string
   ohttp?: boolean
   rpcUrl?: string
 }
@@ -19,6 +17,7 @@ export type PrivacyFeeMode =
   | { mode: 'sponsored'; pool_fee: { paid_by: 'sponsor' } }
   | { mode: 'default'; gas_token: string }
 
+/** Mirrors StarknetPrivacyConfig in @cavos/kit. The vault reads it only from Cavos, so an app cannot change it. */
 export interface VaultPrivacyConfig {
   pool: string
   prover: string
@@ -40,27 +39,36 @@ export const NETWORK_NAME: Record<PrivacyNetwork, string> = { sepolia: 'Sepolia'
 const STRK = '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d'
 const MAX_FEE = '10000000000000000000'
 
-const CAVOS: Record<PrivacyNetwork, { pool: string; relay: string; forwarder: string }> = {
+export const PRIVACY_DEFAULTS: Record<
+  PrivacyNetwork,
+  { pool: string; relay: string; forwarder: string; prover: string; discovery: string; rpcUrl?: string }
+> = {
   sepolia: {
     pool: '0x0254a6b2997ef52e9f830ce1f543f6b29768295e8d17e2267d672c552cfe0d91',
     relay: 'https://sepolia-paymaster.cavos.xyz',
     forwarder: '0x6182be93b71889c874f53c51d1fe15025e30d6ed7118f15bf766c36eca38b3d',
+    prover: 'https://transaction-prover.alpha-sepolia.sw-dev.io',
+    discovery: 'https://discovery-service.alpha-sepolia.sw-dev.io',
+    rpcUrl: 'https://starknet-sepolia-rpc.publicnode.com',
   },
   mainnet: {
     pool: '0x040337b1af3c663e86e333bab5a4b28da8d4652a15a69beee2b677776ffe812a',
     relay: 'https://paymaster.cavos.xyz',
     forwarder: '0x733128df4f5cb1b70ccde2aa000ada016f22675479b8fcdb243c6c4d3a4232f',
+    prover: 'https://transaction-prover.alpha-mainnet.sw-dev.io',
+    discovery: 'https://discovery-service.alpha-mainnet.sw-dev.io',
   },
 }
 
 export function emptyNetworkPrivacy(): NetworkPrivacySettings {
-  return { enabled: false, sponsor: false, prover: '', discovery: '', ohttp: true, rpcUrl: '' }
+  return { enabled: false, sponsor: false, ohttp: true }
 }
 
 const NETWORK_KEYS = ['enabled', 'sponsor', 'prover', 'discovery', 'ohttp', 'rpcUrl']
 
-function serviceUrl(value: unknown, label: string): string {
-  if (typeof value !== 'string' || !value.trim()) throw new Error(`${label} is required`)
+function optionalServiceUrl(value: unknown, label: string): string | undefined {
+  if (value === undefined || value === null || (typeof value === 'string' && !value.trim())) return undefined
+  if (typeof value !== 'string') throw new Error(`${label} must be a URL`)
   let url: URL
   try {
     url = new URL(value.trim())
@@ -97,26 +105,17 @@ export function parseVaultPrivacy(input: unknown): VaultPrivacy {
     if (settings.ohttp !== undefined && typeof settings.ohttp !== 'boolean') {
       throw new Error(`${name}: ohttp must be true or false`)
     }
-    const blank = (value: unknown) => value === undefined || value === null || (typeof value === 'string' && !value.trim())
-    if (!settings.enabled && blank(settings.prover) && blank(settings.discovery) && blank(settings.rpcUrl)) {
-      parsed[network] = {
-        enabled: false,
-        sponsor: settings.sponsor,
-        prover: '',
-        discovery: '',
-        ...(settings.ohttp !== undefined ? { ohttp: settings.ohttp } : {}),
-      }
-      continue
-    }
-    const entry: NetworkPrivacySettings = {
+    const prover = optionalServiceUrl(settings.prover, `${name}: prover URL`)
+    const discovery = optionalServiceUrl(settings.discovery, `${name}: discovery URL`)
+    const rpcUrl = optionalServiceUrl(settings.rpcUrl, `${name}: RPC URL`)
+    parsed[network] = {
       enabled: settings.enabled,
       sponsor: settings.sponsor,
-      prover: serviceUrl(settings.prover, `${name}: prover URL`),
-      discovery: serviceUrl(settings.discovery, `${name}: discovery URL`),
+      ...(prover ? { prover } : {}),
+      ...(discovery ? { discovery } : {}),
+      ...(settings.ohttp !== undefined ? { ohttp: settings.ohttp } : {}),
+      ...(rpcUrl ? { rpcUrl } : {}),
     }
-    if (settings.ohttp !== undefined) entry.ohttp = settings.ohttp
-    if (!blank(settings.rpcUrl)) entry.rpcUrl = serviceUrl(settings.rpcUrl, `${name}: RPC URL`)
-    parsed[network] = entry
   }
   return parsed
 }
@@ -127,20 +126,21 @@ export function toVaultPrivacyConfig(settings: VaultPrivacy): Partial<Record<Pri
   for (const network of PRIVACY_NETWORKS) {
     const entry = settings[network]
     if (!entry?.enabled) continue
-    const cavos = CAVOS[network]
+    const defaults = PRIVACY_DEFAULTS[network]
+    const rpcUrl = entry.rpcUrl ?? defaults.rpcUrl
     configs[network] = {
-      pool: cavos.pool,
-      prover: entry.prover,
-      discovery: entry.discovery,
+      pool: defaults.pool,
+      prover: entry.prover ?? defaults.prover,
+      discovery: entry.discovery ?? defaults.discovery,
       ...(entry.ohttp !== undefined ? { ohttp: entry.ohttp } : {}),
-      ...(entry.rpcUrl ? { rpcUrl: entry.rpcUrl } : {}),
+      ...(rpcUrl ? { rpcUrl } : {}),
       relay: {
-        url: cavos.relay,
+        url: defaults.relay,
         fee: entry.sponsor
           ? { mode: 'sponsored', pool_fee: { paid_by: 'sponsor' } }
           : { mode: 'default', gas_token: STRK },
         maxFee: MAX_FEE,
-        allowedFeeRecipients: [cavos.forwarder],
+        allowedFeeRecipients: [defaults.forwarder],
       },
     }
   }

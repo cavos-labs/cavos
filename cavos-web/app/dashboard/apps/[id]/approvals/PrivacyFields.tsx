@@ -1,7 +1,7 @@
 'use client'
 
 import { Input } from '@/components/ui/Input'
-import { NETWORK_NAME, type NetworkPrivacySettings, type PrivacyNetwork } from '@/lib/vault/privacy'
+import { NETWORK_NAME, PRIVACY_DEFAULTS, type NetworkPrivacySettings, type PrivacyNetwork } from '@/lib/vault/privacy'
 
 interface Props {
   network: PrivacyNetwork
@@ -9,8 +9,15 @@ interface Props {
   onChange: (patch: Partial<NetworkPrivacySettings>) => void
 }
 
+const OVERRIDES = [
+  { key: 'prover', label: 'Prover URL' },
+  { key: 'discovery', label: 'Discovery URL' },
+  { key: 'rpcUrl', label: 'RPC URL' },
+] as const
+
 export function PrivacyFields({ network, settings, onChange }: Props) {
   const id = `privacy-${network}`
+  const defaults = PRIVACY_DEFAULTS[network]
   return (
     <fieldset className="rounded-lg border border-line px-4 py-3 space-y-3">
       <legend className="px-1 text-sm font-medium text-ink">{NETWORK_NAME[network]}</legend>
@@ -37,57 +44,41 @@ export function PrivacyFields({ network, settings, onChange }: Props) {
               <span className="block text-sm text-muted mt-0.5">Off, users pay the fee in STRK from their own balance.</span>
             </span>
           </label>
-          <div>
-            <label htmlFor={`${id}-prover`} className="block text-sm font-medium text-ink mb-1">
-              Prover URL
-            </label>
-            <Input
-              id={`${id}-prover`}
-              value={settings.prover}
-              onChange={(e) => onChange({ prover: e.target.value })}
-              placeholder="https://prover.example.com"
-              className="font-mono text-xs h-9"
-            />
-          </div>
-          <div>
-            <label htmlFor={`${id}-discovery`} className="block text-sm font-medium text-ink mb-1">
-              Discovery URL
-            </label>
-            <Input
-              id={`${id}-discovery`}
-              value={settings.discovery}
-              onChange={(e) => onChange({ discovery: e.target.value })}
-              placeholder="https://discovery.example.com"
-              className="font-mono text-xs h-9"
-            />
-          </div>
-          <div>
-            <label htmlFor={`${id}-rpc`} className="block text-sm font-medium text-ink mb-1">
-              RPC URL <span className="font-normal text-muted">(optional)</span>
-            </label>
-            <Input
-              id={`${id}-rpc`}
-              value={settings.rpcUrl ?? ''}
-              onChange={(e) => onChange({ rpcUrl: e.target.value })}
-              placeholder="https://rpc.example.com"
-              className="font-mono text-xs h-9"
-            />
-            <p className="text-xs text-muted mt-1">Proofs need RPC spec 0.10.1 or newer.</p>
-          </div>
-          <label className="flex items-start gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={settings.ohttp ?? true}
-              onChange={(e) => onChange({ ohttp: e.target.checked })}
-              className="mt-0.5 accent-brand"
-            />
-            <span>
-              <span className="block text-sm text-ink">Encrypt requests with OHTTP</span>
-              <span className="block text-sm text-muted mt-0.5">
-                Keeps the prover and discovery service from reading the viewing key. Recommended.
-              </span>
-            </span>
-          </label>
+          <details className="group">
+            <summary className="text-sm text-muted cursor-pointer select-none">
+              Services <span className="text-xs">(StarkWare-hosted by default)</span>
+            </summary>
+            <div className="space-y-3 pt-3">
+              {OVERRIDES.map(({ key, label }) => (
+                <div key={key}>
+                  <label htmlFor={`${id}-${key}`} className="block text-sm font-medium text-ink mb-1">
+                    {label} <span className="font-normal text-muted">(optional)</span>
+                  </label>
+                  <Input
+                    id={`${id}-${key}`}
+                    value={settings[key] ?? ''}
+                    onChange={(e) => onChange({ [key]: e.target.value })}
+                    placeholder={defaults[key] ?? 'Cavos default'}
+                    className="font-mono text-xs h-9"
+                  />
+                </div>
+              ))}
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={settings.ohttp ?? true}
+                  onChange={(e) => onChange({ ohttp: e.target.checked })}
+                  className="mt-0.5 accent-brand"
+                />
+                <span>
+                  <span className="block text-sm text-ink">Encrypt requests with OHTTP</span>
+                  <span className="block text-sm text-muted mt-0.5">
+                    Keeps the prover and discovery service from reading the viewing key. Recommended.
+                  </span>
+                </span>
+              </label>
+            </div>
+          </details>
         </div>
       )}
     </fieldset>
