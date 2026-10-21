@@ -185,6 +185,7 @@ describe('marketing sitemap', () => {
     assert.equal(isBlogPostNoindex('stellar-embedded-wallet-tutorial'), false)
     assert.equal(isBlogPostNoindex('embedded-wallet-providers'), false)
     assert.equal(isBlogPostNoindex('privy-vs-turnkey'), false)
+    assert.equal(isBlogPostNoindex('embedded-wallet-api'), false)
     assert.equal(
       urls.includes(`${MARKETING_ORIGIN}/blog/v1-1-9-sdk-security`),
       false,
@@ -228,7 +229,7 @@ Hello
   })
 
   it('keeps the indexable marketing URLs including the React integration guide', () => {
-    assert.equal(entries.length, 28)
+    assert.equal(entries.length, 29)
     assert.ok(
       urls.includes(`${MARKETING_ORIGIN}/blog/how-to-add-an-embedded-wallet`),
     )
@@ -246,6 +247,7 @@ Hello
       urls.includes(`${MARKETING_ORIGIN}/blog/embedded-wallet-providers`),
     )
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/privy-vs-turnkey`))
+    assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/embedded-wallet-api`))
     assert.equal(
       urls.includes(`${MARKETING_ORIGIN}/blog/v1-1-9-sdk-security`),
       false,

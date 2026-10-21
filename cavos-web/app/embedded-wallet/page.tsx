@@ -19,9 +19,13 @@ import {
     EMBEDDED_WALLET_PATH,
     EMBEDDED_WALLET_PUBLISHED,
     EMBEDDED_WALLET_TITLE,
+    EMBEDDED_WALLET_API_PATH,
+    EMBEDDED_WALLET_API_TITLE,
     EMBEDDED_WALLET_PROVIDERS_PATH,
     EMBEDDED_WALLET_PROVIDERS_TITLE,
     EMBEDDED_WALLET_VS_EXTENSION_PATH,
+    PRIVY_VS_TURNKEY_PATH,
+    PRIVY_VS_TURNKEY_TITLE,
     STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
 } from '@/lib/embedded-wallet-guide'
 import { guidePageJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
@@ -669,6 +673,47 @@ export default function EmbeddedWalletGuidePage() {
                             .
                         </p>
                     </div>
+                </section>
+
+                <section className="mt-16 max-w-3xl">
+                    <h2 className="text-2xl font-medium tracking-[-0.03em]">
+                        Related guides
+                    </h2>
+                    <p className="mt-5 text-sm leading-relaxed text-muted">
+                        The pillar is the category. These pages are the API, the install,
+                        and the comparisons.
+                    </p>
+                    <ul className="mt-6 list-disc space-y-3 pl-5 text-sm leading-relaxed text-muted">
+                        <li>
+                            <Link href={EMBEDDED_WALLET_API_PATH} className={linkClass}>
+                                {EMBEDDED_WALLET_API_TITLE}
+                            </Link>
+                            {' — '}auth, wallet create, key handling, signing, gas, and
+                            recovery.
+                        </li>
+                        <li>
+                            <Link href={EMBEDDED_WALLET_INTEGRATION_PATH} className={linkClass}>
+                                {EMBEDDED_WALLET_INTEGRATION_TITLE}
+                            </Link>
+                            {' — '}
+                            <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
+                                @cavos/kit
+                            </code>{' '}
+                            install and the first sponsored transaction.
+                        </li>
+                        <li>
+                            <Link href={EMBEDDED_WALLET_PROVIDERS_PATH} className={linkClass}>
+                                {EMBEDDED_WALLET_PROVIDERS_TITLE}
+                            </Link>
+                            {' — '}pricing, chains, and key models.
+                        </li>
+                        <li>
+                            <Link href={PRIVY_VS_TURNKEY_PATH} className={linkClass}>
+                                {PRIVY_VS_TURNKEY_TITLE}
+                            </Link>
+                            {' — '}finished auth and wallets versus signing infrastructure.
+                        </li>
+                    </ul>
                 </section>
 
                 <section className="mt-16" id="faq">
