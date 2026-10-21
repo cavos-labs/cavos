@@ -4,7 +4,7 @@ date: "2026-10-12"
 excerpt: "Install @cavos/kit, wrap CavosProvider, sign in, and send a sponsored transaction with a self-custodial embedded wallet on Starknet, Solana, or Stellar."
 category: "Guide"
 slug: "how-to-add-an-embedded-wallet"
-updated: "2026-10-14"
+updated: "2026-10-21"
 faq:
   - question: "What is an embedded wallet SDK?"
     answer: "An embedded wallet SDK is the library that provisions a wallet inside your application and signs from the user’s device. It is not a wallet app or a browser extension the user installs. Cavos ships that SDK as @cavos/kit for React and @cavos/kit/react-native for mobile."
@@ -20,7 +20,7 @@ faq:
 
 An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain account they can pay, receive, and sign with — no browser extension, no seed phrase, no trip to another app.
 
-This guide is the React path for that model using `@cavos/kit` 0.4.2. It follows the same contract as the [Cavos quickstart](https://docs.cavos.xyz/docs/quickstart): authenticate, connect, then execute. You will install the kit, create an App ID, wrap the tree in `CavosProvider`, sign the user in, send a first sponsored transaction, and understand how gas sponsorship differs per chain.
+This guide is the React path for that model using `@cavos/kit` 0.4.2. It follows the same contract as the [Cavos quickstart](https://docs.cavos.xyz/docs/quickstart): authenticate, connect, then execute. You will install the kit, create an App ID, wrap the tree in `CavosProvider`, sign the user in, send a first sponsored transaction, and understand how gas sponsorship differs per chain. The [embedded wallet API](/blog/embedded-wallet-api) guide is the surface map — auth, connect, execute, gas, recovery — before the first install.
 
 Cavos, LLC is a software and SaaS company. The wallet is the main product: a device-native, self-custodial embedded wallet. Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds. Adapters ship today for [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), and [Stellar](/embedded-stellar-wallet).
 
@@ -217,6 +217,7 @@ Worked comparisons — including when the other product is the better choice —
 ## What to read next
 
 - [What is an embedded wallet?](/embedded-wallet) — custody, key models, and how to choose an SDK.
+- [Embedded wallet API](/blog/embedded-wallet-api) — auth, create, keys, signing, gas, and recovery.
 - [Quickstart](https://docs.cavos.xyz/docs/quickstart) and [React](https://docs.cavos.xyz/docs/react) — the full kit surface.
 - Chain pages: [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), [Stellar](/embedded-stellar-wallet).
 - [How to add an embedded Stellar wallet](/blog/stellar-embedded-wallet-tutorial) — social login, the G… before create, first sponsored execute.

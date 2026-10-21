@@ -8,7 +8,7 @@ export const EMBEDDED_WALLET_DESCRIPTION =
 
 export const EMBEDDED_WALLET_PUBLISHED = '2026-10-07'
 
-export const EMBEDDED_WALLET_MODIFIED = '2026-10-13'
+export const EMBEDDED_WALLET_MODIFIED = '2026-10-21'
 
 export const EMBEDDED_WALLET_INTEGRATION_PATH =
   '/blog/how-to-add-an-embedded-wallet'
@@ -38,6 +38,11 @@ export const PRIVY_VS_TURNKEY_PATH = '/blog/privy-vs-turnkey'
 
 export const PRIVY_VS_TURNKEY_TITLE =
   'Privy vs Turnkey: Embedded Wallet SDKs Compared (2026)'
+
+export const EMBEDDED_WALLET_API_PATH = '/blog/embedded-wallet-api'
+
+export const EMBEDDED_WALLET_API_TITLE =
+  'Embedded Wallet API: How It Works and What to Look For (2026)'
 
 export const DOCS_ORIGIN = 'https://docs.cavos.xyz'
 

@@ -11,6 +11,8 @@ import {
   EMBEDDED_WALLET_PROVIDERS_TITLE,
   EMBEDDED_WALLET_VS_EXTENSION_PATH,
   EMBEDDED_WALLET_VS_EXTENSION_TITLE,
+  EMBEDDED_WALLET_API_PATH,
+  EMBEDDED_WALLET_API_TITLE,
   PRIVY_VS_TURNKEY_PATH,
   PRIVY_VS_TURNKEY_TITLE,
   STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
@@ -29,6 +31,11 @@ const GUIDES = [
     href: '/embedded-wallet',
     title: 'What is an embedded wallet?',
     body: 'Custody models, key management, and how to choose an SDK.',
+  },
+  {
+    href: EMBEDDED_WALLET_API_PATH,
+    title: EMBEDDED_WALLET_API_TITLE,
+    body: 'Auth, wallet create, key handling, signing, gas, and recovery — and how Cavos exposes that surface.',
   },
   {
     href: EMBEDDED_WALLET_INTEGRATION_PATH,
