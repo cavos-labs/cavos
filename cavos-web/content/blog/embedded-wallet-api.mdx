@@ -128,7 +128,7 @@ Each adapter keeps the chain’s native account model:
 
 - **[Starknet](/embedded-starknet-wallet).** An audited OpenZeppelin account contract — AccountUpgradeable v3.0.0 — controlled by one stark key derived from the MasterDEK and `appSalt`. Cavos does not ship its own account implementation. There are no on-chain device signers.
 - **[Solana](/embedded-solana-wallet).** A native Ed25519 system account. The spend key is HKDF of the same MasterDEK. A relayer co-signs as fee payer. The address is an ordinary Solana public key, not a PDA.
-- **[Stellar](/embedded-stellar-wallet).** A classic `G…` account, not a Soroban contract account. On the current path the spend key is HKDF of the MasterDEK (`cavos-ed25519-stellar-v1`, salted by `appSalt`). A new device restores that DEK; it does not add a second Horizon signer.
+- **[Stellar](/embedded-stellar-wallet).** A classic G… account, not a Soroban contract account. On the current path the spend key is HKDF of the MasterDEK (`cavos-ed25519-stellar-v1`, salted by `appSalt`). A new device restores that DEK; it does not add a second Horizon signer.
 
 ### Signing and executing
 
