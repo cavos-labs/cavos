@@ -67,6 +67,8 @@ import {
   EMBEDDED_WALLET_TITLE,
   EMBEDDED_WALLET_API_PATH,
   EMBEDDED_WALLET_API_TITLE,
+  NON_CUSTODIAL_EMBEDDED_WALLET_PATH,
+  NON_CUSTODIAL_EMBEDDED_WALLET_TITLE,
   EMBEDDED_WALLET_PROVIDERS_PATH,
   EMBEDDED_WALLET_PROVIDERS_TITLE,
   EMBEDDED_WALLET_VS_EXTENSION_PATH,
@@ -429,7 +431,7 @@ describe('marketing SEO', () => {
         (item) => item.question === 'Which chains does Cavos support for embedded wallets?',
       ),
     )
-    assert.equal(EMBEDDED_WALLET_MODIFIED, '2026-10-21')
+    assert.equal(EMBEDDED_WALLET_MODIFIED, '2026-10-22')
   })
 
   it('keeps a single H1 and adds how-it-works plus a compare-data provider table', () => {
@@ -498,6 +500,7 @@ describe('marketing SEO', () => {
     assert.match(pageSource, /EMBEDDED_WALLET_INTEGRATION_PATH/)
     assert.match(pageSource, /EMBEDDED_WALLET_VS_EXTENSION_PATH/)
     assert.match(pageSource, /EMBEDDED_WALLET_API_PATH/)
+    assert.match(pageSource, /NON_CUSTODIAL_EMBEDDED_WALLET_PATH/)
     assert.match(pageSource, /PRIVY_VS_TURNKEY_PATH/)
     assert.match(pageSource, /Related guides/)
     assert.match(pageSource, /embedded wallet vs browser extension/)
@@ -1421,6 +1424,118 @@ describe('marketing SEO', () => {
     )
   })
 
+  it('indexes the non-custodial embedded wallet guide as an Article with FAQ JSON-LD', () => {
+    const postPath = path.join(
+      process.cwd(),
+      'content/blog/non-custodial-embedded-wallet.mdx',
+    )
+    assert.equal(fs.existsSync(postPath), true)
+    const source = fs.readFileSync(postPath, 'utf8')
+    const excerptMatch = source.match(/^excerpt:\s*"(.*)"$/m)
+    assert.ok(excerptMatch)
+    assert.ok(excerptMatch[1].length <= 160, excerptMatch[1].length)
+    assert.match(source, /\[embedded wallet\]\(\/embedded-wallet\)/)
+    assert.match(source, /\]\(\/custody\)/)
+    assert.match(source, /\]\(\/compare\)/)
+    assert.match(source, /\]\(\/blog\/embedded-wallet-api\)/)
+    assert.match(source, /\]\(\/blog\/how-to-add-an-embedded-wallet\)/)
+    assert.match(source, /\]\(\/blog\/embedded-wallet-providers\)/)
+    assert.match(source, /embedded-starknet-wallet/)
+    assert.match(source, /embedded-solana-wallet/)
+    assert.match(source, /embedded-stellar-wallet/)
+    assert.match(source, /audited OpenZeppelin account contract/)
+    assert.match(source, /AccountUpgradeable/)
+    assert.match(source, /does not ship its own account implementation/)
+    assert.match(source, /no on-chain device signers/)
+    assert.match(source, /no on-chain social recovery/)
+    assert.match(source, /classic G/)
+    assert.match(source, /native Ed25519 system account/)
+    assert.match(source, /device-native/)
+    assert.match(source, /Cavos, LLC/)
+    assert.match(source, /MasterDEK/)
+    assert.match(source, /What is a non-custodial embedded wallet\?/)
+    assert.match(source, /Is an embedded wallet automatically self-custodial\?/)
+    assert.match(source, /How do I verify a vendor/)
+    assert.match(source, /How does Cavos keep wallets non-custodial\?/)
+    assert.doesNotMatch(source, /audited Cavos/)
+    assert.doesNotMatch(source, /Cavos custom account/)
+    assert.doesNotMatch(source, /on-chain device approval/)
+    assert.doesNotMatch(source, /on-chain approval/)
+    assert.doesNotMatch(source, /This device must be approved first/)
+    assert.doesNotMatch(source, /category:\s*"Release"/)
+    assert.doesNotMatch(source, /robots:\s*noindex/)
+    assert.equal(
+      NON_CUSTODIAL_EMBEDDED_WALLET_PATH,
+      '/blog/non-custodial-embedded-wallet',
+    )
+    assert.equal(
+      NON_CUSTODIAL_EMBEDDED_WALLET_TITLE,
+      'Non-Custodial Embedded Wallets: How Self-Custody Works (2026)',
+    )
+
+    const hub = fs.readFileSync(
+      path.join(process.cwd(), 'app/embedded-wallet/page.tsx'),
+      'utf8',
+    )
+    assert.match(hub, /NON_CUSTODIAL_EMBEDDED_WALLET_PATH/)
+    assert.match(hub, /Related guides/)
+
+    const apiGuide = fs.readFileSync(
+      path.join(process.cwd(), 'content/blog/embedded-wallet-api.mdx'),
+      'utf8',
+    )
+    assert.match(apiGuide, /\]\(\/blog\/non-custodial-embedded-wallet\)/)
+
+    const reactGuide = fs.readFileSync(
+      path.join(process.cwd(), 'content/blog/how-to-add-an-embedded-wallet.mdx'),
+      'utf8',
+    )
+    assert.match(reactGuide, /\]\(\/blog\/non-custodial-embedded-wallet\)/)
+
+    const providersGuide = fs.readFileSync(
+      path.join(process.cwd(), 'content/blog/embedded-wallet-providers.mdx'),
+      'utf8',
+    )
+    assert.match(providersGuide, /\]\(\/blog\/non-custodial-embedded-wallet\)/)
+
+    const data = blogPostJsonLd({
+      title: NON_CUSTODIAL_EMBEDDED_WALLET_TITLE,
+      description:
+        'What makes a non-custodial embedded wallet actually self-custodial: who can sign, key models, a vendor checklist, and how Cavos does it.',
+      path: NON_CUSTODIAL_EMBEDDED_WALLET_PATH,
+      datePublished: '2026-10-22',
+      type: 'Article',
+      faq: [
+        {
+          question: 'What is a non-custodial embedded wallet?',
+          answer:
+            'A non-custodial embedded wallet is one the provider cannot spend from.',
+        },
+      ],
+      crumbs: [
+        { name: 'Home', path: '/' },
+        { name: 'Blog', path: '/blog' },
+        {
+          name: NON_CUSTODIAL_EMBEDDED_WALLET_TITLE,
+          path: NON_CUSTODIAL_EMBEDDED_WALLET_PATH,
+        },
+      ],
+    })
+    const json = JSON.stringify(data)
+    JSON.parse(json)
+    assert.equal(data['@graph'][0]['@type'], 'Article')
+    assert.equal(data['@graph'][1]['@type'], 'BreadcrumbList')
+    assert.equal(data['@graph'][2]['@type'], 'FAQPage')
+    assert.equal(
+      data['@graph'][0].url,
+      'https://cavos.xyz/blog/non-custodial-embedded-wallet',
+    )
+    assert.equal(
+      data['@graph'][0].mainEntityOfPage['@id'],
+      'https://cavos.xyz/blog/non-custodial-embedded-wallet',
+    )
+  })
+
   it('makes /blog an indexable landing page with crawlable guide links', () => {
     const source = fs.readFileSync(
       path.join(process.cwd(), 'app/blog/page.tsx'),
@@ -1435,6 +1550,7 @@ describe('marketing SEO', () => {
     assert.match(source, /EMBEDDED_WALLET_PROVIDERS_PATH/)
     assert.match(source, /PRIVY_VS_TURNKEY_PATH/)
     assert.match(source, /EMBEDDED_WALLET_API_PATH/)
+    assert.match(source, /NON_CUSTODIAL_EMBEDDED_WALLET_PATH/)
     assert.match(source, /href: '\/compare'/)
     assert.match(source, /href: '\/custody'/)
     assert.match(source, /href: '\/privy-alternatives'/)

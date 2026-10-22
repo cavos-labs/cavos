@@ -22,6 +22,8 @@ import {
     EMBEDDED_WALLET_TITLE,
     EMBEDDED_WALLET_API_PATH,
     EMBEDDED_WALLET_API_TITLE,
+    NON_CUSTODIAL_EMBEDDED_WALLET_PATH,
+    NON_CUSTODIAL_EMBEDDED_WALLET_TITLE,
     EMBEDDED_WALLET_PROVIDERS_PATH,
     EMBEDDED_WALLET_PROVIDERS_TITLE,
     EMBEDDED_WALLET_VS_EXTENSION_PATH,
@@ -681,8 +683,8 @@ export default function EmbeddedWalletGuidePage() {
                         Related guides
                     </h2>
                     <p className="mt-5 text-sm leading-relaxed text-muted">
-                        The pillar is the category. These pages are the API, the install,
-                        and the comparisons.
+                        The pillar is the category. These pages are the API, self-custody,
+                        the install, and the comparisons.
                     </p>
                     <ul className="mt-6 list-disc space-y-3 pl-5 text-sm leading-relaxed text-muted">
                         <li>
@@ -691,6 +693,13 @@ export default function EmbeddedWalletGuidePage() {
                             </Link>
                             {' — '}auth, wallet create, key handling, signing, gas, and
                             recovery.
+                        </li>
+                        <li>
+                            <Link href={NON_CUSTODIAL_EMBEDDED_WALLET_PATH} className={linkClass}>
+                                {NON_CUSTODIAL_EMBEDDED_WALLET_TITLE}
+                            </Link>
+                            {' — '}who can sign, key models, and how to verify a
+                            vendor&apos;s claim.
                         </li>
                         <li>
                             <Link href={EMBEDDED_WALLET_INTEGRATION_PATH} className={linkClass}>
