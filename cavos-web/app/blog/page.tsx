@@ -13,6 +13,8 @@ import {
   EMBEDDED_WALLET_VS_EXTENSION_TITLE,
   EMBEDDED_WALLET_API_PATH,
   EMBEDDED_WALLET_API_TITLE,
+  NON_CUSTODIAL_EMBEDDED_WALLET_PATH,
+  NON_CUSTODIAL_EMBEDDED_WALLET_TITLE,
   PRIVY_VS_TURNKEY_PATH,
   PRIVY_VS_TURNKEY_TITLE,
   STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
@@ -36,6 +38,11 @@ const GUIDES = [
     href: EMBEDDED_WALLET_API_PATH,
     title: EMBEDDED_WALLET_API_TITLE,
     body: 'Auth, wallet create, key handling, signing, gas, and recovery — and how Cavos exposes that surface.',
+  },
+  {
+    href: NON_CUSTODIAL_EMBEDDED_WALLET_PATH,
+    title: NON_CUSTODIAL_EMBEDDED_WALLET_TITLE,
+    body: 'Who can sign, which key models are actually self-custodial, and how to verify a vendor’s claim.',
   },
   {
     href: EMBEDDED_WALLET_INTEGRATION_PATH,

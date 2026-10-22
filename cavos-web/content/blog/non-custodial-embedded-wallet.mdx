@@ -1,0 +1,133 @@
+---
+title: "Non-Custodial Embedded Wallets: How Self-Custody Works (2026)"
+date: "2026-10-22"
+excerpt: "What makes a non-custodial embedded wallet actually self-custodial: who can sign, key models, a vendor checklist, and how Cavos does it."
+category: "Guide"
+slug: "non-custodial-embedded-wallet"
+faq:
+  - question: "What is a non-custodial embedded wallet?"
+    answer: "A non-custodial — or self-custodial — embedded wallet is one the provider cannot spend from. The wallet still lives inside the application: the user signs in, the product resolves an on-chain account, and approval happens in the app UI. Self-custody is a separate fact. The signing key is created and used where the vendor cannot produce a valid signature alone. Calling a product non-custodial does not make it so — the test is who can move the assets."
+  - question: "Is an embedded wallet automatically self-custodial?"
+    answer: "No. Embedded describes where the wallet appears. It does not decide custody. The same login modal is used for device-native keys, MPC or TSS shares, a provider-operated HSM or TEE, a remote enclave, and a hosted or delegated spend key. Some vendors ship a non-custodial path and, separately, an optional custodial one. Ask who can produce a valid signature without the user."
+  - question: "How do I verify a vendor’s non-custodial claim?"
+    answer: "Ask whether the vendor can produce a valid signature alone; whether users can export a key or only restore the same address on a new device; what happens if the vendor disappears; what recovery actually unwraps, and whether that path can be arranged after every device is gone; and what was audited (the account contract, the recovery enclave, or the vendor’s own code). Then read the recovery path, not only the happy path."
+  - question: "How does Cavos keep wallets non-custodial?"
+    answer: "Signing keys are created and used on the user’s device. The MasterDEK stays protected at rest by WebCrypto in the browser or the OS keystore on React Native. Cavos cannot see the key, sign with it, or move funds. On Starknet the key controls an audited OpenZeppelin account contract. Recovery is off-chain via a passkey or the enclave. There is no MPC and no hosted spend key."
+  - question: "What happens if the vendor disappears?"
+    answer: "If the signing key lives only on the user’s device, or can be restored from a factor the user holds, the address can still spend after the vendor is gone — assuming the user can still reach the chain. If signing requires a provider share, a remote enclave credential, or a hosted HSM, disappearance is a lockout unless export or a documented break-glass exists. In Cavos, a new device restores the MasterDEK with a passkey or the opt-in enclave. If every device and every restore factor is gone, Cavos cannot recover the wallet."
+  - question: "Does recovery make an embedded wallet custodial?"
+    answer: "Recovery is how a new device restores the means to sign. It is a different fact pattern from ordinary signing. A provider that cannot sign in the happy path but can restore a spend key in an incident is not the same as one that never can. In Cavos, recovery unwraps the MasterDEK off-chain — a passkey or an opt-in hardware-isolated enclave. There is no on-chain social recovery and no on-chain device signers. The docs call that path non-custodial, and not trustless. Counsel has to read the recovery path."
+---
+
+An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain account they can pay, receive, and sign with — no browser extension, no seed phrase, no trip to another app.
+
+**Non-custodial** and **self-custodial** are claims about that account, not about the login modal. This guide is the developer test: who can sign, which key models survive that test, and how to verify a vendor’s wording. The [custody](/custody) page is the legal side — MiCA, FinCEN, California, and the other regimes. This page does not repeat those statutes. The [embedded wallet API](/blog/embedded-wallet-api) guide is the surface map. The [React integration](/blog/how-to-add-an-embedded-wallet) is the install.
+
+Cavos, LLC is a software and SaaS company. The wallet is the main product: a device-native, self-custodial embedded wallet. Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds.
+
+## Who can sign is who controls the key
+
+A wallet is an on-chain account plus the means to authorize transactions from it. Custody is the answer to one question: **who can produce a valid signature without the user present?**
+
+If the provider can complete a transaction alone, or holds the means of access, the wallet is custodial in practice — even when the docs say “non-custodial” or “end-user owned.” If the provider cannot see the key, cannot sign with it, and cannot move funds, the wallet is self-custodial. Calling a product non-custodial does not make it so. The test is who can move the assets.
+
+Embedded is a UX label. Login selects the user, the SDK looks up or creates an on-chain address, and approval happens in the app UI. The same modal is used for hosted signing, MPC shares, and device-native keys. The [providers comparison](/blog/embedded-wallet-providers) is the named-vendor shortlist. Worked one-to-one pages live under [compare](/compare).
+
+Authentication should select which user this is. It should not, by itself, authorize a spend. When email magic-link login is enough to move funds, the provider usually holds the signing capability. Collapse login and signing and you have chosen a hosted model.
+
+A self-custodial embedded wallet is one the provider cannot spend from. The signing key is created and used on the user’s device and is not reconstructed from provider-held shares. That is the definition this site already uses. Everything below is how to check it.
+
+## Key models — and which are non-custodial in practice
+
+When a vendor says “embedded wallet SDK,” ask where the signing key lives. Five designs cover almost every product in the category.
+
+### Device-native keys
+
+The wallet’s account key is derived on the user’s device from a MasterDEK. At rest that DEK is protected by the platform’s non-extractable key: WebCrypto in the browser, the OS keystore on React Native. The device signs. A new device restores the same MasterDEK instead of being added on-chain.
+
+This is non-custodial **when the provider cannot see the DEK, cannot sign with it, and cannot move funds**. Isolation comes from the platform primitive, not from a slogan. Those primitives have limits: WebCrypto cannot hold a stark key, so outside the Cavos vault the Starknet key is re-derived into memory for the session, and the SDK does not enforce non-extractability on Node or other server runtimes. Ask where the key is actually used, not only where it is created.
+
+### Passkeys
+
+Passkeys (WebAuthn) are often described as “the wallet.” They are not one thing. A passkey can sign spends, approve a device, or unwrap a key the vendor also holds. Those are three different products.
+
+On Starknet, Solana, and Stellar in Cavos, a WebAuthn PRF credential encrypts a copy of the wallet’s MasterDEK, which Cavos stores and cannot open. That is not 2FA: anyone with the synced passkey (iCloud Keychain or Google Password Manager) can spend, which is also how a synced passkey recovers the wallet on a new device. When a vendor says “passkey wallet,” ask which of those jobs the passkey does. A passkey that unwraps a key the vendor can also use is not self-custody.
+
+### MPC / TSS shares
+
+The private key is split into shares. Signing reconstructs or jointly computes a signature — typically some mix of the user’s device, the provider’s network, and a recovery factor. Threshold signature schemes (TSS) are the usual production shape: no single share is the key, and a quorum produces a signature.
+
+MPC is a legitimate design. It is not the same as “the provider never has a key.” The provider holds a share used in reconstruction. You are trusting the share holders, the protocol, and whoever can coerce enough shares. Export is often supported — a feature and a different threat model. It is non-custodial only if the vendor cannot reach the threshold without the user. Cavos does not split or reconstruct a signing key with MPC.
+
+### TEE / enclave-held keys
+
+A secure enclave (AWS Nitro, or a vendor HSM) holds key material that is supposed to be usable only inside a measured environment. Remote enclaves are not the user’s device. Server-side signing is the point of that design.
+
+Custody depends on who holds the credentials that authorize the enclave. If the vendor’s operators can approve a sign request, the enclave is a hosted signer with better hardware. If the enclave cannot be asked to sign a spend in the ordinary flow, you are closer to a wrap than to a remote hot wallet.
+
+Cavos uses an enclave only for opt-in hardware-isolated social recovery: an AWS Nitro Enclave with pinned attestation, off by default, which can only unwrap a wallet’s MasterDEK on Starknet, Solana, and Stellar. It is not general server-side signing. The docs call that path non-custodial, and not trustless.
+
+### Hosted or delegated keys
+
+The provider, or an HSM it operates, can produce a signature. Email magic-link login often sits on this model: access to the inbox is enough to spend. If the vendor can sign without the user, the wallet is custodial. Some vendors ship a non-custodial embedded path and, separately, an optional custodial wallet. Read both.
+
+In practice: device-native keys are non-custodial when the vendor cannot see or use the key (the Cavos default). Passkeys are non-custodial when they unwrap a key the vendor cannot open. MPC / TSS is non-custodial only if the vendor cannot reach the threshold without the user. TEE and enclave-held keys follow the authorizing credential — remote signing is hosted unless the enclave cannot be asked to spend. Hosted or delegated keys are custodial. “Embedded wallets” as a search phrase does not pick a row.
+
+## A checklist to verify a vendor’s claim
+
+Write the answers down before you compare SDKs. Marketing copy will not.
+
+**Can the vendor sign alone?** Who can produce a valid signature without the user present? Ask for the ordinary spend path, not a slide about “user-controlled keys.” If a support tool, an admin API, or a recovery share is enough to move funds, that is the answer.
+
+**Key export.** Can the user export a private key or seed, or only restore the same address on a new device? Addresses are derived differently across vendors. Migration is a project. Export is a feature and a different threat model: a seed you can copy is a seed an attacker can copy. Cavos restores the MasterDEK on a new device. It does not advertise a seed or private-key export.
+
+**What happens if the vendor disappears?** If signing requires a provider share, a remote enclave credential, or a hosted HSM, disappearance is a lockout unless export or a documented break-glass exists. If the key lives on the device, or can be restored from a factor the user holds, the address can still spend — assuming the user can still reach the chain. Relayers and paymasters transport, sponsor, or submit. They are not signers.
+
+**Recovery path.** Recovery is how a new device restores the means to sign. Ask what it unwraps, who can trigger it, and whether it can be arranged after every device is gone. A provider that cannot sign in the ordinary flow but can restore a spend key in an incident is a different fact pattern than one that never can. Counsel has to read the recovery path. That is a product fact as well as a [legal](/custody) one.
+
+**Audit status.** Ask what was audited. On Starknet, Cavos wallets are the standard audited OpenZeppelin account contract (AccountUpgradeable). The audit covers OpenZeppelin’s contract, not a custom Cavos account. Cavos does not ship its own account implementation. An enclave attestation, an SDK review, and an on-chain account audit are three different artifacts. Do not treat “audited” as a custody proof.
+
+If you still need the named-vendor table, use the [providers guide](/blog/embedded-wallet-providers). Worked comparisons live under [compare](/compare).
+
+## Recovery trade-offs
+
+A device that is lost, wiped, or replaced takes its key with it. Recovery is a second authority set up *before* that happens. None of those paths can be arranged after every device is gone.
+
+The usual designs:
+
+- **Another signed-in device.** Works while a phone still holds the key; useless after the only device is gone.
+- **A synced passkey.** Fast restore on a new device. Anyone with that passkey can spend. Treat iCloud Keychain or Google Password Manager as the recovery root, not as a second factor.
+- **A hardware-isolated enclave.** Opt-in wrap of the same DEK. Better than a reconstructable server share if the enclave can only unwrap, under pinned attestation. Still not trustless.
+- **On-chain social recovery or extra device signers.** A new device is added as an on-chain signer, or guardians rotate the account. Guardians, delays, and on-chain policy become part of custody.
+
+Cavos does not use the last design. There is no on-chain device-signer list and no on-chain social recovery. On Starknet, Solana, and native Stellar, a new device restores the MasterDEK. It does not add an on-chain signer. Recovery codes remain only for grandfathered Stellar wallets.
+
+Off-chain restore keeps the on-chain account simple — one key, the chain’s native model — and moves recovery to passkeys and an opt-in enclave. You give up on-chain guardian rotation. You keep the rule that Cavos cannot sign. If every device and every restore factor is gone, Cavos cannot recover the wallet.
+
+## How Cavos does it
+
+The public developer surface is `@cavos/kit` (`@cavos/kit/react`, `@cavos/kit/react-native`). Login produces a stable identity for a registry lookup; it never signs a transaction. There is no MPC and no hosted spend key. The account key is derived on the device from a MasterDEK that WebCrypto or the OS keystore protects at rest. Cavos cannot see it.
+
+Each adapter keeps the chain’s native account model:
+
+- **[Starknet](/embedded-starknet-wallet).** An audited OpenZeppelin account contract — AccountUpgradeable v3.0.0 — controlled by one stark key derived from the MasterDEK and `appSalt`. Cavos does not ship its own account implementation. There are no on-chain device signers. Execution is paymaster-sponsored. Connect never deploys; the first execute deploys and runs atomically.
+- **[Solana](/embedded-solana-wallet).** A native Ed25519 system account. The spend key is HKDF of the same MasterDEK. A relayer co-signs as fee payer. The address is an ordinary Solana public key, not a PDA.
+- **[Stellar](/embedded-stellar-wallet).** A classic G… account, not a Soroban contract account. On the current path the spend key is HKDF of the MasterDEK (`cavos-ed25519-stellar-v1`, salted by `appSalt`). A new device restores that DEK; it does not add a second Horizon signer. The relayer can sponsor reserves and fee-bumps.
+
+A new device restores the MasterDEK off-chain with a passkey or an opt-in hardware-isolated enclave. It does not add a signer on-chain. `needs-device-approval` means this device has no key yet. Restore the MasterDEK; the status is not an on-chain device list.
+
+The kit documents four paths: another signed-in device, a passkey, a recovery code (grandfathered Stellar only), and opt-in hardware-isolated social recovery in an AWS Nitro Enclave that can only unwrap a MasterDEK. If every device and every restore factor is gone, Cavos cannot recover the wallet.
+
+That is the product. Integrating a self-custodial SDK does not settle exchange, on-ramp, or payment licensing. Recovery paths count. The control test under those regimes is on the [custody](/custody) page.
+
+The [embedded wallet API](/blog/embedded-wallet-api) guide is the method-level map — `Cavos.connect`, `execute`, `enrollPasskeyDefault`, `approveDeviceWithPasskey`. The [React integration](/blog/how-to-add-an-embedded-wallet) is the first sponsored transaction.
+
+## What to read next
+
+- [What is an embedded wallet?](/embedded-wallet) — custody, key models, and how to choose an SDK.
+- [When an embedded wallet makes you a custodian](/custody) — the control test under MiCA, FinCEN, California, and related regimes.
+- [Embedded wallet API](/blog/embedded-wallet-api) — auth, create, keys, signing, gas, and recovery.
+- [How to add an embedded wallet to a React app](/blog/how-to-add-an-embedded-wallet) — `CavosProvider`, first sponsored transaction.
+- [Embedded wallet providers compared](/blog/embedded-wallet-providers) — pricing, chains, and key models.
+- Chain pages: [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), [Stellar](/embedded-stellar-wallet).
+- [Compare](/compare) for worked one-to-one pages.
