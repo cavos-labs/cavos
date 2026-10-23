@@ -23,7 +23,7 @@ export const FRAMEZZ_APP_URL = 'https://app.studioframezz.com/en'
 export const FRAMEZZ_GALLERIES_URL = 'https://galleries.studioframezz.com/'
 
 export const ABOUT_PATH = '/about'
-export const ABOUT_TITLE = 'Software & SaaS Company'
+export const ABOUT_TITLE = 'About Cavos: Embedded Wallet SDK for Starknet, Solana & Stellar'
 export const ABOUT_DESCRIPTION =
   'Cavos, LLC is a software and SaaS company. The Cavos wallet is the main product. It also builds Framezz event photography software and Framezz Galleries.'
 
@@ -444,9 +444,40 @@ export function marketingPageMetadata(input: {
   }
 }
 
+export const ORGANIZATION_SAME_AS = [
+  'https://x.com/cavosxyz',
+  'https://twitter.com/cavosxyz',
+  'https://github.com/cavos-labs',
+  'https://www.npmjs.com/package/@cavos/kit',
+  'https://docs.cavos.xyz',
+] as const
+
+export const FOUNDER_NAME = 'Adrián Vargas'
+export const FOUNDER_SAME_AS = ['https://x.com/0xAdrianvrj'] as const
+
+const ORGANIZATION_BRANDS = [
+  {
+    '@type': 'Brand' as const,
+    name: 'Cavos',
+    url: MARKETING_ORIGIN,
+  },
+  {
+    '@type': 'Brand' as const,
+    name: 'Framezz',
+    url: FRAMEZZ_URL,
+  },
+  {
+    '@type': 'Brand' as const,
+    name: 'Framezz Galleries',
+    url: FRAMEZZ_GALLERIES_URL,
+  },
+]
+
 export function organizationJsonLd(
   contactType: 'sales' | 'customer support' = 'sales',
+  options: { includeBrands?: boolean } = {},
 ) {
+  const includeBrands = options.includeBrands ?? true
   return {
     '@type': 'Organization',
     '@id': ORGANIZATION_ID,
@@ -459,34 +490,18 @@ export function organizationJsonLd(
       url: `${MARKETING_ORIGIN}/CavosLogo.png`,
     },
     description: ORGANIZATION_DESCRIPTION,
-    brand: [
-      {
-        '@type': 'Brand',
-        name: 'Cavos',
-        url: MARKETING_ORIGIN,
-      },
-      {
-        '@type': 'Brand',
-        name: 'Framezz',
-        url: FRAMEZZ_URL,
-      },
-      {
-        '@type': 'Brand',
-        name: 'Framezz Galleries',
-        url: FRAMEZZ_GALLERIES_URL,
-      },
-    ],
+    founder: {
+      '@type': 'Person',
+      name: FOUNDER_NAME,
+      sameAs: [...FOUNDER_SAME_AS],
+    },
+    ...(includeBrands ? { brand: ORGANIZATION_BRANDS } : {}),
     owns: [
       { '@id': SOFTWARE_ID },
       { '@id': FRAMEZZ_ID },
       { '@id': FRAMEZZ_GALLERIES_ID },
     ],
-    sameAs: [
-      'https://x.com/cavosxyz',
-      'https://twitter.com/cavosxyz',
-      'https://github.com/cavos-labs',
-      'https://docs.cavos.xyz',
-    ],
+    sameAs: [...ORGANIZATION_SAME_AS],
     contactPoint: {
       '@type': 'ContactPoint',
       email: 'hello@cavos.xyz',
@@ -558,6 +573,9 @@ export function aboutPageJsonLd() {
   return {
     '@context': 'https://schema.org',
     '@graph': [
+      organizationJsonLd('sales'),
+      walletSoftwareApplicationJsonLd(),
+      ...cavosProductApplicationsJsonLd(),
       {
         '@type': 'AboutPage',
         '@id': `${url}#webpage`,
@@ -603,19 +621,21 @@ export function homepageJsonLd() {
   }
 }
 
-/** Site-wide graph emitted from the root layout on every public page, including /compare/*. */
+/**
+ * Site-wide graph emitted from the root layout on every public page.
+ * Organization + WebSite only — Brand nodes and the wallet Offer stay on
+ * home / about / pricing, where those products are the topic.
+ */
 export function sitewideJsonLd() {
   return {
     '@context': 'https://schema.org',
     '@graph': [
-      organizationJsonLd('customer support'),
+      organizationJsonLd('customer support', { includeBrands: false }),
       {
         ...websiteJsonLd(),
         description:
           'Embedded wallet infrastructure for Starknet, Solana, and Stellar — device-native and verifiable.',
       },
-      walletSoftwareApplicationJsonLd(),
-      ...cavosProductApplicationsJsonLd(),
     ],
   }
 }
@@ -772,6 +792,9 @@ export function pricingPageJsonLd(input: {
   return {
     '@context': 'https://schema.org',
     '@graph': [
+      organizationJsonLd('sales'),
+      walletSoftwareApplicationJsonLd(),
+      ...cavosProductApplicationsJsonLd(),
       {
         '@type': 'Product',
         name: 'Cavos Embedded Wallet SDK',

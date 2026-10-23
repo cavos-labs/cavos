@@ -14,7 +14,10 @@ import {
   HOME_DESCRIPTION,
   HOME_TITLE,
   NOINDEX_FOLLOW,
+  FOUNDER_NAME,
+  FOUNDER_SAME_AS,
   ORGANIZATION_DESCRIPTION,
+  ORGANIZATION_SAME_AS,
   OFFER_AVAILABILITY,
   ORGANIZATION_ID,
   SOFTWARE_ID,
@@ -231,12 +234,12 @@ describe('marketing SEO', () => {
     assert.equal(website.name, 'Cavos')
     assert.equal(website.url, 'https://cavos.xyz')
     assert.equal(website.publisher['@id'], ORGANIZATION_ID)
-    assert.deepEqual(org.sameAs, [
-      'https://x.com/cavosxyz',
-      'https://twitter.com/cavosxyz',
-      'https://github.com/cavos-labs',
-      'https://docs.cavos.xyz',
-    ])
+    assert.deepEqual(org.sameAs, [...ORGANIZATION_SAME_AS])
+    assert.equal(org.legalName, 'Cavos, LLC')
+    assert.equal(org.founder['@type'], 'Person')
+    assert.equal(org.founder.name, FOUNDER_NAME)
+    assert.deepEqual(org.founder.sameAs, [...FOUNDER_SAME_AS])
+    assert.equal(org.sameAs.includes('https://x.com/0xAdrianvrj'), false)
     assert.equal(org.description, ORGANIZATION_DESCRIPTION)
     assert.match(org.description, /software and SaaS/i)
     assert.equal(org.brand.length, 3)
@@ -300,15 +303,34 @@ describe('marketing SEO', () => {
   })
 
   it('keeps layout and homepage Organization nodes on the same @id', () => {
-    const layoutOrg = organizationJsonLd('customer support')
+    const layoutOrg = organizationJsonLd('customer support', { includeBrands: false })
     const homeOrg = organizationJsonLd('sales')
     assert.equal(layoutOrg['@id'], ORGANIZATION_ID)
     assert.equal(homeOrg['@id'], ORGANIZATION_ID)
     assert.equal(layoutOrg.description, homeOrg.description)
-    assert.deepEqual(layoutOrg.brand, homeOrg.brand)
+    assert.equal(layoutOrg.legalName, homeOrg.legalName)
+    assert.deepEqual(layoutOrg.founder, homeOrg.founder)
+    assert.deepEqual(layoutOrg.sameAs, homeOrg.sameAs)
+    assert.equal('brand' in layoutOrg, false)
+    assert.equal(homeOrg.brand.length, 3)
     assert.deepEqual(layoutOrg.owns, homeOrg.owns)
     assert.equal(layoutOrg.contactPoint.contactType, 'customer support')
     assert.equal(homeOrg.contactPoint.contactType, 'sales')
+  })
+
+  it('omits Brand nodes and the wallet Offer from the sitewide graph', () => {
+    const data = sitewideJsonLd()
+    const json = JSON.stringify(data)
+    JSON.parse(json)
+    const types = data['@graph'].map((node: { '@type'?: string }) => node['@type'])
+    assert.deepEqual(types, ['Organization', 'WebSite'])
+    assert.doesNotMatch(json, /"@type":"Brand"/)
+    assert.doesNotMatch(json, /"@type":"Offer"/)
+    assert.doesNotMatch(json, /"@type":"SoftwareApplication"/)
+    assert.equal(data['@graph'][0]['@id'], ORGANIZATION_ID)
+    assert.equal('brand' in data['@graph'][0], false)
+    assert.equal(data['@graph'][0].legalName, 'Cavos, LLC')
+    assert.equal(data['@graph'][0].founder.name, FOUNDER_NAME)
   })
 
   it('builds AboutPage and BreadcrumbList JSON-LD for /about', () => {
@@ -320,27 +342,48 @@ describe('marketing SEO', () => {
     assert.equal(meta.title, ABOUT_TITLE)
     assert.equal(ABOUT_TITLE.includes('| Cavos'), false)
     assert.equal(meta.alternates?.canonical, 'https://cavos.xyz/about')
-    assert.equal(meta.openGraph?.title, 'Software & SaaS Company | Cavos')
-    assert.ok(ABOUT_TITLE.length > 0 && ABOUT_TITLE.length <= 60)
+    assert.equal(
+      meta.openGraph?.title,
+      'About Cavos: Embedded Wallet SDK for Starknet, Solana & Stellar | Cavos',
+    )
+    assert.match(ABOUT_TITLE, /Embedded Wallet SDK/)
+    assert.match(ABOUT_TITLE, /Starknet/)
+    assert.match(ABOUT_TITLE, /Solana/)
+    assert.match(ABOUT_TITLE, /Stellar/)
+    assert.ok(ABOUT_TITLE.length > 0 && ABOUT_TITLE.length <= 70)
     assert.ok(ABOUT_DESCRIPTION.length > 0 && ABOUT_DESCRIPTION.length <= 155)
 
     const data = aboutPageJsonLd()
     const json = JSON.stringify(data)
     JSON.parse(json)
 
-    const page = data['@graph'][0]
-    assert.equal(page['@type'], 'AboutPage')
+    const page = data['@graph'].find(
+      (node: { '@type'?: string }) => node['@type'] === 'AboutPage',
+    )
+    assert.ok(page)
     assert.equal(page.url, 'https://cavos.xyz/about')
     assert.equal(page.name, ABOUT_TITLE)
     assert.equal(page.description, ABOUT_DESCRIPTION)
     assert.equal(page.about['@id'], ORGANIZATION_ID)
     assert.equal(page.mainEntity['@id'], ORGANIZATION_ID)
 
-    const crumbs = data['@graph'][1]
-    assert.equal(crumbs['@type'], 'BreadcrumbList')
+    const crumbs = data['@graph'].find(
+      (node: { '@type'?: string }) => node['@type'] === 'BreadcrumbList',
+    )
+    assert.ok(crumbs)
     assert.equal(crumbs.itemListElement[0].item, 'https://cavos.xyz/')
     assert.equal(crumbs.itemListElement[1].name, 'About')
     assert.equal(crumbs.itemListElement[1].item, 'https://cavos.xyz/about')
+
+    assert.ok(data['@graph'].some((node: { '@type'?: string }) => node['@type'] === 'Organization'))
+    assert.ok(
+      data['@graph'].some((node: { '@type'?: string }) => node['@type'] === 'SoftwareApplication'),
+    )
+    assert.equal(
+      data['@graph'].filter((node: { '@type'?: string }) => node['@type'] === 'Brand').length,
+      2,
+    )
+    assert.match(json, /"@type":"Offer"/)
   })
 
   it('builds BlogPosting JSON-LD that references the organization node by @id', () => {
@@ -1834,6 +1877,7 @@ describe('marketing SEO', () => {
 
     const graphs: unknown[] = [
       homepageJsonLd(),
+      aboutPageJsonLd(),
       sitewideJsonLd(),
       walletSoftwareApplicationJsonLd(),
       ...cavosProductApplicationsJsonLd(),
@@ -1889,8 +1933,14 @@ describe('marketing SEO', () => {
     }
     assert.ok(productLikeCount > 0)
 
-    const product = pricing['@graph'][0]
-    assert.equal(product['@type'], 'Product')
+    const product = pricing['@graph'].find(
+      (node: { '@type'?: string }) => node['@type'] === 'Product',
+    )
+    assert.ok(product)
+    assert.equal(
+      pricing['@graph'].filter((node: { '@type'?: string }) => node['@type'] === 'Brand').length,
+      2,
+    )
     assert.equal(product.offers.length, 3)
     assert.equal(product.offers[0].price, '0')
     assert.equal(product.offers[0].priceCurrency, 'USD')
@@ -2035,6 +2085,22 @@ describe('marketing SEO', () => {
 
     const layout = fs.readFileSync(path.join(docsRoot, 'app/layout.tsx'), 'utf8')
     assert.match(layout, /availability:\s*'https:\/\/schema\.org\/InStock'/)
+  })
+
+  it('defers the homepage 3D orb until after first paint and pauses it offscreen', () => {
+    const shell = fs.readFileSync(path.join(process.cwd(), 'components/HeroOrb.tsx'), 'utf8')
+    const canvas = fs.readFileSync(path.join(process.cwd(), 'components/HeroOrbCanvas.tsx'), 'utf8')
+    assert.match(shell, /next\/dynamic/)
+    assert.match(shell, /ssr:\s*false/)
+    assert.match(shell, /requestIdleCallback/)
+    assert.match(shell, /IntersectionObserver/)
+    assert.match(shell, /visibilitychange/)
+    assert.match(shell, /prefers-reduced-motion/)
+    assert.match(shell, /HeroOrbPoster/)
+    assert.doesNotMatch(shell, /@react-three\/fiber|three/)
+    assert.match(canvas, /frameloop="demand"/)
+    assert.match(canvas, /dpr=\{mobile \? 1 : \[1, 1\.25\]\}/)
+    assert.doesNotMatch(canvas, /audited Cavos/)
   })
 })
 

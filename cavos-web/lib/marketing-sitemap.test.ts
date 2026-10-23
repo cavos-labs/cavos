@@ -6,7 +6,6 @@ import { COMPETITORS } from './compare-data'
 import {
   MARKETING_HOME_URL,
   MARKETING_ORIGIN,
-  SITEMAP_LASTMOD_FALLBACK,
   getMarketingSitemapEntries,
   gitLastModifiedForFile,
   isBlogPostNoindex,
@@ -93,31 +92,36 @@ describe('marketing sitemap', () => {
     assert.equal(urls.includes(`${MARKETING_ORIGIN}/`), true)
   })
 
-  it('gives every entry a real lastModified instead of a shared now() stamp', () => {
-    const stamps = entries.map((entry) => {
-      assert.ok(entry.lastModified instanceof Date, `missing lastModified for ${entry.url}`)
-      assert.equal(Number.isNaN(entry.lastModified.getTime()), false)
-      return entry.lastModified.toISOString()
-    })
-    assert.equal(new Set(stamps).size > 1, true)
+  it('uses git last-modified or omits lastmod rather than a fabricated fallback', () => {
+    assert.doesNotMatch(SITEMAP_SOURCE, /SITEMAP_LASTMOD_FALLBACK/)
     assert.doesNotMatch(SITEMAP_SOURCE, /new Date\(\s*\)/)
 
+    const withDates = entries.filter((entry) => entry.lastModified)
+    for (const entry of withDates) {
+      assert.ok(entry.lastModified instanceof Date, `invalid lastModified for ${entry.url}`)
+      assert.equal(Number.isNaN(entry.lastModified.getTime()), false)
+    }
+    if (withDates.length > 1) {
+      const stamps = withDates.map((entry) => entry.lastModified!.toISOString())
+      assert.equal(new Set(stamps).size > 1, true)
+    }
+
+    const homeGit = lastModifiedForPath('/')
     const home = entries.find((entry) => entry.url === MARKETING_HOME_URL)
     assert.ok(home)
-    assert.equal(
-      home.lastModified.toISOString(),
-      lastModifiedForPath('/').toISOString(),
-    )
-    assert.equal(
-      lastModifiedForPath('/embedded-wallet').toISOString(),
-      (
-        gitLastModifiedForFile(sitemapPageFile('/embedded-wallet')) ??
-        new Date(SITEMAP_LASTMOD_FALLBACK['/embedded-wallet'])
-      ).toISOString(),
-    )
+    if (homeGit) {
+      assert.ok(home.lastModified instanceof Date)
+      assert.equal(home.lastModified.toISOString(), homeGit.toISOString())
+    } else {
+      assert.equal(home.lastModified, undefined)
+    }
+
+    const walletGit = gitLastModifiedForFile(sitemapPageFile('/embedded-wallet'))
+    const walletLastmod = lastModifiedForPath('/embedded-wallet')
+    assert.deepEqual(walletLastmod, walletGit)
   })
 
-  it('maps each static route to a page file and a per-route fallback date', () => {
+  it('maps each static route to a page file without a fake lastmod fallback', () => {
     const staticPaths = [
       '/',
       '/embedded-wallet',
@@ -139,12 +143,10 @@ describe('marketing sitemap', () => {
       '/terms',
     ]
     for (const routePath of staticPaths) {
-      assert.ok(SITEMAP_LASTMOD_FALLBACK[routePath], `missing fallback for ${routePath}`)
       assert.equal(hasPage(routePath), true)
       assert.ok(sitemapPageFile(routePath).endsWith('page.tsx'))
     }
     assert.equal(sitemapPageFile('/compare/privy'), 'app/compare/[slug]/page.tsx')
-    assert.ok(SITEMAP_LASTMOD_FALLBACK['/compare/[slug]'])
   })
 
   it('includes each competitor compare page from live data', () => {
