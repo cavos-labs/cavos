@@ -1,17 +1,19 @@
 'use client'
 
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { MeshDistortMaterial, Sphere, Environment, Lightformer } from '@react-three/drei'
-import { useEffect, useMemo, useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { ACESFilmicToneMapping, CanvasTexture, SRGBColorSpace, RepeatWrapping, type Group, type Mesh, type Texture } from 'three'
 
-const MOBILE_FPS = 24
-const DESKTOP_FPS = 30
-
 /**
- * Same silk field as the OG card / X banner. Built once on the client on a
- * modest canvas — large enough to read as brushed indigo, small enough that
- * the WebGL upload does not stall first paint.
+ * Procedurally paints the Cavos "silk" texture (electric-indigo field with
+ * brushed diagonal light strands) onto a canvas and returns it as a tileable
+ * 3D texture. Same visual language as the OG card / X banner so the orb reads
+ * as the same brand surface. Runs once on the client; no external asset.
+ *
+ * The soft sheen is blurred on a tiny buffer and scaled up. Blurring hundreds
+ * of strokes on a 1536px canvas looks free until WebGL uploads the texture —
+ * that readback blocked the main thread for several seconds on entry.
  */
 function useSilkTexture(): Texture | null {
     return useMemo(() => {
@@ -21,11 +23,9 @@ function useSilkTexture(): Texture | null {
         c.width = c.height = S
         const ctx = c.getContext('2d')!
 
-        let seed = 0xc0ffee
-        const rnd = (a: number, b: number) => {
-            seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0
-            return a + (seed / 0x1_0000_0000) * (b - a)
-        }
+        // Silk is generated once; Math.random matches the pre-#294 field.
+        /* eslint-disable react-hooks/purity -- one-shot texture, not a render input */
+        const rnd = (a: number, b: number) => a + Math.random() * (b - a)
         const ang = -0.42
         const light = ['#FFFFFF', '#E2D8FF']
         const dark = ['#2616A0', '#3422C9']
@@ -55,7 +55,7 @@ function useSilkTexture(): Texture | null {
             context.save()
             context.globalAlpha = rnd(opMin, opMax)
             if (blur) context.filter = `blur(${blur}px)`
-            context.strokeStyle = cols[(rnd(0, cols.length)) | 0]
+            context.strokeStyle = cols[(Math.random() * cols.length) | 0]
             context.lineWidth = rnd(wMin, wMax)
             context.lineCap = 'round'
             context.beginPath()
@@ -76,34 +76,32 @@ function useSilkTexture(): Texture | null {
 
         for (let i = 0; i < 140; i++) drawStrand(ctx, S, 0.06, 0.16, 1, 2.6, light, 0)
         for (let i = 0; i < 40; i++) drawStrand(ctx, S, 0.05, 0.1, 1, 2.2, dark, 0)
+        /* eslint-enable react-hooks/purity */
 
         const tex = new CanvasTexture(c)
         tex.colorSpace = SRGBColorSpace
         tex.wrapS = tex.wrapT = RepeatWrapping
-        tex.anisotropy = 4
+        tex.anisotropy = 8
         return tex
     }, [])
 }
 
+/**
+ * Glossy morphing 3D orb in Cavos indigo. A high-poly sphere distorts with
+ * noise, rotates and bobs; lit with indigo/violet/blue lightformers for a
+ * polished, reflective gradient surface. Visuals match the pre-#294 orb.
+ */
 function Orb({ animate, mobile }: { animate: boolean; mobile: boolean }) {
     const mesh = useRef<Mesh>(null)
     const group = useRef<Group>(null)
     const silk = useSilkTexture()
-    const acc = useRef(0)
 
     const pos: [number, number, number] = mobile ? [1.3, 2.9, 0] : [4.5, 0.1, 0]
     const scale = mobile ? 1.15 : 2.2
     const baseY = pos[1]
-    const interval = 1 / (mobile ? MOBILE_FPS : DESKTOP_FPS)
-    // Distorted silk reads the same well below 256 segments; the extra
-    // tessellation only fed the render loop.
-    const segments = mobile ? 64 : 96
 
-    useFrame((state, delta) => {
+    useFrame((state) => {
         if (!animate) return
-        acc.current += delta
-        if (acc.current < interval) return
-        acc.current %= interval
         const t = state.clock.elapsedTime
         if (mesh.current) {
             mesh.current.rotation.y = t * 0.3
@@ -116,7 +114,7 @@ function Orb({ animate, mobile }: { animate: boolean; mobile: boolean }) {
 
     return (
         <group ref={group} position={pos} scale={scale}>
-            <Sphere ref={mesh} args={[1.5, segments, segments]}>
+            <Sphere ref={mesh} args={[1.5, 256, 256]}>
                 <MeshDistortMaterial
                     color={silk ? '#ffffff' : '#402AFF'}
                     map={silk ?? undefined}
@@ -137,54 +135,29 @@ function Orb({ animate, mobile }: { animate: boolean; mobile: boolean }) {
     )
 }
 
-function FrameGate({ playing, fps }: { playing: boolean; fps: number }) {
-    const invalidate = useThree((state) => state.invalidate)
-    useEffect(() => {
-        if (!playing) return
-        let raf = 0
-        let last = 0
-        const interval = 1000 / fps
-        const tick = (now: number) => {
-            if (now - last >= interval) {
-                invalidate()
-                last = now
-            }
-            raf = requestAnimationFrame(tick)
-        }
-        raf = requestAnimationFrame(tick)
-        return () => cancelAnimationFrame(raf)
-    }, [playing, fps, invalidate])
-    return null
-}
-
 export function HeroOrbCanvas({
     playing,
     mobile,
-    onReady,
 }: {
     playing: boolean
     mobile: boolean
-    onReady?: () => void
 }) {
     return (
         <Canvas
             className="!absolute inset-0"
             camera={{ position: [0, 0, 4.2], fov: 45 }}
-            dpr={mobile ? 1 : [1, 1.25]}
-            frameloop="demand"
+            dpr={[1, 2]}
+            frameloop={playing ? 'always' : 'demand'}
             gl={{
-                antialias: !mobile,
+                antialias: true,
                 alpha: true,
                 toneMapping: ACESFilmicToneMapping,
                 toneMappingExposure: 1.05,
-                powerPreference: 'low-power',
             }}
-            onCreated={() => onReady?.()}
         >
-            <FrameGate playing={playing} fps={mobile ? MOBILE_FPS : DESKTOP_FPS} />
             <ambientLight intensity={1.6} />
             <directionalLight position={[1, 1, 5]} intensity={0.7} color="#ffffff" />
-            <Environment resolution={128}>
+            <Environment resolution={256}>
                 <Lightformer intensity={1} position={[0, 0, 4]} scale={[14, 14, 1]} color="#6655ff" />
             </Environment>
             <Orb animate={playing} mobile={mobile} />
