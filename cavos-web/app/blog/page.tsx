@@ -19,6 +19,8 @@ import {
   PRIVY_VS_TURNKEY_TITLE,
   STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
   STELLAR_EMBEDDED_WALLET_TUTORIAL_TITLE,
+  WALLET_AS_A_SERVICE_PATH,
+  WALLET_AS_A_SERVICE_TITLE,
 } from '@/lib/embedded-wallet-guide';
 
 export const metadata: Metadata = marketingPageMetadata({
@@ -33,6 +35,11 @@ const GUIDES = [
     href: '/embedded-wallet',
     title: 'What is an embedded wallet?',
     body: 'Custody models, key management, and how to choose an SDK.',
+  },
+  {
+    href: WALLET_AS_A_SERVICE_PATH,
+    title: WALLET_AS_A_SERVICE_TITLE,
+    body: 'What an embedded wallet platform is: auth, keys, signing, gas, recovery, pricing, and build versus buy.',
   },
   {
     href: EMBEDDED_WALLET_API_PATH,

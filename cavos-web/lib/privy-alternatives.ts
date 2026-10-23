@@ -5,6 +5,8 @@ import {
   EMBEDDED_WALLET_PROVIDERS_TITLE,
   PRIVY_VS_TURNKEY_PATH,
   PRIVY_VS_TURNKEY_TITLE,
+  WALLET_AS_A_SERVICE_PATH,
+  WALLET_AS_A_SERVICE_TITLE,
 } from './embedded-wallet-guide'
 import { getCompetitor } from './compare-data'
 
@@ -61,6 +63,10 @@ export const PRIVY_ALTERNATIVE_SECTIONS: AlternativeSection[] = [
       {
         href: EMBEDDED_WALLET_PROVIDERS_PATH,
         label: EMBEDDED_WALLET_PROVIDERS_TITLE,
+      },
+      {
+        href: WALLET_AS_A_SERVICE_PATH,
+        label: WALLET_AS_A_SERVICE_TITLE,
       },
     ],
   },

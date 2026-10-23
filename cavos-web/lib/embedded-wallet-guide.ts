@@ -50,6 +50,11 @@ export const NON_CUSTODIAL_EMBEDDED_WALLET_PATH =
 export const NON_CUSTODIAL_EMBEDDED_WALLET_TITLE =
   'Non-Custodial Embedded Wallets: How Self-Custody Works (2026)'
 
+export const WALLET_AS_A_SERVICE_PATH = '/blog/wallet-as-a-service'
+
+export const WALLET_AS_A_SERVICE_TITLE =
+  'Wallet-as-a-Service (WaaS): How Embedded Wallet Platforms Work (2026)'
+
 export const DOCS_ORIGIN = 'https://docs.cavos.xyz'
 
 export const DOCS_URLS = {
