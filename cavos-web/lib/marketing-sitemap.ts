@@ -22,7 +22,7 @@ export type SitemapEntry = {
   url: string
   changeFrequency: SitemapChangeFrequency
   priority: number
-  lastModified: Date
+  lastModified?: Date
 }
 
 const BLOG_DIR_CANDIDATES = [
@@ -30,42 +30,10 @@ const BLOG_DIR_CANDIDATES = [
   path.join(process.cwd(), 'cavos-web/content/blog'),
 ]
 
-/**
- * Per-route lastmod used when `git log` cannot see the page file (shallow
- * clones, missing .git). Dates match the last known content commit of that
- * route's page file. Never a shared current-time stamp.
- */
-export const SITEMAP_LASTMOD_FALLBACK: Record<string, string> = {
-  '/': '2026-10-08',
-  '/embedded-wallet': '2026-10-22',
-  '/embedded-stellar-wallet': '2026-10-13',
-  '/embedded-solana-wallet': '2026-10-13',
-  '/embedded-starknet-wallet': '2026-10-13',
-  '/compare': '2026-10-13',
-  '/compare/[slug]': '2026-10-20',
-  '/privy-alternatives': '2026-10-23',
-  '/custody': '2026-10-13',
-  '/pricing': '2026-10-12',
-  '/stats': '2026-10-09',
-  '/contact-sales': '2026-10-09',
-  '/about': '2026-10-12',
-  '/blog': '2026-10-23',
-  '/privacy': '2026-10-09',
-  '/dpa': '2026-10-09',
-  '/user-privacy': '2026-10-13',
-  '/user-terms': '2026-10-13',
-  '/terms': '2026-10-09',
-}
-
 export function sitemapPageFile(pathname: string): string {
   if (pathname === '/') return 'app/page.tsx'
   if (/^\/compare\/[^/]+$/.test(pathname)) return 'app/compare/[slug]/page.tsx'
   return `app${pathname}/page.tsx`
-}
-
-function fallbackLastModifiedKey(pathname: string): string {
-  if (/^\/compare\/[^/]+$/.test(pathname)) return '/compare/[slug]'
-  return pathname
 }
 
 function parseStableDate(value: string): Date | undefined {
@@ -85,22 +53,15 @@ export function gitLastModifiedForFile(pageFile: string): Date | undefined {
       const parsed = parseStableDate(output)
       if (parsed) return parsed
     } catch {
-      // Shallow clones and missing git are expected; use the per-route fallback.
+      // Shallow clones and missing git: omit lastmod rather than invent a date.
     }
   }
   return undefined
 }
 
-export function lastModifiedForPath(pathname: string): Date {
-  const fromGit = gitLastModifiedForFile(sitemapPageFile(pathname))
-  if (fromGit) return fromGit
-
-  const fallback = SITEMAP_LASTMOD_FALLBACK[fallbackLastModifiedKey(pathname)]
-  const parsed = fallback ? parseStableDate(fallback) : undefined
-  if (!parsed) {
-    throw new Error(`Missing sitemap lastModified fallback for ${pathname}`)
-  }
-  return parsed
+/** Git last-modified of the route's page file. Omit lastmod when git cannot see it. */
+export function lastModifiedForPath(pathname: string): Date | undefined {
+  return gitLastModifiedForFile(sitemapPageFile(pathname))
 }
 
 function page(
@@ -111,11 +72,12 @@ function page(
 ): SitemapEntry {
   const url =
     pathname === '/' ? MARKETING_HOME_URL : `${MARKETING_ORIGIN}${pathname}`
+  const resolved = lastModified ?? lastModifiedForPath(pathname)
   return {
     url,
     changeFrequency,
     priority,
-    lastModified: lastModified ?? lastModifiedForPath(pathname),
+    ...(resolved ? { lastModified: resolved } : {}),
   }
 }
 
