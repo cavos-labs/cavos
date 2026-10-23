@@ -13,17 +13,17 @@ import { getCompetitor } from './compare-data'
 export const PRIVY_ALTERNATIVES_PATH = '/privy-alternatives'
 
 export const PRIVY_ALTERNATIVES_TITLE =
-  'Privy Alternatives (2026): Wallet SDKs Compared'
+  '5 Privy Alternatives (2026): Pricing & Chains'
 
-/** 156 characters. Document title omits "| Cavos"; the layout template adds it. */
+/** 149 characters. Document title omits "| Cavos"; the layout template adds it. */
 export const PRIVY_ALTERNATIVES_DESCRIPTION =
-  'Privy alternatives for embedded crypto wallets, not the Shopify popup. Compare Cavos, Dynamic, Turnkey, Web3Auth, and Magic on custody, chains, and pricing.'
+  'Compare 5 Privy alternatives — Cavos, Dynamic, Turnkey, Web3Auth, Magic — on Starknet, Solana, Stellar, and published pricing. Not the Shopify popup.'
 
-export const PRIVY_ALTERNATIVES_H1 = 'Privy alternatives for embedded wallets'
+export const PRIVY_ALTERNATIVES_H1 = '5 Privy alternatives for embedded wallets'
 
 export const PRIVY_ALTERNATIVES_PUBLISHED = '2026-10-11'
 
-export const PRIVY_ALTERNATIVES_MODIFIED = '2026-10-20'
+export const PRIVY_ALTERNATIVES_MODIFIED = '2026-10-23'
 
 export const PRIVY_ALTERNATIVES_CRUMB = 'Privy alternatives'
 
@@ -124,6 +124,16 @@ export const PRIVY_ALTERNATIVE_SECTIONS: AlternativeSection[] = [
 
 export function privyChooseThem(): string[] {
   return getCompetitor('privy')?.chooseThem ?? []
+}
+
+export function privyAlternativesItemList() {
+  return {
+    name: 'Privy alternatives',
+    items: PRIVY_ALTERNATIVE_SECTIONS.map((section) => ({
+      name: section.name,
+      path: section.href,
+    })),
+  }
 }
 
 export const PRIVY_WHY_LOOK = [

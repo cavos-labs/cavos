@@ -98,6 +98,7 @@ import {
   PRIVY_ALTERNATIVES_TITLE,
   PRIVY_HOW_TO_CHOOSE,
   PRIVY_WHY_LOOK,
+  privyAlternativesItemList,
 } from './privy-alternatives'
 
 const PRODUCT_LIKE_TYPES = new Set(['Product', 'SoftwareApplication'])
@@ -534,14 +535,18 @@ describe('marketing SEO', () => {
     assert.equal(PRIVY_ALTERNATIVES_TITLE.includes('| Cavos'), false)
     assert.match(PRIVY_ALTERNATIVES_TITLE, /Privy Alternatives/)
     assert.match(PRIVY_ALTERNATIVES_TITLE, /2026/)
+    assert.match(PRIVY_ALTERNATIVES_TITLE, /5 Privy Alternatives/)
     assert.match(PRIVY_ALTERNATIVES_H1, /Privy alternatives/)
+    assert.match(PRIVY_ALTERNATIVES_H1, /5 Privy alternatives/)
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Shopify/)
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Privy alternatives/)
+    assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Cavos, Dynamic, Turnkey, Web3Auth, Magic/)
+    assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Starknet, Solana, Stellar/)
     const fullTitle = `${PRIVY_ALTERNATIVES_TITLE} | Cavos`
     assert.ok(fullTitle.length >= 50 && fullTitle.length <= 60, fullTitle)
     assert.ok(
       PRIVY_ALTERNATIVES_DESCRIPTION.length >= 140 &&
-        PRIVY_ALTERNATIVES_DESCRIPTION.length <= 160,
+        PRIVY_ALTERNATIVES_DESCRIPTION.length <= 155,
       String(PRIVY_ALTERNATIVES_DESCRIPTION.length),
     )
     assert.ok(PRIVY_ALTERNATIVES_FAQ.length >= 6 && PRIVY_ALTERNATIVES_FAQ.length <= 8)
@@ -562,7 +567,7 @@ describe('marketing SEO', () => {
       ],
     )
     assert.equal(PRIVY_ALTERNATIVES_PUBLISHED, '2026-10-11')
-    assert.equal(PRIVY_ALTERNATIVES_MODIFIED, '2026-10-20')
+    assert.equal(PRIVY_ALTERNATIVES_MODIFIED, '2026-10-23')
     assert.equal(PRIVY_ALTERNATIVES_CRUMB, 'Privy alternatives')
 
     const meta = marketingPageMetadata({
@@ -595,6 +600,7 @@ describe('marketing SEO', () => {
         { name: PRIVY_ALTERNATIVES_CRUMB, path: PRIVY_ALTERNATIVES_PATH },
       ],
       faq: [...PRIVY_ALTERNATIVES_FAQ],
+      itemList: privyAlternativesItemList(),
     })
     JSON.parse(JSON.stringify(jsonLd))
     assert.equal(jsonLd['@graph'][0]['@type'], 'Article')
@@ -603,6 +609,26 @@ describe('marketing SEO', () => {
     assert.equal(jsonLd['@graph'][1].itemListElement[2].name, 'Privy alternatives')
     assert.equal(jsonLd['@graph'][2]['@type'], 'FAQPage')
     assert.equal(jsonLd['@graph'][2].mainEntity.length, PRIVY_ALTERNATIVES_FAQ.length)
+    const alternativesList = jsonLd['@graph'].find(
+      (node: { '@type'?: string }) => node['@type'] === 'ItemList',
+    )
+    assert.ok(alternativesList)
+    assert.equal(alternativesList['@id'], 'https://cavos.xyz/privy-alternatives#itemlist')
+    assert.deepEqual(
+      alternativesList.itemListElement.map((item: { name: string; url: string; position: number }) => ({
+        position: item.position,
+        name: item.name,
+        url: item.url,
+      })),
+      [
+        { position: 1, name: 'Cavos', url: 'https://cavos.xyz/compare/privy' },
+        { position: 2, name: 'Dynamic', url: 'https://cavos.xyz/compare/dynamic' },
+        { position: 3, name: 'Turnkey', url: 'https://cavos.xyz/compare/turnkey' },
+        { position: 4, name: 'Web3Auth', url: 'https://cavos.xyz/compare/web3auth' },
+        { position: 5, name: 'Magic', url: 'https://cavos.xyz/compare/magic' },
+      ],
+    )
+    assert.doesNotMatch(JSON.stringify(jsonLd), /"@type":"Product"/)
 
     const pageSource = fs.readFileSync(
       path.join(process.cwd(), 'app/privy-alternatives/page.tsx'),
@@ -613,10 +639,15 @@ describe('marketing SEO', () => {
       'utf8',
     )
     assert.match(pageSource, /guidePageJsonLd/)
+    assert.match(pageSource, /privyAlternativesItemList/)
     assert.match(pageSource, /embeddedWalletProviderRows/)
     assert.match(pageSource, /Why teams look for a Privy alternative/)
     assert.match(pageSource, /How to choose a Privy alternative/)
     assert.match(pageSource, /relatedLinks/)
+    assert.match(
+      pageSource,
+      /Cavos, Dynamic, Turnkey, Web3Auth, and Magic are the five Privy/,
+    )
     assert.equal((pageSource.match(/<h1[\s>]/g) ?? []).length, 1)
 
     const cavos = PRIVY_ALTERNATIVE_SECTIONS[0]
