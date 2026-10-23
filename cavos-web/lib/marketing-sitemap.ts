@@ -49,7 +49,7 @@ export const SITEMAP_LASTMOD_FALLBACK: Record<string, string> = {
   '/stats': '2026-10-09',
   '/contact-sales': '2026-10-09',
   '/about': '2026-10-12',
-  '/blog': '2026-10-22',
+  '/blog': '2026-10-23',
   '/privacy': '2026-10-09',
   '/dpa': '2026-10-09',
   '/user-privacy': '2026-10-13',

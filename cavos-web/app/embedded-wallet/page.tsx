@@ -30,6 +30,8 @@ import {
     PRIVY_VS_TURNKEY_PATH,
     PRIVY_VS_TURNKEY_TITLE,
     STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
+    WALLET_AS_A_SERVICE_PATH,
+    WALLET_AS_A_SERVICE_TITLE,
 } from '@/lib/embedded-wallet-guide'
 import { guidePageJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
 
@@ -683,10 +685,17 @@ export default function EmbeddedWalletGuidePage() {
                         Related guides
                     </h2>
                     <p className="mt-5 text-sm leading-relaxed text-muted">
-                        The pillar is the category. These pages are the API, self-custody,
-                        the install, and the comparisons.
+                        The pillar is the category. These pages are the platform,
+                        the API, self-custody, the install, and the comparisons.
                     </p>
                     <ul className="mt-6 list-disc space-y-3 pl-5 text-sm leading-relaxed text-muted">
+                        <li>
+                            <Link href={WALLET_AS_A_SERVICE_PATH} className={linkClass}>
+                                {WALLET_AS_A_SERVICE_TITLE}
+                            </Link>
+                            {' — '}auth, keys, signing, gas, recovery, pricing, and
+                            build versus buy.
+                        </li>
                         <li>
                             <Link href={EMBEDDED_WALLET_API_PATH} className={linkClass}>
                                 {EMBEDDED_WALLET_API_TITLE}
