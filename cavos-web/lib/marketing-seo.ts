@@ -209,6 +209,17 @@ export type GuideHowTo = {
   steps: readonly GuideHowToStep[]
 }
 
+export type GuideItemListItem = {
+  name: string
+  path?: string
+  description?: string
+}
+
+export type GuideItemList = {
+  name: string
+  items: readonly GuideItemListItem[]
+}
+
 /** Article + BreadcrumbList + FAQPage graph for a long-form marketing guide. */
 export function guidePageJsonLd(input: {
   title: string
@@ -219,6 +230,7 @@ export function guidePageJsonLd(input: {
   crumbs: BreadcrumbCrumb[]
   faq: GuideFaqItem[]
   howTo?: GuideHowTo
+  itemList?: GuideItemList
 }) {
   const url = pageUrl(input.path)
   const datePublished = input.datePublished
@@ -275,6 +287,21 @@ export function guidePageJsonLd(input: {
         name: step.name,
         text: step.text,
         ...(step.url ? { url: step.url } : {}),
+      })),
+    })
+  }
+
+  if (input.itemList && input.itemList.items.length > 0) {
+    graph.push({
+      '@type': 'ItemList',
+      '@id': `${url}#itemlist`,
+      name: input.itemList.name,
+      itemListElement: input.itemList.items.map((item, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: item.name,
+        ...(item.path ? { url: pageUrl(item.path) } : {}),
+        ...(item.description ? { description: item.description } : {}),
       })),
     })
   }

@@ -21,6 +21,7 @@ import {
     PRIVY_ALTERNATIVES_TITLE,
     PRIVY_HOW_TO_CHOOSE,
     PRIVY_WHY_LOOK,
+    privyAlternativesItemList,
     privyChooseThem,
 } from '@/lib/privy-alternatives'
 
@@ -51,6 +52,7 @@ export default function PrivyAlternativesPage() {
             { name: PRIVY_ALTERNATIVES_CRUMB, path: PRIVY_ALTERNATIVES_PATH },
         ],
         faq: [...PRIVY_ALTERNATIVES_FAQ],
+        itemList: privyAlternativesItemList(),
     })
 
     return (
@@ -68,21 +70,12 @@ export default function PrivyAlternativesPage() {
                         {PRIVY_ALTERNATIVES_H1}
                     </h1>
                     <p className="mt-7 max-w-2xl text-lg leading-relaxed text-muted">
-                        This page is about Privy the{' '}
+                        Cavos, Dynamic, Turnkey, Web3Auth, and Magic are the five Privy
+                        alternatives compared here for an{' '}
                         <Link href="/embedded-wallet" className={linkClass}>
                             embedded wallet
                         </Link>{' '}
-                        and authentication provider, not the Shopify popup tool of the same
-                        name. Privy is widely adopted for embedded crypto wallets on EVM
-                        chains, with Solana coverage and external wallet connection. Teams
-                        searching for Privy alternatives are usually comparing custody,
-                        native chain coverage, and whether they need a finished SDK or
-                        key-management infrastructure. If that last fork is the question,
-                        start with{' '}
-                        <Link href={PRIVY_VS_TURNKEY_PATH} className={linkClass}>
-                            Privy vs Turnkey
-                        </Link>
-                        .
+                        — not the Shopify popup of the same name.
                     </p>
                     <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
                         The sections below use the same facts as the{' '}
@@ -93,9 +86,13 @@ export default function PrivyAlternativesPage() {
                         <Link href="/pricing" className={linkClass}>
                             pricing page
                         </Link>
-                        ; other vendors set theirs independently. Migration is a project, not
-                        a config change: wallet addresses are derived differently, so
-                        accounts do not transfer automatically.
+                        ; other vendors set theirs independently. If the question is a
+                        finished SDK versus key-management infrastructure, start with{' '}
+                        <Link href={PRIVY_VS_TURNKEY_PATH} className={linkClass}>
+                            Privy vs Turnkey
+                        </Link>
+                        . Migration is a project, not a config change: wallet addresses are
+                        derived differently, so accounts do not transfer automatically.
                     </p>
                 </header>
 
