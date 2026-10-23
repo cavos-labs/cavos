@@ -8,36 +8,18 @@ const HeroOrbCanvas = dynamic(
     { ssr: false },
 )
 
-function glowStyle(mobile: boolean): { background: string } {
-    return {
-        background: mobile
-            ? 'radial-gradient(70% 38% at 74% 4%, rgba(64,42,255,0.30) 0%, rgba(64,42,255,0.14) 46%, rgba(255,255,255,0) 78%)'
-            : 'radial-gradient(70% 100% at 100% 50%, rgba(64,42,255,0.32) 0%, rgba(64,42,255,0.15) 38%, rgba(255,255,255,0) 66%)',
-    }
-}
+const GLOW_MOBILE =
+    'radial-gradient(70% 38% at 74% 4%, rgba(64,42,255,0.30) 0%, rgba(64,42,255,0.14) 46%, rgba(255,255,255,0) 78%)'
+const GLOW_DESKTOP =
+    'radial-gradient(70% 100% at 100% 50%, rgba(64,42,255,0.32) 0%, rgba(64,42,255,0.15) 38%, rgba(255,255,255,0) 66%)'
+const FADE_MOBILE =
+    'linear-gradient(to bottom, rgba(255,255,255,0) 24%, rgba(255,255,255,0.75) 46%, #FFFFFF 60%)'
+const FADE_DESKTOP =
+    'linear-gradient(100deg, #FFFFFF 0%, rgba(255,255,255,0.95) 30%, rgba(255,255,255,0.5) 52%, rgba(255,255,255,0) 70%)'
 
-function fadeStyle(mobile: boolean): { background: string } {
-    return {
-        background: mobile
-            ? 'linear-gradient(to bottom, rgba(255,255,255,0) 24%, rgba(255,255,255,0.75) 46%, #FFFFFF 60%)'
-            : 'linear-gradient(100deg, #FFFFFF 0%, rgba(255,255,255,0.95) 30%, rgba(255,255,255,0.5) 52%, rgba(255,255,255,0) 70%)',
-    }
-}
-
-/**
- * Static indigo orb that matches the 3D composition (right-weighted on
- * desktop, top-right on mobile) so LCP can be the hero text. The WebGL
- * scene replaces it after first paint.
- */
-function HeroOrbPoster({ mobile }: { mobile: boolean }) {
+function SilkOrb({ className }: { className: string }) {
     return (
-        <div
-            className={
-                mobile
-                    ? 'absolute -top-[8vh] -right-[18vw] h-[min(92vw,34rem)] w-[min(92vw,34rem)]'
-                    : 'absolute top-1/2 -right-[16vw] h-[min(72vw,52rem)] w-[min(72vw,52rem)] -translate-y-1/2'
-            }
-        >
+        <div className={className}>
             <div
                 className="absolute inset-0 rounded-full"
                 style={{
@@ -54,6 +36,20 @@ function HeroOrbPoster({ mobile }: { mobile: boolean }) {
                 }}
             />
         </div>
+    )
+}
+
+/**
+ * Static indigo orb that matches the 3D composition (right-weighted on
+ * desktop, top-right on mobile) so LCP can be the hero text. Positions are
+ * CSS breakpoints — a JS mobile flag would flip the blob after hydrate.
+ */
+function HeroOrbPoster() {
+    return (
+        <>
+            <SilkOrb className="absolute -top-[8vh] -right-[18vw] h-[min(92vw,34rem)] w-[min(92vw,34rem)] md:hidden" />
+            <SilkOrb className="absolute top-1/2 -right-[16vw] hidden h-[min(72vw,52rem)] w-[min(72vw,52rem)] -translate-y-1/2 md:block" />
+        </>
     )
 }
 
@@ -156,12 +152,16 @@ export function HeroOrb({ fixed = false }: { fixed?: boolean }) {
             aria-hidden="true"
             className={`${fixed ? 'fixed' : 'absolute'} top-0 left-0 w-screen h-screen overflow-hidden pointer-events-none -z-10 bg-white`}
         >
-            <div className="absolute inset-0" style={glowStyle(mobile)} />
-            {showPoster ? <HeroOrbPoster mobile={mobile} /> : null}
+            <div className="absolute inset-0 md:hidden" style={{ background: GLOW_MOBILE }} />
+            <div className="absolute inset-0 hidden md:block" style={{ background: GLOW_DESKTOP }} />
+            <div className={showPoster ? 'absolute inset-0' : 'invisible absolute inset-0'}>
+                <HeroOrbPoster />
+            </div>
             {loadCanvas && !reducedMotion ? (
                 <HeroOrbCanvas playing={playing} mobile={mobile} onReady={() => setCanvasReady(true)} />
             ) : null}
-            <div className="absolute inset-0" style={fadeStyle(mobile)} />
+            <div className="absolute inset-0 md:hidden" style={{ background: FADE_MOBILE }} />
+            <div className="absolute inset-0 hidden md:block" style={{ background: FADE_DESKTOP }} />
         </div>
     )
 }
