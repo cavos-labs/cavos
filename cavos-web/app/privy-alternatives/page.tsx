@@ -261,8 +261,15 @@ export default function PrivyAlternativesPage() {
                     </ol>
                     <p className="mt-5 text-sm leading-relaxed text-muted">
                         Worked one-to-one comparisons live on the compare pages. For the
-                        category itself — what an embedded wallet is, and how extension,
-                        MPC, and device-native models differ — start with the pillar guide.
+                        category itself — what an embedded wallet is, and how{' '}
+                        <Link href="/blog/embedded-wallet-vs-browser-extension" className={linkClass}>
+                            embedded wallets vs browser extensions
+                        </Link>
+                        , MPC, and device-native models differ — start with the{' '}
+                        <Link href="/embedded-wallet" className={linkClass}>
+                            pillar guide
+                        </Link>
+                        .
                     </p>
                 </section>
 

@@ -95,6 +95,7 @@ export default function TermsPage() {
                         <li><Link href="/privacy" className="underline underline-offset-2 hover:text-black transition-colors">Privacy Policy</Link></li>
                         <li><Link href="/dpa" className="underline underline-offset-2 hover:text-black transition-colors">Data Processing Agreement</Link> (incorporated when you create an account)</li>
                         <li><Link href="/user-terms" className="underline underline-offset-2 hover:text-black transition-colors">End-User Terms</Link> (for people who use a wallet inside an application that integrates Cavos)</li>
+                        <li><Link href="/user-privacy" className="underline underline-offset-2 hover:text-black transition-colors">End-User Privacy Policy</Link> (for people who use a wallet inside an application that integrates Cavos)</li>
                     </ul>
                     <p>
                         By creating an account, clicking to accept, or using the Services, you agree to these Terms.
