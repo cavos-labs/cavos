@@ -341,6 +341,20 @@ export default function EmbeddedStellarWalletPage() {
                         >
                             How to add an embedded Stellar wallet
                         </Link>
+                        . The method-level surface is the{' '}
+                        <Link
+                            href="/blog/embedded-wallet-api"
+                            className={MARKETING_PROSE_LINK}
+                        >
+                            embedded wallet API
+                        </Link>
+                        . Platform parts and pricing models are in{' '}
+                        <Link
+                            href="/blog/wallet-as-a-service"
+                            className={MARKETING_PROSE_LINK}
+                        >
+                            wallet-as-a-service
+                        </Link>
                         .
                     </p>
                     <div className="mt-6 overflow-x-auto rounded-xl border border-line bg-[#1a1a1a] p-5 text-sm">

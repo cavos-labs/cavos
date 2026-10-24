@@ -19,7 +19,7 @@ faq:
     answer: "Recovery is how a new device restores the means to sign. In Cavos that is a restore of the MasterDEK, not an on-chain device list. After login, enrollPasskeyDefault() stores an encrypted DEK copy under a passkey. Opt-in hardware-isolated social recovery unwraps the same DEK when the user signs in again. There is no on-chain social recovery and no on-chain device signers."
 ---
 
-An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain account they can pay, receive, and sign with — no browser extension, no seed phrase, no trip to another app.
+An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain account they can pay, receive, and sign with — no [browser extension](/blog/embedded-wallet-vs-browser-extension), no seed phrase, no trip to another app.
 
 The **embedded wallet API** is the developer surface that does that job. This guide is the docs-style map: what those APIs cover, what to evaluate before you pick one, and how Cavos exposes the same contract in `@cavos/kit` 0.4.4. The [React integration](/blog/how-to-add-an-embedded-wallet) is the install. The [non-custodial guide](/blog/non-custodial-embedded-wallet) is the custody test. The [providers comparison](/blog/embedded-wallet-providers) is the shortlist. Adapters ship today for [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), and [Stellar](/embedded-stellar-wallet).
 
@@ -201,6 +201,8 @@ The kit documents four paths: another signed-in device, a passkey, a recovery co
 - [Non-custodial embedded wallets](/blog/non-custodial-embedded-wallet) — who can sign, key models, and how to verify a vendor’s claim.
 - [How to add an embedded wallet to a React app](/blog/how-to-add-an-embedded-wallet) — `CavosProvider`, first sponsored transaction.
 - [Embedded wallet providers compared](/blog/embedded-wallet-providers) — pricing, chains, and key models.
+- [Embedded wallet vs browser extension](/blog/embedded-wallet-vs-browser-extension) — where users should sign.
+- [How to add an embedded Stellar wallet](/blog/stellar-embedded-wallet-tutorial) — social login, the G… before create, first sponsored execute.
 - Chain pages: [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), [Stellar](/embedded-stellar-wallet).
 - [Quickstart](https://docs.cavos.xyz/docs/quickstart), [React](https://docs.cavos.xyz/docs/react), and [API reference](https://docs.cavos.xyz/docs/api-reference).
 - [Pricing](/pricing) for the free 1,000 creates and paid recovery options.

@@ -248,7 +248,16 @@ export default function CustodyPage() {
                             self-custodial embedded wallet
                         </Link>{' '}
                         is the design where you cannot move the funds. The figures are in the
-                        table. The statutes are under it.
+                        table. The statutes are under it. The engineering test — who can
+                        sign, and how to verify a vendor&apos;s claim — is the{' '}
+                        <Link href="/blog/non-custodial-embedded-wallet" className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
+                            non-custodial embedded wallet
+                        </Link>{' '}
+                        guide. Platform parts and pricing models are in{' '}
+                        <Link href="/blog/wallet-as-a-service" className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
+                            wallet-as-a-service
+                        </Link>
+                        .
                     </p>
                 </header>
 

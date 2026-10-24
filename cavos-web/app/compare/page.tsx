@@ -4,8 +4,11 @@ import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { COMPETITORS } from '@/lib/compare-data'
 import {
+    EMBEDDED_WALLET_API_PATH,
     EMBEDDED_WALLET_PROVIDERS_PATH,
     EMBEDDED_WALLET_PROVIDERS_TITLE,
+    EMBEDDED_WALLET_VS_EXTENSION_PATH,
+    WALLET_AS_A_SERVICE_PATH,
 } from '@/lib/embedded-wallet-guide'
 import { compareIndexJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
 
@@ -176,6 +179,28 @@ export default function ComparePage() {
                             className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
                         >
                             {EMBEDDED_WALLET_PROVIDERS_TITLE}
+                        </Link>
+                        . The product-shape fork — when users should sign in an{' '}
+                        <Link
+                            href={EMBEDDED_WALLET_VS_EXTENSION_PATH}
+                            className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                        >
+                            embedded wallet vs a browser extension
+                        </Link>
+                        {' — '}is a separate guide. Platform parts and pricing models
+                        are in{' '}
+                        <Link
+                            href={WALLET_AS_A_SERVICE_PATH}
+                            className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                        >
+                            wallet-as-a-service
+                        </Link>
+                        . The method-level surface is the{' '}
+                        <Link
+                            href={EMBEDDED_WALLET_API_PATH}
+                            className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                        >
+                            embedded wallet API
                         </Link>
                         .
                     </p>

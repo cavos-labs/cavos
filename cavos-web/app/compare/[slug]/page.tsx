@@ -4,7 +4,13 @@ import { notFound } from 'next/navigation'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { COMPETITORS, getCompetitor } from '@/lib/compare-data'
-import { PRIVY_VS_TURNKEY_PATH } from '@/lib/embedded-wallet-guide'
+import {
+    EMBEDDED_WALLET_API_PATH,
+    EMBEDDED_WALLET_INTEGRATION_PATH,
+    EMBEDDED_WALLET_PROVIDERS_PATH,
+    PRIVY_VS_TURNKEY_PATH,
+    WALLET_AS_A_SERVICE_PATH,
+} from '@/lib/embedded-wallet-guide'
 import { compareCompetitorPageJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
 
 const linkClass =
@@ -99,6 +105,22 @@ export default async function ComparisonPage({
                         actually does — start with{' '}
                         <Link href="/embedded-wallet" className={linkClass}>
                             how embedded wallets work
+                        </Link>
+                        . The named-vendor table is{' '}
+                        <Link href={EMBEDDED_WALLET_PROVIDERS_PATH} className={linkClass}>
+                            embedded wallet providers
+                        </Link>
+                        . Platform parts and pricing models are in{' '}
+                        <Link href={WALLET_AS_A_SERVICE_PATH} className={linkClass}>
+                            wallet-as-a-service
+                        </Link>
+                        . The method-level surface is the{' '}
+                        <Link href={EMBEDDED_WALLET_API_PATH} className={linkClass}>
+                            embedded wallet API
+                        </Link>
+                        . The React install is{' '}
+                        <Link href={EMBEDDED_WALLET_INTEGRATION_PATH} className={linkClass}>
+                            how to add an embedded wallet
                         </Link>
                         .
                     </p>

@@ -55,7 +55,8 @@ export default function UserTermsPage() {
                         <Link href="/terms" className="underline underline-offset-2 hover:text-black transition-colors">Terms of Service</Link>{' '}
                         and{' '}
                         <Link href="/dpa" className="underline underline-offset-2 hover:text-black transition-colors">DPA</Link>{' '}
-                        apply to you instead.
+                        apply to you instead. How Cavos handles your personal data is in the{' '}
+                        <Link href="/user-privacy" className="underline underline-offset-2 hover:text-black transition-colors">End-User Privacy Policy</Link>.
                     </p>
                 </div>
 

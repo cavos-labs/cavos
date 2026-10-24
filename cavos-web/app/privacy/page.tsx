@@ -110,7 +110,9 @@ export default function PrivacyPage() {
                         </p>
                         <p>
                             For personal data of <strong className="text-black/80">your application&rsquo;s end users</strong> that is processed through the Services, Cavos, LLC acts as a <strong className="text-black/80">Data Processor</strong> under GDPR. You are the <strong className="text-black/80">Data Controller</strong> for that data. You must obtain appropriate consent from your end users and publish your own privacy policy covering your use of Cavos. Processing of that data is further described in the{' '}
-                            <Link href="/dpa" className="underline underline-offset-2 hover:text-black transition-colors">Data Processing Agreement</Link>.
+                            <Link href="/dpa" className="underline underline-offset-2 hover:text-black transition-colors">Data Processing Agreement</Link>
+                            . What Cavos itself collects from those end users is in the{' '}
+                            <Link href="/user-privacy" className="underline underline-offset-2 hover:text-black transition-colors">End-User Privacy Policy</Link>.
                         </p>
                         <p>
                             For <strong className="text-black/80">your</strong> account, billing, and dashboard data, Cavos, LLC determines the purposes and means of processing as described below.

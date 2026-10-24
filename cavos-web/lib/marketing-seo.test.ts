@@ -701,6 +701,8 @@ describe('marketing SEO', () => {
         '/embedded-solana-wallet',
         '/embedded-stellar-wallet',
         '/blog/how-to-add-an-embedded-wallet',
+        '/blog/embedded-wallet-api',
+        '/blog/non-custodial-embedded-wallet',
         '/blog/embedded-wallet-providers',
         '/blog/wallet-as-a-service',
       ],
@@ -727,6 +729,12 @@ describe('marketing SEO', () => {
     assert.deepEqual(
       (turnkey.relatedLinks ?? []).map((link) => link.href),
       [PRIVY_VS_TURNKEY_PATH],
+    )
+    const dynamic = PRIVY_ALTERNATIVE_SECTIONS.find((section) => section.name === 'Dynamic')
+    assert.ok(dynamic)
+    assert.deepEqual(
+      (dynamic.relatedLinks ?? []).map((link) => link.href),
+      [EMBEDDED_WALLET_VS_EXTENSION_PATH],
     )
 
     const privy = getCompetitor('privy')
@@ -965,6 +973,52 @@ describe('marketing SEO', () => {
       )
     }
     assert.match(footer, /hover:text-black transition-colors/)
+    const legal = [
+      ['/terms', 'Terms of Service'],
+      ['/privacy', 'Privacy Policy'],
+      ['/dpa', 'Data Processing Agreement'],
+      ['/user-terms', 'End-User Terms'],
+      ['/user-privacy', 'End-User Privacy Policy'],
+    ] as const
+    for (const [href, label] of legal) {
+      assert.match(
+        footer,
+        new RegExp(`href="${href}"[^>]*>${label}<`),
+        `footer missing ${label} -> ${href}`,
+      )
+    }
+  })
+
+  it('gives each blog guide at least three crawlable inlinks and un-orphans legal pages', () => {
+    const guides = [
+      EMBEDDED_WALLET_API_PATH,
+      EMBEDDED_WALLET_PROVIDERS_PATH,
+      EMBEDDED_WALLET_VS_EXTENSION_PATH,
+      EMBEDDED_WALLET_INTEGRATION_PATH,
+      NON_CUSTODIAL_EMBEDDED_WALLET_PATH,
+      PRIVY_VS_TURNKEY_PATH,
+      STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
+      WALLET_AS_A_SERVICE_PATH,
+    ]
+    for (const href of guides) {
+      const sources = marketingInlinkSources(href)
+      assert.ok(
+        sources.length >= 3,
+        `${href} has ${sources.length} inlinks: ${sources.join(', ')}`,
+      )
+    }
+    for (const href of ['/privacy', '/dpa', '/user-privacy', '/user-terms']) {
+      const sources = marketingInlinkSources(href)
+      assert.ok(
+        sources.length >= 1,
+        `${href} has no crawlable internal inlink`,
+      )
+    }
+    assert.ok(marketingInlinkSources(WALLET_AS_A_SERVICE_PATH).includes('app/embedded-wallet/page.tsx'))
+    const waasSiblings = marketingInlinkSources(WALLET_AS_A_SERVICE_PATH).filter((file) =>
+      file.startsWith('content/blog/') && file !== 'content/blog/wallet-as-a-service.mdx',
+    )
+    assert.ok(waasSiblings.length >= 2, `WaaS sibling inlinks: ${waasSiblings.join(', ')}`)
   })
 
   it('puts a non-footer in-text link to /embedded-wallet on ranking pages', () => {
@@ -1806,6 +1860,8 @@ describe('marketing SEO', () => {
         `${chain.name} missing embedded wallet hub link`,
       )
       assert.match(source, /href=["']\/blog\/how-to-add-an-embedded-wallet["']/)
+      assert.match(source, /href=["']\/blog\/embedded-wallet-api["']/)
+      assert.match(source, /href=["']\/blog\/wallet-as-a-service["']/)
       assert.match(source, /href=["']\/compare["']/)
       assert.match(source, /href=["']\/pricing["']/)
       for (const href of chain.otherChains) {
@@ -2108,4 +2164,79 @@ describe('marketing SEO', () => {
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+const GUIDE_PATH_CONSTANTS: Record<string, string> = {
+  EMBEDDED_WALLET_INTEGRATION_PATH: '/blog/how-to-add-an-embedded-wallet',
+  EMBEDDED_WALLET_VS_EXTENSION_PATH: '/blog/embedded-wallet-vs-browser-extension',
+  STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH: '/blog/stellar-embedded-wallet-tutorial',
+  EMBEDDED_WALLET_PROVIDERS_PATH: '/blog/embedded-wallet-providers',
+  PRIVY_VS_TURNKEY_PATH: '/blog/privy-vs-turnkey',
+  EMBEDDED_WALLET_API_PATH: '/blog/embedded-wallet-api',
+  NON_CUSTODIAL_EMBEDDED_WALLET_PATH: '/blog/non-custodial-embedded-wallet',
+  WALLET_AS_A_SERVICE_PATH: '/blog/wallet-as-a-service',
+}
+
+const SELF_PAGE_FOR_HREF: Record<string, string> = {
+  '/blog/embedded-wallet-api': 'content/blog/embedded-wallet-api.mdx',
+  '/blog/embedded-wallet-providers': 'content/blog/embedded-wallet-providers.mdx',
+  '/blog/embedded-wallet-vs-browser-extension':
+    'content/blog/embedded-wallet-vs-browser-extension.mdx',
+  '/blog/how-to-add-an-embedded-wallet': 'content/blog/how-to-add-an-embedded-wallet.mdx',
+  '/blog/non-custodial-embedded-wallet': 'content/blog/non-custodial-embedded-wallet.mdx',
+  '/blog/privy-vs-turnkey': 'content/blog/privy-vs-turnkey.mdx',
+  '/blog/stellar-embedded-wallet-tutorial': 'content/blog/stellar-embedded-wallet-tutorial.mdx',
+  '/blog/wallet-as-a-service': 'content/blog/wallet-as-a-service.mdx',
+  '/privacy': 'app/privacy/page.tsx',
+  '/dpa': 'app/dpa/page.tsx',
+  '/user-privacy': 'app/user-privacy/page.tsx',
+  '/user-terms': 'app/user-terms/page.tsx',
+}
+
+function marketingInlinkSources(target: string): string[] {
+  const skipDir = new Set(['node_modules', '.next', 'dashboard', 'api'])
+  const sources: string[] = []
+  const stack = [process.cwd()]
+  while (stack.length > 0) {
+    const dir = stack.pop() as string
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name)
+      if (entry.isDirectory()) {
+        if (!skipDir.has(entry.name)) stack.push(full)
+        continue
+      }
+      if (!/\.(tsx|ts|mdx)$/.test(entry.name)) continue
+      if (entry.name.endsWith('.test.ts') || entry.name.endsWith('.test.tsx')) continue
+      if (
+        ['marketing-sitemap.ts', 'marketing-seo.ts', 'sitemap.ts', 'robots.ts'].includes(
+          entry.name,
+        )
+      ) {
+        continue
+      }
+      const relative = path.relative(process.cwd(), full)
+      if (SELF_PAGE_FOR_HREF[target] === relative) continue
+      const text = fs.readFileSync(full, 'utf8')
+      if (fileLinksTo(text, target)) sources.push(relative)
+    }
+  }
+  return sources.sort()
+}
+
+function fileLinksTo(text: string, target: string): boolean {
+  const escaped = escapeRegExp(target)
+  const literals = [
+    new RegExp(`href=["']${escaped}["']`),
+    new RegExp(`href=\\{["']${escaped}["']\\}`),
+    new RegExp(`\\]\\(${escaped}\\)`),
+    new RegExp(`href:\\s*["']${escaped}["']`),
+  ]
+  if (literals.some((pattern) => pattern.test(text))) return true
+  for (const [constant, href] of Object.entries(GUIDE_PATH_CONSTANTS)) {
+    if (href !== target) continue
+    if (new RegExp(`href=\\{${constant}\\}`).test(text)) return true
+    if (new RegExp(`href:\\s*${constant}`).test(text)) return true
+    if (new RegExp(`href=\\{[^}]*${constant}`).test(text)) return true
+  }
+  return false
 }

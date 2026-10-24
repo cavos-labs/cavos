@@ -62,6 +62,7 @@ export function Footer() {
                         <li><Link href="/privacy" className="hover:text-black transition-colors">Privacy Policy</Link></li>
                         <li><Link href="/dpa" className="hover:text-black transition-colors">Data Processing Agreement</Link></li>
                         <li><Link href="/user-terms" className="hover:text-black transition-colors">End-User Terms</Link></li>
+                        <li><Link href="/user-privacy" className="hover:text-black transition-colors">End-User Privacy Policy</Link></li>
                     </ul>
                 </div>
             </div>

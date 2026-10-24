@@ -1,8 +1,14 @@
 import {
+  EMBEDDED_WALLET_API_PATH,
+  EMBEDDED_WALLET_API_TITLE,
   EMBEDDED_WALLET_INTEGRATION_PATH,
   EMBEDDED_WALLET_INTEGRATION_TITLE,
   EMBEDDED_WALLET_PROVIDERS_PATH,
   EMBEDDED_WALLET_PROVIDERS_TITLE,
+  EMBEDDED_WALLET_VS_EXTENSION_PATH,
+  EMBEDDED_WALLET_VS_EXTENSION_TITLE,
+  NON_CUSTODIAL_EMBEDDED_WALLET_PATH,
+  NON_CUSTODIAL_EMBEDDED_WALLET_TITLE,
   PRIVY_VS_TURNKEY_PATH,
   PRIVY_VS_TURNKEY_TITLE,
   WALLET_AS_A_SERVICE_PATH,
@@ -61,6 +67,14 @@ export const PRIVY_ALTERNATIVE_SECTIONS: AlternativeSection[] = [
         label: EMBEDDED_WALLET_INTEGRATION_TITLE,
       },
       {
+        href: EMBEDDED_WALLET_API_PATH,
+        label: EMBEDDED_WALLET_API_TITLE,
+      },
+      {
+        href: NON_CUSTODIAL_EMBEDDED_WALLET_PATH,
+        label: NON_CUSTODIAL_EMBEDDED_WALLET_TITLE,
+      },
+      {
         href: EMBEDDED_WALLET_PROVIDERS_PATH,
         label: EMBEDDED_WALLET_PROVIDERS_TITLE,
       },
@@ -80,6 +94,12 @@ export const PRIVY_ALTERNATIVE_SECTIONS: AlternativeSection[] = [
       'Fireblocks acquired Dynamic in 2025. That is a vendor-risk and custody-stack input, not a reason to treat the products as interchangeable. Dynamic’s public Growth plan is $249/mo for up to 5,000 monthly active users, then $0.05 per extra MAU. A sandbox is available for integration testing before live mode.',
     ],
     chooseWhen: getCompetitor('dynamic')?.chooseThem ?? [],
+    relatedLinks: [
+      {
+        href: EMBEDDED_WALLET_VS_EXTENSION_PATH,
+        label: EMBEDDED_WALLET_VS_EXTENSION_TITLE,
+      },
+    ],
   },
   {
     name: 'Turnkey',
