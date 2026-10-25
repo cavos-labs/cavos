@@ -185,6 +185,7 @@ describe('marketing sitemap', () => {
     assert.equal(isBlogPostNoindex('how-to-add-an-embedded-wallet'), false)
     assert.equal(isBlogPostNoindex('embedded-wallet-vs-browser-extension'), false)
     assert.equal(isBlogPostNoindex('stellar-embedded-wallet-tutorial'), false)
+    assert.equal(isBlogPostNoindex('gasless-starknet-transactions'), false)
     assert.equal(isBlogPostNoindex('embedded-wallet-providers'), false)
     assert.equal(isBlogPostNoindex('privy-vs-turnkey'), false)
     assert.equal(isBlogPostNoindex('embedded-wallet-api'), false)
@@ -233,7 +234,7 @@ Hello
   })
 
   it('keeps the indexable marketing URLs including the React integration guide', () => {
-    assert.equal(entries.length, 31)
+    assert.equal(entries.length, 32)
     assert.ok(
       urls.includes(`${MARKETING_ORIGIN}/blog/how-to-add-an-embedded-wallet`),
     )
@@ -246,6 +247,9 @@ Hello
       urls.includes(
         `${MARKETING_ORIGIN}/blog/stellar-embedded-wallet-tutorial`,
       ),
+    )
+    assert.ok(
+      urls.includes(`${MARKETING_ORIGIN}/blog/gasless-starknet-transactions`),
     )
     assert.ok(
       urls.includes(`${MARKETING_ORIGIN}/blog/embedded-wallet-providers`),

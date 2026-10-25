@@ -292,12 +292,20 @@ export default function EmbeddedStarknetWalletPage() {
                         <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
                             appSalt
                         </code>{' '}
-                        after users exist. The React walkthrough lives in{' '}
+                        after users exist.                         The React walkthrough lives in{' '}
                         <Link
                             href="/blog/how-to-add-an-embedded-wallet"
                             className={MARKETING_PROSE_LINK}
                         >
                             How to add an embedded wallet
+                        </Link>
+                        . The Starknet-only path — paymaster-sponsored deploy and
+                        execute from an embedded wallet — is in{' '}
+                        <Link
+                            href="/blog/gasless-starknet-transactions"
+                            className={MARKETING_PROSE_LINK}
+                        >
+                            How to send gasless Starknet transactions
                         </Link>
                         . The method-level surface — auth, connect, execute, gas,
                         recovery — is the{' '}

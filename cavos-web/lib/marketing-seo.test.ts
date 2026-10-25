@@ -80,6 +80,8 @@ import {
   PRIVY_VS_TURNKEY_TITLE,
   STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
   STELLAR_EMBEDDED_WALLET_TUTORIAL_TITLE,
+  GASLESS_STARKNET_TRANSACTIONS_PATH,
+  GASLESS_STARKNET_TRANSACTIONS_TITLE,
   WALLET_AS_A_SERVICE_PATH,
   WALLET_AS_A_SERVICE_TITLE,
 } from './embedded-wallet-guide'
@@ -998,6 +1000,7 @@ describe('marketing SEO', () => {
       NON_CUSTODIAL_EMBEDDED_WALLET_PATH,
       PRIVY_VS_TURNKEY_PATH,
       STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
+      GASLESS_STARKNET_TRANSACTIONS_PATH,
       WALLET_AS_A_SERVICE_PATH,
     ]
     for (const href of guides) {
@@ -1279,6 +1282,107 @@ describe('marketing SEO', () => {
     assert.equal(
       data['@graph'][0].mainEntityOfPage['@id'],
       'https://cavos.xyz/blog/stellar-embedded-wallet-tutorial',
+    )
+  })
+
+  it('indexes the gasless Starknet transactions guide as an Article with FAQ JSON-LD', () => {
+    const postPath = path.join(
+      process.cwd(),
+      'content/blog/gasless-starknet-transactions.mdx',
+    )
+    assert.equal(fs.existsSync(postPath), true)
+    const source = fs.readFileSync(postPath, 'utf8')
+    assert.match(source, /\[embedded wallet\]\(\/embedded-wallet\)/)
+    assert.match(source, /\]\(\/embedded-starknet-wallet\)/)
+    assert.match(source, /\]\(\/blog\/how-to-add-an-embedded-wallet\)/)
+    assert.match(source, /\]\(\/pricing\)/)
+    assert.match(source, /docs\.cavos\.xyz\/docs\/starknet/)
+    assert.match(source, /@cavos\/kit` 0\.4\.4/)
+    assert.match(source, /npm install @cavos\/kit/)
+    assert.match(source, /login\("google"\)/)
+    assert.match(source, /sendOtp/)
+    assert.match(source, /verifyOtp/)
+    assert.match(source, /paymasterApiKey/)
+    assert.match(source, /SNIP-29/)
+    assert.match(source, /fee: "self"/)
+    assert.match(source, /signMessage/)
+    assert.match(source, /Expo Go is not supported/)
+    assert.match(source, /audited OpenZeppelin account contract/)
+    assert.match(source, /AccountUpgradeable v3\.0\.0/)
+    assert.match(source, /cavos-stark-starknet-v1/)
+    assert.match(source, /grindKey/)
+    assert.match(source, /HKDF/)
+    assert.match(source, /MasterDEK/)
+    assert.match(source, /0x01d1777db36cdd06dd62cfde77b1b6ae06412af95d57a13dc40ac77b8a702381/)
+    assert.match(source, /no on-chain device-signer list/)
+    assert.match(source, /no on-chain social recovery/)
+    assert.doesNotMatch(source, /audited Cavos/)
+    assert.doesNotMatch(source, /session key|sessionKey|session-key/)
+    assert.doesNotMatch(source, /on-chain device approval/)
+    assert.doesNotMatch(source, /Horizon signer/)
+    assert.doesNotMatch(source, /category:\s*"Release"/)
+    assert.doesNotMatch(source, /This device must be approved first/)
+    assert.equal(
+      GASLESS_STARKNET_TRANSACTIONS_PATH,
+      '/blog/gasless-starknet-transactions',
+    )
+    assert.equal(
+      GASLESS_STARKNET_TRANSACTIONS_TITLE,
+      'How to Send Gasless Starknet Transactions',
+    )
+    assert.ok(GASLESS_STARKNET_TRANSACTIONS_TITLE.length <= 60)
+
+    const hub = fs.readFileSync(
+      path.join(process.cwd(), 'app/embedded-wallet/page.tsx'),
+      'utf8',
+    )
+    assert.match(hub, /GASLESS_STARKNET_TRANSACTIONS_PATH/)
+    assert.match(hub, /How to send gasless Starknet transactions/)
+
+    const starknetPage = fs.readFileSync(
+      path.join(process.cwd(), 'app/embedded-starknet-wallet/page.tsx'),
+      'utf8',
+    )
+    assert.match(
+      starknetPage,
+      /href=["']\/blog\/gasless-starknet-transactions["']/,
+    )
+
+    const data = blogPostJsonLd({
+      title: GASLESS_STARKNET_TRANSACTIONS_TITLE,
+      description:
+        'Install @cavos/kit, sign in with Google, Apple, or email, and send a paymaster-sponsored Starknet transaction.',
+      path: GASLESS_STARKNET_TRANSACTIONS_PATH,
+      datePublished: '2026-10-25',
+      type: 'Article',
+      faq: [
+        {
+          question: 'What are gasless Starknet transactions?',
+          answer:
+            'Invokes whose fee is paid by a paymaster instead of the user’s ETH or STRK.',
+        },
+      ],
+      crumbs: [
+        { name: 'Home', path: '/' },
+        { name: 'Blog', path: '/blog' },
+        {
+          name: GASLESS_STARKNET_TRANSACTIONS_TITLE,
+          path: GASLESS_STARKNET_TRANSACTIONS_PATH,
+        },
+      ],
+    })
+    const json = JSON.stringify(data)
+    JSON.parse(json)
+    assert.equal(data['@graph'][0]['@type'], 'Article')
+    assert.equal(data['@graph'][1]['@type'], 'BreadcrumbList')
+    assert.equal(data['@graph'][2]['@type'], 'FAQPage')
+    assert.equal(
+      data['@graph'][0].url,
+      'https://cavos.xyz/blog/gasless-starknet-transactions',
+    )
+    assert.equal(
+      data['@graph'][0].mainEntityOfPage['@id'],
+      'https://cavos.xyz/blog/gasless-starknet-transactions',
     )
   })
 
@@ -1795,6 +1899,7 @@ describe('marketing SEO', () => {
     assert.match(source, /EMBEDDED_WALLET_INTEGRATION_PATH/)
     assert.match(source, /EMBEDDED_WALLET_VS_EXTENSION_PATH/)
     assert.match(source, /STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH/)
+    assert.match(source, /GASLESS_STARKNET_TRANSACTIONS_PATH/)
     assert.match(source, /EMBEDDED_WALLET_PROVIDERS_PATH/)
     assert.match(source, /PRIVY_VS_TURNKEY_PATH/)
     assert.match(source, /EMBEDDED_WALLET_API_PATH/)
@@ -2170,6 +2275,7 @@ const GUIDE_PATH_CONSTANTS: Record<string, string> = {
   EMBEDDED_WALLET_INTEGRATION_PATH: '/blog/how-to-add-an-embedded-wallet',
   EMBEDDED_WALLET_VS_EXTENSION_PATH: '/blog/embedded-wallet-vs-browser-extension',
   STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH: '/blog/stellar-embedded-wallet-tutorial',
+  GASLESS_STARKNET_TRANSACTIONS_PATH: '/blog/gasless-starknet-transactions',
   EMBEDDED_WALLET_PROVIDERS_PATH: '/blog/embedded-wallet-providers',
   PRIVY_VS_TURNKEY_PATH: '/blog/privy-vs-turnkey',
   EMBEDDED_WALLET_API_PATH: '/blog/embedded-wallet-api',
@@ -2186,6 +2292,8 @@ const SELF_PAGE_FOR_HREF: Record<string, string> = {
   '/blog/non-custodial-embedded-wallet': 'content/blog/non-custodial-embedded-wallet.mdx',
   '/blog/privy-vs-turnkey': 'content/blog/privy-vs-turnkey.mdx',
   '/blog/stellar-embedded-wallet-tutorial': 'content/blog/stellar-embedded-wallet-tutorial.mdx',
+  '/blog/gasless-starknet-transactions':
+    'content/blog/gasless-starknet-transactions.mdx',
   '/blog/wallet-as-a-service': 'content/blog/wallet-as-a-service.mdx',
   '/privacy': 'app/privacy/page.tsx',
   '/dpa': 'app/dpa/page.tsx',
