@@ -28,6 +28,12 @@ export const STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH =
 export const STELLAR_EMBEDDED_WALLET_TUTORIAL_TITLE =
   'How to Add an Embedded Stellar Wallet to Your App'
 
+export const GASLESS_STARKNET_TRANSACTIONS_PATH =
+  '/blog/gasless-starknet-transactions'
+
+export const GASLESS_STARKNET_TRANSACTIONS_TITLE =
+  'How to Send Gasless Starknet Transactions'
+
 export const EMBEDDED_WALLET_PROVIDERS_PATH =
   '/blog/embedded-wallet-providers'
 

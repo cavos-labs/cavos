@@ -19,6 +19,8 @@ import {
   PRIVY_VS_TURNKEY_TITLE,
   STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
   STELLAR_EMBEDDED_WALLET_TUTORIAL_TITLE,
+  GASLESS_STARKNET_TRANSACTIONS_PATH,
+  GASLESS_STARKNET_TRANSACTIONS_TITLE,
   WALLET_AS_A_SERVICE_PATH,
   WALLET_AS_A_SERVICE_TITLE,
 } from '@/lib/embedded-wallet-guide';
@@ -75,6 +77,11 @@ const GUIDES = [
     href: STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
     title: STELLAR_EMBEDDED_WALLET_TUTORIAL_TITLE,
     body: 'Install @cavos/kit, sign in with Google, Apple, or email, and send a sponsored Stellar payment.',
+  },
+  {
+    href: GASLESS_STARKNET_TRANSACTIONS_PATH,
+    title: GASLESS_STARKNET_TRANSACTIONS_TITLE,
+    body: 'Install @cavos/kit, sign in with Google, Apple, or email, and send a paymaster-sponsored Starknet transaction.',
   },
   {
     href: '/compare',

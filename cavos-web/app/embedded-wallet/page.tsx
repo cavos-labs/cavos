@@ -30,6 +30,7 @@ import {
     PRIVY_VS_TURNKEY_PATH,
     PRIVY_VS_TURNKEY_TITLE,
     STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
+    GASLESS_STARKNET_TRANSACTIONS_PATH,
     WALLET_AS_A_SERVICE_PATH,
     WALLET_AS_A_SERVICE_TITLE,
 } from '@/lib/embedded-wallet-guide'
@@ -409,6 +410,14 @@ export default function EmbeddedWalletGuidePage() {
                             <p className="mt-4">
                                 <Link href="/embedded-starknet-wallet" className={linkClass}>
                                     Embedded Starknet wallet
+                                </Link>
+                            </p>
+                            <p className="mt-2">
+                                <Link
+                                    href={GASLESS_STARKNET_TRANSACTIONS_PATH}
+                                    className={linkClass}
+                                >
+                                    How to send gasless Starknet transactions
                                 </Link>
                             </p>
                         </article>
