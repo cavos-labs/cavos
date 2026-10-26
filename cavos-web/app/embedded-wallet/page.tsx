@@ -440,10 +440,9 @@ export default function EmbeddedWalletGuidePage() {
                             <p className="mt-3 text-sm leading-relaxed text-muted">
                                 Cavos provisions a classic G… account — not a Soroban contract —
                                 so exchanges and existing tools already understand the address.
-                                On the current path the spend key is HKDF of the same MasterDEK
-                                as Solana. A new device restores that DEK; it does not add a
-                                second Horizon signer. The relayer sponsors reserves and fee
-                                bumps.
+                                The spend key is one Ed25519 key, HKDF of the same MasterDEK as
+                                Solana. A new device restores that DEK and derives the same key.
+                                The relayer sponsors reserves and fee bumps.
                             </p>
                             <p className="mt-4">
                                 <Link href="/embedded-stellar-wallet" className={linkClass}>
@@ -469,6 +468,58 @@ export default function EmbeddedWalletGuidePage() {
                         </Link>{' '}
                         covers ground Cavos does not.
                     </p>
+                </section>
+
+                <section className="mt-16 max-w-3xl" id="gas-sponsorship-in-any-token">
+                    <h2 className="text-2xl font-medium tracking-[-0.03em]">
+                        Gas Sponsorship in Any Token
+                    </h2>
+                    <div className="mt-5 space-y-4 text-sm leading-relaxed text-muted">
+                        <p>
+                            An embedded wallet that still asks the user to hold ETH, STRK, SOL,
+                            or XLM before the first tap has not removed the wallet. The native
+                            gas token is the remaining onboarding wall. Gas Sponsorship in Any
+                            Token takes that wall down: the product can sponsor fees so the user
+                            transacts from a login, and can settle those fees in a token they
+                            already hold. USDC is one example of such a token, not a required
+                            asset.
+                        </p>
+                        <p>
+                            The mechanism is chain-native, not a universal gas tank. On{' '}
+                            <Link href="/embedded-starknet-wallet" className={linkClass}>
+                                Starknet
+                            </Link>,{' '}
+                            <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
+                                execute
+                            </code>{' '}
+                            routes through a paymaster, so deployment and later calls do not
+                            need ETH or STRK. The{' '}
+                            <Link
+                                href={GASLESS_STARKNET_TRANSACTIONS_PATH}
+                                className={linkClass}
+                            >
+                                gasless Starknet transactions
+                            </Link>{' '}
+                            guide is that path. On{' '}
+                            <Link href="/embedded-solana-wallet" className={linkClass}>
+                                Solana
+                            </Link>, the relayer is the fee payer, or the fee settles in a
+                            token the account holds. On{' '}
+                            <Link href="/embedded-stellar-wallet" className={linkClass}>
+                                Stellar
+                            </Link>, the relayer is the transaction source and fee payer: it
+                            sponsors reserves and fee-bumps, so the user locks no XLM to start.
+                        </p>
+                        <p>
+                            Sponsorship is available on every plan and funded separately.
+                            Integrators set spend limits in the dashboard.{' '}
+                            <Link href="/pricing" className={linkClass}>
+                                Pricing
+                            </Link>{' '}
+                            publishes the free 1,000 wallet creates, Essential at $59/mo, and
+                            Complete at $139/mo.
+                        </p>
+                    </div>
                 </section>
 
                 <section className="mt-16 max-w-3xl" id="how-to-integrate">

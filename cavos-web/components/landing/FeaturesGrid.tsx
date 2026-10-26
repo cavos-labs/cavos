@@ -262,7 +262,7 @@ export function FeaturesGrid() {
                         <MockupAccount />
                     </Cell>
                     <Cell
-                        title="Gas sponsorship built in"
+                        title="Gas Sponsorship in Any Token"
                         body="Integrators fund gas so users transact from the very first tap — sponsorable on every chain, gasless when you choose."
                     >
                         <MockupGas />

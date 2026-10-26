@@ -479,7 +479,7 @@ describe('marketing SEO', () => {
         (item) => item.question === 'Which chains does Cavos support for embedded wallets?',
       ),
     )
-    assert.equal(EMBEDDED_WALLET_MODIFIED, '2026-10-22')
+    assert.equal(EMBEDDED_WALLET_MODIFIED, '2026-10-26')
   })
 
   it('keeps a single H1 and adds how-it-works plus a compare-data provider table', () => {
@@ -543,8 +543,14 @@ describe('marketing SEO', () => {
     assert.ok(headings.includes('What is an embedded wallet?'))
     assert.ok(headings.includes('How an embedded wallet works'))
     assert.ok(headings.includes('Embedded wallet SDK'))
+    assert.ok(headings.includes('Gas Sponsorship in Any Token'))
     assert.ok(headings.includes('How to integrate an embedded wallet'))
     assert.ok(headings.includes('Embedded wallet provider comparison'))
+    assert.match(pageSource, /href=["']\/embedded-starknet-wallet["']/)
+    assert.match(pageSource, /href=["']\/embedded-solana-wallet["']/)
+    assert.match(pageSource, /href=["']\/embedded-stellar-wallet["']/)
+    assert.match(pageSource, /GASLESS_STARKNET_TRANSACTIONS_PATH/)
+    assert.match(pageSource, /href=["']\/pricing["']/)
     assert.match(pageSource, /EMBEDDED_WALLET_INTEGRATION_PATH/)
     assert.match(pageSource, /EMBEDDED_WALLET_VS_EXTENSION_PATH/)
     assert.match(pageSource, /EMBEDDED_WALLET_API_PATH/)
@@ -570,6 +576,8 @@ describe('marketing SEO', () => {
     )
     assert.match(features, /Start with what an/)
     assert.match(features, /href="\/compare"/)
+    assert.match(features, /title="Gas Sponsorship in Any Token"/)
+    assert.doesNotMatch(features, /Gas sponsorship built in/)
     const home = fs.readFileSync(path.join(process.cwd(), 'app/page.tsx'), 'utf8')
     assert.match(home, /path: '\/'/)
     assert.doesNotMatch(home, /<h1[\s\S]*embedded wallet/i)
@@ -1215,6 +1223,10 @@ describe('marketing SEO', () => {
     assert.match(source, /no on-chain social recovery/)
     assert.doesNotMatch(source, /audited Cavos/)
     assert.doesNotMatch(source, /adds a second Horizon signer/)
+    assert.doesNotMatch(source, /second Horizon signer/)
+    assert.doesNotMatch(source, /extra Horizon signer/)
+    assert.doesNotMatch(source, /grandfathered/)
+    assert.doesNotMatch(source, /nativeDek/)
     assert.doesNotMatch(source, /on-chain device approval/)
     assert.doesNotMatch(source, /category:\s*"Release"/)
     assert.doesNotMatch(source, /This device must be approved first/)
@@ -1911,6 +1923,11 @@ describe('marketing SEO', () => {
     assert.match(source, /href: '\/embedded-starknet-wallet'/)
     assert.match(source, /href: '\/embedded-solana-wallet'/)
     assert.match(source, /href: '\/embedded-stellar-wallet'/)
+    assert.match(
+      source,
+      /Classic G… account, one Ed25519 key from the MasterDEK, sponsored reserves and fees\./,
+    )
+    assert.doesNotMatch(source, /Horizon ed25519 signers/)
     const meta = marketingPageMetadata({
       title: 'Embedded Wallet Guides & Product Updates',
       description:
@@ -2016,6 +2033,15 @@ describe('marketing SEO', () => {
     assert.match(hub, /href=["']\/embedded-solana-wallet["']/)
     assert.match(hub, /href=["']\/embedded-stellar-wallet["']/)
     assert.match(hub, /Chain considerations/)
+    assert.match(hub, /Gas Sponsorship in Any Token/)
+    assert.ok(
+      !STELLAR_FAQ.some((item) => /Horizon signer/i.test(item.question)),
+      'Stellar FAQ must not mention Horizon signers',
+    )
+    assert.ok(
+      !STELLAR_FAQ.some((item) => /grandfathered|Horizon signer/i.test(item.answer)),
+      'Stellar FAQ answers must not mention grandfathered wallets or Horizon signers',
+    )
   })
 
   it('gives each Product/SoftwareApplication node offers.price and priceCurrency, or no offers', () => {
@@ -2264,6 +2290,65 @@ describe('marketing SEO', () => {
     assert.match(canvas, /resolution=\{256\}/)
     assert.match(canvas, /anisotropy = 8/)
     assert.doesNotMatch(canvas, /audited Cavos/)
+  })
+
+  it('rejects grandfathered Stellar copy and extra Horizon-signer language in marketing content', () => {
+    const banned = [
+      /grandfather/i,
+      /extra Horizon signer/i,
+      /second Horizon signer/i,
+      /weight-1/,
+      /nativeDek/,
+      /generateRecoveryCode/,
+      /setupRecovery\(/,
+    ]
+    const skipDir = new Set([
+      'node_modules',
+      '.next',
+      'dashboard',
+      'api',
+      'stellar',
+      'recovery',
+      'oauth',
+      'vault',
+      'docs',
+    ])
+    const hits: string[] = []
+    const stack = [process.cwd()]
+    while (stack.length > 0) {
+      const dir = stack.pop() as string
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name)
+        if (entry.isDirectory()) {
+          if (!skipDir.has(entry.name)) stack.push(full)
+          continue
+        }
+        if (!/\.(tsx|ts|mdx|txt)$/.test(entry.name)) continue
+        if (entry.name.endsWith('.test.ts') || entry.name.endsWith('.test.tsx')) continue
+        const relative = path.relative(process.cwd(), full)
+        if (relative.startsWith('lib/stellar/')) continue
+        const text = fs.readFileSync(full, 'utf8')
+        for (const pattern of banned) {
+          if (pattern.test(text)) {
+            hits.push(`${relative} matches ${pattern}`)
+          }
+        }
+      }
+    }
+    assert.deepEqual(hits, [])
+
+    const software = walletSoftwareApplicationJsonLd()
+    assert.ok(software.featureList.includes('Gas Sponsorship in Any Token'))
+    assert.equal(
+      software.featureList.includes('Chain-specific gas sponsorship'),
+      false,
+    )
+
+    const llms = fs.readFileSync(path.join(process.cwd(), 'public/llms.txt'), 'utf8')
+    assert.match(llms, /Gas Sponsorship in Any Token/)
+    assert.match(llms, /cavos-ed25519-stellar-v1/)
+    assert.doesNotMatch(llms, /multisig account/)
+    assert.doesNotMatch(llms, /recovery code/)
   })
 })
 

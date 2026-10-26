@@ -532,7 +532,7 @@ export function walletSoftwareApplicationJsonLd() {
       'Account keys derived on-device from a MasterDEK',
       'Self-custodial accounts — no provider-held signing key',
       'Registry-first address resolution',
-      'Chain-specific gas sponsorship',
+      'Gas Sponsorship in Any Token',
       'Starknet, Solana, and Stellar adapters',
       'React and React Native SDKs',
       'Passkey and enclave restore on new devices',

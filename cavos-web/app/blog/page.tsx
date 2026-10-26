@@ -111,7 +111,7 @@ const GUIDES = [
   {
     href: '/embedded-stellar-wallet',
     title: 'Embedded Stellar wallet',
-    body: 'Classic G… account with Horizon ed25519 signers.',
+    body: 'Classic G… account, one Ed25519 key from the MasterDEK, sponsored reserves and fees.',
   },
 ] as const;
 

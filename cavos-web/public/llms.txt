@@ -33,12 +33,12 @@ if (wallet.chain === "solana" && wallet.status !== "needs-device-approval") {
 - **Package**: `@cavos/kit` (React / web) and `@cavos/kit/react-native` (Expo Development Builds, EAS, or bare React Native — Expo Go is not supported).
 - **Custody**: Self-custodial. Cavos does not hold a signing key that can move user funds.
 - **MPC-free**: There are no reconstructable server-side key shards.
-- **Device-native authority**: Keys are created and used locally. Every account key is derived on the device from a MasterDEK (a stark key on Starknet, Ed25519 on Solana and Stellar). In the browser the DEK is protected at rest by a non-extractable WebCrypto key; WebCrypto cannot hold a stark key, so outside the Cavos vault the Starknet key is re-derived into memory for the session. On React Native, the OS keystore provides isolation. The SDK does not enforce non-extractability on Node or server runtimes. A new device restores the MasterDEK with the enclave or a passkey; there is no on-chain device list on Starknet or Solana.
+- **Device-native authority**: Keys are created and used locally. Every account key is derived on the device from a MasterDEK (a stark key on Starknet, Ed25519 on Solana and Stellar). In the browser the DEK is protected at rest by a non-extractable WebCrypto key; WebCrypto cannot hold a stark key, so outside the Cavos vault the Starknet key is re-derived into memory for the session. On React Native, the OS keystore provides isolation. The SDK does not enforce non-extractability on Node or server runtimes. A new device restores the MasterDEK with another signed-in device, a passkey, or opt-in hardware-isolated enclave recovery; there is no on-chain device list.
 - **Chains available today**: Starknet (`sepolia`, `mainnet`), Solana (`solana-devnet`, `solana-mainnet`), Stellar (`stellar-testnet`, `stellar-mainnet`).
 - **Entry point**: `Cavos.connect({ chains, defaultChain, network, identity | auth, appSalt, appId })`. Returns a `CavosSession` — call `session.wallet(chain)` to get the wallet for a specific chain. Narrow on `wallet.chain` before calling chain-native methods.
 - **Auth**: Cavos-hosted login, or bring your own auth by passing `identity={{ userId, email }}`.
-- **Sponsorship**: Chain-specific. Starknet uses a paymaster; Solana uses a relayer as fee payer; Stellar uses sponsored reserves and optional fee bumps.
-- **Recovery**: A new device restores the MasterDEK with a synced passkey or opt-in hardware-isolated social recovery (enclave). Recovery codes apply to grandfathered Stellar wallets only.
+- **Sponsorship**: Gas Sponsorship in Any Token. Starknet uses a paymaster; Solana uses a relayer as fee payer (or settles the fee in a token the account holds, such as USDC); Stellar uses a relayer as fee payer with sponsored reserves and fee bumps.
+- **Recovery**: A new device restores the MasterDEK with another signed-in device, a synced passkey, or opt-in hardware-isolated recovery in an AWS Nitro Enclave.
 
 ## Architecture per chain
 
@@ -46,7 +46,7 @@ Execution is intentionally not reduced to a misleading universal transaction for
 
 - **Starknet**: Standard OpenZeppelin `AccountUpgradeable` (v3.0.0) controlled by a stark key from the MasterDEK. Arbitrary multicalls via `wallet.execute(calls)`. Starknet paymaster for sponsorship.
 - **Solana**: Native Ed25519 system account whose spend key is derived from the MasterDEK. `wallet.execute(amount, destination)` or allowlisted `wallet.executeInstructions(instructions)`. Cavos relayer as fee payer.
-- **Stellar**: Classic `G…` multisig account (no Soroban contract required): a deterministic master key with weight 0, plus a control key sealed on-chain in the account's data entries. The control key is unwrapped locally per device via an ECDH device key, a WebAuthn PRF passkey, or a recovery code. `wallet.execute(amount, destination)` for payments and `wallet.invokeContract(...)` for Soroban calls.
+- **Stellar**: Classic `G…` account (no Soroban contract required). One Ed25519 spend key is HKDF of the MasterDEK (`cavos-ed25519-stellar-v1`, salted by `appSalt`). A new device restores the MasterDEK and derives the same key. The relayer sponsors reserves and fee bumps. `wallet.execute(amount, destination)` for payments and `wallet.invokeContract(...)` for Soroban calls.
 
 ## How Cavos differs from other embedded wallet approaches
 
@@ -56,7 +56,7 @@ Execution is intentionally not reduced to a misleading universal transaction for
 | Key reconstruction | None — no server-side shards | Provider participates in signing | Not applicable |
 | Chain model | One SDK, chain-native adapter per network | Varies by provider | Depends on wallet and installed networks |
 | User experience | Embedded in the product, no extension | Embedded in the product | User installs and approves in another app |
-| Gas sponsorship | Paymaster / relayer / fee-bump per chain | Varies by provider and network | Usually user-funded |
+| Gas Sponsorship in Any Token | Paymaster / relayer / fee-bump per chain | Varies by provider and network | Usually user-funded |
 
 This table describes architectural models, not a ranking. Providers such as Privy, Dynamic, Turnkey, Web3Auth, and Magic each make different and legitimate trade-offs; evaluate them against the custody, chain, and recovery requirements of your specific application.
 

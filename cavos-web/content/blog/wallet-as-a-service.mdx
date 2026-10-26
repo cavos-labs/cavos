@@ -72,7 +72,7 @@ Relayers and paymasters transport, sponsor, or submit. **They are not signers.**
 
 Cavos signs on the device. `Cavos.connect` looks up `(userId, appId, chain, network)` and returns the address; it never deploys Starknet or Stellar. The first `execute` deploys and runs atomically when the account is still undeployed. The [API guide](/blog/embedded-wallet-api) is the method map.
 
-### Gas sponsorship and paymasters
+### Gas Sponsorship in Any Token
 
 Users should not need a native token to start. Sponsorship is chain-specific, and it is not always on the public plan.
 
@@ -89,7 +89,7 @@ A device that is lost, wiped, or replaced takes its key with it. Recovery is a s
 
 In a WaaS product, recovery is usually a synced passkey, a cloud backup, a provider-held share, an enclave unwrap, or a recovery code. Those are not equivalent. A provider that cannot sign in the happy path but can restore a spend key in an incident is a different fact pattern from one that never can.
 
-Cavos recovery is **off-chain**. A new device restores the MasterDEK with a passkey or an opt-in hardware-isolated social recovery in an AWS Nitro Enclave. There is no on-chain social recovery and no on-chain device-signer list. Recovery codes remain only for grandfathered Stellar wallets. If every device and every restore factor is gone, Cavos cannot recover the wallet. See [recovery](https://docs.cavos.xyz/docs/recovery).
+Cavos recovery is **off-chain**. A new device restores the MasterDEK with another signed-in device, a passkey, or opt-in hardware-isolated recovery in an AWS Nitro Enclave. There is no on-chain social recovery and no on-chain device-signer list. If every device and every restore factor is gone, Cavos cannot recover the wallet. See [recovery](https://docs.cavos.xyz/docs/recovery).
 
 ### Dashboard and app management
 
@@ -186,7 +186,7 @@ Adapters ship today for three chains:
 
 - **[Starknet](/embedded-starknet-wallet).** An audited OpenZeppelin account contract — AccountUpgradeable v3.0.0 — controlled by one stark key. Cavos does not ship its own account implementation. There are no on-chain device signers and no on-chain social recovery. The paymaster sponsors deploy and execute.
 - **[Solana](/embedded-solana-wallet).** A native Ed25519 system account. A relayer co-signs as fee payer.
-- **[Stellar](/embedded-stellar-wallet).** A classic G… account. The relayer can sponsor reserves and fee-bumps. A new device restores the MasterDEK; it does not add a second Horizon signer.
+- **[Stellar](/embedded-stellar-wallet).** A classic G… account. One Ed25519 spend key is HKDF of the MasterDEK. The relayer can sponsor reserves and fee-bumps. A new device restores the MasterDEK and derives the same key.
 
 The React path is `@cavos/kit`. Mobile is `@cavos/kit/react-native`. The [React integration](/blog/how-to-add-an-embedded-wallet) and the [quickstart](https://docs.cavos.xyz/docs/quickstart) are the install. [Pricing](/pricing) publishes the free 1,000 wallet creates, Essential at $59/mo, and Complete at $139/mo with enclave recovery.
 
