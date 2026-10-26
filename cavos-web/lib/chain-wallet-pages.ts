@@ -12,7 +12,7 @@ import {
 } from './marketing-seo'
 
 export const CHAIN_WALLET_PUBLISHED = '2026-10-09'
-export const CHAIN_WALLET_MODIFIED = '2026-10-13'
+export const CHAIN_WALLET_MODIFIED = '2026-10-26'
 
 export const MARKETING_PROSE_LINK =
   'font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink'
@@ -166,12 +166,7 @@ export const STELLAR_FAQ: GuideFaqItem[] = [
   {
     question: 'What is a Stellar embedded wallet?',
     answer:
-      'A Stellar embedded wallet is a classic G… Stellar account provisioned inside your application. On the current path the spend key is HKDF of the same MasterDEK as Solana. It is not a Soroban contract, so exchanges and existing tools already understand the address.',
-  },
-  {
-    question: 'Does Cavos use extra Horizon signers on new Stellar wallets?',
-    answer:
-      'Not on the current path. New wallets derive one Ed25519 spend key from the MasterDEK. A new device restores that DEK; it does not add a second Horizon signer. Grandfathered wallets that never enrolled still load with extra weight-1 Horizon signers, including recovery codes. That path is load-only.',
+      'A Stellar embedded wallet is a classic G… Stellar account provisioned inside your application. The spend key is one Ed25519 key, HKDF of the same MasterDEK as Solana (`cavos-ed25519-stellar-v1`, salted by appSalt). It is not a Soroban contract, so exchanges and existing tools already understand the address.',
   },
   {
     question: 'How do reserves and fees work on a Stellar embedded wallet?',
@@ -191,7 +186,7 @@ export const STELLAR_FAQ: GuideFaqItem[] = [
   {
     question: 'How does recovery work on a Stellar embedded wallet?',
     answer:
-      'On the native path, restore the MasterDEK with a passkey (enrollPasskeyDefault after login) or by signing in again when hardware-isolated recovery is enabled. Recovery codes restore grandfathered wallets only; they do not restore native accounts. If every device and restore factor is gone, Cavos cannot recover the wallet.',
+      'A new device restores the MasterDEK and derives the same Ed25519 spend key. Restore with another signed-in device, a passkey (enrollPasskeyDefault after login), or opt-in hardware-isolated recovery in an AWS Nitro Enclave. If every device and every restore factor is gone, Cavos cannot recover the wallet.',
   },
 ]
 
@@ -252,7 +247,7 @@ export const SOLANA_FEATURES: [string, string][] = [
 export const STELLAR_FEATURES: [string, string][] = [
   [
     'Self-custodial',
-    'Cavos never holds a key that can move user funds. The on-chain account is the sole authority over signers.',
+    'Cavos never holds a key that can move user funds. One Ed25519 spend key, derived from the MasterDEK, controls the classic G… account.',
   ],
   [
     'Classic G… address',
@@ -268,7 +263,7 @@ export const STELLAR_FEATURES: [string, string][] = [
   ],
   [
     'Passkey and enclave restore',
-    'On the native path a passkey stores an encrypted copy of the MasterDEK. Enclave sign-in unwraps the same DEK. Recovery codes are grandfathered only.',
+    'A synced passkey stores an encrypted copy of the MasterDEK. Opt-in enclave sign-in unwraps the same DEK on a new device.',
   ],
   [
     'Lazy deploy',

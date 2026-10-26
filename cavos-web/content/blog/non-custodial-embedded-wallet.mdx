@@ -100,7 +100,7 @@ The usual designs:
 - **A hardware-isolated enclave.** Opt-in wrap of the same DEK. Better than a reconstructable server share if the enclave can only unwrap, under pinned attestation. Still not trustless.
 - **On-chain social recovery or extra device signers.** A new device is added as an on-chain signer, or guardians rotate the account. Guardians, delays, and on-chain policy become part of custody.
 
-Cavos does not use the last design. There is no on-chain device-signer list and no on-chain social recovery. On Starknet, Solana, and native Stellar, a new device restores the MasterDEK. It does not add an on-chain signer. Recovery codes remain only for grandfathered Stellar wallets.
+Cavos does not use the last design. There is no on-chain device-signer list and no on-chain social recovery. On Starknet, Solana, and Stellar, a new device restores the MasterDEK and derives the same spend key. It does not add an on-chain signer.
 
 Off-chain restore keeps the on-chain account simple — one key, the chain’s native model — and moves recovery to passkeys and an opt-in enclave. You give up on-chain guardian rotation. You keep the rule that Cavos cannot sign. If every device and every restore factor is gone, Cavos cannot recover the wallet.
 
@@ -112,11 +112,11 @@ Each adapter keeps the chain’s native account model:
 
 - **[Starknet](/embedded-starknet-wallet).** An audited OpenZeppelin account contract — AccountUpgradeable v3.0.0 — controlled by one stark key derived from the MasterDEK and `appSalt`. Cavos does not ship its own account implementation. There are no on-chain device signers. Execution is paymaster-sponsored. Connect never deploys; the first execute deploys and runs atomically.
 - **[Solana](/embedded-solana-wallet).** A native Ed25519 system account. The spend key is HKDF of the same MasterDEK. A relayer co-signs as fee payer. The address is an ordinary Solana public key, not a PDA.
-- **[Stellar](/embedded-stellar-wallet).** A classic G… account, not a Soroban contract account. On the current path the spend key is HKDF of the MasterDEK (`cavos-ed25519-stellar-v1`, salted by `appSalt`). A new device restores that DEK; it does not add a second Horizon signer. The relayer can sponsor reserves and fee-bumps.
+- **[Stellar](/embedded-stellar-wallet).** A classic G… account, not a Soroban contract account. The spend key is one Ed25519 key, HKDF of the MasterDEK (`cavos-ed25519-stellar-v1`, salted by `appSalt`). A new device restores that DEK and derives the same key. The relayer can sponsor reserves and fee-bumps.
 
 A new device restores the MasterDEK off-chain with a passkey or an opt-in hardware-isolated enclave. It does not add a signer on-chain. `needs-device-approval` means this device has no key yet. Restore the MasterDEK; the status is not an on-chain device list.
 
-The kit documents four paths: another signed-in device, a passkey, a recovery code (grandfathered Stellar only), and opt-in hardware-isolated social recovery in an AWS Nitro Enclave that can only unwrap a MasterDEK. If every device and every restore factor is gone, Cavos cannot recover the wallet.
+The kit documents three paths: another signed-in device, a passkey, and opt-in hardware-isolated recovery in an AWS Nitro Enclave that can only unwrap a MasterDEK. If every device and every restore factor is gone, Cavos cannot recover the wallet.
 
 That is the product. Integrating a self-custodial SDK does not settle exchange, on-ramp, or payment licensing. Recovery paths count. The control test under those regimes is on the [custody](/custody) page.
 

@@ -97,7 +97,7 @@ function IcoSlack({ className = '' }: { className?: string }) {
 }
 
 const RECOVERY_FEATURES = [
-    { label: 'On-device recovery', desc: 'Synced passkey or enrolled device. On Starknet, Solana, and Stellar a synced passkey holds an encrypted copy of the wallet key and can spend; recovery codes apply to grandfathered Stellar wallets only.' },
+    { label: 'On-device recovery', desc: 'Synced passkey or enrolled device. A new device restores the MasterDEK with another signed-in device, a passkey, or opt-in hardware-isolated recovery in an AWS Nitro Enclave.' },
     { label: 'Enclave recovery', desc: 'AWS Nitro hardware-isolated, non-custodial key rewrap. Open-source under Apache-2.0 (cavos-labs/cavos-recovery).' },
 ]
 

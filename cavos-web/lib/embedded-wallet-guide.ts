@@ -8,7 +8,7 @@ export const EMBEDDED_WALLET_DESCRIPTION =
 
 export const EMBEDDED_WALLET_PUBLISHED = '2026-10-07'
 
-export const EMBEDDED_WALLET_MODIFIED = '2026-10-22'
+export const EMBEDDED_WALLET_MODIFIED = '2026-10-26'
 
 export const EMBEDDED_WALLET_INTEGRATION_PATH =
   '/blog/how-to-add-an-embedded-wallet'
@@ -89,7 +89,7 @@ export const EMBEDDED_WALLET_HOW_IT_WORKS = [
   },
   {
     title: 'Recovery',
-    body: 'A new device restores the wallet’s MasterDEK, not by reconstituting a master key on a server. Cavos ships passkey restore and opt-in hardware-isolated social recovery that is off by default; recovery codes remain only for grandfathered Stellar wallets.',
+    body: 'A new device restores the wallet’s MasterDEK, not by reconstituting a master key on a server. Restore paths are another signed-in device, a passkey, and opt-in hardware-isolated recovery in an AWS Nitro Enclave (off by default).',
   },
 ] as const
 

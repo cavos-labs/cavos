@@ -128,7 +128,7 @@ Each adapter keeps the chain’s native account model:
 
 - **[Starknet](/embedded-starknet-wallet).** An audited OpenZeppelin account contract — AccountUpgradeable v3.0.0 — controlled by one stark key derived from the MasterDEK and `appSalt`. Cavos does not ship its own account implementation. There are no on-chain device signers.
 - **[Solana](/embedded-solana-wallet).** A native Ed25519 system account. The spend key is HKDF of the same MasterDEK. A relayer co-signs as fee payer. The address is an ordinary Solana public key, not a PDA.
-- **[Stellar](/embedded-stellar-wallet).** A classic G… account, not a Soroban contract account. On the current path the spend key is HKDF of the MasterDEK (`cavos-ed25519-stellar-v1`, salted by `appSalt`). A new device restores that DEK; it does not add a second Horizon signer.
+- **[Stellar](/embedded-stellar-wallet).** A classic G… account, not a Soroban contract account. The spend key is one Ed25519 key, HKDF of the MasterDEK (`cavos-ed25519-stellar-v1`, salted by `appSalt`). A new device restores that DEK and derives the same key.
 
 ### Signing and executing
 
@@ -160,7 +160,7 @@ const { signature, publicKey, curve } = await signMessage("Sign in to dapp.com")
 
 For arbitrary execution, Solana exposes `executeInstructions` (allowlisted programs) and Stellar exposes `invokeContract`. See [wallet actions](https://docs.cavos.xyz/docs/wallet-actions).
 
-### Gas sponsorship
+### Gas Sponsorship in Any Token
 
 Users should not need a native token to start. Sponsorship is chain-specific. Relayers and paymasters transport, sponsor, or submit. They are not signers.
 
@@ -176,7 +176,7 @@ Add `paymasterApiKey` only when Starknet is in `chains`. A paymaster key on a ch
 
 A device that is lost, wiped, or replaced takes its key with it. Recovery is a second authority set up *before* that happens.
 
-On Starknet, Solana, and native Stellar, a new device restores the MasterDEK. It does not add an on-chain signer. There is no on-chain device-signer list and no on-chain social recovery.
+On Starknet, Solana, and Stellar, a new device restores the MasterDEK and derives the same spend key. It does not add an on-chain signer. There is no on-chain device-signer list and no on-chain social recovery.
 
 ```ts
 const { walletStatus, enrollPasskeyDefault, approveDeviceWithPasskey } = useCavos();
@@ -192,7 +192,7 @@ if (!walletStatus.hasPasskey) {
 
 `walletStatus.recovery` is `{ protected: boolean; methods: ("passkey" | "social")[] }`. It starts `false` and flips once the lookup returns. Read it as “not known to be protected” during the first moments of a connect.
 
-The kit documents four paths: another signed-in device, a passkey, a recovery code (grandfathered Stellar only), and opt-in hardware-isolated social recovery in an AWS Nitro Enclave that can only unwrap a MasterDEK. If every device and every restore factor is gone, Cavos cannot recover the wallet. See [recovery](https://docs.cavos.xyz/docs/recovery).
+The kit documents three paths: another signed-in device, a passkey, and opt-in hardware-isolated recovery in an AWS Nitro Enclave that can only unwrap a MasterDEK. If every device and every restore factor is gone, Cavos cannot recover the wallet. See [recovery](https://docs.cavos.xyz/docs/recovery).
 
 ## What to read next
 

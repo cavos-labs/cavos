@@ -78,7 +78,7 @@ export default function EmbeddedStellarWalletPage() {
                         is not supported).
                     </p>
                     <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted">
-                        On the current path the{' '}
+                        The{' '}
                         <code className="text-xs bg-surface px-1.5 py-0.5 rounded">G…</code> is
                         HKDF of the same MasterDEK as Solana. In the browser that Ed25519 control
                         key is a non-extractable WebCrypto key held by the Cavos vault. On React
@@ -133,10 +133,9 @@ export default function EmbeddedStellarWalletPage() {
                         <p>
                             Cavos provisions a <strong>classic G… Stellar account</strong> — not
                             a Soroban contract. It is the same address format that wallets,
-                            exchanges, and every Stellar tool already understand. With enclave or
-                            passkey, that{' '}
+                            exchanges, and every Stellar tool already understand. That{' '}
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">G…</code>{' '}
-                            is HKDF of the MasterDEK (
+                            is one Ed25519 spend key, HKDF of the MasterDEK (
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
                                 cavos-ed25519-stellar-v1
                             </code>
@@ -144,24 +143,12 @@ export default function EmbeddedStellarWalletPage() {
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
                                 appSalt
                             </code>
-                            ). A new device unwraps the DEK. It does not add a second Horizon
-                            signer.{' '}
-                            <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
-                                wallet.nativeDek
-                            </code>{' '}
-                            is true on this path. Changing{' '}
+                            ). A new device restores the MasterDEK and derives the same key.
+                            Changing{' '}
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
                                 appSalt
                             </code>{' '}
                             derives a different address that will not match the registry row.
-                        </p>
-                        <p>
-                            Grandfathered wallets (no enclave, no passkey at connect) still use
-                            extra weight-1 Horizon signers: the first device&apos;s random
-                            control key <em>is</em> the{' '}
-                            <code className="text-xs bg-surface px-1.5 py-0.5 rounded">G…</code>,
-                            and a recovery code or passkey can be an additional signer. That path
-                            is load-only. New apps should use enclave or passkey.
                         </p>
                         <p>
                             Connect never creates the account. An{' '}
@@ -282,35 +269,17 @@ export default function EmbeddedStellarWalletPage() {
                     </h2>
                     <div className="mt-5 space-y-4 text-sm leading-relaxed text-muted">
                         <p>
-                            On the native path there is one spend key. After login, call{' '}
+                            There is one spend key. After login, call{' '}
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
                                 enrollPasskeyDefault()
                             </code>
                             . Signing up never prompts. The passkey stores an encrypted copy of
-                            the MasterDEK; it is not 2FA and not an extra Horizon signer.{' '}
-                            <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
-                                wallet.enrollPasskey(...)
-                            </code>{' '}
-                            is a no-op on native accounts. Hardware-isolated recovery, opt-in per
-                            environment, unwraps the same DEK when the user signs in again with
-                            Google, Apple, or an enclave-verified email code.
-                        </p>
-                        <p>
-                            Recovery codes restore grandfathered wallets only. On that older
-                            path,{' '}
-                            <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
-                                generateRecoveryCode()
-                            </code>{' '}
-                            plus{' '}
-                            <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
-                                wallet.setupRecovery(code)
-                            </code>{' '}
-                            adds an extra Horizon signer. Do not use a recovery code to restore a{' '}
-                            <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
-                                nativeDek
-                            </code>{' '}
-                            wallet. If every device and every restore factor is gone, Cavos
-                            cannot recover the wallet.
+                            the MasterDEK; it is not 2FA. Anyone with that synced passkey can
+                            open the wallet. Hardware-isolated recovery, opt-in per environment,
+                            unwraps the same DEK when the user signs in again with Google, Apple,
+                            or an enclave-verified email code. Restore paths are another
+                            signed-in device, a passkey, and that opt-in enclave. If every device
+                            and every restore factor is gone, Cavos cannot recover the wallet.
                         </p>
                     </div>
                 </section>
@@ -467,11 +436,11 @@ export default function EmbeddedStellarWalletPage() {
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
                                 invokeContract
                             </code>
-                            , trustlines,{' '}
+                            , trustlines, and{' '}
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
                                 signXdr
                             </code>
-                            , and grandfathered Horizon signers on older wallets. If you are
+                            . If you are
                             still choosing a provider, the{' '}
                             <Link href="/compare" className={MARKETING_PROSE_LINK}>
                                 compare

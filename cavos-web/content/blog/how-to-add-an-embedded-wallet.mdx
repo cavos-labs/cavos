@@ -158,11 +158,11 @@ If `status === "needs-device-approval"`, do not create a second wallet. This dev
 
 A Cavos wallet is controlled by keys that live on the user’s devices and never leave them. That is the point, and it is also the risk: a device that is lost, wiped, or replaced takes its key with it. Recovery is the work of setting up a second authority *before* it is needed.
 
-The kit exposes four paths, documented in [recovery](https://docs.cavos.xyz/docs/recovery): another signed-in device, a passkey (`enrollPasskeyDefault()` after login — sign-up never prompts), a recovery code the user stored, and opt-in hardware-isolated social recovery. The first two answer “I still have something.” The last two answer “I have nothing.” A serious app wants at least one of each.
+The kit exposes three paths, documented in [recovery](https://docs.cavos.xyz/docs/recovery): another signed-in device, a passkey (`enrollPasskeyDefault()` after login — sign-up never prompts), and opt-in hardware-isolated recovery in an AWS Nitro Enclave. The first two answer “I still have something.” The enclave answers “I have nothing.” A serious app wants at least one of each.
 
 `walletStatus.recovery` is the flag most apps actually read: `{ protected: boolean; methods: ("passkey" | "social")[] }`. It starts `false` and flips once the lookup that fills it returns. Read it as “not known to be protected” during the first moments of a connect, not as “known to be unprotected.”
 
-## 6. Gas sponsorship
+## 6. Gas Sponsorship in Any Token
 
 Users should not need a native token to start. Sponsorship is chain-specific, not a universal gas tank.
 

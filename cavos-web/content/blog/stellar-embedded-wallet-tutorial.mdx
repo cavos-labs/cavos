@@ -16,7 +16,7 @@ faq:
   - question: "Is a Cavos Stellar wallet a Soroban contract account?"
     answer: "No. Cavos provisions a classic G… Stellar account, the same address format wallets, exchanges, and Horizon already understand. The same G… can still invoke Soroban contracts and satisfy require_auth after the account exists (status ready). invokeContract and addTrustline require that deployed account; native XLM transfers can create it on first execute."
   - question: "Who can sign and move funds?"
-    answer: "Signing is local. With enclave or passkey the G… key is derived via HKDF from the MasterDEK (cavos-ed25519-stellar-v1, salted by appSalt). Cavos cannot see the key, cannot sign with it, and cannot move funds. Login selects which user this is; it never authorizes a spend by itself. If every device and every restore factor is gone, Cavos cannot recover the wallet."
+    answer: "Signing is local. The G… key is one Ed25519 spend key derived via HKDF from the MasterDEK (cavos-ed25519-stellar-v1, salted by appSalt). A new device restores that MasterDEK and derives the same key. Cavos cannot see the key, cannot sign with it, and cannot move funds. Login selects which user this is; it never authorizes a spend by itself. If every device and every restore factor is gone, Cavos cannot recover the wallet."
 ---
 
 An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain Stellar account they can pay, receive, and sign with — no browser extension, no seed phrase, no trip to [Freighter](/blog/embedded-wallet-vs-browser-extension).
@@ -33,7 +33,7 @@ Cavos, LLC is a software and SaaS company. The wallet is the main product: a dev
 
 That is the opposite of connecting Freighter. Freighter is a browser extension the user installed. You request an account that already exists. Cavos **creates a Stellar wallet for users** who have never used crypto: they sign in, you get an address, you send.
 
-Custody is separate from that UX. Some embedded wallets hold a key, split one with MPC, or delegate signing to an HSM. Cavos does not. On the current path the `G…` is HKDF of a MasterDEK that stays on the device. Evaluate any SDK on custody before you write the first `connect`.
+Custody is separate from that UX. Some embedded wallets hold a key, split one with MPC, or delegate signing to an HSM. Cavos does not. The `G…` is HKDF of a MasterDEK that stays on the device. Evaluate any SDK on custody before you write the first `connect`.
 
 ## 1. Install @cavos/kit
 
@@ -50,8 +50,6 @@ Create an app in the [Cavos dashboard](https://cavos.xyz/dashboard) and copy its
 Register every callback URL for the app in **Dashboard → App → Callback URLs**, one per line, matched exactly — scheme, host, path, no trailing slash, and no wildcards. OAuth rejects a `redirect_uri` that is not registered. Add tunnel or preview domains while developing; each one is a distinct origin.
 
 Never change `appSalt` after users exist. On Stellar it is the HKDF salt for the spend key, so changing it derives a different `G…` that will not match the registry row.
-
-New apps should use enclave or passkey. That is the native MasterDEK path (`wallet.nativeDek` is true). Grandfathered wallets that connected with neither still load with extra weight-1 Horizon signers; that path is load-only.
 
 ## 3. Wrap the tree in CavosProvider
 
@@ -234,13 +232,13 @@ The message is prefixed with `Cavos Signed Message:\n<len>\n` before signing. Re
 
 ## How keys, recovery, and the relayer work
 
-With enclave or passkey, the spend key is one Ed25519 key derived via HKDF from the MasterDEK (`cavos-ed25519-stellar-v1`, salted by `appSalt`). In the browser that control key is a non-extractable WebCrypto key held by the Cavos vault. On React Native it uses the OS keystore. The SDK does not enforce non-extractability on Node or other server runtimes.
+The spend key is one Ed25519 key derived via HKDF from the MasterDEK (`cavos-ed25519-stellar-v1`, salted by `appSalt`). In the browser that control key is a non-extractable WebCrypto key held by the Cavos vault. On React Native it uses the OS keystore. The SDK does not enforce non-extractability on Node or other server runtimes.
 
-A new device unwraps the MasterDEK. It does **not** add a second Horizon signer. There is no on-chain device-signer list for new wallets, and there is no on-chain social recovery.
+A new device restores the MasterDEK and derives the same key. There is no on-chain device-signer list, and there is no on-chain social recovery.
 
-After login, call `enrollPasskeyDefault()`. Signing up never prompts. The passkey stores an encrypted copy of the MasterDEK; it is not 2FA and not an extra Horizon signer. Anyone with that synced passkey can open the wallet. `wallet.enrollPasskey(...)` is a no-op on native accounts.
+After login, call `enrollPasskeyDefault()`. Signing up never prompts. The passkey stores an encrypted copy of the MasterDEK; it is not 2FA. Anyone with that synced passkey can open the wallet.
 
-Hardware-isolated recovery is opt-in per environment. When it is on, signing in again with Google, Apple, or an enclave-verified email code unwraps the same DEK. Recovery codes restore grandfathered wallets only. Do not use a recovery code to restore a `nativeDek` wallet. If every device and every restore factor is gone, Cavos cannot recover the wallet.
+Hardware-isolated recovery is opt-in per environment. When it is on, signing in again with Google, Apple, or an enclave-verified email code unwraps the same DEK. Restore paths are another signed-in device, a passkey, and that opt-in enclave. If every device and every restore factor is gone, Cavos cannot recover the wallet.
 
 The relayer is only a fee payer and reserve sponsor — never a custodian or identity authority. Every Stellar account locks XLM reserves (a base reserve plus about 0.5 XLM per subentry). With the relayer those reserves and all fees are sponsored, so the user locks no XLM. A bad or absent relayer can cost fees; it cannot move funds or squat an address. Signing stays on the device.
 
