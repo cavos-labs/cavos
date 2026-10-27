@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { COMPETITORS } from './compare-data'
+import { PRIVY_ALTERNATIVES_MODIFIED } from './privy-alternatives'
 
 export const MARKETING_ORIGIN = 'https://cavos.xyz'
 
@@ -149,7 +150,12 @@ export function getMarketingSitemapEntries(): SitemapEntry[] {
       page('/embedded-solana-wallet', 'monthly', 0.9),
       page('/embedded-starknet-wallet', 'monthly', 0.9),
       page('/compare', 'monthly', 0.9),
-      page('/privy-alternatives', 'monthly', 0.8),
+      page(
+        '/privy-alternatives',
+        'monthly',
+        0.8,
+        parseStableDate(PRIVY_ALTERNATIVES_MODIFIED),
+      ),
       page('/custody', 'monthly', 0.8),
       page('/pricing', 'monthly', 0.9),
       page('/stats', 'weekly', 0.9),
