@@ -2244,6 +2244,87 @@ describe('marketing SEO', () => {
     assert.doesNotMatch(layoutSource, /SoftwareApplication.*Product|Product.*SoftwareApplication/)
   })
 
+  it('gives each compare-page Product/SoftwareApplication node offers with price and priceCurrency', () => {
+    assert.ok(COMPETITORS.some((competitor) => competitor.slug === 'magic'))
+    assert.ok(COMPETITORS.some((competitor) => competitor.slug === 'alchemy'))
+
+    const pages: unknown[] = [
+      compareIndexJsonLd({
+        title: 'Cavos vs Embedded Wallet Providers',
+        description: 'Compare embedded wallet approaches.',
+        faq: [{ question: 'Does Cavos use MPC?', answer: 'No.' }],
+        comparisons: COMPETITORS.map((competitor) => ({
+          name: competitor.name,
+          slug: competitor.slug,
+          summary: competitor.summary,
+        })),
+      }),
+      ...COMPETITORS.map((competitor) => compareCompetitorPageJsonLd(competitor)),
+    ]
+
+    for (const page of pages) {
+      const nodes = walkJsonLdNodes(page)
+      const productLike = nodes.filter((node) =>
+        jsonLdTypes(node).some((type) => PRODUCT_LIKE_TYPES.has(type)),
+      )
+      assert.ok(
+        productLike.length > 0,
+        'compare JSON-LD must emit a Cavos SoftwareApplication with offers',
+      )
+      for (const node of productLike) {
+        const types = jsonLdTypes(node)
+        const label = `${types.join(',')} ${String(node.name ?? node['@id'] ?? '')}`
+        assert.equal(
+          types.includes('SoftwareApplication'),
+          true,
+          `${label} should be SoftwareApplication`,
+        )
+        assert.equal(types.includes('Product'), false, `${label} should not also be Product`)
+        assert.equal(
+          node.applicationCategory,
+          'DeveloperApplication',
+          `${label} applicationCategory`,
+        )
+        assert.equal('aggregateRating' in node, false, `${label} must not invent aggregateRating`)
+        assert.equal('review' in node, false, `${label} must not invent review`)
+        assert.ok(node.offers != null, `${label} missing offers`)
+        const offers = Array.isArray(node.offers) ? node.offers : [node.offers]
+        assert.ok(offers.length > 0, `${label} has empty offers`)
+        for (const offer of offers) {
+          assert.equal(typeof offer, 'object', `${label} offer is not an object`)
+          const fields = offer as Record<string, unknown>
+          assert.ok(
+            fields.price !== undefined && fields.price !== '',
+            `${label} missing offers.price`,
+          )
+          assert.equal(
+            typeof fields.priceCurrency,
+            'string',
+            `${label} missing offers.priceCurrency`,
+          )
+          assert.equal(fields.priceCurrency, 'USD', `${label} priceCurrency must be USD`)
+        }
+        assert.deepEqual(
+          offers.map((offer) => String((offer as { price: unknown }).price)),
+          ['0', '59', '139'],
+        )
+        const names = [
+          node.name,
+          ...(Array.isArray(node.alternateName) ? node.alternateName : [node.alternateName]),
+        ]
+          .filter(Boolean)
+          .map(String)
+        for (const competitor of COMPETITORS) {
+          assert.equal(
+            names.includes(competitor.name),
+            false,
+            `competitor ${competitor.name} must not be a Product/SoftwareApplication`,
+          )
+        }
+      }
+    }
+  })
+
   it('adds crawlable docs links to the embedded-wallet cluster', () => {
     const docsRoot = path.join(process.cwd(), '..', 'docs')
     const shared = [
