@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
@@ -52,11 +51,11 @@ export default function UserTermsPage() {
                     <p className="text-sm text-black/40">Last updated: {LAST_UPDATED}</p>
                     <p className="text-sm text-black/50 mt-3">
                         These terms apply to you if you have created a wallet or signed into an application that uses the Cavos SDK. If you are a developer integrating Cavos, the{' '}
-                        <Link href="/terms" className="underline underline-offset-2 hover:text-black transition-colors">Terms of Service</Link>{' '}
+                        <a href="/terms" className="underline underline-offset-2 hover:text-black transition-colors">Terms of Service</a>{' '}
                         and{' '}
-                        <Link href="/dpa" className="underline underline-offset-2 hover:text-black transition-colors">DPA</Link>{' '}
+                        <a href="/dpa" className="underline underline-offset-2 hover:text-black transition-colors">DPA</a>{' '}
                         apply to you instead. How Cavos handles your personal data is in the{' '}
-                        <Link href="/user-privacy" className="underline underline-offset-2 hover:text-black transition-colors">End-User Privacy Policy</Link>.
+                        <a href="/user-privacy" className="underline underline-offset-2 hover:text-black transition-colors">End-User Privacy Policy</a>.
                     </p>
                 </div>
 

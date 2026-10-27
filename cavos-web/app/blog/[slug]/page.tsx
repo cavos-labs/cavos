@@ -20,12 +20,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = getPostBySlug(slug);
   if (!post) return {};
+  const dateModified = post.meta.updated ?? post.meta.date;
   return marketingPageMetadata({
-    title: `${post.meta.title} — Blog`,
+    title: post.meta.title,
     description: post.meta.excerpt,
     path: `/blog/${slug}`,
     type: 'article',
     publishedTime: post.meta.date,
+    modifiedTime: dateModified,
     robots: isBlogPostNoindex(slug)
       ? { index: false, follow: true }
       : { index: true, follow: true },
@@ -37,13 +39,14 @@ export default async function BlogPostPage({ params }: Props) {
   const post = getPostBySlug(slug);
   if (!post) notFound();
 
+  const dateModified = post.meta.updated ?? post.meta.date;
   const jsonLd = blogPostJsonLd({
     title: post.meta.title,
     description: post.meta.excerpt,
     path: `/blog/${slug}`,
     datePublished: post.meta.date,
-    dateModified: post.meta.date,
-    type: post.meta.faq?.length ? 'Article' : 'BlogPosting',
+    dateModified,
+    type: 'Article',
     faq: post.meta.faq,
     crumbs: [
       { name: 'Home', path: '/' },

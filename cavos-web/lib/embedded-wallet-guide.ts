@@ -38,12 +38,12 @@ export const EMBEDDED_WALLET_PROVIDERS_PATH =
   '/blog/embedded-wallet-providers'
 
 export const EMBEDDED_WALLET_PROVIDERS_TITLE =
-  'Embedded Wallet Providers Compared (2026)'
+  'Best Embedded Wallet Providers (2026 Guide)'
 
 export const PRIVY_VS_TURNKEY_PATH = '/blog/privy-vs-turnkey'
 
 export const PRIVY_VS_TURNKEY_TITLE =
-  'Privy vs Turnkey: Embedded Wallet SDKs Compared (2026)'
+  'Privy vs Turnkey: Pricing & Custody (2026)'
 
 export const EMBEDDED_WALLET_API_PATH = '/blog/embedded-wallet-api'
 

@@ -105,6 +105,7 @@ import {
   PRIVY_WHY_LOOK,
   privyAlternativesItemList,
 } from './privy-alternatives'
+import { parseBlogFrontmatter } from './marketing-sitemap'
 
 const PRODUCT_LIKE_TYPES = new Set(['Product', 'SoftwareApplication'])
 
@@ -388,7 +389,7 @@ describe('marketing SEO', () => {
     assert.match(json, /"@type":"Offer"/)
   })
 
-  it('builds BlogPosting JSON-LD that references the organization node by @id', () => {
+  it('builds Article JSON-LD that references the organization node by @id', () => {
     const data = blogPostJsonLd({
       title: 'v1.1.9 — Cartridge Slot Support & Security Hardening',
       description: 'Native Cartridge Slot integration.',
@@ -405,7 +406,7 @@ describe('marketing SEO', () => {
     JSON.parse(json)
 
     const posting = data['@graph'][0]
-    assert.equal(posting['@type'], 'BlogPosting')
+    assert.equal(posting['@type'], 'Article')
     assert.equal(posting.headline, 'v1.1.9 — Cartridge Slot Support & Security Hardening')
     assert.equal(posting.description, 'Native Cartridge Slot integration.')
     assert.equal(posting.datePublished, '2025-03-30')
@@ -1011,6 +1012,7 @@ describe('marketing SEO', () => {
       ['/blog', 'Changelog'],
       ['/privy-alternatives', 'Privy wallet alternatives'],
       ['/blog/how-to-add-an-embedded-wallet', 'How to add an embedded wallet'],
+      ['/blog/wallet-as-a-service', 'Wallet as a service'],
     ] as const
 
     for (const [href, label] of required) {
@@ -1031,8 +1033,13 @@ describe('marketing SEO', () => {
     for (const [href, label] of legal) {
       assert.match(
         footer,
-        new RegExp(`href="${href}"[^>]*>${label}<`),
-        `footer missing ${label} -> ${href}`,
+        new RegExp(`<a href="${href}"[^>]*>${label}<`),
+        `footer missing crawlable <a href> ${label} -> ${href}`,
+      )
+      assert.doesNotMatch(
+        footer,
+        new RegExp(`<Link href="${href}"`),
+        `footer legal ${href} must be a plain <a href>, not next/link`,
       )
     }
   })
@@ -1064,10 +1071,116 @@ describe('marketing SEO', () => {
       )
     }
     assert.ok(marketingInlinkSources(WALLET_AS_A_SERVICE_PATH).includes('app/embedded-wallet/page.tsx'))
+    assert.ok(marketingInlinkSources(WALLET_AS_A_SERVICE_PATH).includes('app/blog/page.tsx'))
     const waasSiblings = marketingInlinkSources(WALLET_AS_A_SERVICE_PATH).filter((file) =>
       file.startsWith('content/blog/') && file !== 'content/blog/wallet-as-a-service.mdx',
     )
-    assert.ok(waasSiblings.length >= 2, `WaaS sibling inlinks: ${waasSiblings.join(', ')}`)
+    assert.ok(waasSiblings.length >= 3, `WaaS sibling inlinks: ${waasSiblings.join(', ')}`)
+    const waasInBodyPosts = [
+      'content/blog/embedded-wallet-providers.mdx',
+      'content/blog/privy-vs-turnkey.mdx',
+      'content/blog/embedded-wallet-api.mdx',
+      'content/blog/how-to-add-an-embedded-wallet.mdx',
+    ]
+    for (const relative of waasInBodyPosts) {
+      const source = fs.readFileSync(path.join(process.cwd(), relative), 'utf8')
+      const body = source.split('## What to read next')[0]
+      assert.match(
+        body,
+        /\[([^\]]+)\]\(\/blog\/wallet-as-a-service\)/,
+        `${relative} missing in-body WaaS anchor`,
+      )
+      const anchor = body.match(/\[([^\]]+)\]\(\/blog\/wallet-as-a-service\)/)?.[1] ?? ''
+      assert.ok(
+        /wallet-as-a-service/i.test(anchor),
+        `${relative} WaaS anchor is not descriptive: ${anchor}`,
+      )
+    }
+  })
+
+  it('emits Article JSON-LD with dateModified, author, and breadcrumbs for every blog post', () => {
+    const pageSource = fs.readFileSync(
+      path.join(process.cwd(), 'app/blog/[slug]/page.tsx'),
+      'utf8',
+    )
+    const blogLoader = fs.readFileSync(path.join(process.cwd(), 'lib/blog.ts'), 'utf8')
+    assert.match(pageSource, /type:\s*'Article'/)
+    assert.match(pageSource, /const dateModified = post\.meta\.updated \?\? post\.meta\.date/)
+    assert.match(pageSource, /modifiedTime:\s*dateModified/)
+    assert.match(pageSource, /dateModified,/)
+    assert.match(blogLoader, /data\.updated/)
+    assert.doesNotMatch(pageSource, /— Blog/)
+    assert.doesNotMatch(pageSource, /type:\s*post\.meta\.faq/)
+
+    const blogDir = path.join(process.cwd(), 'content/blog')
+    const files = fs.readdirSync(blogDir).filter((name) => name.endsWith('.mdx'))
+    assert.ok(files.length > 0)
+    for (const filename of files) {
+      const source = fs.readFileSync(path.join(blogDir, filename), 'utf8')
+      const fields = parseBlogFrontmatter(source)
+      const slug = fields.slug || filename.replace(/\.mdx$/, '')
+      const datePublished = fields.date
+      const dateModified = fields.updated || fields.dateModified || fields.date
+      assert.ok(datePublished, `${filename} missing date`)
+      const jsonLd = blogPostJsonLd({
+        title: fields.title,
+        description: fields.excerpt,
+        path: `/blog/${slug}`,
+        datePublished,
+        dateModified,
+        type: 'Article',
+        crumbs: [
+          { name: 'Home', path: '/' },
+          { name: 'Blog', path: '/blog' },
+          { name: fields.title, path: `/blog/${slug}` },
+        ],
+      })
+      const article = jsonLd['@graph'][0]
+      assert.equal(article['@type'], 'Article', slug)
+      assert.equal(article.datePublished, datePublished, slug)
+      assert.equal(article.dateModified, dateModified, slug)
+      assert.equal(article.author['@id'], ORGANIZATION_ID, slug)
+      assert.equal(article.author.name, 'Cavos', slug)
+      assert.equal(jsonLd['@graph'][1]['@type'], 'BreadcrumbList', slug)
+    }
+  })
+
+  it('keeps provider-comparison titles and descriptions inside CTR limits', () => {
+    const providersFull = `${EMBEDDED_WALLET_PROVIDERS_TITLE} | Cavos`
+    const privyFull = `${PRIVY_VS_TURNKEY_TITLE} | Cavos`
+    assert.ok(providersFull.length >= 50 && providersFull.length <= 60, providersFull)
+    assert.ok(privyFull.length >= 50 && privyFull.length <= 60, privyFull)
+    assert.match(EMBEDDED_WALLET_PROVIDERS_TITLE, /2026/)
+    assert.match(PRIVY_VS_TURNKEY_TITLE, /2026/)
+    assert.equal(EMBEDDED_WALLET_PROVIDERS_TITLE.includes('| Cavos'), false)
+    assert.equal(PRIVY_VS_TURNKEY_TITLE.includes('| Cavos'), false)
+
+    const providersSource = fs.readFileSync(
+      path.join(process.cwd(), 'content/blog/embedded-wallet-providers.mdx'),
+      'utf8',
+    )
+    const privySource = fs.readFileSync(
+      path.join(process.cwd(), 'content/blog/privy-vs-turnkey.mdx'),
+      'utf8',
+    )
+    const providers = parseBlogFrontmatter(providersSource)
+    const privy = parseBlogFrontmatter(privySource)
+    assert.equal(providers.title, EMBEDDED_WALLET_PROVIDERS_TITLE)
+    assert.equal(privy.title, PRIVY_VS_TURNKEY_TITLE)
+    assert.ok(providers.excerpt.length >= 140 && providers.excerpt.length <= 155)
+    assert.ok(privy.excerpt.length >= 140 && privy.excerpt.length <= 155)
+    assert.equal(providers.updated, '2026-10-27')
+    assert.equal(privy.updated, '2026-10-27')
+    assert.equal((providersSource.match(/^\s+- question:/gm) ?? []).length, 4)
+    assert.equal((privySource.match(/^\s+- question:/gm) ?? []).length, 4)
+    assert.match(providersSource, /What are the best embedded wallet providers in 2026\?/)
+    assert.match(providersSource, /How much do embedded wallet providers cost\?/)
+    assert.match(providersSource, /Which embedded wallet providers are non-custodial\?/)
+    assert.match(providersSource, /What is the difference between Privy, Turnkey, and Dynamic\?/)
+    assert.match(privySource, /What is the difference between Privy and Turnkey\?/)
+    assert.match(privySource, /How does Privy vs Turnkey pricing compare\?/)
+    assert.match(privySource, /Is Turnkey custodial\?/)
+    assert.match(privySource, /When should I choose Privy vs Turnkey\?/)
   })
 
   it('puts a non-footer in-text link to /embedded-wallet on ranking pages', () => {
@@ -1475,7 +1588,7 @@ describe('marketing SEO', () => {
     assert.equal(EMBEDDED_WALLET_PROVIDERS_PATH, '/blog/embedded-wallet-providers')
     assert.equal(
       EMBEDDED_WALLET_PROVIDERS_TITLE,
-      'Embedded Wallet Providers Compared (2026)',
+      'Best Embedded Wallet Providers (2026 Guide)',
     )
 
     const hub = fs.readFileSync(
@@ -1557,7 +1670,7 @@ describe('marketing SEO', () => {
     assert.equal(PRIVY_VS_TURNKEY_PATH, '/blog/privy-vs-turnkey')
     assert.equal(
       PRIVY_VS_TURNKEY_TITLE,
-      'Privy vs Turnkey: Embedded Wallet SDKs Compared (2026)',
+      'Privy vs Turnkey: Pricing & Custody (2026)',
     )
 
     const compareSource = fs.readFileSync(

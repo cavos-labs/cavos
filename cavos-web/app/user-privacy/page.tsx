@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
@@ -88,7 +87,7 @@ export default function UserPrivacyPage() {
                     <p className="text-sm text-black/40">Last updated: {LAST_UPDATED}</p>
                     <p className="text-sm text-black/50 mt-3">
                         This policy applies to you if you have created a wallet or signed into an application that uses the Cavos SDK. If you are a developer integrating Cavos, see our{' '}
-                        <Link href="/privacy" className="underline underline-offset-2 hover:text-black transition-colors">Developer Privacy Policy</Link>.
+                        <a href="/privacy" className="underline underline-offset-2 hover:text-black transition-colors">Developer Privacy Policy</a>.
                     </p>
                 </div>
 

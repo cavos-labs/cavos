@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { breadcrumbListJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
@@ -221,9 +220,9 @@ export default function DpaPage() {
                     </svg>
                     <p className="text-xs text-white/50 leading-relaxed">
                         This DPA is accepted electronically when you create a Cavos account. The acceptance timestamp and DPA version are recorded and stored with your account for compliance purposes. See also the{' '}
-                        <Link href="/privacy" className="underline underline-offset-2 hover:text-white/80 transition-colors">Privacy Policy</Link>{' '}
+                        <a href="/privacy" className="underline underline-offset-2 hover:text-white/80 transition-colors">Privacy Policy</a>{' '}
                         and{' '}
-                        <Link href="/terms" className="underline underline-offset-2 hover:text-white/80 transition-colors">Terms of Service</Link>.
+                        <a href="/terms" className="underline underline-offset-2 hover:text-white/80 transition-colors">Terms of Service</a>.
                     </p>
                 </div>
             </div>
