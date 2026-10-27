@@ -22,6 +22,7 @@ export interface PostMeta {
   slug: string;
   title: string;
   date: string;
+  updated?: string;
   excerpt: string;
   category: PostCategory;
   faq?: PostFaqItem[];
@@ -48,10 +49,18 @@ function postMetaFromData(
   data: Record<string, unknown>,
   fallbackSlug: string,
 ): PostMeta {
+  const updated =
+    typeof data.updated === 'string' && data.updated
+      ? data.updated
+      : typeof data.dateModified === 'string' && data.dateModified
+        ? data.dateModified
+        : undefined;
+
   return {
     slug: (typeof data.slug === 'string' && data.slug) || fallbackSlug,
     title: typeof data.title === 'string' ? data.title : '',
     date: typeof data.date === 'string' ? data.date : '',
+    ...(updated ? { updated } : {}),
     excerpt: typeof data.excerpt === 'string' ? data.excerpt : '',
     category: (typeof data.category === 'string'
       ? data.category

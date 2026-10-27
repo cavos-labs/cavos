@@ -189,16 +189,18 @@ export default function EmbeddedStellarWalletPage() {
 
                 <section className="mt-16 max-w-3xl">
                     <h2 className="text-2xl font-medium tracking-[-0.03em]">
-                        Reserves, fees, and Soroban
+                        Gas Sponsorship in Any Token
                     </h2>
                     <div className="mt-5 space-y-4 text-sm leading-relaxed text-muted">
                         <p>
-                            Every Stellar account locks XLM reserves (a base reserve plus about
-                            0.5 XLM per subentry). With the relayer, those reserves and all fees
-                            are sponsored, so the user locks no XLM. The relayer is only a fee
-                            payer and reserve sponsor — never a custodian or identity authority.
-                            A bad or absent relayer can cost fees; it cannot move funds or squat
-                            an address. Pass{' '}
+                            Gas Sponsorship in Any Token means the user can pay fees and
+                            reserves in any token they hold; USDC is one example. Every Stellar
+                            account locks XLM reserves (a base reserve plus about 0.5 XLM per
+                            subentry). With the relayer, those reserves and all fees are
+                            sponsored, so the user locks no XLM. The relayer is only a fee payer
+                            and reserve sponsor — never a custodian or identity authority. A bad
+                            or absent relayer can cost fees; it cannot move funds or squat an
+                            address. Pass{' '}
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
                                 {'{ sponsored: false }'}
                             </code>{' '}
@@ -445,7 +447,11 @@ export default function EmbeddedStellarWalletPage() {
                             <Link href="/compare" className={MARKETING_PROSE_LINK}>
                                 compare
                             </Link>{' '}
-                            pages state when another product is the better fit.{' '}
+                            pages and{' '}
+                            <Link href="/privy-alternatives" className={MARKETING_PROSE_LINK}>
+                                Privy alternatives
+                            </Link>{' '}
+                            state when another product is the better fit.{' '}
                             <Link href="/pricing" className={MARKETING_PROSE_LINK}>
                                 Pricing
                             </Link>{' '}

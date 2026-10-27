@@ -92,10 +92,10 @@ export default function TermsPage() {
                     </p>
                     <p>Related documents that also apply:</p>
                     <ul className="list-disc pl-4 space-y-1">
-                        <li><Link href="/privacy" className="underline underline-offset-2 hover:text-black transition-colors">Privacy Policy</Link></li>
-                        <li><Link href="/dpa" className="underline underline-offset-2 hover:text-black transition-colors">Data Processing Agreement</Link> (incorporated when you create an account)</li>
-                        <li><Link href="/user-terms" className="underline underline-offset-2 hover:text-black transition-colors">End-User Terms</Link> (for people who use a wallet inside an application that integrates Cavos)</li>
-                        <li><Link href="/user-privacy" className="underline underline-offset-2 hover:text-black transition-colors">End-User Privacy Policy</Link> (for people who use a wallet inside an application that integrates Cavos)</li>
+                        <li><a href="/privacy" className="underline underline-offset-2 hover:text-black transition-colors">Privacy Policy</a></li>
+                        <li><a href="/dpa" className="underline underline-offset-2 hover:text-black transition-colors">Data Processing Agreement</a> (incorporated when you create an account)</li>
+                        <li><a href="/user-terms" className="underline underline-offset-2 hover:text-black transition-colors">End-User Terms</a> (for people who use a wallet inside an application that integrates Cavos)</li>
+                        <li><a href="/user-privacy" className="underline underline-offset-2 hover:text-black transition-colors">End-User Privacy Policy</a> (for people who use a wallet inside an application that integrates Cavos)</li>
                     </ul>
                     <p>
                         By creating an account, clicking to accept, or using the Services, you agree to these Terms.
@@ -202,13 +202,13 @@ export default function TermsPage() {
                             <li>obtain any consents required for your processing of their data;</li>
                             <li>not represent that Cavos operates your application or custodians their assets;</li>
                             <li>ensure that end users who use a Cavos-powered wallet are directed to the{' '}
-                                <Link href="/user-terms" className="underline underline-offset-2 hover:text-black transition-colors">End-User Terms</Link>{' '}
+                                <a href="/user-terms" className="underline underline-offset-2 hover:text-black transition-colors">End-User Terms</a>{' '}
                                 where we reasonably require it.
                             </li>
                         </ul>
                         <p>
                             Under the{' '}
-                            <Link href="/dpa" className="underline underline-offset-2 hover:text-black transition-colors">DPA</Link>,{' '}
+                            <a href="/dpa" className="underline underline-offset-2 hover:text-black transition-colors">DPA</a>,{' '}
                             <strong className="text-black/80">you are the Controller</strong> of end-user personal data processed through the Services; <strong className="text-black/80">Cavos, LLC is the Processor</strong>.
                         </p>
                         <p>
