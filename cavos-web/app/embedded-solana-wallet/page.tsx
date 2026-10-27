@@ -414,7 +414,11 @@ export default function EmbeddedSolanaWalletPage() {
                             <Link href="/compare" className={MARKETING_PROSE_LINK}>
                                 compare
                             </Link>{' '}
-                            pages state when another product is the better fit.{' '}
+                            pages and{' '}
+                            <Link href="/privy-alternatives" className={MARKETING_PROSE_LINK}>
+                                Privy alternatives
+                            </Link>{' '}
+                            state when another product is the better fit.{' '}
                             <Link href="/pricing" className={MARKETING_PROSE_LINK}>
                                 Pricing
                             </Link>{' '}

@@ -31,42 +31,116 @@ export const ORGANIZATION_DESCRIPTION =
   'Cavos, LLC is a software and SaaS company. The Cavos wallet is the main product. It also builds Framezz event photography software and Framezz Galleries.'
 
 export const STARKNET_WALLET_PATH = '/embedded-starknet-wallet'
-export const STARKNET_WALLET_TITLE = 'Embedded Starknet Wallet SDK'
+/** Document title omits "| Cavos"; the layout template adds it. SERP: 53 chars. */
+export const STARKNET_WALLET_TITLE = 'Starknet Embedded Wallet (2026): Self-Custody'
 export const STARKNET_WALLET_DESCRIPTION =
-  'Starknet embedded wallet SDK: device-native and self-custodial. Signing key derived and used on-device. Audited OpenZeppelin AccountUpgradeable v3.0.0.'
+  'Starknet embedded wallet SDK (2026): device-native and self-custodial. Signing key derived on-device. Audited OpenZeppelin AccountUpgradeable v3.0.0.'
 
 export const STARKNET_WALLET_FAQ = [
   {
-    question: 'What account contract does Cavos use on Starknet?',
+    question: 'What is a Starknet embedded wallet?',
     answer:
-      'Each Starknet wallet is an audited OpenZeppelin account contract: AccountUpgradeable v3.0.0, class hash 0x01d1777db36cdd06dd62cfde77b1b6ae06412af95d57a13dc40ac77b8a702381. The audit covers OpenZeppelin’s contract, not Cavos. One stark key, derived from the MasterDEK and app salt, controls the account.',
+      'A Starknet embedded wallet is an on-chain Starknet account provisioned inside your application. The user signs in with an identity you already have. @cavos/kit looks up or claims a deterministic address and signs from the device. Cavos cannot see the key, sign with it, or move funds.',
   },
   {
-    question: 'How do new devices recover a Starknet wallet?',
+    question: 'Does Cavos use a custom Starknet account contract?',
     answer:
-      'Recovery is off-chain. A new device restores the MasterDEK with a Nitro enclave or a synced passkey and derives the same stark key. There are no on-chain device signers and no on-chain social recovery, backup signer, or recovery delay.',
+      'No. Each Starknet wallet is an audited OpenZeppelin account contract: AccountUpgradeable v3.0.0, class hash 0x01d1777db36cdd06dd62cfde77b1b6ae06412af95d57a13dc40ac77b8a702381. The audit covers OpenZeppelin’s contract, not Cavos. One stark key, derived from the MasterDEK and app salt, controls the account. There is no on-chain device list and no custom Cavos account class.',
   },
   {
-    question: 'What does needs-device-approval mean on Starknet?',
+    question: 'How does gas work on a Starknet embedded wallet?',
     answer:
-      'This device has no key yet. Restore the MasterDEK with a passkey or the enclave, then it can spend. The status is not an on-chain device list.',
+      'execute routes through the Cavos paymaster (SNIP-29, with SRC-9 outside execution). Account deployment and later executions are sponsored by default, so the user does not need ETH or STRK. After the account is deployed, fee: "self" pays from the account’s own balance. A self-funded first execute is refused.',
   },
   {
-    question: 'How does gas and deployment work?',
+    question: 'How do I add a Starknet embedded wallet with @cavos/kit?',
     answer:
-      'The Cavos paymaster sponsors deployment and execution, so the user pays no gas. Connect never deploys; the first execute deploys the OpenZeppelin account lazily and runs the calls atomically. Off-chain signatures use SNIP-12.',
+      'Install @cavos/kit, create an app in the Cavos dashboard, and pass the App ID plus a paymaster API key into Cavos.connect or CavosProvider. Call session.wallet("starknet"), then execute a multicall. Connect never deploys; the first execute deploys and runs atomically.',
   },
 ] as const
 
 export const SOLANA_WALLET_PATH = '/embedded-solana-wallet'
-export const SOLANA_WALLET_TITLE = 'Embedded Solana Wallet SDK'
+/** Document title omits "| Cavos"; the layout template adds it. SERP: 55 chars. */
+export const SOLANA_WALLET_TITLE = 'Solana Embedded Wallet SDK (2026): Self-Custody'
 export const SOLANA_WALLET_DESCRIPTION =
-  'Solana embedded wallet SDK: device-native and self-custodial. Signing key derived and used on-device. Native Ed25519 system account. Relayer can pay fees.'
+  'Solana embedded wallet SDK (2026): device-native and self-custodial. Signing key derived on-device. Native Ed25519 system account. Relayer can pay fees.'
+
+export const SOLANA_WALLET_FAQ = [
+  {
+    question: 'What is a Solana embedded wallet?',
+    answer:
+      'A Solana embedded wallet is a native Ed25519 system account provisioned inside your application. The spend key is HKDF of a MasterDEK that stays on the device. The address is an ordinary Solana public key, the same shape as Phantom, not a PDA.',
+  },
+  {
+    question: 'Is a Cavos Solana wallet a program-derived address?',
+    answer:
+      'No. Cavos provisions a native system account. The user key signs the Solana message. There is no on-chain Cavos program, no secp256r1 precompile account, and no extra on-chain signer to add.',
+  },
+  {
+    question: 'How do fees work on a Solana embedded wallet?',
+    answer:
+      'Who pays is a per-call choice. Omitting fee (or fee: "self") makes the account pay SOL. fee: "sponsored" names the Cavos relayer as fee payer when an App ID is set. fee: { token } settles the fee in a token the account holds. A co-signer cannot alter the instructions it signs. Sponsorship of extra programs is allowlisted per app, with a 1,000,000 CU cap.',
+  },
+  {
+    question: 'How do I add a Solana embedded wallet with @cavos/kit?',
+    answer:
+      'Install @cavos/kit, create an app in the Cavos dashboard, and pass the App ID into Cavos.connect or CavosProvider with chains: ["solana"]. Narrow on wallet.chain === "solana", then call execute(amount, destination) in lamports, or executeInstructions for allowlisted programs. Connect does not airdrop SOL.',
+  },
+] as const
 
 export const STELLAR_WALLET_PATH = '/embedded-stellar-wallet'
-export const STELLAR_WALLET_TITLE = 'Embedded Stellar Wallet SDK'
+/** Document title omits "| Cavos"; the layout template adds it. SERP: 52 chars. */
+export const STELLAR_WALLET_TITLE = 'Stellar Embedded Wallet (2026): Self-Custody'
 export const STELLAR_WALLET_DESCRIPTION =
-  'Stellar embedded wallet SDK: device-native and self-custodial. Signing key created and used on-device. Classic G… account. Relayer sponsors reserves.'
+  'Stellar embedded wallet SDK (2026): self-custodial classic G accounts. Signing key on-device. Gas Sponsorship in Any Token: pay fees and reserves in USDC.'
+
+export const STELLAR_WALLET_FAQ = [
+  {
+    question: 'What is a Stellar embedded wallet?',
+    answer:
+      'A Stellar embedded wallet is a classic G… Stellar account provisioned inside your application. The spend key is one Ed25519 key, HKDF of the same MasterDEK as Solana (`cavos-ed25519-stellar-v1`, salted by appSalt). It is not a Soroban contract, so exchanges and existing tools already understand the address.',
+  },
+  {
+    question: 'How does Gas Sponsorship in Any Token work on Stellar?',
+    answer:
+      'Gas Sponsorship in Any Token means users can pay fees and reserves in any token they hold; USDC is one example, via @cavos/reserve. When an App ID is set, the Cavos relayer is the transaction source and fee payer and sponsors the account’s XLM reserves, so the user does not need to hold lumens to start. Pass { sponsored: false } to have the account pay its own fee. The relayer cannot move funds or squat an address.',
+  },
+  {
+    question: 'How do I add a Stellar embedded wallet with @cavos/kit?',
+    answer:
+      'Install @cavos/kit, create an app in the Cavos dashboard, and pass the App ID into Cavos.connect or CavosProvider with chains: ["stellar"]. Narrow on wallet.chain === "stellar", then call execute(amount, destination) in stroops. Connect never creates the account; the first execute creates it and runs atomically.',
+  },
+  {
+    question: 'Can a Stellar embedded wallet invoke Soroban contracts?',
+    answer:
+      'Yes. invokeContract simulates the call, re-signs this account’s Soroban auth entry with the control key, and submits it. The G… can satisfy require_auth in on-chain apps. invokeContract and addTrustline require a deployed account (status ready). Native XLM transfers can create the account on first execute.',
+  },
+] as const
+
+export const PRICING_PATH = '/pricing'
+/** Document title omits "| Cavos"; the layout template adds it. SERP: 52 chars. */
+export const PRICING_TITLE = 'Embedded Wallet Pricing (2026): Free to $139'
+export const PRICING_DESCRIPTION =
+  'Embedded wallet pricing (2026): Free up to 1,000 wallets, Essential $59/month, Complete $139/month. Self-custodial SDK for Starknet, Solana, and Stellar.'
+
+export const PRICING_FAQ = [
+  {
+    q: 'What does Cavos embedded wallet pricing cost?',
+    a: 'Free covers up to 1,000 wallets. Essential is $59/month with unlimited creates and on-device recovery. Complete is $139/month and adds AWS Nitro enclave recovery.',
+  },
+  {
+    q: 'What counts as a wallet create?',
+    a: 'Each new wallet your app provisions counts toward the create cap. Existing wallets, reads, and signatures remain unrestricted. When Free hits 1,000 creates, only new creates pause.',
+  },
+  {
+    q: 'Which chains are supported?',
+    a: 'Starknet, Solana, and Stellar. The same SDK and adapters ship on every plan. Stellar wallets are classic G accounts.',
+  },
+  {
+    q: 'What is enclave recovery?',
+    a: 'Complete includes AWS Nitro enclave recovery. If a user loses their passkey, they can rewrap their device encryption key to a new device through a hardware-isolated flow. The enclave never holds your Stellar control seed or signs transactions.',
+  },
+] as const
 
 /** Auth, dashboard, and utility pages that must not appear in search results. */
 export const NOINDEX_FOLLOW = { index: false, follow: true } as const
@@ -324,7 +398,7 @@ export function chainWalletPageJsonLd(input: {
   datePublished: string
   dateModified: string
   crumbName: string
-  faq: GuideFaqItem[]
+  faq: readonly GuideFaqItem[]
 }) {
   const url = pageUrl(input.path)
   return {
@@ -786,7 +860,7 @@ export type PricingPlanJsonLd = {
 /** /pricing Product node: every Offer includes price + priceCurrency from published plan fees. */
 export function pricingPageJsonLd(input: {
   plans: PricingPlanJsonLd[]
-  faq: { q: string; a: string }[]
+  faq: readonly { q: string; a: string }[]
 }) {
   const url = pageUrl('/pricing')
   return {

@@ -1,7 +1,14 @@
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import Link from 'next/link'
-import { marketingPageMetadata, pricingPageJsonLd } from '@/lib/marketing-seo'
+import {
+    marketingPageMetadata,
+    pricingPageJsonLd,
+    PRICING_DESCRIPTION,
+    PRICING_FAQ,
+    PRICING_PATH,
+    PRICING_TITLE,
+} from '@/lib/marketing-seo'
 
 /* ── Bespoke feature icons (layered, multi-tone Cavos indigo) ───────────────
    Hand-built SVGs so the set feels tailored, not a generic icon-pack pull. */
@@ -52,10 +59,9 @@ function IcoShield() {
 }
 
 export const metadata = marketingPageMetadata({
-    title: 'Embedded Wallet Pricing',
-    description:
-        'Flat monthly fees for multichain embedded wallets. Free up to 1,000 wallets. Essential $59/mo. Complete $139/mo with enclave recovery.',
-    path: '/pricing',
+    title: PRICING_TITLE,
+    description: PRICING_DESCRIPTION,
+    path: PRICING_PATH,
 })
 
 /* ── Domain model: one source of truth ── */
@@ -124,28 +130,7 @@ const FEATURE_GROUPS: { title: string; Art: () => React.ReactElement; items: str
     },
 ]
 
-const FAQ: { q: string; a: string }[] = [
-    {
-        q: 'What counts as a wallet create?',
-        a: 'Each new wallet your app provisions counts toward the create cap. Existing wallets, reads, and signatures remain unrestricted. When Free hits 1,000 creates, only new creates pause.',
-    },
-    {
-        q: 'Which chains are supported?',
-        a: 'Starknet, Solana, and Stellar. The same SDK and adapters ship on every plan. Stellar wallets are classic G accounts.',
-    },
-    {
-        q: 'What is enclave recovery?',
-        a: 'Complete includes AWS Nitro enclave recovery. If a user loses their passkey, they can rewrap their device encryption key to a new device through a hardware-isolated flow. The enclave never holds your Stellar control seed or signs transactions.',
-    },
-    {
-        q: 'Is gas sponsorship included?',
-        a: 'Gas sponsorship is available on every plan and funded separately. Costs are billed to the integrator, not included in these flat fees.',
-    },
-    {
-        q: 'Can I cancel anytime?',
-        a: 'Yes. Paid plans are month-to-month. When you cancel, you keep your plan until the billing period ends, then drop back to Free. Your wallets are never deleted.',
-    },
-]
+const FAQ = PRICING_FAQ
 
 function Check({ className = '' }: { className?: string }) {
     return (
@@ -163,7 +148,7 @@ function formatPlanRow(plan: Plan): { name: string; desc: string; price: string;
 }
 
 export default function PricingPage() {
-    const jsonLd = pricingPageJsonLd({ plans: PLANS, faq: FAQ })
+    const jsonLd = pricingPageJsonLd({ plans: PLANS, faq: [...FAQ] })
 
     return (
         <main className="bg-white min-h-screen text-ink font-sans antialiased">
@@ -190,7 +175,35 @@ export default function PricingPage() {
                             self-custodial embedded wallet
                         </Link>
                         . Free gets you started. Paid plans unlock unlimited creates and
-                        advanced recovery.
+                        advanced recovery. The same SDK ships for{' '}
+                        <Link
+                            href="/embedded-starknet-wallet"
+                            className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                        >
+                            Starknet
+                        </Link>
+                        ,{' '}
+                        <Link
+                            href="/embedded-solana-wallet"
+                            className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                        >
+                            Solana
+                        </Link>
+                        , and{' '}
+                        <Link
+                            href="/embedded-stellar-wallet"
+                            className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                        >
+                            Stellar
+                        </Link>
+                        . See{' '}
+                        <Link
+                            href="/privy-alternatives"
+                            className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                        >
+                            Privy alternatives
+                        </Link>{' '}
+                        if you are comparing providers.
                     </p>
                 </header>
 
