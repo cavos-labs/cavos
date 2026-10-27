@@ -1,46 +1,29 @@
 # Scheduled jobs
 
-Cavos does not use Vercel Cron. Operational HTTP jobs are scheduled with Supabase Cron (`pg_cron`) and invoked with `pg_net`.
+Cavos does not use Vercel Cron. Jobs that call the app run from GitHub Actions;
+jobs that only touch the database run inside Postgres with Supabase Cron (`pg_cron`).
 
-After applying migrations, run this once in the Supabase SQL editor:
+GitHub Actions:
 
-```sql
-SELECT public.configure_cavos_http_crons(
-  'https://cavos.xyz',
-  'the-same-random-value-configured-as-CRON_SECRET'
-);
-```
+- `sync-jwks.yml`: hourly; refreshes the Slot JWKS on every Katana instance.
+  Mainnet/sepolia sync is manual (`workflow_dispatch`).
 
-The function stores both values in Supabase Vault. Do not commit them to source control.
+Supabase Cron:
 
-Generate a secret with `openssl rand -hex 32`, configure it as `CRON_SECRET`
-in the production deployment, and pass that exact same value to the function above.
+- `cleanup-expired-ephemeral-rows`: daily at 04:00 UTC.
+- `cleanup-old-transactions`: daily at 04:00 UTC; drops transactions older than 90 days.
+- `rollup-prune-operational-events`: daily at 02:20 UTC.
+- `expire-social-recovery-sessions`: every five minutes.
+- `cleanup-oauth-callback-codes`: every five minutes.
+- `prune-cron-run-details`: daily at 03:30 UTC; keeps seven days of `pg_cron` history,
+  which pg_cron never prunes on its own.
 
-Jobs:
-
-- `cavos-webhook-retries`: every five minutes.
-- `cavos-sync-jwks`: daily at midnight UTC.
-- `cavos-social-recovery-cleanup`: every five minutes; expires abandoned
-  sessions and **deletes the Confidential Space VMs they left behind**. This is
-  the only path that removes those VMs, so if it is not scheduled they
-  accumulate — one stopped VM and its disk per cycle, indefinitely.
-- `rollup-prune-operational-events`: daily at 02:20 UTC, entirely inside Postgres.
-
-There is no warm-pool job. The pool sustains itself: a worker calls
-`/api/recovery/social/workload/complete` when it finishes, which provisions its
-replacement. Nothing to unschedule — the size is controlled by
-`SOCIAL_RECOVERY_WARM_POOL_SIZE`, which is 0 unless set.
+There are no `pg_net` jobs. The ones that existed were blocked by Cloudflare on
+every call and were dropped in `20261027150000_drop_http_crons.sql`, along with
+the extension. A job that must reach the app belongs in GitHub Actions.
 
 <!-- Verify what is actually scheduled, not what this file claims. -->
 
 ```sql
 SELECT jobname, schedule, active FROM cron.job ORDER BY jobname;
 ```
-
-**Re-run `configure_cavos_http_crons` after any migration adds a job to it.**
-The function only schedules jobs at the moment it runs, so a job added to its
-body later never appears until it is invoked again. That is how
-`cavos-social-recovery-cleanup` went missing while this file listed it as
-scheduled, leaving stopped VMs to pile up.
-
-Inspect recent HTTP calls through `net._http_response` and schedules through `cron.job`.
