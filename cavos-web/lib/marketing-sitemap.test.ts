@@ -204,6 +204,8 @@ describe('marketing sitemap', () => {
     assert.equal(isBlogPostNoindex('embedded-wallet-api'), false)
     assert.equal(isBlogPostNoindex('non-custodial-embedded-wallet'), false)
     assert.equal(isBlogPostNoindex('wallet-as-a-service'), false)
+    assert.equal(isBlogPostNoindex('embedded-wallet-react-sdk'), false)
+    assert.equal(isBlogPostNoindex('alchemy-vs-privy'), false)
     assert.equal(
       urls.includes(`${MARKETING_ORIGIN}/blog/v1-1-9-sdk-security`),
       false,

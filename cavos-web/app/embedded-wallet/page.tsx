@@ -30,6 +30,10 @@ import {
     EMBEDDED_WALLET_VS_EXTENSION_PATH,
     PRIVY_VS_TURNKEY_PATH,
     PRIVY_VS_TURNKEY_TITLE,
+    EMBEDDED_WALLET_REACT_SDK_PATH,
+    EMBEDDED_WALLET_REACT_SDK_TITLE,
+    ALCHEMY_VS_PRIVY_PATH,
+    ALCHEMY_VS_PRIVY_TITLE,
     STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
     GASLESS_STARKNET_TRANSACTIONS_PATH,
     WALLET_AS_A_SERVICE_PATH,
@@ -870,6 +874,12 @@ export default function EmbeddedWalletGuidePage() {
                             install and the first sponsored transaction.
                         </li>
                         <li>
+                            <Link href={EMBEDDED_WALLET_REACT_SDK_PATH} className={linkClass}>
+                                {EMBEDDED_WALLET_REACT_SDK_TITLE}
+                            </Link>
+                            {' — '}best practices for embedding a wallet SDK in a React app.
+                        </li>
+                        <li>
                             <Link href={EMBEDDED_WALLET_PROVIDERS_PATH} className={linkClass}>
                                 {EMBEDDED_WALLET_PROVIDERS_TITLE}
                             </Link>
@@ -880,6 +890,12 @@ export default function EmbeddedWalletGuidePage() {
                                 {PRIVY_VS_TURNKEY_TITLE}
                             </Link>
                             {' — '}finished auth and wallets versus signing infrastructure.
+                        </li>
+                        <li>
+                            <Link href={ALCHEMY_VS_PRIVY_PATH} className={linkClass}>
+                                {ALCHEMY_VS_PRIVY_TITLE}
+                            </Link>
+                            {' — '}Account Kit deprecated; Wallet APIs plus Privy as signer.
                         </li>
                     </ul>
                 </section>

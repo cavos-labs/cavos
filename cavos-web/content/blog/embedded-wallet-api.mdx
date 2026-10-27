@@ -21,7 +21,7 @@ faq:
 
 An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain account they can pay, receive, and sign with — no [browser extension](/blog/embedded-wallet-vs-browser-extension), no seed phrase, no trip to another app.
 
-The **embedded wallet API** is the developer surface of a [wallet-as-a-service platform](/blog/wallet-as-a-service). This guide is the docs-style map: what those APIs cover, what to evaluate before you pick one, and how Cavos exposes the same contract in `@cavos/kit` 0.4.4. The [React integration](/blog/how-to-add-an-embedded-wallet) is the install. The [non-custodial guide](/blog/non-custodial-embedded-wallet) is the custody test. The [providers comparison](/blog/embedded-wallet-providers) is the shortlist. Adapters ship today for [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), and [Stellar](/embedded-stellar-wallet).
+The **embedded wallet API** is the developer surface of a [wallet-as-a-service platform](/blog/wallet-as-a-service). This guide is the docs-style map: what those APIs cover, what to evaluate before you pick one, and how Cavos exposes the same contract in `@cavos/kit` 0.4.4. The [React integration](/blog/how-to-add-an-embedded-wallet) is the install. Best practices for embedding that wallet SDK — custody, passkeys, Gas Sponsorship in Any Token, errors, and testnet — are in the [embedded wallet React SDK](/blog/embedded-wallet-react-sdk) guide. The [non-custodial guide](/blog/non-custodial-embedded-wallet) is the custody test. The [providers comparison](/blog/embedded-wallet-providers) is the shortlist. Adapters ship today for [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), and [Stellar](/embedded-stellar-wallet).
 
 Cavos, LLC is a software and SaaS company. The wallet is the main product: a device-native, self-custodial embedded wallet. Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds.
 
@@ -200,6 +200,7 @@ The kit documents three paths: another signed-in device, a passkey, and opt-in h
 - [Wallet-as-a-service](/blog/wallet-as-a-service) — platform parts, pricing models, and build versus buy.
 - [Non-custodial embedded wallets](/blog/non-custodial-embedded-wallet) — who can sign, key models, and how to verify a vendor’s claim.
 - [How to add an embedded wallet to a React app](/blog/how-to-add-an-embedded-wallet) — `CavosProvider`, first sponsored transaction.
+- [Embedded wallet React SDK](/blog/embedded-wallet-react-sdk) — best practices for embedding a wallet SDK in an app.
 - [Embedded wallet providers compared](/blog/embedded-wallet-providers) — pricing, chains, and key models.
 - [Embedded wallet vs browser extension](/blog/embedded-wallet-vs-browser-extension) — where users should sign.
 - [How to add an embedded Stellar wallet](/blog/stellar-embedded-wallet-tutorial) — social login, the G… before create, first sponsored execute.

@@ -5,6 +5,7 @@ import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { COMPETITORS, getCompetitor } from '@/lib/compare-data'
 import {
+    ALCHEMY_VS_PRIVY_PATH,
     EMBEDDED_WALLET_API_PATH,
     EMBEDDED_WALLET_INTEGRATION_PATH,
     EMBEDDED_WALLET_PROVIDERS_PATH,
@@ -83,6 +84,11 @@ export default async function ComparisonPage({
                                 <Link href={PRIVY_VS_TURNKEY_PATH} className={linkClass}>
                                     Privy vs Turnkey
                                 </Link>
+                                . For Alchemy Wallet APIs versus Privy’s finished embedded
+                                wallet, see{' '}
+                                <Link href={ALCHEMY_VS_PRIVY_PATH} className={linkClass}>
+                                    Alchemy vs Privy
+                                </Link>
                                 .{' '}
                             </>
                         ) : null}
@@ -92,6 +98,17 @@ export default async function ComparisonPage({
                                 finished embedded wallet product, see{' '}
                                 <Link href={PRIVY_VS_TURNKEY_PATH} className={linkClass}>
                                     Privy vs Turnkey
+                                </Link>
+                                .{' '}
+                            </>
+                        ) : null}
+                        {competitor.slug === 'alchemy' ? (
+                            <>
+                                Alchemy vs Privy is not a like-for-like SDK swap: Wallet APIs
+                                are the transaction layer, and Alchemy recommends Privy as the
+                                signer. See{' '}
+                                <Link href={ALCHEMY_VS_PRIVY_PATH} className={linkClass}>
+                                    Alchemy vs Privy
                                 </Link>
                                 .{' '}
                             </>
