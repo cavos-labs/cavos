@@ -58,6 +58,7 @@ import {
 } from './chain-wallet-pages'
 import {
   DOCS_URLS,
+  EMBEDDED_WALLET_DEFINITION,
   EMBEDDED_WALLET_DESCRIPTION,
   EMBEDDED_WALLET_FAQ,
   EMBEDDED_WALLET_HOW_IT_WORKS,
@@ -468,18 +469,33 @@ describe('marketing SEO', () => {
     assert.ok(EMBEDDED_WALLET_TITLE.length > 0)
     assert.ok(EMBEDDED_WALLET_TITLE.length <= 60)
     assert.match(EMBEDDED_WALLET_TITLE, /Embedded Wallet: What It Is/)
-    assert.match(EMBEDDED_WALLET_TITLE, /How to Choose an SDK \(2026\)/)
+    assert.match(EMBEDDED_WALLET_TITLE, /API & SDK/)
+    assert.match(EMBEDDED_WALLET_TITLE, /2026/)
+    assert.ok(`${EMBEDDED_WALLET_TITLE} | Cavos`.length <= 60)
     assert.ok(EMBEDDED_WALLET_DESCRIPTION.length > 0)
     assert.ok(EMBEDDED_WALLET_DESCRIPTION.length <= 155)
+    assert.match(EMBEDDED_WALLET_DESCRIPTION, /embedded wallet/)
+    assert.match(EMBEDDED_WALLET_DESCRIPTION, /API/)
+    assert.match(EMBEDDED_WALLET_DESCRIPTION, /SDK/)
     assert.equal(EMBEDDED_WALLET_PATH, '/embedded-wallet')
+    const definitionWords = EMBEDDED_WALLET_DEFINITION.trim().split(/\s+/).length
+    assert.ok(definitionWords >= 40 && definitionWords <= 60, definitionWords)
     assert.ok(EMBEDDED_WALLET_FAQ.length >= 8 && EMBEDDED_WALLET_FAQ.length <= 10)
     assert.ok(EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What is an embedded wallet SDK?'))
+    assert.ok(EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What is an embedded wallet API?'))
+    assert.ok(
+      EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What is an embedded wallet as a service?'),
+    )
+    assert.ok(EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What are embedded wallet providers?'))
+    assert.ok(
+      EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What is a non-custodial embedded wallet?'),
+    )
     assert.ok(
       EMBEDDED_WALLET_FAQ.some(
         (item) => item.question === 'Which chains does Cavos support for embedded wallets?',
       ),
     )
-    assert.equal(EMBEDDED_WALLET_MODIFIED, '2026-10-26')
+    assert.equal(EMBEDDED_WALLET_MODIFIED, '2026-10-27')
   })
 
   it('keeps a single H1 and adds how-it-works plus a compare-data provider table', () => {
@@ -542,10 +558,20 @@ describe('marketing SEO', () => {
     )
     assert.ok(headings.includes('What is an embedded wallet?'))
     assert.ok(headings.includes('How an embedded wallet works'))
-    assert.ok(headings.includes('Embedded wallet SDK'))
+    assert.ok(headings.includes('Embedded wallet API and SDK'))
+    assert.ok(headings.includes('Embedded wallet vs browser extension'))
+    assert.ok(headings.includes('Embedded wallet pricing'))
     assert.ok(headings.includes('Gas Sponsorship in Any Token'))
     assert.ok(headings.includes('How to integrate an embedded wallet'))
     assert.ok(headings.includes('Embedded wallet provider comparison'))
+    assert.match(pageSource, /EMBEDDED_WALLET_DEFINITION/)
+    assert.match(pageSource, /Free up to 1,000 wallets/)
+    assert.match(pageSource, /Essential \$59\/month/)
+    assert.match(pageSource, /Complete \$139\/month/)
+    assert.match(pageSource, /href=["']\/compare["']/)
+    assert.match(pageSource, /audited OpenZeppelin account contract/)
+    assert.doesNotMatch(pageSource, /Horizon signer/)
+    assert.doesNotMatch(pageSource, /grandfathered/)
     assert.match(pageSource, /href=["']\/embedded-starknet-wallet["']/)
     assert.match(pageSource, /href=["']\/embedded-solana-wallet["']/)
     assert.match(pageSource, /href=["']\/embedded-stellar-wallet["']/)
