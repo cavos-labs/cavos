@@ -738,7 +738,53 @@ function comparisonItemListElement(entries: CompareListEntry[]) {
   }))
 }
 
-/** /compare index: WebPage + breadcrumbs + FAQ + ItemList of comparison pages. No Product nodes. */
+/**
+ * Documented Cavos plans from `/pricing`. Google Product / Software App
+ * snippets require Offer.price + priceCurrency (and availability). Compare
+ * pages attach these to a Cavos SoftwareApplication — never to competitors,
+ * and never with invented review or aggregateRating.
+ */
+function cavosPublishedPlanOffersJsonLd() {
+  const pricingUrl = pageUrl('/pricing')
+  return [
+    {
+      '@type': 'Offer' as const,
+      name: 'Free',
+      price: '0',
+      priceCurrency: 'USD',
+      availability: OFFER_AVAILABILITY,
+      url: pricingUrl,
+      description: 'Free up to 1,000 wallets.',
+    },
+    {
+      '@type': 'Offer' as const,
+      name: 'Essential',
+      price: '59',
+      priceCurrency: 'USD',
+      availability: OFFER_AVAILABILITY,
+      url: pricingUrl,
+      description: 'Essential plan, billed monthly.',
+    },
+    {
+      '@type': 'Offer' as const,
+      name: 'Complete',
+      price: '139',
+      priceCurrency: 'USD',
+      availability: OFFER_AVAILABILITY,
+      url: pricingUrl,
+      description: 'Complete plan, billed monthly.',
+    },
+  ]
+}
+
+function cavosCompareSoftwareApplicationJsonLd() {
+  return {
+    ...walletSoftwareApplicationJsonLd(),
+    offers: cavosPublishedPlanOffersJsonLd(),
+  }
+}
+
+/** /compare index: WebPage + Cavos SoftwareApplication (priced offers) + breadcrumbs + FAQ + ItemList. No competitor Product nodes. */
 export function compareIndexJsonLd(input: {
   title: string
   description: string
@@ -758,7 +804,9 @@ export function compareIndexJsonLd(input: {
         isPartOf: { '@id': WEBSITE_ID },
         breadcrumb: { '@id': `${url}#breadcrumb` },
         about: { '@id': SOFTWARE_ID },
+        mainEntity: { '@id': SOFTWARE_ID },
       },
+      cavosCompareSoftwareApplicationJsonLd(),
       {
         ...breadcrumbListJsonLd([
           { name: 'Home', path: '/' },
@@ -789,8 +837,10 @@ export function compareIndexJsonLd(input: {
 }
 
 /**
- * /compare/[slug]: WebPage + breadcrumbs + FAQ + ItemList of the two names.
+ * /compare/[slug]: WebPage + Cavos SoftwareApplication (priced offers) + breadcrumbs + FAQ + ItemList.
  * Competitor products are ListItem names only — never Product/SoftwareApplication.
+ * Google Product snippets require offers, review, or aggregateRating; we emit
+ * documented Cavos plan Offers and do not invent ratings or competitor prices.
  */
 export function compareCompetitorPageJsonLd(competitor: CompareCompetitorJsonLdInput) {
   const path = `/compare/${competitor.slug}`
@@ -811,7 +861,9 @@ export function compareCompetitorPageJsonLd(competitor: CompareCompetitorJsonLdI
         isPartOf: { '@id': WEBSITE_ID },
         breadcrumb: { '@id': `${url}#breadcrumb` },
         about: { '@id': SOFTWARE_ID },
+        mainEntity: { '@id': SOFTWARE_ID },
       },
+      cavosCompareSoftwareApplicationJsonLd(),
       {
         ...breadcrumbListJsonLd([
           { name: 'Home', path: '/' },
@@ -839,6 +891,7 @@ export function compareCompetitorPageJsonLd(competitor: CompareCompetitorJsonLdI
             position: 1,
             name: 'Cavos',
             url: MARKETING_ORIGIN,
+            item: { '@id': SOFTWARE_ID },
           },
           {
             '@type': 'ListItem',
