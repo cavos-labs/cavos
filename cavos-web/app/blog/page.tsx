@@ -23,6 +23,10 @@ import {
   GASLESS_STARKNET_TRANSACTIONS_TITLE,
   WALLET_AS_A_SERVICE_PATH,
   WALLET_AS_A_SERVICE_TITLE,
+  EMBEDDED_WALLET_REACT_SDK_PATH,
+  EMBEDDED_WALLET_REACT_SDK_TITLE,
+  ALCHEMY_VS_PRIVY_PATH,
+  ALCHEMY_VS_PRIVY_TITLE,
 } from '@/lib/embedded-wallet-guide';
 
 export const metadata: Metadata = marketingPageMetadata({
@@ -59,6 +63,11 @@ const GUIDES = [
     body: 'Install @cavos/kit, wrap CavosProvider, sign in, and send a sponsored transaction.',
   },
   {
+    href: EMBEDDED_WALLET_REACT_SDK_PATH,
+    title: EMBEDDED_WALLET_REACT_SDK_TITLE,
+    body: 'Best practices for embedding a wallet SDK in a React or Next.js app with Cavos.',
+  },
+  {
     href: EMBEDDED_WALLET_VS_EXTENSION_PATH,
     title: EMBEDDED_WALLET_VS_EXTENSION_TITLE,
     body: 'When users should sign in an embedded wallet versus a MetaMask-style browser extension.',
@@ -72,6 +81,11 @@ const GUIDES = [
     href: PRIVY_VS_TURNKEY_PATH,
     title: PRIVY_VS_TURNKEY_TITLE,
     body: 'Finished auth and embedded wallets versus low-level key management and signing infrastructure.',
+  },
+  {
+    href: ALCHEMY_VS_PRIVY_PATH,
+    title: ALCHEMY_VS_PRIVY_TITLE,
+    body: 'Account Kit is deprecated; Wallet APIs are the successor, with Privy as the recommended signer.',
   },
   {
     href: STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,

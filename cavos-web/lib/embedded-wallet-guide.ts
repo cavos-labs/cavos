@@ -65,6 +65,16 @@ export const WALLET_AS_A_SERVICE_PATH = '/blog/wallet-as-a-service'
 export const WALLET_AS_A_SERVICE_TITLE =
   'Wallet-as-a-Service (WaaS): How Embedded Wallet Platforms Work (2026)'
 
+export const EMBEDDED_WALLET_REACT_SDK_PATH = '/blog/embedded-wallet-react-sdk'
+
+export const EMBEDDED_WALLET_REACT_SDK_TITLE =
+  'Embedded Wallet React SDK: Best Practices (2026)'
+
+export const ALCHEMY_VS_PRIVY_PATH = '/blog/alchemy-vs-privy'
+
+export const ALCHEMY_VS_PRIVY_TITLE =
+  'Alchemy vs Privy: Pricing & Custody (2026)'
+
 export const DOCS_ORIGIN = 'https://docs.cavos.xyz'
 
 export const DOCS_URLS = {

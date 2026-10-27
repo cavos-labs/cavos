@@ -91,6 +91,10 @@ import {
   GASLESS_STARKNET_TRANSACTIONS_TITLE,
   WALLET_AS_A_SERVICE_PATH,
   WALLET_AS_A_SERVICE_TITLE,
+  EMBEDDED_WALLET_REACT_SDK_PATH,
+  EMBEDDED_WALLET_REACT_SDK_TITLE,
+  ALCHEMY_VS_PRIVY_PATH,
+  ALCHEMY_VS_PRIVY_TITLE,
 } from './embedded-wallet-guide'
 import {
   COMPETITORS,
@@ -1110,6 +1114,8 @@ describe('marketing SEO', () => {
       STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
       GASLESS_STARKNET_TRANSACTIONS_PATH,
       WALLET_AS_A_SERVICE_PATH,
+      EMBEDDED_WALLET_REACT_SDK_PATH,
+      ALCHEMY_VS_PRIVY_PATH,
     ]
     for (const href of guides) {
       const sources = marketingInlinkSources(href)
@@ -2106,6 +2112,266 @@ describe('marketing SEO', () => {
     )
   })
 
+  it('indexes the embedded wallet React SDK guide as an Article with FAQ JSON-LD', () => {
+    const postPath = path.join(
+      process.cwd(),
+      'content/blog/embedded-wallet-react-sdk.mdx',
+    )
+    assert.equal(fs.existsSync(postPath), true)
+    const source = fs.readFileSync(postPath, 'utf8')
+    const excerptMatch = source.match(/^excerpt:\s*"(.*)"$/m)
+    assert.ok(excerptMatch)
+    assert.ok(excerptMatch[1].length <= 155, excerptMatch[1].length)
+    assert.ok(excerptMatch[1].length >= 140, excerptMatch[1].length)
+    assert.match(source, /\[embedded wallet\]\(\/embedded-wallet\)/)
+    assert.match(source, /\]\(\/blog\/how-to-add-an-embedded-wallet\)/)
+    assert.match(source, /\]\(\/blog\/embedded-wallet-api\)/)
+    assert.match(source, /embedded-starknet-wallet/)
+    assert.match(source, /embedded-solana-wallet/)
+    assert.match(source, /embedded-stellar-wallet/)
+    assert.match(source, /\]\(\/pricing\)/)
+    assert.match(source, /docs\.cavos\.xyz\/docs\/react/)
+    assert.match(source, /docs\.cavos\.xyz\/docs\/quickstart/)
+    assert.match(source, /docs\.cavos\.xyz\/docs\/passkeys/)
+    assert.match(source, /docs\.cavos\.xyz\/docs\/troubleshooting/)
+    assert.match(source, /@cavos\/kit` 0\.4\.4/)
+    assert.match(source, /npm install @cavos\/kit/)
+    assert.match(source, /CavosProvider/)
+    assert.match(source, /useCavos/)
+    assert.match(source, /login\("google"\)/)
+    assert.match(source, /sendOtp/)
+    assert.match(source, /verifyOtp/)
+    assert.match(source, /enrollPasskeyDefault/)
+    assert.match(source, /approveDeviceWithPasskey/)
+    assert.match(source, /paymasterApiKey/)
+    assert.match(source, /network: "testnet"/)
+    assert.match(source, /environment: "development"/)
+    assert.match(source, /Gas Sponsorship in Any Token/)
+    assert.match(source, /audited OpenZeppelin account contract/)
+    assert.match(source, /AccountUpgradeable v3\.0\.0/)
+    assert.match(source, /does not ship its own account implementation/)
+    assert.match(source, /no on-chain device-signer list/)
+    assert.match(source, /no on-chain social recovery/)
+    assert.match(source, /device-native/)
+    assert.match(source, /Cavos, LLC/)
+    assert.match(source, /Free up to 1,000 wallets/)
+    assert.match(source, /Essential at \$59\/mo/)
+    assert.match(source, /Complete at \$139\/mo/)
+    assert.match(source, /What is an embedded wallet React SDK\?/)
+    assert.match(source, /How do I add an embedded wallet SDK to a React app\?/)
+    assert.match(
+      source,
+      /What are best practices for embedding a wallet SDK in an app\?/,
+    )
+    assert.match(source, /Does the Cavos React SDK sponsor gas in any token\?/)
+    assert.equal((source.match(/^\s+- question:/gm) ?? []).length, 4)
+    assert.doesNotMatch(source, /audited Cavos/)
+    assert.doesNotMatch(source, /Cavos custom account/)
+    assert.doesNotMatch(source, /on-chain device approval/)
+    assert.doesNotMatch(source, /This device must be approved first/)
+    assert.doesNotMatch(source, /category:\s*"Release"/)
+    assert.doesNotMatch(source, /robots:\s*noindex/)
+    assert.equal(EMBEDDED_WALLET_REACT_SDK_PATH, '/blog/embedded-wallet-react-sdk')
+    assert.equal(
+      EMBEDDED_WALLET_REACT_SDK_TITLE,
+      'Embedded Wallet React SDK: Best Practices (2026)',
+    )
+    assert.ok(`${EMBEDDED_WALLET_REACT_SDK_TITLE} | Cavos`.length <= 60)
+    assert.equal(EMBEDDED_WALLET_REACT_SDK_TITLE.includes('| Cavos'), false)
+
+    const fields = parseBlogFrontmatter(source)
+    assert.equal(fields.title, EMBEDDED_WALLET_REACT_SDK_TITLE)
+    assert.equal(fields.updated, '2026-10-27')
+    assert.equal(fields.date, '2026-10-27')
+
+    const hub = fs.readFileSync(
+      path.join(process.cwd(), 'app/embedded-wallet/page.tsx'),
+      'utf8',
+    )
+    assert.match(hub, /EMBEDDED_WALLET_REACT_SDK_PATH/)
+
+    const reactGuide = fs.readFileSync(
+      path.join(process.cwd(), 'content/blog/how-to-add-an-embedded-wallet.mdx'),
+      'utf8',
+    )
+    assert.match(reactGuide, /\]\(\/blog\/embedded-wallet-react-sdk\)/)
+    const apiGuide = fs.readFileSync(
+      path.join(process.cwd(), 'content/blog/embedded-wallet-api.mdx'),
+      'utf8',
+    )
+    assert.match(apiGuide, /\]\(\/blog\/embedded-wallet-react-sdk\)/)
+
+    const data = blogPostJsonLd({
+      title: EMBEDDED_WALLET_REACT_SDK_TITLE,
+      description: excerptMatch[1],
+      path: EMBEDDED_WALLET_REACT_SDK_PATH,
+      datePublished: '2026-10-27',
+      dateModified: '2026-10-27',
+      type: 'Article',
+      faq: [
+        {
+          question: 'What is an embedded wallet React SDK?',
+          answer:
+            'The library that provisions a wallet inside a React or Next.js app.',
+        },
+        {
+          question: 'How do I add an embedded wallet SDK to a React app?',
+          answer: 'Install @cavos/kit and wrap CavosProvider.',
+        },
+        {
+          question: 'What are best practices for embedding a wallet SDK in an app?',
+          answer: 'Keep keys on the device, enroll a passkey, sponsor gas, handle errors, test on testnet.',
+        },
+        {
+          question: 'Does the Cavos React SDK sponsor gas in any token?',
+          answer: 'Cavos frames this as Gas Sponsorship in Any Token.',
+        },
+      ],
+      crumbs: [
+        { name: 'Home', path: '/' },
+        { name: 'Blog', path: '/blog' },
+        {
+          name: EMBEDDED_WALLET_REACT_SDK_TITLE,
+          path: EMBEDDED_WALLET_REACT_SDK_PATH,
+        },
+      ],
+    })
+    const json = JSON.stringify(data)
+    JSON.parse(json)
+    assert.equal(data['@graph'][0]['@type'], 'Article')
+    assert.equal(data['@graph'][0].dateModified, '2026-10-27')
+    assert.equal(data['@graph'][1]['@type'], 'BreadcrumbList')
+    assert.equal(data['@graph'][2]['@type'], 'FAQPage')
+    assert.equal(data['@graph'][2].mainEntity.length, 4)
+    assert.equal(
+      data['@graph'][0].url,
+      'https://cavos.xyz/blog/embedded-wallet-react-sdk',
+    )
+    assert.equal(
+      data['@graph'][0].mainEntityOfPage['@id'],
+      'https://cavos.xyz/blog/embedded-wallet-react-sdk',
+    )
+  })
+
+  it('indexes the Alchemy vs Privy guide as an Article with FAQ JSON-LD', () => {
+    const postPath = path.join(process.cwd(), 'content/blog/alchemy-vs-privy.mdx')
+    assert.equal(fs.existsSync(postPath), true)
+    const source = fs.readFileSync(postPath, 'utf8')
+    const excerptMatch = source.match(/^excerpt:\s*"(.*)"$/m)
+    assert.ok(excerptMatch)
+    assert.ok(excerptMatch[1].length <= 155, excerptMatch[1].length)
+    assert.ok(excerptMatch[1].length >= 140, excerptMatch[1].length)
+    assert.match(source, /\[embedded wallet\]\(\/embedded-wallet\)/)
+    assert.match(source, /\]\(\/compare\/alchemy\)/)
+    assert.match(source, /\]\(\/compare\/privy\)/)
+    assert.match(source, /\[Privy alternatives\]\(\/privy-alternatives\)/)
+    assert.match(source, /\]\(\/blog\/privy-vs-turnkey\)/)
+    assert.match(source, /<table>/)
+    assert.doesNotMatch(source, /\|---/)
+    assert.match(source, /Account Kit/)
+    assert.match(source, /deprecated/)
+    assert.match(source, /Wallet APIs/)
+    assert.match(source, /recommend Privy/)
+    assert.match(source, /18 June 2026/)
+    assert.match(source, /alchemy\.com\/docs\/wallets\/account-kit-deprecated/)
+    assert.match(source, /alchemy\.com\/docs\/wallets/)
+    assert.match(source, /alchemy\.com\/docs\/changelog\/2026\/6\/18/)
+    assert.match(source, /alchemy\.com\/docs\/reference\/pricing-plans/)
+    assert.match(source, /audited OpenZeppelin account contract/)
+    assert.match(source, /device-native/)
+    assert.match(source, /Cavos, LLC/)
+    assert.match(source, /no on-chain device-signer list/)
+    assert.match(source, /no on-chain social recovery/)
+    assert.match(source, /does not ship its own account implementation/)
+    assert.match(source, /Free up to 1,000 wallets/)
+    assert.match(source, /Essential at \$59\/mo/)
+    assert.match(source, /Complete at \$139\/mo/)
+    assert.match(source, /What is the difference between Alchemy and Privy\?/)
+    assert.match(source, /Is Alchemy Account Kit still supported\?/)
+    assert.match(source, /Does Alchemy recommend Privy as a signer\?/)
+    assert.match(source, /When should I choose Cavos instead of Alchemy or Privy\?/)
+    assert.equal((source.match(/^\s+- question:/gm) ?? []).length, 4)
+    assert.doesNotMatch(source, /audited Cavos/)
+    assert.doesNotMatch(source, /Cavos custom account/)
+    assert.doesNotMatch(source, /on-chain device approval/)
+    assert.doesNotMatch(source, /category:\s*"Release"/)
+    assert.doesNotMatch(source, /robots:\s*noindex/)
+    assert.equal(ALCHEMY_VS_PRIVY_PATH, '/blog/alchemy-vs-privy')
+    assert.equal(
+      ALCHEMY_VS_PRIVY_TITLE,
+      'Alchemy vs Privy: Pricing & Custody (2026)',
+    )
+    assert.ok(`${ALCHEMY_VS_PRIVY_TITLE} | Cavos`.length <= 60)
+    assert.equal(ALCHEMY_VS_PRIVY_TITLE.includes('| Cavos'), false)
+
+    const fields = parseBlogFrontmatter(source)
+    assert.equal(fields.title, ALCHEMY_VS_PRIVY_TITLE)
+    assert.equal(fields.updated, '2026-10-27')
+    assert.equal(fields.date, '2026-10-27')
+
+    const compareSource = fs.readFileSync(
+      path.join(process.cwd(), 'app/compare/[slug]/page.tsx'),
+      'utf8',
+    )
+    assert.match(compareSource, /ALCHEMY_VS_PRIVY_PATH/)
+    assert.match(compareSource, /slug === 'alchemy'/)
+
+    const privyVsTurnkey = fs.readFileSync(
+      path.join(process.cwd(), 'content/blog/privy-vs-turnkey.mdx'),
+      'utf8',
+    )
+    assert.match(privyVsTurnkey, /\]\(\/blog\/alchemy-vs-privy\)/)
+
+    const data = blogPostJsonLd({
+      title: ALCHEMY_VS_PRIVY_TITLE,
+      description: excerptMatch[1],
+      path: ALCHEMY_VS_PRIVY_PATH,
+      datePublished: '2026-10-27',
+      dateModified: '2026-10-27',
+      type: 'Article',
+      faq: [
+        {
+          question: 'What is the difference between Alchemy and Privy?',
+          answer:
+            'Alchemy Wallet APIs are a transaction layer. Privy is a finished auth and embedded wallet product.',
+        },
+        {
+          question: 'Is Alchemy Account Kit still supported?',
+          answer: 'No. Account Kit is deprecated. Wallet APIs are the successor.',
+        },
+        {
+          question: 'Does Alchemy recommend Privy as a signer?',
+          answer: 'Yes. Alchemy recommends Privy or another provider for signer support.',
+        },
+        {
+          question: 'When should I choose Cavos instead of Alchemy or Privy?',
+          answer:
+            'When the chain is Starknet, Solana, or Stellar and the review requires a device-native key.',
+        },
+      ],
+      crumbs: [
+        { name: 'Home', path: '/' },
+        { name: 'Blog', path: '/blog' },
+        {
+          name: ALCHEMY_VS_PRIVY_TITLE,
+          path: ALCHEMY_VS_PRIVY_PATH,
+        },
+      ],
+    })
+    const json = JSON.stringify(data)
+    JSON.parse(json)
+    assert.equal(data['@graph'][0]['@type'], 'Article')
+    assert.equal(data['@graph'][0].dateModified, '2026-10-27')
+    assert.equal(data['@graph'][1]['@type'], 'BreadcrumbList')
+    assert.equal(data['@graph'][2]['@type'], 'FAQPage')
+    assert.equal(data['@graph'][2].mainEntity.length, 4)
+    assert.equal(data['@graph'][0].url, 'https://cavos.xyz/blog/alchemy-vs-privy')
+    assert.equal(
+      data['@graph'][0].mainEntityOfPage['@id'],
+      'https://cavos.xyz/blog/alchemy-vs-privy',
+    )
+  })
+
   it('makes /blog an indexable landing page with crawlable guide links', () => {
     const source = fs.readFileSync(
       path.join(process.cwd(), 'app/blog/page.tsx'),
@@ -2123,6 +2389,8 @@ describe('marketing SEO', () => {
     assert.match(source, /EMBEDDED_WALLET_API_PATH/)
     assert.match(source, /NON_CUSTODIAL_EMBEDDED_WALLET_PATH/)
     assert.match(source, /WALLET_AS_A_SERVICE_PATH/)
+    assert.match(source, /EMBEDDED_WALLET_REACT_SDK_PATH/)
+    assert.match(source, /ALCHEMY_VS_PRIVY_PATH/)
     assert.match(source, /href: '\/compare'/)
     assert.match(source, /href: '\/custody'/)
     assert.match(source, /href: '\/privy-alternatives'/)
@@ -2758,6 +3026,8 @@ const GUIDE_PATH_CONSTANTS: Record<string, string> = {
   EMBEDDED_WALLET_API_PATH: '/blog/embedded-wallet-api',
   NON_CUSTODIAL_EMBEDDED_WALLET_PATH: '/blog/non-custodial-embedded-wallet',
   WALLET_AS_A_SERVICE_PATH: '/blog/wallet-as-a-service',
+  EMBEDDED_WALLET_REACT_SDK_PATH: '/blog/embedded-wallet-react-sdk',
+  ALCHEMY_VS_PRIVY_PATH: '/blog/alchemy-vs-privy',
 }
 
 const SELF_PAGE_FOR_HREF: Record<string, string> = {
@@ -2772,6 +3042,8 @@ const SELF_PAGE_FOR_HREF: Record<string, string> = {
   '/blog/gasless-starknet-transactions':
     'content/blog/gasless-starknet-transactions.mdx',
   '/blog/wallet-as-a-service': 'content/blog/wallet-as-a-service.mdx',
+  '/blog/embedded-wallet-react-sdk': 'content/blog/embedded-wallet-react-sdk.mdx',
+  '/blog/alchemy-vs-privy': 'content/blog/alchemy-vs-privy.mdx',
   '/privacy': 'app/privacy/page.tsx',
   '/dpa': 'app/dpa/page.tsx',
   '/user-privacy': 'app/user-privacy/page.tsx',

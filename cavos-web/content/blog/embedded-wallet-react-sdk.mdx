@@ -1,0 +1,211 @@
+---
+title: "Embedded Wallet React SDK: Best Practices (2026)"
+date: "2026-10-27"
+updated: "2026-10-27"
+excerpt: "Add an embedded wallet React SDK to a Next.js app with Cavos: device-native keys, passkeys, Gas Sponsorship in Any Token, error handling, and testnet."
+category: "Guide"
+slug: "embedded-wallet-react-sdk"
+faq:
+  - question: "What is an embedded wallet React SDK?"
+    answer: "An embedded wallet React SDK is the library that provisions a crypto wallet inside a React or Next.js app and signs from the user’s device. It is not a wallet app or a browser extension the user installs. Cavos ships that SDK as @cavos/kit, with React bindings on @cavos/kit/react."
+  - question: "How do I add an embedded wallet SDK to a React app?"
+    answer: "Install @cavos/kit, create an App ID in the Cavos dashboard, wrap the tree in CavosProvider with network set to testnet while you develop, sign the user in, then execute. Connect never deploys Starknet or Stellar. The first execute deploys and runs atomically. The install walkthrough is the how-to-add guide; this page is the best-practices companion."
+  - question: "What are best practices for embedding a wallet SDK in an app?"
+    answer: "Keep signing keys on the device, enroll a passkey after login, sponsor gas so users do not need a native token, treat authError and needs-device-approval as first-class states, and test on testnet with the development environment. Never change appSalt after users exist. Do not require isReady before the first execute."
+  - question: "Does the Cavos React SDK sponsor gas in any token?"
+    answer: "Cavos frames this as Gas Sponsorship in Any Token. Sponsorship is chain-specific: a Starknet paymaster, a Solana relayer as fee payer, and Stellar sponsored reserves and fee bumps. Relayers and paymasters are not signers. Cavos cannot see the device key, sign with it, or move funds."
+---
+
+An [embedded wallet](/embedded-wallet) lives inside your application. Search for **embedded wallet React SDK** and you want a library, not a Chrome extension: install it, wrap a provider, sign the user in, and send a sponsored transaction from React or Next.js.
+
+This guide is that path with `@cavos/kit` 0.4.4, plus the **best practices for embedding a wallet SDK in an app**. Code follows the same contract as the [Cavos React docs](https://docs.cavos.xyz/docs/react) and [quickstart](https://docs.cavos.xyz/docs/quickstart): authenticate, connect, then execute. The [how-to-add walkthrough](/blog/how-to-add-an-embedded-wallet) is the first install. The [embedded wallet API](/blog/embedded-wallet-api) guide is the surface map.
+
+Cavos, LLC is a software and SaaS company. The wallet is the main product: a device-native, self-custodial embedded wallet. Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds. Adapters ship today for [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), and [Stellar](/embedded-stellar-wallet). [Pricing](/pricing) publishes Free up to 1,000 wallets, Essential at $59/mo, and Complete at $139/mo.
+
+## What you are installing
+
+`@cavos/kit` is an **embedded wallet React SDK**. The React bindings live on the same package, under `@cavos/kit/react`. You do not install a second library.
+
+Authentication selects which user this is. The SDK looks up or creates an on-chain address for that identity. A signer bound to the device authorizes transactions from inside your UI. Login never signs a transaction.
+
+The label does not decide custody. Evaluate any SDK on who can produce a signature, which chains are native, how a second device restores, and how gas is paid — before the first `connect`.
+
+## 1. Install and wrap CavosProvider
+
+```bash
+npm install @cavos/kit
+```
+
+Create an app in the [Cavos dashboard](https://cavos.xyz/dashboard) and copy its App ID. The kit reads it in the browser as `NEXT_PUBLIC_CAVOS_APP_ID`.
+
+Starknet sponsorship also requires a paymaster API key. The current web SDK receives that value in browser code, so treat it as a **client-visible, app-scoped sponsorship credential**, never as an operator or treasury secret.
+
+Register every callback URL in **Dashboard → App → Callback URLs**, one per line, matched exactly — scheme, host, path, no trailing slash, and no wildcards. Never change `appSalt` after users exist. On every chain it is the HKDF salt for the account key, so changing it derives a different address that will not match the registry row.
+
+In the Next.js App Router, the file that renders `CavosProvider` needs `'use client'`. So does any component that calls `useCavos()`. Wallet state is not available during server rendering: the device key lives in the browser.
+
+```tsx
+"use client";
+
+import { CavosProvider } from "@cavos/kit/react";
+
+export function Providers({ children }) {
+  return (
+    <CavosProvider
+      config={{
+        chains: ["solana", "stellar"],
+        defaultChain: "solana",
+        network: "testnet",
+        environment: "development",
+        appSalt: "my-app",
+        appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+      }}
+      modal={{ appName: "My App" }}
+    >
+      {children}
+    </CavosProvider>
+  );
+}
+```
+
+`network` is the chain (testnet or mainnet). `environment` is the Cavos console environment (`development` or `production`). They answer different questions: which chain versus whose gas pool and API keys. Omit `environment` and the SDK uses `production`. See [environments](https://docs.cavos.xyz/docs/environments).
+
+Passing `modal={{ appName: "My App" }}` mounts the hosted login modal. Omit `modal` if you will drive auth yourself.
+
+If you already authenticate users (Clerk, Auth0, your own session), pass a stable `userId` as `identity`. Cavos login turns off: the modal is not mounted and `login()` throws. Pass `null` while your auth is loading and once the user signs out. Use an immutable primary key, not an email that can change.
+
+In development the provider checks the config on mount. Run the same checks yourself with `validateCavosConfig(config)` from `@cavos/kit`.
+
+## 2. Sign in, then execute
+
+```tsx
+import { useCavos } from "@cavos/kit/react";
+
+function Wallet() {
+  const { address, isAuthenticated, walletStatus, openModal, logout, isLoading, authError } =
+    useCavos();
+  if (isLoading) return <p>Connecting…</p>;
+  if (!isAuthenticated) {
+    return (
+      <div>
+        <button onClick={openModal}>Sign in</button>
+        {authError ? <p>{authError}</p> : null}
+      </div>
+    );
+  }
+  return (
+    <div>
+      {address} · ready={String(walletStatus.isReady)}
+      <button onClick={logout}>Sign out</button>
+    </div>
+  );
+}
+```
+
+`openModal()` opens the hosted flow. `login("google")` and `login("apple")` start OAuth. `sendOtp(email)` / `verifyOtp(email, code)` cover email. When the registry has no row, this device computes a candidate address and claims it. A second device connecting later sees the existing address and enters `needs-device-approval` instead of creating a duplicate wallet.
+
+Narrow on `wallet.chain` so TypeScript exposes the correct native method. On Solana and Stellar, call the wallet directly instead of the context’s `execute`:
+
+```ts
+const { wallet } = useCavos();
+
+if (wallet?.status === "needs-device-approval") {
+  throw new Error("This device has no key yet. Restore the MasterDEK.");
+}
+
+if (wallet?.chain === "solana") {
+  const txHash = await wallet.execute(1_000_000n, destinationAddress); // lamports
+} else if (wallet?.chain === "stellar") {
+  const txHash = await wallet.execute(1_000_000n, destinationAddress); // stroops
+}
+```
+
+On Starknet, use the context’s `execute(calls)` for a multicall. It is sponsored by default. Add `paymasterApiKey` only when Starknet is in `chains`.
+
+```ts
+const { execute } = useCavos();
+const { transactionHash } = await execute([
+  { contractAddress: TOKEN, entrypoint: "transfer", calldata: [to, amountLow, amountHigh] },
+]);
+```
+
+When the account is `undeployed`, `execute` deploys it first, then runs the operation — atomically, in a single sponsored transaction. After the first execute, status becomes `ready`. For arbitrary execution, Starknet accepts multicalls, Solana exposes `executeInstructions`, and Stellar exposes `invokeContract`. See [wallet actions](https://docs.cavos.xyz/docs/wallet-actions).
+
+## Best practices for embedding a wallet SDK
+
+### Key custody
+
+Write down who can produce a valid signature without the user present. That is the [non-custodial](/blog/non-custodial-embedded-wallet) test, not the login modal.
+
+In Cavos a non-exportable key is created on the device. On Starknet that key controls an **audited OpenZeppelin account contract** (AccountUpgradeable v3.0.0). Cavos does not ship its own account implementation. There is no on-chain device-signer list and no on-chain social recovery. A new device restores the MasterDEK off-chain; it does not add a signer on-chain.
+
+The backend can transport, sponsor, or submit a transaction. It does not hold the user authority required to move funds. Relayers and paymasters are not signers.
+
+Keep `userId` stable. Addresses are looked up by `(userId, appId, chain, network)`. If your auth starts reporting an email where it used to report a primary key, those users land on a different wallet and nothing errors.
+
+### Passkeys
+
+Signing up never asks for a passkey. Call `enrollPasskeyDefault()` after login — from settings, after the first transaction, or a banner. `secureStep` defaults to `'off'`.
+
+```ts
+const { enrollPasskeyDefault, approveDeviceWithPasskey, walletStatus, passkeySupported } =
+  useCavos();
+
+if (passkeySupported && walletStatus.isReady && !walletStatus.hasPasskey) {
+  await enrollPasskeyDefault();
+}
+
+if (walletStatus.needsDeviceApproval && walletStatus.hasPasskey) {
+  await approveDeviceWithPasskey();
+}
+```
+
+The passkey holds an encrypted copy of the MasterDEK. Cavos stores the ciphertext; only the passkey can open it. A synced passkey that was added **can spend**. Frame it as restore, not 2FA. `deviceApproval: "passkey"` is one chain; use `deviceApproval: "enclave"` when Starknet, Solana, and Stellar share a login. See [passkeys](https://docs.cavos.xyz/docs/passkeys).
+
+`walletStatus.recovery` is `{ protected: boolean; methods: ("passkey" | "social")[] }`. It starts `false` and flips once the lookup returns. Read it as “not known to be protected” during the first moments of a connect, not as “known to be unprotected.”
+
+### Gas Sponsorship in Any Token
+
+Users should not need a native token to start. Sponsorship is chain-specific, not a universal gas tank.
+
+| Adapter | Required configuration | Sponsored execution |
+|---|---|---|
+| **Starknet** | App ID, network, app salt, identity, `paymasterApiKey` | Paymaster sponsors deploy and execute. |
+| **Solana** | App ID, network, app salt, identity | Hosted relayer becomes fee payer; arbitrary programs are allowlisted per app. |
+| **Stellar** | App ID, network, app salt, identity | Hosted relayer can sponsor reserves and fee-bump submission. |
+
+A paymaster key on a chain that ignores it is a config error; the provider reports that in development.
+
+### Error handling
+
+Do not require `walletStatus.isReady` before execute. Both `undeployed` and `ready` wallets can send. Only `needs-device-approval` blocks transactions — this device has no key yet. Restore the MasterDEK with a passkey or the [enclave](https://docs.cavos.xyz/docs/hardware-isolated-recovery).
+
+Read `authError` from `useCavos()` and show it. Host consoles that JSON-serialize `Error` objects often print `{}` because `message` is non-enumerable; read the string off the error you caught.
+
+OAuth fails with `redirect_uri is not registered for this app` when the callback URL is missing from the dashboard list — including when the list is empty. Tunnel and preview domains each count as a separate origin.
+
+Starknet connections require `paymasterApiKey`. Solana and Stellar use a relayer activated by `appId` instead.
+
+Finish Google or Apple login in the same tab and origin that started it. The kit ties the callback to a one-time secret in `sessionStorage`. Symptoms and causes live in [troubleshooting](https://docs.cavos.xyz/docs/troubleshooting).
+
+### Testing on testnet
+
+Ship the first integration against `network: "testnet"` and `environment: "development"` so test traffic does not drain the production gas pool.
+
+On Solana, an undeployed account is not the blocker — native Solana is `ready` once this device has the spend key. You can airdrop on testnet with `wallet.connection.requestAirdrop`. On Stellar testnet, friendbot funds the G… address. Starknet execute is paymaster-sponsored, so the user does not need ETH or STRK for the first invoke.
+
+Confirm status per chain after `setChain`. One chain might be `ready` while another is `undeployed` or `needs-device-approval`.
+
+## What to read next
+
+- [How to add an embedded wallet](/blog/how-to-add-an-embedded-wallet) — the install walkthrough this page assumes.
+- [Embedded wallet API](/blog/embedded-wallet-api) — auth, create, keys, signing, gas, and recovery.
+- [Non-custodial embedded wallets](/blog/non-custodial-embedded-wallet) — who can sign, and how to verify a vendor’s claim.
+- [What is an embedded wallet?](/embedded-wallet) — custody, key models, and how to choose an SDK.
+- [Quickstart](https://docs.cavos.xyz/docs/quickstart) and [React](https://docs.cavos.xyz/docs/react) — the full kit surface.
+- Chain pages: [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), [Stellar](/embedded-stellar-wallet).
+- [How to send gasless Starknet transactions](/blog/gasless-starknet-transactions) — paymaster-sponsored deploy and execute.
+- [Pricing](/pricing) for Free up to 1,000 wallets, Essential at $59/mo, and Complete at $139/mo.
+- [Custody](/custody) if your counsel needs the control test.
+
+React Native uses `@cavos/kit/react-native` (Expo Development Builds, EAS, or bare React Native — Expo Go is not supported). That path is documented separately; this guide stays on web React.

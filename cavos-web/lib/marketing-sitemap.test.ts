@@ -204,6 +204,8 @@ describe('marketing sitemap', () => {
     assert.equal(isBlogPostNoindex('embedded-wallet-api'), false)
     assert.equal(isBlogPostNoindex('non-custodial-embedded-wallet'), false)
     assert.equal(isBlogPostNoindex('wallet-as-a-service'), false)
+    assert.equal(isBlogPostNoindex('embedded-wallet-react-sdk'), false)
+    assert.equal(isBlogPostNoindex('alchemy-vs-privy'), false)
     assert.equal(
       urls.includes(`${MARKETING_ORIGIN}/blog/v1-1-9-sdk-security`),
       false,
@@ -255,10 +257,24 @@ Hello
     assert.ok(privy)
     assert.equal(providers.lastModified.toISOString().startsWith('2026-10-27'), true)
     assert.equal(privy.lastModified.toISOString().startsWith('2026-10-27'), true)
+
+    const reactSdk = publishedBlogPosts().find(
+      (item) => item.slug === 'embedded-wallet-react-sdk',
+    )
+    const alchemyVsPrivy = publishedBlogPosts().find(
+      (item) => item.slug === 'alchemy-vs-privy',
+    )
+    assert.ok(reactSdk)
+    assert.ok(alchemyVsPrivy)
+    assert.equal(reactSdk.lastModified.toISOString().startsWith('2026-10-27'), true)
+    assert.equal(
+      alchemyVsPrivy.lastModified.toISOString().startsWith('2026-10-27'),
+      true,
+    )
   })
 
   it('keeps the indexable marketing URLs including the React integration guide', () => {
-    assert.equal(entries.length, 33)
+    assert.equal(entries.length, 35)
     assert.ok(
       urls.includes(`${MARKETING_ORIGIN}/blog/how-to-add-an-embedded-wallet`),
     )
@@ -284,6 +300,10 @@ Hello
       urls.includes(`${MARKETING_ORIGIN}/blog/non-custodial-embedded-wallet`),
     )
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/wallet-as-a-service`))
+    assert.ok(
+      urls.includes(`${MARKETING_ORIGIN}/blog/embedded-wallet-react-sdk`),
+    )
+    assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/alchemy-vs-privy`))
     assert.equal(
       urls.includes(`${MARKETING_ORIGIN}/blog/v1-1-9-sdk-security`),
       false,
