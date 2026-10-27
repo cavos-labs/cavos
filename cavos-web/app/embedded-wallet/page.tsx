@@ -9,6 +9,7 @@ import {
 } from '@/lib/compare-data'
 import {
     DOCS_URLS,
+    EMBEDDED_WALLET_DEFINITION,
     EMBEDDED_WALLET_DESCRIPTION,
     EMBEDDED_WALLET_FAQ,
     EMBEDDED_WALLET_HOW_IT_WORKS,
@@ -79,12 +80,38 @@ export default function EmbeddedWalletGuidePage() {
                         What is an embedded wallet?
                     </h1>
                     <p className="mt-7 max-w-2xl text-lg leading-relaxed text-muted">
-                        An embedded wallet lives inside your application. The user signs in the
-                        way they already do, and the product resolves an on-chain account they
-                        can pay, receive, and sign with — no browser extension, no seed phrase,
-                        no trip to another app. The rest of this guide is about what that label
-                        does not decide: who holds the key, who can spend, and which chain
-                        account model you are actually shipping.
+                        {EMBEDDED_WALLET_DEFINITION}
+                    </p>
+                    <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted">
+                        This guide covers how embedded wallets work, the{' '}
+                        <Link href={EMBEDDED_WALLET_API_PATH} className={linkClass}>
+                            embedded wallet API
+                        </Link>{' '}
+                        and SDK, how they compare to a{' '}
+                        <Link href={EMBEDDED_WALLET_VS_EXTENSION_PATH} className={linkClass}>
+                            browser extension
+                        </Link>
+                        ,{' '}
+                        <Link href={EMBEDDED_WALLET_PROVIDERS_PATH} className={linkClass}>
+                            providers
+                        </Link>
+                        , and pricing. Native adapters ship for{' '}
+                        <Link href="/embedded-starknet-wallet" className={linkClass}>
+                            Starknet
+                        </Link>
+                        ,{' '}
+                        <Link href="/embedded-solana-wallet" className={linkClass}>
+                            Solana
+                        </Link>
+                        , and{' '}
+                        <Link href="/embedded-stellar-wallet" className={linkClass}>
+                            Stellar
+                        </Link>
+                        . To install, follow{' '}
+                        <Link href={EMBEDDED_WALLET_INTEGRATION_PATH} className={linkClass}>
+                            how to add an embedded wallet
+                        </Link>
+                        .
                     </p>
                 </header>
 
@@ -113,38 +140,52 @@ export default function EmbeddedWalletGuidePage() {
                             commerce, and consumer finance cannot ask a first-time user to
                             understand seed phrases. The tradeoff is that the application now
                             owns the wallet experience — including recovery, device changes, and
-                            how honest it is about who can sign.
+                            how honest it is about who can sign. The commercial name for the
+                            same job is{' '}
+                            <Link href={WALLET_AS_A_SERVICE_PATH} className={linkClass}>
+                                wallet-as-a-service
+                            </Link>
+                            , or embedded wallet as a service.
                         </p>
                     </div>
                 </section>
 
                 <section className="mt-16 max-w-3xl" id="embedded-wallet-sdk">
                     <h2 className="text-2xl font-medium tracking-[-0.03em]">
-                        Embedded wallet SDK
+                        Embedded wallet API and SDK
                     </h2>
                     <div className="mt-5 space-y-4 text-sm leading-relaxed text-muted">
                         <p>
-                            An embedded wallet SDK is the library that provisions that wallet
-                            inside your application. It is not a wallet app, and it is not a
-                            browser extension. The user never installs a second program. Your
-                            product owns sign-in, account resolution, approval UI, and recovery.
+                            An embedded wallet API is the developer surface that provisions that
+                            wallet inside your application. It covers authentication, wallet
+                            create or lookup, key handling, signing, sending transactions, gas
+                            sponsorship, and recovery. An embedded wallet SDK is the library
+                            that implements that surface in your app. Neither is a wallet app
+                            or a browser extension. The user never installs a second program.
                         </p>
                         <p>
                             A wallet app or extension keeps keys in software the user manages.
                             The dapp requests access; it does not create the account. An
-                            embedded wallet SDK inverts that: authentication selects the user,
-                            the SDK looks up or creates an on-chain address, and a signer bound
-                            to the device authorizes transactions from inside the app.
+                            embedded wallet API and SDK invert that: authentication selects the
+                            user, the SDK looks up or creates an on-chain address, and a signer
+                            bound to the device authorizes transactions from inside the app.
                         </p>
                         <p>
-                            The SDK label still does not decide custody. Ask who can produce a
-                            valid signature without the user, which chains are native, how a
-                            lost device is recovered, and whether approval happens in your UI
-                            or in someone else&apos;s. Cavos ships that SDK as{' '}
+                            Some vendors ship a finished client SDK. Some ship a REST or RPC
+                            signing layer you assemble yourself. Confirm which layer you are
+                            buying. Cavos ships a client SDK as{' '}
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
                                 @cavos/kit
                             </code>
-                            .
+                            . There is no public create-wallet REST endpoint. The method-level
+                            map is the{' '}
+                            <Link href={EMBEDDED_WALLET_API_PATH} className={linkClass}>
+                                embedded wallet API
+                            </Link>{' '}
+                            guide. The SDK label still does not decide custody: ask who can
+                            produce a valid signature without the user, which chains are
+                            native, how a lost device is recovered, and whether approval
+                            happens in your UI or in someone else&apos;s.
                         </p>
                     </div>
                 </section>
@@ -169,7 +210,7 @@ export default function EmbeddedWalletGuidePage() {
 
                 <section className="mt-16">
                     <h2 className="text-2xl font-medium tracking-[-0.03em]">
-                        Embedded wallets vs browser extensions
+                        Embedded wallet vs browser extension
                     </h2>
                     <p className="mt-5 max-w-3xl text-sm leading-relaxed text-muted">
                         Browser-extension wallets keep keys in a separate application. The user
@@ -285,7 +326,12 @@ export default function EmbeddedWalletGuidePage() {
                         <Link href="/custody" className={linkClass}>
                             custody page
                         </Link>{' '}
-                        cites under MiCA, FinCEN, California, and other regimes.
+                        cites under MiCA, FinCEN, California, and other regimes. The
+                        developer checklist is the{' '}
+                        <Link href={NON_CUSTODIAL_EMBEDDED_WALLET_PATH} className={linkClass}>
+                            non-custodial embedded wallet
+                        </Link>{' '}
+                        guide.
                     </p>
                 </section>
 
@@ -401,11 +447,11 @@ export default function EmbeddedWalletGuidePage() {
                         <article className="bg-white p-7">
                             <h3 className="text-lg font-semibold">Starknet</h3>
                             <p className="mt-3 text-sm leading-relaxed text-muted">
-                                Each wallet is an audited OpenZeppelin AccountUpgradeable
-                                v3.0.0, controlled by one stark key derived from the
-                                MasterDEK and app salt. There is no on-chain device list.
-                                Execution is paymaster-sponsored (SNIP-29); the account
-                                deploys lazily on first execute. Signatures are SNIP-12.
+                                Each wallet is an audited OpenZeppelin account contract —
+                                AccountUpgradeable v3.0.0 — controlled by one stark key
+                                derived from the MasterDEK and app salt. There is no on-chain
+                                device list. Execution is paymaster-sponsored (SNIP-29); the
+                                account deploys lazily on first execute. Signatures are SNIP-12.
                             </p>
                             <p className="mt-4">
                                 <Link href="/embedded-starknet-wallet" className={linkClass}>
@@ -673,13 +719,56 @@ export default function EmbeddedWalletGuidePage() {
                         <Link href="/privy-alternatives" className={linkClass}>
                             Privy alternatives
                         </Link>{' '}
-                        guide. The longer listicle — pricing, chains, and key models for
+                        guide. One-to-one write-ups live on the{' '}
+                        <Link href="/compare" className={linkClass}>
+                            compare
+                        </Link>{' '}
+                        pages. The longer listicle — pricing, chains, and key models for
                         the same vendors — is{' '}
                         <Link href={EMBEDDED_WALLET_PROVIDERS_PATH} className={linkClass}>
                             {EMBEDDED_WALLET_PROVIDERS_TITLE}
                         </Link>
                         .
                     </p>
+                </section>
+
+                <section className="mt-16">
+                    <h2 className="text-2xl font-medium tracking-[-0.03em]">
+                        Embedded wallet pricing
+                    </h2>
+                    <p className="mt-5 max-w-3xl text-sm leading-relaxed text-muted">
+                        Cavos prices on wallet creates, not monthly active users or
+                        signatures. The full SDK, including Gas Sponsorship in Any Token, is
+                        on every plan. Paid plans add unlimited creates and recovery options.
+                        Published fees live on{' '}
+                        <Link href="/pricing" className={linkClass}>
+                            pricing
+                        </Link>
+                        .
+                    </p>
+                    <div className="mt-8 grid gap-px overflow-hidden rounded-2xl border border-line bg-line md:grid-cols-3">
+                        <article className="bg-white p-7">
+                            <h3 className="text-lg font-semibold">Free</h3>
+                            <p className="mt-3 text-sm leading-relaxed text-muted">
+                                Free up to 1,000 wallets. The first 1,000 wallet creates are
+                                included. Sponsorship is funded separately.
+                            </p>
+                        </article>
+                        <article className="bg-white p-7">
+                            <h3 className="text-lg font-semibold">Essential</h3>
+                            <p className="mt-3 text-sm leading-relaxed text-muted">
+                                Essential $59/month. Unlimited wallet creates and on-device
+                                recovery.
+                            </p>
+                        </article>
+                        <article className="bg-white p-7">
+                            <h3 className="text-lg font-semibold">Complete</h3>
+                            <p className="mt-3 text-sm leading-relaxed text-muted">
+                                Complete $139/month. Unlimited wallet creates plus opt-in
+                                hardware-isolated enclave recovery.
+                            </p>
+                        </article>
+                    </div>
                 </section>
 
                 <section className="mt-16 max-w-3xl">

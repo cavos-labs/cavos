@@ -1,14 +1,18 @@
 export const EMBEDDED_WALLET_PATH = '/embedded-wallet'
 
 export const EMBEDDED_WALLET_TITLE =
-  'Embedded Wallet: What It Is & How to Choose an SDK (2026)'
+  'Embedded Wallet: What It Is, API & SDK (2026)'
 
 export const EMBEDDED_WALLET_DESCRIPTION =
-  'What an embedded wallet is, how to choose an SDK, and how providers differ on pricing, chains, and key model for Starknet, Solana, and Stellar.'
+  'An embedded wallet lives in your app with no extension or seed phrase. Use the API and SDK to ship self-custodial wallets on Starknet, Solana, and Stellar.'
 
 export const EMBEDDED_WALLET_PUBLISHED = '2026-10-07'
 
-export const EMBEDDED_WALLET_MODIFIED = '2026-10-26'
+export const EMBEDDED_WALLET_MODIFIED = '2026-10-27'
+
+/** Featured-snippet definition rendered under the H1. Keep 40–60 words. */
+export const EMBEDDED_WALLET_DEFINITION =
+  'An embedded wallet is a crypto wallet built into your application instead of a browser extension or a separate wallet app. Users sign in the way they already do, and the product resolves an on-chain account they can pay, receive, and sign with. There is no install, no seed phrase, and no trip to another app.'
 
 export const EMBEDDED_WALLET_INTEGRATION_PATH =
   '/blog/how-to-add-an-embedded-wallet'
@@ -139,29 +143,29 @@ export const EMBEDDED_WALLET_FAQ = [
       'An extension wallet keeps keys in a separate application the user installs and manages. An embedded wallet is provisioned by the product: login selects the user, the SDK looks up or creates an on-chain account, and approval happens in the app UI. Extensions are the better fit when users already hold wallets you must connect to.',
   },
   {
-    question: 'Is an embedded wallet the same as an MPC wallet?',
+    question: 'What is an embedded wallet API?',
     answer:
-      'No. Embedded describes where the wallet appears. MPC is a key-management design that splits a private key into shares and reconstructs or jointly computes a signature. Some embedded wallets use MPC; others use device-native keys, delegated HSMs, or remote enclaves. The UX label does not decide custody.',
-  },
-  {
-    question: 'What is a self-custodial embedded wallet?',
-    answer:
-      'A self-custodial embedded wallet is one the provider cannot spend from. The signing key is created and used on the user’s device and is not reconstructed from provider-held shares. Calling a product non-custodial does not make it so — the test is who can move the assets.',
-  },
-  {
-    question: 'Does choosing an embedded wallet make my app a custodian?',
-    answer:
-      'Only if your company can move the user’s crypto or holds the means of access. The name of the wallet is irrelevant. MiCA, FinCEN, California, and other regimes look at control. Integrating a self-custodial SDK also does not settle exchange, on-ramp, or payment licensing. Recovery paths count; counsel has to read them.',
-  },
-  {
-    question: 'How should I choose an embedded wallet SDK?',
-    answer:
-      'Ask who can produce a valid signature without the user, where the key lives, which chains are native rather than compatibility layers, how a second device is authorized, and what recovery actually does. Then match that to the product: provision new accounts, or connect existing ones. Worked comparisons live on the Cavos compare pages.',
+      'An embedded wallet API is the developer surface that provisions a crypto wallet inside an application. It covers authentication, wallet create or lookup, key handling, signing, sending transactions, gas sponsorship, and recovery. Cavos exposes that surface as a client SDK, @cavos/kit, not a public create-wallet REST endpoint.',
   },
   {
     question: 'What is an embedded wallet SDK?',
     answer:
       'An embedded wallet SDK is the library that provisions the wallet and signs from inside your application. It is not a wallet app or a browser extension the user installs. Authentication selects the user; the SDK looks up or creates an on-chain account; a signer bound to the session or the device authorizes transactions in your UI. Cavos ships that as @cavos/kit on web and @cavos/kit/react-native on mobile.',
+  },
+  {
+    question: 'What is an embedded wallet as a service?',
+    answer:
+      'Embedded wallet as a service, also called wallet-as-a-service, is the commercial name for provisioning a crypto wallet through an API or SDK instead of asking the user to install an extension. Login selects the user, the platform looks up or creates an on-chain account, and approval happens in the product UI. The label does not decide who can sign.',
+  },
+  {
+    question: 'What are embedded wallet providers?',
+    answer:
+      'Embedded wallet providers are vendors that ship an in-app wallet through an API or SDK. Cavos, Privy, Dynamic, Turnkey, Web3Auth, and Magic all do this, with different key models, native chains, and pricing. Compare them on the Cavos compare pages, or start with Privy alternatives if you are replacing that stack.',
+  },
+  {
+    question: 'What is a non-custodial embedded wallet?',
+    answer:
+      'A non-custodial embedded wallet is one the provider cannot spend from. The wallet still lives inside the application, but the signing key is created and used on the user’s device and is not reconstructed from provider-held shares. Calling a product non-custodial does not make it so — the test is who can move the assets.',
   },
   {
     question: 'Which chains does Cavos support for embedded wallets?',
@@ -172,5 +176,10 @@ export const EMBEDDED_WALLET_FAQ = [
     question: 'How do I add an embedded wallet to a React app?',
     answer:
       'Install @cavos/kit, create an app in the Cavos dashboard for an App ID, wrap the tree in CavosProvider, sign the user in, then execute. Connect never deploys Starknet or Stellar; the first execute deploys and runs atomically when the account is still undeployed. The step-by-step integration guide on this site walks through that path.',
+  },
+  {
+    question: 'How should I choose an embedded wallet SDK?',
+    answer:
+      'Ask who can produce a valid signature without the user, where the key lives, which chains are native rather than compatibility layers, how a second device is authorized, and what recovery actually does. Then match that to the product: provision new accounts, or connect existing ones. Worked comparisons live on the Cavos compare pages.',
   },
 ] as const
