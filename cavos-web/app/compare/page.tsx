@@ -170,7 +170,7 @@ export default function ComparePage() {
                             href="/privy-alternatives"
                             className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
                         >
-                            Privy wallet alternatives
+                            Privy alternatives
                         </Link>{' '}
                         guide. For a single pricing, chain, and key-model table of the
                         same vendors, see{' '}

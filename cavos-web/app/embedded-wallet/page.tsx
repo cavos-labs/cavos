@@ -671,7 +671,7 @@ export default function EmbeddedWalletGuidePage() {
                     <p className="mt-5 max-w-3xl text-sm leading-relaxed text-muted">
                         Teams replacing Privy specifically can start with the{' '}
                         <Link href="/privy-alternatives" className={linkClass}>
-                            Privy wallet alternatives
+                            Privy alternatives
                         </Link>{' '}
                         guide. The longer listicle — pricing, chains, and key models for
                         the same vendors — is{' '}

@@ -589,12 +589,14 @@ describe('marketing SEO', () => {
     assert.match(PRIVY_ALTERNATIVES_TITLE, /Privy Alternatives/)
     assert.match(PRIVY_ALTERNATIVES_TITLE, /2026/)
     assert.match(PRIVY_ALTERNATIVES_TITLE, /5 Privy Alternatives/)
+    assert.match(PRIVY_ALTERNATIVES_TITLE, /Free 1,000 Wallets/)
     assert.match(PRIVY_ALTERNATIVES_H1, /Privy alternatives/)
     assert.match(PRIVY_ALTERNATIVES_H1, /5 Privy alternatives/)
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Shopify/)
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Privy alternatives/)
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Cavos, Dynamic, Turnkey, Web3Auth, Magic/)
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Starknet, Solana, Stellar/)
+    assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /1,000 wallets/)
     const fullTitle = `${PRIVY_ALTERNATIVES_TITLE} | Cavos`
     assert.ok(fullTitle.length >= 50 && fullTitle.length <= 60, fullTitle)
     assert.ok(
@@ -602,7 +604,22 @@ describe('marketing SEO', () => {
         PRIVY_ALTERNATIVES_DESCRIPTION.length <= 155,
       String(PRIVY_ALTERNATIVES_DESCRIPTION.length),
     )
-    assert.ok(PRIVY_ALTERNATIVES_FAQ.length >= 6 && PRIVY_ALTERNATIVES_FAQ.length <= 8)
+    assert.ok(PRIVY_ALTERNATIVES_FAQ.length >= 5 && PRIVY_ALTERNATIVES_FAQ.length <= 8)
+    assert.ok(
+      PRIVY_ALTERNATIVES_FAQ.some(
+        (item) => item.question === 'What is the best Privy alternative?',
+      ),
+    )
+    assert.ok(
+      PRIVY_ALTERNATIVES_FAQ.some(
+        (item) => item.question === 'Is there a free Privy alternative?',
+      ),
+    )
+    assert.ok(
+      PRIVY_ALTERNATIVES_FAQ.some((item) =>
+        /Starknet, Solana, or Stellar/.test(item.question),
+      ),
+    )
     assert.ok(PRIVY_WHY_LOOK.length >= 4)
     assert.ok(PRIVY_HOW_TO_CHOOSE.length >= 5)
     assert.deepEqual(
@@ -620,7 +637,7 @@ describe('marketing SEO', () => {
       ],
     )
     assert.equal(PRIVY_ALTERNATIVES_PUBLISHED, '2026-10-11')
-    assert.equal(PRIVY_ALTERNATIVES_MODIFIED, '2026-10-23')
+    assert.equal(PRIVY_ALTERNATIVES_MODIFIED, '2026-10-27')
     assert.equal(PRIVY_ALTERNATIVES_CRUMB, 'Privy alternatives')
 
     const meta = marketingPageMetadata({
@@ -662,6 +679,10 @@ describe('marketing SEO', () => {
     assert.equal(jsonLd['@graph'][1].itemListElement[2].name, 'Privy alternatives')
     assert.equal(jsonLd['@graph'][2]['@type'], 'FAQPage')
     assert.equal(jsonLd['@graph'][2].mainEntity.length, PRIVY_ALTERNATIVES_FAQ.length)
+    assert.deepEqual(
+      jsonLd['@graph'][2].mainEntity.map((item: { name: string }) => item.name),
+      PRIVY_ALTERNATIVES_FAQ.map((item) => item.question),
+    )
     const alternativesList = jsonLd['@graph'].find(
       (node: { '@type'?: string }) => node['@type'] === 'ItemList',
     )
@@ -694,6 +715,7 @@ describe('marketing SEO', () => {
     assert.match(pageSource, /guidePageJsonLd/)
     assert.match(pageSource, /privyAlternativesItemList/)
     assert.match(pageSource, /embeddedWalletProviderRows/)
+    assert.match(pageSource, /href=["']\/pricing["']/)
     assert.match(pageSource, /Why teams look for a Privy alternative/)
     assert.match(pageSource, /How to choose a Privy alternative/)
     assert.match(pageSource, /relatedLinks/)
@@ -729,6 +751,22 @@ describe('marketing SEO', () => {
     )
     assert.match(
       compareSource,
+      /href="\/privy-alternatives"[^>]*>\s*Privy alternatives\s*</,
+    )
+    const compareIndex = fs.readFileSync(
+      path.join(process.cwd(), 'app/compare/page.tsx'),
+      'utf8',
+    )
+    assert.match(
+      compareIndex,
+      /href="\/privy-alternatives"[^>]*>\s*Privy alternatives\s*</,
+    )
+    const embeddedWallet = fs.readFileSync(
+      path.join(process.cwd(), 'app/embedded-wallet/page.tsx'),
+      'utf8',
+    )
+    assert.match(
+      embeddedWallet,
       /href="\/privy-alternatives"[^>]*>\s*Privy alternatives\s*</,
     )
     assert.match(compareSource, /PRIVY_VS_TURNKEY_PATH/)
@@ -1406,7 +1444,7 @@ describe('marketing SEO', () => {
     assert.equal(fs.existsSync(postPath), true)
     const source = fs.readFileSync(postPath, 'utf8')
     assert.match(source, /\[embedded wallet\]\(\/embedded-wallet\)/)
-    assert.match(source, /\]\(\/privy-alternatives\)/)
+    assert.match(source, /\[Privy alternatives\]\(\/privy-alternatives\)/)
     assert.match(source, /\]\(\/compare\)/)
     assert.match(source, /\]\(\/compare\/privy\)/)
     assert.match(source, /\]\(\/compare\/dynamic\)/)
@@ -1497,7 +1535,7 @@ describe('marketing SEO', () => {
     assert.match(source, /\[embedded wallet\]\(\/embedded-wallet\)/)
     assert.match(source, /\]\(\/compare\/privy\)/)
     assert.match(source, /\]\(\/compare\/turnkey\)/)
-    assert.match(source, /\]\(\/privy-alternatives\)/)
+    assert.match(source, /\[Privy alternatives\]\(\/privy-alternatives\)/)
     assert.match(source, /\]\(\/blog\/embedded-wallet-providers\)/)
     assert.match(source, /<table>/)
     assert.doesNotMatch(source, /\|---/)

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 import { COMPETITORS } from './compare-data'
+import { PRIVY_ALTERNATIVES_MODIFIED } from './privy-alternatives'
 import {
   MARKETING_HOME_URL,
   MARKETING_ORIGIN,
@@ -147,6 +148,18 @@ describe('marketing sitemap', () => {
       assert.ok(sitemapPageFile(routePath).endsWith('page.tsx'))
     }
     assert.equal(sitemapPageFile('/compare/privy'), 'app/compare/[slug]/page.tsx')
+  })
+
+  it('lists /privy-alternatives with the content dateModified', () => {
+    const entry = entries.find(
+      (item) => item.url === `${MARKETING_ORIGIN}/privy-alternatives`,
+    )
+    assert.ok(entry)
+    assert.ok(entry.lastModified instanceof Date)
+    assert.equal(
+      entry.lastModified.toISOString().slice(0, 10),
+      PRIVY_ALTERNATIVES_MODIFIED,
+    )
   })
 
   it('includes each competitor compare page from live data', () => {

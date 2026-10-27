@@ -19,17 +19,17 @@ import { getCompetitor } from './compare-data'
 export const PRIVY_ALTERNATIVES_PATH = '/privy-alternatives'
 
 export const PRIVY_ALTERNATIVES_TITLE =
-  '5 Privy Alternatives (2026): Pricing & Chains'
+  '5 Privy Alternatives (2026): Free 1,000 Wallets'
 
-/** 149 characters. Document title omits "| Cavos"; the layout template adds it. */
+/** 147 characters. Document title omits "| Cavos"; the layout template adds it. */
 export const PRIVY_ALTERNATIVES_DESCRIPTION =
-  'Compare 5 Privy alternatives — Cavos, Dynamic, Turnkey, Web3Auth, Magic — on Starknet, Solana, Stellar, and published pricing. Not the Shopify popup.'
+  'Compare 5 Privy alternatives — Cavos, Dynamic, Turnkey, Web3Auth, Magic. Free to 1,000 wallets on Starknet, Solana, Stellar. Not the Shopify popup.'
 
-export const PRIVY_ALTERNATIVES_H1 = '5 Privy alternatives for embedded wallets'
+export const PRIVY_ALTERNATIVES_H1 = '5 Privy alternatives compared in 2026'
 
 export const PRIVY_ALTERNATIVES_PUBLISHED = '2026-10-11'
 
-export const PRIVY_ALTERNATIVES_MODIFIED = '2026-10-23'
+export const PRIVY_ALTERNATIVES_MODIFIED = '2026-10-27'
 
 export const PRIVY_ALTERNATIVES_CRUMB = 'Privy alternatives'
 
@@ -186,29 +186,14 @@ export const PRIVY_HOW_TO_CHOOSE = [
 
 export const PRIVY_ALTERNATIVES_FAQ = [
   {
-    question: 'Is Cavos a drop-in replacement for Privy?',
+    question: 'What is the best Privy alternative?',
     answer:
-      'No. They target different chain ecosystems. If your application is EVM-first, Privy covers ground Cavos does not. Cavos is a direct alternative when you are building on Starknet, Solana, or Stellar and want a device-native, MPC-free signing model.',
+      'There is no single best Privy alternative — the right pick depends on chain and key model. Cavos is the alternative when the product is on Starknet, Solana, or Stellar and the review requires a device-native key. Dynamic is stronger when you must connect wallets users already hold. Turnkey is key-management infrastructure, not a finished SDK. Web3Auth / MetaMask Embedded Wallets fits broad social-login chain coverage. Magic fits simple email-first EVM onboarding. Privy itself remains the more mature choice across the EVM ecosystem.',
   },
   {
-    question: 'Which Privy alternative is best for connecting existing wallets?',
+    question: 'Is there a free Privy alternative?',
     answer:
-      'Dynamic. Connecting existing external wallets is a core Dynamic capability and is not a Cavos goal — Cavos provisions the wallet rather than connecting to one the user already holds. The two models can coexist in one product.',
-  },
-  {
-    question: 'Do these alternatives use MPC?',
-    answer:
-      'Web3Auth does: it reconstructs a private key from distributed shares, and the provider network holds a share used in reconstruction. MetaMask’s Embedded Wallets page describes that design as MPC with threshold signatures and Shamir’s Secret Sharing. Dynamic’s public pricing page lists TSS-MPC key management. Cavos does not split or reconstruct a signing key with MPC. Turnkey holds keys in remote enclaves. Magic uses delegated key management backed by provider-operated HSMs. Privy manages keys through its own infrastructure.',
-  },
-  {
-    question: 'Can I migrate from Privy without changing wallet addresses?',
-    answer:
-      'Not automatically. Wallet addresses are derived differently, so accounts do not transfer as a config change. Migration means provisioning new wallets against your existing stable user IDs and moving assets deliberately.',
-  },
-  {
-    question: 'What is the difference between Privy and Turnkey?',
-    answer:
-      'Privy is a finished embedded wallet and authentication product. Turnkey is key-management infrastructure: hardware-backed enclaves and a signing API you build a wallet on top of. Privy vs Turnkey is usually build-versus-buy, not a like-for-like SDK swap.',
+      'Yes. Cavos is free for the first 1,000 wallet creates, then Essential at $59/mo and Complete at $139/mo. Web3Auth / MetaMask Embedded Wallets starts free at 1,000 monthly active wallets. Magic’s Developer plan includes 1,000 monthly active wallets and 50,000 signatures at $0/mo. Turnkey’s Pay as you go tier includes 1,000 wallets and 25 free signatures per month. Privy’s own Developer free tier is 0–499 MAU. Those figures are from each vendor’s public pricing page as of October 2026 and can change.',
   },
   {
     question: 'Which Privy alternative is best for Starknet, Solana, or Stellar?',
@@ -216,13 +201,18 @@ export const PRIVY_ALTERNATIVES_FAQ = [
       'Cavos ships native adapters for all three: an audited OpenZeppelin account contract on Starknet, a native Ed25519 system account on Solana, and a classic G-account on Stellar. Privy’s published coverage is broad EVM plus Solana. MetaMask Embedded Wallets lists EVM, Solana, and additional networks including StarkNet on its product page; feature parity still varies by chain.',
   },
   {
+    question: 'Is Cavos a drop-in replacement for Privy?',
+    answer:
+      'No. They target different chain ecosystems. If your application is EVM-first, Privy covers ground Cavos does not. Cavos is a direct alternative when you are building on Starknet, Solana, or Stellar and want a device-native, MPC-free signing model. Wallet addresses are derived differently, so accounts do not transfer as a config change.',
+  },
+  {
+    question: 'What is the difference between Privy and Turnkey?',
+    answer:
+      'Privy is a finished embedded wallet and authentication product. Turnkey is key-management infrastructure: hardware-backed enclaves and a signing API you build a wallet on top of. Privy vs Turnkey is usually build-versus-buy, not a like-for-like SDK swap.',
+  },
+  {
     question: 'Is this page about the Shopify Privy popup app?',
     answer:
       'No. This page is about Privy the embedded crypto wallet and authentication provider. The Shopify popup tool of the same name is a different product.',
-  },
-  {
-    question: 'How much do Privy alternatives cost?',
-    answer:
-      'Cavos is free for the first 1,000 wallet creates, then Essential at $59/mo and Complete at $139/mo. Privy’s public Developer free tier is 0–499 MAU with 50,000 signatures and $1M volume per month; Core is $299/mo and Scale is $499/mo. Dynamic’s public Growth plan is $249/mo for up to 5,000 MAUs. Turnkey’s Pay as you go tier includes 1,000 wallets and 25 free signatures per month. Web3Auth / MetaMask Embedded Wallets starts free at 1,000 monthly active wallets, with Growth at $69/mo and Scale at $399/mo. Magic’s Developer plan includes 1,000 monthly active wallets and 50,000 signatures at $0/mo. Those figures are from each vendor’s public pricing page as of October 2026 and can change.',
   },
 ] as const
