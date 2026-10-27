@@ -162,11 +162,11 @@ export function getMarketingSitemapEntries(): SitemapEntry[] {
       page('/contact-sales', 'monthly', 0.7),
       page('/about', 'monthly', 0.8),
       page('/blog', 'weekly', 0.7),
-      page('/privacy', 'yearly', 0.2),
-      page('/dpa', 'yearly', 0.2),
-      page('/user-privacy', 'yearly', 0.2),
-      page('/user-terms', 'yearly', 0.2),
-      page('/terms', 'yearly', 0.2),
+      page('/privacy', 'monthly', 0.2),
+      page('/dpa', 'monthly', 0.2),
+      page('/user-privacy', 'monthly', 0.2),
+      page('/user-terms', 'monthly', 0.2),
+      page('/terms', 'monthly', 0.2),
     ]
 
     const comparePages = COMPETITORS.map((competitor) =>

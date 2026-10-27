@@ -37,6 +37,7 @@ export function Footer() {
                     <ul className="space-y-3 text-sm font-medium text-black/40">
                         <li><Link href="/embedded-wallet" className="hover:text-black transition-colors">What is an embedded wallet</Link></li>
                         <li><Link href="/blog/how-to-add-an-embedded-wallet" className="hover:text-black transition-colors">How to add an embedded wallet</Link></li>
+                        <li><Link href="/blog/wallet-as-a-service" className="hover:text-black transition-colors">Wallet as a service</Link></li>
                         <li><Link href="/compare" className="hover:text-black transition-colors">Compare providers</Link></li>
                         <li><Link href="/privy-alternatives" className="hover:text-black transition-colors">Privy wallet alternatives</Link></li>
                         <li><Link href="/blog" className="hover:text-black transition-colors">Changelog</Link></li>
@@ -58,11 +59,11 @@ export function Footer() {
                 <div className="space-y-5">
                     <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/50">Legal</p>
                     <ul className="space-y-3 text-sm font-medium text-black/25">
-                        <li><Link href="/terms" className="hover:text-black transition-colors">Terms of Service</Link></li>
-                        <li><Link href="/privacy" className="hover:text-black transition-colors">Privacy Policy</Link></li>
-                        <li><Link href="/dpa" className="hover:text-black transition-colors">Data Processing Agreement</Link></li>
-                        <li><Link href="/user-terms" className="hover:text-black transition-colors">End-User Terms</Link></li>
-                        <li><Link href="/user-privacy" className="hover:text-black transition-colors">End-User Privacy Policy</Link></li>
+                        <li><a href="/terms" className="hover:text-black transition-colors">Terms of Service</a></li>
+                        <li><a href="/privacy" className="hover:text-black transition-colors">Privacy Policy</a></li>
+                        <li><a href="/dpa" className="hover:text-black transition-colors">Data Processing Agreement</a></li>
+                        <li><a href="/user-terms" className="hover:text-black transition-colors">End-User Terms</a></li>
+                        <li><a href="/user-privacy" className="hover:text-black transition-colors">End-User Privacy Policy</a></li>
                     </ul>
                 </div>
             </div>

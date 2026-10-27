@@ -147,7 +147,7 @@ export function blogPostJsonLd(input: {
   const url = pageUrl(input.path)
   const datePublished = input.datePublished
   const dateModified = input.dateModified ?? input.datePublished
-  const type = input.type ?? 'BlogPosting'
+  const type = input.type ?? 'Article'
 
   const graph: Record<string, unknown>[] = [
     {

@@ -244,6 +244,17 @@ Hello
     )
     assert.ok(post)
     assert.equal(post.lastModified.toISOString().startsWith('2025-03-30'), true)
+
+    const providers = publishedBlogPosts().find(
+      (item) => item.slug === 'embedded-wallet-providers',
+    )
+    const privy = publishedBlogPosts().find(
+      (item) => item.slug === 'privy-vs-turnkey',
+    )
+    assert.ok(providers)
+    assert.ok(privy)
+    assert.equal(providers.lastModified.toISOString().startsWith('2026-10-27'), true)
+    assert.equal(privy.lastModified.toISOString().startsWith('2026-10-27'), true)
   })
 
   it('keeps the indexable marketing URLs including the React integration guide', () => {
