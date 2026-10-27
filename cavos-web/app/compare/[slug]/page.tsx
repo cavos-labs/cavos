@@ -30,10 +30,11 @@ export async function generateMetadata({
     if (!competitor) return {}
 
     const title =
-        competitor.pageTitle ?? `Cavos vs ${competitor.name}: embedded wallet comparison`
+        competitor.pageTitle ??
+        `Cavos vs ${competitor.name} (2026): Pricing, Chains, Custody`
     const description =
         competitor.pageDescription ??
-        `An honest comparison of Cavos and ${competitor.name} across custody, chain support, signing authority, gas sponsorship, and recovery — including when ${competitor.name} is the better choice.`
+        `Cavos vs ${competitor.name} on pricing, chains, and custody. Free up to 1,000 wallets on Starknet, Solana, and Stellar.`
 
     return marketingPageMetadata({
         title,

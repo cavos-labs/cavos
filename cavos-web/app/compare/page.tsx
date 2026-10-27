@@ -46,7 +46,7 @@ const COMPARISON = [
     },
     {
         feature: 'Gas sponsorship',
-        cavos: 'Chain-specific paymaster and relayer integrations',
+        cavos: 'Gas Sponsorship in Any Token via chain-specific paymaster and relayer integrations',
         hosted: 'Varies by provider and network',
         extension: 'Usually funded by the user or a separate paymaster',
     },
@@ -69,7 +69,7 @@ const FAQ = [
     },
     {
         question: 'Does Cavos use MPC?',
-        answer: 'No. Cavos does not split or reconstruct a master key with MPC. Signing authority stays with device-bound keys or the chain-specific non-custodial control model documented for each adapter.',
+        answer: 'No. Cavos does not split or reconstruct a master key with MPC. Signing authority stays with device-bound keys.',
     },
     {
         question: 'Can one application use Cavos across multiple chains?',

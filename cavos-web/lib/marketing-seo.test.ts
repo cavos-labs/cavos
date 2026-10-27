@@ -495,14 +495,7 @@ describe('marketing SEO', () => {
     )
     assert.deepEqual(
       rows.map((row) => row.href),
-      [
-        '/pricing',
-        '/compare/privy',
-        '/compare/dynamic',
-        '/compare/turnkey',
-        '/compare/web3auth',
-        '/compare/magic',
-      ],
+      ['/pricing', ...COMPETITORS.map((competitor) => `/compare/${competitor.slug}`)],
     )
     for (const row of rows) {
       assert.ok(row.pricing.length > 0, `${row.slug} missing pricing`)
@@ -787,9 +780,10 @@ describe('marketing SEO', () => {
 
     const privy = getCompetitor('privy')
     assert.ok(privy)
-    assert.match(privy.pageTitle ?? '', /Privy wallet alternative/)
+    assert.match(privy.pageTitle ?? '', /Cavos vs Privy \(2026\): Pricing, Chains, Custody/)
     assert.match(privy.pageH1 ?? '', /Privy wallet alternative/)
     assert.match(privy.pageDescription ?? '', /Shopify/)
+    assert.match(privy.pageDescription ?? '', /1,000 wallets/)
     assert.match(privy.rows.find((row) => row.feature === 'Account model')?.cavos ?? '', /audited OpenZeppelin/i)
     assert.doesNotMatch(JSON.stringify(privy.rows), /PDA/)
   })
@@ -2179,6 +2173,23 @@ describe('marketing SEO', () => {
   it('lists comparison subjects as ItemList entries without Product fields', () => {
     const privy = getCompetitor('privy')
     assert.ok(privy)
+    assert.ok(getCompetitor('alchemy'))
+    for (const competitor of COMPETITORS) {
+      const title = competitor.pageTitle ?? `Cavos vs ${competitor.name} (2026): Pricing, Chains, Custody`
+      const description =
+        competitor.pageDescription ??
+        `Cavos vs ${competitor.name} on pricing, chains, and custody. Free up to 1,000 wallets on Starknet, Solana, and Stellar.`
+      const fullTitle = `${title} | Cavos`
+      assert.ok(title.length <= 60, `${competitor.slug} title ${title.length}: ${title}`)
+      assert.ok(fullTitle.length <= 60, `${competitor.slug} full title ${fullTitle.length}: ${fullTitle}`)
+      assert.ok(description.length <= 155, `${competitor.slug} description ${description.length}`)
+      assert.match(description, /1,000 wallets/)
+      assert.ok(competitor.faq.length >= 3 && competitor.faq.length <= 4, `${competitor.slug} faq count ${competitor.faq.length}`)
+      const jsonLd = compareCompetitorPageJsonLd(competitor)
+      const faq = jsonLd['@graph'].find((node: { '@type'?: string }) => node['@type'] === 'FAQPage')
+      assert.ok(faq)
+      assert.equal(faq.mainEntity.length, competitor.faq.length)
+    }
     const page = compareCompetitorPageJsonLd(privy)
     const json = JSON.stringify(page)
     JSON.parse(json)
