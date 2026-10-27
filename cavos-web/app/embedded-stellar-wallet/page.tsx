@@ -450,6 +450,18 @@ export default function EmbeddedStellarWalletPage() {
                             pages and{' '}
                             <Link href="/privy-alternatives" className={MARKETING_PROSE_LINK}>
                                 Privy alternatives
+                            </Link>
+                            ,{' '}
+                            <Link href="/turnkey-alternatives" className={MARKETING_PROSE_LINK}>
+                                Turnkey alternatives
+                            </Link>
+                            ,{' '}
+                            <Link href="/dynamic-alternatives" className={MARKETING_PROSE_LINK}>
+                                Dynamic alternatives
+                            </Link>
+                            , and{' '}
+                            <Link href="/magic-alternatives" className={MARKETING_PROSE_LINK}>
+                                Magic alternatives
                             </Link>{' '}
                             state when another product is the better fit.{' '}
                             <Link href="/pricing" className={MARKETING_PROSE_LINK}>

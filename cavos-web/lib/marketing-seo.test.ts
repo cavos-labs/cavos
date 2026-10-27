@@ -103,6 +103,34 @@ import {
   getCompetitor,
 } from './compare-data'
 import {
+  DYNAMIC_ALTERNATIVE_SECTIONS,
+  DYNAMIC_ALTERNATIVES_CRUMB,
+  DYNAMIC_ALTERNATIVES_DESCRIPTION,
+  DYNAMIC_ALTERNATIVES_FAQ,
+  DYNAMIC_ALTERNATIVES_H1,
+  DYNAMIC_ALTERNATIVES_MODIFIED,
+  DYNAMIC_ALTERNATIVES_PATH,
+  DYNAMIC_ALTERNATIVES_PUBLISHED,
+  DYNAMIC_ALTERNATIVES_TITLE,
+  DYNAMIC_HOW_TO_CHOOSE,
+  DYNAMIC_WHY_LOOK,
+  dynamicAlternativesItemList,
+} from './dynamic-alternatives'
+import {
+  MAGIC_ALTERNATIVE_SECTIONS,
+  MAGIC_ALTERNATIVES_CRUMB,
+  MAGIC_ALTERNATIVES_DESCRIPTION,
+  MAGIC_ALTERNATIVES_FAQ,
+  MAGIC_ALTERNATIVES_H1,
+  MAGIC_ALTERNATIVES_MODIFIED,
+  MAGIC_ALTERNATIVES_PATH,
+  MAGIC_ALTERNATIVES_PUBLISHED,
+  MAGIC_ALTERNATIVES_TITLE,
+  MAGIC_HOW_TO_CHOOSE,
+  MAGIC_WHY_LOOK,
+  magicAlternativesItemList,
+} from './magic-alternatives'
+import {
   PRIVY_ALTERNATIVE_SECTIONS,
   PRIVY_ALTERNATIVES_CRUMB,
   PRIVY_ALTERNATIVES_DESCRIPTION,
@@ -116,6 +144,20 @@ import {
   PRIVY_WHY_LOOK,
   privyAlternativesItemList,
 } from './privy-alternatives'
+import {
+  TURNKEY_ALTERNATIVE_SECTIONS,
+  TURNKEY_ALTERNATIVES_CRUMB,
+  TURNKEY_ALTERNATIVES_DESCRIPTION,
+  TURNKEY_ALTERNATIVES_FAQ,
+  TURNKEY_ALTERNATIVES_H1,
+  TURNKEY_ALTERNATIVES_MODIFIED,
+  TURNKEY_ALTERNATIVES_PATH,
+  TURNKEY_ALTERNATIVES_PUBLISHED,
+  TURNKEY_ALTERNATIVES_TITLE,
+  TURNKEY_HOW_TO_CHOOSE,
+  TURNKEY_WHY_LOOK,
+  turnkeyAlternativesItemList,
+} from './turnkey-alternatives'
 import { parseBlogFrontmatter } from './marketing-sitemap'
 
 const PRODUCT_LIKE_TYPES = new Set(['Product', 'SoftwareApplication'])
@@ -738,22 +780,27 @@ describe('marketing SEO', () => {
       path.join(process.cwd(), 'app/privy-alternatives/page.tsx'),
       'utf8',
     )
+    const templateSource = fs.readFileSync(
+      path.join(process.cwd(), 'components/AlternativesGuidePage.tsx'),
+      'utf8',
+    )
     const dataSource = fs.readFileSync(
       path.join(process.cwd(), 'lib/privy-alternatives.ts'),
       'utf8',
     )
-    assert.match(pageSource, /guidePageJsonLd/)
-    assert.match(pageSource, /privyAlternativesItemList/)
-    assert.match(pageSource, /embeddedWalletProviderRows/)
-    assert.match(pageSource, /href=["']\/pricing["']/)
-    assert.match(pageSource, /Why teams look for a Privy alternative/)
-    assert.match(pageSource, /How to choose a Privy alternative/)
-    assert.match(pageSource, /relatedLinks/)
+    assert.match(pageSource, /privyAlternativesGuide/)
+    assert.match(pageSource, /AlternativesGuidePage/)
+    assert.match(templateSource, /guidePageJsonLd/)
+    assert.match(templateSource, /embeddedWalletProviderRows/)
+    assert.match(templateSource, /relatedLinks/)
+    assert.match(dataSource, /href: '\/pricing'/)
+    assert.match(dataSource, /Why teams look for a Privy alternative/)
+    assert.match(dataSource, /How to choose a Privy alternative/)
     assert.match(
-      pageSource,
+      dataSource,
       /Cavos, Dynamic, Turnkey, Web3Auth, and Magic are the five Privy/,
     )
-    assert.equal((pageSource.match(/<h1[\s>]/g) ?? []).length, 1)
+    assert.equal((templateSource.match(/<h1[\s>]/g) ?? []).length, 1)
 
     const cavos = PRIVY_ALTERNATIVE_SECTIONS[0]
     assert.deepEqual(
@@ -800,20 +847,30 @@ describe('marketing SEO', () => {
       /href="\/privy-alternatives"[^>]*>\s*Privy alternatives\s*</,
     )
     assert.match(compareSource, /PRIVY_VS_TURNKEY_PATH/)
-    assert.match(pageSource, /PRIVY_VS_TURNKEY_PATH/)
     assert.match(dataSource, /PRIVY_VS_TURNKEY_PATH/)
     const turnkey = PRIVY_ALTERNATIVE_SECTIONS.find((section) => section.name === 'Turnkey')
     assert.ok(turnkey)
     assert.deepEqual(
       (turnkey.relatedLinks ?? []).map((link) => link.href),
-      [PRIVY_VS_TURNKEY_PATH],
+      [PRIVY_VS_TURNKEY_PATH, '/turnkey-alternatives'],
     )
     const dynamic = PRIVY_ALTERNATIVE_SECTIONS.find((section) => section.name === 'Dynamic')
     assert.ok(dynamic)
     assert.deepEqual(
       (dynamic.relatedLinks ?? []).map((link) => link.href),
-      [EMBEDDED_WALLET_VS_EXTENSION_PATH],
+      [EMBEDDED_WALLET_VS_EXTENSION_PATH, '/dynamic-alternatives'],
     )
+    const magic = PRIVY_ALTERNATIVE_SECTIONS.find((section) => section.name === 'Magic')
+    assert.ok(magic)
+    assert.deepEqual(
+      (magic.relatedLinks ?? []).map((link) => link.href),
+      ['/magic-alternatives'],
+    )
+    assert.match(compareSource, /href="\/turnkey-alternatives"/)
+    assert.match(compareSource, /href="\/dynamic-alternatives"/)
+    assert.match(compareSource, /href="\/magic-alternatives"/)
+    assert.match(compareIndex, /href="\/turnkey-alternatives"/)
+    assert.match(embeddedWallet, /href="\/turnkey-alternatives"/)
 
     const privy = getCompetitor('privy')
     assert.ok(privy)
@@ -823,6 +880,232 @@ describe('marketing SEO', () => {
     assert.match(privy.pageDescription ?? '', /1,000 wallets/)
     assert.match(privy.rows.find((row) => row.feature === 'Account model')?.cavos ?? '', /audited OpenZeppelin/i)
     assert.doesNotMatch(JSON.stringify(privy.rows), /PDA/)
+  })
+
+  it('replicates the Privy alternatives template for Turnkey, Dynamic, and Magic', () => {
+    const guides = [
+      {
+        incumbent: 'Turnkey',
+        path: TURNKEY_ALTERNATIVES_PATH,
+        title: TURNKEY_ALTERNATIVES_TITLE,
+        description: TURNKEY_ALTERNATIVES_DESCRIPTION,
+        h1: TURNKEY_ALTERNATIVES_H1,
+        published: TURNKEY_ALTERNATIVES_PUBLISHED,
+        modified: TURNKEY_ALTERNATIVES_MODIFIED,
+        crumb: TURNKEY_ALTERNATIVES_CRUMB,
+        faq: TURNKEY_ALTERNATIVES_FAQ,
+        whyLook: TURNKEY_WHY_LOOK,
+        howToChoose: TURNKEY_HOW_TO_CHOOSE,
+        sections: TURNKEY_ALTERNATIVE_SECTIONS,
+        itemList: turnkeyAlternativesItemList(),
+        pageFile: 'app/turnkey-alternatives/page.tsx',
+        dataFile: 'lib/turnkey-alternatives.ts',
+        names: ['Cavos', 'Privy', 'Dynamic', 'Web3Auth', 'Magic'],
+        hrefs: [
+          '/compare/turnkey',
+          '/compare/privy',
+          '/compare/dynamic',
+          '/compare/web3auth',
+          '/compare/magic',
+        ],
+        itemListUrls: [
+          { position: 1, name: 'Cavos', url: 'https://cavos.xyz/compare/turnkey' },
+          { position: 2, name: 'Privy', url: 'https://cavos.xyz/compare/privy' },
+          { position: 3, name: 'Dynamic', url: 'https://cavos.xyz/compare/dynamic' },
+          { position: 4, name: 'Web3Auth', url: 'https://cavos.xyz/compare/web3auth' },
+          { position: 5, name: 'Magic', url: 'https://cavos.xyz/compare/magic' },
+        ],
+        fiveLead: 'Cavos, Privy, Dynamic, Web3Auth, and Magic are the five Turnkey',
+        comparePath: '/compare/turnkey',
+      },
+      {
+        incumbent: 'Dynamic',
+        path: DYNAMIC_ALTERNATIVES_PATH,
+        title: DYNAMIC_ALTERNATIVES_TITLE,
+        description: DYNAMIC_ALTERNATIVES_DESCRIPTION,
+        h1: DYNAMIC_ALTERNATIVES_H1,
+        published: DYNAMIC_ALTERNATIVES_PUBLISHED,
+        modified: DYNAMIC_ALTERNATIVES_MODIFIED,
+        crumb: DYNAMIC_ALTERNATIVES_CRUMB,
+        faq: DYNAMIC_ALTERNATIVES_FAQ,
+        whyLook: DYNAMIC_WHY_LOOK,
+        howToChoose: DYNAMIC_HOW_TO_CHOOSE,
+        sections: DYNAMIC_ALTERNATIVE_SECTIONS,
+        itemList: dynamicAlternativesItemList(),
+        pageFile: 'app/dynamic-alternatives/page.tsx',
+        dataFile: 'lib/dynamic-alternatives.ts',
+        names: ['Cavos', 'Privy', 'Turnkey', 'Web3Auth', 'Magic'],
+        hrefs: [
+          '/compare/dynamic',
+          '/compare/privy',
+          '/compare/turnkey',
+          '/compare/web3auth',
+          '/compare/magic',
+        ],
+        itemListUrls: [
+          { position: 1, name: 'Cavos', url: 'https://cavos.xyz/compare/dynamic' },
+          { position: 2, name: 'Privy', url: 'https://cavos.xyz/compare/privy' },
+          { position: 3, name: 'Turnkey', url: 'https://cavos.xyz/compare/turnkey' },
+          { position: 4, name: 'Web3Auth', url: 'https://cavos.xyz/compare/web3auth' },
+          { position: 5, name: 'Magic', url: 'https://cavos.xyz/compare/magic' },
+        ],
+        fiveLead: 'Cavos, Privy, Turnkey, Web3Auth, and Magic are the five Dynamic',
+        comparePath: '/compare/dynamic',
+      },
+      {
+        incumbent: 'Magic',
+        path: MAGIC_ALTERNATIVES_PATH,
+        title: MAGIC_ALTERNATIVES_TITLE,
+        description: MAGIC_ALTERNATIVES_DESCRIPTION,
+        h1: MAGIC_ALTERNATIVES_H1,
+        published: MAGIC_ALTERNATIVES_PUBLISHED,
+        modified: MAGIC_ALTERNATIVES_MODIFIED,
+        crumb: MAGIC_ALTERNATIVES_CRUMB,
+        faq: MAGIC_ALTERNATIVES_FAQ,
+        whyLook: MAGIC_WHY_LOOK,
+        howToChoose: MAGIC_HOW_TO_CHOOSE,
+        sections: MAGIC_ALTERNATIVE_SECTIONS,
+        itemList: magicAlternativesItemList(),
+        pageFile: 'app/magic-alternatives/page.tsx',
+        dataFile: 'lib/magic-alternatives.ts',
+        names: ['Cavos', 'Privy', 'Dynamic', 'Turnkey', 'Web3Auth'],
+        hrefs: [
+          '/compare/magic',
+          '/compare/privy',
+          '/compare/dynamic',
+          '/compare/turnkey',
+          '/compare/web3auth',
+        ],
+        itemListUrls: [
+          { position: 1, name: 'Cavos', url: 'https://cavos.xyz/compare/magic' },
+          { position: 2, name: 'Privy', url: 'https://cavos.xyz/compare/privy' },
+          { position: 3, name: 'Dynamic', url: 'https://cavos.xyz/compare/dynamic' },
+          { position: 4, name: 'Turnkey', url: 'https://cavos.xyz/compare/turnkey' },
+          { position: 5, name: 'Web3Auth', url: 'https://cavos.xyz/compare/web3auth' },
+        ],
+        fiveLead: 'Cavos, Privy, Dynamic, Turnkey, and Web3Auth are the five Magic',
+        comparePath: '/compare/magic',
+      },
+    ] as const
+
+    const templateSource = fs.readFileSync(
+      path.join(process.cwd(), 'components/AlternativesGuidePage.tsx'),
+      'utf8',
+    )
+    assert.match(templateSource, /guidePageJsonLd/)
+    assert.match(templateSource, /FAQPage|faq/)
+    assert.equal((templateSource.match(/<h1[\s>]/g) ?? []).length, 1)
+
+    for (const guide of guides) {
+      assert.equal(guide.path, `/${guide.incumbent.toLowerCase()}-alternatives`)
+      assert.equal(guide.title.includes('| Cavos'), false)
+      assert.match(guide.title, new RegExp(`5 ${guide.incumbent} Alternatives`))
+      assert.match(guide.title, /2026/)
+      assert.match(guide.title, /Free 1,000 Wallets/)
+      assert.match(guide.h1, new RegExp(`5 ${guide.incumbent} alternatives`))
+      assert.match(guide.description, /1,000 wallets/)
+      assert.match(guide.description, /Starknet, Solana, Stellar/)
+      const fullTitle = `${guide.title} | Cavos`
+      assert.ok(fullTitle.length >= 50 && fullTitle.length <= 60, fullTitle)
+      assert.ok(
+        guide.description.length >= 140 && guide.description.length <= 155,
+        `${guide.incumbent} description ${guide.description.length}`,
+      )
+      assert.ok(guide.faq.length >= 5 && guide.faq.length <= 8)
+      assert.ok(
+        guide.faq.some(
+          (item) => item.question === `What is the best ${guide.incumbent} alternative?`,
+        ),
+      )
+      assert.ok(
+        guide.faq.some(
+          (item) => item.question === `Is there a free ${guide.incumbent} alternative?`,
+        ),
+      )
+      assert.ok(
+        guide.faq.some((item) => /Starknet, Solana, or Stellar/.test(item.question)),
+      )
+      assert.ok(guide.whyLook.length >= 4)
+      assert.ok(guide.howToChoose.length >= 5)
+      assert.deepEqual(
+        guide.sections.map((section) => section.name),
+        [...guide.names],
+      )
+      assert.deepEqual(
+        guide.sections.map((section) => section.href),
+        [...guide.hrefs],
+      )
+      assert.equal(guide.published, '2026-10-27')
+      assert.equal(guide.modified, '2026-10-27')
+      assert.equal(guide.crumb, `${guide.incumbent} alternatives`)
+
+      const jsonLd = guidePageJsonLd({
+        title: guide.title,
+        description: guide.description,
+        path: guide.path,
+        datePublished: guide.published,
+        dateModified: guide.modified,
+        crumbs: [
+          { name: 'Home', path: '/' },
+          { name: 'Compare', path: '/compare' },
+          { name: guide.crumb, path: guide.path },
+        ],
+        faq: [...guide.faq],
+        itemList: guide.itemList,
+      })
+      JSON.parse(JSON.stringify(jsonLd))
+      assert.equal(jsonLd['@graph'][0]['@type'], 'Article')
+      assert.equal(jsonLd['@graph'][1]['@type'], 'BreadcrumbList')
+      assert.equal(jsonLd['@graph'][2]['@type'], 'FAQPage')
+      const alternativesList = jsonLd['@graph'].find(
+        (node: { '@type'?: string }) => node['@type'] === 'ItemList',
+      )
+      assert.ok(alternativesList)
+      assert.equal(
+        alternativesList['@id'],
+        `https://cavos.xyz${guide.path}#itemlist`,
+      )
+      assert.deepEqual(
+        alternativesList.itemListElement.map(
+          (item: { name: string; url: string; position: number }) => ({
+            position: item.position,
+            name: item.name,
+            url: item.url,
+          }),
+        ),
+        [...guide.itemListUrls],
+      )
+      assert.doesNotMatch(JSON.stringify(jsonLd), /"@type":"Product"/)
+
+      const pageSource = fs.readFileSync(
+        path.join(process.cwd(), guide.pageFile),
+        'utf8',
+      )
+      const dataSource = fs.readFileSync(
+        path.join(process.cwd(), guide.dataFile),
+        'utf8',
+      )
+      assert.match(pageSource, /AlternativesGuidePage/)
+      assert.match(dataSource, new RegExp(guide.fiveLead))
+      assert.match(dataSource, /href: '\/privy-alternatives'/)
+      assert.match(dataSource, new RegExp(`href: '${guide.comparePath}'`))
+      assert.match(dataSource, /audited OpenZeppelin account contract/)
+      assert.match(dataSource, /Gas Sponsorship in Any Token/)
+      assert.doesNotMatch(dataSource, /audited Cavos/)
+      assert.doesNotMatch(dataSource, /on-chain device approval/)
+      assert.doesNotMatch(dataSource, /grandfather/)
+      assert.doesNotMatch(dataSource, /Horizon signer/)
+      const cavos = guide.sections[0]
+      assert.equal(cavos.href, guide.comparePath)
+      assert.match(cavos.paragraphs.join(' '), /audited OpenZeppelin/)
+      const privySection = guide.sections.find((section) => section.name === 'Privy')
+      assert.ok(privySection)
+      assert.ok(
+        (privySection.relatedLinks ?? []).some(
+          (link) => link.href === '/privy-alternatives',
+        ),
+      )
+    }
   })
 
   it('builds Article, BreadcrumbList, and FAQPage JSON-LD for the guide', () => {
@@ -1024,7 +1307,7 @@ describe('marketing SEO', () => {
   it('emits BreadcrumbList JSON-LD on indexable marketing pages', () => {
     const pagesWithBreadcrumbs = [
       'app/compare/page.tsx',
-      'app/privy-alternatives/page.tsx',
+      'components/AlternativesGuidePage.tsx',
       'app/custody/page.tsx',
       'app/pricing/page.tsx',
       'app/stats/page.tsx',
@@ -1070,6 +1353,9 @@ describe('marketing SEO', () => {
       ['/embedded-stellar-wallet', 'Stellar wallet'],
       ['/blog', 'Changelog'],
       ['/privy-alternatives', 'Privy wallet alternatives'],
+      ['/turnkey-alternatives', 'Turnkey wallet alternatives'],
+      ['/dynamic-alternatives', 'Dynamic wallet alternatives'],
+      ['/magic-alternatives', 'Magic wallet alternatives'],
       ['/blog/how-to-add-an-embedded-wallet', 'How to add an embedded wallet'],
       ['/blog/wallet-as-a-service', 'Wallet as a service'],
     ] as const
@@ -1247,7 +1533,6 @@ describe('marketing SEO', () => {
   it('puts a non-footer in-text link to /embedded-wallet on ranking pages', () => {
     const pages = [
       ['app/compare/[slug]/page.tsx', 'how embedded wallets work'],
-      ['app/privy-alternatives/page.tsx', 'embedded wallet'],
       ['app/pricing/page.tsx', 'self-custodial embedded wallet'],
       ['app/custody/page.tsx', 'self-custodial embedded wallet'],
       ['app/about/page.tsx', 'embedded wallet'],
@@ -1273,6 +1558,29 @@ describe('marketing SEO', () => {
         `${relative} missing compare-page underline link style`,
       )
     }
+
+    const alternativesData = [
+      'lib/privy-alternatives.ts',
+      'lib/turnkey-alternatives.ts',
+      'lib/dynamic-alternatives.ts',
+      'lib/magic-alternatives.ts',
+    ]
+    for (const relative of alternativesData) {
+      const source = fs.readFileSync(path.join(process.cwd(), relative), 'utf8')
+      assert.match(
+        source,
+        /href: '\/embedded-wallet', label: 'embedded wallet'/,
+        `${relative} missing embedded wallet intro link`,
+      )
+    }
+    const template = fs.readFileSync(
+      path.join(process.cwd(), 'components/AlternativesGuidePage.tsx'),
+      'utf8',
+    )
+    assert.match(
+      template,
+      /font-semibold text-ink underline decoration-line underline-offset-4/,
+    )
   })
 
   it('indexes the React integration guide as an Article with FAQ JSON-LD', () => {
@@ -1829,11 +2137,27 @@ describe('marketing SEO', () => {
     assert.doesNotMatch(source, /This device must be approved first/)
     assert.doesNotMatch(source, /category:\s*"Release"/)
     assert.doesNotMatch(source, /robots:\s*noindex/)
+    assert.match(source, /\*\*embedded wallet API\*\*/)
+    assert.match(source, /SDK methods \(what people call the API\)/)
+    assert.match(source, /Which SDK methods make up the Cavos embedded wallet API\?/)
+    assert.match(source, /docs\.cavos\.xyz\/docs\/react/)
+    assert.match(source, /\]\(\/blog\/embedded-wallet-react-sdk\)/)
+    assert.match(source, /no public “create wallet” REST endpoint|not a public REST create-wallet endpoint/)
+    assert.doesNotMatch(source, /grandfather/)
+    assert.doesNotMatch(source, /Horizon signer/)
     assert.equal(EMBEDDED_WALLET_API_PATH, '/blog/embedded-wallet-api')
     assert.equal(
       EMBEDDED_WALLET_API_TITLE,
-      'Embedded Wallet API: How It Works and What to Look For (2026)',
+      'Embedded Wallet API (2026): SDK Methods & Auth',
     )
+    assert.ok(`${EMBEDDED_WALLET_API_TITLE} | Cavos`.length <= 60)
+    assert.ok(
+      excerptMatch[1].length >= 140 && excerptMatch[1].length <= 155,
+      String(excerptMatch[1].length),
+    )
+    const apiFields = parseBlogFrontmatter(source)
+    assert.equal(apiFields.title, EMBEDDED_WALLET_API_TITLE)
+    assert.equal(apiFields.updated, '2026-10-27')
 
     const hub = fs.readFileSync(
       path.join(process.cwd(), 'app/embedded-wallet/page.tsx'),
@@ -2394,6 +2718,9 @@ describe('marketing SEO', () => {
     assert.match(source, /href: '\/compare'/)
     assert.match(source, /href: '\/custody'/)
     assert.match(source, /href: '\/privy-alternatives'/)
+    assert.match(source, /href: '\/turnkey-alternatives'/)
+    assert.match(source, /href: '\/dynamic-alternatives'/)
+    assert.match(source, /href: '\/magic-alternatives'/)
     assert.match(source, /href: '\/embedded-starknet-wallet'/)
     assert.match(source, /href: '\/embedded-solana-wallet'/)
     assert.match(source, /href: '\/embedded-stellar-wallet'/)

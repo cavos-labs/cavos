@@ -3,7 +3,10 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 import { COMPETITORS } from './compare-data'
+import { DYNAMIC_ALTERNATIVES_MODIFIED } from './dynamic-alternatives'
+import { MAGIC_ALTERNATIVES_MODIFIED } from './magic-alternatives'
 import { PRIVY_ALTERNATIVES_MODIFIED } from './privy-alternatives'
+import { TURNKEY_ALTERNATIVES_MODIFIED } from './turnkey-alternatives'
 import {
   MARKETING_HOME_URL,
   MARKETING_ORIGIN,
@@ -65,6 +68,9 @@ describe('marketing sitemap', () => {
       '/embedded-starknet-wallet',
       '/compare',
       '/privy-alternatives',
+      '/turnkey-alternatives',
+      '/dynamic-alternatives',
+      '/magic-alternatives',
       '/custody',
       '/pricing',
       '/stats',
@@ -131,6 +137,9 @@ describe('marketing sitemap', () => {
       '/embedded-starknet-wallet',
       '/compare',
       '/privy-alternatives',
+      '/turnkey-alternatives',
+      '/dynamic-alternatives',
+      '/magic-alternatives',
       '/custody',
       '/pricing',
       '/stats',
@@ -160,6 +169,22 @@ describe('marketing sitemap', () => {
       entry.lastModified.toISOString().slice(0, 10),
       PRIVY_ALTERNATIVES_MODIFIED,
     )
+  })
+
+  it('lists Turnkey, Dynamic, and Magic alternatives with the content dateModified', () => {
+    const expected = [
+      ['/turnkey-alternatives', TURNKEY_ALTERNATIVES_MODIFIED],
+      ['/dynamic-alternatives', DYNAMIC_ALTERNATIVES_MODIFIED],
+      ['/magic-alternatives', MAGIC_ALTERNATIVES_MODIFIED],
+    ] as const
+    for (const [routePath, modified] of expected) {
+      const entry = entries.find(
+        (item) => item.url === `${MARKETING_ORIGIN}${routePath}`,
+      )
+      assert.ok(entry, `sitemap missing ${routePath}`)
+      assert.ok(entry.lastModified instanceof Date)
+      assert.equal(entry.lastModified.toISOString().slice(0, 10), modified)
+    }
   })
 
   it('includes each competitor compare page from live data', () => {
@@ -274,7 +299,7 @@ Hello
   })
 
   it('keeps the indexable marketing URLs including the React integration guide', () => {
-    assert.equal(entries.length, 35)
+    assert.equal(entries.length, 38)
     assert.ok(
       urls.includes(`${MARKETING_ORIGIN}/blog/how-to-add-an-embedded-wallet`),
     )

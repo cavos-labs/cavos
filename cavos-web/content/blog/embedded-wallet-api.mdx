@@ -1,7 +1,8 @@
 ---
-title: "Embedded Wallet API: How It Works and What to Look For (2026)"
+title: "Embedded Wallet API (2026): SDK Methods & Auth"
 date: "2026-10-21"
-excerpt: "What an embedded wallet API covers — auth, create, keys, signing, gas, recovery — and how Cavos exposes that surface in @cavos/kit."
+updated: "2026-10-27"
+excerpt: "Search for an embedded wallet API: auth, create, sign, gas, recovery. Cavos ships a client SDK, not a public REST create-wallet endpoint, in @cavos/kit."
 category: "Guide"
 slug: "embedded-wallet-api"
 faq:
@@ -11,6 +12,8 @@ faq:
     answer: "Ask who can produce a valid signature without the user, which chains are native, whether you get a client SDK or a REST signing layer you assemble yourself, how pricing and rate limits are metered, and whether users can export a key or only restore the same address on a new device. Then match that to the product: provision new accounts, or connect existing ones."
   - question: "Does Cavos expose a REST embedded wallet API or a client SDK?"
     answer: "Cavos ships a client SDK. The public surface is @cavos/kit, @cavos/kit/react, and @cavos/kit/react-native. Cavos.connect and CavosProvider talk to hosted registry, paymaster, and relayer services behind an App ID. Developers do not call a public create-wallet REST endpoint. Lower-level vendors such as Turnkey expose a signing and key-management API that you assemble into a wallet yourself."
+  - question: "Which SDK methods make up the Cavos embedded wallet API?"
+    answer: "There are no public REST wallet-create paths. Auth is CavosAuth and useCavos().login, sendOtp, and verifyOtp. Wallet create or lookup is Cavos.connect or CavosProvider. Signing and sending are wallet.execute, signMessage, signTransaction, executeInstructions, and invokeContract. Recovery is enrollPasskeyDefault and approveDeviceWithPasskey. The method list is the API reference at docs.cavos.xyz/docs/api-reference."
   - question: "How does Cavos create a wallet through the API?"
     answer: "Cavos.connect looks up (userId, appId, chain, network) in the registry and returns the existing address, or claims a new one. Connect never deploys Starknet or Stellar. Native Solana is ready once this device holds the spend key. The first execute deploys a Starknet or Stellar account and runs the operation atomically."
   - question: "Who holds the keys in the Cavos embedded wallet API?"
@@ -19,9 +22,9 @@ faq:
     answer: "Recovery is how a new device restores the means to sign. In Cavos that is a restore of the MasterDEK, not an on-chain device list. After login, enrollPasskeyDefault() stores an encrypted DEK copy under a passkey. Opt-in hardware-isolated social recovery unwraps the same DEK when the user signs in again. There is no on-chain social recovery and no on-chain device signers."
 ---
 
-An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain account they can pay, receive, and sign with — no [browser extension](/blog/embedded-wallet-vs-browser-extension), no seed phrase, no trip to another app.
+Search for **embedded wallet API** and you usually want the developer surface: authenticate a user, create or look up a wallet, sign, send, sponsor gas, recover a device. An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain account they can pay, receive, and sign with — no [browser extension](/blog/embedded-wallet-vs-browser-extension), no seed phrase, no trip to another app.
 
-The **embedded wallet API** is the developer surface of a [wallet-as-a-service platform](/blog/wallet-as-a-service). This guide is the docs-style map: what those APIs cover, what to evaluate before you pick one, and how Cavos exposes the same contract in `@cavos/kit` 0.4.4. The [React integration](/blog/how-to-add-an-embedded-wallet) is the install. Best practices for embedding that wallet SDK — custody, passkeys, Gas Sponsorship in Any Token, errors, and testnet — are in the [embedded wallet React SDK](/blog/embedded-wallet-react-sdk) guide. The [non-custodial guide](/blog/non-custodial-embedded-wallet) is the custody test. The [providers comparison](/blog/embedded-wallet-providers) is the shortlist. Adapters ship today for [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), and [Stellar](/embedded-stellar-wallet).
+The **embedded wallet API** is that surface on a [wallet-as-a-service platform](/blog/wallet-as-a-service). Cavos ships it as a **client SDK**, not a public REST create-wallet endpoint. The packages are `@cavos/kit`, `@cavos/kit/react`, and `@cavos/kit/react-native`. Hosted registry, paymaster, and relayer calls happen inside the kit behind an App ID. This guide is the docs-style map of that contract in `@cavos/kit` 0.4.4, grounded in the [API reference](https://docs.cavos.xyz/docs/api-reference). The [React integration](/blog/how-to-add-an-embedded-wallet) is the install. Best practices for embedding that wallet SDK — custody, passkeys, Gas Sponsorship in Any Token, errors, and testnet — are in the [embedded wallet React SDK](/blog/embedded-wallet-react-sdk) guide. The [non-custodial guide](/blog/non-custodial-embedded-wallet) is the custody test. The [providers comparison](/blog/embedded-wallet-providers) is the shortlist. Adapters ship today for [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), and [Stellar](/embedded-stellar-wallet).
 
 Cavos, LLC is a software and SaaS company. The wallet is the main product: a device-native, self-custodial embedded wallet. Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds.
 
@@ -62,6 +65,23 @@ The public developer surface is `@cavos/kit`. React bindings live on the same pa
 There is no public “create wallet” REST endpoint for your backend to call. `Cavos.connect` and `CavosProvider` talk to the hosted registry, paymaster, and relayers behind an App ID. Your code stays on the kit.
 
 The onboarding contract is the same on every adapter: authenticate, connect, then execute. See the [quickstart](https://docs.cavos.xyz/docs/quickstart).
+
+### SDK methods (what people call the API)
+
+<!-- Source: https://docs.cavos.xyz/docs/api-reference and https://docs.cavos.xyz/docs/react. Do not invent REST paths. -->
+
+This is the map from the job you searched for to the export you call. None of these are public HTTP routes you POST to from your backend.
+
+| Job | Export | Package | Docs |
+|---|---|---|---|
+| Authenticate | `CavosAuth` (`getGoogleOAuthUrl`, `getAppleOAuthUrl`, `handleCallback`, `sendOtp`, `verifyOtp`); `useCavos().login`, `sendOtp`, `verifyOtp`, `openModal` | `@cavos/kit`, `@cavos/kit/react` | [Authentication](https://docs.cavos.xyz/docs/auth), [React](https://docs.cavos.xyz/docs/react) |
+| Create or look up a wallet | `Cavos.connect`; `CavosProvider` | `@cavos/kit`, `@cavos/kit/react` | [Quickstart](https://docs.cavos.xyz/docs/quickstart) |
+| Read session state | `session.wallet(chain)`, `chainStatus`, `chainAddress`; `useCavos()` (`address`, `wallet`, `walletStatus`, `session`) | `@cavos/kit`, `@cavos/kit/react` | [API reference](https://docs.cavos.xyz/docs/api-reference) |
+| Sign and send | `wallet.execute`, `signMessage`, `signTransaction`; Solana `executeInstructions`; Stellar `invokeContract`; React `execute` is Starknet-only | `@cavos/kit`, `@cavos/kit/react` | [Wallet actions](https://docs.cavos.xyz/docs/wallet-actions) |
+| Gas Sponsorship in Any Token | Starknet `paymasterApiKey` on connect; Solana hosted relayer as fee payer; Stellar hosted relayer for reserves and fee bumps | `@cavos/kit` | [Quickstart](https://docs.cavos.xyz/docs/quickstart) |
+| Recover a device | `enrollPasskeyDefault()`, `approveDeviceWithPasskey()`; opt-in `SocialRecoveryClient` | `@cavos/kit`, `@cavos/kit/react` | [Recovery](https://docs.cavos.xyz/docs/recovery) |
+
+`ConnectOptions.backendUrl` defaults to Cavos hosted services. That URL is not a public create-wallet REST API. `appId` is public. The Starknet web SDK also receives `paymasterApiKey` in browser code, so treat it as a client-visible, app-scoped sponsorship credential.
 
 ### Auth and session
 

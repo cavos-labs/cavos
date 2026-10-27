@@ -40,6 +40,9 @@ export function Footer() {
                         <li><Link href="/blog/wallet-as-a-service" className="hover:text-black transition-colors">Wallet as a service</Link></li>
                         <li><Link href="/compare" className="hover:text-black transition-colors">Compare providers</Link></li>
                         <li><Link href="/privy-alternatives" className="hover:text-black transition-colors">Privy wallet alternatives</Link></li>
+                        <li><Link href="/turnkey-alternatives" className="hover:text-black transition-colors">Turnkey wallet alternatives</Link></li>
+                        <li><Link href="/dynamic-alternatives" className="hover:text-black transition-colors">Dynamic wallet alternatives</Link></li>
+                        <li><Link href="/magic-alternatives" className="hover:text-black transition-colors">Magic wallet alternatives</Link></li>
                         <li><Link href="/blog" className="hover:text-black transition-colors">Changelog</Link></li>
                         <li><Link href="https://docs.cavos.xyz" target="_blank" className="hover:text-black transition-colors">Documentation</Link></li>
                     </ul>

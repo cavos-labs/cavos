@@ -99,6 +99,28 @@ export default async function ComparisonPage({
                                 <Link href={PRIVY_VS_TURNKEY_PATH} className={linkClass}>
                                     Privy vs Turnkey
                                 </Link>
+                                . For a multi-vendor shortlist, see{' '}
+                                <Link href="/turnkey-alternatives" className={linkClass}>
+                                    Turnkey alternatives
+                                </Link>
+                                .{' '}
+                            </>
+                        ) : null}
+                        {competitor.slug === 'dynamic' ? (
+                            <>
+                                For a multi-vendor shortlist, see{' '}
+                                <Link href="/dynamic-alternatives" className={linkClass}>
+                                    Dynamic alternatives
+                                </Link>
+                                .{' '}
+                            </>
+                        ) : null}
+                        {competitor.slug === 'magic' ? (
+                            <>
+                                For a multi-vendor shortlist, see{' '}
+                                <Link href="/magic-alternatives" className={linkClass}>
+                                    Magic alternatives
+                                </Link>
                                 .{' '}
                             </>
                         ) : null}
@@ -220,6 +242,30 @@ export default async function ComparisonPage({
                                 className="rounded-md border border-line px-4 py-2 text-sm font-medium transition-colors hover:border-ink"
                             >
                                 Privy wallet alternatives
+                            </Link>
+                        ) : null}
+                        {competitor.slug === 'turnkey' ? (
+                            <Link
+                                href="/turnkey-alternatives"
+                                className="rounded-md border border-line px-4 py-2 text-sm font-medium transition-colors hover:border-ink"
+                            >
+                                Turnkey wallet alternatives
+                            </Link>
+                        ) : null}
+                        {competitor.slug === 'dynamic' ? (
+                            <Link
+                                href="/dynamic-alternatives"
+                                className="rounded-md border border-line px-4 py-2 text-sm font-medium transition-colors hover:border-ink"
+                            >
+                                Dynamic wallet alternatives
+                            </Link>
+                        ) : null}
+                        {competitor.slug === 'magic' ? (
+                            <Link
+                                href="/magic-alternatives"
+                                className="rounded-md border border-line px-4 py-2 text-sm font-medium transition-colors hover:border-ink"
+                            >
+                                Magic wallet alternatives
                             </Link>
                         ) : null}
                     </div>
