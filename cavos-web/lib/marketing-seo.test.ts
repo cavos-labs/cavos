@@ -874,8 +874,11 @@ describe('marketing SEO', () => {
 
     const privy = getCompetitor('privy')
     assert.ok(privy)
-    assert.match(privy.pageTitle ?? '', /Cavos vs Privy \(2026\): Pricing, Chains, Custody/)
-    assert.match(privy.pageH1 ?? '', /Privy wallet alternative/)
+    assert.match(privy.pageTitle ?? '', /Cavos vs Privy \(2026\): Security, Pricing, Review/)
+    assert.match(privy.pageH1 ?? '', /Cavos vs Privy: security, pricing, and chains/)
+    assert.doesNotMatch(privy.pageTitle ?? '', /alternative/i)
+    assert.doesNotMatch(privy.pageH1 ?? '', /alternative/i)
+    assert.doesNotMatch(privy.pageDescription ?? '', /alternative/i)
     assert.match(privy.pageDescription ?? '', /Shopify/)
     assert.match(privy.pageDescription ?? '', /1,000 wallets/)
     assert.match(privy.rows.find((row) => row.feature === 'Account model')?.cavos ?? '', /audited OpenZeppelin/i)
