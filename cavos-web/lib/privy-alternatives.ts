@@ -1,19 +1,15 @@
 import {
-  EMBEDDED_WALLET_API_PATH,
-  EMBEDDED_WALLET_API_TITLE,
-  EMBEDDED_WALLET_INTEGRATION_PATH,
-  EMBEDDED_WALLET_INTEGRATION_TITLE,
-  EMBEDDED_WALLET_PROVIDERS_PATH,
-  EMBEDDED_WALLET_PROVIDERS_TITLE,
-  EMBEDDED_WALLET_VS_EXTENSION_PATH,
-  EMBEDDED_WALLET_VS_EXTENSION_TITLE,
-  NON_CUSTODIAL_EMBEDDED_WALLET_PATH,
-  NON_CUSTODIAL_EMBEDDED_WALLET_TITLE,
-  PRIVY_VS_TURNKEY_PATH,
-  PRIVY_VS_TURNKEY_TITLE,
-  WALLET_AS_A_SERVICE_PATH,
-  WALLET_AS_A_SERVICE_TITLE,
-} from './embedded-wallet-guide'
+  CAVOS_CHAIN_ACCOUNT_PARAGRAPH,
+  CAVOS_RELATED_LINKS,
+  DEFAULT_HOW_TO_CHOOSE_OUTRO,
+  DYNAMIC_VS_EXTENSION_LINKS,
+  TURNKEY_VS_PRIVY_LINKS,
+  type AlternativeRelatedLink,
+  type AlternativeSection,
+  type AlternativesGuide,
+  vendorSection,
+} from './alternatives-guide'
+import { PRIVY_VS_TURNKEY_PATH } from './embedded-wallet-guide'
 import { getCompetitor } from './compare-data'
 
 export const PRIVY_ALTERNATIVES_PATH = '/privy-alternatives'
@@ -33,19 +29,7 @@ export const PRIVY_ALTERNATIVES_MODIFIED = '2026-10-27'
 
 export const PRIVY_ALTERNATIVES_CRUMB = 'Privy alternatives'
 
-export type AlternativeRelatedLink = {
-  href: string
-  label: string
-}
-
-export type AlternativeSection = {
-  name: string
-  href: string
-  linkLabel: string
-  paragraphs: string[]
-  chooseWhen: string[]
-  relatedLinks?: AlternativeRelatedLink[]
-}
+export type { AlternativeRelatedLink, AlternativeSection }
 
 export const PRIVY_ALTERNATIVE_SECTIONS: AlternativeSection[] = [
   {
@@ -54,92 +38,24 @@ export const PRIVY_ALTERNATIVE_SECTIONS: AlternativeSection[] = [
     linkLabel: 'Cavos vs Privy',
     paragraphs: [
       'Cavos is a Privy alternative when the product is on Starknet, Solana, or Stellar and the security review requires a device-native key. The wallet is embedded in the application. Signing authority is a non-exportable device key: Cavos holds no key that can move user funds and does not reconstruct a master key with MPC.',
-      'One SDK ships chain-native adapters for those three networks. On Starknet each wallet is an audited OpenZeppelin account contract — AccountUpgradeable v3.0.0 — controlled by one stark key derived from the MasterDEK and app salt. Solana uses a native Ed25519 system account. Stellar uses a classic G-account. Recovery is off-chain: a new device restores the MasterDEK with a passkey or an opt-in hardware-isolated enclave. There is no on-chain device-signer list and no on-chain social recovery.',
+      CAVOS_CHAIN_ACCOUNT_PARAGRAPH,
       'Cavos is not a drop-in replacement for Privy. It does not connect existing extensions, and it is not an EVM-wide wallet layer. The published free tier covers the first 1,000 wallet creates; Essential is $59/mo and Complete is $139/mo.',
     ],
     chooseWhen: getCompetitor('privy')?.chooseCavos ?? [],
-    relatedLinks: [
-      { href: '/embedded-starknet-wallet', label: 'Embedded Starknet wallet' },
-      { href: '/embedded-solana-wallet', label: 'Embedded Solana wallet' },
-      { href: '/embedded-stellar-wallet', label: 'Embedded Stellar wallet' },
-      {
-        href: EMBEDDED_WALLET_INTEGRATION_PATH,
-        label: EMBEDDED_WALLET_INTEGRATION_TITLE,
-      },
-      {
-        href: EMBEDDED_WALLET_API_PATH,
-        label: EMBEDDED_WALLET_API_TITLE,
-      },
-      {
-        href: NON_CUSTODIAL_EMBEDDED_WALLET_PATH,
-        label: NON_CUSTODIAL_EMBEDDED_WALLET_TITLE,
-      },
-      {
-        href: EMBEDDED_WALLET_PROVIDERS_PATH,
-        label: EMBEDDED_WALLET_PROVIDERS_TITLE,
-      },
-      {
-        href: WALLET_AS_A_SERVICE_PATH,
-        label: WALLET_AS_A_SERVICE_TITLE,
-      },
-    ],
+    relatedLinks: CAVOS_RELATED_LINKS,
   },
-  {
-    name: 'Dynamic',
-    href: '/compare/dynamic',
-    linkLabel: 'Cavos vs Dynamic',
-    paragraphs: [
-      'Dynamic provides wallet connection, embedded wallets, and authentication tooling with a strong emphasis on multi-wallet login experiences and developer-facing configuration. Connecting existing external wallets is a core capability. Cavos provisions the wallet rather than connecting to one the user already holds. The two models can coexist in one product.',
-      'Embedded wallet keys are managed by the provider’s key infrastructure with configurable custody models. Dynamic’s public pricing page lists TSS-MPC key management as a plan feature. Chain coverage is multi-chain, with EVM breadth and additional non-EVM support; parity varies by chain. Gas sponsorship is supported through account abstraction and paymaster integrations, mainly on EVM.',
-      'Fireblocks acquired Dynamic in 2025. That is a vendor-risk and custody-stack input, not a reason to treat the products as interchangeable. Dynamic’s public Growth plan is $249/mo for up to 5,000 monthly active users, then $0.05 per extra MAU. A sandbox is available for integration testing before live mode.',
-    ],
-    chooseWhen: getCompetitor('dynamic')?.chooseThem ?? [],
-    relatedLinks: [
-      {
-        href: EMBEDDED_WALLET_VS_EXTENSION_PATH,
-        label: EMBEDDED_WALLET_VS_EXTENSION_TITLE,
-      },
-    ],
-  },
-  {
-    name: 'Turnkey',
-    href: '/compare/turnkey',
-    linkLabel: 'Cavos vs Turnkey',
-    paragraphs: [
-      'Privy vs Turnkey is usually a layer question, not a feature checklist. Privy is a finished embedded wallet and authentication product. Turnkey is secure key-management infrastructure running in hardware-backed secure enclaves, exposed as a low-level API for building wallets and signing systems. You assemble the wallet experience on top of policy-driven signing primitives.',
-      'Keys live in remote enclaves, not on the end user’s device. Server-side signing, organizational policy, quorums, and approval workflows are the point of that design. Chain coverage is broad at the cryptographic-curve and signing-primitive level. Recovery is something you design on top of those primitives.',
-      'Choose Turnkey when you are building your own wallet or custody product. Choose a finished SDK when you want login, recovery, and sponsorship already wired. Turnkey’s public Pay as you go tier includes 1,000 wallets and 25 free signatures per month, then $0.10 per signature. Pro is $99/mo.',
-    ],
-    chooseWhen: getCompetitor('turnkey')?.chooseThem ?? [],
-    relatedLinks: [
-      {
-        href: PRIVY_VS_TURNKEY_PATH,
-        label: PRIVY_VS_TURNKEY_TITLE,
-      },
-    ],
-  },
-  {
-    name: 'Web3Auth',
-    href: '/compare/web3auth',
-    linkLabel: 'Cavos vs Web3Auth',
-    paragraphs: [
-      'Web3Auth — shipped by Consensys as MetaMask Embedded Wallets after the 2025 acquisition — provides social-login wallets using multi-party computation. Key shares are split across the user’s device, the provider’s network, and recovery factors. Signing reconstructs or jointly computes a signature from those shares.',
-      'That is the clearest architectural contrast with Cavos. Cavos never reconstructs a signing key: the device derives the account key and signs. MetaMask’s product page states that Embedded Wallets use MPC with threshold signatures and Shamir’s Secret Sharing, and that export is part of the model. The same page lists native support for EVM and Solana, plus additional networks including Bitcoin and StarkNet.',
-      'Choose Web3Auth when you need very broad chain coverage from a single social-login wallet layer, or a key you can export and use in other tooling. Public pricing starts at a free Base plan with 1,000 monthly active wallets. Growth is $69/mo. Scale is $399/mo.',
-    ],
-    chooseWhen: getCompetitor('web3auth')?.chooseThem ?? [],
-  },
-  {
-    name: 'Magic',
-    href: '/compare/magic',
-    linkLabel: 'Cavos vs Magic',
-    paragraphs: [
-      'Magic offers embedded wallets and passwordless authentication, historically known for email magic-link login and a delegated key management model backed by hardware security modules. It pioneered invisible wallet onboarding and remains a strong choice for simple, email-first flows on EVM chains.',
-      'Signing is delegated to provider-operated infrastructure rather than a device-bound key. If access to the email account grants the provider the ability to sign, wallet security reduces to the security of that inbox. Cavos separates the two: identity selects which account you are, but a device factor is required to sign. In 2026 Payward, the parent of Kraken, acquired Magic Labs wallet infrastructure.',
-      'Choose Magic when you want the simplest possible email-link onboarding on EVM, or a mature provider for a straightforward wallet requirement. The public Developer plan includes 1,000 monthly active wallets and 50,000 signatures at $0/mo. The next listed team plan is $99/mo with 2,500 monthly active wallets.',
-    ],
-    chooseWhen: getCompetitor('magic')?.chooseThem ?? [],
-  },
+  vendorSection('dynamic', [
+    ...DYNAMIC_VS_EXTENSION_LINKS,
+    { href: '/dynamic-alternatives', label: 'Dynamic alternatives' },
+  ]),
+  vendorSection('turnkey', [
+    ...TURNKEY_VS_PRIVY_LINKS,
+    { href: '/turnkey-alternatives', label: 'Turnkey alternatives' },
+  ]),
+  vendorSection('web3auth'),
+  vendorSection('magic', [
+    { href: '/magic-alternatives', label: 'Magic alternatives' },
+  ]),
 ]
 
 export function privyChooseThem(): string[] {
@@ -216,3 +132,55 @@ export const PRIVY_ALTERNATIVES_FAQ = [
       'No. This page is about Privy the embedded crypto wallet and authentication provider. The Shopify popup tool of the same name is a different product.',
   },
 ] as const
+
+export const privyAlternativesGuide: AlternativesGuide = {
+  path: PRIVY_ALTERNATIVES_PATH,
+  title: PRIVY_ALTERNATIVES_TITLE,
+  description: PRIVY_ALTERNATIVES_DESCRIPTION,
+  h1: PRIVY_ALTERNATIVES_H1,
+  published: PRIVY_ALTERNATIVES_PUBLISHED,
+  modified: PRIVY_ALTERNATIVES_MODIFIED,
+  crumb: PRIVY_ALTERNATIVES_CRUMB,
+  jsonLdId: 'privy-alternatives-json-ld',
+  introParagraphs: [
+    [
+      'Cavos, Dynamic, Turnkey, Web3Auth, and Magic are the five Privy alternatives compared here for an ',
+      { href: '/embedded-wallet', label: 'embedded wallet' },
+      ' — not the Shopify popup of the same name.',
+    ],
+    [
+      'The sections below use the same facts as the ',
+      { href: '/compare', label: 'compare pages' },
+      '. Cavos publishes its own fees on the ',
+      { href: '/pricing', label: 'pricing page' },
+      '; other vendors set theirs independently. If the question is a finished SDK versus key-management infrastructure, start with ',
+      { href: PRIVY_VS_TURNKEY_PATH, label: 'Privy vs Turnkey' },
+      '. Replacement shortlists also exist for ',
+      { href: '/turnkey-alternatives', label: 'Turnkey' },
+      ', ',
+      { href: '/dynamic-alternatives', label: 'Dynamic' },
+      ', and ',
+      { href: '/magic-alternatives', label: 'Magic' },
+      '. Migration is a project, not a config change: wallet addresses are derived differently, so accounts do not transfer automatically.',
+    ],
+  ],
+  whyLookHeading: 'Why teams look for a Privy alternative',
+  whyLookIntro:
+    'Privy is not the weaker product. It covers ground several of these alternatives do not, especially on EVM. Teams still shortlist replacements when one of the following no longer matches the product they are shipping.',
+  whyLook: PRIVY_WHY_LOOK,
+  comparedHeading: 'Privy alternatives compared',
+  comparedIntro:
+    'Cavos, Privy, Dynamic, Turnkey, Web3Auth / MetaMask Embedded Wallets, and Magic all ship an embedded wallet. They do not share a key model, the same native chain coverage, or the same pricing. Each name opens the full comparison except Cavos, which links to published fees.',
+  sections: PRIVY_ALTERNATIVE_SECTIONS,
+  howToChooseHeading: 'How to choose a Privy alternative',
+  howToChooseIntro:
+    'Ask the custody question first, then the chain question, then whether you are buying a wallet product or signing infrastructure.',
+  howToChoose: PRIVY_HOW_TO_CHOOSE,
+  howToChooseOutro: DEFAULT_HOW_TO_CHOOSE_OUTRO,
+  stayHeading: 'When Privy is still the right choice',
+  stayIntro:
+    'Privy is the more mature choice across the EVM ecosystem. It is not the weaker product — it covers ground Cavos does not. Stay with Privy when the following are true.',
+  chooseThem: privyChooseThem,
+  faq: PRIVY_ALTERNATIVES_FAQ,
+  itemListName: 'Privy alternatives',
+}

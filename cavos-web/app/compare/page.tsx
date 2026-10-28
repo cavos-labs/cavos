@@ -165,14 +165,35 @@ export default function ComparePage() {
                     <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted">
                         Each page covers custody, chain support, signing authority, sponsorship, and
                         recovery — including the cases where the other provider is the better choice.
-                        Teams comparing replacements for Privy can start with the{' '}
+                        Teams comparing replacements can start with{' '}
                         <Link
                             href="/privy-alternatives"
                             className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
                         >
                             Privy alternatives
-                        </Link>{' '}
-                        guide. For a single pricing, chain, and key-model table of the
+                        </Link>
+                        ,{' '}
+                        <Link
+                            href="/turnkey-alternatives"
+                            className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                        >
+                            Turnkey alternatives
+                        </Link>
+                        ,{' '}
+                        <Link
+                            href="/dynamic-alternatives"
+                            className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                        >
+                            Dynamic alternatives
+                        </Link>
+                        , or{' '}
+                        <Link
+                            href="/magic-alternatives"
+                            className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                        >
+                            Magic alternatives
+                        </Link>
+                        . For a single pricing, chain, and key-model table of the
                         same vendors, see{' '}
                         <Link
                             href={EMBEDDED_WALLET_PROVIDERS_PATH}

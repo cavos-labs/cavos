@@ -1,10 +1,13 @@
 ---
-title: "Non-Custodial Embedded Wallets: How Self-Custody Works (2026)"
+title: "Non-Custodial Embedded Wallets: What They Are (2026)"
 date: "2026-10-22"
-excerpt: "What makes a non-custodial embedded wallet actually self-custodial: who can sign, key models, a vendor checklist, and how Cavos does it."
+updated: "2026-10-28"
+excerpt: "A non-custodial embedded wallet is one the provider cannot spend from. Who can sign, key models, a vendor checklist, and how Cavos keeps wallets self-custodial."
 category: "Guide"
 slug: "non-custodial-embedded-wallet"
 faq:
+  - question: "What are non-custodial embedded wallets?"
+    answer: "Non-custodial embedded wallets are in-app crypto wallets the provider cannot spend from. The wallet still lives inside the application: the user signs in, the product resolves an on-chain account, and approval happens in the app UI. Self-custody is a separate fact. The signing key is created and used where the vendor cannot produce a valid signature alone. The test is who can move the assets."
   - question: "What is a non-custodial embedded wallet?"
     answer: "A non-custodial — or self-custodial — embedded wallet is one the provider cannot spend from. The wallet still lives inside the application: the user signs in, the product resolves an on-chain account, and approval happens in the app UI. Self-custody is a separate fact. The signing key is created and used where the vendor cannot produce a valid signature alone. Calling a product non-custodial does not make it so — the test is who can move the assets."
   - question: "Is an embedded wallet automatically self-custodial?"
@@ -24,6 +27,12 @@ An [embedded wallet](/embedded-wallet) lives inside your application. The user s
 **Non-custodial** and **self-custodial** are claims about that account, not about the login modal. This guide is the developer test: who can sign, which key models survive that test, and how to verify a vendor’s wording. The [custody](/custody) page is the legal side — MiCA, FinCEN, California, and the other regimes. This page does not repeat those statutes. The [embedded wallet API](/blog/embedded-wallet-api) guide is the surface map. The [React integration](/blog/how-to-add-an-embedded-wallet) is the install.
 
 Cavos, LLC is a software and SaaS company. The wallet is the main product: a device-native, self-custodial embedded wallet. Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds.
+
+## What is a non-custodial embedded wallet?
+
+A **non-custodial embedded wallet** is an in-app crypto wallet the provider cannot spend from. The wallet still lives inside the application: the user signs in, the product resolves an on-chain account, and approval happens in the app UI. Self-custody is a separate fact. The signing key is created and used where the vendor cannot produce a valid signature alone. Calling a product non-custodial does not make it so — the test is who can move the assets.
+
+Non-custodial embedded wallets (plural) are the same design at product scale: every user account follows that test. Embedded describes where the wallet appears. It does not decide custody. The [embedded wallet](/embedded-wallet) page is the category definition; this page is the custody test. The legal control test is on [custody](/custody).
 
 ## Who can sign is who controls the key
 

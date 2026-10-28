@@ -1,14 +1,17 @@
 ---
-title: "How to Add an Embedded Stellar Wallet to Your App"
+title: "How to Set Up a Stellar Wallet in Your App (2026)"
 date: "2026-10-18"
-excerpt: "Install @cavos/kit, sign in with Google, Apple, or email, and send a sponsored Stellar payment from a classic G… embedded wallet — no Freighter."
+updated: "2026-10-28"
+excerpt: "How to set up and create a Stellar wallet in-app: install @cavos/kit, sign in, and send a sponsored G… payment — React, iOS, and Android, no Freighter."
 category: "Guide"
 slug: "stellar-embedded-wallet-tutorial"
 faq:
-  - question: "What is a Stellar embedded wallet SDK?"
-    answer: "A Stellar embedded wallet SDK is a library that provisions a classic G… account inside your application and signs from the user’s device. The user signs in; the SDK looks up or claims an address; approval happens in your UI. It is not a wallet app and not a Freighter connect flow. Cavos ships that SDK as @cavos/kit for React and @cavos/kit/react-native for mobile."
+  - question: "How do I set up a Stellar wallet as a developer?"
+    answer: 'Install @cavos/kit, create an App ID, wrap the tree in CavosProvider with chains: ["stellar"], and sign the user in with Google, Apple, or an enclave-verified email code. Connect returns a G… address before the account exists on-chain. The first execute creates the account (sponsored, 0 XLM cost to the user) and runs the payment. That is how to set up and create a Stellar wallet inside your app — not a Freighter connect flow.'
   - question: "How do I create a Stellar wallet for users without Freighter?"
     answer: 'Install @cavos/kit, create an App ID, wrap the tree in CavosProvider with chains: ["stellar"], and sign the user in with Google, Apple, or an enclave-verified email code. Connect returns a G… address before the account exists on-chain. The first execute creates the account (sponsored, 0 XLM cost to the user) and runs the payment. Users do not install Freighter or paste a seed.'
+  - question: "Can I create a Stellar wallet in an Android app?"
+    answer: 'Yes. Use @cavos/kit/react-native with an Expo Development Build, EAS, or bare React Native. Minimum Android is API 28 (Android 9); iOS 16 is the iOS floor. Expo Go is not supported. Email sign-in is not available on React Native yet; use Google or Apple. The native provider uses chain: "stellar" (singular). Register the exact redirectUri in Callback URLs.'
   - question: "Does connect create the Stellar account?"
     answer: "No. Connect looks up (userId, appId, chain, network) in the registry and returns a G… address, or claims a new one. It never creates the on-chain account. An undeployed wallet already has that address. The first execute creates the account and runs the operation in a sponsored transaction. After that, status is ready."
   - question: "What is a sponsored Stellar account in Cavos?"
@@ -21,11 +24,23 @@ faq:
 
 An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain Stellar account they can pay, receive, and sign with — no browser extension, no seed phrase, no trip to [Freighter](/blog/embedded-wallet-vs-browser-extension).
 
-This guide is the Stellar path for that model using `@cavos/kit` 0.4.2. It is the how-to companion to the [Stellar embedded wallet](/embedded-stellar-wallet) page. The chain page is the account model. This post is the install: App ID, Google / Apple / email login, the `G…` address before the account exists, the first sponsored `execute`, `balance`, `signMessage`, and React Native notes. The cross-chain React walkthrough is [how to add an embedded wallet](/blog/how-to-add-an-embedded-wallet).
+This guide is how to **set up a Stellar wallet** and **create a Stellar wallet** for users inside your product — an embedded, in-app wallet for developers, including mobile. It uses `@cavos/kit` 0.4.2. It is the how-to companion to the [Stellar embedded wallet](/embedded-stellar-wallet) page. The chain page is the account model. This post is the install: App ID, Google / Apple / email login, the `G…` address before the account exists, the first sponsored `execute`, `balance`, `signMessage`, and React Native notes for iOS and Android. The cross-chain React walkthrough is [how to add an embedded wallet](/blog/how-to-add-an-embedded-wallet).
 
 Cavos, LLC is a software and SaaS company. The wallet is the main product: a device-native, self-custodial embedded wallet. Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds. The Stellar adapter provisions a **classic `G…` account**, not a Soroban contract account and not a Freighter connect flow.
 
 [Pricing](/pricing) publishes the free 1,000 wallet creates and paid recovery options.
+
+## How to set up and create a Stellar wallet
+
+This is the developer path, not a consumer Stellar Android wallet from an app store. Users never install Freighter, paste a seed, or leave your UI.
+
+1. Install `@cavos/kit` (React) or `@cavos/kit/react-native` (iOS 16+ / Android 9+).
+2. Create an app in the Cavos dashboard and copy the App ID.
+3. Wrap the tree in `CavosProvider` with `chains: ["stellar"]` (native `chain: "stellar"` on React Native).
+4. Sign the user in with Google, Apple, or email. Connect returns a classic `G…` before the Horizon account exists.
+5. The first sponsored `execute` **creates** the on-chain account (0 XLM cost to the user) and runs the payment.
+
+Cavos ships native embedded wallets for Starknet, Solana, and Stellar. It does not ship Midnight, Aleo, Cosmos, or Sui adapters. The account model, HKDF spend key, and relayer live on the [Stellar embedded wallet](/embedded-stellar-wallet) page. What an embedded wallet is — custody, key models, how to choose an SDK — is the [embedded wallet](/embedded-wallet) guide.
 
 ## What you are installing
 

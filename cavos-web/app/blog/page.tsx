@@ -113,6 +113,21 @@ const GUIDES = [
     body: 'When teams look past Privy the embedded crypto wallet, and which architecture actually fits.',
   },
   {
+    href: '/turnkey-alternatives',
+    title: 'Turnkey wallet alternatives',
+    body: 'Finished embedded-wallet SDKs versus Turnkey’s enclave signing infrastructure.',
+  },
+  {
+    href: '/dynamic-alternatives',
+    title: 'Dynamic wallet alternatives',
+    body: 'Provision-only wallets versus Dynamic’s multi-wallet connection layer.',
+  },
+  {
+    href: '/magic-alternatives',
+    title: 'Magic wallet alternatives',
+    body: 'Device-native keys versus Magic’s email-first delegated HSM wallets.',
+  },
+  {
     href: '/embedded-starknet-wallet',
     title: 'Embedded Starknet wallet',
     body: 'Audited OpenZeppelin AccountUpgradeable v3.0.0 with a native stark key.',

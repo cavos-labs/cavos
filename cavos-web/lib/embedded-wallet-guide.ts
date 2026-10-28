@@ -42,17 +42,17 @@ export const EMBEDDED_WALLET_PROVIDERS_PATH =
   '/blog/embedded-wallet-providers'
 
 export const EMBEDDED_WALLET_PROVIDERS_TITLE =
-  'Best Embedded Wallet Providers (2026 Guide)'
+  'Embedded Wallet Providers Compared in 2026'
 
 export const PRIVY_VS_TURNKEY_PATH = '/blog/privy-vs-turnkey'
 
 export const PRIVY_VS_TURNKEY_TITLE =
-  'Privy vs Turnkey: Pricing & Custody (2026)'
+  'Privy vs Turnkey & Turnkey vs Privy (2026)'
 
 export const EMBEDDED_WALLET_API_PATH = '/blog/embedded-wallet-api'
 
 export const EMBEDDED_WALLET_API_TITLE =
-  'Embedded Wallet API: How It Works and What to Look For (2026)'
+  'Embedded Wallet API (2026): SDK Methods & Auth'
 
 export const NON_CUSTODIAL_EMBEDDED_WALLET_PATH =
   '/blog/non-custodial-embedded-wallet'
@@ -86,6 +86,7 @@ export const DOCS_URLS = {
   recovery: `${DOCS_ORIGIN}/docs/recovery`,
   concepts: `${DOCS_ORIGIN}/docs/concepts`,
   react: `${DOCS_ORIGIN}/docs/react`,
+  apiReference: `${DOCS_ORIGIN}/docs/api-reference`,
 } as const
 
 export const EMBEDDED_WALLET_HOW_IT_WORKS = [

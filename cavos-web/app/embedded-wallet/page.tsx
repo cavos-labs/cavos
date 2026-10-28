@@ -147,7 +147,7 @@ export default function EmbeddedWalletGuidePage() {
                             how honest it is about who can sign. The commercial name for the
                             same job is{' '}
                             <Link href={WALLET_AS_A_SERVICE_PATH} className={linkClass}>
-                                wallet-as-a-service
+                                wallet as a service
                             </Link>
                             , or embedded wallet as a service.
                         </p>
@@ -719,11 +719,23 @@ export default function EmbeddedWalletGuidePage() {
                         {EMBEDDED_WALLET_MARKET_NOTE}
                     </p>
                     <p className="mt-5 max-w-3xl text-sm leading-relaxed text-muted">
-                        Teams replacing Privy specifically can start with the{' '}
+                        Teams replacing a named vendor can start with{' '}
                         <Link href="/privy-alternatives" className={linkClass}>
                             Privy alternatives
-                        </Link>{' '}
-                        guide. One-to-one write-ups live on the{' '}
+                        </Link>
+                        ,{' '}
+                        <Link href="/turnkey-alternatives" className={linkClass}>
+                            Turnkey alternatives
+                        </Link>
+                        ,{' '}
+                        <Link href="/dynamic-alternatives" className={linkClass}>
+                            Dynamic alternatives
+                        </Link>
+                        , or{' '}
+                        <Link href="/magic-alternatives" className={linkClass}>
+                            Magic alternatives
+                        </Link>
+                        . One-to-one write-ups live on the{' '}
                         <Link href="/compare" className={linkClass}>
                             compare
                         </Link>{' '}

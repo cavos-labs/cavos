@@ -90,6 +90,9 @@ This table describes architectural models, not a ranking. Providers such as Priv
 - Embedded Starknet Wallet: https://cavos.xyz/embedded-starknet-wallet
 - Comparison: https://cavos.xyz/compare
 - Privy alternatives: https://cavos.xyz/privy-alternatives
+- Turnkey alternatives: https://cavos.xyz/turnkey-alternatives
+- Dynamic alternatives: https://cavos.xyz/dynamic-alternatives
+- Magic alternatives: https://cavos.xyz/magic-alternatives
 - Dashboard: https://cavos.xyz/dashboard
 - Website: https://cavos.xyz
 - Contact: hello@cavos.xyz

@@ -202,6 +202,27 @@ export default function PricingPage() {
                             className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
                         >
                             Privy alternatives
+                        </Link>
+                        ,{' '}
+                        <Link
+                            href="/turnkey-alternatives"
+                            className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                        >
+                            Turnkey alternatives
+                        </Link>
+                        ,{' '}
+                        <Link
+                            href="/dynamic-alternatives"
+                            className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                        >
+                            Dynamic alternatives
+                        </Link>
+                        , or{' '}
+                        <Link
+                            href="/magic-alternatives"
+                            className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                        >
+                            Magic alternatives
                         </Link>{' '}
                         if you are comparing providers.
                     </p>

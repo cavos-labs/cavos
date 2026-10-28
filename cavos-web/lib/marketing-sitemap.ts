@@ -2,7 +2,10 @@ import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { COMPETITORS } from './compare-data'
+import { DYNAMIC_ALTERNATIVES_MODIFIED } from './dynamic-alternatives'
+import { MAGIC_ALTERNATIVES_MODIFIED } from './magic-alternatives'
 import { PRIVY_ALTERNATIVES_MODIFIED } from './privy-alternatives'
+import { TURNKEY_ALTERNATIVES_MODIFIED } from './turnkey-alternatives'
 
 export const MARKETING_ORIGIN = 'https://cavos.xyz'
 
@@ -155,6 +158,24 @@ export function getMarketingSitemapEntries(): SitemapEntry[] {
         'monthly',
         0.8,
         parseStableDate(PRIVY_ALTERNATIVES_MODIFIED),
+      ),
+      page(
+        '/turnkey-alternatives',
+        'monthly',
+        0.8,
+        parseStableDate(TURNKEY_ALTERNATIVES_MODIFIED),
+      ),
+      page(
+        '/dynamic-alternatives',
+        'monthly',
+        0.8,
+        parseStableDate(DYNAMIC_ALTERNATIVES_MODIFIED),
+      ),
+      page(
+        '/magic-alternatives',
+        'monthly',
+        0.8,
+        parseStableDate(MAGIC_ALTERNATIVES_MODIFIED),
       ),
       page('/custody', 'monthly', 0.8),
       page('/pricing', 'monthly', 0.9),
