@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { organizationForApp } from '@/lib/operations/access'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { encryptJson } from '@/lib/oauth/encryption'
+
+const SOCIAL_RECOVERY_PROVIDERS = ['google', 'apple', 'email', 'github']
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -8,11 +11,17 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   if (!access) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   const { data, error } = await access.supabase
     .from('app_environments')
-    .select('id,public_id,kind,is_active,allowed_origins,low_balance_threshold_usd,social_recovery_enabled,social_recovery_provider,social_recovery_audiences,created_at,updated_at')
+    .select('id,public_id,kind,is_active,allowed_origins,low_balance_threshold_usd,social_recovery_enabled,social_recovery_provider,social_recovery_audiences,github_client_id,github_client_secret_ciphertext,created_at,updated_at')
     .eq('app_id', id)
     .order('kind', { ascending: false })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ environments: data })
+  const environments = (data ?? []).map(
+    ({ github_client_secret_ciphertext, ...environment }) => ({
+      ...environment,
+      github_client_secret_set: !!github_client_secret_ciphertext,
+    }),
+  )
+  return NextResponse.json({ environments })
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -23,7 +32,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!body.environment_id) return NextResponse.json({ error: 'environment_id is required' }, { status: 400 })
   const { data: currentEnvironment } = await access.supabase
     .from('app_environments')
-    .select('id,social_recovery_enabled,social_recovery_provider,social_recovery_audiences')
+    .select('id,social_recovery_enabled,social_recovery_provider,social_recovery_audiences,github_client_id,github_client_secret_ciphertext')
     .eq('id', body.environment_id)
     .eq('app_id', id)
     .maybeSingle()
@@ -42,7 +51,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (body.social_recovery_provider !== undefined) {
     if (
       body.social_recovery_provider !== null &&
-      !['google', 'apple', 'email'].includes(body.social_recovery_provider)
+      !SOCIAL_RECOVERY_PROVIDERS.includes(body.social_recovery_provider)
     ) {
       return NextResponse.json({ error: 'Invalid social recovery provider' }, { status: 400 })
     }
@@ -79,6 +88,38 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
     updates.social_recovery_audiences = audiences
   }
+  if (body.github_client_id !== undefined || body.github_client_secret !== undefined) {
+    const clientId = body.github_client_id
+    const clientSecret = body.github_client_secret
+    if (clientId !== undefined && clientId !== null && typeof clientId !== 'string') {
+      return NextResponse.json({ error: 'Invalid GitHub client ID' }, { status: 400 })
+    }
+    if (clientSecret !== undefined && clientSecret !== null && typeof clientSecret !== 'string') {
+      return NextResponse.json({ error: 'Invalid GitHub client secret' }, { status: 400 })
+    }
+    const trimmedId = typeof clientId === 'string' ? clientId.trim() : clientId
+    if (typeof trimmedId === 'string' && trimmedId.length > 255) {
+      return NextResponse.json({ error: 'GitHub client ID is too long' }, { status: 400 })
+    }
+    if (typeof clientSecret === 'string' && clientSecret.length > 255) {
+      return NextResponse.json({ error: 'GitHub client secret is too long' }, { status: 400 })
+    }
+    if (clientId === null || trimmedId === '') {
+      updates.github_client_id = null
+      updates.github_client_secret_ciphertext = null
+    } else {
+      const effectiveId = typeof trimmedId === 'string' ? trimmedId : currentEnvironment.github_client_id
+      const hasNewSecret = typeof clientSecret === 'string' && clientSecret !== ''
+      if (typeof trimmedId === 'string') updates.github_client_id = trimmedId
+      if (hasNewSecret) updates.github_client_secret_ciphertext = encryptJson(clientSecret)
+      if (effectiveId && !hasNewSecret && !currentEnvironment.github_client_secret_ciphertext) {
+        return NextResponse.json({ error: 'A GitHub client secret is required with a client ID' }, { status: 400 })
+      }
+      if (!effectiveId && hasNewSecret) {
+        return NextResponse.json({ error: 'A GitHub client ID is required with a client secret' }, { status: 400 })
+      }
+    }
+  }
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'No supported fields provided' }, { status: 400 })
   }
@@ -102,5 +143,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     .select()
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ environment: data })
+  const { github_client_secret_ciphertext, ...environment } = data
+  return NextResponse.json({
+    environment: { ...environment, github_client_secret_set: !!github_client_secret_ciphertext },
+  })
 }

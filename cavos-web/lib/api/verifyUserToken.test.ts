@@ -75,6 +75,16 @@ describe('verifyUserToken', () => {
         assert.equal((await verifyUserToken(req(token), () => enclaveKeys))?.sub, 'a'.repeat(64));
     });
 
+    it('accepts an enclave-issued GitHub token', async () => {
+        const token = await signEnclave({ iss: `${ENCLAVE}/github`, aud: 'cavos-github', sub: 'b'.repeat(64) });
+        assert.equal((await verifyUserToken(req(token), () => enclaveKeys))?.sub, 'b'.repeat(64));
+    });
+
+    it('rejects a GitHub token carrying the email audience', async () => {
+        const token = await signEnclave({ iss: `${ENCLAVE}/github`, aud: 'cavos-email', sub: 'b'.repeat(64) });
+        assert.equal(await verifyUserToken(req(token), () => enclaveKeys), null);
+    });
+
     it('rejects an enclave token minted for another audience', async () => {
         const token = await signEnclave({ iss: ENCLAVE, aud: 'someone-else', sub: 'a'.repeat(64) });
         assert.equal(await verifyUserToken(req(token), () => enclaveKeys), null);
@@ -133,5 +143,15 @@ describe('isUserOfApp', () => {
         assert.equal(isUserOfApp(user, 'a'.repeat(64), APP), true);
         assert.equal(isUserOfApp(user, 'a'.repeat(64), OTHER_APP), false);
         assert.equal(isUserOfApp(await email(), 'a'.repeat(64), APP), false);
+    });
+
+    it('checks the app of an enclave GitHub token by its nonce', async () => {
+        const github = (nonce?: string) =>
+            signEnclave({ iss: `${ENCLAVE}/github`, aud: 'cavos-github', sub: 'b'.repeat(64), ...(nonce ? { nonce } : {}) })
+                .then((token) => verifyUserToken(req(token), () => enclaveKeys));
+        const user = await github(`${APP}.${HASH}`);
+        assert.equal(isUserOfApp(user, 'b'.repeat(64), APP), true);
+        assert.equal(isUserOfApp(user, 'b'.repeat(64), OTHER_APP), false);
+        assert.equal(isUserOfApp(await github(), 'b'.repeat(64), APP), false);
     });
 });

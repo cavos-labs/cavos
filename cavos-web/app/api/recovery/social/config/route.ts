@@ -34,4 +34,4 @@ export async function GET(request: Request) {
   })
 }
 
-const PROVIDERS = ['google', 'apple', 'email'] as const
+const PROVIDERS = ['google', 'apple', 'email', 'github'] as const

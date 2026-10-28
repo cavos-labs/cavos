@@ -121,7 +121,7 @@ export async function POST(request: Request) {
       {
         error: body.provider ? 'unsupported_provider' : 'provider_not_determined',
         detail: body.provider
-          ? `Social recovery supports google, apple and email; got "${body.provider}".`
+          ? `Social recovery supports google, apple, email and github; got "${body.provider}".`
           : 'This SDK version does not send an identity provider and the environment has no fallback configured. Upgrade @cavos/kit, or set a fallback provider on the environment.',
       },
       { status: 400 },
