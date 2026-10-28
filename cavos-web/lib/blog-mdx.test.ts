@@ -2,7 +2,6 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
-import { compileMDX } from 'next-mdx-remote/rsc'
 import { getAllPosts, getPostBySlug } from './blog'
 
 const BLOG_DIR = path.join(process.cwd(), 'content/blog')
@@ -22,12 +21,18 @@ describe('blog MDX compile', () => {
   })
 
   it('compiles every blog post with next-mdx-remote', async () => {
+    // Dynamic import so tsx loads the ESM graph the same way Next does.
+    const { serialize } = await import('next-mdx-remote/serialize')
     const posts = getAllPosts()
     assert.ok(posts.length > 0)
     for (const meta of posts) {
       const post = getPostBySlug(meta.slug)
       assert.ok(post, meta.slug)
-      await compileMDX({ source: post.content })
+      // Same compile path as app/blog/[slug]/page.tsx (MDXRemote from rsc
+      // calls serialize(source, options, true)).
+      await serialize(post.content, {}, true)
     }
   })
 })
+
+
