@@ -150,18 +150,32 @@ export interface JobResult {
   sealed_result: { nonce_b64: string; ciphertext_b64: string }
 }
 
+/** What the enclave needs to redeem a GitHub authorization code. */
+export interface GithubRedemption {
+  code: string
+  app_id: string
+  client_id: string
+  client_secret: string
+  redirect_uri: string
+}
+
 /**
  * Run one job and return its result, in the same request. Jobs bound to a
  * recovery session pass a challenge hash; the email verification job has none.
+ * The GitHub login job instead carries `github`: the authorization code and the
+ * OAuth app credentials the enclave redeems it with (it alone holds the PKCE
+ * verifier). The client secret is forwarded to the enclave and never logged.
  */
 export function runJob(params: {
   sessionId: string
   job: EncryptedJob
   authChallengeHash?: string
+  github?: GithubRedemption
 }): Promise<JobResult> {
   return call<JobResult>('/jobs', {
     session_id: params.sessionId,
     job: params.job,
     auth_challenge_hash: params.authChallengeHash,
+    github: params.github,
   })
 }

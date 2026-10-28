@@ -38,6 +38,11 @@ const ISSUERS: Record<string, Issuer> = {
         audience: () => 'cavos-email',
         appInNonce: true,
     },
+    'https://enclave.cavos.xyz/github': {
+        jwksUrl: 'https://enclave.cavos.xyz/.well-known/jwks.json',
+        audience: () => 'cavos-github',
+        appInNonce: true,
+    },
     /** Cavos-signed JWT for password logins (see lib/firebase-jwt.ts). */
     'https://cavos.app/firebase': {
         jwksUrl: 'https://cavos.xyz/.well-known/jwks.json',
@@ -69,7 +74,7 @@ export interface VerifiedUser {
     sub: string;
     /**
      * Whether this token was issued to a login `appId` started. Google, Apple
-     * and enclave email tokens name the app in their nonce; password tokens
+     * and enclave email and GitHub tokens name the app in their nonce; password tokens
      * carry none and are not checked here.
      */
     issuedTo(appId: string): boolean;
