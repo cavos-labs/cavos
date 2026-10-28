@@ -147,7 +147,7 @@ export default function EmbeddedWalletGuidePage() {
                             how honest it is about who can sign. The commercial name for the
                             same job is{' '}
                             <Link href={WALLET_AS_A_SERVICE_PATH} className={linkClass}>
-                                wallet-as-a-service
+                                wallet as a service
                             </Link>
                             , or embedded wallet as a service.
                         </p>

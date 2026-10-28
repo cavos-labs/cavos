@@ -280,8 +280,8 @@ Hello
     )
     assert.ok(providers)
     assert.ok(privy)
-    assert.equal(providers.lastModified.toISOString().startsWith('2026-10-27'), true)
-    assert.equal(privy.lastModified.toISOString().startsWith('2026-10-27'), true)
+    assert.equal(providers.lastModified.toISOString().startsWith('2026-10-28'), true)
+    assert.equal(privy.lastModified.toISOString().startsWith('2026-10-28'), true)
 
     const reactSdk = publishedBlogPosts().find(
       (item) => item.slug === 'embedded-wallet-react-sdk',

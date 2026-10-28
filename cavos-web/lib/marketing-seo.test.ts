@@ -1428,6 +1428,7 @@ describe('marketing SEO', () => {
       'content/blog/privy-vs-turnkey.mdx',
       'content/blog/embedded-wallet-api.mdx',
       'content/blog/how-to-add-an-embedded-wallet.mdx',
+      'content/blog/embedded-wallet-react-sdk.mdx',
     ]
     for (const relative of waasInBodyPosts) {
       const source = fs.readFileSync(path.join(process.cwd(), relative), 'utf8')
@@ -1439,8 +1440,29 @@ describe('marketing SEO', () => {
       )
       const anchor = body.match(/\[([^\]]+)\]\(\/blog\/wallet-as-a-service\)/)?.[1] ?? ''
       assert.ok(
-        /wallet-as-a-service/i.test(anchor),
+        /wallet[- ]as[- ]a[- ]service/i.test(anchor),
         `${relative} WaaS anchor is not descriptive: ${anchor}`,
+      )
+    }
+    const hub = fs.readFileSync(
+      path.join(process.cwd(), 'app/embedded-wallet/page.tsx'),
+      'utf8',
+    )
+    assert.match(
+      hub,
+      /href=\{WALLET_AS_A_SERVICE_PATH\}[^>]*>\s*wallet as a service\s*</,
+    )
+
+    const blogDir = path.join(process.cwd(), 'content/blog')
+    for (const filename of fs.readdirSync(blogDir).filter((name) => name.endsWith('.mdx'))) {
+      const source = fs.readFileSync(path.join(blogDir, filename), 'utf8')
+      const body = source.split('## What to read next')[0]
+      const match = body.match(/\[([^\]]+)\]\(\/embedded-wallet\)/)
+      assert.ok(match, `${filename} missing in-body /embedded-wallet link`)
+      assert.match(
+        match[1],
+        /embedded wallet/i,
+        `${filename} /embedded-wallet anchor is not descriptive: ${match[1]}`,
       )
     }
   })
@@ -1516,10 +1538,18 @@ describe('marketing SEO', () => {
     assert.equal(privy.title, PRIVY_VS_TURNKEY_TITLE)
     assert.ok(providers.excerpt.length >= 140 && providers.excerpt.length <= 155)
     assert.ok(privy.excerpt.length >= 140 && privy.excerpt.length <= 155)
-    assert.equal(providers.updated, '2026-10-27')
-    assert.equal(privy.updated, '2026-10-27')
+    assert.equal(providers.updated, '2026-10-28')
+    assert.equal(privy.updated, '2026-10-28')
+    assert.match(EMBEDDED_WALLET_PROVIDERS_TITLE, /Embedded Wallet Providers/)
+    assert.match(PRIVY_VS_TURNKEY_TITLE, /Privy vs Turnkey/)
+    assert.match(PRIVY_VS_TURNKEY_TITLE, /Turnkey vs Privy/)
+    assert.ok(
+      providersSource.indexOf('<table>') <
+        providersSource.indexOf('## How to evaluate providers'),
+      'comparison table should sit above the evaluation checklist',
+    )
     assert.equal((providersSource.match(/^\s+- question:/gm) ?? []).length, 4)
-    assert.equal((privySource.match(/^\s+- question:/gm) ?? []).length, 4)
+    assert.equal((privySource.match(/^\s+- question:/gm) ?? []).length, 8)
     assert.match(providersSource, /What are the best embedded wallet providers in 2026\?/)
     assert.match(providersSource, /How much do embedded wallet providers cost\?/)
     assert.match(providersSource, /Which embedded wallet providers are non-custodial\?/)
@@ -1528,6 +1558,24 @@ describe('marketing SEO', () => {
     assert.match(privySource, /How does Privy vs Turnkey pricing compare\?/)
     assert.match(privySource, /Is Turnkey custodial\?/)
     assert.match(privySource, /When should I choose Privy vs Turnkey\?/)
+    assert.match(
+      privySource,
+      /How do Privy's higher-level product abstractions differ from lower-level signing and key-management primitives\?/,
+    )
+    assert.match(
+      privySource,
+      /How does Privy's product scope compare with Turnkey's focus on low-level signing infrastructure\?/,
+    )
+    assert.match(
+      privySource,
+      /How do Privy's architecture and MPC compare when adding new chains or cryptographic curves\?/,
+    )
+    assert.match(
+      privySource,
+      /Because Turnkey provides lower-level primitives, does it necessarily offer developers more flexibility than Privy\?/,
+    )
+    assert.match(privySource, /does not document TSS-MPC/)
+    assert.match(privySource, /secp256k1/)
   })
 
   it('puts a non-footer in-text link to /embedded-wallet on ranking pages', () => {
@@ -1957,7 +2005,7 @@ describe('marketing SEO', () => {
     assert.equal(EMBEDDED_WALLET_PROVIDERS_PATH, '/blog/embedded-wallet-providers')
     assert.equal(
       EMBEDDED_WALLET_PROVIDERS_TITLE,
-      'Best Embedded Wallet Providers (2026 Guide)',
+      'Embedded Wallet Providers Compared in 2026',
     )
 
     const hub = fs.readFileSync(
@@ -2039,7 +2087,7 @@ describe('marketing SEO', () => {
     assert.equal(PRIVY_VS_TURNKEY_PATH, '/blog/privy-vs-turnkey')
     assert.equal(
       PRIVY_VS_TURNKEY_TITLE,
-      'Privy vs Turnkey: Pricing & Custody (2026)',
+      'Privy vs Turnkey & Turnkey vs Privy (2026)',
     )
 
     const compareSource = fs.readFileSync(
@@ -2157,7 +2205,7 @@ describe('marketing SEO', () => {
     )
     const apiFields = parseBlogFrontmatter(source)
     assert.equal(apiFields.title, EMBEDDED_WALLET_API_TITLE)
-    assert.equal(apiFields.updated, '2026-10-27')
+    assert.equal(apiFields.updated, '2026-10-28')
 
     const hub = fs.readFileSync(
       path.join(process.cwd(), 'app/embedded-wallet/page.tsx'),

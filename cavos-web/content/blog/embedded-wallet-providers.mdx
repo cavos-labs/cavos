@@ -1,8 +1,8 @@
 ---
-title: "Best Embedded Wallet Providers (2026 Guide)"
+title: "Embedded Wallet Providers Compared in 2026"
 date: "2026-10-19"
-updated: "2026-10-27"
-excerpt: "Compare Cavos, Privy, Dynamic, Turnkey, Magic, and Web3Auth in 2026: custody, chains, pricing, and when each embedded wallet provider actually fits."
+updated: "2026-10-28"
+excerpt: "Compare embedded wallet providers in 2026: Cavos, Privy, Dynamic, Turnkey, Magic, and Web3Auth on custody, chains, pricing, and when each actually fits."
 category: "Guide"
 slug: "embedded-wallet-providers"
 faq:
@@ -16,28 +16,9 @@ faq:
     answer: "Privy is a finished embedded wallet and authentication product, including external wallet connectors. Turnkey is low-level key-management and signing infrastructure in AWS Nitro Enclaves; you build the wallet experience. Dynamic combines wallet connection, embedded wallets, and authentication, with TSS-MPC keys. Privy vs Turnkey is usually build-versus-buy. Privy vs Dynamic is usually provision-versus-connect."
 ---
 
-An [embedded wallet](/embedded-wallet) lives inside your application. A [wallet-as-a-service platform](/blog/wallet-as-a-service) is the commercial name for the same job: provision an on-chain account from a login, sign in your UI, and skip the browser-extension install. The words do not pick a key model. This guide is the listicle for teams comparing **embedded wallet providers**, **embedded wallet solutions**, and **embedded wallets as a service** — pricing, chains, and who can produce a signature.
+An [embedded wallet](/embedded-wallet) lives inside your application. A [wallet as a service](/blog/wallet-as-a-service) platform is the commercial name for the same job: provision an on-chain account from a login, sign in your UI, and skip the browser-extension install. The words do not pick a key model. This guide is the listicle for teams comparing **embedded wallet providers**, **embedded wallet solutions**, and **embedded wallets as a service** — pricing, chains, and who can produce a signature.
 
 Cavos, LLC is a software and SaaS company. Positioning for Cavos comes after the table is fair. If the honest answer is another vendor, that is the answer. One-to-one pages live under [compare](/compare). Teams leaving a named vendor can start at [Privy alternatives](/privy-alternatives), [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), or [Magic alternatives](/magic-alternatives).
-
-## What an embedded wallet (and wallet-as-a-service) is
-
-The user signs in the way they already do. The SDK looks up or creates an on-chain account for that identity. Approval stays in the product. There is no seed phrase in the happy path and no second program to install.
-
-That is **where the wallet appears**. It is not a custody claim. An embedded wallet can be device-native self-custody, MPC shares, a remote enclave, or a delegated TEE. A wallet-as-a-service API can sit at any of those layers. Turnkey is closer to signing infrastructure. Privy, Dynamic, Magic, Web3Auth, and Cavos ship a finished login-to-signature path. Ask who can move funds without the user present. The [custody](/custody) page is the control test; this page is the shortlist.
-
-## How to evaluate providers
-
-Write the answers down before you read a pricing page.
-
-- **Custody / key model.** Device-native, MPC, TEE or HSM, remote enclave. Who holds a share, a wrap, or a credential that can authorize a spend.
-- **Chains.** Which networks are native (account model, fees, signatures) versus a reused EOA-shaped key. Cavos is [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), and [Stellar](/embedded-stellar-wallet) only.
-- **Gas sponsorship.** Whether first transactions work with an empty native-token balance, and whether that feature is on the public plan or enterprise-only.
-- **Auth methods.** Email, social, SMS, passkeys, bring-your-own JWT. Login selects the user. It should not, by itself, be the spend key — unless you chose a hosted model on purpose.
-- **Pricing.** Units differ: wallet creates, monthly active users, monthly active wallets, signatures, volume. A cheap free tier with a tight MAU cap is not the same as a flat wallet-create allowance.
-- **Lock-in.** Can the user export a key? Can you restore the same address on another vendor? Addresses are derived differently. Migration is a project. Confirm export, import, and what happens if you cancel the subscription.
-
-The [compare](/compare) hub is the model-level table (device-native vs hosted vs extension). The rows below are the named vendors.
 
 ## Embedded wallet providers compared
 
@@ -97,6 +78,25 @@ Read the one-to-one pages for the cases where the other product is the better pi
 ### A short market note
 
 The category has consolidated. Stripe acquired Privy in 2025. Fireblocks acquired Dynamic in 2025. Consensys acquired Web3Auth in 2025 and now ships it as MetaMask Embedded Wallets. In 2026 Payward, the parent of Kraken, agreed to acquire Magic Labs’ wallet-as-a-service business. Acquisition is a vendor-risk and roadmap input. It does not change who can produce a signature.
+
+## What an embedded wallet (and wallet-as-a-service) is
+
+The user signs in the way they already do. The SDK looks up or creates an on-chain account for that identity. Approval stays in the product. There is no seed phrase in the happy path and no second program to install.
+
+That is **where the wallet appears**. It is not a custody claim. An embedded wallet can be device-native self-custody, MPC shares, a remote enclave, or a delegated TEE. A wallet-as-a-service API can sit at any of those layers. Turnkey is closer to signing infrastructure. Privy, Dynamic, Magic, Web3Auth, and Cavos ship a finished login-to-signature path. Ask who can move funds without the user present. The [custody](/custody) page is the control test; this page is the shortlist.
+
+## How to evaluate providers
+
+Write the answers down before you read a pricing page.
+
+- **Custody / key model.** Device-native, MPC, TEE or HSM, remote enclave. Who holds a share, a wrap, or a credential that can authorize a spend.
+- **Chains.** Which networks are native (account model, fees, signatures) versus a reused EOA-shaped key. Cavos is [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), and [Stellar](/embedded-stellar-wallet) only.
+- **Gas sponsorship.** Whether first transactions work with an empty native-token balance, and whether that feature is on the public plan or enterprise-only.
+- **Auth methods.** Email, social, SMS, passkeys, bring-your-own JWT. Login selects the user. It should not, by itself, be the spend key — unless you chose a hosted model on purpose.
+- **Pricing.** Units differ: wallet creates, monthly active users, monthly active wallets, signatures, volume. A cheap free tier with a tight MAU cap is not the same as a flat wallet-create allowance.
+- **Lock-in.** Can the user export a key? Can you restore the same address on another vendor? Addresses are derived differently. Migration is a project. Confirm export, import, and what happens if you cancel the subscription.
+
+The [compare](/compare) hub is the model-level table (device-native vs hosted vs extension). The rows above are the named vendors.
 
 ## Privy vs Turnkey vs Dynamic
 
