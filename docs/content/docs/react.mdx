@@ -332,6 +332,9 @@ The provider handles multiple chains natively. Configure them all up front:
 Then switch chains without remounting:
 
 ```tsx
+import type { Chain } from "@cavos/kit";
+import { useCavos } from "@cavos/kit/react";
+
 function ChainSwitcher() {
   const { chain, setChain, configuredChains, walletStatus } = useCavos();
 

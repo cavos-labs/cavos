@@ -78,7 +78,7 @@ const wallet = session.wallet("solana");
 
 // Only needs-device-approval must be handled differently
 if (wallet.status === "needs-device-approval") {
-  throw new Error("This device must be approved first");
+  throw new Error("Restore the wallet on this device first (enclave sign-in or passkey)");
 }
 
 if (wallet.chain === "starknet") {
