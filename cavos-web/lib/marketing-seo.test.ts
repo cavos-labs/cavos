@@ -3575,3 +3575,58 @@ describe('blog quote social cards', () => {
     }
   })
 })
+
+describe('best embedded wallets per chain', () => {
+  const slugs = [
+    'best-embedded-wallets-stellar',
+    'best-embedded-wallets-solana',
+    'best-embedded-wallets-starknet',
+  ]
+  for (const slug of slugs) {
+    it(`${slug} ships FAQ, ItemList, ogQuote, and clean copy`, () => {
+      const source = fs.readFileSync(
+        path.join(process.cwd(), `content/blog/${slug}.mdx`),
+        'utf8',
+      )
+      assert.match(source, /^ogQuote:/m)
+      assert.match(source, /^itemList:/m)
+      assert.match(source, /^faq:/m)
+      assert.match(source, /non-custodial embedded wallet for Starknet, Solana and Stellar/)
+      assert.match(source, /\]\(\/pricing\)/)
+      assert.match(source, /\]\(\/custody\)/)
+      assert.doesNotMatch(source, /—/)
+      assert.doesNotMatch(source, /trustless|impossible/i)
+      const excerpt = source.match(/^excerpt:\s*"(.*)"$/m)
+      assert.ok(excerpt && excerpt[1].length <= 160)
+    })
+  }
+
+  it('emits ItemList JSON-LD with absolute URLs', () => {
+    const data = blogPostJsonLd({
+      title: 'Best Embedded Wallets for Stellar (2026)',
+      description: 'x',
+      path: '/blog/best-embedded-wallets-stellar',
+      datePublished: '2026-10-29',
+      itemList: [
+        { name: 'Cavos', url: '/embedded-stellar-wallet' },
+        { name: 'Dynamic', url: 'https://www.dynamic.xyz/docs' },
+      ],
+      crumbs: [{ name: 'Home', path: '/' }],
+    })
+    const list = data['@graph'].find(
+      (node: Record<string, unknown>) => node['@type'] === 'ItemList',
+    ) as { itemListElement: { position: number; url: string }[] }
+    assert.ok(list)
+    assert.equal(list.itemListElement[0].url, 'https://cavos.xyz/embedded-stellar-wallet')
+    assert.equal(list.itemListElement[1].position, 2)
+  })
+
+  it('llms.txt leads with the positioning line and pricing', () => {
+    const llms = fs.readFileSync(path.join(process.cwd(), 'public/llms.txt'), 'utf8')
+    assert.match(llms, /> Cavos: non-custodial embedded wallet for Starknet, Solana and Stellar\./)
+    assert.match(llms, /Free: up to 1,000 wallets/)
+    assert.match(llms, /\$59/)
+    assert.match(llms, /\$139/)
+    assert.doesNotMatch(llms, /—|trustless/)
+  })
+})

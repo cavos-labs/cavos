@@ -18,6 +18,11 @@ export type PostFaqItem = {
   answer: string;
 };
 
+export type PostItemListEntry = {
+  name: string;
+  url: string;
+};
+
 export interface PostMeta {
   slug: string;
   title: string;
@@ -28,6 +33,8 @@ export interface PostMeta {
   /** Pull quote for the social card. Falls back to the excerpt. */
   ogQuote?: string;
   faq?: PostFaqItem[];
+  /** Ranked entries for ItemList JSON-LD on listicle posts. */
+  itemList?: PostItemListEntry[];
 }
 
 export interface Post {
@@ -43,6 +50,18 @@ function parsePostFaq(value: unknown): PostFaqItem[] | undefined {
       typeof item === 'object' &&
       typeof (item as PostFaqItem).question === 'string' &&
       typeof (item as PostFaqItem).answer === 'string',
+  );
+  return items.length > 0 ? items : undefined;
+}
+
+function parsePostItemList(value: unknown): PostItemListEntry[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const items = value.filter(
+    (item): item is PostItemListEntry =>
+      Boolean(item) &&
+      typeof item === 'object' &&
+      typeof (item as PostItemListEntry).name === 'string' &&
+      typeof (item as PostItemListEntry).url === 'string',
   );
   return items.length > 0 ? items : undefined;
 }
@@ -71,6 +90,7 @@ function postMetaFromData(
       ? { ogQuote: data.ogQuote.trim() }
       : {}),
     faq: parsePostFaq(data.faq),
+    itemList: parsePostItemList(data.itemList),
   };
 }
 
