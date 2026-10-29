@@ -63,7 +63,7 @@ execute per chain: see [Concepts](/docs/concepts).
 | `network` | `"testnet" \| "mainnet"` | Required. Resolves to each chain's concrete network. |
 | `appSalt` | `string` | Required. HKDF salt for the account key. Never change it after users connect. |
 | `paymasterApiKey` | `string?` | Required for Starknet. Sponsors deploy and execute. |
-| `deviceApproval` | `"enclave" \| "passkey"?` | How a new device restores the MasterDEK. Defaults to `"enclave"` when `socialRecovery` is on. `"passkey"` supports one chain. |
+| `deviceApproval` | `"enclave" \| "passkey"?` | How a new device restores the MasterDEK. Defaults to `"enclave"` when `socialRecovery` is on, otherwise `"passkey"`. `"passkey"` supports one chain. |
 | `socialRecovery` | `boolean \| AttestationPolicy?` | Turn on [hardware-isolated recovery](/docs/hardware-isolated-recovery), or pass your own attestation policy. Also needs the environment toggle in the dashboard. |
 | `socialRecoveryAttestation` | `AttestationPolicy?` | **Deprecated.** Use `socialRecovery`. If set, it takes precedence. |
 | `vault` | `boolean \| { url?: string }?` | Keys live in the Cavos vault. On by default with `appId`. |

@@ -25,9 +25,11 @@ The kit exposes each chain's balance read differently.
 SOL directly. Balance is in **lamports** (1 SOL = 10⁹ lamports).
 
 ```ts title="TypeScript"
-const { wallet, address } = useCavos();
+import { PublicKey } from "@solana/web3.js";
+
+const { wallet } = useCavos();
 if (wallet?.chain === "solana") {
-  const lamports = await wallet.connection.getBalance(address); // number
+  const lamports = await wallet.connection.getBalance(new PublicKey(wallet.address)); // number
   const sol = lamports / 1e9;
 }
 ```
@@ -47,8 +49,8 @@ if (wallet?.chain === "stellar") {
 ### Starknet
 
 There is no single "native balance" call in the kit for Starknet (the fee token
-is an ERC-20). Read a specific token with a `balanceOf` call via
-[execute](/docs/signing), or query the RPC directly with starknet.js.
+is an ERC-20). Read a token's `balance_of` with a read-only RPC call through starknet.js
+(`RpcProvider.callContract`). `execute` submits transactions; it does not read.
 
 ## Fund from a testnet faucet
 
@@ -57,8 +59,10 @@ Only on `testnet`. Handy for demos and first-run UX.
 ### Solana: airdrop
 
 ```ts title="TypeScript"
+import { PublicKey } from "@solana/web3.js";
+
 if (wallet?.chain === "solana") {
-  const sig = await wallet.connection.requestAirdrop(address, 1_000_000_000); // 1 SOL
+  const sig = await wallet.connection.requestAirdrop(new PublicKey(wallet.address), 1_000_000_000); // 1 SOL
   // confirm with connection.getSignatureStatus(sig) if you need to wait
 }
 ```
@@ -95,7 +99,7 @@ Same signature, `amount` in **stroops** (bigint).
 
 ```ts title="TypeScript"
 if (wallet?.chain === "stellar") {
-  const txHash = await wallet.execute(10_000_0000n, destinationAddress); // 1 XLM
+  const txHash = await wallet.execute(10_000_000n, destinationAddress); // 1 XLM
 }
 ```
 
@@ -192,7 +196,7 @@ const { signature, publicKey, curve, typedData } = await signMessage("Sign in to
 import { ec, typedData as snTypedData } from "starknet";
 
 if (curve === "stark") {
-  // Starknet — recompute the SNIP-12 hash and verify the stark signature.
+  // Starknet: recompute the SNIP-12 hash and verify the stark signature.
   // `publicKey` is the x-coordinate only, so try both y parities.
   const hash = snTypedData.getMessageHash(typedData, accountAddress);
   const hex = Buffer.from(signature).toString("hex");
@@ -200,7 +204,7 @@ if (curve === "stark") {
   const x = publicKey.replace(/^0x/, "").padStart(64, "0");
   const valid = ["02", "03"].some((prefix) => ec.starkCurve.verify(sig, hash, prefix + x));
 } else {
-  // Solana / Stellar — ed25519.
+  // Solana and Stellar: ed25519.
 }
 ```
 
