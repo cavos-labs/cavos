@@ -17,9 +17,9 @@ address, authority, execution, recovery, and sponsorship rules.
 | **Stellar** | Available | `stellar-testnet`, `stellar-mainnet` |
 | **Additional chains** | Design-partner and adapter roadmap | Published after implementation and validation |
 
-All three chain adapters are shipped in the SDK. Release compatibility still
-requires the physical-device E2E matrix described in the React Native guide;
-the docs do not treat simulator/emulator results as hardware validation.
+All three chain adapters ship in `@cavos/kit`. On mobile, validate hardware
+key storage on physical devices; simulator and emulator results are not
+hardware validation.
 
 ## Per-chain guides
 
@@ -28,7 +28,7 @@ details:
 
 <Cards>
   <Card title="Starknet" href="/docs/starknet" description="Native stark key, OpenZeppelin account, Cavos paymaster." />
-  <Card title="Solana" href="/docs/solana" description="Native Ed25519 system account, Cavos relayer as fee payer." />
+  <Card title="Solana" href="/docs/solana" description="Native Ed25519 system account; self-paid, relayer-sponsored, or token fees." />
   <Card title="Stellar" href="/docs/stellar" description="Classic G… account, key derived from the MasterDEK." />
   <Card title="Reserve" href="/docs/reserve" description="Pay Stellar reserves and fees in a token, from any G… wallet." />
 </Cards>
@@ -83,8 +83,10 @@ if (wallet.chain === "starknet" && wallet.status !== "needs-device-approval") {
 }
 ```
 
-**Lazy deploy**: Connect NEVER deploys the account. Wallets start as `undeployed`
-and the first `execute` deploys + runs atomically. `signMessage` works on
+**Lazy deploy**: Connect never deploys the account. Starknet and Stellar wallets
+start as `undeployed` and the first `execute` deploys and runs atomically. A
+Solana system account has nothing to deploy and is `ready` once this device
+holds the key. `signMessage` works on
 undeployed wallets too.
 
 When a new adapter ships, the SDK adds its typed `chain` and `network` values.

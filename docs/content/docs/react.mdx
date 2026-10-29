@@ -103,7 +103,7 @@ function Wallet() {
 | `isAuthenticated: boolean` | Whether a wallet is connected. |
 | `user: UserInfo \| null` | `{ userId, email?, provider? }` from the login. |
 | `wallet: CavosWallet \| null` | The connected wallet for the selected chain, discriminated by `wallet.chain`. Narrow on it before chain-native calls. |
-| `session: CavosWallet & CavosSession \| null` | The full multi-chain session. Use `session.wallet("stellar")` to access other chains. |
+| `session` | The full multi-chain session, or `null`: the default wallet plus `wallet(chain)`, `chainStatus`, and `chainAddress`. Use `session.wallet("stellar")` to access other chains. |
 | `address: string \| null` | The account address for the selected chain. |
 | `chain: Chain` | The active chain (`"starknet" \| "solana" \| "stellar"`). |
 | `configuredChains: Chain[]` | All chains configured for this session. |
@@ -117,7 +117,7 @@ hasPasskey, isNewAccount, recovery }`.
 
 - `isUndeployed`: True when the account has not been deployed on-chain yet.
   First execute will deploy + run atomically.
-- `isReady`: True when this device holds the wallet key.
+- `isReady`: True when status is `ready`: the account exists on-chain (always, on Solana) and this device holds its key.
 - `needsDeviceApproval`: True when the wallet exists but this device holds no key yet.
 
 <Callout type="info">
@@ -167,8 +167,8 @@ is active. The session keeps all chains connected.
 |--------|-------------|
 | `login(provider)` | OAuth social login (`"google" \| "apple" \| "github"`): opens the hosted flow. GitHub is optional (`providers` must include `'github'`), not recommended over Google, Apple, or email, and not available in React Native. |
 | `sendOtp(email)` | Email a 9-character sign-in code. |
-| `verifyOtp(email, code)` | Verify the emailed code and deploy the wallet. |
-| `handleCallback(authData, redirectUri?)` | Resolve identity from an OAuth callback (`?cavos_auth_code=…`) and deploy. Pass the callback URL as `redirectUri` if it differs from the current one. |
+| `verifyOtp(email, code)` | Verify the emailed code and connect the wallet (nothing deploys until the first `execute`). |
+| `handleCallback(authData, redirectUri?)` | Resolve identity from an OAuth callback (`?cavos_auth_code=…`) and connect. Pass the callback URL as `redirectUri` if it differs from the current one. |
 
 ### Transactions
 
@@ -264,7 +264,7 @@ import { CavosAuthModal } from "@cavos/kit/react";
 | `radius` | `number?` | Card & button corner radius in px (card defaults to `16`). |
 | `inline` | `boolean?` | Render the card in-flow (no overlay/backdrop): for live previews. When `true`, `open` is ignored. |
 | `secureStep` | `"optional" \| "required" \| "off"?` | Passkey screen after a new account. **`'off'` is the default**: login never prompts. |
-| `onSuccess` | `(address: string) => void?` | Fired when authentication + deployment succeed. |
+| `onSuccess` | `(address: string) => void?` | Fired when sign-in and connect succeed. |
 
 ## `CavosModalConfig`
 

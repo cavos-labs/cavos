@@ -84,7 +84,8 @@ if (wallet.status === "needs-device-approval") {
 if (wallet.chain === "starknet") {
   const { transactionHash } = await wallet.execute(calls);
 } else if (wallet.chain === "solana") {
-  const signature = await wallet.execute(1_000_000n, solanaRecipient); // lamports
+  // lamports; the account must hold them. `fee: "sponsored"` makes the relayer pay the fee.
+  const signature = await wallet.execute(1_000_000n, solanaRecipient, { fee: "sponsored" });
 } else if (wallet.chain === "stellar") {
   const hash = await wallet.execute(1_000_000n, stellarRecipient); // stroops
 }
@@ -93,6 +94,9 @@ if (wallet.chain === "starknet") {
 When the account is `undeployed`, `execute` deploys it first, then runs the
 operation atomically, in a single sponsored transaction. After the first
 execute, status becomes `ready`.
+
+On Solana the account pays its own fee unless you pass `fee: "sponsored"`; on
+Starknet and Stellar sponsorship is the default.
 
 For arbitrary execution, Starknet accepts multicalls, Solana exposes
 `executeInstructions`, and Stellar exposes `invokeContract`. Each path has
@@ -117,9 +121,9 @@ product pages are the
 
 `status === "needs-device-approval"` means the identity already owns a wallet
 but this device holds no key yet. Do not create a second wallet. Restore the
-MasterDEK through [Passkeys](/docs/passkeys) (recommended), the enclave
-([Multi-device](/docs/multi-device)), or the adapter's [Recovery](/docs/recovery)
-path.
+MasterDEK with a [passkey](/docs/passkeys) the user added or with
+[hardware-isolated recovery](/docs/hardware-isolated-recovery) (sign in again).
+See [Multi-device](/docs/multi-device) for the flow.
 
 <Callout type="info">
 Starknet, Solana, and Stellar restore the same way: the MasterDEK is

@@ -209,7 +209,7 @@ if (curve === "stark") {
 ```
 
 On Solana and Stellar the verifier must reconstruct the same prefixed message
-the signer used (see the prefix per chain above). For Sign-In-with-X flows, embed a nonce + domain
+the signer used (the Cavos message prefix: `prefixedMessageBytes(message)`). For Sign-In-with-X flows, embed a nonce + domain
 in the message string.
 
 ### `signTransaction`: sign without submit
@@ -242,7 +242,7 @@ transaction. Attach the fee payer's signature (the relayer or your own funded ke
 <Callout type="warn">
 **All `signTransaction` outputs are single-use and bind to on-chain state.**
 Starknet binds to the nonce + resource bounds; Stellar to the sequence number
-(and a 180s timeout); Solana to the on-chain account nonce. If any other
-transaction from the same account is submitted first, the signature becomes
-invalid. Broadcast promptly.
+(and a 180s timeout); Solana to a recent blockhash, which expires within
+about two minutes. On Starknet and Stellar, any other transaction from the
+same account submitted first also invalidates the signature. Broadcast promptly.
 </Callout>

@@ -11,8 +11,8 @@ You have two options: bring your own identity, or use Cavos hosted auth.
 
 ## Option A: Bring your own identity
 
-If you already authenticate users (your own auth, Clerk, Auth0, etc.), just pass
-a stable `userId`:
+If you already authenticate users (your own auth, Clerk, Auth0, etc.), pass a
+stable `userId`:
 
 ```ts title="TypeScript"
 const cavos = await Cavos.connect({
@@ -187,7 +187,7 @@ every other enclave failure, including `github_unreachable`, as
 [0.5.0 changelog](https://cavos.xyz/blog/cavos-kit-0-5-0).
 
 <Callout type="warn">
-Register every callback URL for your app in **Dashboard → App → Callback URLs**,
+Register every callback URL for your app in **Dashboard → App → Settings → Callback URLs**,
 one per line, matched **exactly**: scheme, host, path, no trailing slash, and no
 wildcards. OAuth rejects a `redirect_uri` that is not registered, including when
 the app has none registered at all. This is deliberate: the callback carries a
@@ -255,7 +255,7 @@ const auth = new NativeCavosAuth({
 
 const identity = await auth.login("google");
 const wallet = await Cavos.connect({
-  chain: "stellar",
+  chains: ["stellar"],
   network: "testnet",
   appSalt: "my-app",
   appId,

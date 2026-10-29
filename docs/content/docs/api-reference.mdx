@@ -16,8 +16,8 @@ The high-level entry point. Most apps only use this.
 ### `Cavos.connect(options): Promise<CavosWallet & CavosSession>`
 
 Unified entry point. Pick one or more `chains` and a `network` environment; the
-kit resolves the concrete network (sepolia / solana-devnet for testnet, mainnet
-otherwise) and returns a multi-chain session. The session IS the default chain's
+kit resolves the concrete network (sepolia / solana-devnet / stellar-testnet for
+`testnet`, each chain's mainnet for `mainnet`) and returns a multi-chain session. The session IS the default chain's
 wallet, augmented with methods to access other configured chains.
 
 Connect **never deploys** Starknet or Stellar accounts. It derives addresses and
@@ -213,13 +213,13 @@ Classic `G…` account whose key derives from the same MasterDEK as Solana. See 
 | `NetworkEnv` | `"testnet" \| "mainnet"` |
 | `CavosWallet` | Union of all wallet types. |
 | `ConnectStatus` | `"undeployed" \| "ready" \| "needs-device-approval"` (the type of `wallet.status`). |
-
-`CavosSession` is shown in the type sketch above but is not exported by name. Use `Awaited<ReturnType<typeof Cavos.connect>>` for the session
-type and `ConnectStatus` for a status.
 | `MessageSignature` | `{ signature, publicKey, curve, typedData? }` |
 | `SignedTransaction`, `StarknetSignedTransaction`, `StellarSignedTransaction`, `SolanaSignedTransaction` | Sign-without-submit results. |
 | `SignatureCurve` | `"stark" \| "ed25519"` (and `"secp256r1"`, no longer produced by Starknet) |
 | `CAVOS_MESSAGE_PREFIX`, `prefixedMessageBytes(message)` | Off-chain message prefix scheme. |
+
+`CavosSession` is shown in the type sketch above but is not exported by name. Use `Awaited<ReturnType<typeof Cavos.connect>>` for the session
+type and `ConnectStatus` for a status.
 
 ## React Native exports (`@cavos/kit/react-native`)
 

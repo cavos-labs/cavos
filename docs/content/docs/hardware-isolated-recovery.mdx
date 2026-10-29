@@ -11,7 +11,10 @@ The obvious way to build that would be for Cavos to hold a key and hand it over
 once a login checks out. That would make Cavos custodial and every Cavos
 employee a target. Instead the check runs inside an **AWS Nitro Enclave**, an
 isolated environment whose exact software is measured by hardware and attested
-by AWS, holding a sealed copy of the wallet's MasterDEK that it releases only to the enrolled identity.
+by AWS, holding a sealed copy of the wallet's MasterDEK that it re-encrypts only to a
+device of the enrolled identity. The MasterDEK is opened only inside the
+attested enclave and leaves it only encrypted to the device's key; account keys
+are derived and used to sign only on the user's device.
 
 <Callout type="info">
 **Availability.** Hardware-isolated recovery is **opt-in per environment** and
@@ -81,7 +84,7 @@ sign-in the enclave accepts for the enrolled identity.
 
 ## What the enclave verifies
 
-Inside, before it signs anything, the enclave checks the provider signature,
+Inside, before it opens anything, the enclave checks the provider signature,
 issuer, audience, token fingerprint, configured provider, and the enrolled
 subject: the recovery only proceeds for the identity that enrolled.
 
@@ -113,7 +116,8 @@ tokens are never accepted.
 ## What the enclave holds
 
 The enclave's authority is not "a key that can sign for the wallet". It holds a
-sealed wrap of the MasterDEK and releases it only for the enrolled identity.
+sealed wrap of the MasterDEK and re-encrypts it, only for the enrolled
+identity, to the requesting device's key.
 
 | Chain | What the enclave does |
 |---|---|
@@ -361,8 +365,8 @@ Cavos-hosted sign-in for enclave recovery in the meantime. The rest of this
 section describes the intended flow.
 </Callout>
 
-Register your OAuth client ID once in **Dashboard → App → Environments → Your
-OAuth client ID**. The enclave then accepts tokens minted for your client
+Register your OAuth client ID once in **Dashboard → App → Environments** (the
+**Google client ID** or **Apple client ID** field). The enclave then accepts tokens minted for your client
 instead of only Cavos's.
 
 ```tsx title="app/secure-account.tsx"
@@ -370,9 +374,9 @@ const { submitSocialRecoveryToken } = useCavos();
 
 // Enrols when this device is ready and recovers when it is not; the wallet's
 // state decides, so the same call serves both screens.
-async function useRecovery() {
+async function secureAccount() {
   const idToken = await getGoogleIdTokenFromYourAuth();
-  submitSocialRecoveryToken(idToken);
+  await submitSocialRecoveryToken(idToken);
 }
 ```
 
@@ -416,5 +420,5 @@ pool, they describe that design; none of it exists now.
 
 - [Cavos Kit 0.5.0](https://cavos.xyz/blog/cavos-kit-0-5-0): signed enclave releases and GitHub sign-in.
 - [Recovery codes](/docs/recovery-codes): why Cavos wallets do not use them.
-- [Multi-device](/docs/multi-device): approving a new device from an existing one.
+- [Multi-device](/docs/multi-device): restoring the MasterDEK on a new device.
 - [Passkeys](/docs/passkeys): a synced passkey as the approval factor.

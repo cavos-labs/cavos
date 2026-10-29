@@ -3,9 +3,16 @@ title: Recovery
 description: The ways a Cavos user regains access to their wallet after losing a device, and which ones to offer.
 ---
 
-A Cavos wallet is controlled by an account key that the user's device derives
-from a MasterDEK and keeps locally. That is the point, and it is also the risk:
-**a device that is lost, wiped, or replaced takes its local copy with it.**
+Private keys never leave the user's device in plaintext and are never used to
+sign on a server. Every account key is derived on the device from the wallet's
+master key (the MasterDEK), and every signature is made there. The enclave and
+a passkey hold only an encrypted copy of the MasterDEK, used to restore it on a
+device: the enclave opens its sealed copy only inside the attested enclave and
+re-encrypts it to the requesting device's key, and a passkey's copy is
+decrypted on the device with the passkey's PRF output.
+
+That is the point, and it is also the risk: **a device that is lost, wiped, or
+replaced takes its local copy with it.**
 
 So recovery is the work of setting up a way back *before* it is needed, because
 none of these can be arranged after the fact. On Starknet, Solana, and Stellar

@@ -86,8 +86,9 @@ Fund it, then spend: there is no `initialize`.
 An `undeployed` wallet can:
 - **Sign messages** (`signMessage`): the signature comes from the local device
   key, which exists regardless of on-chain state.
-- **Execute**: the first `execute` call deploys the account and runs the
-  user's operation atomically in a single sponsored transaction.
+- **Execute**: on Starknet and Stellar, the first `execute` call deploys the
+  account and runs the user's operation atomically in a single sponsored
+  transaction.
 
 This lazy model means users see their address immediately and can share it
 before their first transaction. The account is created only when they use it.
@@ -180,7 +181,8 @@ individual [chain guides](/docs/chains).
 ## Typed native execution
 
 `Cavos.connect` returns the default chain's wallet with session methods added
-(`CavosWallet & CavosSession`), and `session.wallet()` returns the
+(the session type is not exported by name; use
+`Awaited<ReturnType<typeof Cavos.connect>>`), and `session.wallet()` returns the
 `CavosWallet` union. Narrow on `wallet.chain` before execution. This keeps onboarding portable without hiding
 important differences in calls, units, replay protection, or confirmation.
 

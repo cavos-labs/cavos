@@ -20,8 +20,6 @@ apart:
 
 - **Sponsorship / gas pool**: each environment meters its own relayer balance
   and low-balance alerts, so test traffic never drains your production gas.
-- **Allowed origins**: the domains/schemes permitted to call the app are set per
-  environment.
 - **API keys**: server credentials are issued per environment.
 - **Events & webhooks**: the event stream and webhook subscriptions are scoped
   per environment, so your development integration doesn't fire production hooks.
@@ -41,7 +39,8 @@ apart:
   [Authentication → GitHub](/docs/auth#bring-your-own-github-oauth-app).
 
 <Callout type="info">
-**Callback URLs are per app, not per environment.** A URL you add so a tunnel
+**Callback URLs and allowed web origins are per app, not per environment.**
+Both live in **Dashboard → App → Settings**. A URL you add so a tunnel
 works in development is accepted in production too, because OAuth validates the
 redirect against the app's list before an environment is in play. Remove
 throwaway tunnel and preview domains once you are done with them. See
@@ -90,7 +89,7 @@ vs. *which chain*.
 ## Wallet addresses across environments
 
 The wallet address does not depend on the Cavos console `environment` flag.
-Addresses come from the registry, keyed by identity, app, and chain.
+Addresses come from the registry, keyed by identity, app, chain, and network.
 
 If you want a user's **development** wallet to be a different address than their
 **production** wallet, you need a distinct registry key, which means a separate

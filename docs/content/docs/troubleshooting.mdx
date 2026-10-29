@@ -14,8 +14,8 @@ email where it used to be a primary key, a provider migration that renumbers
 users), those users land on a different wallet. Nothing errors: the app works
 perfectly, on the wrong accounts.
 
-The same applies to `appId`. If you switch environments or change the app ID,
-users get new wallets. Derive `userId` from something immutable.
+The same applies to `appId`: change the app ID and users get new wallets.
+Switching `environment` does not change addresses. Derive `userId` from something immutable.
 
 <Callout type="info">
 On every chain, `appSalt` is the HKDF salt for the account key. Changing it
@@ -31,7 +31,7 @@ list: **including when the app has no URLs registered at all.** An empty list
 rejects rather than allows, because the callback carries a one-time code and
 honouring an unregistered URI would hand that code to whoever asked.
 
-Add the exact URL in **Dashboard → App → Callback URLs**: scheme, host and path
+Add the exact URL in **Dashboard → App → Settings → Callback URLs**: scheme, host and path
 must match, with no trailing slash and no wildcards. Tunnel and preview domains
 each count as a separate origin, and a fresh tunnel URL means a fresh
 registration. See [Authentication](/docs/auth#google-and-apple).
@@ -50,9 +50,9 @@ Check that `status !== "needs-device-approval"`. Both `undeployed` and `ready`
 wallets can execute: only `needs-device-approval` blocks it.
 
 A user can be signed in on a device the account has not authorized yet (the
-normal state on a second browser), and `execute` will fail until the device is
-approved. Route `walletStatus.needsDeviceApproval` to a passkey prompt or
-[multi-device](/docs/multi-device) approval.
+normal state on a second browser), and `execute` will fail until this device restores the MasterDEK. Route
+`walletStatus.needsDeviceApproval` to `approveDeviceWithPasskey()` or an enclave
+sign-in; see [Multi-device](/docs/multi-device).
 
 <Callout type="info">
 **Don't require `isReady` for execution.** An `undeployed` wallet can execute.
@@ -75,9 +75,9 @@ Four causes, in the order worth checking:
    sees a provider token. Call `submitSocialRecoveryToken(idToken)` yourself (since 0.2.6 it is not
    accepted for Google and Apple tokens). See
    [With your own auth](/docs/hardware-isolated-recovery#with-your-own-auth).
-4. **The creating device never sealed.** Mac logged in from IndexedDB; the phone
-   got `not_enrolled`. Reconnect once on the device that has the wrap; enroll
-   is idempotent.
+4. **The creating device never sealed.** The original device keeps working from
+   its local wrap, but a new device gets `not_enrolled`. Reconnect once on the
+   original device; it reseals, and enrolling is idempotent.
 
 ## `id_token issuer … cannot be used for social recovery`
 
