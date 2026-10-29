@@ -27,13 +27,19 @@ apart:
   per environment, so your development integration doesn't fire production hooks.
 - **Social recovery** — enable or disable [hardware-isolated
   recovery](/docs/hardware-isolated-recovery) for **Starknet, Solana, and
-  native Stellar** wallets in that environment, choose exactly one of Google,
-  Apple, or email code, and register
-  your own OAuth client ID if you authenticate users yourself. Grandfathered
-  Stellar wallets are unaffected. All independent per environment, so you can
-  rehearse recovery in development against a different provider than production
-  uses. The email provider's "Firebase project ID" field no longer affects email
-  sign-in codes, which the enclave issues itself.
+  native Stellar** wallets in that environment. Google, Apple, email, and GitHub
+  are all accepted; each wallet recovers through the provider its owner signed
+  in with. Register your own Google or Apple OAuth client ID if you authenticate
+  users yourself. GitHub has no client-ID override: the enclave redeems the
+  code and issues its own token. Grandfathered Stellar wallets are unaffected.
+  All independent per environment, so you can rehearse recovery in development
+  without touching production. The email provider's "Firebase project ID" field
+  no longer affects email sign-in codes, which the enclave issues itself.
+- **GitHub OAuth app** — each environment can use Cavos's GitHub app or its
+  own. The client id and secret live on the environment; the secret is never
+  returned. Switching apps gives every GitHub user in that environment a new
+  identity and a new, empty wallet. See
+  [Authentication → GitHub](/docs/auth#github).
 
 <Callout type="info">
 **Callback URLs are per app, not per environment.** A URL you add so a tunnel

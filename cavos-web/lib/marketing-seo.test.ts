@@ -1470,6 +1470,27 @@ describe('marketing SEO', () => {
     }
   })
 
+  it('keeps the Kit 0.5.0 changelog title inside the SERP limit', () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), 'content/blog/cavos-kit-0-5-0.mdx'),
+      'utf8',
+    )
+    const fields = parseBlogFrontmatter(source)
+    assert.equal(fields.slug, 'cavos-kit-0-5-0')
+    assert.equal(fields.category, 'Release')
+    assert.equal(fields.title.includes('| Cavos'), false)
+    const fullTitle = `${fields.title} | Cavos`
+    assert.ok(
+      fullTitle.length <= 60,
+      `Kit 0.5.0 SERP title length ${fullTitle.length}: ${fullTitle}`,
+    )
+    assert.match(source, /\[embedded wallet\]\(\/embedded-wallet\)/)
+    assert.match(source, /docs\.cavos\.xyz\/docs\/hardware-isolated-recovery/)
+    assert.match(source, /getGitHubOAuthUrl/)
+    assert.doesNotMatch(source, /grandfathered/i)
+    assert.doesNotMatch(source, /Horizon signer/i)
+  })
+
   it('emits Article JSON-LD with dateModified, author, and breadcrumbs for every blog post', () => {
     const pageSource = fs.readFileSync(
       path.join(process.cwd(), 'app/blog/[slug]/page.tsx'),
@@ -2775,6 +2796,7 @@ describe('marketing SEO', () => {
     assert.match(source, /href: '\/embedded-starknet-wallet'/)
     assert.match(source, /href: '\/embedded-solana-wallet'/)
     assert.match(source, /href: '\/embedded-stellar-wallet'/)
+    assert.match(source, /href="\/blog\/cavos-kit-0-5-0"/)
     assert.match(
       source,
       /Classic G… account, one Ed25519 key from the MasterDEK, sponsored reserves and fees\./,

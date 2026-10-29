@@ -255,7 +255,7 @@ domain prefix before signing.
 ## Unlock factors & silent signing
 
 **Native DEK path (enclave / passkey):** one spend key, restored by an enclave
-unwrap or a passkey's encrypted copy. Signing in again with the enrolled Google/Apple identity **does** restore
+unwrap or a passkey's encrypted copy. Signing in again with the enrolled Google, Apple, GitHub, or email identity **does** restore
 the account.
 
 **Grandfathered path:** extra Horizon signers.
@@ -281,7 +281,7 @@ MasterDEK** — anyone with that synced passkey can open the wallet. It is *not*
 native accounts. See [Passkeys](/docs/passkeys) for how the copy is protected.
 
 <Callout type="warn">
-Use the enclave if you want Google/Apple restore without giving a synced
+Use the enclave if you want Google/Apple/GitHub/email restore without giving a synced
 credential spending power by itself. `deviceApproval: "passkey"` is one chain.
 </Callout>
 

@@ -115,8 +115,10 @@ export function Providers({ children }) {
 
 The provider exports `useCavos`, `CavosAuthModal`, `NativeCavosAuth`, and the
 native passkey and key classes. `NativeCavosAuth` supports Google and Apple
-through the registered deep/universal link. Email sign-in is not available on
-React Native yet.
+through the registered deep/universal link. Email and GitHub sign-in are not
+available on React Native yet — both need to verify the enclave's attestation,
+which this build cannot do. The native `providers` type is
+`("google" | "apple" | "email")[]`; `'github'` is not accepted.
 
 ## Keys and security levels
 
@@ -170,7 +172,7 @@ the enclave.
 
 `logout()` clears only the persisted `Identity` and pending nonce. Keys remain in
 Secure Enclave/Keychain or Keystore so the user can reconnect. It does not sign
-the user out of Google or Apple. Reinstalling the app creates a new device that
+the user out of Google or Apple. GitHub login is not on this build. Reinstalling the app creates a new device that
 must unwrap the MasterDEK (enclave or passkey) or, on grandfathered Stellar,
 use a recovery code. Recovery codes are generated and displayed once; store
 them outside the app. They are not used on Starknet, Solana, or native Stellar.

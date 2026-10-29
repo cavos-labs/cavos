@@ -111,7 +111,7 @@ MasterDEK (enclave or passkey) and derives the same key. See
 
 | Export | Description |
 |--------|-------------|
-| `CavosAuth` | Hosted login: `getGoogleOAuthUrl`, `getAppleOAuthUrl`, `handleCallback`, `sendOtp`, `verifyOtp`, `authenticate`. Also `useExternalSocialRecoveryToken(idToken)` to drive social recovery from your own login. |
+| `CavosAuth` | Hosted login: `getGoogleOAuthUrl`, `getAppleOAuthUrl`, `getGitHubOAuthUrl`, `handleCallback`, `sendOtp`, `verifyOtp`, `authenticate`. Also `useExternalSocialRecoveryToken(idToken)` to drive social recovery from your own login. GitHub is web-only (PKCE + enclave redemption); see [Authentication](/docs/auth#github). |
 | `StaticIdentity` | Wrap a `{ userId, email }` you already have as an `AuthProvider`. |
 | `AuthProvider`, `Identity` | Types for the auth contract. |
 
@@ -127,16 +127,18 @@ MasterDEK (enclave or passkey) and derives the same key. See
 
 Optional, opt-in per environment. On every chain the enclave seals the
 MasterDEK. See
-[Hardware-isolated recovery](/docs/hardware-isolated-recovery).
+[Hardware-isolated recovery](/docs/hardware-isolated-recovery) and the
+[0.5.0 changelog](https://cavos.xyz/blog/cavos-kit-0-5-0).
 
 | Export | Description |
 |--------|-------------|
 | `SocialRecoveryClient` | Client for the recovery enclave. `enroll(...)`, `recover(...)`, `confirmEnrollment(...)`. |
 | `SocialRecoveryClientOptions` | `{ baseUrl, appId, attestation, environment? }`. |
-| `AttestationPolicy` | Which enclave you accept: `{ pcr0 }`, the SHA-384 measurement of the Nitro enclave image. |
-| `DEFAULT_SOCIAL_RECOVERY_ATTESTATION` | The policy for the enclave Cavos operates (AWS Nitro), pinned in this package. |
+| `AttestationPolicy` | Which enclave you accept: `{ pcr0?, release? }`. `pcr0` is the SHA-384 measurement of the Nitro image (a string or list). `release` is an `EnclaveReleasePolicy`. A policy with only `pcr0` is a strict pin — no Sigstore fallback. See [Hardware-isolated recovery](/docs/hardware-isolated-recovery#the-attestation-pin). |
+| `EnclaveReleasePolicy` | `{ repository, repositoryId, ownerId, workflow, minVersion }`. Default 0.5.0 values: `cavos-labs/cavos-recovery`, repository id `1333734222`, owner id `216094156`, workflow `.github/workflows/release.yml`, `minVersion` `1`. |
+| `DEFAULT_SOCIAL_RECOVERY_ATTESTATION` | The policy for the enclave Cavos operates: a transitional `pcr0` list **or** a Sigstore bundle from `{backendUrl}/api/enclave/releases/{pcr0}` that verifies against `release`. |
 | `SocialRecoveryCredential`, `createSocialRecoveryCredential` | The in-memory social credential. |
-| `SocialRecoveryProvider`, `SocialRecoveryAction`, `SocialRecoveryResult` | Types. |
+| `SocialRecoveryProvider`, `SocialRecoveryAction`, `SocialRecoveryResult` | Types. `SocialRecoveryProvider` is `"google" \| "apple" \| "email" \| "github"`. |
 
 ## Passkeys
 

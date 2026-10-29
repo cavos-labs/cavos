@@ -1,6 +1,6 @@
 ---
 title: Authentication
-description: Use Cavos hosted login (Google / Apple / email code) or bring your own identity.
+description: Use Cavos hosted login (Google / Apple / GitHub / email code) or bring your own identity.
 ---
 
 Authentication exists for **one reason**: to produce a stable `userId` (plus
@@ -67,7 +67,7 @@ Grandfathered Stellar wallets still need a passkey or recovery code.
 
 ## Option B — Cavos hosted auth (`CavosAuth`)
 
-`CavosAuth` provides Google, Apple, and email-code login that resolves
+`CavosAuth` provides Google, Apple, GitHub, and email-code login that resolves
 to a Cavos `Identity` you pass straight into `connect`.
 
 ```ts title="TypeScript"
@@ -109,6 +109,67 @@ Each sign-in URL carries the hash of a one-time secret the SDK keeps in
 it. Build the URL right before redirecting, and handle the callback in the same
 tab and origin that started the login.
 
+### GitHub
+
+GitHub is opt-in and web-only. The default modal providers stay Google, Apple,
+and email; add `'github'` to show the button, or call `login('github')` /
+`auth.getGitHubOAuthUrl()`. React Native does not offer GitHub: like email, the
+flow has to verify the enclave's attestation, which that build cannot do.
+
+```ts title="TypeScript"
+const url = await auth.getGitHubOAuthUrl(/* redirectUri? */);
+window.location.href = url;
+
+const identity = await auth.handleCallback(window.location.search);
+```
+
+`getGitHubOAuthUrl` keeps a login secret and a PKCE verifier in
+`sessionStorage`, asks the backend for the authorize URL, and refuses it unless
+it is `https://github.com/login/oauth/authorize` with this login's
+`code_challenge` and `S256`. The callback never talks to GitHub. It returns a
+one-time `github_grant`; `handleCallback` sends `verify_github` into the
+attested enclave with the PKCE verifier. The enclave redeems the code, reads
+`api.github.com/user`, discards the access token, and signs an ES256 login
+token:
+
+| Claim | Value |
+|---|---|
+| `iss` | `https://enclave.cavos.xyz/github` |
+| `aud` | `cavos-github` |
+| `sub` | `hex(SHA-256("cavos-github-subject-v1:" + client_id + ":" + github_id))` |
+| `azp` | the OAuth `client_id` the code was redeemed with |
+| `nonce` | `<app_id>.<BASE64URL(SHA-256(login secret))>` |
+
+JWKS: `https://enclave.cavos.xyz/.well-known/jwks.json`. No GitHub scopes are
+requested.
+
+Register a **per-environment GitHub OAuth app** in **Dashboard → App →
+Environments** if you do not want the Cavos app. The authorization callback URL
+is shown there (`/api/oauth/github/callback`). Leave the fields empty to use
+Cavos's app. Switching an environment's GitHub app gives every GitHub user a
+**new identity and a new, empty wallet**, because `sub` is bound to `client_id`.
+GitHub reports the same numeric id to every OAuth app; tying `sub` to the app
+the code was actually redeemed with is what stops a code from one app becoming
+a login for another.
+
+The built-in modal only shows GitHub when `providers` includes `'github'`:
+
+```tsx title="app/provider.tsx"
+<CavosProvider
+  config={{ appId, environment, chains, defaultChain, network, appSalt }}
+  modal={{ appName: "My App", providers: ["google", "apple", "email", "github"] }}
+>
+  {children}
+</CavosProvider>
+```
+
+Enclave failure codes: `github_rejected` (GitHub did not accept the sign-in)
+and `github_unreachable` (the enclave could not reach GitHub). The SDK maps
+`github_rejected` to `GitHub did not accept this sign-in. Try again.` A stale
+grant is `invalid_grant`. See
+[Troubleshooting](/docs/troubleshooting#github-sign-in-errors) and the
+[0.5.0 changelog](https://cavos.xyz/blog/cavos-kit-0-5-0).
+
 <Callout type="warn">
 Register every callback URL for your app in **Dashboard → App → Callback URLs**,
 one per line, matched **exactly** — scheme, host, path, no trailing slash, and no
@@ -141,8 +202,8 @@ sends it to the enclave encrypted to its attested key. The enclave answers with
 its own signed token (issuer `https://enclave.cavos.xyz`, keys at
 `https://enclave.cavos.xyz/.well-known/jwks.json`), bound to a login secret the
 SDK keeps, the same binding Google and Apple tokens have. Email users therefore
-get [hardware-isolated recovery](/docs/hardware-isolated-recovery) like Google
-and Apple users. The user id of an email login is derived from the address.
+get [hardware-isolated recovery](/docs/hardware-isolated-recovery) like Google,
+Apple, and GitHub users. The user id of an email login is derived from the address.
 
 - **Lifetime.** A code expires after 5 minutes and allows 3 attempts. A new code
   for the same address can be requested after 60 seconds.
@@ -154,7 +215,8 @@ and Apple users. The user id of an email login is derived from the address.
   testing mode). Other domains get `This email provider is not supported yet.`
   (error code `email_undeliverable`).
 - **React Native.** Email sign-in is not available yet: `sendOtp` and
-  `verifyOtp` throw an `unsupported` error there. Use Google or Apple.
+  `verifyOtp` throw an `unsupported` error there. GitHub is not on the native
+  API either. Use Google or Apple.
 
 `CavosAuthModal` shows a 9-character code screen and accepts a pasted code with
 spaces or hyphens. For the errors the code flow can return, see
@@ -164,7 +226,7 @@ spaces or hyphens. For the errors the code flow can return, see
 
 React Native apps use `NativeCavosAuth` from `@cavos/kit/react-native`. It opens
 Google or Apple in the system browser and returns through the registered
-`redirectUri`; email sign-in is not available on React Native yet.
+`redirectUri`. Email and GitHub sign-in are not available on React Native yet.
 
 ```ts
 import { NativeCavosAuth } from "@cavos/kit/react-native";

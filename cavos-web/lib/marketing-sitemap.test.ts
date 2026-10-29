@@ -231,6 +231,7 @@ describe('marketing sitemap', () => {
     assert.equal(isBlogPostNoindex('wallet-as-a-service'), false)
     assert.equal(isBlogPostNoindex('embedded-wallet-react-sdk'), false)
     assert.equal(isBlogPostNoindex('alchemy-vs-privy'), false)
+    assert.equal(isBlogPostNoindex('cavos-kit-0-5-0'), false)
     assert.equal(
       urls.includes(`${MARKETING_ORIGIN}/blog/v1-1-9-sdk-security`),
       false,
@@ -299,7 +300,7 @@ Hello
   })
 
   it('keeps the indexable marketing URLs including the React integration guide', () => {
-    assert.equal(entries.length, 38)
+    assert.equal(entries.length, 39)
     assert.ok(
       urls.includes(`${MARKETING_ORIGIN}/blog/how-to-add-an-embedded-wallet`),
     )
@@ -329,6 +330,7 @@ Hello
       urls.includes(`${MARKETING_ORIGIN}/blog/embedded-wallet-react-sdk`),
     )
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/alchemy-vs-privy`))
+    assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/cavos-kit-0-5-0`))
     assert.equal(
       urls.includes(`${MARKETING_ORIGIN}/blog/v1-1-9-sdk-security`),
       false,

@@ -140,7 +140,7 @@ is active. The session keeps all chains connected.
 
 | Method | Description |
 |--------|-------------|
-| `login(provider)` | OAuth social login (`"google" \| "apple"`) — opens the hosted flow. |
+| `login(provider)` | OAuth social login (`"google" \| "apple" \| "github"`) — opens the hosted flow. GitHub is opt-in (`providers` must include `'github'`) and is not available in React Native. |
 | `sendOtp(email)` | Email a 9-character sign-in code. |
 | `verifyOtp(email, code)` | Verify the emailed code and deploy the wallet. |
 | `handleCallback(authData, redirectUri?)` | Resolve identity from an OAuth callback (`?cavos_auth_code=…`) and deploy. Pass the callback URL as `redirectUri` if it differs from the current one. |
@@ -185,7 +185,7 @@ for the capability details.
 | Method | Description |
 |--------|-------------|
 | `openModal()` / `closeModal()` | Open/close the built-in auth modal (the provider mounts it automatically when `modal` is set). |
-| `logout()` | Clears the persisted identity and session token, and tells the [vault](/docs/vault) to let go of the keys it unlocked. Stored keys stay, so the next login is silent. Does **not** sign the user out of Google or Apple. |
+| `logout()` | Clears the persisted identity and session token, and tells the [vault](/docs/vault) to let go of the keys it unlocked. Stored keys stay, so the next login is silent. Does **not** sign the user out of Google, Apple, or GitHub. |
 | `clearAuthError()` | Clear `authError` (e.g. when the user starts a new login attempt). |
 
 ## `useCavosAuth()`
@@ -215,7 +215,7 @@ import { CavosAuthModal } from "@cavos/kit/react";
   appName="My App"
   appLogo="https://myapp.com/logo.png"
   appLogoSize={56}
-  providers={["email", "google", "apple"]}
+  providers={["email", "google", "apple"]} // add "github" to offer GitHub
   primaryColor="#402AFF"
   theme="light"
   radius={16}
@@ -232,7 +232,7 @@ import { CavosAuthModal } from "@cavos/kit/react";
 | `appName` | `string?` | Shown in the heading (`"Sign in to {appName}"`). |
 | `appLogo` | `string?` | Image URL for the logo. If omitted, the Cavos star is shown. The provider also loads it from your app's dashboard config automatically; a local `appLogo` overrides that. |
 | `appLogoSize` | `number?` | Logo height in px. Defaults to `40` (image) / `34` (Cavos star). |
-| `providers` | `("google" \| "apple" \| "email")[]?` | Which login buttons to show. Defaults to all three. |
+| `providers` | `("google" \| "apple" \| "email" \| "github")[]?` | Which login buttons to show. Defaults to Google, Apple, and email. Add `"github"` to offer GitHub (kit 0.5.0, web only); see [Authentication](/docs/auth#github) and the [0.5.0 changelog](https://cavos.xyz/blog/cavos-kit-0-5-0). |
 | `primaryColor` | `string?` | Accent color for buttons / focus rings (hex). |
 | `theme` | `"light" \| "dark"?` | Card theme. Defaults to `light`. |
 | `backgroundColor` | `string?` | Override the card background (defaults to white / `#111` per theme). |

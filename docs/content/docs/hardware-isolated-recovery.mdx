@@ -5,7 +5,7 @@ description: Restore a Starknet, Solana, or Stellar MasterDEK by signing in agai
 
 A recovery code works, but it asks the user to keep a secret safe forever, and
 most will not. **Hardware-isolated recovery** lets them recover the way they
-expect to: by signing in again with Google, Apple, or an email code.
+expect to: by signing in again with Google, Apple, GitHub, or an email code.
 
 The obvious way to build that would be for Cavos to hold a key and hand it over
 once a login checks out. That would make Cavos custodial and every Cavos
@@ -99,10 +99,17 @@ comparison before it uses a login at all.
 
 What binds a token to *this* session is its SHA-256 fingerprint, committed when
 the session opens and compared in constant time. The API stores only a second
-hash of that fingerprint, so a token can be used once and replays are rejected. Email uses the enclave's own signed token
-(issuer `https://enclave.cavos.xyz`), issued after the user enters the emailed
-code and bound to the same login secret. Cavos-signed compatibility tokens are
-never accepted.
+hash of that fingerprint, so a token can be used once and replays are rejected.
+Email uses the enclave's own signed token (issuer `https://enclave.cavos.xyz`),
+issued after the user enters the emailed code and bound to the same login
+secret. GitHub is the same shape with a different issuer: the enclave redeems
+the authorization code with the client's PKCE verifier and signs an ES256 token
+(`iss` `https://enclave.cavos.xyz/github`, `aud` `cavos-github`, keys at
+`https://enclave.cavos.xyz/.well-known/jwks.json`). The subject is
+`hex(SHA-256("cavos-github-subject-v1:" + client_id + ":" + github_id))`, so
+identity is per OAuth app — switching an environment's GitHub app gives every
+GitHub user a new identity and a new, empty wallet. Cavos-signed compatibility
+tokens are never accepted.
 
 ## What the enclave holds
 
@@ -149,15 +156,19 @@ Self-custodial is not the same as trustless, and the difference is not a
 formality:
 
 - **The measured enclave image.** You are trusting that this specific code does
-  what it claims. Pin the digest and review changes to it the way you would
-  review a key rotation.
+  what it claims. Pin the digest, or accept only releases signed by the
+  workflow below, and review changes the way you would review a key rotation.
 - **AWS.** Attestation and KMS are what make the measurement meaningful
   and the sealed key openable.
-- **The image-upgrade policy.** A new digest is a new trust decision.
+- **The image-upgrade policy.** A new digest is a new trust decision unless
+  your installed policy includes `release` and the new image was signed by
+  that policy's workflow on a `vN` tag. You are then trusting that GitHub
+  Actions workflow, on that repository, on a GitHub-hosted runner — not
+  `cavos.xyz`.
 - **The sign-in.** Recovery follows whoever completes a fresh sign-in as the
   enrolled identity. That means the identity provider, and the service that
-  runs the sign-in flow — Cavos, when you use Cavos-hosted Google or Apple
-  login.
+  runs the sign-in flow — Cavos, when you use Cavos-hosted Google, Apple,
+  GitHub, or email login.
 
 The honest summary: recovery is as strong as the measured enclave image and the
 sign-in behind it. Nobody — Cavos included — can take a sealed key out of the
@@ -172,9 +183,10 @@ treat social recovery as one path among several rather than the only one.
 
 ## Turning it on
 
-Enable it in **Dashboard → App → Environments** and select exactly one provider.
-Users never see a three-provider recovery picker: the environment policy decides
-the single login method shown.
+Enable it in **Dashboard → App → Environments**. Google, Apple, email, and
+GitHub are all accepted; each wallet recovers through the provider its owner
+signed in with. GitHub is opt-in on the client — add `'github'` to
+`modal.providers` or call `login('github')`. It is not available in React Native.
 
 ```tsx title="app/provider.tsx"
 <CavosProvider
@@ -201,55 +213,105 @@ device never sealed — open that wallet once more on the original device.
 
 ## The attestation pin
 
-`socialRecovery: true` verifies the enclave against measurements **pinned in the
-package you installed** (`DEFAULT_SOCIAL_RECOVERY_ATTESTATION`).
-
-Those measurements are the answer to "which code am I trusting with my users'
-recovery?", and they must not come from the service being checked. If
-`cavos.xyz` told the client which image digest to expect, anyone who compromised
+`socialRecovery: true` uses `DEFAULT_SOCIAL_RECOVERY_ATTESTATION` from the
+package you installed. Those values answer "which code am I trusting with my
+users' recovery?", and they must not come from the service being checked. If
+`cavos.xyz` told the client which image to expect, anyone who compromised
 `cavos.xyz` would answer with their own — and the attestation would prove
-nothing. Verifying against values supplied by the thing under verification is
-not verification.
+nothing.
 
-Shipping them in a versioned, immutable package keeps the pin outside that
-control plane while taking it off your hands: you can audit the constant, and
-you choose when to adopt a new one by upgrading. The attestation itself is signed
-by AWS, so authenticity is anchored outside Cavos either way — the pin only
-fixes *which workload* you are willing to talk to.
+From `@cavos/kit` 0.5.0 an attested enclave is accepted on **either** of two
+paths, in this order:
 
-Pin your own policy when you run your own enclave:
+1. **Pinned PCR0.** The live Nitro attestation's PCR0 is in
+   `DEFAULT_SOCIAL_RECOVERY_ATTESTATION.pcr0`. The list is transitional: it
+   covers currently deployed images, including ones that predate signed
+   releases, and it is meant to shrink once those images are replaced.
+2. **Signed release.** The SDK fetches
+   `{backendUrl}/api/enclave/releases/{pcr0}` (default host `https://cavos.xyz`)
+   and verifies a Sigstore v0.3 bundle **in the client**: Rekor inclusion, the
+   public-good trusted root (one TUF refresh on failure, then fail closed),
+   signer identity, PCR0/PCR1/PCR2 equal to the live Nitro attestation,
+   `version >= minVersion`, and an unexpired `expiresAt`. An all-zero PCR0
+   (debug mode) is rejected.
+
+The Cavos API is an untrusted pass-through. It can withhold a bundle; it cannot
+make the SDK accept one. A new enclave deploy therefore does not require an SDK
+bump, as long as the release was signed by the workflow below. 0.4.x has no
+release path and does not list the currently deployed PCR0, so email sign-in
+and enclave recovery against that image fail until you upgrade to `^0.5.0`.
+See the [0.5.0 changelog](https://cavos.xyz/blog/cavos-kit-0-5-0).
+
+The default `release` policy shipped in 0.5.0:
+
+| Field | Value |
+|---|---|
+| `repository` | `cavos-labs/cavos-recovery` |
+| `repositoryId` | `1333734222` |
+| `ownerId` | `216094156` |
+| `workflow` | `.github/workflows/release.yml` |
+| `minVersion` | `1` |
+
+A release is trusted when GitHub Actions, on a GitHub-hosted runner, signed it
+for that repository and owner, using that workflow, on a `refs/tags/vN` push
+(`N` a positive integer that matches the statement's `version`). The signature
+is public in Rekor. The currently deployed image is accepted through the PCR0
+list; the signed-release path is how later deploys can ship without a kit
+release. Do not treat that path as production-proven on its own. The browser
+library that checks the bundle (`@freedomofpress/sigstore-browser` 0.1.15) has
+not received an independent security audit.
+
+The AWS signature on the attestation document still anchors authenticity
+outside Cavos. The policy only fixes *which workload* you are willing to talk
+to.
+
+### Strict pinning
+
+Pass only `pcr0` when you run your own enclave, or when you want the SDK to
+refuse any image you did not list. A policy with no `release` has no Sigstore
+fallback.
 
 ```ts title="TypeScript"
 socialRecovery: {
-  pcr0: ["f2f81237…", "24ce0009…"], // list to overlap a rollout
+  pcr0: ["<pcr0 from the release you audited>"], // list to overlap a rollout
 }
 ```
 
 `pcr0` is the SHA-384 measurement of the enclave image, the value
-`nitro-cli build-enclave` reports. It accepts a list because the measurement
-changes whenever the image is rebuilt: publishing the incoming and outgoing
-value together lets a redeploy overlap instead of cutting off apps mid-rollout.
-The attested measurement must still match one of them exactly — an empty list
-accepts nothing, which is the safe direction.
+`nitro-cli build-enclave` reports. A list lets a redeploy overlap; the attested
+measurement must still match one entry exactly. An empty list accepts nothing.
 
-The enclave build is reproducible, so this is a claim you can check rather than
-one you have to take on faith. Rebuild the published source and confirm you get
-the same measurement:
+The config key is `socialRecovery` (boolean, or this policy object).
+`socialRecoveryAttestation` is the older name for an explicit policy: it still
+works and **takes precedence** over `socialRecovery`, so an app that pinned its
+own measurements is never silently repointed onto the shipped defaults.
+
+### How to verify a published measurement
+
+Do not copy hashes out of older docs. Each signed release publishes
+`measurements.json` next to the image. For
+[release v1](https://github.com/cavos-labs/cavos-recovery/releases/tag/v1),
+download that file and compare `PCR0`, `PCR1`, and `PCR2` to the live Nitro
+attestation. The enclave build is reproducible:
 
 ```bash title="Terminal"
 git clone https://github.com/cavos-labs/cavos-recovery
 cd cavos-recovery/enclave
-./scripts/build-enclave.sh --expect f2f81237…
+./scripts/build-enclave.sh
 ```
 
-Two independent builds of the same source produce the same `PCR0`; if they did
+Two independent builds of the same source produce the same `PCR0`. If they did
 not, a published measurement would prove nothing about the published code.
 
-<Callout type="info">
-Apps that set `socialRecoveryAttestation` before this existed keep working
-unchanged: an explicit policy always wins over the shipped defaults, so an app
-that pinned its own measurements is never silently repointed.
-</Callout>
+### Content-Security-Policy
+
+A strict `connect-src` must allow:
+
+- `{backendUrl}/api/enclave/releases/*` (hosted default `https://cavos.xyz`)
+- the Sigstore TUF CDN, `https://tuf-repo-cdn.sigstore.dev/`, used if the
+  bundled trusted root needs a refresh
+
+The hosted vault already uses `connect-src 'self' https:`.
 
 ## With your own auth
 
@@ -257,6 +319,9 @@ Social recovery works when you authenticate users yourself — Clerk, Auth0,
 Firebase, your own backend — as long as a real Google or Apple sign-in happens
 somewhere underneath. **Your users never sign in twice:** you pass the provider
 token your login already obtained. Works on Starknet, Solana, and Stellar.
+GitHub is not on this path: the enclave redeems the GitHub authorization code
+itself and issues its own token, so recovery for a GitHub user requires the
+Cavos-hosted GitHub flow.
 
 <Callout type="warn">
 **Not available for Google and Apple in 0.2.6.** The enclave now requires the
@@ -321,6 +386,7 @@ pool, they describe that design; none of it exists now.
 
 ## Related
 
+- [Cavos Kit 0.5.0](https://cavos.xyz/blog/cavos-kit-0-5-0) — signed enclave releases and GitHub sign-in.
 - [Recovery codes](/docs/recovery-codes) — the self-custodial baseline, no enclave involved.
 - [Multi-device](/docs/multi-device) — approving a new device from an existing one.
 - [Passkeys](/docs/passkeys) — a synced passkey as the approval factor.

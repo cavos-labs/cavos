@@ -81,6 +81,32 @@ describe('docs SEO', () => {
     assert.doesNotMatch(homeH1[0], /href=/)
   })
 
+  it('documents kit 0.5.0 attestation paths and GitHub login without stale PCR hashes', () => {
+    const recovery = read('content/docs/hardware-isolated-recovery.mdx')
+    assert.match(recovery, /DEFAULT_SOCIAL_RECOVERY_ATTESTATION/)
+    assert.match(recovery, /api\/enclave\/releases/)
+    assert.match(recovery, /repositoryId/)
+    assert.match(recovery, /cavos-labs\/cavos-recovery/)
+    assert.match(recovery, /measurements\.json/)
+    assert.match(recovery, /releases\/tag\/v1/)
+    assert.match(recovery, /tuf-repo-cdn\.sigstore\.dev/)
+    assert.match(recovery, /getGitHubOAuthUrl|login\('github'\)/)
+    assert.match(recovery, /https:\/\/cavos\.xyz\/blog\/cavos-kit-0-5-0/)
+    assert.doesNotMatch(recovery, /f2f81237/)
+    assert.doesNotMatch(recovery, /24ce0009/)
+    assert.match(recovery, /socialRecoveryAttestation/)
+
+    const auth = read('content/docs/auth.mdx')
+    assert.match(auth, /getGitHubOAuthUrl/)
+    assert.match(auth, /https:\/\/enclave\.cavos\.xyz\/github/)
+    assert.match(auth, /cavos-github/)
+
+    const api = read('content/docs/api-reference.mdx')
+    assert.match(api, /getGitHubOAuthUrl/)
+    assert.match(api, /EnclaveReleasePolicy/)
+    assert.match(api, /AttestationPolicy/)
+  })
+
   it('adds offers.availability to the docs SoftwareApplication Offer', () => {
     const layout = read('app/layout.tsx')
     assert.match(layout, /'@type': 'SoftwareApplication'/)

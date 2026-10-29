@@ -50,7 +50,7 @@ it in application storage.
 There is no recovery-code restore. Native accounts restore the MasterDEK:
 
 ```ts title="TypeScript"
-// Enclave: the same Google/Apple login on the new device unwraps the DEK.
+// Enclave: the same Google/Apple/GitHub/email login on the new device unwraps the DEK.
 // Passkey:
 const { approveDeviceWithPasskey } = useCavos();
 await approveDeviceWithPasskey();
