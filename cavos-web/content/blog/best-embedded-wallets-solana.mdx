@@ -1,0 +1,134 @@
+---
+title: "Best Embedded Wallets for Solana (2026)"
+date: "2026-10-29"
+excerpt: "Embedded wallet SDKs for Solana in 2026: Cavos, Privy, Dynamic, Turnkey, Magic, MetaMask Embedded Wallets, Para, and Crossmint compared on custody and gas."
+category: "Guide"
+ogQuote: "Most providers support Solana. The real differences are custody, fee payment, and the pricing meter."
+slug: "best-embedded-wallets-solana"
+itemList:
+  - name: "Cavos"
+    url: "/embedded-solana-wallet"
+  - name: "Privy"
+    url: "https://docs.privy.io/wallets/overview/chains"
+  - name: "Dynamic"
+    url: "https://www.dynamic.xyz/docs/embedded-wallets/chains/overview"
+  - name: "Turnkey"
+    url: "https://docs.turnkey.com/networks/overview"
+  - name: "Magic"
+    url: "https://docs.magic.link/embedded-wallets/blockchains/non-evm/solana"
+  - name: "MetaMask Embedded Wallets (Web3Auth)"
+    url: "https://docs.metamask.io/embedded-wallets/connect-blockchain/solana/"
+  - name: "Para"
+    url: "https://docs.getpara.com/v2/react/guides/web3-operations/solana/setup-libraries"
+  - name: "Crossmint"
+    url: "https://docs.crossmint.com/wallets/overview"
+faq:
+  - question: "What are the best embedded wallets for Solana in 2026?"
+    answer: "Solana is well covered. Providers whose docs list Solana embedded wallets in October 2026 include Cavos, Privy, Dynamic, Turnkey, Magic, MetaMask Embedded Wallets (formerly Web3Auth), Para, and Crossmint. Cavos is a non-custodial embedded wallet for Starknet, Solana and Stellar with a native Ed25519 system account and a relayer as fee payer. Privy and Dynamic manage sending and gas sponsorship on Solana. Turnkey offers signing and policy infrastructure. Pick on custody model, fee payment, and pricing meter."
+  - question: "Which Solana embedded wallets support gasless transactions?"
+    answer: "Cavos uses a relayer as fee payer or settles the fee in a token the account holds, such as USDC, as part of Gas Sponsorship in Any Token. Dynamic lists Solana as gasless in its chain support table. Privy offers gas sponsorship on its Tier 3 chains, which include Solana. For others, check the vendor docs."
+  - question: "Are Solana embedded wallets custodial?"
+    answer: "Most are not, but the models differ. Cavos derives the key on the user's device and never signs on its servers. Dynamic and Para use MPC. Privy and Magic use TEE-based key management. Turnkey decrypts keys only in AWS Nitro Enclaves, and custody depends on who holds the authorizing credentials. Read each provider's recovery and export docs."
+  - question: "How much does a Solana embedded wallet cost?"
+    answer: "Cavos is free up to 1,000 wallets, then Essential at $59 per month and Complete at $139 per month. Other vendors meter by monthly active users, signatures, or wallets on their own pricing pages, so compare on expected volume."
+---
+
+This guide lists [embedded wallet](/embedded-wallet) SDKs that support **Solana**, based on each vendor's own documentation as of October 2026. Cavos, LLC publishes this page and Cavos is on the list, so the criteria come first and every row links to the source. Solana has the deepest bench of any chain here, and several of these providers are strong choices.
+
+For the multichain view, see [embedded wallet providers](/blog/embedded-wallet-providers). For head-to-head pages, see [compare](/compare).
+
+## How we evaluated
+
+- **Solana depth.** Create, sign, and send, or signing only.
+- **Fee payment.** Can the app pay fees or let users pay in a token other than SOL?
+- **Custody.** Who can produce a signature.
+- **Platforms.** Web, React Native, and native mobile.
+- **Pricing meter.** Wallets, monthly active users, or signatures.
+
+## Solana embedded wallets compared
+
+<table>
+<thead>
+<tr>
+<th>Provider</th>
+<th>Solana support (vendor docs)</th>
+<th>Fees</th>
+<th>Key / custody model</th>
+<th>Pricing</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/embedded-solana-wallet">Cavos</a></td>
+<td>Native Ed25519 system account on devnet and mainnet. <code>wallet.execute</code> for transfers, allowlisted <code>wallet.executeInstructions</code>.</td>
+<td>Relayer as fee payer, or the fee settled in a held token such as USDC.</td>
+<td>Hardware-isolated, non-custodial. Keys never leave the device in plaintext and never sign on Cavos servers.</td>
+<td>Free up to 1,000 wallets. Essential $59/mo. Complete $139/mo.</td>
+</tr>
+<tr>
+<td><a href="https://docs.privy.io/wallets/overview/chains">Privy</a></td>
+<td>Tier 3: Privy signs, broadcasts, and tracks Solana transactions.</td>
+<td>Gas sponsorship available on Tier 3 chains.</td>
+<td>TEE key infrastructure. Non-custodial embedded wallets; optional custodial wallets.</td>
+<td><a href="https://www.privy.io/pricing">privy.io/pricing</a></td>
+</tr>
+<tr>
+<td><a href="https://www.dynamic.xyz/docs/embedded-wallets/chains/overview">Dynamic</a></td>
+<td>Tier 1: send and sign on web, React Native, Swift, Kotlin, and Flutter.</td>
+<td>Gasless listed as supported.</td>
+<td>TSS-MPC embedded wallets.</td>
+<td><a href="https://www.dynamic.xyz/pricing">dynamic.xyz/pricing</a></td>
+</tr>
+<tr>
+<td><a href="https://docs.turnkey.com/networks/overview">Turnkey</a></td>
+<td>SVM at its highest tier: SDK construction, signing, transaction parsing, and policies.</td>
+<td>See Turnkey docs.</td>
+<td>Keys decrypt only in AWS Nitro Enclaves. Custody depends on who holds the authorizing credentials.</td>
+<td><a href="https://www.turnkey.com/pricing">turnkey.com/pricing</a></td>
+</tr>
+<tr>
+<td><a href="https://docs.magic.link/embedded-wallets/blockchains/non-evm/solana">Magic</a></td>
+<td><code>@magic-ext/solana</code> extension for the Magic SDK.</td>
+<td>See Magic docs.</td>
+<td>Non-custodial embedded wallets on a TEE key-management system.</td>
+<td><a href="https://magic.link/pricing">magic.link/pricing</a></td>
+</tr>
+<tr>
+<td><a href="https://docs.metamask.io/embedded-wallets/connect-blockchain/solana/">MetaMask Embedded Wallets (Web3Auth)</a></td>
+<td>Solana integration in the Embedded Wallets SDKs.</td>
+<td>See MetaMask docs.</td>
+<td>MPC with threshold signatures.</td>
+<td><a href="https://web3auth.io/pricing.html">web3auth.io/pricing</a></td>
+</tr>
+<tr>
+<td><a href="https://docs.getpara.com/v2/react/guides/web3-operations/solana/setup-libraries">Para</a></td>
+<td>Solana wallets with a setup guide for Solana libraries.</td>
+<td>See Para docs.</td>
+<td>MPC split between the user's device and Para infrastructure.</td>
+<td><a href="https://www.getpara.com/pricing">getpara.com/pricing</a></td>
+</tr>
+<tr>
+<td><a href="https://docs.crossmint.com/wallets/overview">Crossmint</a></td>
+<td>Solana in the wallets API alongside EVM and Stellar.</td>
+<td>Gas sponsorship listed in the wallets API.</td>
+<td>Smart wallets with operational signers and recovery methods.</td>
+<td><a href="https://www.crossmint.com/pricing">crossmint.com/pricing</a></td>
+</tr>
+</tbody>
+</table>
+
+"See docs" means the vendor page did not state the detail clearly enough to summarize. Recheck tiers and prices before you commit.
+
+## When each one fits
+
+- **Cavos** fits consumer Solana apps that want device-held keys, sponsored or token-paid fees, and the same SDK on Stellar and Starknet. It does not cover EVM.
+- **Privy** fits teams that want a finished auth plus wallet product with managed sending on Solana and EVM.
+- **Dynamic** fits apps that mix embedded and external wallets across many chains.
+- **Turnkey** fits teams building their own wallet UX or server-side flows with strict signing policies.
+- **Magic**, **MetaMask Embedded Wallets**, **Para**, and **Crossmint** fit teams already on those platforms for other chains or products.
+
+## Where Cavos stands on Solana
+
+Cavos is a non-custodial embedded wallet for Starknet, Solana and Stellar. On Solana it creates a native Ed25519 system account whose key is derived on the device, with Gas Sponsorship in Any Token through a relayer. Read the [Solana wallet page](/embedded-solana-wallet), the [custody model](/custody), [pricing](/pricing), and the [quickstart](https://docs.cavos.xyz/docs/quickstart).
+
+Also see the [best embedded wallets for Stellar](/blog/best-embedded-wallets-stellar) and [for Starknet](/blog/best-embedded-wallets-starknet).

@@ -300,7 +300,7 @@ Hello
   })
 
   it('keeps the indexable marketing URLs including the React integration guide', () => {
-    assert.equal(entries.length, 39)
+    assert.equal(entries.length, 42)
     assert.ok(
       urls.includes(`${MARKETING_ORIGIN}/blog/how-to-add-an-embedded-wallet`),
     )
@@ -331,6 +331,9 @@ Hello
     )
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/alchemy-vs-privy`))
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/cavos-kit-0-5-0`))
+    for (const slug of ['best-embedded-wallets-stellar', 'best-embedded-wallets-solana', 'best-embedded-wallets-starknet']) {
+      assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/${slug}`))
+    }
     assert.equal(
       urls.includes(`${MARKETING_ORIGIN}/blog/v1-1-9-sdk-security`),
       false,

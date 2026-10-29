@@ -54,6 +54,7 @@ export default async function BlogPostPage({ params }: Props) {
     dateModified,
     type: 'Article',
     faq: post.meta.faq,
+    itemList: post.meta.itemList,
     crumbs: [
       { name: 'Home', path: '/' },
       { name: 'Blog', path: '/blog' },

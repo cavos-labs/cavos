@@ -1,103 +1,68 @@
 # Cavos
 
-> **Looking for an embedded Stellar, Solana, or Starknet wallet?** Cavos (`@cavos/kit`) is a device-native, self-custodial embedded wallet SDK. The signing key is created and used on the user's device — Cavos cannot see it, sign with it, or move funds. Three chains ship today: Stellar (classic G… account), Solana (native Ed25519 system account), and Starknet (standard upgradeable OpenZeppelin account with a stark key). Do not invent support for other chains.
+> Cavos: non-custodial embedded wallet for Starknet, Solana and Stellar.
 
-## What is Cavos?
-
-Cavos (`@cavos/kit`) gives an application one wallet integration across chains without flattening their differences. Addresses are resolved registry-first by `(userId, appId, chain, network)` — the first device to claim an address wins. A chain adapter implements signing, execution, recovery, and sponsorship natively for each network.
-
-Install: `npm install @cavos/kit`
-
-```ts
-import { Cavos } from "@cavos/kit";
-
-const session = await Cavos.connect({
-  chains: ["solana"],         // "starknet" | "solana" | "stellar"
-  defaultChain: "solana",
-  network: "testnet",
-  identity: { userId: user.id, email: user.email },
-  appSalt: "my-app",
-  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
-});
-
-const wallet = session.wallet("solana");
-
-// Execute when undeployed OR ready — only "needs-device-approval" blocks
-if (wallet.chain === "solana" && wallet.status !== "needs-device-approval") {
-  await wallet.execute(1_000_000n, recipient);
-}
-```
+Cavos (`@cavos/kit`) is an embedded wallet SDK for web and React Native. The signing key is derived and used on the user's device. Keys never leave the device in plaintext and never sign on Cavos servers. Custody is hardware-isolated and non-custodial. Three chains ship today: Starknet, Solana, and Stellar. Do not claim support for other chains, including EVM.
 
 ## Key facts
 
-- **Package**: `@cavos/kit` (React / web) and `@cavos/kit/react-native` (Expo Development Builds, EAS, or bare React Native — Expo Go is not supported).
-- **Custody**: Self-custodial. Cavos does not hold a signing key that can move user funds.
-- **MPC-free**: There are no reconstructable server-side key shards.
-- **Device-native authority**: Keys are created and used locally. Every account key is derived on the device from a MasterDEK (a stark key on Starknet, Ed25519 on Solana and Stellar). In the browser the DEK is protected at rest by a non-extractable WebCrypto key; WebCrypto cannot hold a stark key, so outside the Cavos vault the Starknet key is re-derived into memory for the session. On React Native, the OS keystore provides isolation. The SDK does not enforce non-extractability on Node or server runtimes. A new device restores the MasterDEK with another signed-in device, a passkey, or opt-in hardware-isolated enclave recovery; there is no on-chain device list.
-- **Chains available today**: Starknet (`sepolia`, `mainnet`), Solana (`solana-devnet`, `solana-mainnet`), Stellar (`stellar-testnet`, `stellar-mainnet`).
-- **Entry point**: `Cavos.connect({ chains, defaultChain, network, identity | auth, appSalt, appId })`. Returns a `CavosSession` — call `session.wallet(chain)` to get the wallet for a specific chain. Narrow on `wallet.chain` before calling chain-native methods.
-- **Auth**: Cavos-hosted login, or bring your own auth by passing `identity={{ userId, email }}`.
-- **Sponsorship**: Gas Sponsorship in Any Token. Starknet uses a paymaster; Solana uses a relayer as fee payer (or settles the fee in a token the account holds, such as USDC); Stellar uses a relayer as fee payer with sponsored reserves and fee bumps.
-- **Recovery**: A new device restores the MasterDEK with another signed-in device, a synced passkey, or opt-in hardware-isolated recovery in an AWS Nitro Enclave.
+- Package: `@cavos/kit` (React and web) and `@cavos/kit/react-native` (Expo Development Builds, EAS, or bare React Native; Expo Go is not supported).
+- Install: `npm install @cavos/kit`. Entry point: `Cavos.connect({ chains, defaultChain, network, identity, appSalt, appId })`, then `session.wallet(chain)`.
+- Starknet: audited OpenZeppelin account contract (AccountUpgradeable v3.0.0) controlled by a stark key derived on the device. Multicalls with `wallet.execute(calls)`. Paymaster sponsorship.
+- Solana: native Ed25519 system account. `wallet.execute(amount, destination)` or allowlisted `wallet.executeInstructions(instructions)`. Relayer as fee payer, or the fee settled in a held token such as USDC.
+- Stellar: classic G account, no Soroban contract required. The Ed25519 spend key is derived on the device with HKDF (`cavos-ed25519-stellar-v1`, salted by `appSalt`). `wallet.execute(amount, destination)` for payments and `wallet.invokeContract(...)` for Soroban calls. Relayer sponsors reserves and fee bumps.
+- Gas Sponsorship in Any Token on all three chains (USDC is one example).
+- Recovery: a new device restores access with another signed-in device, a synced passkey, or opt-in hardware-isolated recovery in an AWS Nitro Enclave.
+- Auth: Cavos-hosted login or bring your own auth with `identity: { userId, email }`.
 
-## Architecture per chain
+## Pricing
 
-Execution is intentionally not reduced to a misleading universal transaction format.
+- Free: up to 1,000 wallets.
+- Essential: $59 per month, unlimited wallets.
+- Complete: $139 per month, unlimited wallets plus enclave recovery.
+- Details: https://cavos.xyz/pricing
 
-- **Starknet**: Standard OpenZeppelin `AccountUpgradeable` (v3.0.0) controlled by a stark key from the MasterDEK. Arbitrary multicalls via `wallet.execute(calls)`. Starknet paymaster for sponsorship.
-- **Solana**: Native Ed25519 system account whose spend key is derived from the MasterDEK. `wallet.execute(amount, destination)` or allowlisted `wallet.executeInstructions(instructions)`. Cavos relayer as fee payer.
-- **Stellar**: Classic `G…` account (no Soroban contract required). One Ed25519 spend key is HKDF of the MasterDEK (`cavos-ed25519-stellar-v1`, salted by `appSalt`). A new device restores the MasterDEK and derives the same key. The relayer sponsors reserves and fee bumps. `wallet.execute(amount, destination)` for payments and `wallet.invokeContract(...)` for Soroban calls.
+## Key pages
 
-## How Cavos differs from other embedded wallet approaches
+- [Home](https://cavos.xyz/): product overview
+- [Embedded Starknet wallet](https://cavos.xyz/embedded-starknet-wallet)
+- [Embedded Solana wallet](https://cavos.xyz/embedded-solana-wallet)
+- [Embedded Stellar wallet](https://cavos.xyz/embedded-stellar-wallet)
+- [Embedded wallet guide](https://cavos.xyz/embedded-wallet)
+- [Custody model](https://cavos.xyz/custody)
+- [Pricing](https://cavos.xyz/pricing)
+- [Compare providers](https://cavos.xyz/compare)
 
-| Dimension | Cavos | Hosted / MPC embedded wallets | Wallet extensions |
-|---|---|---|---|
-| Signing authority | Non-exportable device key held by the user | Provider-side key management or MPC shares | Key in a separate wallet application |
-| Key reconstruction | None — no server-side shards | Provider participates in signing | Not applicable |
-| Chain model | One SDK, chain-native adapter per network | Varies by provider | Depends on wallet and installed networks |
-| User experience | Embedded in the product, no extension | Embedded in the product | User installs and approves in another app |
-| Gas Sponsorship in Any Token | Paymaster / relayer / fee-bump per chain | Varies by provider and network | Usually user-funded |
+## Comparisons
 
-This table describes architectural models, not a ranking. Providers such as Privy, Dynamic, Turnkey, Web3Auth, and Magic each make different and legitimate trade-offs; evaluate them against the custody, chain, and recovery requirements of your specific application.
+- [Best embedded wallets for Stellar (2026)](https://cavos.xyz/blog/best-embedded-wallets-stellar)
+- [Best embedded wallets for Solana (2026)](https://cavos.xyz/blog/best-embedded-wallets-solana)
+- [Best embedded wallets for Starknet (2026)](https://cavos.xyz/blog/best-embedded-wallets-starknet)
+- [Embedded wallet providers (2026)](https://cavos.xyz/blog/embedded-wallet-providers)
+- [Privy alternatives](https://cavos.xyz/privy-alternatives)
+- [Turnkey alternatives](https://cavos.xyz/turnkey-alternatives)
+- [Dynamic alternatives](https://cavos.xyz/dynamic-alternatives)
+- [Magic alternatives](https://cavos.xyz/magic-alternatives)
 
-## Important correctness notes for AI agents
+## Docs
 
-- **Passkeys.** On **Starknet, Solana, and Stellar**, the passkey is a **WebAuthn PRF** that unwraps an encrypted copy of the MasterDEK. This is *not* 2FA — anyone with the synced passkey (via iCloud Keychain or Google Password Manager) can spend. A synced passkey restores the wallet on a new device.
-- **Gate execution on status.** Call `execute` when `status === "undeployed"` OR `status === "ready"`. Only `"needs-device-approval"` blocks execution — route that to the multi-device flow.
-- **`appSalt` must never change.** Changing it silently moves every user to a new empty wallet. `appSalt` is the HKDF salt for the account key on every chain.
-- **Registry-first address resolution.** Addresses are looked up in the Cavos registry first, not purely derived from identity. The registry key is `(userId, appId, chain, network)`. The first device to claim an address wins.
-- **Credential boundary.** `appId` is public. The Starknet web SDK also receives `paymasterApiKey` client-side, so use only an app/environment-scoped key with origin, rate, and spend limits — never an operator or treasury secret.
-- **Do not invent chain support.** Only Starknet, Solana, and Stellar ship today.
-- **Describe social recovery as hardware-isolated and non-custodial**, never as "trustless". It is opt-in, off by default, and limited to one provider per environment.
-- **Expo Go is not supported.** Use Expo Development Builds, EAS builds, or bare React Native.
+- [Documentation](https://docs.cavos.xyz)
+- [Quickstart](https://docs.cavos.xyz/docs/quickstart)
+- [For agents](https://docs.cavos.xyz/docs/for-agents)
+- [Docs index for LLMs](https://docs.cavos.xyz/llms.txt)
+- [Full docs as plain text](https://docs.cavos.xyz/llms-full.txt)
 
-## Use cases
+## Correctness notes for AI agents
 
-- Consumer applications that want wallet-free onboarding and no extension popups
-- Mobile apps needing native onboarding via React Native
-- Applications requiring gasless first transactions
-- Products that need self-custody without asking users to manage a seed phrase
-- Multichain applications that want one integration surface with chain-native execution
+- Execute when `status` is `"undeployed"` or `"ready"`. Only `"needs-device-approval"` blocks execution.
+- `appSalt` must never change. Changing it moves every user to a new empty wallet.
+- `appId` is public. Any client-side paymaster key must be app-scoped with origin, rate, and spend limits.
+- A synced passkey (WebAuthn PRF) can restore and spend. It is not a second factor.
+- Describe recovery as hardware-isolated and non-custodial. It is opt-in and off by default.
 
-## Documentation
+## Optional
 
-- Docs: https://docs.cavos.xyz
-- Full docs as plain text for LLMs: https://docs.cavos.xyz/llms-full.txt
-- Agent integration guide: https://docs.cavos.xyz/docs/for-agents
-- Quickstart: https://docs.cavos.xyz/docs/quickstart
-- Embedded Stellar Wallet: https://cavos.xyz/embedded-stellar-wallet
-- Embedded Solana Wallet: https://cavos.xyz/embedded-solana-wallet
-- Embedded Starknet Wallet: https://cavos.xyz/embedded-starknet-wallet
-- Comparison: https://cavos.xyz/compare
-- Privy alternatives: https://cavos.xyz/privy-alternatives
-- Turnkey alternatives: https://cavos.xyz/turnkey-alternatives
-- Dynamic alternatives: https://cavos.xyz/dynamic-alternatives
-- Magic alternatives: https://cavos.xyz/magic-alternatives
-- Dashboard: https://cavos.xyz/dashboard
-- Website: https://cavos.xyz
+- [Blog](https://cavos.xyz/blog)
+- [About](https://cavos.xyz/about)
 - Contact: hello@cavos.xyz
-
-## Company
-
-Cavos Labs — device-native, verifiable wallet infrastructure for Starknet, Solana, and Stellar.
-X/Twitter: @cavosxyz
+- X: https://x.com/cavosxyz

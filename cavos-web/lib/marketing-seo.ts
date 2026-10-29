@@ -217,6 +217,7 @@ export function blogPostJsonLd(input: {
   crumbs: BreadcrumbCrumb[]
   type?: 'BlogPosting' | 'Article'
   faq?: GuideFaqItem[]
+  itemList?: { name: string; url: string }[]
 }) {
   const url = pageUrl(input.path)
   const datePublished = input.datePublished
@@ -261,6 +262,22 @@ export function blogPostJsonLd(input: {
           '@type': 'Answer',
           text: item.answer,
         },
+      })),
+    })
+  }
+
+  if (input.itemList && input.itemList.length > 0) {
+    graph.push({
+      '@type': 'ItemList',
+      '@id': `${url}#itemlist`,
+      name: input.title,
+      itemListOrder: 'https://schema.org/ItemListUnordered',
+      numberOfItems: input.itemList.length,
+      itemListElement: input.itemList.map((item, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: item.name,
+        url: item.url.startsWith('/') ? pageUrl(item.url) : item.url,
       })),
     })
   }
