@@ -11,8 +11,8 @@ model.
 
 | Chain | Transaction authority | On-chain verification | Sponsorship |
 |---|---|---|---|
-| **Starknet** | Native stark key (HKDF of MasterDEK) | OpenZeppelin account validates the stark signature | Paymaster-sponsored deployment and execution |
-| **Solana** | Native Ed25519 spend key (HKDF of MasterDEK) | Solana verifies the user's signature on the transaction message | Relayer co-signs as fee payer |
+| **Starknet** | Native stark key (HKDF of MasterDEK) | OpenZeppelin account validates the stark signature | Paymaster-sponsored deployment and execution; `fee: 'self'` after deploy |
+| **Solana** | Native Ed25519 spend key (HKDF of MasterDEK) | Solana verifies the user's signature on the transaction message | The account pays by default; the relayer co-signs as fee payer with `fee: 'sponsored'`, or the fee is settled in a held token |
 | **Stellar** | Native Ed25519 control key (HKDF of MasterDEK) | Classic-account signature and Soroban authorization | Sponsored reserves and optional fee-bump |
 
 The backend can transport, sponsor, or submit a transaction. It does not hold
@@ -51,15 +51,15 @@ the `fee: 'self'` path after deploy.
 
 ## Solana
 
-The user's Ed25519 key signs the Solana transaction message. The relayer may
-co-sign as fee payer because paying the fee does not grant authority over the
+The user's Ed25519 key signs the Solana transaction message. With `fee: 'sponsored'` the relayer
+co-signs as fee payer because paying the fee does not grant authority over the
 source account. Sponsored extra program ids are restricted by the app's
 allowlist. See [Solana](/docs/solana).
 
 ## Stellar
 
-Stellar uses its native ed25519 account model. With enclave or passkey, the
-control key is HKDF of the MasterDEK (same wrap as Solana).
+Stellar uses its native ed25519 account model. The control key is HKDF of the
+MasterDEK (same wrap as Solana).
 
 On web, the control key is a non-extractable WebCrypto Ed25519 key held by the
 [Cavos vault](/docs/vault). Your page cannot read it, and what it signs past

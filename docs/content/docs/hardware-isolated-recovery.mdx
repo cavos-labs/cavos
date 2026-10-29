@@ -368,7 +368,7 @@ instead of only Cavos's.
 ```tsx title="app/secure-account.tsx"
 const { submitSocialRecoveryToken } = useCavos();
 
-// Enrols when this device is ready and recovers when it is not — the wallet's
+// Enrols when this device is ready and recovers when it is not; the wallet's
 // state decides, so the same call serves both screens.
 async function useRecovery() {
   const idToken = await getGoogleIdTokenFromYourAuth();

@@ -103,7 +103,7 @@ adapter-specific validation and sponsorship rules.
 | Adapter | Required configuration | Sponsored execution |
 |---|---|---|
 | **Starknet** | App ID, network, app salt, identity, `paymasterApiKey` | Paymaster sponsors deploy and execute. |
-| **Solana** | App ID, network, app salt, identity | Hosted relayer becomes fee payer; arbitrary programs are allowlisted per app. |
+| **Solana** | App ID, network, app salt, identity | The account pays its own fee by default; with `fee: 'sponsored'` the hosted relayer is fee payer, and arbitrary programs are allowlisted per app. |
 | **Stellar** | App ID, network, app salt, identity | Hosted relayer can sponsor reserves and fee-bump submission. |
 
 Use the dedicated [Starknet](/docs/starknet), [Solana](/docs/solana), or
@@ -153,7 +153,7 @@ console.log(session.chainStatus("solana"));   // "undeployed" | "ready" | "needs
 console.log(session.chainStatus("stellar"));
 console.log(session.chainAddress("stellar")); // G… address
 
-// Execute on Stellar (works even if undeployed — first execute creates the account)
+// Execute on Stellar (works even if undeployed: first execute creates the account)
 if (stellar.chain === "stellar" && stellar.status !== "needs-device-approval") {
   await stellar.execute(10_000_000n, "GDEST...");
 }

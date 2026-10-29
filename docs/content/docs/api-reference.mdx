@@ -35,7 +35,7 @@ interface ConnectOptions {
   chain?: Chain;                          // treated as chains: [chain], defaultChain: chain
 
   network: "testnet" | "mainnet";         // resolves to each chain's concrete network
-  appSalt: string;                        // HKDF salt for the account key — never change it
+  appSalt: string;                        // HKDF salt for the account key; never change it
   auth?: AuthProvider;                    // pass `auth` OR `identity`
   identity?: Identity;
   appId?: string;                         // hosted registry + relayers

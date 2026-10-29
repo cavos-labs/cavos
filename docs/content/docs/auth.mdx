@@ -90,7 +90,7 @@ window.location.href = url;             // or auth.getAppleOAuthUrl()
 
 // 2. On your callback route, exchange the result for an identity.
 //    The callback carries a short-lived one-time code (`?cavos_auth_code=…`)
-//    that is redeemed server-side — identity material never sits in the URL.
+//    that is redeemed server-side; identity material never sits in the URL.
 const identity = await auth.handleCallback(window.location.search);
 
 // 3. Connect with the resolved identity

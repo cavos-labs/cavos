@@ -45,7 +45,7 @@ Three layers keep Cavos portable:
 Curves differ across ecosystems, and each adapter resolves that:
 
 - **Starknet**: the standard upgradeable OpenZeppelin account, validating a stark key derived from the MasterDEK.
-- **Solana**: native Ed25519 system account. The user key signs the Solana message; the relayer is fee payer only.
+- **Solana**: native Ed25519 system account. The user key signs the Solana message; by default the account pays its own fee, and the relayer, when used, is fee payer only.
 - **Stellar**: classic `G…`. The address is HKDF of the same MasterDEK as Solana.
 
 ## Writing every-chain application code
@@ -73,7 +73,7 @@ const wallet = session.wallet("starknet");
 console.log(wallet.address);   // address is available immediately
 console.log(wallet.status);    // "undeployed" | "ready" | "needs-device-approval"
 
-// execute() keeps each chain's native signature — narrow on `chain`:
+// execute() keeps each chain's native signature, so narrow on `chain`:
 if (wallet.chain === "starknet" && wallet.status !== "needs-device-approval") {
   await wallet.execute(calls);                 // arbitrary Starknet calls
 } else if (wallet.chain === "solana" && wallet.status !== "needs-device-approval") {

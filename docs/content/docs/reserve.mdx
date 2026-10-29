@@ -17,7 +17,7 @@ import { Reserve } from "@cavos/reserve";
 const reserve = await Reserve.connect("testnet");
 // Mainnet: await Reserve.connect("mainnet")
 
-const USDC = "USDC:GCKUFD5KAAM6DRSLODK55OVECMB5IJ5NSFQYFTBZRPOTJASUKTBZXGS2"; // Cavos Testnet USDC — not Circle
+const USDC = "USDC:GCKUFD5KAAM6DRSLODK55OVECMB5IJ5NSFQYFTBZRPOTJASUKTBZXGS2"; // Cavos Testnet USDC, not Circle
 
 const { hash } = await reserve.pay(
   {
@@ -236,7 +236,7 @@ only against the quote the service just sealed proves nothing: a compromised
 server can make the two agree. `quote` therefore keeps the request **you**
 made, and `build` / `send` refuse anything that does not match it.
 
-That check needs three things the HTTP body used to omit:
+That check needs three things the quote response does not carry:
 
 - **`maxSend` / `maxSendStroops`**: the fee payment is not one of `ops`.
 - **the operations and fee token you asked for**: not the ones the payload

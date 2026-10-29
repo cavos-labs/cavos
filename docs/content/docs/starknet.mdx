@@ -34,7 +34,7 @@ const session = await Cavos.connect({
   chains: ["starknet"],
   defaultChain: "starknet",
   network: "testnet",                   // "testnet" (sepolia) | "mainnet"
-  appSalt: "my-app",                    // HKDF salt — never change it
+  appSalt: "my-app",                    // HKDF salt; never change it
   identity: {                           // from your login (see Authentication)
     userId: user.id,
     email: user.email,

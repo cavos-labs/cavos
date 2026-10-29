@@ -3,13 +3,13 @@ title: Recovery
 description: The ways a Cavos user regains access to their wallet after losing a device, and which ones to offer.
 ---
 
-A Cavos wallet is controlled by keys that live on the user's devices and never
-leave them. That is the point, and it is also the risk: **a device that is lost,
-wiped, or replaced takes its key with it.**
+A Cavos wallet is controlled by an account key that the user's device derives
+from a MasterDEK and keeps locally. That is the point, and it is also the risk:
+**a device that is lost, wiped, or replaced takes its local copy with it.**
 
 So recovery is the work of setting up a way back *before* it is needed, because
-none of these can be arranged after the fact. On Starknet, Solana, and native
-Stellar that way back is a copy of the MasterDEK the account key derives from.
+none of these can be arranged after the fact. On Starknet, Solana, and Stellar
+that way back is a copy of the MasterDEK the account key derives from.
 
 ## The paths
 
@@ -31,7 +31,7 @@ every native chain in the session. Signing up never asks for a passkey; call
 `enrollPasskeyDefault()` when you want one.
 
 **Add a way back from nothing.** On Starknet, Solana, and Stellar that is the
-enclave (sign in again) or a passkey the user added. Cavos wallets do not use
+enclave (sign in again) or a passkey the user added. New Cavos wallets do not use
 recovery codes.
 
 **Do not rely on multi-device alone**: there is no second on-chain signer on

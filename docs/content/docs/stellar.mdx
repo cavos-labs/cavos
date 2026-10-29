@@ -63,7 +63,7 @@ with no prompt.
 |--------|---------|--------------|
 | `undeployed` | Address resolved, no on-chain account yet | Yes: first execute creates + runs atomically |
 | `ready` | Account exists and this device can sign | Yes |
-| `needs-device-approval` | Account exists but this device not authorized | No: route to device approval |
+| `needs-device-approval` | The registry has an address, but this device holds no key | No: restore with enclave login or `approveDeviceWithPasskey()` |
 
 <Callout type="info">
 **Lazy deploy**: An `undeployed` wallet can sign messages and execute. The
@@ -200,7 +200,7 @@ import { TrustlessWorkEscrow, buildEscrowScVal } from "@cavos/kit";
 
 const escrow = new TrustlessWorkEscrow(wallet, escrowId);
 
-// Client funds the escrow (fund BEFORE any milestone change — the expected
+// Client funds the escrow (fund BEFORE any milestone change; the expected
 // struct must match stored state; rebuild it from the same EscrowInput):
 await escrow.fundEscrow(buildEscrowScVal(escrowInput), 2_000_000n);
 
@@ -210,7 +210,7 @@ await escrow.changeMilestoneStatus(0, "delivered");
 // Client approves:
 await escrow.approveMilestone(0);
 
-// Once every milestone is approved and the escrow is funded, release funds —
+// Once every milestone is approved and the escrow is funded, release funds:
 // pays the receiver, minus the Trustless Work + platform fees:
 await escrow.releaseFunds("G...TRUSTLESS_WORK");
 

@@ -1,6 +1,6 @@
 ---
 title: Solana
-description: "Use @cavos/kit on Solana: a native Ed25519 system account whose spend key is HKDF of a MasterDEK. The account pays its own fee, your relayer pays it, or the user pays in a token they hold."
+description: "Use @cavos/kit on Solana: a native Ed25519 system account whose spend key is HKDF of a MasterDEK. The account pays its own fee, the Cavos relayer pays it, or the user pays in a token they hold."
 ---
 
 Solana in `@cavos/kit` is a **native system account**. The address is an
@@ -22,8 +22,8 @@ instructions it signs.
 
 ## Connect
 
-Use `Cavos.connect` with `chains: ["solana"]`. An `appId` activates the
-relayer.
+Use `Cavos.connect` with `chains: ["solana"]`. An `appId` enables the Cavos
+relayer for `fee: 'sponsored'`.
 Connect resolves the address and unwraps the spend key on this device. It does
 **not** airdrop SOL and there is no `initialize` instruction.
 
@@ -34,7 +34,7 @@ const session = await Cavos.connect({
   chains: ["solana"],
   defaultChain: "solana",
   network: "testnet",                   // "testnet" (devnet) | "mainnet"
-  appSalt: "my-app",                    // HKDF salt — never change it
+  appSalt: "my-app",                    // HKDF salt; never change it
   identity: {
     userId: user.id,
     email: user.email,
@@ -79,14 +79,14 @@ covers the fee, never the balance.
 ## Execute a transfer
 
 `execute(amount, destination)` moves `amount` **lamports** from this system
-account. The user's Ed25519 key signs the Solana message; the relayer is fee
-payer.
+account. The user's Ed25519 key signs the Solana message. By default the
+account pays its own fee; see [Who pays the fee](#who-pays-the-fee).
 
 ```ts title="TypeScript"
 if (wallet.chain === "solana" && wallet.status !== "needs-device-approval") {
   const signature = await wallet.execute(
     1_000_000n,                          // 0.001 SOL, in lamports
-    recipientPublicKey,                  // base58
+    recipientAddress,                    // base58 string
   );
   console.log(signature);
 }
@@ -100,11 +100,12 @@ if (wallet.chain === "solana" && wallet.status !== "needs-device-approval") {
 normal signer (owner of ATAs, etc.), not a PDA that CPIs on the user's behalf.
 
 ```ts title="TypeScript"
+import { PublicKey } from "@solana/web3.js";
 import { createTransferInstruction, getAssociatedTokenAddress } from "@solana/spl-token";
 import type { InstructionData } from "@cavos/kit";
 
 const source = await getAssociatedTokenAddress(usdcMint, new PublicKey(wallet.address));
-const dest = await getAssociatedTokenAddress(usdcMint, recipientPublicKey);
+const dest = await getAssociatedTokenAddress(usdcMint, new PublicKey(recipientAddress));
 const ix = createTransferInstruction(source, dest, new PublicKey(wallet.address), amount);
 
 const instructions: InstructionData[] = [{
@@ -124,8 +125,8 @@ if (wallet.chain === "solana" && wallet.status !== "needs-device-approval") {
 
 <Callout type="warn">
 **Sponsorship is allowlisted.** The relayer only co-signs instructions whose
-program ids are in the app's **Solana program allowlist** (dashboard → Solana
-Programs) **plus** System, SPL Token, Token-2022, and Associated Token. A
+program ids are in the app's **Solana program allowlist** (dashboard → your app →
+**Programs**) **plus** System, SPL Token, Token-2022, and Associated Token. A
 1,000,000 CU cap also applies.
 </Callout>
 

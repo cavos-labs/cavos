@@ -26,7 +26,7 @@ The Cavos backend must not possess authority that can move user funds or enroll
 itself as a signer.
 
 - **Starknet:** the audited OpenZeppelin `AccountUpgradeable` v3.0.0, controlled by a stark key derived from the MasterDEK.
-- **Solana:** a native Ed25519 system account. The relayer is fee payer, never a spender.
+- **Solana:** a native Ed25519 system account. The account pays its own fee by default; the relayer can be fee payer (`fee: 'sponsored'`), never a spender.
 - **Stellar:** the classic account's Ed25519 control key (derived from the MasterDEK).
 
 Registries and recovery services coordinate public state or messages. Paymasters

@@ -14,7 +14,7 @@ An **organization** owns billing, team members, API keys, and the gas balance.
 Inside it you create **apps**; each app has a `development` and a `production`
 [environment](/docs/environments) from the moment it exists.
 
-Org-level sections: **Applications**, **Activity**, **Gas & usage**,
+Org-level sections: **Organizations**, **Applications**, **Activity**, **Gas**,
 **Webhooks**, **Team**, **API keys**, **Billing**, **Audit log**, **Settings**.
 
 Each app then has its own tabs:
@@ -22,16 +22,13 @@ Each app then has its own tabs:
 | Tab | What it is for |
 |---|---|
 | **Overview** | Health, recent traffic, and the app's `appId`. |
-| **Wallets** | Every wallet derived under this app, with its devices and transactions. |
-| **Devices & recovery** | Pending device-approval requests, enrolled factors, recovery state. |
+| **Wallets** | Every wallet registered under this app. A wallet's support view shows its authorized devices, pending recovery, and a logged reveal of the user's external id. |
 | **Activity** | The event stream (also the source of webhooks). |
-| **Sponsorship** | Gas funding and the relay decisions made for this app. |
-| **Authentication** | Providers, OAuth client IDs, callback URLs, social-recovery config. GitHub is configured per environment, not here. |
 | **Emails** | Templates for account verification and password reset. The magic link and OTP templates apply only to apps on the legacy `@cavos/react` SDK; `@cavos/kit` sign-in codes use a fixed design. |
 | **Programs** | The Solana program allowlist (see below). |
 | **Approvals** | What the [Cavos vault](/docs/vault) signs without asking: per-token limits and what happens over them. |
-| **Environments** | Per-environment origins, keys, social recovery, and an optional GitHub OAuth app. See [Authentication → GitHub](/docs/auth#bring-your-own-github-oauth-app). |
-| **Settings** | Name, logo, allowed web origins (the sites that may embed the [vault](/docs/vault)). |
+| **Environments** | Per-environment origins, keys, hardware-isolated social recovery, and an optional GitHub OAuth app. See [Authentication → GitHub](/docs/auth#bring-your-own-github-oauth-app). |
+| **Settings** | Name, logo, and allowed web origins (the sites that may embed the [vault](/docs/vault)). |
 
 <Callout type="info">
 `appSalt` is **not** a dashboard value: it lives in your code. It names the
@@ -78,11 +75,11 @@ Never ship a `cav_…` key to a browser or a mobile bundle.
 
 Gas is metered **per environment**, so test traffic never drains production. The
 Starknet gas tank is an on-chain balance read per organization; Solana and
-Stellar relayers are funded through the same **Gas & usage** section.
+Stellar relayers are funded from the same **Gas** section.
 
 When the balance runs out, sponsored operations are rejected rather than
-silently charged to the user: `relay.rejected` and `gas.balance_low` are
-webhook events for exactly this reason.
+silently charged to the user. Subscribe to the `relay.rejected` webhook to hear
+about it on Solana and Stellar.
 
 ## Solana program allowlist
 
@@ -100,16 +97,17 @@ time, not on-chain.
 ## Webhooks
 
 Signed operational events, delivered to one HTTPS endpoint, scoped to a single
-app **environment**. Event types:
+app **environment**. An endpoint created in the console is subscribed to every
+event type below:
 
 | Event | Fires when |
 |---|---|
-| `wallet.created` | A wallet was derived and deployed. |
-| `wallet.creation_failed` | Deployment failed. |
-| `device.addition_requested` | A new device asked to be authorized. |
-| `device.addition_approved` | The owner approved it. |
-| `relay.rejected` | The relayer refused to sponsor an operation. |
-| `gas.balance_low` | The environment's gas balance crossed its threshold. |
+| `wallet.created` | A new wallet was registered for a user (deployment happens later, on first execution). |
+| `wallet.creation_failed` | Registering the wallet failed. |
+| `relay.rejected` | The Solana or Stellar relayer refused to sponsor an operation. |
+| `device.addition_requested` | Selectable in the console, but not emitted: kit 0.5.0 has no on-chain device approval. |
+| `device.addition_approved` | Selectable in the console, but not emitted, for the same reason. |
+| `gas.balance_low` | Selectable in the console, but not emitted yet. Watch the **Gas** section instead. |
 
 Creating an endpoint returns a `whsec_…` signing secret **once**, and
 immediately delivers a `ping` event so you can confirm the route works.
