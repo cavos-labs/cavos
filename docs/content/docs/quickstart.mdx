@@ -12,7 +12,7 @@ the user's operation.
 ## 1. Install
 
 ```bash title="Terminal"
-npm install @cavos/kit
+npm install @cavos/kit@^0.5.0
 ```
 
 Create an app in the [Cavos dashboard](https://cavos.xyz/dashboard) and copy its
@@ -58,9 +58,9 @@ methods. `session.wallet("solana")` returns the Solana wallet;
 
 | Status | Meaning | Can execute? |
 |--------|---------|--------------|
-| `undeployed` | Address derived but no on-chain account yet. | Yes — first execute deploys + runs atomically. |
+| `undeployed` | Address derived but no on-chain account yet. | Yes: first execute deploys + runs atomically. |
 | `ready` | This device holds the account key. | Yes |
-| `needs-device-approval` | The wallet exists but this device holds no key. | No — route to [device approval](#handle-device-approval). |
+| `needs-device-approval` | The wallet exists but this device holds no key. | No: route to [device approval](#5-handle-device-approval). |
 
 <Callout type="info">
 **Lazy deploy**: An `undeployed` wallet can sign messages (`signMessage`) and
@@ -91,7 +91,7 @@ if (wallet.chain === "starknet") {
 ```
 
 When the account is `undeployed`, `execute` deploys it first, then runs the
-operation — atomically, in a single sponsored transaction. After the first
+operation atomically, in a single sponsored transaction. After the first
 execute, status becomes `ready`.
 
 For arbitrary execution, Starknet accepts multicalls, Solana exposes

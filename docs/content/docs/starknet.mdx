@@ -1,11 +1,11 @@
 ---
 title: Starknet
-description: Use @cavos/kit on Starknet — a native OpenZeppelin account whose stark key is HKDF of a MasterDEK, with gasless execution via the Cavos paymaster.
+description: Use @cavos/kit on Starknet: a native OpenZeppelin account whose stark key is HKDF of a MasterDEK, with gasless execution via the Cavos paymaster.
 ---
 
 Starknet in `@cavos/kit` is a **native account**, the same model as Solana and
 Stellar. The account is the standard, upgradeable OpenZeppelin
-`AccountUpgradeable` (v3.0.0) controlled by a stark key — the same shape as
+`AccountUpgradeable` (v3.0.0) controlled by a stark key, the same shape as
 Argent or Braavos, not a custom contract. This is the Starknet adapter for the
 Cavos [embedded wallet](https://cavos.xyz/embedded-wallet). The same account
 model is described for a product audience on the
@@ -22,7 +22,7 @@ gas.
 
 ## Connect
 
-`Cavos.connect` with `chain: "starknet"` (or `chains: ["starknet"]`) does
+`Cavos.connect` with `chains: ["starknet"]` does
 everything: authenticate, derive the deterministic address, unwrap the stark
 key on this device, and wire up the gas sponsor. **Connect never deploys**. The
 account is created lazily on the first `execute`.
@@ -44,13 +44,14 @@ const session = await Cavos.connect({
 });
 
 const wallet = session.wallet("starknet");
+if (wallet.chain !== "starknet") throw new Error("expected a Starknet wallet");
 console.log(wallet.address);            // deterministic address
 console.log(wallet.status);             // "undeployed" | "ready" | "needs-device-approval"
 ```
 
-`wallet.chain` narrows to `"starknet"`. The instance members (`address`,
-`status`, `execute`, `signMessage`) are documented in the
-[API reference](/docs/api-reference).
+`session.wallet()` returns the `CavosWallet` union. The `wallet.chain` check
+narrows it, so the snippets below can call Starknet methods directly. The
+instance members are documented in the [API reference](/docs/api-reference).
 
 `appSalt` is part of the HKDF. Changing it derives a different key and address
 that will not match the registry row.
@@ -59,9 +60,9 @@ that will not match the registry row.
 
 | Status | Meaning | Can execute? |
 |--------|---------|--------------|
-| `undeployed` | Address derived, no on-chain account yet | Yes — first execute deploys + runs atomically |
+| `undeployed` | Address derived, no on-chain account yet | Yes: first execute deploys + runs atomically |
 | `ready` | Account deployed and this device holds the stark key | Yes |
-| `needs-device-approval` | The registry has an address, but this device holds no key | No — restore with enclave login or `approveDeviceWithPasskey()` |
+| `needs-device-approval` | The registry has an address, but this device holds no key | No: restore with enclave login or `approveDeviceWithPasskey()` |
 
 <Callout type="info">
 **Lazy deploy**: An `undeployed` wallet can sign messages and execute. The
@@ -88,7 +89,7 @@ if (wallet.chain === "starknet" && wallet.status !== "needs-device-approval") {
 ```
 
 When the account is `undeployed`, this call deploys the account first, then
-executes the calls — atomically in a single paymaster-sponsored transaction.
+executes the calls: atomically in a single paymaster-sponsored transaction.
 
 <Callout type="info">
 If `status` is `"needs-device-approval"`, this device is new to an existing
@@ -99,7 +100,7 @@ the user added. See [Multi-device](/docs/multi-device).
 
 ## How signing works
 
-The stark key is derived from the MasterDEK and signs silently — there is no
+The stark key is derived from the MasterDEK and signs silently: there is no
 user interaction. When you call `execute`:
 
 1. starknet.js computes the v3 transaction hash.
@@ -125,7 +126,7 @@ would no longer be controlled by the DEK.
 
 `execute` routes through the **Cavos paymaster** (SNIP-29, with SRC-9 outside
 execution), so the user pays no gas. Both **account deployment** (first execute)
-and **every subsequent execution** are sponsored — the user never needs ETH or
+and **every subsequent execution** are sponsored: the user never needs ETH or
 STRK.
 
 After the account is deployed, `fee: 'self'` pays from the account's own
@@ -217,7 +218,7 @@ declared on mainnet and Sepolia.
 
 - ✅ Native stark key from the MasterDEK, deterministic address.
 - ✅ Standard, upgradeable OpenZeppelin account.
-- ✅ Lazy deploy — first execute creates the account atomically.
+- ✅ Lazy deploy: first execute creates the account atomically.
 - ✅ Gasless execute + deployment via the Cavos paymaster; `fee: 'self'` after deploy.
 - ✅ Sign messages off-chain (SNIP-12) while undeployed.
 - ✅ Enclave DEK wrap and [passkey](/docs/passkeys) restore on a new device.

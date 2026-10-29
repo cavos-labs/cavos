@@ -3,8 +3,8 @@ title: Reserve
 description: Pay Stellar reserves and fees in a held token with @cavos/reserve. Classic G… accounts. Any wallet.
 ---
 
-`@cavos/reserve` sponsors the two XLM costs Stellar charges — **reserves**
-(locked) and **fees** (spent) — and collects both in a token the user already
+`@cavos/reserve` sponsors the two XLM costs Stellar charges, **reserves**
+(locked) and **fees** (spent), and collects both in a token the user already
 holds. Classic `G…` accounts only. No Cavos app, no API key, no wallet lock-in.
 
 ```bash title="Terminal"
@@ -21,24 +21,25 @@ const USDC = "USDC:GCKUFD5KAAM6DRSLODK55OVECMB5IJ5NSFQYFTBZRPOTJASUKTBZXGS2"; //
 
 const { hash } = await reserve.pay(
   {
-    source: address,
+    source: address,       // the paying G… account
     destination,
     amount: "10",
     token: USDC,
     maxSend: "0.05",
   },
-  (xdr, { networkPassphrase }) =>
-    wallet.signTransaction(xdr, { networkPassphrase }),
+  // Signer: (xdr, { networkPassphrase }) => Promise<signed XDR>.
+  // With a Cavos Stellar wallet: (xdr) => wallet.signXdr(xdr)
+  signer,
 );
 ```
 
-The signer is whatever the wallet already exposes — Freighter, Albedo, a
+The signer is whatever the wallet already exposes: Freighter, Albedo, a
 `Keypair`, or a Cavos Stellar wallet's `signXdr`. This package is not specific
 to any wallet or account type: any `G…` address works.
 
 Later snippets reuse `USDC` as that testnet issuer. Circle's **mainnet** USDC
 is `USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN`. Always take
-the live string from `tokens()` — an asset code is not an identity.
+the live string from `tokens()`: an asset code is not an identity.
 
 <Callout type="info">
 **Hosted service.** `new Reserve("testnet")` pins
@@ -59,7 +60,7 @@ the user holding lumens so the account can exist.
 
 The user pays for both in the same transaction: a `PathPaymentStrictReceive`
 buys exactly the XLM owed through the SDEX / liquidity pools. There is no
-oracle — the rate is the route the payment itself takes. If liquidity moves
+oracle: the rate is the route the payment itself takes. If liquidity moves
 past the quoted `sendMax`, the inner transaction fails and the user is charged
 nothing.
 
@@ -74,13 +75,13 @@ never holds lumens because Cavos pays.
 | | `@cavos/kit` Stellar relayer | `@cavos/reserve` |
 |---|---|---|
 | Who pays | Cavos, in XLM | The user, in an allowlisted token |
-| Who it is for | Embedded Cavos wallets | Any `G…` — Freighter, kit, a raw keypair |
+| Who it is for | Embedded Cavos wallets | Any `G…`: Freighter, kit, a raw keypair |
 | What it sponsors | Kit `execute`, trustlines, optional fee-bumps | Classic ops on an allowlist. No Soroban |
 | Identity | Cavos `appId` + registry | None. Paste the URL and it works |
 
 Use **kit's relayer** when you want gasless embedded wallets and Cavos covers
 XLM. Use **Reserve** when the user should pay those same costs in USDC (or
-another accepted asset) — including a Freighter account, or a kit wallet you
+another accepted asset), including a Freighter account, or a kit wallet you
 do **not** send through `wallet.execute`.
 
 They compose. A kit Stellar wallet can sign a Reserve transaction with
@@ -123,8 +124,8 @@ comes back cannot be recovered (`RevokeSponsorship` fails with
 `REVOKE_SPONSORSHIP_LOW_RESERVE`).
 
 Stellar's mechanism for paying someone who has no account yet is a claimable
-balance. The recipient's first transaction does everything at once — create,
-trust, claim — and the reserves (1.5 XLM for an account with one trustline)
+balance. The recipient's first transaction does everything at once (create,
+trust, claim), and the reserves (1.5 XLM for an account with one trustline)
 plus the fees come out of the claimed funds:
 
 ```ts title="TypeScript"
@@ -237,10 +238,10 @@ made, and `build` / `send` refuse anything that does not match it.
 
 That check needs three things the HTTP body used to omit:
 
-- **`maxSend` / `maxSendStroops`** — the fee payment is not one of `ops`.
-- **the operations and fee token you asked for** — not the ones the payload
+- **`maxSend` / `maxSendStroops`**: the fee payment is not one of `ops`.
+- **the operations and fee token you asked for**: not the ones the payload
   claims you asked for.
-- **`networkPassphrase` and `sponsor`**, when set on the client — neither is
+- **`networkPassphrase` and `sponsor`**, when set on the client: neither is
   inside the envelope a wallet signs.
 
 The path of the fee payment is compared hop for hop against the quote. A
@@ -295,7 +296,7 @@ const { hash } = await reserve.send(quote, sign);
 `submit(quote, signedXdr)`) when the signer lives in another process.
 
 Quotes live about a minute (`RESERVE_QUOTE_LEDGERS`, default 12). They travel
-as an HMAC-signed payload — the service stores nothing. At submit it rebuilds
+as an HMAC-signed payload: the service stores nothing. At submit it rebuilds
 the inner transaction and compares XDR byte for byte.
 
 ### Modes
@@ -306,7 +307,7 @@ the inner transaction and compares XDR byte for byte.
 | **`bootstrap`** | The account does not exist yet | The sponsor (or a channel account). The new account co-signs. Requires a `claim_balance` in the same request. |
 
 Bootstrap consumes a sponsor sequence unless extra channel accounts are
-configured. A second concurrent bootstrap returns `503 bootstrap_busy` —
+configured. A second concurrent bootstrap returns `503 bootstrap_busy`:
 retry.
 
 ## Operations
@@ -330,7 +331,7 @@ builds can add a signer or change thresholds.
 ## Accepted tokens
 
 Only allowlisted assets are accepted as payment. An asset code is not an
-identity on Stellar — mainnet has hundreds of issuers of something called
+identity on Stellar: mainnet has hundreds of issuers of something called
 "USDC". Always show the issuer or its `home_domain` in the UI, never the code
 alone.
 
@@ -347,7 +348,7 @@ lists as of this writing:
 | Asset | Domain | Notes |
 |---|---|---|
 | `native` | stellar.org | XLM |
-| `USDC:GCKUFD5KAAM6DRSLODK55OVECMB5IJ5NSFQYFTBZRPOTJASUKTBZXGS2` | cavos.xyz | Cavos Testnet USDC — not Circle. What the Reserve demo sends. |
+| `USDC:GCKUFD5KAAM6DRSLODK55OVECMB5IJ5NSFQYFTBZRPOTJASUKTBZXGS2` | cavos.xyz | Cavos Testnet USDC: not Circle. What the Reserve demo sends. |
 | `USDC:GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5` | centre.io | Circle USDC on Testnet |
 
 **Mainnet** (`https://reserve.cavos.xyz/mainnet`)
@@ -488,7 +489,7 @@ rebuilds and verifies locally before the wallet sees the bytes.
 ## What it charges
 
 Twenty per cent over cost, with a floor of 56,000 stroops (about $0.001 at
-XLM near $0.18). Reserves are passed on in full — they are money handed over,
+XLM near $0.18). Reserves are passed on in full: they are money handed over,
 not a service. A new account with one trustline costs 1.5 XLM of reserves, so
 it is charged 1.5 XLM plus margin, out of the funds it claims.
 

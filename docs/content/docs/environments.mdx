@@ -6,9 +6,9 @@ description: Every Cavos app has a development and a production environment. Sel
 Every app in the Cavos console has two environments, created automatically the
 moment the app is created:
 
-- **`production`** — real traffic. This is the default the SDK uses when you
+- **`production`**: real traffic. This is the default the SDK uses when you
   don't pass an `environment`.
-- **`development`** — building and testing, isolated from production.
+- **`development`**: building and testing, isolated from production.
 
 You keep **one `appId`** and switch environments with a single flag. There is no
 separate app to create.
@@ -18,14 +18,14 @@ separate app to create.
 The two environments share the app's identity but keep their operational state
 apart:
 
-- **Sponsorship / gas pool** — each environment meters its own relayer balance
+- **Sponsorship / gas pool**: each environment meters its own relayer balance
   and low-balance alerts, so test traffic never drains your production gas.
-- **Allowed origins** — the domains/schemes permitted to call the app are set per
+- **Allowed origins**: the domains/schemes permitted to call the app are set per
   environment.
-- **API keys** — server credentials are issued per environment.
-- **Events & webhooks** — the event stream and webhook subscriptions are scoped
+- **API keys**: server credentials are issued per environment.
+- **Events & webhooks**: the event stream and webhook subscriptions are scoped
   per environment, so your development integration doesn't fire production hooks.
-- **Social recovery** — enable or disable [hardware-isolated
+- **Social recovery**: enable or disable [hardware-isolated
   recovery](/docs/hardware-isolated-recovery) for **Starknet, Solana, and
   Stellar** wallets in that environment. Google, Apple, email, and GitHub
   are all accepted; each wallet recovers through the provider its owner signed
@@ -55,23 +55,25 @@ SDK uses `production`.
 
 ```ts title="TypeScript"
 const wallet = await Cavos.connect({
-  chain: "stellar",
+  chains: ["stellar"],
   network: "testnet",
   appId: process.env.CAVOS_APP_ID!,
   appSalt: "my-app",
   identity,
-  environment: __DEV__ ? "development" : "production",
+  environment: process.env.NODE_ENV === "production" ? "production" : "development",
 });
 ```
 
 With the React or React Native provider, set it once on the config:
 
-```tsx title="Provider"
+```tsx title="React Native provider"
 <CavosProvider config={{
   appId: process.env.EXPO_PUBLIC_CAVOS_APP_ID!,
   appSalt: "my-app",
   chain: "stellar",
   network: "testnet",
+  redirectUri: "myapp://auth",
+  rpId: "auth.example.com",
   environment: __DEV__ ? "development" : "production",
 }}>
   {children}
@@ -81,7 +83,7 @@ With the React or React Native provider, set it once on the config:
 <Callout type="info">
 `environment` (the Cavos console environment) is independent of `network`
 (testnet / mainnet). A `development` environment can point at mainnet, and
-`production` at testnet — they answer different questions: *whose gas and config*
+`production` at testnet; they answer different questions: *whose gas and config*
 vs. *which chain*.
 </Callout>
 
@@ -91,7 +93,7 @@ The wallet address does not depend on the Cavos console `environment` flag.
 Addresses come from the registry, keyed by identity, app, and chain.
 
 If you want a user's **development** wallet to be a different address than their
-**production** wallet, you need a distinct registry key — which means a separate
+**production** wallet, you need a distinct registry key, which means a separate
 app (distinct `appId`). One `appId` shared across development and production
 shares the registry address.
 

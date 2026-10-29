@@ -1,10 +1,10 @@
 ---
 title: Solana
-description: Use @cavos/kit on Solana — a native Ed25519 system account whose spend key is HKDF of a MasterDEK. The account pays its own fee, your relayer pays it, or the user pays in a token they hold.
+description: Use @cavos/kit on Solana: a native Ed25519 system account whose spend key is HKDF of a MasterDEK. The account pays its own fee, your relayer pays it, or the user pays in a token they hold.
 ---
 
 Solana in `@cavos/kit` is a **native system account**. The address is an
-Ed25519 public key — the same shape as Phantom — not a PDA and not a P-256
+Ed25519 public key, the same shape as Phantom, not a PDA and not a P-256
 program account. This is the Solana adapter for the Cavos
 [embedded wallet](https://cavos.xyz/embedded-wallet). The same account model
 is described for a product audience on the
@@ -16,7 +16,7 @@ a multi-chain enclave session. A new device restores that DEK with the [enclave]
 or a [passkey](/docs/passkeys) the user added. Signing up never asks for a passkey.
 
 The account signs its own transactions. Who is named **fee payer** is a
-per-call choice — itself, the Cavos relayer, or the fee settled in a token the
+per-call choice: itself, the Cavos relayer, or the fee settled in a token the
 user already holds. None of them can spend: a co-signer cannot alter the
 instructions it signs.
 
@@ -43,12 +43,14 @@ const session = await Cavos.connect({
 });
 
 const wallet = session.wallet("solana");
+if (wallet.chain !== "solana") throw new Error("expected a Solana wallet");
 console.log(wallet.address);            // base58 Ed25519 system account
 console.log(wallet.status);             // "ready" | "needs-device-approval"
 ```
 
 `network: "testnet"` resolves to `solana-devnet`; `"mainnet"` resolves to
-`solana-mainnet`. Narrow on `wallet.chain` before chain-native calls.
+`solana-mainnet`. `session.wallet()` returns the `CavosWallet` union; the `wallet.chain` check
+narrows it, so the snippets below can call Solana methods directly.
 
 <Callout type="warn">
 **Pass your own RPC on mainnet.** Without `rpcUrl` / `rpcUrls.solana`, the kit
@@ -60,8 +62,8 @@ Provide Helius / Triton / QuickNode in production.
 
 | Status | Meaning | Can execute? |
 |--------|---------|--------------|
-| `ready` | This device unwrapped the Ed25519 spend key | Yes — if the account holds lamports |
-| `needs-device-approval` | Registry has an address, this device has no wrap | No — restore with enclave login or `approveDeviceWithPasskey()` |
+| `ready` | This device unwrapped the Ed25519 spend key | Yes: if the account holds lamports |
+| `needs-device-approval` | Registry has an address, this device has no wrap | No: restore with enclave login or `approveDeviceWithPasskey()` |
 
 Native Solana does not use `undeployed` the way Starknet does. There is nothing
 to deploy: a system account appears when it first receives lamports. After
@@ -70,7 +72,7 @@ connect, `isDeployed` is `true` once the spend key is present.
 <Callout type="info">
 **Fund the address, then spend.** By default the account pays its own fee, so
 it needs SOL. Send devnet SOL to `wallet.address`, or pick a fee route that
-does not need it — see below. No route puts SOL in the account; sponsorship
+does not need it: see below. No route puts SOL in the account; sponsorship
 covers the fee, never the balance.
 </Callout>
 
@@ -155,7 +157,7 @@ not match the registry row.
 
 ## Who pays the fee
 
-`fee` answers one question — who pays, and in what — so the three answers are
+`fee` answers one question (who pays, and in what), so the three answers are
 one field rather than flags that look independent and are not.
 
 ```ts title="TypeScript"

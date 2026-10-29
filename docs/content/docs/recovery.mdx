@@ -1,6 +1,6 @@
 ---
 title: Recovery
-description: The ways a Cavos user regains access to their wallet after losing a device — and which ones to offer.
+description: The ways a Cavos user regains access to their wallet after losing a device, and which ones to offer.
 ---
 
 A Cavos wallet is controlled by keys that live on the user's devices and never
@@ -16,7 +16,7 @@ Stellar that way back is a copy of the MasterDEK the account key derives from.
 | Path | The user needs | Best for | Cost |
 |---|---|---|---|
 | [**Multi-device**](/docs/multi-device) | Another device that restores the MasterDEK | Users who already have a second device | The enclave or a passkey must be enabled |
-| [**Passkeys**](/docs/passkeys) | Face ID / Touch ID / PIN | Almost everyone | One prompt **after** login (`enrollPasskeyDefault`) — never during OAuth |
+| [**Passkeys**](/docs/passkeys) | Face ID / Touch ID / PIN | Almost everyone | One prompt **after** login (`enrollPasskeyDefault`): never during OAuth |
 | [**Hardware-isolated recovery**](/docs/hardware-isolated-recovery) | To sign in again with Google / Apple / GitHub / email | Starknet, Solana, and Stellar | Opt-in per environment; the enclave wraps the MasterDEK |
 
 The first two answer *"I still have something."* The last one answers *"I have
@@ -24,7 +24,7 @@ nothing."* A serious app wants at least one of each.
 
 ## What to offer
 
-**Start with a passkey or the enclave — not both as the same `deviceApproval`.**
+**Start with a passkey or the enclave, not both as the same `deviceApproval`.**
 `deviceApproval: "passkey"` is one chain, and a passkey that was added can open
 the wallet. `deviceApproval: "enclave"` wraps the MasterDEK for
 every native chain in the session. Signing up never asks for a passkey; call

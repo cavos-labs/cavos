@@ -9,16 +9,16 @@ expect to: by signing in again with Google, Apple, GitHub, or an email code.
 
 The obvious way to build that would be for Cavos to hold a key and hand it over
 once a login checks out. That would make Cavos custodial and every Cavos
-employee a target. Instead the check runs inside an **AWS Nitro Enclave** — an
+employee a target. Instead the check runs inside an **AWS Nitro Enclave**, an
 isolated environment whose exact software is measured by hardware and attested
-by AWS — holding a sealed copy of the wallet's MasterDEK that it releases only to the enrolled identity.
+by AWS, holding a sealed copy of the wallet's MasterDEK that it releases only to the enrolled identity.
 
 <Callout type="info">
 **Availability.** Hardware-isolated recovery is **opt-in per environment**, not
 on by default. The SDK path ships in `@cavos/kit`, but the enclave it talks to
 has to be enabled for your app and environment in the
 [dashboard](/docs/dashboard) before `socialRecovery: true` or
-`deviceApproval: "enclave"` resolves — ask us to turn it on. Every other
+`deviceApproval: "enclave"` resolves: ask us to turn it on. Every other
 recovery path in [Recovery](/docs/recovery) works without it.
 </Callout>
 
@@ -74,7 +74,7 @@ controls, and **recovery**, later, on a device that has nothing.
 The user signs in on the new device and the same channel is established. The
 enclave verifies the token and unwraps the MasterDEK to this device's wrap key.
 The device then derives the same account key (Ed25519 on Solana and Stellar, a
-stark key on Starknet). Recovery completes immediately — there is no waiting
+stark key on Starknet). Recovery completes immediately: there is no waiting
 period, and no on-chain transaction.
 
 The result is worth stating plainly: an attacker who fully compromises the Cavos
@@ -85,7 +85,7 @@ sign-in the enclave accepts for the enrolled identity.
 
 Inside, before it will sign anything, Cavos checks the provider signature,
 issuer, audience, token fingerprint, configured provider, and the enrolled
-subject — the recovery only proceeds for the identity that enrolled.
+subject: the recovery only proceeds for the identity that enrolled.
 
 The authentication must be **no more than five minutes old**. Google and Apple
 tokens must carry an OIDC `nonce` of the form
@@ -93,7 +93,7 @@ tokens must carry an OIDC `nonce` of the form
 the app the wallet belongs to and the login secret it received over the
 encrypted channel, and compares in constant time. A token is therefore only
 accepted for the app it was issued for, and only together with the secret held
-by the device that started that sign-in — the same construction as PKCE's
+by the device that started that sign-in: the same construction as PKCE's
 `S256` challenge (RFC 7636), applied to the OIDC `nonce`. The SDK makes the same
 comparison before it uses a login at all.
 
@@ -131,7 +131,7 @@ The SDK never persists the social token.
 so it is worth being precise about what the enclave can and cannot do. Three
 things hold, and each is enforced by something other than a Cavos promise.
 
-**Nobody can read the recovery key — not even the people who run it.** The
+**Nobody can read the recovery key, not even the people who run it.** The
 private half is sealed under a key AWS KMS releases only to an
 enclave whose measured image matches the one that sealed it. There is no console,
 no debugger, no support tool that reveals it: an enclave started in debug mode
@@ -141,7 +141,7 @@ Cavos employee asked to hand over a user's key has nothing to hand over.
 
 **The enclave is not a spender.** It holds a wrap of the MasterDEK, not a hot
 signing key. Compromise of the wrap would still mean restore of the account key
-— that is why attestation pins and the 5-minute token window exist. Compare that
+that is why attestation pins and the 5-minute token window exist. Compare that
 with a custodial provider, where the operator's key *is* the spending key.
 
 **Nothing is added on-chain.** Enroll is a wrap, not an extra on-chain authority.
@@ -149,7 +149,7 @@ with a custodial provider, where the operator's key *is* the spending key.
 Put together: the account key stays derived from a DEK the user's devices hold,
 the enclave keeps a sealed copy under a narrow policy, and the Cavos control
 plane only relays ciphertext it cannot read. That is what makes this
-self-custodial — not the fact that a TEE is involved.
+self-custodial: not the fact that a TEE is involved.
 
 ### What you are still trusting
 
@@ -173,7 +173,7 @@ formality:
   GitHub, or email login.
 
 The honest summary: recovery is as strong as the measured enclave image and the
-sign-in behind it. Nobody — Cavos included — can take a sealed key out of the
+sign-in behind it. Nobody, Cavos included, can take a sealed key out of the
 enclave or use one without a sign-in the enclave accepts.
 
 Classic Stellar **is** on this path, like Starknet and Solana, when `deviceApproval` is `"enclave"`: the
@@ -211,7 +211,7 @@ and not recommended over Google, Apple, or email. See
 That is the whole integration. `<CavosProvider>` enrolls after a fresh login
 when this device has the DEK (the reseal runs in the background) and unwraps on
 a device that does not. A 409 `not_enrolled` on a new phone means the creating
-device never sealed — open that wallet once more on the original device.
+device never sealed: open that wallet once more on the original device.
 
 ## The attestation pin
 
@@ -345,8 +345,8 @@ The hosted vault already uses `connect-src 'self' https:`.
 
 ## With your own auth
 
-Social recovery works when you authenticate users yourself — Clerk, Auth0,
-Firebase, your own backend — as long as a real Google or Apple sign-in happens
+Social recovery works when you authenticate users yourself (Clerk, Auth0,
+Firebase, your own backend), as long as a real Google or Apple sign-in happens
 somewhere underneath. **Your users never sign in twice:** you pass the provider
 token your login already obtained. Works on Starknet, Solana, and Stellar.
 GitHub is not on this path: the enclave redeems the GitHub authorization code
@@ -389,8 +389,8 @@ Two requirements, both easy to miss:
   so. Clerk, Auth0 and Firebase all expose the underlying token, usually behind
   an explicit call.
 - **Pass a fresh one.** The enclave requires the authentication to be under five
-  minutes old. This falls out naturally — enrolment follows a login, recovery
-  happens as the user signs in on the new device — but a token cached from an
+  minutes old. This falls out naturally (enrolment follows a login, recovery
+  happens as the user signs in on the new device), but a token cached from an
   earlier session is rejected.
 
 <Callout type="info">
@@ -419,7 +419,7 @@ pool, they describe that design; none of it exists now.
 
 ## Related
 
-- [Cavos Kit 0.5.0](https://cavos.xyz/blog/cavos-kit-0-5-0) — signed enclave releases and GitHub sign-in.
+- [Cavos Kit 0.5.0](https://cavos.xyz/blog/cavos-kit-0-5-0): signed enclave releases and GitHub sign-in.
 - [Recovery codes](/docs/recovery-codes): why Cavos wallets do not use them.
-- [Multi-device](/docs/multi-device) — approving a new device from an existing one.
-- [Passkeys](/docs/passkeys) — a synced passkey as the approval factor.
+- [Multi-device](/docs/multi-device): approving a new device from an existing one.
+- [Passkeys](/docs/passkeys): a synced passkey as the approval factor.

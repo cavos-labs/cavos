@@ -48,6 +48,8 @@ The vault is **on by default** when `appId` is set:
     // vault: { url: "http://localhost:3003/vault" },   // a local cavos-web
   }}
 >
+  {children}
+</CavosProvider>
 ```
 
 `Cavos.connect` takes the same `vault` option (`true`, `false` or `{ url }`) and
@@ -97,7 +99,7 @@ Defaults, used until you save a policy:
 |---|---|---|
 | **Solana** | `SystemProgram.transfer` from the account (SOL), `TransferChecked` with the account as authority (by mint), the fee including priority fee when the account pays it, token-account rent | Compute budget, memo |
 | **Stellar** | `payment` (XLM or `CODE:ISSUER`), `createAccount` starting balance | `changeTrust`, `manageData`, `bumpSequence`, `endSponsoringFutureReserves` |
-| **Starknet** | `transfer` on ETH, STRK and USDC | — |
+| **Starknet** | `transfer` on ETH, STRK and USDC | none |
 
 Everything else is **over the limit**, whatever its value: contract and program
 calls, token approvals, signer or threshold changes (`setOptions`), account upgrades,

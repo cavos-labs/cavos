@@ -54,12 +54,12 @@ When you call `connect`:
 
 This design prevents a second wallet from being created silently when the same
 user connects from a different device. The second device sees the existing
-address and lands on `needs-device-approval` until it restores the MasterDEK
-— it does not mint a duplicate.
+address and lands on `needs-device-approval` until it restores the MasterDEK;
+it does not mint a duplicate.
 
 <Callout type="info">
 **Why a registry?** The first device mints a MasterDEK and
-claims the derived address. A second device must unwrap that same DEK — it
+claims the derived address. A second device must unwrap that same DEK: it
 cannot invent a new one. The registry records which address belongs to which
 user so connect does not mint a duplicate.
 </Callout>
@@ -77,7 +77,7 @@ The registry key is `(userId, appId, chain, network)`.
 Connect **never** deploys Starknet or Stellar accounts. It resolves the address
 and checks on-chain status; those accounts are created on the first `execute`.
 **Solana** is a system account: `ready` once this device has the spend key.
-Fund it, then spend — there is no `initialize`.
+Fund it, then spend: there is no `initialize`.
 
 | Connect result | What happens |
 |----------------|--------------|
@@ -86,9 +86,9 @@ Fund it, then spend — there is no `initialize`.
 | User has a wallet, this device holds no key | `status: "needs-device-approval"`. |
 
 An `undeployed` wallet can:
-- **Sign messages** (`signMessage`) — the signature comes from the local device
+- **Sign messages** (`signMessage`): the signature comes from the local device
   key, which exists regardless of on-chain state.
-- **Execute** — the first `execute` call deploys the account and runs the
+- **Execute**: the first `execute` call deploys the account and runs the
   user's operation atomically in a single sponsored transaction.
 
 This lazy model means users see their address immediately and can share it

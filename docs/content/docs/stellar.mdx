@@ -1,6 +1,6 @@
 ---
 title: Stellar
-description: Use @cavos/kit on Stellar — a classic G… whose spend key is HKDF of a MasterDEK (same wrap as Solana). Relayer sponsors reserves and fees. Soroban and Trustless Work still work.
+description: Use @cavos/kit on Stellar: a classic G… whose spend key is HKDF of a MasterDEK (same wrap as Solana). Relayer sponsors reserves and fees. Soroban and Trustless Work still work.
 ---
 
 Stellar is a **classic `G…` account**, the same address format wallets,
@@ -12,7 +12,7 @@ same account model is described for a product audience on the
 [Stellar embedded wallet](https://cavos.xyz/embedded-stellar-wallet) page.
 
 It's a native Stellar account (not a Soroban contract), so it interoperates with
-the whole ecosystem — and it can still **sign Soroban contract invocations**, so
+the whole ecosystem, and it can still **sign Soroban contract invocations**, so
 the same `G…` acts as a `require_auth` role in on-chain apps like
 [escrows](#soroban-contracts--escrows). Gas and account reserves are sponsored
 by the Cavos relayer.
@@ -21,7 +21,7 @@ by the Cavos relayer.
 
 Use the unified `Cavos.connect`, passing `chains: ["stellar"]`. An `appId`
 activates the gasless relayer (it sponsors the account's XLM reserves and pays
-fees). **Connect never creates the account** — the account is created lazily on
+fees). **Connect never creates the account**: the account is created lazily on
 the first `execute`.
 
 ```ts title="TypeScript"
@@ -40,12 +40,14 @@ const session = await Cavos.connect({
 });
 
 const wallet = session.wallet("stellar");
+if (wallet.chain !== "stellar") throw new Error("expected a Stellar wallet");
 console.log(wallet.address);            // G… address
 console.log(wallet.status);             // "undeployed" | "ready" | "needs-device-approval"
 ```
 
 `network: "testnet"` resolves to `stellar-testnet`; `"mainnet"` resolves to
-`stellar-mainnet`. The returned `wallet` is discriminated by `wallet.chain`.
+`stellar-mainnet`. `session.wallet()` returns the `CavosWallet` union; the `wallet.chain` check
+narrows it, so the snippets below can call Stellar methods directly.
 
 <Callout type="info">
 `connect` unwraps (or mints) the MasterDEK and
@@ -59,9 +61,9 @@ with no prompt.
 
 | Status | Meaning | Can execute? |
 |--------|---------|--------------|
-| `undeployed` | Address resolved, no on-chain account yet | Yes — first execute creates + runs atomically |
+| `undeployed` | Address resolved, no on-chain account yet | Yes: first execute creates + runs atomically |
 | `ready` | Account exists and this device can sign | Yes |
-| `needs-device-approval` | Account exists but this device not authorized | No — route to device approval |
+| `needs-device-approval` | Account exists but this device not authorized | No: route to device approval |
 
 <Callout type="info">
 **Lazy deploy**: An `undeployed` wallet can sign messages and execute. The
@@ -73,7 +75,7 @@ performs the operation. After that, status becomes `ready`.
 
 On Stellar, `execute(amount, destination)` moves `amount` **stroops** of native
 XLM out of the account to `destination`. Both `undeployed` and `ready` wallets
-can execute — the first execution creates the account atomically.
+can execute: the first execution creates the account atomically.
 
 ```ts title="TypeScript"
 if (wallet.chain === "stellar" && wallet.status !== "needs-device-approval") {
@@ -89,7 +91,7 @@ When the account is `undeployed`, this call creates the account first (sponsored
 0 XLM cost), then performs the payment. After that, status becomes `ready`.
 
 `amount` is a `bigint` of stroops (`1 XLM = 10_000_000 stroops`). Pass
-`{ sponsored: false }` to submit directly — the account pays its own (tiny) fee
+`{ fee: 'self' }` to submit directly: the account pays its own (tiny) fee
 from its XLM balance instead of the relayer.
 
 Read the native balance with `wallet.balance()` (stroops):
@@ -102,13 +104,13 @@ const stroops = await wallet.balance();  // bigint, native XLM
 
 Beyond native XLM transfers, the account can **invoke Soroban contracts**. Because
 the control key is a real Stellar signer, it can satisfy a contract's
-`require_auth` for this account's address — so your `G…` account participates in
+`require_auth` for this account's address, so your `G…` account participates in
 on-chain apps (escrows, marketplaces, DeFi) as a first-class signer, still silent
 and still gasless.
 
 `invokeContract` builds and simulates the call, re-signs **only** the Soroban auth
 entry belonging to this account with the control key (other roles' entries are
-untouched), and submits it — sponsored by the relayer by default:
+untouched), and submits it, sponsored by the relayer by default:
 
 ```ts title="TypeScript"
 if (wallet.chain === "stellar" && wallet.status === "ready") {
@@ -126,7 +128,7 @@ if (wallet.chain === "stellar" && wallet.status === "ready") {
 `status === "ready"`. Call `execute()` first to create the account if needed.
 </Callout>
 
-To hold or receive a classic asset (e.g. USDC — needed to fund a USDC escrow),
+To hold or receive a classic asset (e.g. USDC, needed to fund a USDC escrow),
 open a trustline first. A trustline adds a subentry (reserve); sponsored by the
 relayer by default:
 
@@ -138,7 +140,7 @@ const bal = await wallet.tokenBalance({ code: "USDC", issuer: "GA...ISSUER" }); 
 When your backend (or a platform's REST API) builds the transaction and hands
 you an **unsigned XDR**, use `signXdr` instead. It mirrors a classic wallet's
 `signTransaction(unsignedXdr) → signedXdr`, so a Cavos account drops into any
-flow that already expects one — it does **not** submit:
+flow that already expects one: it does **not** submit:
 
 ```ts title="TypeScript"
 const signedXdr = await wallet.signXdr(unsignedXdr); // your backend submits it
@@ -152,7 +154,7 @@ addresses are left untouched.
 ### Trustless Work escrows
 
 `@cavos/kit` ships a first-class wrapper for [Trustless Work](https://www.trustlesswork.com/)
-milestone escrows — a Soroban platform where auth is spread across six roles
+milestone escrows: a Soroban platform where auth is spread across six roles
 (`approver`, `service_provider`, `platform`, `release_signer`, `dispute_resolver`,
 `receiver`), each an address that signs contract calls. A Cavos account can hold
 any of these roles: the wrapper passes this account's `G…` as the role argument and
@@ -164,7 +166,7 @@ account:
 ```ts title="TypeScript"
 import { deployEscrow, StellarAdapter } from "@cavos/kit";
 
-const adapter = new StellarAdapter({ network: "testnet" });
+const adapter = new StellarAdapter({ network: "stellar-testnet" });
 
 const { escrowId } = await deployEscrow(wallet, {
   factoryId: "C...FACTORY",
@@ -218,19 +220,19 @@ console.log(state.flags.released, state.milestones[0].approved);
 ```
 
 `disputeEscrow()` and `resolveDispute(...)` cover the dispute path. Every method is
-gasless by default; pass `{ sponsored: false }` to have the account pay its own fee.
+gasless by default; pass `{ fee: 'self' }` to have the account pay its own fee.
 
 <Callout type="info">
 **Gasless by default.** `invokeContract` and escrow methods are sponsored: the
 relayer signs the fee-bump (`kind: "soroban"`) and pays the inclusion fee and
-the resource fee. Pass `{ sponsored: false }` for the account to pay the fee
+the resource fee. Pass `{ fee: 'self' }` for the account to pay the fee
 itself.
 </Callout>
 
 ## Sign messages
 
 Sign arbitrary messages off-chain with the control key. Works on both
-`undeployed` and `ready` wallets — the control key is generated at connect time:
+`undeployed` and `ready` wallets, because the control key is generated at connect time:
 
 ```ts title="TypeScript"
 const sig = await wallet.signMessage("Hello, Cavos!");
@@ -240,7 +242,7 @@ const sig = await wallet.signMessage("Hello, Cavos!");
 ```
 
 A verifier calls `Keypair.fromPublicKey(controlAddress).verify(messageBytes,
-signature)` — standard ed25519 math. The message is prefixed with the Cavos
+signature)`: standard ed25519 math. The message is prefixed with the Cavos
 domain prefix before signing.
 
 ## Unlock factors & silent signing
@@ -304,7 +306,7 @@ per-device list to manage, the same as Starknet and Solana.
 
 ## Pay reserves and fees in a token
 
-The kit relayer (`appId`) sponsors **XLM** so the user never holds lumens —
+The kit relayer (`appId`) sponsors **XLM** so the user never holds lumens;
 Cavos pays. That is the default for `execute`, trustlines, fee-bumps, and `invokeContract`.
 
 If the user should pay those same costs in USDC (or another allowlisted
@@ -332,7 +334,7 @@ if (wallet.chain === "stellar") {
 ```
 
 Reserve is wallet-agnostic (Freighter works the same way) and does not need
-a Cavos `appId`. Classic operations only — no Soroban. See
+a Cavos `appId`. Classic operations only: no Soroban. See
 [Reserve](/docs/reserve) for activate-from-a-claimable (a `G…` that holds
 0 XLM), verification, and the token allowlist.
 
@@ -346,7 +348,7 @@ a Cavos `appId`. Classic operations only — no Soroban. See
 Every Stellar account locks XLM **reserves** (a base reserve plus ~0.5 XLM per
 subentry, such as data entries and trustlines). With the relayer, those reserves
 and all fees are sponsored, so the user locks no XLM. The relayer is **only** a
-fee payer + reserve sponsor — never a custodian or identity authority: a bad or
+fee payer + reserve sponsor, never a custodian or identity authority; a bad or
 absent relayer can cost fees but can never move funds or squat an address.
 
 ## Address resolution
@@ -365,6 +367,7 @@ account is created on first `execute`.
 
 ```ts title="TypeScript"
 const wallet = session.wallet("stellar");
+if (wallet.chain !== "stellar") throw new Error("expected a Stellar wallet");
 console.log(wallet.address);  // G… address
 console.log(wallet.status);   // "undeployed" until first execute
 ```
@@ -384,13 +387,13 @@ Networks: `"stellar-testnet"`, `"stellar-mainnet"`.
 ## What's available
 
 - ✅ Classic `G…` account. Native MasterDEK path shares the DEK with Solana.
-- ✅ **Lazy deploy** — first execute creates the account atomically.
+- ✅ **Lazy deploy**: first execute creates the account atomically.
 - ✅ Silent signing via a non-extractable ed25519 control key, held by the
   [Cavos vault](/docs/vault) within your app's limits.
 - ✅ **Sign messages off-chain while undeployed.**
 - ✅ Gasless create + execute via the Cavos relayer (reserves sponsored).
 - ✅ Native XLM transfer (`execute(amount, destination)`) + `balance()`.
-- ✅ **Soroban contract invocation** (`invokeContract`) — the account signs its own
+- ✅ **Soroban contract invocation** (`invokeContract`): the account signs its own
   `require_auth` entry, so it acts as a role in on-chain apps, plus USDC-style
   trustlines (`addTrustline` / `tokenBalance`).
 - ✅ **Trustless Work escrows** out of the box: `deployEscrow` (via factory) and

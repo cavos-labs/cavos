@@ -1,6 +1,6 @@
 ---
 title: API reference
-description: Public exports of @cavos/kit — the surface you build against.
+description: Public exports of @cavos/kit: the surface you build against.
 ---
 
 Everything below is exported from the package root: `import { ... } from "@cavos/kit"`.
@@ -45,14 +45,16 @@ interface ConnectOptions {
   rpcUrls?: Partial<Record<Chain, string>>; // per-chain RPC overrides
   registry?: WalletRegistry;              // off-chain userId -> wallet map
   vault?: boolean | { url?: string };     // keys in the Cavos vault (needs appId); see /docs/vault
+  socialRecovery?: SocialRecoveryClient;  // low-level: your own enclave client (React uses `socialRecovery: true`)
+  socialRecoveryCredential?: SocialRecoveryCredential;
 
   // --- Starknet-only ---
   paymasterApiKey?: string;               // sponsors deploy + execute (required on Starknet)
   paymasterUrl?: string;
 
   // --- Solana-only ---
-  relayer?: SolanaRelayer;                // gasless fee payer
-  feePayer?: Keypair;                     // self-funded fallback
+  relayer?: SolanaRelayer;                // sponsored fee payer
+  tollUrl?: string;                       // where `fee: { token }` settles; defaults to the hosted service
   passkeyPrf?: PasskeyPrfProvider;        // restores from a passkey's DEK copy (single-chain)
 
   // --- Stellar-only (classic `G…`) ---
@@ -68,11 +70,11 @@ interface CavosSession {
   chains: Chain[];                        // configured chains
   defaultChain: Chain;                    // the default chain
   wallet(chain: Chain): CavosWallet;      // get wallet for a chain
-  chainStatus(chain: Chain): ChainStatus; // get status for a chain
+  chainStatus(chain: Chain): ConnectStatus; // get status for a chain
   chainAddress(chain: Chain): string;     // get address for a chain
 }
 
-type ChainStatus = "undeployed" | "ready" | "needs-device-approval";
+type ConnectStatus = "undeployed" | "ready" | "needs-device-approval";
 ```
 
 - `status === "undeployed"` → Address derived, no on-chain account. Can execute
@@ -90,7 +92,7 @@ by a stark key derived from the MasterDEK.
 | Member | Description |
 |--------|-------------|
 | `wallet.address: string` | The account address. |
-| `wallet.status: ChainStatus` | `"undeployed" \| "ready" \| "needs-device-approval"` |
+| `wallet.status: ConnectStatus` | `"undeployed" \| "ready" \| "needs-device-approval"` |
 | `wallet.isDeployed: boolean` | Whether the account exists on-chain. |
 | `wallet.identity: Identity` | The authenticated identity. |
 | `wallet.publicKey: string` | The stark public key (hex) the account was deployed with. |
@@ -121,6 +123,7 @@ MasterDEK (enclave or passkey) and derives the same key. See
 |--------|-------------|
 | `WalletRegistry`, `RegisteredWallet`, `RegisterResult` | Off-chain `userId` → wallet map (cross-device recognition). |
 | `InMemoryWalletRegistry`, `HttpWalletRegistry` | Registry implementations. |
+| `generateRecoveryCode()` | **Deprecated.** Kept for compatibility. Current wallets do not use recovery codes; restore with the enclave or a passkey. |
 
 ### Hardware-isolated social recovery
 
@@ -205,12 +208,14 @@ Classic `G…` account whose key derives from the same MasterDEK as Solana. See 
 
 | Export | Description |
 |--------|-------------|
-| `ChainAdapter`, `ChainCall`, `ComputeAddressParams`, `ExecuteOptions` | Multi-chain interface types. |
+| `ChainCall`, `ExecuteOptions` | Call and execute-option types shared across chains. |
 | `Chain` | `"starknet" \| "solana" \| "stellar"` |
 | `NetworkEnv` | `"testnet" \| "mainnet"` |
 | `CavosWallet` | Union of all wallet types. |
-| `CavosSession` | Multi-chain session interface. |
-| `ChainStatus` | `"undeployed" \| "ready" \| "needs-device-approval"` |
+| `ConnectStatus` | `"undeployed" \| "ready" \| "needs-device-approval"` (the type of `wallet.status`). |
+
+`CavosSession` is shown in the type sketch above but is not exported by name. Use `Awaited<ReturnType<typeof Cavos.connect>>` for the session
+type and `ConnectStatus` for a status.
 | `MessageSignature` | `{ signature, publicKey, curve, typedData? }` |
 | `SignedTransaction`, `StarknetSignedTransaction`, `StellarSignedTransaction`, `SolanaSignedTransaction` | Sign-without-submit results. |
 | `SignatureCurve` | `"stark" \| "ed25519"` (and `"secp256r1"`, no longer produced by Starknet) |
@@ -242,7 +247,7 @@ React bindings shipped under the `/react` subpath. See [React](/docs/react).
 | `validateCavosConfig(config)` | Config problems as `CavosConfigProblem[]`. |
 | `checkAppSaltDrift(config, storage?)` | Reports changed `appSalt`. |
 | `formatConfigProblems(problems)` | Render problems as console lines. |
-| `useCavos()` | Primary hook — full wallet surface including `setChain`, `session`, `configuredChains`. |
+| `useCavos()` | Primary hook: full wallet surface including `setChain`, `session`, `configuredChains`. |
 | `useCavosAuth()` | Thin subset for modal/auth only. |
 | `CavosAuthModal` | Customizable login modal. |
 | `CavosConfig`, `CavosModalConfig`, `CavosAuthModalProps`, `CavosProviderProps`, `CavosContextValue`, `UserInfo`, `WalletStatus` | Types. |

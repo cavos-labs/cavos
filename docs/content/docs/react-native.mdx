@@ -13,12 +13,12 @@ The minimum supported platforms are iOS 16 and Android 9 (API 28).
 ## Install
 
 ```bash
-npm install @cavos/kit expo expo-modules-core expo-web-browser expo-linking react-native-get-random-values
+npm install @cavos/kit@^0.5.0 expo expo-modules-core expo-web-browser expo-linking react-native-get-random-values
 npx expo prebuild
 npx expo run:ios       # or: npx expo run:android
 ```
 
-`react-native-get-random-values` is a peer dependency and must be installed — it
+`react-native-get-random-values` is a peer dependency and must be installed: it
 backs the CSPRNG the kit uses for key and transaction generation.
 
 For EAS, build a development client before starting Metro:
@@ -55,7 +55,7 @@ import "@cavos/kit/react-native"; // installs the RN polyfills
 <Callout type="warn">
 Symptoms of a missing shim: `crypto.getRandomValues must be defined` at signup,
 or the relayer rejecting a Stellar transaction with `Invalid transaction
-encoding`. Both mean the runtime did not load before signing — check your import
+encoding`. Both mean the runtime did not load before signing: check your import
 order.
 </Callout>
 

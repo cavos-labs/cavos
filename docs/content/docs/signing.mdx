@@ -3,8 +3,8 @@ title: Signing & sponsorship
 description: How device-native authority and gas sponsorship differ across Cavos chain adapters.
 ---
 
-Cavos keeps the user experience consistent—local authority, no seed phrase, no
-routine signing popup—while preserving each chain's actual cryptography and fee
+Cavos keeps the user experience consistent, local authority, no seed phrase, no
+routine signing popup, while preserving each chain's actual cryptography and fee
 model.
 
 ## Capability matrix
@@ -76,7 +76,7 @@ separate sponsor from the kit relayer.
 
 ## Signing without submission
 
-Every adapter can sign a transaction without submitting it — useful when your
+Every adapter can sign a transaction without submitting it: useful when your
 own relayer does the submitting. The payload is chain-specific, so narrow on
 `wallet.chain` first. See [Wallet actions](/docs/wallet-actions#sign-messages--transactions)
 for the call, the per-chain payloads, and how a backend verifies a signature.

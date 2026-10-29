@@ -6,7 +6,7 @@ description: Device-native, self-custodial embedded wallets across every chain, 
 `@cavos/kit` gives applications one [embedded wallet](https://cavos.xyz/embedded-wallet)
 integration across chains without flattening their differences. Users
 authenticate with a familiar identity and control a deterministic wallet
-through device-native key material—no seed phrase, MPC cluster, or browser
+through device-native key material, no seed phrase, MPC cluster, or browser
 extension.
 
 **[Starknet](https://cavos.xyz/embedded-starknet-wallet),
@@ -20,7 +20,7 @@ and fee model.
 import { Cavos } from "@cavos/kit";
 
 const wallet = await Cavos.connect({
-  chain: "solana", // "starknet" | "solana" | "stellar"
+  chains: ["solana"], // any of "starknet" | "solana" | "stellar"
   network: "testnet",
   identity: { userId: user.id, email: user.email },
   appSalt: "my-app",
@@ -39,7 +39,7 @@ if (wallet.chain === "solana" && wallet.status === "ready") {
 | **Identity** | A stable `userId` plus an app-specific salt. On every chain the salt is also HKDF input for the account key. |
 | **Device-native authority** | Every account key is derived from a MasterDEK: a stark key on Starknet, native Ed25519 on Solana and Stellar. |
 | **Chain adapter** | Implements address derivation, signing, execution, recovery, and sponsorship for one network family. |
-| **Unified SDK** | `Cavos.connect({ chain, network })` returns a discriminated wallet union so shared onboarding stays stable and chain-native methods remain typed. |
+| **Unified SDK** | `Cavos.connect({ chains, network })` returns a discriminated wallet union so shared onboarding stays stable and chain-native methods remain typed. |
 | **Sponsorship** | A paymaster, relayer, fee payer, or fee-bump service removes the need for users to acquire gas when that adapter supports it. |
 
 ## What remains chain-native

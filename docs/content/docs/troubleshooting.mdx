@@ -3,15 +3,15 @@ title: Troubleshooting
 description: Symptoms you are likely to hit integrating @cavos/kit, what actually causes them, and how to confirm it.
 ---
 
-Organized by what you see, not by what is wrong — the cause is usually somewhere
+Organized by what you see, not by what is wrong: the cause is usually somewhere
 other than where the symptom appears.
 
 ## Users suddenly have new, empty wallets
 
 **Almost always the `userId` changed.** Addresses are looked up in the registry
-by `(userId, appId, chain, network)`. If your auth changes what it reports — an
+by `(userId, appId, chain, network)`. If your auth changes what it reports (an
 email where it used to be a primary key, a provider migration that renumbers
-users — those users land on a different wallet. Nothing errors: the app works
+users), those users land on a different wallet. Nothing errors: the app works
 perfectly, on the wrong accounts.
 
 The same applies to `appId`. If you switch environments or change the app ID,
@@ -20,14 +20,14 @@ users get new wallets. Derive `userId` from something immutable.
 <Callout type="info">
 On every chain, `appSalt` is the HKDF salt for the account key. Changing it
 derives a different key and address (a stark key on Starknet, Ed25519 on Solana
-and Stellar) that will not match the registry row — the user cannot unwrap the
+and Stellar) that will not match the registry row: the user cannot unwrap the
 DEK onto the claimed account. Treat it as permanent.
 </Callout>
 
 ## `redirect_uri is not registered for this app`
 
 Returned when the URL your app started OAuth from is not on the app's registered
-list — **including when the app has no URLs registered at all.** An empty list
+list: **including when the app has no URLs registered at all.** An empty list
 rejects rather than allows, because the callback carries a one-time code and
 honouring an unregistered URI would hand that code to whoever asked.
 
@@ -40,17 +40,17 @@ registration. See [Authentication](/docs/auth#oauth-google--apple).
 
 Starknet sponsors both the account deploy and every transaction through the
 paymaster, so the key is required rather than optional. Solana and Stellar use a
-relayer activated by `appId` instead — a paymaster key there is ignored, and the
+relayer activated by `appId` instead: a paymaster key there is ignored, and the
 development config check flags it as `[unused-paymaster-key]` so it does not sit
 in your bundle for nothing.
 
 ## Transactions fail with the wallet apparently connected
 
 Check that `status !== "needs-device-approval"`. Both `undeployed` and `ready`
-wallets can execute — only `needs-device-approval` blocks it.
+wallets can execute: only `needs-device-approval` blocks it.
 
-A user can be signed in on a device the account has not authorized yet — the
-normal state on a second browser — and `execute` will fail until the device is
+A user can be signed in on a device the account has not authorized yet (the
+normal state on a second browser), and `execute` will fail until the device is
 approved. Route `walletStatus.needsDeviceApproval` to a passkey prompt or
 [multi-device](/docs/multi-device) approval.
 
@@ -71,19 +71,19 @@ Three causes, in the order worth checking:
 2. **No `appId`.** The enclave session is scoped to the app; without it the
    feature cannot start. Flagged as `[social-recovery-without-app-id]`.
 3. **Your own auth, with no provider token supplied.** If you authenticate users
-   yourself, enrolment and recovery do not happen automatically — the SDK never
+   yourself, enrolment and recovery do not happen automatically: the SDK never
    sees a provider token. Call `submitSocialRecoveryToken(idToken)` yourself (not
    accepted for Google and Apple tokens in 0.2.6). See
    [With your own auth](/docs/hardware-isolated-recovery#with-your-own-auth).
 4. **The creating device never sealed.** Mac logged in from IndexedDB; the phone
-   got `not_enrolled`. Reconnect once on the device that has the wrap — enroll
+   got `not_enrolled`. Reconnect once on the device that has the wrap; enroll
    is idempotent.
 
 ## `id_token issuer … cannot be used for social recovery`
 
 You passed your own session JWT rather than the provider's `id_token`. The
 enclave verifies against Google's or Apple's published keys, and a token your
-auth signed cannot be verified against them — so it is rejected before it is
+auth signed cannot be verified against them, so it is rejected before it is
 sent anywhere.
 
 Clerk, Auth0 and Firebase all expose the underlying provider token, usually
@@ -98,15 +98,15 @@ rather than reusing what it has.
 
 ## Errors log as `{}`
 
-A host whose console JSON-serializes its arguments — notably Capacitor's native
-bridge — prints an `Error` as `{}`, because `message` and `stack` are
+A host whose console JSON-serializes its arguments (notably Capacitor's native
+bridge) prints an `Error` as `{}`, because `message` and `stack` are
 non-enumerable. The value is not lost, just unprinted: read the message off the
 error you caught, or off the status field for background work
 (`walletStatus`-level errors and `authError`).
 
 ## Hydration or `window is not defined` errors
 
-The React bindings are client-only — `@cavos/kit/react` is marked
+The React bindings are client-only: `@cavos/kit/react` is marked
 `'use client'`. In Next.js App Router, the file that renders `<CavosProvider>`
 needs `'use client'` at the top, and so does any component calling `useCavos()`.
 
@@ -165,8 +165,8 @@ and the [0.5.0 changelog](https://cavos.xyz/blog/cavos-kit-0-5-0).
 |---|---|---|
 | `GitHub did not accept this sign-in. Try again.` | `github_rejected` | GitHub refused the authorization code (denied, expired, or a verifier mismatch). Start the login again. |
 | `This GitHub sign-in expired. Sign in again.` | `invalid_grant` | The one-time grant wrapped around the code is stale or reused. |
-| `kit/auth: the GitHub sign-in URL is not the one this login asked for` | — | The authorize URL from the backend was not `https://github.com/login/oauth/authorize` with this login's PKCE `code_challenge` and `S256`. |
-| `kit/auth: the GitHub token was not issued by the enclave` | — | The token's `iss` was not `https://enclave.cavos.xyz/github`. |
+| `kit/auth: the GitHub sign-in URL is not the one this login asked for` | none | The authorize URL from the backend was not `https://github.com/login/oauth/authorize` with this login's PKCE `code_challenge` and `S256`. |
+| `kit/auth: the GitHub token was not issued by the enclave` | none | The token's `iss` was not `https://enclave.cavos.xyz/github`. |
 
 `github_unreachable` is the enclave's code when it cannot reach GitHub. The
 hosted `/api/oauth/github/verify` maps that (and other non-rejected enclave
@@ -198,11 +198,11 @@ Typical causes:
 
 - `maxSend` / `maxSendStroops` missing or too tight (`path_moved`, or
   `ReserveError` from the client before a request is sent).
-- Fee token not on this host's allowlist — call `reserve.tokens()`. An asset
+- Fee token not on this host's allowlist: call `reserve.tokens()`. An asset
   **code** is not an identity; use `CODE:ISSUER`.
 - Calling `/v1/build` and signing the bytes instead of `send`.
-- Quote expired (~60 seconds) — `quote_expired`.
-- Creating a new account while another bootstrap is in flight —
+- Quote expired (~60 seconds): `quote_expired`.
+- Creating a new account while another bootstrap is in flight:
   `503 bootstrap_busy`. Retry.
 
 Kit `wallet.execute` on Stellar still uses the Cavos XLM relayer. Do not mix
@@ -229,7 +229,7 @@ Google or Apple there. See [Authentication](/docs/auth#email-code).
 
 ## Still stuck
 
-Run the config checks and read what they say — they cover the mistakes above
+Run the config checks and read what they say: they cover the mistakes above
 that are visible from configuration alone:
 
 ```ts title="TypeScript"
