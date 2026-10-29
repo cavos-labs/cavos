@@ -63,7 +63,6 @@ silently.
 Social recovery also works from your own auth on Starknet, Solana, and Stellar
 (MasterDEK wrap); see
 [Hardware-isolated recovery](/docs/hardware-isolated-recovery#with-your-own-auth).
-Grandfathered Stellar wallets still need a passkey or recovery code.
 
 ## Option B — Cavos hosted auth (`CavosAuth`)
 
@@ -149,17 +148,20 @@ requested.
 
 Leave **Dashboard → App → Environments → GitHub sign-in** empty to use Cavos's
 GitHub app. To put your own name and logo on GitHub's consent screen, create a
-GitHub OAuth app and save its **client id** and **client secret** on that
-environment. Copy the authorization callback URL from the dashboard
-(`/api/oauth/github/callback`) into the OAuth app. Both fields are required
-together; the secret is encrypted at rest (AES-256-GCM) and **never returned**.
+GitHub OAuth app and save its **client ID** and **client secret** on that
+environment. In the GitHub OAuth app, set **Authorization callback URL** to
+the value the dashboard shows under **GitHub sign-in** (copy button). It is
+the Cavos dashboard's own origin followed by `/api/oauth/github/callback`.
+This is GitHub's callback into Cavos; do **not** add it to your app's
+**Callback URLs** below, which list where Cavos returns the user afterwards.
+Both fields are required together; the secret is encrypted at rest
+(AES-256-GCM) and **never returned**.
 Leave the secret blank on later saves to keep the stored value.
 
-Identity is derived **per OAuth client id**. `sub` is
+Identity is derived **per OAuth client ID**. `sub` is
 `hex(SHA-256("cavos-github-subject-v1:" + client_id + ":" + github_id))`
 because GitHub reports the same numeric id to every app. Switching an
-environment's GitHub app — Cavos's app to yours, yours to another, or back —
-gives every GitHub user a **new identity and a new, empty wallet**. Tying
+environment's GitHub app, in either direction, gives every GitHub user a **new identity and a new, empty wallet**. Tying
 `sub` to the app the code was actually redeemed with is also what stops a
 code from one app becoming a login for another.
 
@@ -176,8 +178,10 @@ The built-in modal only shows GitHub when `providers` includes `'github'`:
 
 Enclave failure codes: `github_rejected` (GitHub did not accept the sign-in)
 and `github_unreachable` (the enclave could not reach GitHub). The SDK maps
-`github_rejected` to `GitHub did not accept this sign-in. Try again.` A stale
-grant is `invalid_grant`. See
+`github_rejected` to `GitHub did not accept this sign-in. Try again.` The
+hosted `/api/oauth/github/verify` route returns `github_rejected` as is and
+every other enclave failure, including `github_unreachable`, as
+`enclave_unavailable`. A stale or reused grant is `invalid_grant`. See
 [Troubleshooting](/docs/troubleshooting#github-sign-in-errors) and the
 [0.5.0 changelog](https://cavos.xyz/blog/cavos-kit-0-5-0).
 

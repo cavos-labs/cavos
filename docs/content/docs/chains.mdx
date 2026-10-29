@@ -29,7 +29,7 @@ details:
 <Cards>
   <Card title="Starknet" href="/docs/starknet" description="Native stark key, OpenZeppelin account, Cavos paymaster." />
   <Card title="Solana" href="/docs/solana" description="Native Ed25519 system account, Cavos relayer as fee payer." />
-  <Card title="Stellar" href="/docs/stellar" description="Classic G… account, MasterDEK or extra Horizon signers." />
+  <Card title="Stellar" href="/docs/stellar" description="Classic G… account, key derived from the MasterDEK." />
   <Card title="Reserve" href="/docs/reserve" description="Pay Stellar reserves and fees in a token, from any G… wallet." />
 </Cards>
 
@@ -46,7 +46,7 @@ Curves differ across ecosystems, and each adapter resolves that:
 
 - **Starknet** — the standard upgradeable OpenZeppelin account, validating a stark key derived from the MasterDEK.
 - **Solana** — native Ed25519 system account. The user key signs the Solana message; the relayer is fee payer only.
-- **Stellar** — classic `G…`. With enclave or passkey, the address is HKDF of the same MasterDEK as Solana. Older wallets still use extra Horizon signers.
+- **Stellar** — classic `G…`. The address is HKDF of the same MasterDEK as Solana.
 
 ## Writing every-chain application code
 

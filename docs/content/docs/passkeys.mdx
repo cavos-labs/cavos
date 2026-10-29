@@ -7,7 +7,7 @@ Signing up with Google / Apple / GitHub / email **never** asks for a passkey. Th
 exists without one. The app decides when to add it (`enrollPasskeyDefault`), and
 from then on a new device asks for it when it needs the wallet's key.
 
-On **Starknet, Solana, and native Stellar** the passkey holds an **encrypted
+On **Starknet, Solana, and Stellar** the passkey holds an **encrypted
 copy of the wallet's key** (the MasterDEK). Cavos stores the ciphertext; only
 the passkey can open it. It **can spend**: anyone with a synced passkey that was
 added can open the wallet. This is not 2FA.

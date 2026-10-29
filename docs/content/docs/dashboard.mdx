@@ -30,12 +30,12 @@ Each app then has its own tabs:
 | **Emails** | Templates for account verification and password reset. The magic link and OTP templates apply only to apps on the legacy `@cavos/react` SDK; `@cavos/kit` sign-in codes use a fixed design. |
 | **Programs** | The Solana program allowlist (see below). |
 | **Approvals** | What the [Cavos vault](/docs/vault) signs without asking: per-token limits and what happens over them. |
-| **Environments** | Per-environment origins, keys, social recovery, and an optional GitHub OAuth app (client id and secret; secret encrypted, never returned; leave empty to use Cavos's app so the consent screen stays Cavos-branded). Switching that app gives every GitHub user a new identity. |
+| **Environments** | Per-environment origins, keys, social recovery, and an optional GitHub OAuth app. See [Authentication → GitHub](/docs/auth#bring-your-own-github-oauth-app). |
 | **Settings** | Name, logo, allowed web origins (the sites that may embed the [vault](/docs/vault)). |
 
 <Callout type="info">
 `appSalt` is **not** a dashboard value — it lives in your code. It names the
-local device-key slot and, on native Solana/Stellar, salts the spend-key HKDF.
+local device-key slot and, on Solana and Stellar, salts the spend-key HKDF.
 The registry (keyed by user, app, chain, and network) records the address.
 Changing `appSalt` after users exist is a breaking change. See
 [Troubleshooting](/docs/troubleshooting#users-suddenly-have-new-empty-wallets).

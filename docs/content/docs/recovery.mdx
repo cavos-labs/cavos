@@ -17,10 +17,9 @@ Stellar that way back is a copy of the MasterDEK the account key derives from.
 |---|---|---|---|
 | [**Multi-device**](/docs/multi-device) | Another device that restores the MasterDEK | Users who already have a second device | The enclave or a passkey must be enabled |
 | [**Passkeys**](/docs/passkeys) | Face ID / Touch ID / PIN | Almost everyone | One prompt **after** login (`enrollPasskeyDefault`) — never during OAuth |
-| [**Recovery codes**](/docs/recovery-codes) | A code they stored | Grandfathered Stellar only | The user must keep a secret |
 | [**Hardware-isolated recovery**](/docs/hardware-isolated-recovery) | To sign in again with Google / Apple / GitHub / email | Starknet, Solana, and Stellar | Opt-in per environment; the enclave wraps the MasterDEK |
 
-The first two answer *"I still have something."* The last two answer *"I have
+The first two answer *"I still have something."* The last one answers *"I have
 nothing."* A serious app wants at least one of each.
 
 ## What to offer
@@ -32,8 +31,8 @@ every native chain in the session. Signing up never asks for a passkey; call
 `enrollPasskeyDefault()` when you want one.
 
 **Add a way back from nothing.** On Starknet, Solana, and Stellar that is the
-enclave (sign in again) or a passkey the user added. Recovery codes do **not**
-restore native accounts; they apply to grandfathered Stellar wallets only.
+enclave (sign in again) or a passkey the user added. Cavos wallets do not use
+recovery codes.
 
 **Do not rely on multi-device alone**: there is no second on-chain signer on
 native accounts. A second phone unwraps the same DEK.
@@ -57,6 +56,5 @@ user and the chain, and it is deliberately bounded: see
 ## Per-chain detail
 
 Each adapter implements these with the primitives its chain offers.
-[Recovery codes](/docs/recovery-codes) has the per-chain restore paths, and
 [Hardware-isolated recovery](/docs/hardware-isolated-recovery#what-the-enclave-holds)
 covers what the enclave holds on each chain.

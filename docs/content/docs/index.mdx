@@ -49,7 +49,7 @@ format:
 
 - **Starknet:** standard OpenZeppelin account, arbitrary multicalls, Starknet paymaster.
 - **Solana:** native Ed25519 system account, transfer or allowlisted instructions, sponsoring fee payer.
-- **Stellar:** classic `G…` account, native Ed25519 control key (MasterDEK or grandfathered extra signers), XLM payments, Soroban invocation, optional fee-bump.
+- **Stellar:** classic `G…` account, native Ed25519 control key (derived from the MasterDEK), XLM payments, Soroban invocation, optional fee-bump.
 
 Narrow on `wallet.chain` before calling chain-native methods. See
 [Chains](/docs/chains) for the capability matrix.

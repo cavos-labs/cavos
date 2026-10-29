@@ -27,7 +27,7 @@ itself as a signer.
 
 - **Starknet:** the audited OpenZeppelin `AccountUpgradeable` v3.0.0, controlled by a stark key derived from the MasterDEK.
 - **Solana:** a native Ed25519 system account. The relayer is fee payer, never a spender.
-- **Stellar:** the classic account's Ed25519 control key (MasterDEK, or extra Horizon signers on grandfathered wallets).
+- **Stellar:** the classic account's Ed25519 control key (derived from the MasterDEK).
 
 Registries and recovery services coordinate public state or messages. Paymasters
 and relayers fund or submit transactions. None of those roles is a substitute
@@ -144,8 +144,7 @@ one universal curve:
 
 - Starknet, Solana, and Stellar derive their account keys from a MasterDEK
   (enclave wrap or a passkey's encrypted copy): a stark key on Starknet,
-  Ed25519 on Solana and Stellar. Grandfathered Stellar wallets still use extra
-  Horizon signers.
+  Ed25519 on Solana and Stellar.
 - WebCrypto cannot hold a stark key, so outside the Cavos vault the Starknet
   key is re-derived into memory for the session; the DEK at rest stays
   protected by the device's non-extractable key.

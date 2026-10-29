@@ -27,22 +27,18 @@ apart:
   per environment, so your development integration doesn't fire production hooks.
 - **Social recovery** — enable or disable [hardware-isolated
   recovery](/docs/hardware-isolated-recovery) for **Starknet, Solana, and
-  native Stellar** wallets in that environment. Google, Apple, email, and GitHub
+  Stellar** wallets in that environment. Google, Apple, email, and GitHub
   are all accepted; each wallet recovers through the provider its owner signed
   in with. Register your own Google or Apple OAuth client ID if you authenticate
-  users yourself. GitHub has no client-ID override: the enclave redeems the
-  code and issues its own token. Grandfathered Stellar wallets are unaffected.
-  All independent per environment, so you can rehearse recovery in development
+  users yourself. GitHub needs no OAuth client ID here; its OAuth app is set in
+  the **GitHub OAuth app** field below. All independent per environment, so you can rehearse recovery in development
   without touching production. The email provider's "Firebase project ID" field
   no longer affects email sign-in codes, which the enclave issues itself.
-- **GitHub OAuth app** — GitHub is an optional login provider, not recommended
-  over Google, Apple, or email. Each environment can use Cavos's GitHub app or
-  one you register. Save the OAuth app's client id and client secret on the
-  environment so GitHub's consent screen shows your app; the secret is
-  encrypted at rest and never returned. Switching apps gives every GitHub user
-  in that environment a new identity and a new, empty wallet, because identity
-  is derived per OAuth client id. See
-  [Authentication → GitHub](/docs/auth#github).
+- **GitHub OAuth app**: leave empty to use Cavos's GitHub app, or save your own
+  OAuth app's client ID and client secret so GitHub's consent screen shows your
+  app. Switching apps gives every GitHub user in that environment a new
+  identity and a new, empty wallet. See
+  [Authentication → GitHub](/docs/auth#bring-your-own-github-oauth-app).
 
 <Callout type="info">
 **Callback URLs are per app, not per environment.** A URL you add so a tunnel

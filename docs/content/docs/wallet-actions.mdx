@@ -140,23 +140,6 @@ if (passkeySupported && !walletStatus.hasPasskey) {
 
 `walletStatus.hasPasskey` flips to true once enrolled.
 
-### Recovery code
-
-Grandfathered Stellar only. Starknet, Solana, and native Stellar have nothing to
-register — restore with the enclave or `approveDeviceWithPasskey()`.
-
-```ts title="TypeScript"
-const { setupRecovery } = useCavos();
-
-const code = await setupRecovery(); // Stellar only — show it ONCE
-```
-
-<Callout type="warn">
-The recovery code is returned **once**. Display it immediately and tell the
-user to store it somewhere safe. Only its derived key is registered on-chain —
-the code itself never leaves the device.
-</Callout>
-
 ### Restore a new device
 
 When a user signs in on a fresh device, `walletStatus.needsDeviceApproval` is

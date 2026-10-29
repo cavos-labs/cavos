@@ -65,8 +65,9 @@ Three causes, in the order worth checking:
 
 1. **Not enabled for the environment.** `socialRecovery: true` is the client
    half; the environment must also have it enabled in the dashboard. It is off
-   by default. GitHub users also need `'github'` in `modal.providers` (or a
-   `login('github')` call).
+   by default. A GitHub user recovers only by signing in with GitHub again, so
+   your app must still offer it (`'github'` in `modal.providers`, or
+   `login('github')`).
 2. **No `appId`.** The enclave session is scoped to the app; without it the
    feature cannot start. Flagged as `[social-recovery-without-app-id]`.
 3. **Your own auth, with no provider token supplied.** If you authenticate users
@@ -146,7 +147,13 @@ sends, and no longer serve the legacy `@cavos/react` flow. Upgrade to
 
 `@cavos/kit` 0.4.x pins older PCR0 values and has no signed-release path. The
 enclave now running is not on that list, so email sign-in and hardware-isolated
-recovery fail until you upgrade to `@cavos/kit` `^0.5.0`. Apps that set a
+recovery fail until you upgrade:
+
+```bash title="Terminal"
+npm install @cavos/kit@^0.5.0
+```
+
+Apps that set a
 custom `socialRecovery` / `socialRecoveryAttestation` with only `pcr0` still
 pin strictly and will not pick up signed releases. See
 [The attestation pin](/docs/hardware-isolated-recovery#the-attestation-pin)
@@ -166,19 +173,19 @@ hosted `/api/oauth/github/verify` maps that (and other non-rejected enclave
 failures) to `enclave_unavailable`. Retry; if it persists, the enclave's
 outbound path to `github.com` / `api.github.com` is down.
 
-GitHub is optional and not recommended over Google, Apple, or email. It is not
-available in React Native. Bring-your-own GitHub OAuth app is per environment
-(client id and secret; secret encrypted, never returned). Switching that app
-gives every GitHub user a new identity and a new, empty wallet — that looks
-like "users suddenly have new, empty wallets" and is expected.
+If GitHub users suddenly have new, empty wallets, check whether the
+environment's GitHub OAuth app changed. Identity is per OAuth client ID, so
+that is expected; see
+[Authentication → GitHub](/docs/auth#bring-your-own-github-oauth-app).
 
 ## `connect-src` blocks enclave release lookup
 
 From 0.5.0 the SDK may fetch `{backendUrl}/api/enclave/releases/{pcr0}` and,
 if the bundled Sigstore trusted root is stale, the TUF CDN at
 `https://tuf-repo-cdn.sigstore.dev/`. A strict Content-Security-Policy that
-omits those hosts fails closed (`kit/nitro: the enclave release signature is
-not valid` or `the enclave release lookup failed`). Allow both. The hosted
+omits those hosts fails closed with
+`kit/social-recovery: the enclave release lookup failed (<status>)` or
+`kit/nitro: the enclave release signature is not valid: <reason>`. Allow both. The hosted
 vault already uses `connect-src 'self' https:`.
 
 ## Reserve refused to sign, or `token_not_allowed`

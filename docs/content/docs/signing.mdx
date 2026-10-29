@@ -13,7 +13,7 @@ model.
 |---|---|---|---|
 | **Starknet** | Native stark key (HKDF of MasterDEK) | OpenZeppelin account validates the stark signature | Paymaster-sponsored deployment and execution |
 | **Solana** | Native Ed25519 spend key (HKDF of MasterDEK) | Solana verifies the user's signature on the transaction message | Relayer co-signs as fee payer |
-| **Stellar** | Native Ed25519 control key (same DEK family, or grandfathered extra signer) | Classic-account signature and Soroban authorization | Sponsored reserves and optional fee-bump |
+| **Stellar** | Native Ed25519 control key (HKDF of MasterDEK) | Classic-account signature and Soroban authorization | Sponsored reserves and optional fee-bump |
 
 The backend can transport, sponsor, or submit a transaction. It does not hold
 the user authority required to move funds.
@@ -59,8 +59,7 @@ allowlist. See [Solana](/docs/solana).
 ## Stellar
 
 Stellar uses its native ed25519 account model. With enclave or passkey, the
-control key is HKDF of the MasterDEK (same wrap as Solana). Grandfathered
-wallets still use extra Horizon signers.
+control key is HKDF of the MasterDEK (same wrap as Solana).
 
 On web, the control key is a non-extractable WebCrypto Ed25519 key held by the
 [Cavos vault](/docs/vault). Your page cannot read it, and what it signs past

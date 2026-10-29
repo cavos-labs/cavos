@@ -3,11 +3,10 @@ title: Stellar
 description: Use @cavos/kit on Stellar — a classic G… whose spend key is HKDF of a MasterDEK (same wrap as Solana). Relayer sponsors reserves and fees. Soroban and Trustless Work still work.
 ---
 
-Stellar is a **classic `G…` account** — the same address format wallets,
-exchanges, and every Stellar tool already understand. With
-`deviceApproval: "enclave"` or a passkey (the current path), that `G…` is HKDF
-of the same **MasterDEK** as Solana (`cavos-ed25519-stellar-v1`). A new device
-unwraps the DEK. It does not add a second Horizon signer. This is the Stellar
+Stellar is a **classic `G…` account**, the same address format wallets,
+exchanges, and every Stellar tool already understand. The `G…` is HKDF of the
+same **MasterDEK** as Solana (`cavos-ed25519-stellar-v1`). A new device
+unwraps the DEK; the account has one spend key. This is the Stellar
 adapter for the Cavos [embedded wallet](https://cavos.xyz/embedded-wallet). The
 same account model is described for a product audience on the
 [Stellar embedded wallet](https://cavos.xyz/embedded-stellar-wallet) page.
@@ -17,13 +16,6 @@ the whole ecosystem — and it can still **sign Soroban contract invocations**, 
 the same `G…` acts as a `require_auth` role in on-chain apps like
 [escrows](#soroban-contracts--escrows). Gas and account reserves are sponsored
 by the Cavos relayer.
-
-<Callout type="info">
-**Grandfathered wallets** (no enclave, no passkey at connect) still use extra
-weight-1 Horizon signers: the first device's random control key *is* the `G…`,
-and a new device is `setOptions`'d on. That path is load-only. New apps should
-use enclave or passkey.
-</Callout>
 
 ## Connect
 
@@ -56,12 +48,11 @@ console.log(wallet.status);             // "undeployed" | "ready" | "needs-devic
 `stellar-mainnet`. The returned `wallet` is discriminated by `wallet.chain`.
 
 <Callout type="info">
-On the **native DEK** path, `connect` unwraps (or mints) the MasterDEK and
+`connect` unwraps (or mints) the MasterDEK and
 imports the Ed25519 control key as a non-extractable WebCrypto key, inside the
 [Cavos vault](/docs/vault) on the web. The `G…`
 is that key's public address. A returning device with a local wrap is `ready`
-with no prompt. Grandfathered wallets still mint a random control key whose
-pubkey *is* the `G…`.
+with no prompt.
 </Callout>
 
 ## Status values
@@ -254,18 +245,15 @@ domain prefix before signing.
 
 ## Unlock factors & silent signing
 
-**Native DEK path (enclave / passkey):** one spend key, restored by an enclave
-unwrap or a passkey's encrypted copy. Signing in again with the enrolled Google, Apple, GitHub, or email identity **does** restore
-the account.
+One spend key, restored by an enclave unwrap or a passkey's encrypted copy.
+Signing in again with the enrolled Google, Apple, GitHub, or email identity
+**does** restore the account.
 
-**Grandfathered path:** extra Horizon signers.
-
-| Factor | Native DEK | Grandfathered |
-|--------|------------|---------------|
-| **Device** | Ed25519 imported from the DEK | Random WebCrypto key; first device's pubkey is the `G…` |
-| **Passkey** | Encrypted copy of the MasterDEK (can spend) | Extra weight-1 signer |
-| **Enclave** | Seals / unwraps the DEK | Not used |
-| **Recovery code** | Not used | Extra weight-1 signer |
+| Factor | Role |
+|--------|------|
+| **Device** | Ed25519 key imported from the DEK |
+| **Passkey** | Encrypted copy of the MasterDEK (can spend) |
+| **Enclave** | Seals / unwraps the DEK |
 
 On a returning device with a local wrap, `connect` is `ready` with no prompt.
 On a new device with no wrap, the vault asks for the passkey if one was added;
@@ -275,10 +263,9 @@ otherwise status is `needs-device-approval` until enclave login or
 ## Add a passkey (recommended)
 
 Signing up never asks for a passkey. After connect, call `enrollPasskeyDefault()`.
-On the native DEK path the passkey stores an **encrypted copy of the
-MasterDEK** — anyone with that synced passkey can open the wallet. It is *not*
-2FA and *not* a Horizon extra signer. `wallet.enrollPasskey(...)` is a no-op on
-native accounts. See [Passkeys](/docs/passkeys) for how the copy is protected.
+The passkey stores an **encrypted copy of the MasterDEK**: anyone with that
+synced passkey can open the wallet. It is *not* 2FA and does not add a signer
+to the account. See [Passkeys](/docs/passkeys) for how the copy is protected.
 
 <Callout type="warn">
 Use the enclave if you want Google/Apple/GitHub/email restore without giving a synced
@@ -296,76 +283,24 @@ if (walletStatus.needsDeviceApproval && walletStatus.hasPasskey) {
 }
 ```
 
-**Grandfathered wallets only:** `PasskeyPrf.enroll` + `wallet.enrollPasskey(secret)`
-still adds a weight-1 Horizon signer. Do not use that on a `nativeDek` wallet.
-
 ## Approve a new device
 
-On the **native DEK** path, a fresh device lands on the same `G…` with
+A fresh device lands on the same `G…` with
 `status: "needs-device-approval"` until it unwraps the MasterDEK (enclave login
-or `approveDeviceWithPasskey()`). There is no `setOptions` of a second signer.
-
-**Grandfathered wallets:** unlock with the passkey (or a recovery code) to
-`setOptions` this device's ed25519 key onto the account:
-
-```ts title="TypeScript"
-import { PasskeyPrf } from "@cavos/kit";
-
-// Grandfathered only
-if (wallet.chain === "stellar" && wallet.status === "needs-device-approval" && !wallet.nativeDek) {
-  const prf = new PasskeyPrf({ rpName: "My App" });
-  await wallet.approveThisDeviceWithPasskey(await prf.getSecret());
-}
-```
+or `approveDeviceWithPasskey()`). No signer is added to the account.
 
 See [Multi-device](/docs/multi-device) and [Passkeys](/docs/passkeys).
 
 ## Recovery
 
-**Native DEK:** [hardware-isolated recovery](/docs/hardware-isolated-recovery)
-seals the MasterDEK. Sign in again on the new device, or use
-`approveDeviceWithPasskey()`. Do not use a recovery code to restore native
-accounts.
-
-**Grandfathered:** a recovery code is an extra Horizon signer:
-
-```ts title="TypeScript"
-import { generateRecoveryCode } from "@cavos/kit";
-
-const code = generateRecoveryCode();
-await wallet.setupRecovery(code);
-// show `code` once; the kit never persists it.
-```
-
-```ts title="TypeScript"
-if (wallet.chain === "stellar" && wallet.status === "needs-device-approval" && !wallet.nativeDek) {
-  await wallet.approveThisDeviceWithRecovery(code);
-}
-```
-
-See [Recovery codes](/docs/recovery-codes) for the grandfathered model.
+[Hardware-isolated recovery](/docs/hardware-isolated-recovery) seals the
+MasterDEK. Sign in again on the new device, or use
+`approveDeviceWithPasskey()`.
 
 ## Manage devices
 
-**Native DEK:** one spend key. `listDevices` still reads Horizon signers of the
-classic account (usually just the `G…` itself). Do not treat extra signers as
-the restore path.
-
-**Grandfathered:** a "device" is a Horizon signer. List and revoke:
-
-```ts title="TypeScript"
-const signers = await wallet.listDevices();
-
-await wallet.removeDevice({
-  slotId, // never this device's own key
-});
-```
-
-<Callout type="warn">
-**Revocation is surgical** on grandfathered accounts. `removeDevice` drops that
-one signer via `setOptions` (weight 0). You cannot revoke the signer this
-device is using. Native Solana and Starknet have no equivalent: one key, restored from the MasterDEK.
-</Callout>
+One spend key, restored from the MasterDEK on every device. There is no
+per-device list to manage, the same as Starknet and Solana.
 
 ## Pay reserves and fees in a token
 
@@ -409,7 +344,7 @@ a Cavos `appId`. Classic operations only — no Soroban. See
 | **Self-funded fallback** | no `appId`, a `stellarSourceKeypair` is passed | Your funded keypair funds reserves + pays fees |
 
 Every Stellar account locks XLM **reserves** (a base reserve plus ~0.5 XLM per
-subentry — data entries and extra signers). With the relayer, those reserves
+subentry, such as data entries and trustlines). With the relayer, those reserves
 and all fees are sponsored, so the user locks no XLM. The relayer is **only** a
 fee payer + reserve sponsor — never a custodian or identity authority: a bad or
 absent relayer can cost fees but can never move funds or squat an address.
@@ -420,12 +355,10 @@ On Stellar, the `G…` address is resolved via the **registry-first** model (see
 [Concepts](/docs/concepts)). When you call `connect`:
 
 1. **Registry lookup**: `(userId, appId, chain, network)`.
-2. **If found**: that `G…` is returned. Native: unwrap the MasterDEK or land on
-   `needs-device-approval`. Grandfathered: check whether this device already
-   holds a Horizon signer.
-3. **If not found**: native mints a random MasterDEK and claims the
-   HKDF `G…`. Grandfathered mints a random control key whose pubkey *is* the
-   `G…`. The first device to register wins.
+2. **If found**: that `G…` is returned. The device unwraps the MasterDEK or lands on
+   `needs-device-approval`.
+3. **If not found**: the SDK mints a random MasterDEK and claims the
+   HKDF `G…`. The first device to register wins.
 
 The address is available before the account exists on-chain. The on-chain
 account is created on first `execute`.
@@ -451,7 +384,6 @@ Networks: `"stellar-testnet"`, `"stellar-mainnet"`.
 ## What's available
 
 - ✅ Classic `G…` account. Native MasterDEK path shares the DEK with Solana.
-- ✅ Grandfathered per-device Horizon signers still load for older wallets.
 - ✅ **Lazy deploy** — first execute creates the account atomically.
 - ✅ Silent signing via a non-extractable ed25519 control key, held by the
   [Cavos vault](/docs/vault) within your app's limits.

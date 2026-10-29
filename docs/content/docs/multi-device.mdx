@@ -6,7 +6,7 @@ description: Open an existing wallet on a new device by restoring its MasterDEK,
 A wallet's address is looked up in the registry by `(userId, appId, chain, network)`,
 so the **same user on a new device lands on the same wallet**.
 
-On **Starknet, Solana, and native Stellar**, there is one account key, derived
+On **Starknet, Solana, and Stellar**, there is one account key, derived
 from the MasterDEK. A new device does not get a key of its own and there is no
 on-chain device list: it **restores the MasterDEK** (enclave or passkey) and
 derives the same key. Nothing is added on-chain.
@@ -49,18 +49,10 @@ if (walletStatus.needsDeviceApproval) {
 The vault opens the passkey's encrypted copy of the MasterDEK (it usually asked
 already at sign-in). The same prompt works on every chain in the session.
 
-## Stellar grandfathered wallets
+## Device lists
 
-Grandfathered Stellar wallets that never enrolled still use Horizon signer
-keys. Manage them on the wallet after narrowing on `wallet.chain === "stellar"`:
-
-```ts title="Devices.tsx"
-const devices = await wallet.listDevices();
-await wallet.removeDevice({ slotId });
-```
-
-See [Stellar → Manage devices](/docs/stellar#manage-devices). Starknet and
-native Solana/Stellar have one key, so there is nothing to list or remove.
+Starknet, Solana, and Stellar each have one account key, so there is no
+per-device list to manage or revoke.
 
 <Callout type="info">
 **Encourage a way back early.** If a user only ever has one device and loses

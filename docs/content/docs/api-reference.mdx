@@ -121,7 +121,6 @@ MasterDEK (enclave or passkey) and derives the same key. See
 |--------|-------------|
 | `WalletRegistry`, `RegisteredWallet`, `RegisterResult` | Off-chain `userId` → wallet map (cross-device recognition). |
 | `InMemoryWalletRegistry`, `HttpWalletRegistry` | Registry implementations. |
-| `generateRecoveryCode()` | New high-entropy recovery code. Used by grandfathered Stellar only. |
 
 ### Hardware-isolated social recovery
 
@@ -134,7 +133,7 @@ MasterDEK. See
 |--------|-------------|
 | `SocialRecoveryClient` | Client for the recovery enclave. `enroll(...)`, `recover(...)`, `confirmEnrollment(...)`. |
 | `SocialRecoveryClientOptions` | `{ baseUrl, appId, attestation, environment? }`. |
-| `AttestationPolicy` | Which enclave you accept: `{ pcr0?, release? }`. `pcr0` is the SHA-384 measurement of the Nitro image (a string or list). `release` is an `EnclaveReleasePolicy`. A policy with only `pcr0` is a strict pin — no Sigstore fallback. See [Hardware-isolated recovery](/docs/hardware-isolated-recovery#the-attestation-pin). |
+| `AttestationPolicy` | Which enclave you accept: `{ pcr0?, release? }`. `pcr0` is the SHA-384 measurement of the Nitro image (a string or list). `release` is an `EnclaveReleasePolicy`. A policy with only `pcr0` is a strict pin with no Sigstore fallback. See [Hardware-isolated recovery](/docs/hardware-isolated-recovery#the-attestation-pin). |
 | `EnclaveReleasePolicy` | `{ repository, repositoryId, ownerId, workflow, minVersion }`. Default 0.5.0 values: `cavos-labs/cavos-recovery`, repository id `1333734222`, owner id `216094156`, workflow `.github/workflows/release.yml`, `minVersion` `1`. |
 | `DEFAULT_SOCIAL_RECOVERY_ATTESTATION` | The policy for the enclave Cavos operates: a transitional `pcr0` list **or** a Sigstore bundle from `{backendUrl}/api/enclave/releases/{pcr0}` that verifies against `release`. |
 | `SocialRecoveryCredential`, `createSocialRecoveryCredential` | The in-memory social credential. |
@@ -148,7 +147,7 @@ open (can spend). Signing up never prompts. See [Passkeys](/docs/passkeys).
 | Export | Description |
 |--------|-------------|
 | `PasskeyPrfProvider`, `PasskeyEnrollParams`, `PasskeyPrfEnrollResult` | Types for a passkey PRF provider. |
-| `PasskeyPrf` | WebAuthn PRF helper. Opens a passkey's DEK copy (grandfathered Stellar uses it as an extra signer). |
+| `PasskeyPrf` | WebAuthn PRF helper. Opens a passkey's DEK copy. |
 
 ## Vault
 
@@ -189,18 +188,17 @@ Cavos message prefix itself.
 
 ### Stellar
 
-Classic `G…` account. Native MasterDEK path shares the DEK with Solana;
-grandfathered wallets still use extra Horizon signers. See [Stellar](/docs/stellar).
+Classic `G…` account whose key derives from the same MasterDEK as Solana. See [Stellar](/docs/stellar).
 
 | Export | Description |
 |--------|-------------|
-| `CavosStellar` | High-level Stellar client. `nativeDek` is true on the current path. Native: `enrollPasskey` / `setupRecovery` no-op; `approveThisDeviceWithPasskey` / `approveThisDeviceWithRecovery` throw — reconnect with passkey or enclave. Grandfathered methods remain for older wallets. |
+| `CavosStellar` | High-level Stellar client. A new device restores the MasterDEK with the enclave or a passkey. |
 | `ConnectStellarOptions`, `StellarConnectStatus` | Option/status types. |
 | `StellarAdapter`, `StellarAdapterOptions` | Low-level adapter. |
 | `StellarRelayer`, `StellarRelayerOptions`, `StellarRelayKind` | Gasless relayer. |
 | `STELLAR_NETWORKS`, `StellarNetwork`, `HORIZON_URL`, `SOROBAN_RPC_URL`, `XLM_DECIMALS` | Network configs. |
 | `TrustlessWorkEscrow`, `deployEscrow`, `buildEscrowScVal` | Trustless Work escrow wrapper. |
-| `PasskeyPrf`, `PasskeyPrfOptions`, `PasskeyPrfEnrollParams` | WebAuthn PRF helper (passkey DEK copy / grandfathered extra signer). |
+| `PasskeyPrf`, `PasskeyPrfOptions`, `PasskeyPrfEnrollParams` | WebAuthn PRF helper (opens a passkey's DEK copy). |
 | `generateControlKey`, `controlKeypairFromSeed` | Control key generation. |
 
 ### Shared interface types
@@ -226,7 +224,7 @@ grandfathered wallets still use extra Horizon signers. See [Stellar](/docs/stell
 | `Cavos` | Native connect entry point. |
 | `NativeCavosAuth`, `NativeCavosAuthError` | Native auth adapters. |
 | `NativeDeviceUnwrapKey` | Secure Enclave/Keystore key that protects the MasterDEK at rest. |
-| `NativeControlSigner` | Native ed25519 control key, used on grandfathered Stellar. |
+| `NativeControlSigner` | Native ed25519 control key. |
 | `NativePasskeyPrf` | Native passkey PRF adapter. |
 | `getNativeCapabilities()` | Reports signing, passkey, and PRF support. |
 | `getCavosNativeModule()` | Underlying Expo native module. |

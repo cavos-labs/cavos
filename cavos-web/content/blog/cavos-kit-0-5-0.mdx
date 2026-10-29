@@ -6,7 +6,7 @@ category: "Release"
 slug: "cavos-kit-0-5-0"
 ---
 
-`@cavos/kit` **0.5.0** is on npm. It is a release for anyone integrating the Cavos [embedded wallet](/embedded-wallet) SDK: GitHub as an optional hosted login — live and tested in production — and a second way to accept the recovery enclave so a redeploy of that enclave does not require another kit release. GitHub is not recommended over Google, Apple, or email.
+`@cavos/kit` **0.5.0** is on npm. For anyone integrating the Cavos [embedded wallet](/embedded-wallet) SDK, it adds GitHub as an optional hosted login, and a second way to accept the recovery enclave so redeploying it no longer requires a new kit release.
 
 Upgrade:
 
@@ -14,7 +14,7 @@ Upgrade:
 npm install @cavos/kit@^0.5.0
 ```
 
-**0.4.x will not talk to the enclave that is now deployed.** Email sign-in and hardware-isolated recovery fail until you are on `^0.5.0`. The hosted vault and the public demo already moved. If you pin a custom `pcr0` and omit `release`, you still have a strict pin — this release does not silently loosen it.
+**0.4.x will not talk to the enclave that is now deployed.** Email sign-in and hardware-isolated recovery fail until you are on `^0.5.0`. The hosted vault and the public demo already moved. If you pin a custom `pcr0` and omit `release`, you still have a strict pin; this release does not loosen it.
 
 Docs: [Authentication](https://docs.cavos.xyz/docs/auth), [Hardware-isolated recovery](https://docs.cavos.xyz/docs/hardware-isolated-recovery), [API reference](https://docs.cavos.xyz/docs/api-reference), [Troubleshooting](https://docs.cavos.xyz/docs/troubleshooting).
 
@@ -32,9 +32,9 @@ Until 0.5.0 the SDK accepted an enclave only when the live Nitro attestation's P
 
 `cavos.xyz` only relays the bytes. GitHub release assets have no CORS headers, so the browser cannot fetch them directly; the route is transport, not trust. A compromised API can withhold a bundle. It cannot make 0.5.0 accept one.
 
-A release is trusted if that workflow signed it on a `vN` tag. The signature is public in Rekor. On [cavos-recovery](https://github.com/cavos-labs/cavos-recovery), `vN` tags are tag-protected and the `Release` workflow runs in the `release` environment with required reviewers, so a tag or a workflow run is not enough on its own. Cut a release by pushing a `vN` tag on `main`; the workflow publishes `enclave.eif`, `measurements.json`, and `enclave-<pcr0>.sigstore.json`. [Release v1](https://github.com/cavos-labs/cavos-recovery/releases/tag/v1) is the first of those. Verify measurements from that `measurements.json` — do not copy hashes out of older docs.
+A release is trusted if that workflow signed it on a `vN` tag. The signature is public in Rekor. On [cavos-recovery](https://github.com/cavos-labs/cavos-recovery), the `Release` workflow runs in the `release` environment with required reviewers, so pushing a tag does not publish a release on its own. Cut a release by pushing a `vN` tag on `main`; the workflow publishes `enclave.eif`, `measurements.json`, and `enclave-<pcr0>.sigstore.json`. [Release v1](https://github.com/cavos-labs/cavos-recovery/releases/tag/v1) is the first of those. Verify measurements from that `measurements.json`, not from hashes in older docs.
 
-The currently deployed image is still on the PCR0 list, so today's production accept path is the pin. The signed-release path is how a later deploy can ship without a kit bump. That path has not been the production accept path. `@freedomofpress/sigstore-browser` is pinned at 0.1.15; it has not received an independent security audit.
+The currently deployed image is still on the PCR0 list, so today's production accept path is the pin. The signed-release path is how a later deploy can ship without a kit bump. No production enclave has been accepted through this path yet. `@freedomofpress/sigstore-browser` is pinned at 0.1.15; it has not received an independent security audit.
 
 Default `release` policy in `DEFAULT_SOCIAL_RECOVERY_ATTESTATION`:
 
@@ -73,13 +73,13 @@ JWKS: `https://enclave.cavos.xyz/.well-known/jwks.json`. No GitHub scopes.
 
 ### Bring your own GitHub OAuth app
 
-Leave **Dashboard → App → Environments → GitHub sign-in** empty to use Cavos's GitHub app. To show your own name and logo on GitHub's consent screen, register a GitHub OAuth app and save its client id and client secret on that environment. Paste GitHub's authorization callback URL from the dashboard (`/api/oauth/github/callback`) into the OAuth app. The secret is encrypted at rest and never returned; leave the secret field empty on later saves to keep the stored value.
+Leave **Dashboard → App → Environments → GitHub sign-in** empty to use Cavos's GitHub app. To show your own name and logo on GitHub's consent screen, register a GitHub OAuth app and save its client ID and client secret on that environment. Set the OAuth app's authorization callback URL to the one the dashboard shows there (the dashboard origin plus `/api/oauth/github/callback`). It is not one of your app's Callback URLs. The secret is encrypted at rest and never returned; leave the secret field empty on later saves to keep the stored value.
 
-Identity is **per OAuth client id**. `sub` hashes `client_id` with the GitHub user id, because GitHub reports the same numeric id to every app. Switching an environment's GitHub app — including from Cavos's app to yours, or the other way — gives every GitHub user a **new identity and a new, empty wallet**.
+Identity is **per OAuth client ID**. `sub` hashes `client_id` with the GitHub user id, because GitHub reports the same numeric id to every app. Switching an environment's GitHub app, in either direction, gives every GitHub user a **new identity and a new, empty wallet**.
 
 Not in React Native. Same constraint as email: the native build cannot verify the enclave attestation this flow needs.
 
-Enclave codes: `github_rejected` (SDK: "GitHub did not accept this sign-in. Try again.") and `github_unreachable` (the enclave could not reach GitHub; hosted `/api/oauth/github/verify` maps that to `enclave_unavailable`). A stale grant is `invalid_grant`.
+Enclave codes: `github_rejected` (SDK: "GitHub did not accept this sign-in. Try again.") and `github_unreachable` (the enclave could not reach GitHub). The hosted `/api/oauth/github/verify` route passes `github_rejected` through and returns every other enclave failure as `enclave_unavailable`. A stale or reused grant is `invalid_grant`.
 
 ## What did not change
 
@@ -87,7 +87,7 @@ Starknet is still the audited OpenZeppelin `AccountUpgradeable`. The enclave sti
 
 ## What to read next
 
-- [Hardware-isolated recovery](https://docs.cavos.xyz/docs/hardware-isolated-recovery) — the two accept paths, release policy fields, how to read `measurements.json`
-- [Authentication → GitHub](https://docs.cavos.xyz/docs/auth#github) — PKCE, token claims, per-environment OAuth app
-- [Troubleshooting](https://docs.cavos.xyz/docs/troubleshooting) — 0.4.x upgrade, GitHub errors, CSP
-- [Changelog](/blog) — other product updates
+- [Hardware-isolated recovery](https://docs.cavos.xyz/docs/hardware-isolated-recovery): the two accept paths, release policy fields, how to read `measurements.json`
+- [Authentication → GitHub](https://docs.cavos.xyz/docs/auth#github): PKCE, token claims, per-environment OAuth app
+- [Troubleshooting](https://docs.cavos.xyz/docs/troubleshooting): 0.4.x upgrade, GitHub errors, CSP
+- [Changelog](/blog): other product updates

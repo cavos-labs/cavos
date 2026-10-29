@@ -140,7 +140,7 @@ is active. The session keeps all chains connected.
 
 | Method | Description |
 |--------|-------------|
-| `login(provider)` | OAuth social login (`"google" \| "apple" \| "github"`) — opens the hosted flow. GitHub is optional (`providers` must include `'github'`), not recommended over Google or Apple, and is not available in React Native. |
+| `login(provider)` | OAuth social login (`"google" \| "apple" \| "github"`) — opens the hosted flow. GitHub is optional (`providers` must include `'github'`), not recommended over Google, Apple, or email, and not available in React Native. |
 | `sendOtp(email)` | Email a 9-character sign-in code. |
 | `verifyOtp(email, code)` | Verify the emailed code and deploy the wallet. |
 | `handleCallback(authData, redirectUri?)` | Resolve identity from an OAuth callback (`?cavos_auth_code=…`) and deploy. Pass the callback URL as `redirectUri` if it differs from the current one. |
@@ -165,10 +165,8 @@ the args differ per chain. See [Wallet actions](/docs/wallet-actions).
 | Method | Description |
 |--------|-------------|
 | `enrollPasskeyDefault()` | Add a passkey **after** sign-up. Stores a PRF-encrypted copy of the MasterDEK. Sign-up never prompts. |
-| `approveDeviceWithPasskey()` | New device with no wrap, when the user dismissed the prompt: opens the passkey's encrypted copy of the MasterDEK (every chain) or approves the grandfathered-Stellar path. |
-| `setupRecovery()` | **Stellar only** (grandfathered wallets). Starknet and Solana have nothing to register. **Resolves with the code** when it applies. |
+| `approveDeviceWithPasskey()` | New device with no wrap, when the user dismissed the prompt: opens the passkey's encrypted copy of the MasterDEK (every chain). |
 | `submitSocialRecoveryToken(idToken)` | Drive enclave enroll/unwrap with the provider's raw `id_token`. Starknet, Solana, and Stellar. Not accepted for Google and Apple tokens in 0.2.6. See [Hardware-isolated recovery](/docs/hardware-isolated-recovery#with-your-own-auth). |
-| `recover(code)` | Recover access after losing every device. **Grandfathered Stellar only.** Starknet, Solana, and native Stellar restore with enclave login or `approveDeviceWithPasskey()`. |
 
 When hardware-isolated social recovery is enabled, `<CavosProvider>` enrolls
 after a fresh login (reseals the MasterDEK if this device already has it) and
@@ -232,7 +230,7 @@ import { CavosAuthModal } from "@cavos/kit/react";
 | `appName` | `string?` | Shown in the heading (`"Sign in to {appName}"`). |
 | `appLogo` | `string?` | Image URL for the logo. If omitted, the Cavos star is shown. The provider also loads it from your app's dashboard config automatically; a local `appLogo` overrides that. |
 | `appLogoSize` | `number?` | Logo height in px. Defaults to `40` (image) / `34` (Cavos star). |
-| `providers` | `("google" \| "apple" \| "email" \| "github")[]?` | Which login buttons to show. Defaults to Google, Apple, and email. Add `"github"` to offer GitHub (optional, not recommended over the others; kit 0.5.0, web only); see [Authentication](/docs/auth#github) and the [0.5.0 changelog](https://cavos.xyz/blog/cavos-kit-0-5-0). |
+| `providers` | `("google" \| "apple" \| "email" \| "github")[]?` | Which login buttons to show. Defaults to Google, Apple, and email. Add `"github"` to offer GitHub (kit 0.5.0, web only); see [Authentication → GitHub](/docs/auth#github). |
 | `primaryColor` | `string?` | Accent color for buttons / focus rings (hex). |
 | `theme` | `"light" \| "dark"?` | Card theme. Defaults to `light`. |
 | `backgroundColor` | `string?` | Override the card background (defaults to white / `#111` per theme). |

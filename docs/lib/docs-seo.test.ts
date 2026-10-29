@@ -95,9 +95,10 @@ describe('docs SEO', () => {
     assert.doesNotMatch(recovery, /f2f81237/)
     assert.doesNotMatch(recovery, /24ce0009/)
     assert.match(recovery, /socialRecoveryAttestation/)
-    assert.match(recovery, /tag-protected/)
+    assert.doesNotMatch(recovery, /tag-protected/)
+    assert.match(recovery, /"PCR1": "3b4a7e1b/)
     assert.match(recovery, /required\s+reviewers/)
-    assert.match(recovery, /not\s+been the production accept path/)
+    assert.match(recovery, /No production enclave has been accepted\s+through this path yet/)
     assert.match(recovery, /not recommended over/)
     assert.match(recovery, /live and tested in production/)
 
@@ -113,6 +114,14 @@ describe('docs SEO', () => {
     assert.match(api, /getGitHubOAuthUrl/)
     assert.match(api, /EnclaveReleasePolicy/)
     assert.match(api, /AttestationPolicy/)
+
+    for (const file of fs.readdirSync(path.join(process.cwd(), 'content/docs'))) {
+      if (!file.endsWith('.mdx')) continue
+      const page = read(`content/docs/${file}`)
+      assert.doesNotMatch(page, /grandfather/i, file)
+      assert.doesNotMatch(page, /Horizon signer/i, file)
+      assert.doesNotMatch(page, /approveThisDeviceWithRecovery/, file)
+    }
   })
 
   it('adds offers.availability to the docs SoftwareApplication Offer', () => {
