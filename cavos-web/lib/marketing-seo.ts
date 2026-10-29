@@ -474,12 +474,14 @@ export function marketingPageMetadata(input: {
   publishedTime?: string
   modifiedTime?: string
   robots?: Metadata['robots']
+  /** Per-page social image. Defaults to the site-wide OG image. */
+  image?: { url: string; width: number; height: number; alt: string }
 }): Metadata {
   const url = pageUrl(input.path)
   const type = input.type ?? 'website'
   const isHome = input.path === '/'
   const title = isHome ? input.title : socialTitle(input.title)
-  const image = {
+  const image = input.image ?? {
     url: OG_IMAGE.url,
     width: OG_IMAGE.width,
     height: OG_IMAGE.height,

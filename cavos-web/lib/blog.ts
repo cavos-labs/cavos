@@ -25,6 +25,8 @@ export interface PostMeta {
   updated?: string;
   excerpt: string;
   category: PostCategory;
+  /** Pull quote for the social card. Falls back to the excerpt. */
+  ogQuote?: string;
   faq?: PostFaqItem[];
 }
 
@@ -65,6 +67,9 @@ function postMetaFromData(
     category: (typeof data.category === 'string'
       ? data.category
       : 'Announcement') as PostCategory,
+    ...(typeof data.ogQuote === 'string' && data.ogQuote.trim()
+      ? { ogQuote: data.ogQuote.trim() }
+      : {}),
     faq: parsePostFaq(data.faq),
   };
 }
