@@ -1,13 +1,28 @@
 ---
-title: "Cavos Kit 0.5.0: Enclave Releases & GitHub Login"
+title: "We're Open-Sourcing the Cavos Enclave (Kit 0.5.0)"
 date: "2026-10-28"
-excerpt: "@cavos/kit 0.5.0 adds GitHub sign-in and verifies signed enclave releases in the client, so an enclave redeploy no longer needs an SDK bump."
+updated: "2026-10-29"
+excerpt: "The Cavos recovery enclave is now open source. Read the code that restores wallets. Plus @cavos/kit 0.5.0: GitHub sign-in and signed enclave releases."
 category: "Release"
-ogQuote: "An enclave redeploy no longer needs an SDK bump."
+ogQuote: "Our enclave is open source. Read every line that touches recovery."
 slug: "cavos-kit-0-5-0"
 ---
 
-`@cavos/kit` **0.5.0** is on npm. For anyone integrating the Cavos [embedded wallet](/embedded-wallet) SDK, it adds GitHub as an optional hosted login, and a second way to accept the recovery enclave so redeploying it no longer requires a new kit release.
+The Cavos recovery enclave is open source. The code is public at [cavos-labs/cavos-recovery](https://github.com/cavos-labs/cavos-recovery), and every enclave image we deploy is built from it.
+
+The enclave has one job: restore a user's [embedded wallet](/embedded-wallet) on a new device. It runs in a hardware-isolated AWS Nitro Enclave and wraps the key that protects the wallet backup. It cannot sign transactions and it cannot move funds. Wallet keys never leave the user's device in plaintext, and they are never used to sign on our servers. Cavos is hardware-isolated and non-custodial, and now you do not have to take our word for what the enclave does. You can read it.
+
+## Read the code
+
+- Repository: [github.com/cavos-labs/cavos-recovery](https://github.com/cavos-labs/cavos-recovery)
+- Releases: [Release v1](https://github.com/cavos-labs/cavos-recovery/releases/tag/v1) ships `enclave.eif`, `measurements.json`, and a Sigstore bundle, so you can match the PCR0 of the running enclave to a public build.
+- Docs: [Hardware-isolated recovery](https://docs.cavos.xyz/docs/hardware-isolated-recovery)
+
+Open source is also what makes the second half of this post possible: `@cavos/kit` 0.5.0 can accept an enclave release because a public workflow in that repository signed it.
+
+## Cavos Kit 0.5.0
+
+`@cavos/kit` **0.5.0** is on npm. For anyone integrating the Cavos embedded wallet SDK, it adds GitHub as an optional hosted login, and a second way to accept the recovery enclave so redeploying it no longer requires a new kit release.
 
 Upgrade:
 
@@ -19,7 +34,7 @@ npm install @cavos/kit@^0.5.0
 
 Docs: [Authentication](https://docs.cavos.xyz/docs/auth), [Hardware-isolated recovery](https://docs.cavos.xyz/docs/hardware-isolated-recovery), [API reference](https://docs.cavos.xyz/docs/api-reference), [Troubleshooting](https://docs.cavos.xyz/docs/troubleshooting).
 
-## Signed enclave releases
+### Signed enclave releases
 
 Until 0.5.0 the SDK accepted an enclave only when the live Nitro attestation's PCR0 was listed in `DEFAULT_SOCIAL_RECOVERY_ATTESTATION`. A new image meant a new kit version.
 
@@ -51,11 +66,11 @@ release: {
 
 Pass only `pcr0` (including via the deprecated `socialRecoveryAttestation` key, which still wins over `socialRecovery`) and there is no Sigstore fallback.
 
-### Content-Security-Policy
+#### Content-Security-Policy
 
 A strict `connect-src` must allow `{backendUrl}/api/enclave/releases/*` (hosted default `https://cavos.xyz`) and the Sigstore TUF CDN `https://tuf-repo-cdn.sigstore.dev/`. The hosted vault already uses `connect-src 'self' https:`.
 
-## GitHub sign-in
+### GitHub sign-in
 
 GitHub sign-in is live and tested in production. It is an **optional** provider, not recommended over Google, Apple, or email. Default modal providers are still those three; add `'github'` only if you want it.
 
@@ -72,7 +87,7 @@ modal={{ providers: ["google", "apple", "email", "github"] }}
 
 JWKS: `https://enclave.cavos.xyz/.well-known/jwks.json`. No GitHub scopes.
 
-### Bring your own GitHub OAuth app
+#### Bring your own GitHub OAuth app
 
 Leave **Dashboard → App → Environments → GitHub sign-in** empty to use Cavos's GitHub app. To show your own name and logo on GitHub's consent screen, register a GitHub OAuth app and save its client ID and client secret on that environment. Set the OAuth app's authorization callback URL to the one the dashboard shows there (the dashboard origin plus `/api/oauth/github/callback`). It is not one of your app's Callback URLs. The secret is encrypted at rest and never returned; leave the secret field empty on later saves to keep the stored value.
 
@@ -82,12 +97,13 @@ Not in React Native. Same constraint as email: the native build cannot verify th
 
 Enclave codes: `github_rejected` (SDK: "GitHub did not accept this sign-in. Try again.") and `github_unreachable` (the enclave could not reach GitHub). The hosted `/api/oauth/github/verify` route passes `github_rejected` through and returns every other enclave failure as `enclave_unavailable`. A stale or reused grant is `invalid_grant`.
 
-## What did not change
+### What did not change
 
 Starknet is still the audited OpenZeppelin `AccountUpgradeable`. The enclave still wraps the MasterDEK; it does not sign transfers. `socialRecovery: true` still enrolls after a fresh login. Google, Apple, and email behaviour is unchanged.
 
 ## What to read next
 
+- [cavos-recovery on GitHub](https://github.com/cavos-labs/cavos-recovery): the enclave source and signed releases
 - [Hardware-isolated recovery](https://docs.cavos.xyz/docs/hardware-isolated-recovery): the two accept paths, release policy fields, how to read `measurements.json`
 - [Authentication → GitHub](https://docs.cavos.xyz/docs/auth#github): PKCE, token claims, per-environment OAuth app
 - [Troubleshooting](https://docs.cavos.xyz/docs/troubleshooting): 0.4.x upgrade, GitHub errors, CSP
