@@ -1,8 +1,8 @@
 ---
-title: "Embedded Wallet Providers Compared in 2026"
+title: "Embedded Wallet Providers: Who Fits in 2026"
 date: "2026-10-19"
-updated: "2026-10-28"
-excerpt: "Compare embedded wallet providers in 2026: Cavos, Privy, Dynamic, Turnkey, Magic, and Web3Auth on custody, chains, pricing, and when each actually fits."
+updated: "2026-10-29"
+excerpt: "Compare embedded wallet providers in 2026 — Cavos, Privy, Dynamic, Turnkey, Magic, Web3Auth — on custody, chains, pricing, and when each actually fits."
 category: "Guide"
 slug: "embedded-wallet-providers"
 faq:
@@ -16,9 +16,9 @@ faq:
     answer: "Privy is a finished embedded wallet and authentication product, including external wallet connectors. Turnkey is low-level key-management and signing infrastructure in AWS Nitro Enclaves; you build the wallet experience. Dynamic combines wallet connection, embedded wallets, and authentication, with TSS-MPC keys. Privy vs Turnkey is usually build-versus-buy. Privy vs Dynamic is usually provision-versus-connect."
 ---
 
-An [embedded wallet](/embedded-wallet) lives inside your application. A [wallet as a service](/blog/wallet-as-a-service) platform is the commercial name for the same job: provision an on-chain account from a login, sign in your UI, and skip the browser-extension install. The words do not pick a key model. This guide is the listicle for teams comparing **embedded wallet providers**, **embedded wallet solutions**, and **embedded wallets as a service** — pricing, chains, and who can produce a signature.
+An [embedded wallet](/embedded-wallet) lives inside your application. A [wallet as a service](/blog/wallet-as-a-service) platform is the commercial name for the same job: provision an on-chain account from a login, sign in your UI, and skip the browser-extension install. The words do not pick a key model. This guide is the 2026 listicle for **embedded wallet providers** — who provisions the wallet, who can produce a signature, which chains are native, and what the invoice meters. Searchers also type embedded wallet solutions and embedded wallets as a service; they want the same table.
 
-Cavos, LLC is a software and SaaS company. Positioning for Cavos comes after the table is fair. If the honest answer is another vendor, that is the answer. One-to-one pages live under [compare](/compare). Teams leaving a named vendor can start at [Privy alternatives](/privy-alternatives), [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), or [Magic alternatives](/magic-alternatives).
+Cavos, LLC is a software and SaaS company. Positioning for Cavos comes after the table is fair. If the honest answer is another vendor, that is the answer. One-to-one pages live under [compare](/compare). Teams leaving a named vendor can start at [Privy alternatives](/privy-alternatives), [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), or [Magic alternatives](/magic-alternatives). The current Cavos React release is [Cavos Kit 0.5.0](/blog/cavos-kit-0-5-0).
 
 ## Embedded wallet providers compared
 
@@ -112,7 +112,7 @@ None of those three is “the Starknet / Solana / Stellar device-native SDK.” 
 
 ## When Cavos is the right pick — and when it is not
 
-Cavos is an [embedded wallet](/embedded-wallet), not an extension, and not a connector.
+Cavos is a hardware-isolated, non-custodial [embedded wallet](/embedded-wallet), not an extension, and not a connector.
 
 Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds. Login produces a stable identity for a registry lookup; it never signs a transaction. There is no MPC. There is no hosted spend key.
 
@@ -120,7 +120,7 @@ On Starknet the on-chain account is an **audited OpenZeppelin AccountUpgradeable
 
 Solana and Stellar are native adapters, not EVM compatibility. Solana provisions a native Ed25519 system account; a relayer co-signs as fee payer. Stellar provisions a classic G… account so existing tools already understand the address; the relayer can sponsor reserves and fee-bumps. Both restore the same MasterDEK on a new device rather than adding a second on-chain signer.
 
-Auth is hosted Google, Apple, or email, or an identity you pass in from your own stack. The React path is `@cavos/kit`; mobile is `@cavos/kit/react-native`. The [React integration guide](/blog/how-to-add-an-embedded-wallet) and the [Cavos docs](https://docs.cavos.xyz/docs/quickstart) are the install. [Pricing](/pricing) publishes the free 1,000 wallet creates, Essential at $59/mo, and Complete at $139/mo with enclave recovery.
+Auth is hosted Google, Apple, or email, or an identity you pass in from your own stack. The React path is `@cavos/kit`; mobile is `@cavos/kit/react-native`. The current kit release is [Cavos Kit 0.5.0](/blog/cavos-kit-0-5-0). The [React integration guide](/blog/how-to-add-an-embedded-wallet) and the [Cavos docs](https://docs.cavos.xyz/docs/quickstart) are the install. [Pricing](/pricing) publishes the free 1,000 wallet creates, Essential at $59/mo, and Complete at $139/mo with enclave recovery.
 
 **Choose Cavos** when the user should never see a wallet picker, the chain is Starknet, Solana, or Stellar, and the review requires that the vendor cannot reconstruct a signing key.
 
@@ -136,6 +136,7 @@ Auth is hosted Google, Apple, or email, or an identity you pass in from your own
 - [Embedded wallet vs browser extension](/blog/embedded-wallet-vs-browser-extension) — where users should sign.
 - [Privy alternatives](/privy-alternatives) — the same vendors, framed as replacements for Privy.
 - [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), and [Magic alternatives](/magic-alternatives) — the same shortlist for those stacks.
+- [Cavos Kit 0.5.0](/blog/cavos-kit-0-5-0) — GitHub sign-in and signed enclave releases.
 - [Compare embedded wallet providers](/compare) — Cavos vs Privy, Dynamic, Turnkey, Web3Auth, and Magic.
 - [How to add an embedded wallet](/blog/how-to-add-an-embedded-wallet) — `@cavos/kit` install and the first sponsored transaction.
 - [Embedded Starknet wallet](/embedded-starknet-wallet) — audited OpenZeppelin AccountUpgradeable, paymaster, SNIP-12. Also [Solana](/embedded-solana-wallet) and [Stellar](/embedded-stellar-wallet).

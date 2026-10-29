@@ -40,7 +40,7 @@ A wallet is an on-chain account plus the means to authorize transactions from it
 
 If the provider can complete a transaction alone, or holds the means of access, the wallet is custodial in practice — even when the docs say “non-custodial” or “end-user owned.” If the provider cannot see the key, cannot sign with it, and cannot move funds, the wallet is self-custodial. Calling a product non-custodial does not make it so. The test is who can move the assets.
 
-Embedded is a UX label. Login selects the user, the SDK looks up or creates an on-chain address, and approval happens in the app UI. The same modal is used for hosted signing, MPC shares, and device-native keys. The [providers comparison](/blog/embedded-wallet-providers) is the named-vendor shortlist. Worked one-to-one pages live under [compare](/compare).
+Embedded is a UX label. Login selects the user, the SDK looks up or creates an on-chain address, and approval happens in the app UI. The same modal is used for hosted signing, MPC shares, and device-native keys. The [providers comparison](/blog/embedded-wallet-providers) is the named-vendor shortlist. Worked one-to-one pages live under [compare](/compare). Replacement shortlists: [Privy alternatives](/privy-alternatives), [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), and [Magic alternatives](/magic-alternatives).
 
 Authentication should select which user this is. It should not, by itself, authorize a spend. When email magic-link login is enough to move funds, the provider usually holds the signing capability. Collapse login and signing and you have chosen a hosted model.
 
