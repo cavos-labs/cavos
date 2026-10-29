@@ -1,7 +1,7 @@
 ---
 title: "Best Embedded Wallets for Stellar (2026)"
 date: "2026-10-29"
-excerpt: "Embedded wallet SDKs that support Stellar in 2026: Cavos, Dynamic, Crossmint, Para, Privy, and Turnkey compared on account model, fees, and custody."
+excerpt: "Embedded wallets that support Stellar in 2026: Cavos, Dynamic, Crossmint, Para, Blux, Privy, and Turnkey compared on account model, fees, and custody."
 category: "Guide"
 ogQuote: "On Stellar, the account model and who pays reserves decide the user experience."
 slug: "best-embedded-wallets-stellar"
@@ -14,13 +14,15 @@ itemList:
     url: "https://docs.crossmint.com/wallets/overview"
   - name: "Para"
     url: "https://docs.getpara.com/v3/flutter/guides/stellar"
+  - name: "Blux"
+    url: "https://blux.cc/"
   - name: "Privy"
     url: "https://docs.privy.io/wallets/overview/chains"
   - name: "Turnkey"
     url: "https://docs.turnkey.com/concepts/wallets"
 faq:
   - question: "What are the best embedded wallets for Stellar in 2026?"
-    answer: "Providers whose own docs list Stellar support in October 2026 are Cavos, Dynamic, Crossmint, Para, Privy, and Turnkey. Cavos is a non-custodial embedded wallet for Starknet, Solana and Stellar that creates classic G accounts and sponsors reserves and fees through a relayer. Dynamic lists Stellar as a Tier 1 chain for send and sign. Crossmint uses Soroban smart contract wallets. Para supports Stellar with MPC keys. Privy lists Stellar as Tier 2 (sign transactions). Turnkey derives Stellar addresses on Ed25519 at the signing level."
+    answer: "Providers whose own docs list Stellar support in October 2026 are Cavos, Dynamic, Crossmint, Para, Blux, Privy, and Turnkey. Cavos is a non-custodial embedded wallet for Starknet, Solana and Stellar that creates classic G accounts and sponsors reserves and fees through a relayer. Dynamic lists Stellar as a Tier 1 chain for send and sign. Crossmint uses Soroban smart contract wallets. Para supports Stellar with MPC keys. Blux is Stellar-only wallet infrastructure with email, social, and passkey sign-in plus external wallet connection. Privy lists Stellar as Tier 2 (sign transactions). Turnkey derives Stellar addresses on Ed25519 at the signing level."
   - question: "Which Stellar embedded wallets sponsor fees and reserves?"
     answer: "Cavos sponsors Stellar reserves and fee bumps through its relayer, part of Gas Sponsorship in Any Token. Dynamic's chain support table lists gasless as not available for Stellar as of October 2026. Crossmint lists gas sponsorship as part of its wallet API. For other providers, check the vendor docs, because Stellar fee sponsorship usually means fee bump transactions that you build."
   - question: "Is a classic Stellar account or a Soroban smart wallet better?"
@@ -83,6 +85,13 @@ For the general multichain view, see [embedded wallet providers](/blog/embedded-
 <td><a href="https://www.getpara.com/pricing">getpara.com/pricing</a></td>
 </tr>
 <tr>
+<td><a href="https://blux.cc/">Blux</a></td>
+<td>Stellar-only wallet infrastructure, listed in the Stellar developer docs. Email, social, and passkey sign-in, plus external Stellar wallets.</td>
+<td>See Blux docs.</td>
+<td>See Blux docs.</td>
+<td>See Blux.</td>
+</tr>
+<tr>
 <td><a href="https://docs.privy.io/wallets/overview/chains">Privy</a></td>
 <td>Tier 2: create, export, and sign transactions. Privy does not broadcast Stellar transactions.</td>
 <td>You build and submit.</td>
@@ -107,6 +116,7 @@ Cells that say "see docs" are left that way on purpose: the vendor page did not 
 - **Dynamic** fits teams that need Stellar next to EVM, Solana, Bitcoin, and others, plus external wallet connection, and can fund fees themselves on Stellar.
 - **Crossmint** fits apps that want Soroban smart wallets with on-chain signer and recovery logic, often alongside its payments and onramp products.
 - **Para** fits teams already on Para for EVM or Solana that want Stellar under the same MPC wallet.
+- **Blux** fits Stellar-only dApps that want one login surface covering new users and existing Stellar wallets.
 - **Privy** and **Turnkey** fit teams comfortable building and submitting Stellar transactions themselves on top of a signing layer.
 
 ## Where Cavos stands on Stellar
