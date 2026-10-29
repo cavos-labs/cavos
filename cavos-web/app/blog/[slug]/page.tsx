@@ -6,7 +6,7 @@ import { Footer } from '@/components/Footer';
 import { getAllPosts, getPostBySlug, formatDate, CATEGORY_COLORS, PostCategory } from '@/lib/blog';
 import { Metadata } from 'next';
 import { blogPostJsonLd, marketingPageMetadata } from '@/lib/marketing-seo';
-import { isBlogPostNoindex } from '@/lib/marketing-sitemap';
+import { isBlogPostNoindex, MARKETING_ORIGIN } from '@/lib/marketing-sitemap';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -28,6 +28,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     type: 'article',
     publishedTime: post.meta.date,
     modifiedTime: dateModified,
+    image: {
+      url: `${MARKETING_ORIGIN}/blog/${slug}/opengraph-image`,
+      width: 1200,
+      height: 630,
+      alt: post.meta.ogQuote ?? post.meta.title,
+    },
     robots: isBlogPostNoindex(slug)
       ? { index: false, follow: true }
       : { index: true, follow: true },

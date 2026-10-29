@@ -3503,3 +3503,32 @@ function fileLinksTo(text: string, target: string): boolean {
   }
   return false
 }
+
+describe('blog quote social cards', () => {
+  it('uses a per-page image when one is passed', () => {
+    const url = 'https://cavos.xyz/blog/example/opengraph-image'
+    const meta = marketingPageMetadata({
+      title: 'Example',
+      description: 'Example post',
+      path: '/blog/example',
+      type: 'article',
+      image: { url, width: 1200, height: 630, alt: 'Example quote' },
+    })
+    const og = meta.openGraph?.images as Array<{ url: string }>
+    const tw = meta.twitter?.images as Array<{ url: string }>
+    assert.equal(og[0].url, url)
+    assert.equal(tw[0].url, url)
+  })
+
+  it('every blog post carries an ogQuote within house copy rules', () => {
+    const dir = path.join(process.cwd(), 'content/blog')
+    for (const file of fs.readdirSync(dir).filter((f) => f.endsWith('.mdx'))) {
+      const raw = fs.readFileSync(path.join(dir, file), 'utf-8')
+      const match = raw.match(/^ogQuote: "(.+)"$/m)
+      assert.ok(match, `${file} is missing ogQuote`)
+      const quote = match[1]
+      assert.ok(quote.length <= 110, `${file} ogQuote is too long for the card`)
+      assert.doesNotMatch(quote, /—|trustless|impossible/i, `${file} ogQuote breaks copy rules`)
+    }
+  })
+})
