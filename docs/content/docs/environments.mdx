@@ -6,9 +6,9 @@ description: Every Cavos app has a development and a production environment. Sel
 Every app in the Cavos console has two environments, created automatically the
 moment the app is created:
 
-- **`production`** — real traffic. This is the default the SDK uses when you
+- **`production`**: real traffic. This is the default the SDK uses when you
   don't pass an `environment`.
-- **`development`** — building and testing, isolated from production.
+- **`development`**: building and testing, isolated from production.
 
 You keep **one `appId`** and switch environments with a single flag. There is no
 separate app to create.
@@ -18,29 +18,33 @@ separate app to create.
 The two environments share the app's identity but keep their operational state
 apart:
 
-- **Sponsorship / gas pool** — each environment meters its own relayer balance
+- **Sponsorship / gas pool**: each environment meters its own relayer balance
   and low-balance alerts, so test traffic never drains your production gas.
-- **Allowed origins** — the domains/schemes permitted to call the app are set per
-  environment.
-- **API keys** — server credentials are issued per environment.
-- **Events & webhooks** — the event stream and webhook subscriptions are scoped
+- **API keys**: server credentials are issued per environment.
+- **Events & webhooks**: the event stream and webhook subscriptions are scoped
   per environment, so your development integration doesn't fire production hooks.
-- **Social recovery** — enable or disable [hardware-isolated
+- **Social recovery**: enable or disable [hardware-isolated
   recovery](/docs/hardware-isolated-recovery) for **Starknet, Solana, and
-  native Stellar** wallets in that environment, choose exactly one of Google,
-  Apple, or email code, and register
-  your own OAuth client ID if you authenticate users yourself. Grandfathered
-  Stellar wallets are unaffected. All independent per environment, so you can
-  rehearse recovery in development against a different provider than production
-  uses. The email provider's "Firebase project ID" field no longer affects email
-  sign-in codes, which the enclave issues itself.
+  Stellar** wallets in that environment. Google, Apple, email, and GitHub
+  are all accepted; each wallet recovers through the provider its owner signed
+  in with. Register your own Google or Apple OAuth client ID if you authenticate
+  users yourself. GitHub needs no OAuth client ID here; its OAuth app is set
+  under **GitHub sign-in** (next item). All settings are independent per environment, so you can rehearse recovery in development
+  without touching production. The email provider's "Firebase project ID" field
+  no longer affects email sign-in codes, which the enclave issues itself.
+- **GitHub sign-in**: leave empty to use Cavos's GitHub app, or save your own
+  OAuth app's client ID and client secret so GitHub's consent screen shows your
+  app. Switching apps gives every GitHub user in that environment a new
+  identity and a new, empty wallet. See
+  [Authentication → GitHub](/docs/auth#bring-your-own-github-oauth-app).
 
 <Callout type="info">
-**Callback URLs are per app, not per environment.** A URL you add so a tunnel
+**Callback URLs and allowed web origins are per app, not per environment.**
+Both live in **Dashboard → App → Settings**. A URL you add so a tunnel
 works in development is accepted in production too, because OAuth validates the
 redirect against the app's list before an environment is in play. Remove
 throwaway tunnel and preview domains once you are done with them. See
-[Authentication](/docs/auth#oauth-google--apple).
+[Authentication](/docs/auth#google-and-apple).
 </Callout>
 
 ## Select it from the SDK
@@ -50,23 +54,25 @@ SDK uses `production`.
 
 ```ts title="TypeScript"
 const wallet = await Cavos.connect({
-  chain: "stellar",
+  chains: ["stellar"],
   network: "testnet",
   appId: process.env.CAVOS_APP_ID!,
   appSalt: "my-app",
   identity,
-  environment: __DEV__ ? "development" : "production",
+  environment: process.env.NODE_ENV === "production" ? "production" : "development",
 });
 ```
 
 With the React or React Native provider, set it once on the config:
 
-```tsx title="Provider"
+```tsx title="React Native provider"
 <CavosProvider config={{
   appId: process.env.EXPO_PUBLIC_CAVOS_APP_ID!,
   appSalt: "my-app",
   chain: "stellar",
   network: "testnet",
+  redirectUri: "myapp://auth",
+  rpId: "auth.example.com",
   environment: __DEV__ ? "development" : "production",
 }}>
   {children}
@@ -76,23 +82,23 @@ With the React or React Native provider, set it once on the config:
 <Callout type="info">
 `environment` (the Cavos console environment) is independent of `network`
 (testnet / mainnet). A `development` environment can point at mainnet, and
-`production` at testnet — they answer different questions: *whose gas and config*
+`production` at testnet; they answer different questions: *whose gas and config*
 vs. *which chain*.
 </Callout>
 
 ## Wallet addresses across environments
 
 The wallet address does not depend on the Cavos console `environment` flag.
-Addresses come from the registry, keyed by identity, app, and chain.
+Addresses come from the registry, keyed by identity, app, chain, and network.
 
 If you want a user's **development** wallet to be a different address than their
-**production** wallet, you need a distinct registry key — which means a separate
+**production** wallet, you need a distinct registry key, which means a separate
 app (distinct `appId`). One `appId` shared across development and production
 shares the registry address.
 
-A distinct `appSalt` isolates the local device-key slot. On **native Solana
-and Stellar** it is also the HKDF salt, so changing it after users have
-connected derives a spend key that will not match the registry address.
+A distinct `appSalt` isolates the local device-key slot. It is also the HKDF
+salt for the account key on every chain, so changing it after users have
+connected derives a key that will not match the registry address.
 
 <Callout type="warn">
 Treat `appSalt` as permanent. Decide your salt before onboarding real users.

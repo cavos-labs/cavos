@@ -12,7 +12,7 @@ the user's operation.
 ## 1. Install
 
 ```bash title="Terminal"
-npm install @cavos/kit
+npm install @cavos/kit@^0.5.0
 ```
 
 Create an app in the [Cavos dashboard](https://cavos.xyz/dashboard) and copy its
@@ -58,9 +58,9 @@ methods. `session.wallet("solana")` returns the Solana wallet;
 
 | Status | Meaning | Can execute? |
 |--------|---------|--------------|
-| `undeployed` | Address derived but no on-chain account yet. | Yes — first execute deploys + runs atomically. |
+| `undeployed` | Address derived but no on-chain account yet. | Yes: first execute deploys + runs atomically. |
 | `ready` | This device holds the account key. | Yes |
-| `needs-device-approval` | The wallet exists but this device holds no key. | No — route to [device approval](#handle-device-approval). |
+| `needs-device-approval` | The wallet exists but this device holds no key. | No: route to [device approval](#5-handle-device-approval). |
 
 <Callout type="info">
 **Lazy deploy**: An `undeployed` wallet can sign messages (`signMessage`) and
@@ -78,21 +78,25 @@ const wallet = session.wallet("solana");
 
 // Only needs-device-approval must be handled differently
 if (wallet.status === "needs-device-approval") {
-  throw new Error("This device must be approved first");
+  throw new Error("Restore the wallet on this device first (enclave sign-in or passkey)");
 }
 
 if (wallet.chain === "starknet") {
   const { transactionHash } = await wallet.execute(calls);
 } else if (wallet.chain === "solana") {
-  const signature = await wallet.execute(1_000_000n, solanaRecipient); // lamports
+  // lamports; the account must hold them. `fee: "sponsored"` makes the relayer pay the fee.
+  const signature = await wallet.execute(1_000_000n, solanaRecipient, { fee: "sponsored" });
 } else if (wallet.chain === "stellar") {
   const hash = await wallet.execute(1_000_000n, stellarRecipient); // stroops
 }
 ```
 
 When the account is `undeployed`, `execute` deploys it first, then runs the
-operation — atomically, in a single sponsored transaction. After the first
+operation atomically, in a single sponsored transaction. After the first
 execute, status becomes `ready`.
+
+On Solana the account pays its own fee unless you pass `fee: "sponsored"`; on
+Starknet and Stellar sponsorship is the default.
 
 For arbitrary execution, Starknet accepts multicalls, Solana exposes
 `executeInstructions`, and Stellar exposes `invokeContract`. Each path has
@@ -103,7 +107,7 @@ adapter-specific validation and sponsorship rules.
 | Adapter | Required configuration | Sponsored execution |
 |---|---|---|
 | **Starknet** | App ID, network, app salt, identity, `paymasterApiKey` | Paymaster sponsors deploy and execute. |
-| **Solana** | App ID, network, app salt, identity | Hosted relayer becomes fee payer; arbitrary programs are allowlisted per app. |
+| **Solana** | App ID, network, app salt, identity | The account pays its own fee by default; with `fee: 'sponsored'` the hosted relayer is fee payer, and arbitrary programs are allowlisted per app. |
 | **Stellar** | App ID, network, app salt, identity | Hosted relayer can sponsor reserves and fee-bump submission. |
 
 Use the dedicated [Starknet](/docs/starknet), [Solana](/docs/solana), or
@@ -117,12 +121,12 @@ product pages are the
 
 `status === "needs-device-approval"` means the identity already owns a wallet
 but this device holds no key yet. Do not create a second wallet. Restore the
-MasterDEK through [Passkeys](/docs/passkeys) (recommended), the enclave
-([Multi-device](/docs/multi-device)), or the adapter's [Recovery](/docs/recovery)
-path.
+MasterDEK with a [passkey](/docs/passkeys) the user added or with
+[hardware-isolated recovery](/docs/hardware-isolated-recovery) (sign in again).
+See [Multi-device](/docs/multi-device) for the flow.
 
 <Callout type="info">
-Starknet, Solana, and native Stellar restore the same way: the MasterDEK is
+Starknet, Solana, and Stellar restore the same way: the MasterDEK is
 unwrapped on the new device. Use the high-level wallet methods and follow the
 selected adapter's capability notes.
 </Callout>
@@ -153,7 +157,7 @@ console.log(session.chainStatus("solana"));   // "undeployed" | "ready" | "needs
 console.log(session.chainStatus("stellar"));
 console.log(session.chainAddress("stellar")); // G… address
 
-// Execute on Stellar (works even if undeployed — first execute creates the account)
+// Execute on Stellar (works even if undeployed: first execute creates the account)
 if (stellar.chain === "stellar" && stellar.status !== "needs-device-approval") {
   await stellar.execute(10_000_000n, "GDEST...");
 }

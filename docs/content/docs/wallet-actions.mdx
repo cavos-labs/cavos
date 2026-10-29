@@ -1,9 +1,9 @@
 ---
 title: Wallet actions
-description: What you do with a connected wallet — read balances, send tokens, sign messages, and sign without submitting.
+description: "What you do with a connected wallet: read balances, send tokens, sign messages, and sign without submitting."
 ---
 
-Once connected, this page covers the common things you do — all via `useCavos()`
+Once connected, this page covers the common things you do, all via `useCavos()`
 inside a `<CavosProvider>`. See [React](/docs/react) for the provider/hook setup.
 
 **When can you execute?** Both `undeployed` and `ready` wallets can execute. The
@@ -25,9 +25,11 @@ The kit exposes each chain's balance read differently.
 SOL directly. Balance is in **lamports** (1 SOL = 10⁹ lamports).
 
 ```ts title="TypeScript"
-const { wallet, address } = useCavos();
+import { PublicKey } from "@solana/web3.js";
+
+const { wallet } = useCavos();
 if (wallet?.chain === "solana") {
-  const lamports = await wallet.connection.getBalance(address); // number
+  const lamports = await wallet.connection.getBalance(new PublicKey(wallet.address)); // number
   const sol = lamports / 1e9;
 }
 ```
@@ -47,18 +49,20 @@ if (wallet?.chain === "stellar") {
 ### Starknet
 
 There is no single "native balance" call in the kit for Starknet (the fee token
-is an ERC-20). Read a specific token with a `balanceOf` call via
-[execute](/docs/signing), or query the RPC directly with starknet.js.
+is an ERC-20). Read a token's `balance_of` with a read-only RPC call through starknet.js
+(`RpcProvider.callContract`). `execute` submits transactions; it does not read.
 
 ## Fund from a testnet faucet
 
 Only on `testnet`. Handy for demos and first-run UX.
 
-### Solana — airdrop
+### Solana: airdrop
 
 ```ts title="TypeScript"
+import { PublicKey } from "@solana/web3.js";
+
 if (wallet?.chain === "solana") {
-  const sig = await wallet.connection.requestAirdrop(address, 1_000_000_000); // 1 SOL
+  const sig = await wallet.connection.requestAirdrop(new PublicKey(wallet.address), 1_000_000_000); // 1 SOL
   // confirm with connection.getSignatureStatus(sig) if you need to wait
 }
 ```
@@ -68,7 +72,7 @@ Public Solana devnet rate-limits airdrops. For reliable funding, use a private
 RPC (Helius/Alchemy) as your `rpcUrl`, or the official Solana faucet.
 </Callout>
 
-### Stellar — friendbot
+### Stellar: friendbot
 
 Stellar testnet is funded by the public friendbot:
 
@@ -78,32 +82,34 @@ await fetch(`https://friendbot.stellar.org?addr=${encodeURIComponent(address)}`)
 
 ## Send native tokens
 
-### Solana — SOL transfer
+### Solana: SOL transfer
 
-`CavosSolana.execute(amount, destination)` transfers SOL, sponsored by the
-relayer when `appId` is set. `amount` is in **lamports** (bigint).
+`CavosSolana.execute(amount, destination, opts?)` transfers SOL. `amount` is in
+**lamports** (bigint). The account pays its own fee by default; pass
+`{ fee: "sponsored" }` to have the Cavos relayer pay it (needs `appId`).
 
 ```ts title="TypeScript"
 if (wallet?.chain === "solana") {
-  const txHash = await wallet.execute(1_000_000_000n, destinationAddress); // 1 SOL
+  const txHash = await wallet.execute(1_000_000_000n, destinationAddress, { fee: "sponsored" }); // 1 SOL
 }
 ```
 
-### Stellar — XLM transfer
+### Stellar: XLM transfer
 
-Same signature, `amount` in **stroops** (bigint).
+Same signature, `amount` in **stroops** (bigint). On Stellar the relayer
+sponsors by default.
 
 ```ts title="TypeScript"
 if (wallet?.chain === "stellar") {
-  const txHash = await wallet.execute(10_000_0000n, destinationAddress); // 1 XLM
+  const txHash = await wallet.execute(10_000_000n, destinationAddress); // 1 XLM
 }
 ```
 
-Both return the transaction hash as a string. Build explorer links per chain —
+Both return the transaction hash as a string. Build explorer links per chain:
 Solana: `https://explorer.solana.com/tx/${hash}?cluster=devnet`; Stellar testnet:
 `https://stellar.expert/explorer/testnet/tx/${hash}`.
 
-### Starknet — arbitrary calls
+### Starknet: arbitrary calls
 
 On Starknet, use the context's `execute(calls)` for a multicall (transfers,
 swaps, any contract interaction). It's sponsored by default.
@@ -140,28 +146,11 @@ if (passkeySupported && !walletStatus.hasPasskey) {
 
 `walletStatus.hasPasskey` flips to true once enrolled.
 
-### Recovery code
-
-Grandfathered Stellar only. Starknet, Solana, and native Stellar have nothing to
-register — restore with the enclave or `approveDeviceWithPasskey()`.
-
-```ts title="TypeScript"
-const { setupRecovery } = useCavos();
-
-const code = await setupRecovery(); // Stellar only — show it ONCE
-```
-
-<Callout type="warn">
-The recovery code is returned **once**. Display it immediately and tell the
-user to store it somewhere safe. Only its derived key is registered on-chain —
-the code itself never leaves the device.
-</Callout>
-
 ### Restore a new device
 
 When a user signs in on a fresh device, `walletStatus.needsDeviceApproval` is
 true because this device holds no key yet. Restore the MasterDEK with a synced
-passkey or the enclave. There is no on-chain device approval on Starknet.
+passkey or the enclave. Nothing is approved on-chain, on any chain.
 
 ```ts title="TypeScript"
 const { walletStatus, approveDeviceWithPasskey } = useCavos();
@@ -180,7 +169,7 @@ ownership without moving funds) and **sign transactions without submitting**
 (hand them to your own relayer). Both are available on every current adapter;
 future adapters must document and implement them before they are advertised.
 
-### `signMessage` — off-chain signature
+### `signMessage`: off-chain signature
 
 Sign an arbitrary message with the wallet's signing key. Nothing is submitted,
 no gas is paid, no state changes. Returns a uniform `MessageSignature`:
@@ -193,15 +182,15 @@ const { signature, publicKey, curve, typedData } = await signMessage("Sign in to
 | Field | Meaning |
 |-------|---------|
 | `signature` | 64-byte signature (`r‖s` for stark, ed25519 raw). |
-| `publicKey` | The verifier input — Starknet: the stark public key; Solana/Stellar: the account address (base58 / `G…`). |
+| `publicKey` | The verifier input. Starknet: the stark public key; Solana/Stellar: the account address (base58 / `G…`). |
 | `curve` | `"stark"` (Starknet) or `"ed25519"` (Solana, Stellar). |
 | `typedData` | Starknet only: the SNIP-12 typed data that was signed. |
 
 **Per-chain details:**
 
-- **Starknet** — signs SNIP-12 revision 1 typed data (domain `Cavos` / `1` / chain id / revision `1`, type `Message { content: string }`) with the stark key. `publicKey` is the stark public key. Verify with the deployed account's `is_valid_signature`, or off-chain by recomputing the typed-data hash.
-- **Solana** — signs the prefixed message with the **Ed25519** spend key. `publicKey` is the base58 address. `curve` is `"ed25519"`.
-- **Stellar** — the signing key is the **ed25519 control key** (not P-256), so `curve` is `"ed25519"` and `publicKey` is the `G…` control address.
+- **Starknet**: signs SNIP-12 revision 1 typed data (domain `Cavos` / `1` / chain id / revision `1`, type `Message { content: string }`) with the stark key. `publicKey` is the stark public key. Verify with the deployed account's `is_valid_signature`, or off-chain by recomputing the typed-data hash.
+- **Solana**: signs the prefixed message with the **Ed25519** spend key. `publicKey` is the base58 address. `curve` is `"ed25519"`.
+- **Stellar**: the signing key is the **ed25519 control key** (not P-256), so `curve` is `"ed25519"` and `publicKey` is the `G…` control address.
 
 **Verifying off-chain** (what a third party / backend does):
 
@@ -209,7 +198,7 @@ const { signature, publicKey, curve, typedData } = await signMessage("Sign in to
 import { ec, typedData as snTypedData } from "starknet";
 
 if (curve === "stark") {
-  // Starknet — recompute the SNIP-12 hash and verify the stark signature.
+  // Starknet: recompute the SNIP-12 hash and verify the stark signature.
   // `publicKey` is the x-coordinate only, so try both y parities.
   const hash = snTypedData.getMessageHash(typedData, accountAddress);
   const hex = Buffer.from(signature).toString("hex");
@@ -217,15 +206,15 @@ if (curve === "stark") {
   const x = publicKey.replace(/^0x/, "").padStart(64, "0");
   const valid = ["02", "03"].some((prefix) => ec.starkCurve.verify(sig, hash, prefix + x));
 } else {
-  // Solana / Stellar — ed25519.
+  // Solana and Stellar: ed25519.
 }
 ```
 
 On Solana and Stellar the verifier must reconstruct the same prefixed message
-the signer used (see the prefix per chain above). For Sign-In-with-X flows, embed a nonce + domain
+the signer used (the Cavos message prefix: `prefixedMessageBytes(message)`). For Sign-In-with-X flows, embed a nonce + domain
 in the message string.
 
-### `signTransaction` — sign without submit
+### `signTransaction`: sign without submit
 
 Sign a transaction WITHOUT broadcasting it. Each chain returns its own signed
 artifact (narrow on `chain`):
@@ -243,19 +232,19 @@ if (wallet?.chain === "starknet") {
 
 What you get back, and what to do with it:
 
-- **Starknet** — the signed invoke (`calldata`, the 2-felt stark `signature`, `nonce`, `resourceBounds`, `version`). A relayer broadcasts it via the account's `invokeFunction`.
-- **Stellar** — the control-signed inner transaction as base64 **XDR**. Submit it directly via Horizon, or hand it to a relayer to fee-bump (the control signature stays valid through the wrap).
-- **Solana** — `{ message, signature, publicKey }` where `signature` is Ed25519 over the Solana message. A relayer can fee-pay; it must not replace the user signature.
+- **Starknet**: the signed invoke (`calldata`, the 2-felt stark `signature`, `nonce`, `resourceBounds`, `version`). A relayer broadcasts it via the account's `invokeFunction`.
+- **Stellar**: the control-signed inner transaction as base64 **XDR**. Submit it directly via Horizon, or hand it to a relayer to fee-bump (the control signature stays valid through the wrap).
+- **Solana**: `{ message, signature, publicKey }` where `signature` is Ed25519 over the Solana message. A relayer can fee-pay; it must not replace the user signature.
 
 <Callout type="warn">
 **Solana `signTransaction` is a user-signed message**, not a fully submitted
-transaction. Attach the relayer (or `feePayer`) signature and broadcast.
+transaction. Attach the fee payer's signature (the relayer or your own funded keypair) and broadcast.
 </Callout>
 
 <Callout type="warn">
 **All `signTransaction` outputs are single-use and bind to on-chain state.**
 Starknet binds to the nonce + resource bounds; Stellar to the sequence number
-(and a 180s timeout); Solana to the on-chain account nonce. If any other
-transaction from the same account is submitted first, the signature becomes
-invalid. Broadcast promptly.
+(and a 180s timeout); Solana to a recent blockhash, which expires within
+about two minutes. On Starknet and Stellar, any other transaction from the
+same account submitted first also invalidates the signature. Broadcast promptly.
 </Callout>

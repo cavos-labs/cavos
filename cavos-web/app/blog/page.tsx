@@ -234,8 +234,8 @@ export default function BlogIndexPage() {
           Product updates
         </h2>
         <p className="mt-3 max-w-2xl text-sm text-black/45 leading-relaxed">
-          Release notes and security write-ups. Individual changelog entries are
-          kept out of the search index.
+          Release notes and security write-ups for @cavos/kit, including{' '}
+          <Link href="/blog/cavos-kit-0-5-0">Cavos Kit 0.5.0</Link>.
         </p>
         {changelogPosts.length === 0 ? (
           <p className="mt-8 text-black/40 text-sm">No posts yet.</p>

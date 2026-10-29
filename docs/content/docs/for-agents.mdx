@@ -10,7 +10,7 @@ this, or a developer handing this to one, here's the fast path.
 
 | URL | Contents |
 |-----|----------|
-| [`/llms.txt`](/llms.txt) | Index of every page with descriptions — a map of the docs. |
+| [`/llms.txt`](/llms.txt) | Index of every page with descriptions: a map of the docs. |
 | [`/llms-full.txt`](/llms-full.txt) | **The entire documentation as one plain-text file.** Paste this into your model's context. |
 | `/llms.mdx/docs/<page>/content.md` | Any page's raw Markdown, e.g. `/llms.mdx/docs/quickstart/content.md`. |
 
@@ -41,35 +41,57 @@ For token-pay Stellar sponsorship (`@cavos/reserve`), same paste, different ask:
 
 ## What an agent should know up front
 
-- **Install:** `npm install @cavos/kit`. Stellar token-pay sponsorship is a **separate** package: `npm install @cavos/reserve @stellar/stellar-sdk`. See [Reserve](/docs/reserve).
+- **Install:** `npm install @cavos/kit@^0.5.0`. 0.4.x breaks email sign-in and enclave recovery against the current enclave. Stellar token-pay sponsorship is a **separate** package: `npm install @cavos/reserve @stellar/stellar-sdk`. See [Reserve](/docs/reserve).
 - **Every-chain direction, three adapters today:** **Starknet**, **Solana**, and **Stellar** (classic `G…` account) ship now. Never invent support for a roadmap chain. See [Chains](/docs/chains).
 - **React Native:** use `@cavos/kit/react-native` with Expo Development Builds/EAS or bare React Native. Expo Go is not supported; configure `redirectUri`, `rpId`, and the native config plugin. See [React Native](/docs/react-native).
 - **Passkeys.** Sign-up never prompts. Call `enrollPasskeyDefault()` to add one; a new device is asked on sign-in (`approveDeviceWithPasskey()` if dismissed). On every chain (Starknet, Solana, Stellar) the passkey stores a PRF-encrypted copy of the MasterDEK that Cavos cannot open (can spend). `deviceApproval: "passkey"` is one chain; use `"enclave"` for multi-chain. See [Passkeys](/docs/passkeys).
-- **One unified entry point:** `Cavos.connect({ chains, defaultChain, network, identity | auth, appSalt, appId, ... })`. Returns a `CavosSession` — call `session.wallet(chain)` to get the wallet for a specific chain. Narrow on `wallet.chain` before calling `execute`.
+- **One unified entry point:** `Cavos.connect({ chains, defaultChain, network, identity | auth, appSalt, appId, ... })`. Returns the default chain's wallet with session methods added (`session.wallet(chain)`, `chainStatus`, `chainAddress`). `session.wallet(chain)` returns the `CavosWallet` union: narrow on `wallet.chain` before calling chain-specific methods.
 - **Multi-chain sessions:** Pass `chains: ["starknet", "solana"]` to connect multiple chains at once. Use `session.wallet("solana")` to get each chain's wallet. In React, use `setChain()` to switch the active chain without remounting.
 - **`execute` differs per chain:** Starknet → `wallet.execute(calls)`; Solana → `wallet.execute(amount, destination)` or allowlisted `wallet.executeInstructions(instructions)`; Stellar → `wallet.execute(amount, destination)` plus `wallet.invokeContract(...)` for Soroban calls.
 - **Lazy deploy on Starknet/Stellar:** Connect never deploys those accounts; the first sponsored `execute` deploys and runs the calls in one transaction. Starknet is the standard OpenZeppelin `AccountUpgradeable` with a stark key from the MasterDEK. Native **Solana** is a system account: `ready` once this device has the spend key; fund it with lamports before the first transfer.
-- **Gas sponsorship differs per chain:** Starknet uses a paymaster; Solana uses a relayer as fee payer; Stellar kit relayer (`appId`) sponsors reserves and fees in XLM. `@cavos/reserve` is not that relayer. It lets any `G…` pay those same costs in an allowlisted token. Use `pay` / `activate` / `send`; do not call `/v1/build` and sign the bytes. Never send Soroban, SetOptions, or arbitrary XDR. `maxSend` (or `maxSendStroops`) is required. Token identity is `CODE:ISSUER`. Never create an empty account — activate with a claimable in the same transaction. Unkeyed: 30 req/min. Concurrent bootstrap can return `503 bootstrap_busy` — retry. See [Reserve](/docs/reserve). Never put a secret sponsorship credential in client-side code.
-- **Gate execution on status:** call `execute` when `status === "undeployed"` OR `status === "ready"`. Only `"needs-device-approval"` blocks execution — route that to [multi-device](/docs/multi-device).
+- **Gas sponsorship differs per chain:** Starknet uses the Cavos paymaster (`paymasterApiKey`); on Solana the account pays its own fee by default, `fee: 'sponsored'` makes the Cavos relayer fee payer, and `fee: { token }` lets the user pay the fee in a token they hold (Solana only); the Stellar kit relayer (`appId`) sponsors reserves and fees in XLM. Describe the product as **Gas Sponsorship in Any Token**. Never put a secret sponsorship credential in client-side code.
+- **`@cavos/reserve` (Stellar, separate package):** not the kit relayer. Any `G…` pays reserves and fees in an allowlisted token. Use `pay` / `activate` / `send`; do not call `/v1/build` and sign the bytes. Never send Soroban, SetOptions, or arbitrary XDR. `maxSend` (or `maxSendStroops`) is required. Token identity is `CODE:ISSUER` from `tokens()`. Never create an empty account: activate with a claimable in the same transaction. Unkeyed limit: 30 req/min. A concurrent bootstrap can return `503 bootstrap_busy`; retry. See [Reserve](/docs/reserve).
+- **Gate execution on status:** call `execute` when `status === "undeployed"` OR `status === "ready"`. Only `"needs-device-approval"` blocks execution: route that to [multi-device](/docs/multi-device).
 - **Cavos vault (web, kit ≥ 0.2.0):** with `appId` set, keys live in an iframe on `vault.cavos.xyz`, not the page. Register the app's origins in the dashboard or connect fails. Limits and the over-limit rule (ask / block / sign) are set per app under **Approvals**, never in code. Handle `kit/vault: the user rejected this transaction` and `kit/vault: this app's policy does not allow this transaction`. See [Cavos vault](/docs/vault).
-- **Credential boundary:** `appId` is public. The current Starknet web SDK also receives `paymasterApiKey` client-side, so use only an app/environment-scoped key with origin, rate, and spend restrictions—never an operator or treasury secret.
+- **Credential boundary:** `appId` is public. The current Starknet web SDK also receives `paymasterApiKey` client-side, so use only an app/environment-scoped key with origin, rate, and spend restrictions, never an operator or treasury secret.
 - **Registry-first address resolution:** Addresses are looked up in the Cavos registry first, not purely derived from identity. The registry key is `(userId, appId, chain, network)`. The first device to claim an address wins. `appSalt` is the HKDF salt for the account key on every chain. Never change it.
-- **Recovery:** Starknet, Solana, and native Stellar restore the MasterDEK with enclave login or `approveDeviceWithPasskey()`; there is no on-chain device list and no recovery code on those chains. Grandfathered Stellar still uses `approveThisDeviceWithRecovery(code)`.
-- **Social recovery / enclave:** `socialRecovery: true` or `deviceApproval: "enclave"`. On every chain the enclave seals the MasterDEK. Describe it as *hardware-isolated, non-custodial* — never *trustless*. See [Hardware-isolated recovery](/docs/hardware-isolated-recovery).
-- **Bring your own auth** still uses `identity` + `submitSocialRecoveryToken(idToken)` with the provider's raw `id_token` (fresh, under 5 minutes). That call enrolls or restores the MasterDEK wrap on every chain. In 0.2.6 the enclave rejects Google and Apple tokens that did not come from an SDK-started sign-in, so this path is unavailable for those two providers for now.
-- **Device management:** Starknet, Solana, and native Stellar have **one** account key; a new device restores the MasterDEK, so there is nothing to list or remove. Only grandfathered Stellar still uses Horizon `listDevices` / `removeDevice`.
-- **Ask about the console when a value is missing:** `appId`, callback URLs, the Solana program allowlist, gas balance, webhooks, and API keys all live in the dashboard, per environment. See [Dashboard](/docs/dashboard).
-- **When something fails, check configuration before code.** The common causes are a changed `appSalt` (the HKDF no longer matches the registry row), an unregistered callback URL, gating on `isAuthenticated` instead of `walletStatus.isReady`, or social recovery not enabled for the environment. See [Troubleshooting](/docs/troubleshooting).
+- **Recovery:** Starknet, Solana, and Stellar restore the MasterDEK with enclave login or `approveDeviceWithPasskey()`; there is no on-chain device list and no recovery code.
+- **Social recovery / enclave:** `socialRecovery: true` or `deviceApproval: "enclave"`. On every chain the enclave seals the MasterDEK. Describe it as *hardware-isolated, non-custodial*, never *trustless*. See [Hardware-isolated recovery](/docs/hardware-isolated-recovery).
+  - **Accept paths (kit 0.5.0):** the SDK accepts an enclave if its PCR0 is in `DEFAULT_SOCIAL_RECOVERY_ATTESTATION.pcr0`, or if a Sigstore bundle from `{backendUrl}/api/enclave/releases/{pcr0}` verifies in the client. The backend is an untrusted pass-through.
+  - **What the bundle must prove:** Rekor inclusion against the public-good trusted root; signer is GitHub Actions for `cavos-labs/cavos-recovery`, workflow `.github/workflows/release.yml`, on `refs/tags/vN`, on a GitHub-hosted runner; PCR0, PCR1, and PCR2 equal the live attestation; `version >= minVersion`; `expiresAt` in the future.
+  - **Strict pin:** a custom policy with only `pcr0` (including the deprecated `socialRecoveryAttestation` key, which wins over `socialRecovery`) has no Sigstore fallback.
+  - **Do not claim** that the signed-release path has accepted a production enclave (today's image is accepted through the PCR0 list) or that `@freedomofpress/sigstore-browser` is audited. The `Release` workflow on `cavos-labs/cavos-recovery` requires reviewers.
+  - **CSP:** a strict `connect-src` must allow `{backendUrl}/api/enclave/releases/*` and `https://tuf-repo-cdn.sigstore.dev/`.
+  - **Upgrade:** 0.4.x fails email sign-in and enclave recovery against the current enclave. Use `^0.5.0`. See the [0.5.0 changelog](https://cavos.xyz/blog/cavos-kit-0-5-0).
+- **GitHub sign-in (web, kit 0.5.0):** live and tested in production, optional, and not recommended over Google, Apple, or email. See [Authentication → GitHub](/docs/auth#github).
+  - **Opt in:** `'github'` in `modal.providers`, or `login('github')` / `CavosAuth.getGitHubOAuthUrl(redirectUri?)`. Not available in React Native.
+  - **Token:** PKCE S256; the enclave redeems the code and signs an ES256 token with `iss` `https://enclave.cavos.xyz/github` and `aud` `cavos-github`.
+  - **OAuth app:** each environment uses Cavos's GitHub app or the team's own (client ID and secret saved in the dashboard; the secret is never returned). Identity is per OAuth client ID, so switching the app gives every GitHub user a new, empty wallet.
+  - **Errors:** `github_rejected`, `invalid_grant` (stale grant), and `enclave_unavailable` (the hosted verify route's code for any other enclave failure, including `github_unreachable`).
+- **Bring your own auth** still uses `identity` + `submitSocialRecoveryToken(idToken)` with the provider's raw `id_token` (fresh, under 5 minutes). That call enrolls or restores the MasterDEK wrap on every chain. Since 0.2.6 the enclave rejects Google and Apple tokens that did not come from an SDK-started sign-in, so this path is unavailable for those two providers for now.
+- **Device management:** Starknet, Solana, and Stellar have **one** account key; a new device restores the MasterDEK, so there is nothing to list or remove.
+- **Ask about the console when a value is missing:** `appId`, callback URLs, allowed web origins, and the Solana program allowlist live in the dashboard per app; gas balance, webhooks, API keys, and social recovery are per environment. See [Dashboard](/docs/dashboard).
+- **When something fails, check configuration before code.** The common causes are a changed `appSalt` (the HKDF no longer matches the registry row), an unregistered callback URL, gating execution on `isAuthenticated` or on `walletStatus.isReady` alone (an `undeployed` wallet can execute too), or social recovery not enabled for the environment. See [Troubleshooting](/docs/troubleshooting).
 - **Non-custodial invariant:** Cavos never holds a hot spender. The enclave only wraps a MasterDEK. Don't design flows that assume a Cavos server can transfer.
+
+## Wording rules
+
+Use these exact claims when you describe Cavos:
+
+- **Starknet account:** "the audited OpenZeppelin account contract". Never say Cavos itself is audited.
+- **Enclave:** "hardware-isolated, non-custodial". Never "trustless".
+- **Gas:** "Gas Sponsorship in Any Token".
+- **Pricing:** Free up to 1,000 wallets; Essential $59/mo; Complete $139/mo. See [cavos.xyz/pricing](https://cavos.xyz/pricing).
+- **GitHub sign-in:** optional, and not recommended over Google, Apple, or email.
 
 ## Reference pages
 
 <Cards>
-  <Card title="Quickstart" href="/docs/quickstart" description="Install → gasless transaction." />
+  <Card title="Quickstart" href="/docs/quickstart" description="Install, connect, and send a sponsored transaction." />
   <Card title="Starknet" href="/docs/starknet" description="OpenZeppelin account + Cavos paymaster." />
-  <Card title="Solana" href="/docs/solana" description="Native Ed25519 system account + fee-payer relayer." />
+  <Card title="Solana" href="/docs/solana" description="Native Ed25519 system account; self-paid, relayer-sponsored, or token fees." />
   <Card title="Stellar" href="/docs/stellar" description="Classic G… + MasterDEK unlock + Soroban." />
-  <Card title="Reserve" href="/docs/reserve" description="@cavos/reserve — pay Stellar reserves and fees in a token." />
+  <Card title="Reserve" href="/docs/reserve" description="@cavos/reserve: pay Stellar reserves and fees in a token." />
   <Card title="API reference" href="/docs/api-reference" description="Every public export." />
   <Card title="Concepts" href="/docs/concepts" description="Security model & determinism." />
   <Card title="Dashboard" href="/docs/dashboard" description="Console: roles, API keys, webhooks, sponsorship." />

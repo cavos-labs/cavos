@@ -48,6 +48,8 @@ The vault is **on by default** when `appId` is set:
     // vault: { url: "http://localhost:3003/vault" },   // a local cavos-web
   }}
 >
+  {children}
+</CavosProvider>
 ```
 
 `Cavos.connect` takes the same `vault` option (`true`, `false` or `{ url }`) and
@@ -97,7 +99,7 @@ Defaults, used until you save a policy:
 |---|---|---|
 | **Solana** | `SystemProgram.transfer` from the account (SOL), `TransferChecked` with the account as authority (by mint), the fee including priority fee when the account pays it, token-account rent | Compute budget, memo |
 | **Stellar** | `payment` (XLM or `CODE:ISSUER`), `createAccount` starting balance | `changeTrust`, `manageData`, `bumpSequence`, `endSponsoringFutureReserves` |
-| **Starknet** | `transfer` on ETH, STRK and USDC | — |
+| **Starknet** | `transfer` on ETH, STRK and USDC | none |
 
 Everything else is **over the limit**, whatever its value: contract and program
 calls, token approvals, signer or threshold changes (`setOptions`), account upgrades,
@@ -136,7 +138,7 @@ The call rejects with a message you can match:
 Passkey ceremonies run inside the vault, so the passkey belongs to
 `vault.cavos.xyz`, not to your domain. The vault shows **"Add a passkey"** when
 the user adds one and **"Verify it's you"** when a new device needs it. On
-Solana and Stellar it stores the passkey's encrypted copy of the wallet key and
+Starknet, Solana and Stellar it stores the passkey's encrypted copy of the wallet key and
 opens it on a new device; see [Passkeys](/docs/passkeys). Browsers that refuse
 passkeys in a cross-site frame fall back to a top-level Cavos window.
 
@@ -149,10 +151,10 @@ because a wallet with no recovery factor would be lost with them.
 Keys are filed under your app's id. Another app on the same site cannot reach
 them, even with a looser policy.
 
-When a Solana or Stellar key from before the vault is left in your page's
-storage, it is deleted after a vault connect once it provably opens the same
-address. Starknet device keys created before the vault stay registered on the
-account contract and in your page's storage.
+When a key from before the vault is left in your page's storage (on Starknet,
+Solana, or Stellar), it is deleted after a vault connect once it provably opens
+the same address. A copy that opens any other address is kept, because it may
+be the only way into those funds.
 
 ## What it protects against
 

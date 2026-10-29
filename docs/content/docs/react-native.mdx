@@ -13,12 +13,12 @@ The minimum supported platforms are iOS 16 and Android 9 (API 28).
 ## Install
 
 ```bash
-npm install @cavos/kit expo expo-modules-core expo-web-browser expo-linking react-native-get-random-values
+npm install @cavos/kit@^0.5.0 expo expo-modules-core expo-web-browser expo-linking react-native-get-random-values
 npx expo prebuild
 npx expo run:ios       # or: npx expo run:android
 ```
 
-`react-native-get-random-values` is a peer dependency and must be installed — it
+`react-native-get-random-values` is a peer dependency and must be installed: it
 backs the CSPRNG the kit uses for key and transaction generation.
 
 For EAS, build a development client before starting Metro:
@@ -55,7 +55,7 @@ import "@cavos/kit/react-native"; // installs the RN polyfills
 <Callout type="warn">
 Symptoms of a missing shim: `crypto.getRandomValues must be defined` at signup,
 or the relayer rejecting a Stellar transaction with `Invalid transaction
-encoding`. Both mean the runtime did not load before signing — check your import
+encoding`. Both mean the runtime did not load before signing: check your import
 order.
 </Callout>
 
@@ -115,20 +115,21 @@ export function Providers({ children }) {
 
 The provider exports `useCavos`, `CavosAuthModal`, `NativeCavosAuth`, and the
 native passkey and key classes. `NativeCavosAuth` supports Google and Apple
-through the registered deep/universal link. Email sign-in is not available on
-React Native yet.
+through the registered deep/universal link. Email and GitHub sign-in are not
+available on React Native yet: both need to verify the enclave's attestation,
+which this build cannot do. The native `providers` type is
+`("google" | "apple" | "email")[]`; `'github'` is not accepted.
 
 ## Keys and security levels
 
 The device key that protects the MasterDEK at rest uses Secure Enclave on iOS
 when available, and StrongBox → TEE → OS-protected Android Keystore on Android.
 **Starknet, Solana, and Stellar** derive their account keys from the MasterDEK:
-a stark key on Starknet, Ed25519 on Solana and Stellar. Grandfathered Stellar
-still uses `NativeControlSigner` per device. The default policy is
+a stark key on Starknet, Ed25519 on Solana and Stellar. The default policy is
 `minimumKeySecurity: "os-protected"`; use `"hardware"` to reject a software
 fallback.
 
-```ts
+```ts title="TypeScript"
 import {
   getNativeCapabilities,
   deleteDeviceKeys,
@@ -150,11 +151,11 @@ transaction signing.
 Use the same unified `Cavos.connect` model for Starknet, Solana, and Stellar.
 The chain-specific entrypoints are available when bundle size matters:
 
-```ts
+```ts title="TypeScript"
 import { Cavos } from "@cavos/kit/react-native";
 
 const wallet = await Cavos.connect({
-  chain: "solana",
+  chains: ["solana"],
   network: "testnet",
   appId,
   appSalt: "my-app",
@@ -163,14 +164,12 @@ const wallet = await Cavos.connect({
 ```
 
 Every chain uses `NativePasskeyPrf` / `approveDeviceWithPasskey()` so the PRF
-can open the passkey's encrypted copy of the MasterDEK. If Android does not return PRF, use
-the enclave.
+can open the passkey's encrypted copy of the MasterDEK. If an Android device
+does not return PRF, the passkey cannot open that copy there.
 
 ## Logout, reinstall, and recovery
 
 `logout()` clears only the persisted `Identity` and pending nonce. Keys remain in
 Secure Enclave/Keychain or Keystore so the user can reconnect. It does not sign
 the user out of Google or Apple. Reinstalling the app creates a new device that
-must unwrap the MasterDEK (enclave or passkey) or, on grandfathered Stellar,
-use a recovery code. Recovery codes are generated and displayed once; store
-them outside the app. They are not used on Starknet, Solana, or native Stellar.
+must unwrap the MasterDEK (enclave or passkey).

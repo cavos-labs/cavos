@@ -1,15 +1,15 @@
 ---
 title: React
-description: Drop-in React bindings for @cavos/kit — provider, hooks, and the customizable login modal.
+description: "Drop-in React bindings for @cavos/kit: provider, hooks, and the customizable login modal."
 ---
 
 `@cavos/kit` ships React bindings under the `@cavos/kit/react` subpath (same
 package). Wrap your app once in `<CavosProvider>` and every descendant can call
-`useCavos()` to read wallet state and trigger actions — no prop drilling, no
+`useCavos()` to read wallet state and trigger actions: no prop drilling, no
 imperative `connect` calls.
 
-```tsx title="Terminal"
-npm install @cavos/kit
+```bash title="Terminal"
+npm install @cavos/kit@^0.5.0
 ```
 
 ```tsx title="app/provider.tsx"
@@ -41,18 +41,43 @@ export function Providers({ children }) {
 The provider manages **one or more chains**. Behind the scenes it resolves the
 identity, derives addresses for all configured chains, and keeps the wallet
 handles ready for sponsored transactions. Deployment happens lazily on first
-execute per chain — see [Concepts](/docs/concepts).
+execute per chain: see [Concepts](/docs/concepts).
 
 ### Props
 
 | Prop | Description |
 |------|-------------|
-| `config` | Chains, network, `appSalt`, `deviceApproval` (`"enclave"` \| `"passkey"` — passkey is one chain), `socialRecovery`, `vault` (on by default with `appId`; see [Cavos vault](/docs/vault)). |
+| `config` | Chains, network, `appSalt`, `deviceApproval` (`"enclave"` \| `"passkey"`; passkey is one chain), `socialRecovery`, `vault` (on by default with `appId`; see [Cavos vault](/docs/vault)). |
 | `modal` | Login modal appearance and providers. Omit to render no modal. |
 | `identity` | **Bring your own auth.** Pass your signed-in user and Cavos login turns off. `null` while your auth loads or after sign-out. See [Authentication](/docs/auth#in-react). |
 
+### `CavosConfig`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `appId` | `string?` | App ID from the [dashboard](/docs/dashboard). Turns on the hosted registry, relayers, and the [vault](/docs/vault). |
+| `environment` | `"development" \| "production"?` | Dashboard environment. Defaults to `"production"`. |
+| `chains` | `Chain[]?` | Chains to connect. Addresses are derived for all of them; nothing deploys until the first `execute`. |
+| `defaultChain` | `Chain?` | Active chain at start. Must be in `chains`; defaults to `chains[0]`. |
+| `chain` | `Chain?` | **Deprecated.** Single-chain form of `chains`. |
+| `network` | `"testnet" \| "mainnet"` | Required. Resolves to each chain's concrete network. |
+| `appSalt` | `string` | Required. HKDF salt for the account key. Never change it after users connect. |
+| `paymasterApiKey` | `string?` | Required for Starknet. Sponsors deploy and execute. |
+| `deviceApproval` | `"enclave" \| "passkey"?` | How a new device restores the MasterDEK. Defaults to `"enclave"` when `socialRecovery` is on, otherwise `"passkey"`. `"passkey"` supports one chain. |
+| `socialRecovery` | `boolean \| AttestationPolicy?` | Turn on [hardware-isolated recovery](/docs/hardware-isolated-recovery), or pass your own attestation policy. Also needs the environment toggle in the dashboard. |
+| `socialRecoveryAttestation` | `AttestationPolicy?` | **Deprecated.** Use `socialRecovery`. If set, it takes precedence. |
+| `vault` | `boolean \| { url?: string }?` | Keys live in the Cavos vault. On by default with `appId`. |
+| `persistSession` | `boolean?` | Defaults to `true` (`localStorage`). `false` keeps the sign-in in `sessionStorage`, so it ends when the tab closes. Read once at mount. |
+| `rpcUrl` | `string?` | RPC override. Only valid with one configured chain. |
+| `rpcUrls` | `Partial<Record<Chain, string>>?` | Per-chain RPC overrides. Use this with more than one chain. |
+| `tollUrl` | `string?` | Override where `fee: { token }` settles (Solana). Defaults to the hosted service. |
+| `authBackendUrl` | `string?` | Override the Cavos auth backend (self-hosted or staging). |
+| `redirectUri` | `string?` | Explicit OAuth callback. Optional on web, required in React Native. |
+| `rpId` | `string?` | Passkey relying-party ID. Optional on web, required in React Native. |
+| `minimumKeySecurity` | `"os-protected" \| "hardware"?` | React Native only; accepted on web so config objects stay portable. |
+
 In development the provider checks the config when it mounts and reports
-problems in the console — a missing `appSalt`, a paymaster key on a chain that
+problems in the console: a missing `appSalt`, a paymaster key on a chain that
 ignores it, and in particular an `appSalt` that changed since this browser last
 connected, which silently moves every existing user to a new, empty wallet. Run
 the same checks yourself with `validateCavosConfig(config)`.
@@ -78,7 +103,7 @@ function Wallet() {
 | `isAuthenticated: boolean` | Whether a wallet is connected. |
 | `user: UserInfo \| null` | `{ userId, email?, provider? }` from the login. |
 | `wallet: CavosWallet \| null` | The connected wallet for the selected chain, discriminated by `wallet.chain`. Narrow on it before chain-native calls. |
-| `session: CavosWallet & CavosSession \| null` | The full multi-chain session. Use `session.wallet("stellar")` to access other chains. |
+| `session` | The full multi-chain session, or `null`: the default wallet plus `wallet(chain)`, `chainStatus`, and `chainAddress`. Use `session.wallet("stellar")` to access other chains. |
 | `address: string \| null` | The account address for the selected chain. |
 | `chain: Chain` | The active chain (`"starknet" \| "solana" \| "stellar"`). |
 | `configuredChains: Chain[]` | All chains configured for this session. |
@@ -92,17 +117,17 @@ hasPasskey, isNewAccount, recovery }`.
 
 - `isUndeployed`: True when the account has not been deployed on-chain yet.
   First execute will deploy + run atomically.
-- `isReady`: True when this device holds the wallet key.
+- `isReady`: True when status is `ready`: the account exists on-chain (always, on Solana) and this device holds its key.
 - `needsDeviceApproval`: True when the wallet exists but this device holds no key yet.
 
 <Callout type="info">
 Both `isUndeployed` and `isReady` allow execution. Only `needsDeviceApproval`
-blocks transactions. An undeployed wallet can sign messages and execute — the
+blocks transactions. An undeployed wallet can sign messages and execute: the
 first execute deploys the account.
 </Callout>
 
 `walletStatus.recovery` is the one flag most apps actually read:
-`{ protected: boolean; methods: ("passkey" | "social")[] }` — can this user get
+`{ protected: boolean; methods: ("passkey" | "social")[] }`. It answers one question: can this user get
 back in from a device they do not have yet? The other flags describe work in
 flight; this describes the standing guarantee.
 
@@ -116,7 +141,7 @@ if (walletStatus.isReady && !walletStatus.recovery.protected) {
 <Callout type="info">
 `recovery.protected` starts `false` and flips once the lookup that fills it
 returns. Read it as "not known to be protected" during the first moments of a
-connect, not as "known to be unprotected" — don't show a scary warning on frame one.
+connect, not as "known to be unprotected": don't show a scary warning on frame one.
 </Callout>
 
 ### Chain switching
@@ -133,17 +158,17 @@ await setChain("stellar");
 // The walletStatus updates to reflect the Stellar account's state
 ```
 
-`setChain` does not re-deploy or re-authenticate — it just changes which wallet
+`setChain` does not re-deploy or re-authenticate: it just changes which wallet
 is active. The session keeps all chains connected.
 
 ### Login
 
 | Method | Description |
 |--------|-------------|
-| `login(provider)` | OAuth social login (`"google" \| "apple"`) — opens the hosted flow. |
+| `login(provider)` | OAuth social login (`"google" \| "apple" \| "github"`): opens the hosted flow. GitHub is optional (`providers` must include `'github'`), not recommended over Google, Apple, or email, and not available in React Native. |
 | `sendOtp(email)` | Email a 9-character sign-in code. |
-| `verifyOtp(email, code)` | Verify the emailed code and deploy the wallet. |
-| `handleCallback(authData, redirectUri?)` | Resolve identity from an OAuth callback (`?cavos_auth_code=…`) and deploy. Pass the callback URL as `redirectUri` if it differs from the current one. |
+| `verifyOtp(email, code)` | Verify the emailed code and connect the wallet (nothing deploys until the first `execute`). |
+| `handleCallback(authData, redirectUri?)` | Resolve identity from an OAuth callback (`?cavos_auth_code=…`) and connect. Pass the callback URL as `redirectUri` if it differs from the current one. |
 
 ### Transactions
 
@@ -156,7 +181,7 @@ is active. The session keeps all chains connected.
 On **Solana and Stellar**, call the wallet directly for chain-native actions
 instead of the context's `execute`: narrow on `wallet.chain`, then
 `wallet.execute(amount, destination)`. For `signTransaction` (sign without
-submit), also call `wallet.signTransaction(...)` directly after narrowing —
+submit), also call `wallet.signTransaction(...)` directly after narrowing:
 the args differ per chain. See [Wallet actions](/docs/wallet-actions).
 </Callout>
 
@@ -165,15 +190,15 @@ the args differ per chain. See [Wallet actions](/docs/wallet-actions).
 | Method | Description |
 |--------|-------------|
 | `enrollPasskeyDefault()` | Add a passkey **after** sign-up. Stores a PRF-encrypted copy of the MasterDEK. Sign-up never prompts. |
-| `approveDeviceWithPasskey()` | New device with no wrap, when the user dismissed the prompt: opens the passkey's encrypted copy of the MasterDEK (every chain) or approves the grandfathered-Stellar path. |
-| `setupRecovery()` | **Stellar only** (grandfathered wallets). Starknet and Solana have nothing to register. **Resolves with the code** when it applies. |
-| `submitSocialRecoveryToken(idToken)` | Drive enclave enroll/unwrap with the provider's raw `id_token`. Starknet, Solana, and Stellar. Not accepted for Google and Apple tokens in 0.2.6. See [Hardware-isolated recovery](/docs/hardware-isolated-recovery#with-your-own-auth). |
-| `recover(code)` | Recover access after losing every device. **Grandfathered Stellar only.** Starknet, Solana, and native Stellar restore with enclave login or `approveDeviceWithPasskey()`. |
+| `approveDeviceWithPasskey()` | New device with no wrap, when the user dismissed the prompt: opens the passkey's encrypted copy of the MasterDEK (every chain). |
+| `setupRecovery()` | **Deprecated.** Current wallets do not use recovery codes. Throws on Starknet and Solana; registers nothing on Stellar. |
+| `recover(code)` | **Deprecated.** Current wallets do not use recovery codes. Restore with enclave login or `approveDeviceWithPasskey()`. |
+| `submitSocialRecoveryToken(idToken)` | Drive enclave enroll/unwrap with the provider's raw `id_token`. Starknet, Solana, and Stellar. Since 0.2.6, not accepted for Google and Apple tokens. See [Hardware-isolated recovery](/docs/hardware-isolated-recovery#with-your-own-auth). |
 
 When hardware-isolated social recovery is enabled, `<CavosProvider>` enrolls
 after a fresh login (reseals the MasterDEK if this device already has it) and
 unwraps on a device that does not. Passkey is opt-in via
-`enrollPasskeyDefault()` — `secureStep` defaults to `'off'`.
+`enrollPasskeyDefault()`: `secureStep` defaults to `'off'`.
 
 These wrappers present a shared product flow across the current adapters. Their
 cryptographic implementation and some availability constraints remain
@@ -185,13 +210,13 @@ for the capability details.
 | Method | Description |
 |--------|-------------|
 | `openModal()` / `closeModal()` | Open/close the built-in auth modal (the provider mounts it automatically when `modal` is set). |
-| `logout()` | Clears the persisted identity and session token, and tells the [vault](/docs/vault) to let go of the keys it unlocked. Stored keys stay, so the next login is silent. Does **not** sign the user out of Google or Apple. |
+| `logout()` | Clears the persisted identity and session token, and tells the [vault](/docs/vault) to let go of the keys it unlocked. Stored keys stay, so the next login is silent. Does **not** sign the user out of Google, Apple, or GitHub. |
 | `clearAuthError()` | Clear `authError` (e.g. when the user starts a new login attempt). |
 
 ## `useCavosAuth()`
 
 A deliberately thin subset for components that only need to open the modal and
-read basic auth state — no wallet, no transactions:
+read basic auth state: no wallet, no transactions:
 
 ```ts
 {
@@ -215,7 +240,7 @@ import { CavosAuthModal } from "@cavos/kit/react";
   appName="My App"
   appLogo="https://myapp.com/logo.png"
   appLogoSize={56}
-  providers={["email", "google", "apple"]}
+  providers={["email", "google", "apple"]} // add "github" to offer GitHub
   primaryColor="#402AFF"
   theme="light"
   radius={16}
@@ -232,14 +257,14 @@ import { CavosAuthModal } from "@cavos/kit/react";
 | `appName` | `string?` | Shown in the heading (`"Sign in to {appName}"`). |
 | `appLogo` | `string?` | Image URL for the logo. If omitted, the Cavos star is shown. The provider also loads it from your app's dashboard config automatically; a local `appLogo` overrides that. |
 | `appLogoSize` | `number?` | Logo height in px. Defaults to `40` (image) / `34` (Cavos star). |
-| `providers` | `("google" \| "apple" \| "email")[]?` | Which login buttons to show. Defaults to all three. |
+| `providers` | `("google" \| "apple" \| "email" \| "github")[]?` | Which login buttons to show. Defaults to Google, Apple, and email. Add `"github"` to offer GitHub (kit 0.5.0, web only); see [Authentication → GitHub](/docs/auth#github). |
 | `primaryColor` | `string?` | Accent color for buttons / focus rings (hex). |
 | `theme` | `"light" \| "dark"?` | Card theme. Defaults to `light`. |
 | `backgroundColor` | `string?` | Override the card background (defaults to white / `#111` per theme). |
 | `radius` | `number?` | Card & button corner radius in px (card defaults to `16`). |
-| `inline` | `boolean?` | Render the card in-flow (no overlay/backdrop) — for live previews. When `true`, `open` is ignored. |
-| `secureStep` | `"optional" \| "required" \| "off"?` | Passkey screen after a new account. **`'off'` is the default** — login never prompts. |
-| `onSuccess` | `(address: string) => void?` | Fired when authentication + deployment succeed. |
+| `inline` | `boolean?` | Render the card in-flow (no overlay/backdrop): for live previews. When `true`, `open` is ignored. |
+| `secureStep` | `"optional" \| "required" \| "off"?` | Passkey screen after a new account. **`'off'` is the default**: login never prompts. |
+| `onSuccess` | `(address: string) => void?` | Fired when sign-in and connect succeed. |
 
 ## `CavosModalConfig`
 
@@ -272,7 +297,7 @@ All visual props (`primaryColor`, `theme`, `backgroundColor`, `radius`,
 
 ## Mobile: automatic bottom sheet
 
-On viewports **`max-width: 640px`** the modal becomes a **bottom sheet** — it
+On viewports **`max-width: 640px`** the modal becomes a **bottom sheet**: it
 slides up from the bottom with rounded top corners and a grab handle, overlaying
 the page with a blurred backdrop. This is fully automatic; there is no prop to
 toggle. On desktop the modal renders centered. The `inline` mode disables the
@@ -307,6 +332,9 @@ The provider handles multiple chains natively. Configure them all up front:
 Then switch chains without remounting:
 
 ```tsx
+import type { Chain } from "@cavos/kit";
+import { useCavos } from "@cavos/kit/react";
+
 function ChainSwitcher() {
   const { chain, setChain, configuredChains, walletStatus } = useCavos();
 
@@ -325,7 +353,7 @@ chain's status. No re-authentication, no remount, no lost state.
 
 <Callout type="info">
 Each chain has its own address, deployment status, and device authorization.
-Switching chains may show a different `walletStatus` — one chain might be
+Switching chains may show a different `walletStatus`: one chain might be
 `ready` while another is `undeployed` or `needs-device-approval`.
 </Callout>
 

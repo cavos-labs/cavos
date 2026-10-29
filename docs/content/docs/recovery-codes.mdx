@@ -1,106 +1,33 @@
 ---
 title: Recovery codes
-description: A stored code that restores grandfathered Stellar wallets. Starknet, Solana, and native Stellar restore the MasterDEK instead.
+description: Cavos wallets do not use recovery codes. Starknet, Solana, and Stellar restore the MasterDEK with an enclave sign-in or a passkey.
 ---
 
-Cavos cannot reset a wallet or authorize a replacement device by itself. The
-recovery code costs nothing and involves no server: a high-entropy code,
-generated on a device the user already controls, which derives a backup
-authority the account recognizes. Today that applies to grandfathered Stellar
-wallets only.
+Cavos wallets on Starknet, Solana, and Stellar do not use recovery codes. Each
+account has one key derived from a **MasterDEK**, and a new device restores
+that MasterDEK in one of two ways:
 
-The trade-off is the one every code-based scheme has — the user has to keep it.
-For recovery that works by signing in again instead, see
-[Hardware-isolated recovery](/docs/hardware-isolated-recovery).
-
-## Recovery capabilities
-
-| Chain | Recovery code role | Restore path |
+| Way back | What the user does | Setup |
 |---|---|---|
-| **Starknet** | **Not used.** Native accounts have one stark key | Enclave login or `approveDeviceWithPasskey()` |
-| **Solana** | **Not used.** Native accounts have one spend key | Enclave login or `approveDeviceWithPasskey()` |
-| **Stellar (enclave)** | Same MasterDEK wrap as Solana | Sign in again |
-| **Stellar (grandfathered)** | Extra ed25519 Horizon signer | Reconnect, then `approveThisDeviceWithRecovery(code)` |
-
-## Set up once
-
-Generate a code on a connected device, show it once, and ask the user to store it
-offline:
+| [**Hardware-isolated recovery**](/docs/hardware-isolated-recovery) | Signs in again with Google, Apple, GitHub, or an email code | `socialRecovery: true` or `deviceApproval: "enclave"`, plus the environment toggle in the dashboard |
+| [**Passkey**](/docs/passkeys) | Verifies with Face ID / Touch ID / PIN on a synced passkey | `enrollPasskeyDefault()` after sign-up |
 
 ```ts title="TypeScript"
-import { generateRecoveryCode } from "@cavos/kit";
-
-const code = generateRecoveryCode();
-await wallet.setupRecovery(code);
-
-// Display `code` once. Never send it to analytics, logs, or your backend.
-```
-
-`setupRecovery` is chain-specific. Starknet, Solana, and native Stellar have
-nothing to register and ignore it. Only grandfathered Stellar wallets use it.
-
-<Callout type="warn">
-Anyone with the recovery code may be able to restore wallet authority. Treat it
-like a private key: never log it, never email it in plaintext, and never persist
-it in application storage.
-</Callout>
-
-## Restore Starknet and Solana
-
-There is no recovery-code restore. Native accounts restore the MasterDEK:
-
-```ts title="TypeScript"
-// Enclave: the same Google/Apple login on the new device unwraps the DEK.
-// Passkey:
-const { approveDeviceWithPasskey } = useCavos();
-await approveDeviceWithPasskey();
-```
-
-## Restore Stellar
-
-**Native DEK:** do not call `approveThisDeviceWithRecovery`. Sign in again
-(enclave) or `approveDeviceWithPasskey()`.
-
-**Grandfathered:**
-
-```ts title="TypeScript"
-import { Cavos } from "@cavos/kit";
-
-const session = await Cavos.connect({
-  chains: ["stellar"],
-  defaultChain: "stellar",
-  network: "testnet",
-  identity: { userId: user.id, email: user.email },
-  appSalt: "my-app",
-  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
-});
-
-const wallet = session.wallet("stellar");
-if (
-  wallet.chain === "stellar" &&
-  wallet.status === "needs-device-approval" &&
-  !wallet.nativeDek
-) {
-  await wallet.approveThisDeviceWithRecovery(code);
+// Enclave: signing in again on the new device unwraps the MasterDEK.
+// Passkey, when the user dismissed the prompt at sign-in:
+const { approveDeviceWithPasskey, walletStatus } = useCavos();
+if (walletStatus.needsDeviceApproval && walletStatus.hasPasskey) {
+  await approveDeviceWithPasskey();
 }
 ```
 
-The recovery factor is itself a Horizon signer. It `setOptions` the fresh
-device's ed25519 key onto the account.
-
 ## Product guidance
 
-- Encourage a synced passkey or the enclave before relying on a recovery code.
-- Verify recovery on physical iOS and Android devices before production release.
-- Treat the code as one factor among several, not the plan. Most users will not
-  keep it, which is the problem [hardware-isolated
-  recovery](/docs/hardware-isolated-recovery) exists to solve on Starknet,
-  Solana, and native Stellar. Grandfathered Stellar wallets still use the code
-  (or a synced passkey extra signer) as the way back from nothing.
-- If the user loses every device and every recovery factor, and — on Starknet,
-  Solana, or native Stellar — neither the enclave nor a passkey was enrolled,
-  Cavos cannot restore access. That is the cost of the guarantee, not a gap in
-  it.
+- Turn on the enclave, offer a passkey, or both, before users hold real funds.
+- Verify restore on physical iOS and Android devices before a production release.
+- If the user loses every device and neither the enclave nor a passkey was
+  enrolled, Cavos cannot restore access. That is the cost of a non-custodial
+  wallet, not a gap in it.
 
-See [Multi-device](/docs/multi-device), [Passkeys](/docs/passkeys), and the
-selected [chain guide](/docs/chains).
+See [Recovery](/docs/recovery), [Multi-device](/docs/multi-device), and
+[Passkeys](/docs/passkeys).

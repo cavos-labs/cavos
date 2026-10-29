@@ -6,7 +6,7 @@ description: Device-native, self-custodial embedded wallets across every chain, 
 `@cavos/kit` gives applications one [embedded wallet](https://cavos.xyz/embedded-wallet)
 integration across chains without flattening their differences. Users
 authenticate with a familiar identity and control a deterministic wallet
-through device-native key material—no seed phrase, MPC cluster, or browser
+through device-native key material, no seed phrase, MPC cluster, or browser
 extension.
 
 **[Starknet](https://cavos.xyz/embedded-starknet-wallet),
@@ -20,7 +20,7 @@ and fee model.
 import { Cavos } from "@cavos/kit";
 
 const wallet = await Cavos.connect({
-  chain: "solana", // "starknet" | "solana" | "stellar"
+  chains: ["solana"], // any of "starknet" | "solana" | "stellar"
   network: "testnet",
   identity: { userId: user.id, email: user.email },
   appSalt: "my-app",
@@ -28,7 +28,8 @@ const wallet = await Cavos.connect({
 });
 
 if (wallet.chain === "solana" && wallet.status === "ready") {
-  await wallet.execute(1_000_000n, recipient);
+  // Moves 0.001 SOL the account holds; the Cavos relayer pays the fee.
+  await wallet.execute(1_000_000n, recipient, { fee: "sponsored" });
 }
 ```
 
@@ -39,7 +40,7 @@ if (wallet.chain === "solana" && wallet.status === "ready") {
 | **Identity** | A stable `userId` plus an app-specific salt. On every chain the salt is also HKDF input for the account key. |
 | **Device-native authority** | Every account key is derived from a MasterDEK: a stark key on Starknet, native Ed25519 on Solana and Stellar. |
 | **Chain adapter** | Implements address derivation, signing, execution, recovery, and sponsorship for one network family. |
-| **Unified SDK** | `Cavos.connect({ chain, network })` returns a discriminated wallet union so shared onboarding stays stable and chain-native methods remain typed. |
+| **Unified SDK** | `Cavos.connect({ chains, network })` returns a discriminated wallet union so shared onboarding stays stable and chain-native methods remain typed. |
 | **Sponsorship** | A paymaster, relayer, fee payer, or fee-bump service removes the need for users to acquire gas when that adapter supports it. |
 
 ## What remains chain-native
@@ -48,15 +49,15 @@ Execution is intentionally not reduced to a misleading universal transaction
 format:
 
 - **Starknet:** standard OpenZeppelin account, arbitrary multicalls, Starknet paymaster.
-- **Solana:** native Ed25519 system account, transfer or allowlisted instructions, sponsoring fee payer.
-- **Stellar:** classic `G…` account, native Ed25519 control key (MasterDEK or grandfathered extra signers), XLM payments, Soroban invocation, optional fee-bump.
+- **Solana:** native Ed25519 system account, transfer or allowlisted instructions; the account, the Cavos relayer, or a held token pays the fee.
+- **Stellar:** classic `G…` account, native Ed25519 control key (derived from the MasterDEK), XLM payments, Soroban invocation, optional fee-bump.
 
 Narrow on `wallet.chain` before calling chain-native methods. See
 [Chains](/docs/chains) for the capability matrix.
 
 ## Security properties
 
-- **Self-custodial:** Cavos does not hold a signing key that can move user funds.
+- **Self-custodial:** private keys never leave the user's device in plaintext and are never used to sign on a server. The enclave and passkeys hold only an encrypted copy of the wallet's master key.
 - **MPC-free:** there are no reconstructable server-side key shards.
 - **Device-native:** authority is created or unlocked locally on an enrolled
   device.
@@ -76,7 +77,7 @@ choosing where users should sign, start with
   <Card title="Quickstart" href="/docs/quickstart" description="Install, choose an adapter, and execute a sponsored transaction." />
   <Card title="Chains" href="/docs/chains" description="Current availability and the adapter contract for future chains." />
   <Card title="Starknet" href="/docs/starknet" description="Native stark key, OpenZeppelin account, and paymaster execution." />
-  <Card title="Solana" href="/docs/solana" description="Native Ed25519 system account and sponsoring fee payer." />
+  <Card title="Solana" href="/docs/solana" description="Native Ed25519 system account; self-paid, relayer-sponsored, or token fees." />
   <Card title="Stellar" href="/docs/stellar" description="Classic G… account, MasterDEK unlock, and Soroban calls." />
   <Card title="Reserve" href="/docs/reserve" description="Pay Stellar reserves and fees in a token, from any G… wallet." />
   <Card title="React" href="/docs/react" description="Provider, hooks, modal, and chain switching." />

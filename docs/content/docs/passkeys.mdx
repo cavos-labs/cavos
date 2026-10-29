@@ -3,11 +3,11 @@ title: Passkeys
 description: Add a passkey after sign-up so a new device can open the wallet. It carries an encrypted copy of the wallet's key, on Starknet, Solana, and Stellar alike. Signing up never asks for one.
 ---
 
-Signing up with Google / Apple / email **never** asks for a passkey. The wallet
+Signing up with Google / Apple / GitHub / email **never** asks for a passkey. The wallet
 exists without one. The app decides when to add it (`enrollPasskeyDefault`), and
 from then on a new device asks for it when it needs the wallet's key.
 
-On **Starknet, Solana, and native Stellar** the passkey holds an **encrypted
+On **Starknet, Solana, and Stellar** the passkey holds an **encrypted
 copy of the wallet's key** (the MasterDEK). Cavos stores the ciphertext; only
 the passkey can open it. It **can spend**: anyone with a synced passkey that was
 added can open the wallet. This is not 2FA.
@@ -37,7 +37,7 @@ import { CavosProvider } from '@cavos/kit/react';
   }}
   modal={{
     appName: "My App",
-    secureStep: "off",           // default — sign-up never prompts
+    secureStep: "off",           // default: sign-up never prompts
   }}
 >
   {children}
@@ -90,7 +90,7 @@ The wallet's key comes from a random 32-byte MasterDEK. Adding a passkey stores
 a copy of it encrypted under a key only the passkey can produce, its WebAuthn
 **PRF** output:
 
-```
+```text
 KEK  = HKDF-SHA256(passkey PRF, "cavos-passkey-dek-wrap-v1")
 wrap = 0x01 || nonce || AES-256-GCM(KEK, DEK, aad = "appId:userId")
 ```
@@ -105,10 +105,10 @@ wrap = 0x01 || nonce || AES-256-GCM(KEK, DEK, aad = "appId:userId")
 
 A synced passkey that was added **is** a way into the wallet. Frame it as *"Add
 a passkey so you can open this wallet on any device"*, not as 2FA. Use the
-[enclave](/docs/hardware-isolated-recovery) if you want Google/Apple restore
+[enclave](/docs/hardware-isolated-recovery) if you want restore by signing in again
 without giving a synced credential that power.
 
-On Starknet and Solana there is no on-chain approver and no `enrollPasskey` on the
+On Starknet, Solana, and Stellar there is no on-chain approver and no `enrollPasskey` on the
 wallet; use `enrollPasskeyDefault()` from the hook.
 
 ## Prerequisites
@@ -133,7 +133,7 @@ than changing the account model.
 
 ## Related
 
-- [Hardware-isolated recovery](/docs/hardware-isolated-recovery) — Google/Apple
-  unwrap of the same MasterDEK, and it **can** cover several chains at once.
-- [Vault](/docs/vault) — where passkeys and keys live on the web.
-- [Multi-device](/docs/multi-device) — opening a wallet on a new device.
+- [Hardware-isolated recovery](/docs/hardware-isolated-recovery): sign-in
+  restore of the same MasterDEK, and it **can** cover several chains at once.
+- [Vault](/docs/vault): where passkeys and keys live on the web.
+- [Multi-device](/docs/multi-device): opening a wallet on a new device.

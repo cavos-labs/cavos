@@ -81,6 +81,49 @@ describe('docs SEO', () => {
     assert.doesNotMatch(homeH1[0], /href=/)
   })
 
+  it('documents kit 0.5.0 attestation paths and GitHub login without stale PCR hashes', () => {
+    const recovery = read('content/docs/hardware-isolated-recovery.mdx')
+    assert.match(recovery, /DEFAULT_SOCIAL_RECOVERY_ATTESTATION/)
+    assert.match(recovery, /api\/enclave\/releases/)
+    assert.match(recovery, /repositoryId/)
+    assert.match(recovery, /cavos-labs\/cavos-recovery/)
+    assert.match(recovery, /measurements\.json/)
+    assert.match(recovery, /releases\/tag\/v1/)
+    assert.match(recovery, /tuf-repo-cdn\.sigstore\.dev/)
+    assert.match(recovery, /getGitHubOAuthUrl|login\('github'\)/)
+    assert.match(recovery, /https:\/\/cavos\.xyz\/blog\/cavos-kit-0-5-0/)
+    assert.doesNotMatch(recovery, /f2f81237/)
+    assert.doesNotMatch(recovery, /24ce0009/)
+    assert.match(recovery, /socialRecoveryAttestation/)
+    assert.doesNotMatch(recovery, /tag-protected/)
+    assert.match(recovery, /"PCR1": "3b4a7e1b/)
+    assert.match(recovery, /required\s+reviewers/)
+    assert.match(recovery, /No production enclave has been accepted\s+through this path yet/)
+    assert.match(recovery, /not recommended over/)
+    assert.match(recovery, /live and tested in production/)
+
+    const auth = read('content/docs/auth.mdx')
+    assert.match(auth, /getGitHubOAuthUrl/)
+    assert.match(auth, /https:\/\/enclave\.cavos\.xyz\/github/)
+    assert.match(auth, /cavos-github/)
+    assert.match(auth, /Bring your own GitHub OAuth app/)
+    assert.match(auth, /never returned/)
+    assert.match(auth, /not recommended over Google, Apple, or email/)
+
+    const api = read('content/docs/api-reference.mdx')
+    assert.match(api, /getGitHubOAuthUrl/)
+    assert.match(api, /EnclaveReleasePolicy/)
+    assert.match(api, /AttestationPolicy/)
+
+    for (const file of fs.readdirSync(path.join(process.cwd(), 'content/docs'))) {
+      if (!file.endsWith('.mdx')) continue
+      const page = read(`content/docs/${file}`)
+      assert.doesNotMatch(page, /grandfather/i, file)
+      assert.doesNotMatch(page, /Horizon signer/i, file)
+      assert.doesNotMatch(page, /approveThisDeviceWithRecovery/, file)
+    }
+  })
+
   it('adds offers.availability to the docs SoftwareApplication Offer', () => {
     const layout = read('app/layout.tsx')
     assert.match(layout, /'@type': 'SoftwareApplication'/)

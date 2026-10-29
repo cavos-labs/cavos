@@ -3,17 +3,17 @@ title: Signing & sponsorship
 description: How device-native authority and gas sponsorship differ across Cavos chain adapters.
 ---
 
-Cavos keeps the user experience consistent—local authority, no seed phrase, no
-routine signing popup—while preserving each chain's actual cryptography and fee
+Cavos keeps the user experience consistent, local authority, no seed phrase, no
+routine signing popup, while preserving each chain's actual cryptography and fee
 model.
 
 ## Capability matrix
 
 | Chain | Transaction authority | On-chain verification | Sponsorship |
 |---|---|---|---|
-| **Starknet** | Native stark key (HKDF of MasterDEK) | OpenZeppelin account validates the stark signature | Paymaster-sponsored deployment and execution |
-| **Solana** | Native Ed25519 spend key (HKDF of MasterDEK) | Solana verifies the user's signature on the transaction message | Relayer co-signs as fee payer |
-| **Stellar** | Native Ed25519 control key (same DEK family, or grandfathered extra signer) | Classic-account signature and Soroban authorization | Sponsored reserves and optional fee-bump |
+| **Starknet** | Native stark key (HKDF of MasterDEK) | OpenZeppelin account validates the stark signature | Paymaster-sponsored deployment and execution; `fee: 'self'` after deploy |
+| **Solana** | Native Ed25519 spend key (HKDF of MasterDEK) | Solana verifies the user's signature on the transaction message | The account pays by default; the relayer co-signs as fee payer with `fee: 'sponsored'`, or the fee is settled in a held token |
+| **Stellar** | Native Ed25519 control key (HKDF of MasterDEK) | Classic-account signature and Soroban authorization | Sponsored reserves and optional fee-bump |
 
 The backend can transport, sponsor, or submit a transaction. It does not hold
 the user authority required to move funds.
@@ -51,16 +51,15 @@ the `fee: 'self'` path after deploy.
 
 ## Solana
 
-The user's Ed25519 key signs the Solana transaction message. The relayer may
-co-sign as fee payer because paying the fee does not grant authority over the
+The user's Ed25519 key signs the Solana transaction message. With `fee: 'sponsored'` the relayer
+co-signs as fee payer because paying the fee does not grant authority over the
 source account. Sponsored extra program ids are restricted by the app's
 allowlist. See [Solana](/docs/solana).
 
 ## Stellar
 
-Stellar uses its native ed25519 account model. With enclave or passkey, the
-control key is HKDF of the MasterDEK (same wrap as Solana). Grandfathered
-wallets still use extra Horizon signers.
+Stellar uses its native ed25519 account model. The control key is HKDF of the
+MasterDEK (same wrap as Solana).
 
 On web, the control key is a non-extractable WebCrypto Ed25519 key held by the
 [Cavos vault](/docs/vault). Your page cannot read it, and what it signs past
@@ -77,7 +76,7 @@ separate sponsor from the kit relayer.
 
 ## Signing without submission
 
-Every adapter can sign a transaction without submitting it — useful when your
+Every adapter can sign a transaction without submitting it: useful when your
 own relayer does the submitting. The payload is chain-specific, so narrow on
 `wallet.chain` first. See [Wallet actions](/docs/wallet-actions#sign-messages--transactions)
 for the call, the per-chain payloads, and how a backend verifies a signature.

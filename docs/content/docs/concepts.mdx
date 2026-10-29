@@ -26,8 +26,8 @@ The Cavos backend must not possess authority that can move user funds or enroll
 itself as a signer.
 
 - **Starknet:** the audited OpenZeppelin `AccountUpgradeable` v3.0.0, controlled by a stark key derived from the MasterDEK.
-- **Solana:** a native Ed25519 system account. The relayer is fee payer, never a spender.
-- **Stellar:** the classic account's Ed25519 control key (MasterDEK, or extra Horizon signers on grandfathered wallets).
+- **Solana:** a native Ed25519 system account. The account pays its own fee by default; the relayer can be fee payer (`fee: 'sponsored'`), never a spender.
+- **Stellar:** the classic account's Ed25519 control key (derived from the MasterDEK).
 
 Registries and recovery services coordinate public state or messages. Paymasters
 and relayers fund or submit transactions. None of those roles is a substitute
@@ -38,14 +38,14 @@ for user authorization.
 The address is **not** derived purely from identity. It is looked up in the
 registry first, and only computed when the user has no existing wallet.
 
-```
+```text
 (userId, appId, chain, network) → registry lookup → address
 ```
 
 When you call `connect`:
 
 1. **Registry lookup**: The kit asks the Cavos registry: does this user already
-   have a wallet for this app and chain?
+   have a wallet for this app, chain, and network?
 2. **If found**: The existing address is returned. The device unwraps
    the MasterDEK (local wrap, enclave, or passkey) or lands on
    `needs-device-approval`.
@@ -54,30 +54,28 @@ When you call `connect`:
 
 This design prevents a second wallet from being created silently when the same
 user connects from a different device. The second device sees the existing
-address and lands on `needs-device-approval` until it restores the MasterDEK
-— it does not mint a duplicate.
+address and lands on `needs-device-approval` until it restores the MasterDEK;
+it does not mint a duplicate.
 
 <Callout type="info">
 **Why a registry?** The first device mints a MasterDEK and
-claims the derived address. A second device must unwrap that same DEK — it
+claims the derived address. A second device must unwrap that same DEK: it
 cannot invent a new one. The registry records which address belongs to which
 user so connect does not mint a duplicate.
 </Callout>
 
 ### The `appSalt` parameter
 
-`appSalt` is the local device-key slot. On **Solana and Stellar native** it is
-also the HKDF salt for the spend key, so changing it derives a different
-address that will not match the existing registry row. Never change it.
-
-The registry key is `(userId, appId, chain, network)`.
+`appSalt` names the local device-key slot and is the HKDF salt for the account
+key on every chain. Changing it derives a different key and address that will
+not match the existing registry row. Never change it.
 
 ## Lazy deployment
 
 Connect **never** deploys Starknet or Stellar accounts. It resolves the address
 and checks on-chain status; those accounts are created on the first `execute`.
 **Solana** is a system account: `ready` once this device has the spend key.
-Fund it, then spend — there is no `initialize`.
+Fund it, then spend: there is no `initialize`.
 
 | Connect result | What happens |
 |----------------|--------------|
@@ -86,10 +84,11 @@ Fund it, then spend — there is no `initialize`.
 | User has a wallet, this device holds no key | `status: "needs-device-approval"`. |
 
 An `undeployed` wallet can:
-- **Sign messages** (`signMessage`) — the signature comes from the local device
+- **Sign messages** (`signMessage`): the signature comes from the local device
   key, which exists regardless of on-chain state.
-- **Execute** — the first `execute` call deploys the account and runs the
-  user's operation atomically in a single sponsored transaction.
+- **Execute**: on Starknet and Stellar, the first `execute` call deploys the
+  account and runs the user's operation atomically in a single sponsored
+  transaction.
 
 This lazy model means users see their address immediately and can share it
 before their first transaction. The account is created only when they use it.
@@ -144,8 +143,7 @@ one universal curve:
 
 - Starknet, Solana, and Stellar derive their account keys from a MasterDEK
   (enclave wrap or a passkey's encrypted copy): a stark key on Starknet,
-  Ed25519 on Solana and Stellar. Grandfathered Stellar wallets still use extra
-  Horizon signers.
+  Ed25519 on Solana and Stellar.
 - WebCrypto cannot hold a stark key, so outside the Cavos vault the Starknet
   key is re-derived into memory for the session; the DEK at rest stays
   protected by the device's non-extractable key.
@@ -182,8 +180,10 @@ individual [chain guides](/docs/chains).
 
 ## Typed native execution
 
-`Cavos.connect` returns a `CavosWallet & CavosSession` union. Narrow on
-`wallet.chain` before execution. This keeps onboarding portable without hiding
+`Cavos.connect` returns the default chain's wallet with session methods added
+(the session type is not exported by name; use
+`Awaited<ReturnType<typeof Cavos.connect>>`), and `session.wallet()` returns the
+`CavosWallet` union. Narrow on `wallet.chain` before execution. This keeps onboarding portable without hiding
 important differences in calls, units, replay protection, or confirmation.
 
 ```ts title="TypeScript"

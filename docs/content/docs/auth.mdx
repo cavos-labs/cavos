@@ -1,22 +1,22 @@
 ---
 title: Authentication
-description: Use Cavos hosted login (Google / Apple / email code) or bring your own identity.
+description: Use Cavos hosted login (Google / Apple / GitHub / email code) or bring your own identity.
 ---
 
 Authentication exists for **one reason**: to produce a stable `userId` (plus
 optional email) that the Cavos registry keys on. The login **never signs
-transactions** — that is always the device key.
+transactions**: that is always the device key.
 
 You have two options: bring your own identity, or use Cavos hosted auth.
 
-## Option A — Bring your own identity
+## Option A: Bring your own identity
 
-If you already authenticate users (your own auth, Clerk, Auth0, etc.), just pass
-a stable `userId`:
+If you already authenticate users (your own auth, Clerk, Auth0, etc.), pass a
+stable `userId`:
 
 ```ts title="TypeScript"
 const cavos = await Cavos.connect({
-  chain: "solana",
+  chains: ["solana"],
   network: "testnet",
   appSalt: "my-app",
   identity: { userId: user.id, email: user.email },
@@ -26,14 +26,14 @@ const cavos = await Cavos.connect({
 
 <Callout type="warn">
 `userId` must be **stable and unique per user**. If it changes, the registry
-lookup is for a different user — resulting in a different (or new) wallet. Use
+lookup is for a different user, which resolves to a different (or new) wallet. Use
 an immutable primary key, not an email that can change.
 </Callout>
 
 ### In React
 
-Pass the same identity to `<CavosProvider>` and you get the full React surface —
-wallet status, device approval, passkeys, recovery — driven by your own auth.
+Pass the same identity to `<CavosProvider>` and you get the full React surface
+(wallet status, device approval, passkeys, recovery), driven by your own auth.
 Cavos login turns off: the modal is not mounted and `login()` throws.
 
 ```tsx title="app/providers.tsx"
@@ -56,18 +56,17 @@ follows you: it connects when an identity appears, clears its state when it goes
 away, and swaps wallets when the user changes.
 
 The identity is **never persisted**. Your auth is the source of truth on every
-mount, so a Cavos session cannot outlive the session that authorized it — unlike
+mount, so a Cavos session cannot outlive the session that authorized it, unlike
 Cavos hosted auth, which remembers its own logins so a reload can reconnect
 silently.
 
 Social recovery also works from your own auth on Starknet, Solana, and Stellar
 (MasterDEK wrap); see
 [Hardware-isolated recovery](/docs/hardware-isolated-recovery#with-your-own-auth).
-Grandfathered Stellar wallets still need a passkey or recovery code.
 
-## Option B — Cavos hosted auth (`CavosAuth`)
+## Option B: Cavos hosted auth (`CavosAuth`)
 
-`CavosAuth` provides Google, Apple, and email-code login that resolves
+`CavosAuth` provides Google, Apple, GitHub, and email-code login that resolves
 to a Cavos `Identity` you pass straight into `connect`.
 
 ```ts title="TypeScript"
@@ -79,7 +78,7 @@ const auth = new CavosAuth({
 });
 ```
 
-### OAuth (Google / Apple)
+### Google and Apple
 
 OAuth is multi-step (redirect out, handle the callback), so resolve the identity
 first, then call `connect` with it.
@@ -91,12 +90,12 @@ window.location.href = url;             // or auth.getAppleOAuthUrl()
 
 // 2. On your callback route, exchange the result for an identity.
 //    The callback carries a short-lived one-time code (`?cavos_auth_code=…`)
-//    that is redeemed server-side — identity material never sits in the URL.
+//    that is redeemed server-side; identity material never sits in the URL.
 const identity = await auth.handleCallback(window.location.search);
 
 // 3. Connect with the resolved identity
 const cavos = await Cavos.connect({
-  chain: "solana",
+  chains: ["solana"],
   network: "testnet",
   appSalt: "my-app",
   identity,
@@ -109,9 +108,87 @@ Each sign-in URL carries the hash of a one-time secret the SDK keeps in
 it. Build the URL right before redirecting, and handle the callback in the same
 tab and origin that started the login.
 
+### GitHub
+
+GitHub sign-in is live and tested in production. It is an **optional** web
+provider, not recommended over Google, Apple, or email. The default modal
+providers stay those three; add `'github'` to show the button, or call
+`login('github')` / `auth.getGitHubOAuthUrl()`. React Native does not offer
+GitHub: like email, the flow has to verify the enclave's attestation, which
+that build cannot do.
+
+```ts title="TypeScript"
+const url = await auth.getGitHubOAuthUrl(/* redirectUri? */);
+window.location.href = url;
+
+const identity = await auth.handleCallback(window.location.search);
+```
+
+`getGitHubOAuthUrl` keeps a login secret and a PKCE verifier in
+`sessionStorage`, asks the backend for the authorize URL, and refuses it unless
+it is `https://github.com/login/oauth/authorize` with this login's
+`code_challenge` and `S256`. The callback never talks to GitHub. It returns a
+one-time `github_grant`; `handleCallback` sends `verify_github` into the
+attested enclave with the PKCE verifier. The enclave redeems the code, reads
+`api.github.com/user`, discards the access token, and signs an ES256 login
+token:
+
+| Claim | Value |
+|---|---|
+| `iss` | `https://enclave.cavos.xyz/github` |
+| `aud` | `cavos-github` |
+| `sub` | `hex(SHA-256("cavos-github-subject-v1:" + client_id + ":" + github_id))` |
+| `azp` | the OAuth `client_id` the code was redeemed with |
+| `nonce` | `<app_id>.<BASE64URL(SHA-256(login secret))>` |
+
+JWKS: `https://enclave.cavos.xyz/.well-known/jwks.json`. No GitHub scopes are
+requested.
+
+#### Bring your own GitHub OAuth app
+
+Leave **Dashboard → App → Environments → GitHub sign-in** empty to use Cavos's
+GitHub app. To put your own name and logo on GitHub's consent screen, create a
+GitHub OAuth app and save its **client ID** and **client secret** on that
+environment. In the GitHub OAuth app, set **Authorization callback URL** to
+the value the dashboard shows under **GitHub sign-in** (copy button). It is
+the Cavos dashboard's own origin followed by `/api/oauth/github/callback`.
+This is GitHub's callback into Cavos; do **not** add it to your app's
+**Callback URLs** below, which list where Cavos returns the user afterwards.
+Both fields are required together; the secret is encrypted at rest
+(AES-256-GCM) and **never returned**.
+Leave the secret blank on later saves to keep the stored value.
+
+Identity is derived **per OAuth client ID**. `sub` is
+`hex(SHA-256("cavos-github-subject-v1:" + client_id + ":" + github_id))`
+because GitHub reports the same numeric id to every app. Switching an
+environment's GitHub app, in either direction, gives every GitHub user a
+**new identity and a new, empty wallet**. Tying
+`sub` to the app the code was actually redeemed with is also what stops a
+code from one app becoming a login for another.
+
+The built-in modal only shows GitHub when `providers` includes `'github'`:
+
+```tsx title="app/provider.tsx"
+<CavosProvider
+  config={{ appId, environment, chains, defaultChain, network, appSalt }}
+  modal={{ appName: "My App", providers: ["google", "apple", "email", "github"] }}
+>
+  {children}
+</CavosProvider>
+```
+
+Enclave failure codes: `github_rejected` (GitHub did not accept the sign-in)
+and `github_unreachable` (the enclave could not reach GitHub). The SDK maps
+`github_rejected` to `GitHub did not accept this sign-in. Try again.` The
+hosted `/api/oauth/github/verify` route returns `github_rejected` as is and
+every other enclave failure, including `github_unreachable`, as
+`enclave_unavailable`. A stale or reused grant is `invalid_grant`. See
+[Troubleshooting](/docs/troubleshooting#github-sign-in-errors) and the
+[0.5.0 changelog](https://cavos.xyz/blog/cavos-kit-0-5-0).
+
 <Callout type="warn">
-Register every callback URL for your app in **Dashboard → App → Callback URLs**,
-one per line, matched **exactly** — scheme, host, path, no trailing slash, and no
+Register every callback URL for your app in **Dashboard → App → Settings → Callback URLs**,
+one per line, matched **exactly**: scheme, host, path, no trailing slash, and no
 wildcards. OAuth rejects a `redirect_uri` that is not registered, including when
 the app has none registered at all. This is deliberate: the callback carries a
 one-time code, and honouring an unregistered URI would hand that code to whoever
@@ -126,7 +203,7 @@ await auth.sendOtp(email);
 const identity = await auth.verifyOtp(email, code);
 
 const cavos = await Cavos.connect({
-  chain: "solana",
+  chains: ["solana"],
   network: "testnet",
   appSalt: "my-app",
   identity,
@@ -141,8 +218,8 @@ sends it to the enclave encrypted to its attested key. The enclave answers with
 its own signed token (issuer `https://enclave.cavos.xyz`, keys at
 `https://enclave.cavos.xyz/.well-known/jwks.json`), bound to a login secret the
 SDK keeps, the same binding Google and Apple tokens have. Email users therefore
-get [hardware-isolated recovery](/docs/hardware-isolated-recovery) like Google
-and Apple users. The user id of an email login is derived from the address.
+get [hardware-isolated recovery](/docs/hardware-isolated-recovery) like Google,
+Apple, and GitHub users. The user ID of an email login is derived from the address.
 
 - **Lifetime.** A code expires after 5 minutes and allows 3 attempts. A new code
   for the same address can be requested after 60 seconds.
@@ -154,7 +231,8 @@ and Apple users. The user id of an email login is derived from the address.
   testing mode). Other domains get `This email provider is not supported yet.`
   (error code `email_undeliverable`).
 - **React Native.** Email sign-in is not available yet: `sendOtp` and
-  `verifyOtp` throw an `unsupported` error there. Use Google or Apple.
+  `verifyOtp` throw an `unsupported` error there. GitHub is not on the native
+  API either. Use Google or Apple.
 
 `CavosAuthModal` shows a 9-character code screen and accepts a pasted code with
 spaces or hyphens. For the errors the code flow can return, see
@@ -164,10 +242,10 @@ spaces or hyphens. For the errors the code flow can return, see
 
 React Native apps use `NativeCavosAuth` from `@cavos/kit/react-native`. It opens
 Google or Apple in the system browser and returns through the registered
-`redirectUri`; email sign-in is not available on React Native yet.
+`redirectUri`. Email and GitHub sign-in are not available on React Native yet.
 
-```ts
-import { NativeCavosAuth } from "@cavos/kit/react-native";
+```ts title="TypeScript"
+import { Cavos, NativeCavosAuth } from "@cavos/kit/react-native";
 
 const auth = new NativeCavosAuth({
   appId,
@@ -177,7 +255,7 @@ const auth = new NativeCavosAuth({
 
 const identity = await auth.login("google");
 const wallet = await Cavos.connect({
-  chain: "stellar",
+  chains: ["stellar"],
   network: "testnet",
   appSalt: "my-app",
   appId,
@@ -194,8 +272,8 @@ dashboard; unregistered redirects are rejected by the backend.
 
 When you call `connect`, the kit looks up the address in the Cavos registry:
 
-```
-(userId, appId, chain) → registry lookup → address
+```text
+(userId, appId, chain, network) → registry lookup → address
 ```
 
 If the registry has an entry, that address is returned. If not, this device
@@ -204,7 +282,7 @@ first device to register wins. A second device connecting later sees the
 existing address and enters `needs-device-approval` instead of creating a
 duplicate wallet.
 
-The `appSalt` parameter names the local device-key slot. On **native Solana
-and Stellar** it is also the HKDF salt for the spend key, so changing it
-derives a different address that will not match the registry row. Never change
+The `appSalt` parameter names the local device-key slot and is the HKDF salt
+for the account key on every chain, so changing it derives a different address
+that will not match the registry row. Never change
 it. The registry key remains `(userId, appId, chain, network)`.

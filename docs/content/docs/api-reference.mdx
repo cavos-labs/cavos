@@ -1,6 +1,6 @@
 ---
 title: API reference
-description: Public exports of @cavos/kit — the surface you build against.
+description: "Public exports of @cavos/kit: the surface you build against."
 ---
 
 Everything below is exported from the package root: `import { ... } from "@cavos/kit"`.
@@ -16,8 +16,8 @@ The high-level entry point. Most apps only use this.
 ### `Cavos.connect(options): Promise<CavosWallet & CavosSession>`
 
 Unified entry point. Pick one or more `chains` and a `network` environment; the
-kit resolves the concrete network (sepolia / solana-devnet for testnet, mainnet
-otherwise) and returns a multi-chain session. The session IS the default chain's
+kit resolves the concrete network (sepolia / solana-devnet / stellar-testnet for
+`testnet`, each chain's mainnet for `mainnet`) and returns a multi-chain session. The session IS the default chain's
 wallet, augmented with methods to access other configured chains.
 
 Connect **never deploys** Starknet or Stellar accounts. It derives addresses and
@@ -35,7 +35,7 @@ interface ConnectOptions {
   chain?: Chain;                          // treated as chains: [chain], defaultChain: chain
 
   network: "testnet" | "mainnet";         // resolves to each chain's concrete network
-  appSalt: string;                        // HKDF salt for the account key — never change it
+  appSalt: string;                        // HKDF salt for the account key; never change it
   auth?: AuthProvider;                    // pass `auth` OR `identity`
   identity?: Identity;
   appId?: string;                         // hosted registry + relayers
@@ -45,14 +45,16 @@ interface ConnectOptions {
   rpcUrls?: Partial<Record<Chain, string>>; // per-chain RPC overrides
   registry?: WalletRegistry;              // off-chain userId -> wallet map
   vault?: boolean | { url?: string };     // keys in the Cavos vault (needs appId); see /docs/vault
+  socialRecovery?: SocialRecoveryClient;  // low-level: your own enclave client (React uses `socialRecovery: true`)
+  socialRecoveryCredential?: SocialRecoveryCredential;
 
   // --- Starknet-only ---
   paymasterApiKey?: string;               // sponsors deploy + execute (required on Starknet)
   paymasterUrl?: string;
 
   // --- Solana-only ---
-  relayer?: SolanaRelayer;                // gasless fee payer
-  feePayer?: Keypair;                     // self-funded fallback
+  relayer?: SolanaRelayer;                // sponsored fee payer
+  tollUrl?: string;                       // where `fee: { token }` settles; defaults to the hosted service
   passkeyPrf?: PasskeyPrfProvider;        // restores from a passkey's DEK copy (single-chain)
 
   // --- Stellar-only (classic `G…`) ---
@@ -68,11 +70,11 @@ interface CavosSession {
   chains: Chain[];                        // configured chains
   defaultChain: Chain;                    // the default chain
   wallet(chain: Chain): CavosWallet;      // get wallet for a chain
-  chainStatus(chain: Chain): ChainStatus; // get status for a chain
+  chainStatus(chain: Chain): ConnectStatus; // get status for a chain
   chainAddress(chain: Chain): string;     // get address for a chain
 }
 
-type ChainStatus = "undeployed" | "ready" | "needs-device-approval";
+type ConnectStatus = "undeployed" | "ready" | "needs-device-approval";
 ```
 
 - `status === "undeployed"` → Address derived, no on-chain account. Can execute
@@ -90,7 +92,7 @@ by a stark key derived from the MasterDEK.
 | Member | Description |
 |--------|-------------|
 | `wallet.address: string` | The account address. |
-| `wallet.status: ChainStatus` | `"undeployed" \| "ready" \| "needs-device-approval"` |
+| `wallet.status: ConnectStatus` | `"undeployed" \| "ready" \| "needs-device-approval"` |
 | `wallet.isDeployed: boolean` | Whether the account exists on-chain. |
 | `wallet.identity: Identity` | The authenticated identity. |
 | `wallet.publicKey: string` | The stark public key (hex) the account was deployed with. |
@@ -111,7 +113,7 @@ MasterDEK (enclave or passkey) and derives the same key. See
 
 | Export | Description |
 |--------|-------------|
-| `CavosAuth` | Hosted login: `getGoogleOAuthUrl`, `getAppleOAuthUrl`, `handleCallback`, `sendOtp`, `verifyOtp`, `authenticate`. Also `useExternalSocialRecoveryToken(idToken)` to drive social recovery from your own login. |
+| `CavosAuth` | Hosted login: `getGoogleOAuthUrl`, `getAppleOAuthUrl`, `getGitHubOAuthUrl`, `handleCallback`, `sendOtp`, `verifyOtp`, `authenticate`. Also `useExternalSocialRecoveryToken(idToken)` to drive social recovery from your own login. GitHub is web-only (PKCE + enclave redemption); see [Authentication](/docs/auth#github). |
 | `StaticIdentity` | Wrap a `{ userId, email }` you already have as an `AuthProvider`. |
 | `AuthProvider`, `Identity` | Types for the auth contract. |
 
@@ -121,22 +123,24 @@ MasterDEK (enclave or passkey) and derives the same key. See
 |--------|-------------|
 | `WalletRegistry`, `RegisteredWallet`, `RegisterResult` | Off-chain `userId` → wallet map (cross-device recognition). |
 | `InMemoryWalletRegistry`, `HttpWalletRegistry` | Registry implementations. |
-| `generateRecoveryCode()` | New high-entropy recovery code. Used by grandfathered Stellar only. |
+| `generateRecoveryCode()` | **Deprecated.** Kept for compatibility. Current wallets do not use recovery codes; restore with the enclave or a passkey. |
 
 ### Hardware-isolated social recovery
 
 Optional, opt-in per environment. On every chain the enclave seals the
 MasterDEK. See
-[Hardware-isolated recovery](/docs/hardware-isolated-recovery).
+[Hardware-isolated recovery](/docs/hardware-isolated-recovery) and the
+[0.5.0 changelog](https://cavos.xyz/blog/cavos-kit-0-5-0).
 
 | Export | Description |
 |--------|-------------|
 | `SocialRecoveryClient` | Client for the recovery enclave. `enroll(...)`, `recover(...)`, `confirmEnrollment(...)`. |
 | `SocialRecoveryClientOptions` | `{ baseUrl, appId, attestation, environment? }`. |
-| `AttestationPolicy` | Which enclave you accept: `{ pcr0 }`, the SHA-384 measurement of the Nitro enclave image. |
-| `DEFAULT_SOCIAL_RECOVERY_ATTESTATION` | The policy for the enclave Cavos operates (AWS Nitro), pinned in this package. |
+| `AttestationPolicy` | Which enclave you accept: `{ pcr0?, release? }`. `pcr0` is the SHA-384 measurement of the Nitro image (a string or list). `release` is an `EnclaveReleasePolicy`. A policy with only `pcr0` is a strict pin with no Sigstore fallback. See [Hardware-isolated recovery](/docs/hardware-isolated-recovery#the-attestation-pin). |
+| `EnclaveReleasePolicy` | `{ repository, repositoryId, ownerId, workflow, minVersion }`. Default 0.5.0 values: `cavos-labs/cavos-recovery`, repository id `1333734222`, owner id `216094156`, workflow `.github/workflows/release.yml`, `minVersion` `1`. |
+| `DEFAULT_SOCIAL_RECOVERY_ATTESTATION` | The policy for the enclave Cavos operates: a transitional `pcr0` list **or** a Sigstore bundle from `{backendUrl}/api/enclave/releases/{pcr0}` that verifies against `release`. |
 | `SocialRecoveryCredential`, `createSocialRecoveryCredential` | The in-memory social credential. |
-| `SocialRecoveryProvider`, `SocialRecoveryAction`, `SocialRecoveryResult` | Types. |
+| `SocialRecoveryProvider`, `SocialRecoveryAction`, `SocialRecoveryResult` | Types. `SocialRecoveryProvider` is `"google" \| "apple" \| "email" \| "github"`. |
 
 ## Passkeys
 
@@ -146,7 +150,7 @@ open (can spend). Signing up never prompts. See [Passkeys](/docs/passkeys).
 | Export | Description |
 |--------|-------------|
 | `PasskeyPrfProvider`, `PasskeyEnrollParams`, `PasskeyPrfEnrollResult` | Types for a passkey PRF provider. |
-| `PasskeyPrf` | WebAuthn PRF helper. Opens a passkey's DEK copy (grandfathered Stellar uses it as an extra signer). |
+| `PasskeyPrf` | WebAuthn PRF helper. Opens a passkey's DEK copy. |
 
 ## Vault
 
@@ -187,34 +191,35 @@ Cavos message prefix itself.
 
 ### Stellar
 
-Classic `G…` account. Native MasterDEK path shares the DEK with Solana;
-grandfathered wallets still use extra Horizon signers. See [Stellar](/docs/stellar).
+Classic `G…` account whose key derives from the same MasterDEK as Solana. See [Stellar](/docs/stellar).
 
 | Export | Description |
 |--------|-------------|
-| `CavosStellar` | High-level Stellar client. `nativeDek` is true on the current path. Native: `enrollPasskey` / `setupRecovery` no-op; `approveThisDeviceWithPasskey` / `approveThisDeviceWithRecovery` throw — reconnect with passkey or enclave. Grandfathered methods remain for older wallets. |
+| `CavosStellar` | High-level Stellar client. A new device restores the MasterDEK with the enclave or a passkey. |
 | `ConnectStellarOptions`, `StellarConnectStatus` | Option/status types. |
 | `StellarAdapter`, `StellarAdapterOptions` | Low-level adapter. |
 | `StellarRelayer`, `StellarRelayerOptions`, `StellarRelayKind` | Gasless relayer. |
 | `STELLAR_NETWORKS`, `StellarNetwork`, `HORIZON_URL`, `SOROBAN_RPC_URL`, `XLM_DECIMALS` | Network configs. |
 | `TrustlessWorkEscrow`, `deployEscrow`, `buildEscrowScVal` | Trustless Work escrow wrapper. |
-| `PasskeyPrf`, `PasskeyPrfOptions`, `PasskeyPrfEnrollParams` | WebAuthn PRF helper (passkey DEK copy / grandfathered extra signer). |
+| `PasskeyPrf`, `PasskeyPrfOptions`, `PasskeyPrfEnrollParams` | WebAuthn PRF helper (opens a passkey's DEK copy). |
 | `generateControlKey`, `controlKeypairFromSeed` | Control key generation. |
 
 ### Shared interface types
 
 | Export | Description |
 |--------|-------------|
-| `ChainAdapter`, `ChainCall`, `ComputeAddressParams`, `ExecuteOptions` | Multi-chain interface types. |
+| `ChainCall`, `ExecuteOptions` | Call and execute-option types shared across chains. |
 | `Chain` | `"starknet" \| "solana" \| "stellar"` |
 | `NetworkEnv` | `"testnet" \| "mainnet"` |
 | `CavosWallet` | Union of all wallet types. |
-| `CavosSession` | Multi-chain session interface. |
-| `ChainStatus` | `"undeployed" \| "ready" \| "needs-device-approval"` |
+| `ConnectStatus` | `"undeployed" \| "ready" \| "needs-device-approval"` (the type of `wallet.status`). |
 | `MessageSignature` | `{ signature, publicKey, curve, typedData? }` |
 | `SignedTransaction`, `StarknetSignedTransaction`, `StellarSignedTransaction`, `SolanaSignedTransaction` | Sign-without-submit results. |
 | `SignatureCurve` | `"stark" \| "ed25519"` (and `"secp256r1"`, no longer produced by Starknet) |
 | `CAVOS_MESSAGE_PREFIX`, `prefixedMessageBytes(message)` | Off-chain message prefix scheme. |
+
+`CavosSession` is shown in the type sketch above but is not exported by name. Use `Awaited<ReturnType<typeof Cavos.connect>>` for the session
+type and `ConnectStatus` for a status.
 
 ## React Native exports (`@cavos/kit/react-native`)
 
@@ -224,7 +229,7 @@ grandfathered wallets still use extra Horizon signers. See [Stellar](/docs/stell
 | `Cavos` | Native connect entry point. |
 | `NativeCavosAuth`, `NativeCavosAuthError` | Native auth adapters. |
 | `NativeDeviceUnwrapKey` | Secure Enclave/Keystore key that protects the MasterDEK at rest. |
-| `NativeControlSigner` | Native ed25519 control key, used on grandfathered Stellar. |
+| `NativeControlSigner` | Native ed25519 control key. |
 | `NativePasskeyPrf` | Native passkey PRF adapter. |
 | `getNativeCapabilities()` | Reports signing, passkey, and PRF support. |
 | `getCavosNativeModule()` | Underlying Expo native module. |
@@ -242,7 +247,7 @@ React bindings shipped under the `/react` subpath. See [React](/docs/react).
 | `validateCavosConfig(config)` | Config problems as `CavosConfigProblem[]`. |
 | `checkAppSaltDrift(config, storage?)` | Reports changed `appSalt`. |
 | `formatConfigProblems(problems)` | Render problems as console lines. |
-| `useCavos()` | Primary hook — full wallet surface including `setChain`, `session`, `configuredChains`. |
+| `useCavos()` | Primary hook: full wallet surface including `setChain`, `session`, `configuredChains`. |
 | `useCavosAuth()` | Thin subset for modal/auth only. |
 | `CavosAuthModal` | Customizable login modal. |
 | `CavosConfig`, `CavosModalConfig`, `CavosAuthModalProps`, `CavosProviderProps`, `CavosContextValue`, `UserInfo`, `WalletStatus` | Types. |
