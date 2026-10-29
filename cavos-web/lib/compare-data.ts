@@ -69,12 +69,12 @@ export const COMPETITORS: Competitor[] = [
     {
         slug: 'privy',
         name: 'Privy',
-        pageTitle: 'Cavos vs Privy (2026): Security, Pricing, Review',
-        pageH1: 'Cavos vs Privy: security, pricing, and chains',
+        pageTitle: 'Privy vs Cavos (2026): Pricing, Chains, Review',
+        pageH1: 'Privy vs Cavos: pricing, chains, and custody',
         pageDescription:
-            'Cavos vs Privy on security, pricing, and chains. A Privy wallet review, not the Shopify popup. Free up to 1,000 wallets on Starknet, Solana, and Stellar.',
+            'Privy vs Cavos: a Privy wallet alternative — not the Shopify popup. Pricing, chains, custody. Free up to 1,000 wallets on Starknet, Solana, and Stellar.',
         summary:
-            'Privy is a widely adopted embedded wallet and authentication provider focused primarily on EVM chains, offering both embedded wallets and external wallet connection.',
+            'Privy is a widely adopted embedded wallet and authentication provider focused primarily on EVM chains, offering both embedded wallets and external wallet connection. This page is the one-to-one Privy vs Cavos comparison; the broader Privy alternative shortlist lives on a separate page.',
         positioning:
             'Both products embed a wallet into your application and remove the extension requirement. The architectural difference is where signing authority lives and which chains are treated as native. Privy’s published security model reconstitutes a 2-of-2 Shamir split inside AWS Nitro Enclaves; Cavos never reconstructs a signing key because a non-exportable device key signs. Privy is the more mature choice across the EVM ecosystem; Cavos ships native adapters for Starknet, Solana, and Stellar.',
         chooseThem: [

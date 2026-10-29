@@ -178,7 +178,7 @@ Solana and Stellar are native adapters, not EVM compatibility. Solana provisions
 
 Recovery is passkey restore and opt-in hardware-isolated social recovery (an AWS Nitro Enclave that can only unwrap a MasterDEK, off by default). The docs call that path non-custodial, and not trustless. Enroll it before the phone is gone. Kit details — `CavosProvider`, `connect`, `execute`, chain switching — live in the [React guide](/blog/how-to-add-an-embedded-wallet) and in the [Cavos docs](https://docs.cavos.xyz/docs/quickstart). This article does not repeat the install.
 
-Cavos does not inject into `window.ethereum` and does not speak WalletConnect. If the requirement is “connect the wallet they already have,” stop here and use a connection-focused provider, alone or beside an embedded SDK.
+Cavos does not inject into `window.ethereum` and does not speak WalletConnect. If the requirement is “connect the wallet they already have,” stop here and use a connection-focused provider, alone or beside an embedded SDK. The connector-plus-embedded shortlist is on [Dynamic alternatives](/dynamic-alternatives); Magic’s replacement list is [Magic alternatives](/magic-alternatives).
 
 Use Cavos when the user should never see a wallet picker, the chain is Starknet, Solana, or Stellar, and the review requires that the vendor cannot reconstruct a signing key. Use an extension — or a vendor that connects one — when the user already has an address you must honor.
 

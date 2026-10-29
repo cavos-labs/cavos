@@ -73,14 +73,14 @@ export default async function ComparisonPage({
                     <p className="mt-7 max-w-2xl text-lg leading-relaxed text-muted">
                         {competitor.slug === 'privy' ? (
                             <>
-                                This comparison is about Privy the embedded crypto wallet, not
-                                the Shopify popup tool of the same name. For a multi-vendor
-                                shortlist, see{' '}
+                                This is Privy vs Cavos: a one-to-one look at Privy the
+                                embedded crypto wallet, not the Shopify popup of the same
+                                name. Teams searching for a Privy alternative should start at{' '}
                                 <Link href="/privy-alternatives" className={linkClass}>
                                     Privy alternatives
                                 </Link>
-                                . For finished auth and wallets versus signing
-                                infrastructure, see{' '}
+                                ; this page is the head-to-head. For finished auth and wallets
+                                versus signing infrastructure, see{' '}
                                 <Link href={PRIVY_VS_TURNKEY_PATH} className={linkClass}>
                                     Privy vs Turnkey
                                 </Link>
