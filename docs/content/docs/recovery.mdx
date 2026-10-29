@@ -53,8 +53,8 @@ a second authority during onboarding rather than when it is needed.
 
 ## What Cavos never does
 
-None of these paths gives Cavos a hot key that can move funds in production
-relaying. The enclave only wraps a MasterDEK.
+None of these paths gives Cavos a key that can move funds. The enclave only
+holds a sealed copy of the MasterDEK and never signs for the wallet.
 
 Hardware-isolated recovery is the only path that introduces a party beyond the
 user and the chain, and it is deliberately bounded: see

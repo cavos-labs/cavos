@@ -105,7 +105,7 @@ wrap = 0x01 || nonce || AES-256-GCM(KEK, DEK, aad = "appId:userId")
 
 A synced passkey that was added **is** a way into the wallet. Frame it as *"Add
 a passkey so you can open this wallet on any device"*, not as 2FA. Use the
-[enclave](/docs/hardware-isolated-recovery) if you want Google/Apple restore
+[enclave](/docs/hardware-isolated-recovery) if you want restore by signing in again
 without giving a synced credential that power.
 
 On Starknet, Solana, and Stellar there is no on-chain approver and no `enrollPasskey` on the
@@ -133,7 +133,7 @@ than changing the account model.
 
 ## Related
 
-- [Hardware-isolated recovery](/docs/hardware-isolated-recovery): Google/Apple
-  unwrap of the same MasterDEK, and it **can** cover several chains at once.
+- [Hardware-isolated recovery](/docs/hardware-isolated-recovery): sign-in
+  restore of the same MasterDEK, and it **can** cover several chains at once.
 - [Vault](/docs/vault): where passkeys and keys live on the web.
 - [Multi-device](/docs/multi-device): opening a wallet on a new device.

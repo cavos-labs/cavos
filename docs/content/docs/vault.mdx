@@ -151,10 +151,10 @@ because a wallet with no recovery factor would be lost with them.
 Keys are filed under your app's id. Another app on the same site cannot reach
 them, even with a looser policy.
 
-When a Solana or Stellar key from before the vault is left in your page's
-storage, it is deleted after a vault connect once it provably opens the same
-address. Starknet device keys created before the vault stay registered on the
-account contract and in your page's storage.
+When a key from before the vault is left in your page's storage (on Starknet,
+Solana, or Stellar), it is deleted after a vault connect once it provably opens
+the same address. A copy that opens any other address is kept, because it may
+be the only way into those funds.
 
 ## What it protects against
 

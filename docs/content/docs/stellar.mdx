@@ -232,7 +232,7 @@ itself.
 ## Sign messages
 
 Sign arbitrary messages off-chain with the control key. Works on both
-`undeployed` and `ready` wallets, because the control key is generated at connect time:
+`undeployed` and `ready` wallets, because the control key is derived from the MasterDEK at connect time:
 
 ```ts title="TypeScript"
 const sig = await wallet.signMessage("Hello, Cavos!");
