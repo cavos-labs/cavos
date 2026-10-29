@@ -2,6 +2,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
+import { blogOgImageUrl, blogOgVersion } from './blog-og-version'
 import {
   ABOUT_DESCRIPTION,
   ABOUT_PATH,
@@ -3548,6 +3549,18 @@ describe('blog quote social cards', () => {
     const tw = meta.twitter?.images as Array<{ url: string }>
     assert.equal(og[0].url, url)
     assert.equal(tw[0].url, url)
+  })
+
+  it('blog card image URLs carry a deterministic content version', () => {
+    const meta = { title: 'Example', ogQuote: 'A quote', excerpt: 'Excerpt' }
+    const url = blogOgImageUrl('https://cavos.xyz', 'example', meta)
+    assert.match(url, /^https:\/\/cavos\.xyz\/blog\/example\/opengraph-image\?v=[0-9a-f]{8}$/)
+    assert.equal(url, blogOgImageUrl('https://cavos.xyz', 'example', { ...meta }))
+    assert.notEqual(blogOgVersion(meta), blogOgVersion({ ...meta, ogQuote: 'Another quote' }))
+    assert.notEqual(blogOgVersion(meta), blogOgVersion({ ...meta, title: 'Other' }))
+    const page = fs.readFileSync(path.join(process.cwd(), 'app/blog/[slug]/page.tsx'), 'utf-8')
+    assert.match(page, /blogOgImageUrl\(/, 'blog post metadata must use the versioned card URL')
+    assert.doesNotMatch(page, /opengraph-image`/, 'blog post metadata must not use an unversioned card URL')
   })
 
   it('every blog post carries an ogQuote within house copy rules', () => {
