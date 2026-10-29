@@ -6,6 +6,7 @@ import { Footer } from '@/components/Footer';
 import { getAllPosts, getPostBySlug, formatDate, CATEGORY_COLORS, PostCategory } from '@/lib/blog';
 import { Metadata } from 'next';
 import { blogPostJsonLd, marketingPageMetadata } from '@/lib/marketing-seo';
+import { blogOgImageUrl } from '@/lib/blog-og-version';
 import { isBlogPostNoindex, MARKETING_ORIGIN } from '@/lib/marketing-sitemap';
 
 interface Props {
@@ -29,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     publishedTime: post.meta.date,
     modifiedTime: dateModified,
     image: {
-      url: `${MARKETING_ORIGIN}/blog/${slug}/opengraph-image`,
+      url: blogOgImageUrl(MARKETING_ORIGIN, slug, post.meta),
       width: 1200,
       height: 630,
       alt: post.meta.ogQuote ?? post.meta.title,
