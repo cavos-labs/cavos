@@ -129,7 +129,7 @@ a stark key on Starknet, Ed25519 on Solana and Stellar. The default policy is
 `minimumKeySecurity: "os-protected"`; use `"hardware"` to reject a software
 fallback.
 
-```ts
+```ts title="TypeScript"
 import {
   getNativeCapabilities,
   deleteDeviceKeys,
@@ -151,11 +151,11 @@ transaction signing.
 Use the same unified `Cavos.connect` model for Starknet, Solana, and Stellar.
 The chain-specific entrypoints are available when bundle size matters:
 
-```ts
+```ts title="TypeScript"
 import { Cavos } from "@cavos/kit/react-native";
 
 const wallet = await Cavos.connect({
-  chain: "solana",
+  chains: ["solana"],
   network: "testnet",
   appId,
   appSalt: "my-app",
@@ -164,8 +164,8 @@ const wallet = await Cavos.connect({
 ```
 
 Every chain uses `NativePasskeyPrf` / `approveDeviceWithPasskey()` so the PRF
-can open the passkey's encrypted copy of the MasterDEK. If Android does not return PRF, use
-the enclave.
+can open the passkey's encrypted copy of the MasterDEK. If an Android device
+does not return PRF, the passkey cannot open that copy there.
 
 ## Logout, reinstall, and recovery
 

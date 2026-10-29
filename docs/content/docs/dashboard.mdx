@@ -35,7 +35,7 @@ Each app then has its own tabs:
 
 <Callout type="info">
 `appSalt` is **not** a dashboard value: it lives in your code. It names the
-local device-key slot and, on Solana and Stellar, salts the spend-key HKDF.
+local device-key slot and salts the account-key HKDF on every chain.
 The registry (keyed by user, app, chain, and network) records the address.
 Changing `appSalt` after users exist is a breaking change. See
 [Troubleshooting](/docs/troubleshooting#users-suddenly-have-new-empty-wallets).

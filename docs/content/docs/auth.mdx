@@ -78,7 +78,7 @@ const auth = new CavosAuth({
 });
 ```
 
-### OAuth (Google / Apple)
+### Google and Apple
 
 OAuth is multi-step (redirect out, handle the callback), so resolve the identity
 first, then call `connect` with it.
@@ -161,7 +161,8 @@ Leave the secret blank on later saves to keep the stored value.
 Identity is derived **per OAuth client ID**. `sub` is
 `hex(SHA-256("cavos-github-subject-v1:" + client_id + ":" + github_id))`
 because GitHub reports the same numeric id to every app. Switching an
-environment's GitHub app, in either direction, gives every GitHub user a **new identity and a new, empty wallet**. Tying
+environment's GitHub app, in either direction, gives every GitHub user a
+**new identity and a new, empty wallet**. Tying
 `sub` to the app the code was actually redeemed with is also what stops a
 code from one app becoming a login for another.
 
@@ -218,7 +219,7 @@ its own signed token (issuer `https://enclave.cavos.xyz`, keys at
 `https://enclave.cavos.xyz/.well-known/jwks.json`), bound to a login secret the
 SDK keeps, the same binding Google and Apple tokens have. Email users therefore
 get [hardware-isolated recovery](/docs/hardware-isolated-recovery) like Google,
-Apple, and GitHub users. The user id of an email login is derived from the address.
+Apple, and GitHub users. The user ID of an email login is derived from the address.
 
 - **Lifetime.** A code expires after 5 minutes and allows 3 attempts. A new code
   for the same address can be requested after 60 seconds.
@@ -243,8 +244,8 @@ React Native apps use `NativeCavosAuth` from `@cavos/kit/react-native`. It opens
 Google or Apple in the system browser and returns through the registered
 `redirectUri`. Email and GitHub sign-in are not available on React Native yet.
 
-```ts
-import { NativeCavosAuth } from "@cavos/kit/react-native";
+```ts title="TypeScript"
+import { Cavos, NativeCavosAuth } from "@cavos/kit/react-native";
 
 const auth = new NativeCavosAuth({
   appId,
@@ -271,8 +272,8 @@ dashboard; unregistered redirects are rejected by the backend.
 
 When you call `connect`, the kit looks up the address in the Cavos registry:
 
-```
-(userId, appId, chain) → registry lookup → address
+```text
+(userId, appId, chain, network) → registry lookup → address
 ```
 
 If the registry has an entry, that address is returned. If not, this device
@@ -281,7 +282,7 @@ first device to register wins. A second device connecting later sees the
 existing address and enters `needs-device-approval` instead of creating a
 duplicate wallet.
 
-The `appSalt` parameter names the local device-key slot. On **native Solana
-and Stellar** it is also the HKDF salt for the spend key, so changing it
-derives a different address that will not match the registry row. Never change
+The `appSalt` parameter names the local device-key slot and is the HKDF salt
+for the account key on every chain, so changing it derives a different address
+that will not match the registry row. Never change
 it. The registry key remains `(userId, appId, chain, network)`.

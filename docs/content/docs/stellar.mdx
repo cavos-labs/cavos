@@ -31,7 +31,7 @@ const session = await Cavos.connect({
   chains: ["stellar"],
   defaultChain: "stellar",
   network: "testnet",                   // "testnet" | "mainnet"
-  appSalt: "my-app",                    // HKDF salt on the native path — never change it
+  appSalt: "my-app",                    // HKDF salt, never change it
   identity: {                           // from your login (see Authentication)
     userId: user.id,
     email: user.email,

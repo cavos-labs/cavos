@@ -34,7 +34,7 @@ honouring an unregistered URI would hand that code to whoever asked.
 Add the exact URL in **Dashboard → App → Callback URLs**: scheme, host and path
 must match, with no trailing slash and no wildcards. Tunnel and preview domains
 each count as a separate origin, and a fresh tunnel URL means a fresh
-registration. See [Authentication](/docs/auth#oauth-google--apple).
+registration. See [Authentication](/docs/auth#google-and-apple).
 
 ## `paymasterApiKey` is required for Starknet connections
 
@@ -61,7 +61,7 @@ The first execution deploys the account atomically, then runs the operation.
 
 ## Nothing happens when social recovery should run
 
-Three causes, in the order worth checking:
+Four causes, in the order worth checking:
 
 1. **Not enabled for the environment.** `socialRecovery: true` is the client
    half; the environment must also have it enabled in the dashboard. It is off
@@ -72,8 +72,8 @@ Three causes, in the order worth checking:
    feature cannot start. Flagged as `[social-recovery-without-app-id]`.
 3. **Your own auth, with no provider token supplied.** If you authenticate users
    yourself, enrolment and recovery do not happen automatically: the SDK never
-   sees a provider token. Call `submitSocialRecoveryToken(idToken)` yourself (not
-   accepted for Google and Apple tokens in 0.2.6). See
+   sees a provider token. Call `submitSocialRecoveryToken(idToken)` yourself (since 0.2.6 it is not
+   accepted for Google and Apple tokens). See
    [With your own auth](/docs/hardware-isolated-recovery#with-your-own-auth).
 4. **The creating device never sealed.** Mac logged in from IndexedDB; the phone
    got `not_enrolled`. Reconnect once on the device that has the wrap; enroll
@@ -114,7 +114,7 @@ Wallet state is not available during server rendering by design: the device key
 lives in the browser. Gate on `isLoading` for the first paint rather than
 expecting an address to be present immediately.
 
-## "This sign-in did not start here" or "does not match this sign-in"
+## `this sign-in did not start here` or `does not match this sign-in`
 
 From 0.2.6 a Google or Apple login is tied to a one-time secret the SDK creates
 when it builds the sign-in URL, kept in `sessionStorage` on web and in memory on
@@ -128,14 +128,6 @@ React Native. The callback has to land where that secret is:
 - **A stale URL:** each sign-in URL is single-use. Call `getGoogleOAuthUrl()` /
   `getAppleOAuthUrl()` / `getGitHubOAuthUrl()` right before redirecting rather
   than caching the result.
-
-## "This wallet has not been used on the device that created it yet"
-
-Starknet only. The account is created by the first transaction from the device
-that owns its address, and enclave recovery authorizes a new device against that
-account. A second device that signs in before the first one has transacted has
-nothing on-chain to be added to. Make one transaction on the original device,
-then sign in again on the new one.
 
 ## Google or Apple login stopped working after a backend update
 
@@ -227,21 +219,6 @@ can be requested after 60 seconds.
 On React Native, `sendOtp` and `verifyOtp` throw an `unsupported` error; use
 Google or Apple there. See [Authentication](/docs/auth#email-code).
 
-## Still stuck
-
-Run the config checks and read what they say: they cover the mistakes above
-that are visible from configuration alone:
-
-```ts title="TypeScript"
-import { validateCavosConfig, formatConfigProblems } from "@cavos/kit/react";
-
-console.log(formatConfigProblems(validateCavosConfig(config)));
-```
-
-`<CavosProvider>` already runs these in development. Calling them yourself is
-useful in a setup screen or in CI, where a misconfigured environment is cheaper
-to catch than in a user's first login.
-
 ## The Cavos vault
 
 **`kit/vault: add <origin> to this app's allowed web origins in the Cavos dashboard`.**
@@ -262,7 +239,21 @@ counts only what was signed without asking, per user, and resets at 00:00 UTC.
 
 **A returning user lands on `needs-device-approval` after upgrading to 0.2.0.**
 Keys created before the vault lived in your page's storage, which the vault
-cannot read. Solana and Stellar wallets restore through the enclave or the
-passkey, as on a new device; Starknet adds this browser as a new device. See
+cannot read. Every chain restores through the enclave or the passkey, as on a new
+device. See
 [Cavos vault](/docs/vault#logout-and-storage).
 
+## Still stuck
+
+Run the config checks and read what they say: they cover the mistakes above
+that are visible from configuration alone:
+
+```ts title="TypeScript"
+import { validateCavosConfig, formatConfigProblems } from "@cavos/kit/react";
+
+console.log(formatConfigProblems(validateCavosConfig(config)));
+```
+
+`<CavosProvider>` already runs these in development. Calling them yourself is
+useful in a setup screen or in CI, where a misconfigured environment is cheaper
+to catch than in a user's first login.

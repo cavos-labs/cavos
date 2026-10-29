@@ -14,11 +14,9 @@ isolated environment whose exact software is measured by hardware and attested
 by AWS, holding a sealed copy of the wallet's MasterDEK that it releases only to the enrolled identity.
 
 <Callout type="info">
-**Availability.** Hardware-isolated recovery is **opt-in per environment**, not
-on by default. The SDK path ships in `@cavos/kit`, but the enclave it talks to
-has to be enabled for your app and environment in the
-[dashboard](/docs/dashboard) before `socialRecovery: true` or
-`deviceApproval: "enclave"` resolves: ask us to turn it on. Every other
+**Availability.** Hardware-isolated recovery is **opt-in per environment** and
+off by default. Turn it on in **Dashboard → App → Environments** before
+`socialRecovery: true` or `deviceApproval: "enclave"` can resolve. Every other
 recovery path in [Recovery](/docs/recovery) works without it.
 </Callout>
 
@@ -83,7 +81,7 @@ sign-in the enclave accepts for the enrolled identity.
 
 ## What the enclave verifies
 
-Inside, before it will sign anything, Cavos checks the provider signature,
+Inside, before it signs anything, the enclave checks the provider signature,
 issuer, audience, token fingerprint, configured provider, and the enrolled
 subject: the recovery only proceeds for the identity that enrolled.
 
@@ -140,8 +138,8 @@ release the key to it. A
 Cavos employee asked to hand over a user's key has nothing to hand over.
 
 **The enclave is not a spender.** It holds a wrap of the MasterDEK, not a hot
-signing key. Compromise of the wrap would still mean restore of the account key
-that is why attestation pins and the 5-minute token window exist. Compare that
+signing key. Compromise of the wrap would still mean restore of the account key,
+which is why attestation pins and the 5-minute token window exist. Compare that
 with a custodial provider, where the operator's key *is* the spending key.
 
 **Nothing is added on-chain.** Enroll is a wrap, not an extra on-chain authority.
@@ -172,12 +170,9 @@ formality:
   runs the sign-in flow: Cavos, when you use Cavos-hosted Google, Apple,
   GitHub, or email login.
 
-The honest summary: recovery is as strong as the measured enclave image and the
+In short, recovery is as strong as the measured enclave image and the
 sign-in behind it. Nobody, Cavos included, can take a sealed key out of the
 enclave or use one without a sign-in the enclave accepts.
-
-Classic Stellar **is** on this path, like Starknet and Solana, when `deviceApproval` is `"enclave"`: the
-`G…` is HKDF of the sealed DEK.
 
 Keep a second factor regardless. Encourage a passkey or a second device, and
 treat social recovery as one path among several rather than the only one.

@@ -45,7 +45,7 @@ apart:
 works in development is accepted in production too, because OAuth validates the
 redirect against the app's list before an environment is in play. Remove
 throwaway tunnel and preview domains once you are done with them. See
-[Authentication](/docs/auth#oauth-google--apple).
+[Authentication](/docs/auth#google-and-apple).
 </Callout>
 
 ## Select it from the SDK
@@ -97,9 +97,9 @@ If you want a user's **development** wallet to be a different address than their
 app (distinct `appId`). One `appId` shared across development and production
 shares the registry address.
 
-A distinct `appSalt` isolates the local device-key slot. On **native Solana
-and Stellar** it is also the HKDF salt, so changing it after users have
-connected derives a spend key that will not match the registry address.
+A distinct `appSalt` isolates the local device-key slot. It is also the HKDF
+salt for the account key on every chain, so changing it after users have
+connected derives a key that will not match the registry address.
 
 <Callout type="warn">
 Treat `appSalt` as permanent. Decide your salt before onboarding real users.

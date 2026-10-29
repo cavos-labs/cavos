@@ -90,7 +90,7 @@ The wallet's key comes from a random 32-byte MasterDEK. Adding a passkey stores
 a copy of it encrypted under a key only the passkey can produce, its WebAuthn
 **PRF** output:
 
-```
+```text
 KEK  = HKDF-SHA256(passkey PRF, "cavos-passkey-dek-wrap-v1")
 wrap = 0x01 || nonce || AES-256-GCM(KEK, DEK, aad = "appId:userId")
 ```

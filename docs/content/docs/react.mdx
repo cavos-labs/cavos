@@ -193,7 +193,7 @@ the args differ per chain. See [Wallet actions](/docs/wallet-actions).
 | `approveDeviceWithPasskey()` | New device with no wrap, when the user dismissed the prompt: opens the passkey's encrypted copy of the MasterDEK (every chain). |
 | `setupRecovery()` | **Deprecated.** Current wallets do not use recovery codes. Throws on Starknet and Solana; registers nothing on Stellar. |
 | `recover(code)` | **Deprecated.** Current wallets do not use recovery codes. Restore with enclave login or `approveDeviceWithPasskey()`. |
-| `submitSocialRecoveryToken(idToken)` | Drive enclave enroll/unwrap with the provider's raw `id_token`. Starknet, Solana, and Stellar. Not accepted for Google and Apple tokens in 0.2.6. See [Hardware-isolated recovery](/docs/hardware-isolated-recovery#with-your-own-auth). |
+| `submitSocialRecoveryToken(idToken)` | Drive enclave enroll/unwrap with the provider's raw `id_token`. Starknet, Solana, and Stellar. Since 0.2.6, not accepted for Google and Apple tokens. See [Hardware-isolated recovery](/docs/hardware-isolated-recovery#with-your-own-auth). |
 
 When hardware-isolated social recovery is enabled, `<CavosProvider>` enrolls
 after a fresh login (reseals the MasterDEK if this device already has it) and
