@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 import GithubSlugger from 'github-slugger'
+import yaml from 'js-yaml'
 
 const DIR = path.join(process.cwd(), 'content/docs')
 const pages = fs.readdirSync(DIR).filter((f) => f.endsWith('.mdx'))
@@ -56,8 +57,9 @@ describe('docs internal links', () => {
     const descs = new Map<string, string>()
     for (const f of pages) {
       const fm = /^---\n([\s\S]*?)\n---/.exec(fs.readFileSync(path.join(DIR, f), 'utf8'))?.[1] ?? ''
-      const t = /^title:\s*(.+)$/m.exec(fm)?.[1]
-      const d = /^description:\s*(.+)$/m.exec(fm)?.[1]
+      const data = yaml.load(fm) as { title?: string; description?: string }
+      const t = data?.title
+      const d = data?.description
       assert.ok(t && d, `${f} needs title and description`)
       assert.ok(!titles.has(t!), `duplicate title ${t} in ${f} and ${titles.get(t!)}`)
       assert.ok(!descs.has(d!), `duplicate description in ${f}`)
