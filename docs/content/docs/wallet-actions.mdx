@@ -84,18 +84,20 @@ await fetch(`https://friendbot.stellar.org?addr=${encodeURIComponent(address)}`)
 
 ### Solana: SOL transfer
 
-`CavosSolana.execute(amount, destination)` transfers SOL, sponsored by the
-relayer when `appId` is set. `amount` is in **lamports** (bigint).
+`CavosSolana.execute(amount, destination, opts?)` transfers SOL. `amount` is in
+**lamports** (bigint). The account pays its own fee by default; pass
+`{ fee: "sponsored" }` to have the Cavos relayer pay it (needs `appId`).
 
 ```ts title="TypeScript"
 if (wallet?.chain === "solana") {
-  const txHash = await wallet.execute(1_000_000_000n, destinationAddress); // 1 SOL
+  const txHash = await wallet.execute(1_000_000_000n, destinationAddress, { fee: "sponsored" }); // 1 SOL
 }
 ```
 
 ### Stellar: XLM transfer
 
-Same signature, `amount` in **stroops** (bigint).
+Same signature, `amount` in **stroops** (bigint). On Stellar the relayer
+sponsors by default.
 
 ```ts title="TypeScript"
 if (wallet?.chain === "stellar") {
@@ -148,7 +150,7 @@ if (passkeySupported && !walletStatus.hasPasskey) {
 
 When a user signs in on a fresh device, `walletStatus.needsDeviceApproval` is
 true because this device holds no key yet. Restore the MasterDEK with a synced
-passkey or the enclave. There is no on-chain device approval on Starknet.
+passkey or the enclave. Nothing is approved on-chain, on any chain.
 
 ```ts title="TypeScript"
 const { walletStatus, approveDeviceWithPasskey } = useCavos();
