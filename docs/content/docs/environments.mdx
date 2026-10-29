@@ -28,11 +28,11 @@ apart:
   Stellar** wallets in that environment. Google, Apple, email, and GitHub
   are all accepted; each wallet recovers through the provider its owner signed
   in with. Register your own Google or Apple OAuth client ID if you authenticate
-  users yourself. GitHub needs no OAuth client ID here; its OAuth app is set in
-  the **GitHub OAuth app** field below. All independent per environment, so you can rehearse recovery in development
+  users yourself. GitHub needs no OAuth client ID here; its OAuth app is set
+  under **GitHub sign-in** (next item). All settings are independent per environment, so you can rehearse recovery in development
   without touching production. The email provider's "Firebase project ID" field
   no longer affects email sign-in codes, which the enclave issues itself.
-- **GitHub OAuth app**: leave empty to use Cavos's GitHub app, or save your own
+- **GitHub sign-in**: leave empty to use Cavos's GitHub app, or save your own
   OAuth app's client ID and client secret so GitHub's consent screen shows your
   app. Switching apps gives every GitHub user in that environment a new
   identity and a new, empty wallet. See
