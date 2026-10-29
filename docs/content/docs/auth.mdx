@@ -111,10 +111,12 @@ tab and origin that started the login.
 
 ### GitHub
 
-GitHub is opt-in and web-only. The default modal providers stay Google, Apple,
-and email; add `'github'` to show the button, or call `login('github')` /
-`auth.getGitHubOAuthUrl()`. React Native does not offer GitHub: like email, the
-flow has to verify the enclave's attestation, which that build cannot do.
+GitHub sign-in is live and tested in production. It is an **optional** web
+provider, not recommended over Google, Apple, or email. The default modal
+providers stay those three; add `'github'` to show the button, or call
+`login('github')` / `auth.getGitHubOAuthUrl()`. React Native does not offer
+GitHub: like email, the flow has to verify the enclave's attestation, which
+that build cannot do.
 
 ```ts title="TypeScript"
 const url = await auth.getGitHubOAuthUrl(/* redirectUri? */);
@@ -143,14 +145,23 @@ token:
 JWKS: `https://enclave.cavos.xyz/.well-known/jwks.json`. No GitHub scopes are
 requested.
 
-Register a **per-environment GitHub OAuth app** in **Dashboard → App →
-Environments** if you do not want the Cavos app. The authorization callback URL
-is shown there (`/api/oauth/github/callback`). Leave the fields empty to use
-Cavos's app. Switching an environment's GitHub app gives every GitHub user a
-**new identity and a new, empty wallet**, because `sub` is bound to `client_id`.
-GitHub reports the same numeric id to every OAuth app; tying `sub` to the app
-the code was actually redeemed with is what stops a code from one app becoming
-a login for another.
+#### Bring your own GitHub OAuth app
+
+Leave **Dashboard → App → Environments → GitHub sign-in** empty to use Cavos's
+GitHub app. To put your own name and logo on GitHub's consent screen, create a
+GitHub OAuth app and save its **client id** and **client secret** on that
+environment. Copy the authorization callback URL from the dashboard
+(`/api/oauth/github/callback`) into the OAuth app. Both fields are required
+together; the secret is encrypted at rest (AES-256-GCM) and **never returned**.
+Leave the secret blank on later saves to keep the stored value.
+
+Identity is derived **per OAuth client id**. `sub` is
+`hex(SHA-256("cavos-github-subject-v1:" + client_id + ":" + github_id))`
+because GitHub reports the same numeric id to every app. Switching an
+environment's GitHub app — Cavos's app to yours, yours to another, or back —
+gives every GitHub user a **new identity and a new, empty wallet**. Tying
+`sub` to the app the code was actually redeemed with is also what stops a
+code from one app becoming a login for another.
 
 The built-in modal only shows GitHub when `providers` includes `'github'`:
 

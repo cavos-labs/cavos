@@ -164,7 +164,9 @@ formality:
   your installed policy includes `release` and the new image was signed by
   that policy's workflow on a `vN` tag. You are then trusting that GitHub
   Actions workflow, on that repository, on a GitHub-hosted runner — not
-  `cavos.xyz`.
+  `cavos.xyz`. On `cavos-labs/cavos-recovery`, `vN` tags are tag-protected
+  and the `Release` workflow runs in the `release` environment with required
+  reviewers.
 - **The sign-in.** Recovery follows whoever completes a fresh sign-in as the
   enrolled identity. That means the identity provider, and the service that
   runs the sign-in flow — Cavos, when you use Cavos-hosted Google, Apple,
@@ -185,8 +187,10 @@ treat social recovery as one path among several rather than the only one.
 
 Enable it in **Dashboard → App → Environments**. Google, Apple, email, and
 GitHub are all accepted; each wallet recovers through the provider its owner
-signed in with. GitHub is opt-in on the client — add `'github'` to
-`modal.providers` or call `login('github')`. It is not available in React Native.
+signed in with. GitHub is an optional client provider — add `'github'` to
+`modal.providers` or call `login('github')` — and is not recommended over
+Google, Apple, or email. It is not available in React Native. GitHub sign-in
+is live and tested in production.
 
 ```tsx title="app/provider.tsx"
 <CavosProvider
@@ -255,11 +259,14 @@ The default `release` policy shipped in 0.5.0:
 A release is trusted when GitHub Actions, on a GitHub-hosted runner, signed it
 for that repository and owner, using that workflow, on a `refs/tags/vN` push
 (`N` a positive integer that matches the statement's `version`). The signature
-is public in Rekor. The currently deployed image is accepted through the PCR0
-list; the signed-release path is how later deploys can ship without a kit
-release. Do not treat that path as production-proven on its own. The browser
-library that checks the bundle (`@freedomofpress/sigstore-browser` 0.1.15) has
-not received an independent security audit.
+is public in Rekor. On `cavos-labs/cavos-recovery`, `vN` tags are tag-protected
+and the `Release` workflow runs in the `release` environment with required
+reviewers, so a tag push or a workflow file is not enough on its own. The
+currently deployed image is accepted through the PCR0 list; the signed-release
+path is how later deploys can ship without a kit release. That path has not
+been the production accept path. The browser library that checks the bundle
+(`@freedomofpress/sigstore-browser` 0.1.15) has not received an independent
+security audit.
 
 The AWS signature on the attestation document still anchors authenticity
 outside Cavos. The policy only fixes *which workload* you are willing to talk
@@ -321,7 +328,10 @@ somewhere underneath. **Your users never sign in twice:** you pass the provider
 token your login already obtained. Works on Starknet, Solana, and Stellar.
 GitHub is not on this path: the enclave redeems the GitHub authorization code
 itself and issues its own token, so recovery for a GitHub user requires the
-Cavos-hosted GitHub flow.
+Cavos-hosted GitHub flow (`getGitHubOAuthUrl` / `login('github')`), not a
+token from Clerk or Auth0. You can still bring your own **GitHub OAuth app**
+per environment so the consent screen shows your app: see
+[Authentication → GitHub](/docs/auth#github).
 
 <Callout type="warn">
 **Not available for Google and Apple in 0.2.6.** The enclave now requires the

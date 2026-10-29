@@ -166,9 +166,11 @@ hosted `/api/oauth/github/verify` maps that (and other non-rejected enclave
 failures) to `enclave_unavailable`. Retry; if it persists, the enclave's
 outbound path to `github.com` / `api.github.com` is down.
 
-GitHub is not available in React Native. Switching the environment's GitHub
-OAuth app gives every GitHub user a new identity and a new, empty wallet —
-that looks like "users suddenly have new, empty wallets" and is expected.
+GitHub is optional and not recommended over Google, Apple, or email. It is not
+available in React Native. Bring-your-own GitHub OAuth app is per environment
+(client id and secret; secret encrypted, never returned). Switching that app
+gives every GitHub user a new identity and a new, empty wallet — that looks
+like "users suddenly have new, empty wallets" and is expected.
 
 ## `connect-src` blocks enclave release lookup
 

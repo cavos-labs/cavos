@@ -35,10 +35,13 @@ apart:
   All independent per environment, so you can rehearse recovery in development
   without touching production. The email provider's "Firebase project ID" field
   no longer affects email sign-in codes, which the enclave issues itself.
-- **GitHub OAuth app** — each environment can use Cavos's GitHub app or its
-  own. The client id and secret live on the environment; the secret is never
-  returned. Switching apps gives every GitHub user in that environment a new
-  identity and a new, empty wallet. See
+- **GitHub OAuth app** — GitHub is an optional login provider, not recommended
+  over Google, Apple, or email. Each environment can use Cavos's GitHub app or
+  one you register. Save the OAuth app's client id and client secret on the
+  environment so GitHub's consent screen shows your app; the secret is
+  encrypted at rest and never returned. Switching apps gives every GitHub user
+  in that environment a new identity and a new, empty wallet, because identity
+  is derived per OAuth client id. See
   [Authentication → GitHub](/docs/auth#github).
 
 <Callout type="info">

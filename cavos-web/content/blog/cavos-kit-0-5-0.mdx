@@ -6,7 +6,7 @@ category: "Release"
 slug: "cavos-kit-0-5-0"
 ---
 
-`@cavos/kit` **0.5.0** is on npm. It is a release for anyone integrating the Cavos [embedded wallet](/embedded-wallet) SDK: GitHub as a hosted login, and a second way to accept the recovery enclave so a redeploy of that enclave does not require another kit release.
+`@cavos/kit` **0.5.0** is on npm. It is a release for anyone integrating the Cavos [embedded wallet](/embedded-wallet) SDK: GitHub as an optional hosted login — live and tested in production — and a second way to accept the recovery enclave so a redeploy of that enclave does not require another kit release. GitHub is not recommended over Google, Apple, or email.
 
 Upgrade:
 
@@ -32,9 +32,9 @@ Until 0.5.0 the SDK accepted an enclave only when the live Nitro attestation's P
 
 `cavos.xyz` only relays the bytes. GitHub release assets have no CORS headers, so the browser cannot fetch them directly; the route is transport, not trust. A compromised API can withhold a bundle. It cannot make 0.5.0 accept one.
 
-A release is trusted if that workflow signed it on a `vN` tag. The signature is public in Rekor. Cut a release by pushing a `vN` tag on [cavos-recovery](https://github.com/cavos-labs/cavos-recovery); the workflow publishes `enclave.eif`, `measurements.json`, and `enclave-<pcr0>.sigstore.json`. [Release v1](https://github.com/cavos-labs/cavos-recovery/releases/tag/v1) is the first of those. Verify measurements from that `measurements.json` — do not copy hashes out of older docs.
+A release is trusted if that workflow signed it on a `vN` tag. The signature is public in Rekor. On [cavos-recovery](https://github.com/cavos-labs/cavos-recovery), `vN` tags are tag-protected and the `Release` workflow runs in the `release` environment with required reviewers, so a tag or a workflow run is not enough on its own. Cut a release by pushing a `vN` tag on `main`; the workflow publishes `enclave.eif`, `measurements.json`, and `enclave-<pcr0>.sigstore.json`. [Release v1](https://github.com/cavos-labs/cavos-recovery/releases/tag/v1) is the first of those. Verify measurements from that `measurements.json` — do not copy hashes out of older docs.
 
-The currently deployed image is still on the PCR0 list, so today's production accept path is the pin. The signed-release path is how a later deploy can ship without a kit bump. Do not read this as "we have been accepting production enclaves via Sigstore for a while." `@freedomofpress/sigstore-browser` is pinned at 0.1.15; it has not received an independent security audit.
+The currently deployed image is still on the PCR0 list, so today's production accept path is the pin. The signed-release path is how a later deploy can ship without a kit bump. That path has not been the production accept path. `@freedomofpress/sigstore-browser` is pinned at 0.1.15; it has not received an independent security audit.
 
 Default `release` policy in `DEFAULT_SOCIAL_RECOVERY_ATTESTATION`:
 
@@ -56,7 +56,7 @@ A strict `connect-src` must allow `{backendUrl}/api/enclave/releases/*` (hosted 
 
 ## GitHub sign-in
 
-Opt-in on web. Default modal providers are still Google, Apple, and email.
+GitHub sign-in is live and tested in production. It is an **optional** provider, not recommended over Google, Apple, or email. Default modal providers are still those three; add `'github'` only if you want it.
 
 ```tsx
 modal={{ providers: ["google", "apple", "email", "github"] }}
@@ -71,7 +71,11 @@ modal={{ providers: ["google", "apple", "email", "github"] }}
 
 JWKS: `https://enclave.cavos.xyz/.well-known/jwks.json`. No GitHub scopes.
 
-Identity is **per OAuth app**. GitHub reports the same numeric id to every app; binding `sub` to `client_id` is what stops a code minted for one app from becoming a login on another. Each environment can use Cavos's GitHub app or its own (**Dashboard → App → Environments**). Switching that app gives every GitHub user a new identity and a new, empty wallet.
+### Bring your own GitHub OAuth app
+
+Leave **Dashboard → App → Environments → GitHub sign-in** empty to use Cavos's GitHub app. To show your own name and logo on GitHub's consent screen, register a GitHub OAuth app and save its client id and client secret on that environment. Paste GitHub's authorization callback URL from the dashboard (`/api/oauth/github/callback`) into the OAuth app. The secret is encrypted at rest and never returned; leave the secret field empty on later saves to keep the stored value.
+
+Identity is **per OAuth client id**. `sub` hashes `client_id` with the GitHub user id, because GitHub reports the same numeric id to every app. Switching an environment's GitHub app — including from Cavos's app to yours, or the other way — gives every GitHub user a **new identity and a new, empty wallet**.
 
 Not in React Native. Same constraint as email: the native build cannot verify the enclave attestation this flow needs.
 
