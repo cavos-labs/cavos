@@ -1,11 +1,15 @@
 import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
-import { COMPETITORS } from './compare-data'
+import { COMPARE_PAGES_MODIFIED, COMPETITORS } from './compare-data'
 import { DYNAMIC_ALTERNATIVES_MODIFIED } from './dynamic-alternatives'
+import { EMBEDDED_WALLET_MODIFIED } from './embedded-wallet-guide'
 import { MAGIC_ALTERNATIVES_MODIFIED } from './magic-alternatives'
 import { PRIVY_ALTERNATIVES_MODIFIED } from './privy-alternatives'
 import { TURNKEY_ALTERNATIVES_MODIFIED } from './turnkey-alternatives'
+
+/** Sitemap lastmod for /pricing when published fees or FAQ copy change. */
+export const PRICING_SITEMAP_MODIFIED = '2026-10-30'
 
 export const MARKETING_ORIGIN = 'https://cavos.xyz'
 
@@ -148,7 +152,12 @@ export function getMarketingSitemapEntries(): SitemapEntry[] {
   try {
     const staticPages: SitemapEntry[] = [
       page('/', 'weekly', 1),
-      page('/embedded-wallet', 'monthly', 0.9),
+      page(
+        '/embedded-wallet',
+        'monthly',
+        0.9,
+        parseStableDate(EMBEDDED_WALLET_MODIFIED),
+      ),
       page('/embedded-stellar-wallet', 'monthly', 0.9),
       page('/embedded-solana-wallet', 'monthly', 0.9),
       page('/embedded-starknet-wallet', 'monthly', 0.9),
@@ -178,7 +187,12 @@ export function getMarketingSitemapEntries(): SitemapEntry[] {
         parseStableDate(MAGIC_ALTERNATIVES_MODIFIED),
       ),
       page('/custody', 'monthly', 0.8),
-      page('/pricing', 'monthly', 0.9),
+      page(
+        '/pricing',
+        'monthly',
+        0.9,
+        parseStableDate(PRICING_SITEMAP_MODIFIED),
+      ),
       page('/stats', 'weekly', 0.9),
       page('/contact-sales', 'monthly', 0.7),
       page('/about', 'monthly', 0.8),
@@ -191,7 +205,12 @@ export function getMarketingSitemapEntries(): SitemapEntry[] {
     ]
 
     const comparePages = COMPETITORS.map((competitor) =>
-      page(`/compare/${competitor.slug}`, 'monthly', 0.8),
+      page(
+        `/compare/${competitor.slug}`,
+        'monthly',
+        0.8,
+        parseStableDate(COMPARE_PAGES_MODIFIED),
+      ),
     )
 
     const blogPages = publishedBlogPosts()

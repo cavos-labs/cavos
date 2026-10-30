@@ -2,14 +2,16 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
-import { COMPETITORS } from './compare-data'
+import { COMPARE_PAGES_MODIFIED, COMPETITORS } from './compare-data'
 import { DYNAMIC_ALTERNATIVES_MODIFIED } from './dynamic-alternatives'
+import { EMBEDDED_WALLET_MODIFIED } from './embedded-wallet-guide'
 import { MAGIC_ALTERNATIVES_MODIFIED } from './magic-alternatives'
 import { PRIVY_ALTERNATIVES_MODIFIED } from './privy-alternatives'
 import { TURNKEY_ALTERNATIVES_MODIFIED } from './turnkey-alternatives'
 import {
   MARKETING_HOME_URL,
   MARKETING_ORIGIN,
+  PRICING_SITEMAP_MODIFIED,
   getMarketingSitemapEntries,
   gitLastModifiedForFile,
   isBlogPostNoindex,
@@ -159,6 +161,41 @@ describe('marketing sitemap', () => {
     assert.equal(sitemapPageFile('/compare/privy'), 'app/compare/[slug]/page.tsx')
   })
 
+  it('lists /embedded-wallet and /pricing with the content dateModified', () => {
+    const wallet = entries.find(
+      (item) => item.url === `${MARKETING_ORIGIN}/embedded-wallet`,
+    )
+    assert.ok(wallet)
+    assert.ok(wallet.lastModified instanceof Date)
+    assert.equal(
+      wallet.lastModified.toISOString().slice(0, 10),
+      EMBEDDED_WALLET_MODIFIED,
+    )
+    const pricing = entries.find(
+      (item) => item.url === `${MARKETING_ORIGIN}/pricing`,
+    )
+    assert.ok(pricing)
+    assert.ok(pricing.lastModified instanceof Date)
+    assert.equal(
+      pricing.lastModified.toISOString().slice(0, 10),
+      PRICING_SITEMAP_MODIFIED,
+    )
+  })
+
+  it('lists compare pages with the content dateModified', () => {
+    for (const competitor of COMPETITORS) {
+      const entry = entries.find(
+        (item) => item.url === `${MARKETING_ORIGIN}/compare/${competitor.slug}`,
+      )
+      assert.ok(entry, `sitemap missing /compare/${competitor.slug}`)
+      assert.ok(entry.lastModified instanceof Date)
+      assert.equal(
+        entry.lastModified.toISOString().slice(0, 10),
+        COMPARE_PAGES_MODIFIED,
+      )
+    }
+  })
+
   it('lists /privy-alternatives with the content dateModified', () => {
     const entry = entries.find(
       (item) => item.url === `${MARKETING_ORIGIN}/privy-alternatives`,
@@ -281,8 +318,8 @@ Hello
     )
     assert.ok(providers)
     assert.ok(privy)
-    assert.equal(providers.lastModified.toISOString().startsWith('2026-10-29'), true)
-    assert.equal(privy.lastModified.toISOString().startsWith('2026-10-29'), true)
+    assert.equal(providers.lastModified.toISOString().startsWith('2026-10-30'), true)
+    assert.equal(privy.lastModified.toISOString().startsWith('2026-10-30'), true)
 
     const reactSdk = publishedBlogPosts().find(
       (item) => item.slug === 'embedded-wallet-react-sdk',
@@ -292,9 +329,9 @@ Hello
     )
     assert.ok(reactSdk)
     assert.ok(alchemyVsPrivy)
-    assert.equal(reactSdk.lastModified.toISOString().startsWith('2026-10-27'), true)
+    assert.equal(reactSdk.lastModified.toISOString().startsWith('2026-10-30'), true)
     assert.equal(
-      alchemyVsPrivy.lastModified.toISOString().startsWith('2026-10-27'),
+      alchemyVsPrivy.lastModified.toISOString().startsWith('2026-10-30'),
       true,
     )
   })

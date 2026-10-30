@@ -94,12 +94,12 @@ export default async function ComparisonPage({
                         ) : null}
                         {competitor.slug === 'turnkey' ? (
                             <>
-                                For how Turnkey’s key-management layer differs from Privy’s
-                                finished embedded wallet product, see{' '}
+                                Turnkey vs Privy is finished SDK versus enclave
+                                infrastructure — see{' '}
                                 <Link href={PRIVY_VS_TURNKEY_PATH} className={linkClass}>
                                     Privy vs Turnkey
                                 </Link>
-                                . For a multi-vendor shortlist, see{' '}
+                                . For Turnkey embedded wallet competitors, see{' '}
                                 <Link href="/turnkey-alternatives" className={linkClass}>
                                     Turnkey alternatives
                                 </Link>
@@ -144,7 +144,7 @@ export default async function ComparisonPage({
                         For the category itself — custody, key models, and what the SDK
                         actually does — start with{' '}
                         <Link href="/embedded-wallet" className={linkClass}>
-                            how embedded wallets work
+                            embedded wallet
                         </Link>
                         . The named-vendor table is{' '}
                         <Link href={EMBEDDED_WALLET_PROVIDERS_PATH} className={linkClass}>
