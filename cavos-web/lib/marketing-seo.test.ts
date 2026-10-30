@@ -3697,3 +3697,26 @@ describe('best embedded wallets per chain', () => {
     assert.doesNotMatch(llms, /—|trustless/)
   })
 })
+
+it('chain landing pages link to their best-embedded-wallets shortlist', () => {
+  for (const chain of ['solana', 'starknet', 'stellar']) {
+    const src = fs.readFileSync(
+      path.join(process.cwd(), `app/embedded-${chain}-wallet/page.tsx`),
+      'utf8',
+    )
+    assert.ok(src.includes(`/blog/best-embedded-wallets-${chain}`), chain)
+  }
+})
+
+describe('comparison copy style', () => {
+  it('has no em-dashes in comparison and Privy alternatives copy', () => {
+    for (const f of ['compare-data.ts', 'privy-alternatives.ts']) {
+      const code = fs
+        .readFileSync(path.join(process.cwd(), 'lib', f), 'utf8')
+        .split('\n')
+        .filter((l) => !l.trim().startsWith('//'))
+        .join('\n')
+      assert.ok(!code.includes('\u2014'), `${f} contains an em-dash`)
+    }
+  })
+})

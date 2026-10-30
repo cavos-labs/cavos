@@ -93,7 +93,7 @@ export const PRIVY_WHY_LOOK = [
 
 export const PRIVY_HOW_TO_CHOOSE = [
   'Who can produce a valid signature without the user present?',
-  'Where does the signing key live — device, MPC shares, HSM, or remote enclave?',
+  'Where does the signing key live: device, MPC shares, HSM, or remote enclave?',
   'Which chains are native, and which are a compatibility layer?',
   'Do you need to connect existing wallets, or only provision new ones?',
   'Do you want a finished embedded-wallet SDK, or key-management infrastructure you build on?',
@@ -104,7 +104,7 @@ export const PRIVY_ALTERNATIVES_FAQ = [
   {
     question: 'What is the best Privy alternative?',
     answer:
-      'There is no single best Privy alternative — the right pick depends on chain and key model. Cavos is the alternative when the product is on Starknet, Solana, or Stellar and the review requires a device-native key. Dynamic is stronger when you must connect wallets users already hold. Turnkey is key-management infrastructure, not a finished SDK. Web3Auth / MetaMask Embedded Wallets fits broad social-login chain coverage. Magic fits simple email-first EVM onboarding. Privy itself remains the more mature choice across the EVM ecosystem.',
+      'There is no single best Privy alternative. The right pick depends on chain and key model. Cavos is the alternative when the product is on Starknet, Solana, or Stellar and the review requires a device-native key. Dynamic is stronger when you must connect wallets users already hold. Turnkey is key-management infrastructure, not a finished SDK. Web3Auth / MetaMask Embedded Wallets fits broad social-login chain coverage. Magic fits simple email-first EVM onboarding. Privy itself remains the more mature choice across the EVM ecosystem.',
   },
   {
     question: 'Is there a free Privy alternative?',
@@ -156,7 +156,7 @@ export const privyAlternativesGuide: AlternativesGuide = {
     [
       'What are some alternatives to Privy? Cavos, Dynamic, Turnkey, Web3Auth, and Magic are the five Privy alternatives and competitors compared here for an ',
       { href: '/embedded-wallet', label: 'embedded wallet' },
-      ' — not the Shopify popup of the same name. A Privy alternative is a different product in this category, not a drop-in.',
+      ', not the Shopify popup of the same name. A Privy alternative is a different product in this category, not a drop-in.',
     ],
     [
       'The sections below use the same facts as the ',
@@ -189,7 +189,7 @@ export const privyAlternativesGuide: AlternativesGuide = {
   howToChooseOutro: DEFAULT_HOW_TO_CHOOSE_OUTRO,
   stayHeading: 'When Privy is still the right choice',
   stayIntro:
-    'Privy is the more mature choice across the EVM ecosystem. It is not the weaker product — it covers ground Cavos does not. Stay with Privy when the following are true.',
+    'Privy is the more mature choice across the EVM ecosystem. It is not the weaker product; it covers ground Cavos does not. Stay with Privy when the following are true.',
   chooseThem: privyChooseThem,
   faq: PRIVY_ALTERNATIVES_FAQ,
   itemListName: 'Privy alternatives',
