@@ -12,6 +12,8 @@ import {
   EMBEDDED_WALLET_VS_EXTENSION_PATH,
   EMBEDDED_WALLET_VS_EXTENSION_TITLE,
   EMBEDDED_WALLET_API_PATH,
+  WHAT_IS_AN_EMBEDDED_WALLET_PATH,
+  WHAT_IS_AN_EMBEDDED_WALLET_TITLE,
   EMBEDDED_WALLET_API_TITLE,
   NON_CUSTODIAL_EMBEDDED_WALLET_PATH,
   NON_CUSTODIAL_EMBEDDED_WALLET_TITLE,
@@ -43,6 +45,11 @@ const GUIDES = [
     body: 'Custody models, key management, and how to choose an SDK.',
   },
   {
+    href: WHAT_IS_AN_EMBEDDED_WALLET_PATH,
+    title: WHAT_IS_AN_EMBEDDED_WALLET_TITLE,
+    body: 'A plain definition: how an embedded wallet works, who holds the key, and when to use one.',
+  },
+  {
     href: WALLET_AS_A_SERVICE_PATH,
     title: WALLET_AS_A_SERVICE_TITLE,
     body: 'What an embedded wallet platform is: auth, keys, signing, gas, recovery, pricing, and build versus buy.',
@@ -50,7 +57,7 @@ const GUIDES = [
   {
     href: EMBEDDED_WALLET_API_PATH,
     title: EMBEDDED_WALLET_API_TITLE,
-    body: 'Auth, wallet create, key handling, signing, gas, and recovery — and how Cavos exposes that surface.',
+    body: 'Auth, wallet create, key handling, signing, gas, and recovery, and how Cavos exposes that surface.',
   },
   {
     href: NON_CUSTODIAL_EMBEDDED_WALLET_PATH,

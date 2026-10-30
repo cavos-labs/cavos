@@ -1,0 +1,122 @@
+---
+title: "What Is an Embedded Wallet? A Developer Definition"
+date: "2026-10-30"
+updated: "2026-10-30"
+excerpt: "An embedded wallet is a crypto wallet that lives inside an app, not a browser extension. A plain definition: how it works, who holds the key, and when to use one."
+category: "Guide"
+ogQuote: "An embedded wallet is a wallet the user never installs. The app provisions it at sign-in."
+slug: "what-is-an-embedded-wallet"
+faq:
+  - question: "What is an embedded wallet?"
+    answer: "An embedded wallet is a crypto wallet built into an application instead of a browser extension or a separate wallet app. The user signs in with an account they already have, such as Google, Apple, or email, and the app resolves an on-chain address they can receive, pay, and sign with. There is nothing to install and no seed phrase to copy."
+  - question: "How is an embedded wallet different from a regular crypto wallet?"
+    answer: "A regular wallet such as a browser extension or mobile wallet app is installed by the user and connected to many sites. An embedded wallet is provisioned by one application during sign-in and approval happens inside that application's UI. The difference is where the wallet lives and who provisions it. Custody is a separate question."
+  - question: "Who holds the private key in an embedded wallet?"
+    answer: "It depends on the provider. Models include a key created and used on the user's device, MPC key shares split between parties, and keys held in a provider-operated HSM or secure enclave. Ask who can produce a valid signature without the user. In Cavos the signing key is created and used on the device, never leaves it in plaintext, and is never used to sign on Cavos servers."
+  - question: "Are embedded wallets safe?"
+    answer: "An embedded wallet is as safe as its key model and its recovery path. The checks are: where the signing key lives, whether the provider can sign without the user, how a new device restores access, and whether the recovery component can be inspected. Cavos keeps keys on the device and its recovery enclave is open source."
+  - question: "What happens if the user loses their phone?"
+    answer: "The wallet address lives on-chain, so funds are not tied to the phone. The user needs a way to restore the means to sign on a new device. In Cavos that is another signed-in device, a synced passkey, or opt-in hardware-isolated recovery. The passkey and the enclave only hold an encrypted copy of the master key for restore."
+  - question: "Do users need crypto to pay gas in an embedded wallet?"
+    answer: "Not necessarily. Many embedded wallet platforms sponsor network fees so a first-time user can transact without holding the chain's fee token. Cavos offers Gas Sponsorship in Any Token on Starknet, Solana, and Stellar, with USDC as one example of a token a user might already hold."
+  - question: "When should an app use an embedded wallet?"
+    answer: "Use an embedded wallet when most users do not already have a crypto wallet, when onboarding should feel like a normal sign-up, or when payments and on-chain actions are part of the product rather than the point of it. Keep supporting external wallets if your users already arrive with one."
+---
+
+An **embedded wallet** is a crypto wallet that lives inside an application. The user does not install anything. They sign in the way they already sign in to software, and the app provisions an on-chain account they can receive, pay, and sign with.
+
+That is the whole definition. The rest of this post explains the parts, so you can tell embedded wallets apart and ask vendors the right questions. If you are choosing an SDK, the commercial guide is the [embedded wallet](/embedded-wallet) page. This post is the primer.
+
+## Embedded wallet, defined in three parts
+
+An embedded wallet has three properties. A product needs all three to fit the term.
+
+1. **It is provisioned by the app.** The wallet is created or looked up as part of the app's own sign-in, not by a separate download.
+2. **Approval happens in the app's UI.** The user confirms a payment or a signature on a screen the product controls, not in a popup from a third-party extension.
+3. **It is a real on-chain account.** The address can hold assets and sign transactions on the target chain. It is not a balance in the app's database.
+
+The third point is what separates an embedded wallet from a custodial account balance at an exchange. The second is what separates it from a [browser extension](/blog/embedded-wallet-vs-browser-extension).
+
+## How an embedded wallet works
+
+The flow is the same across most providers:
+
+- **Sign in.** The user authenticates with Google, Apple, email, or the app's existing login. This tells the system who the user is. It does not, by itself, authorize spending.
+- **Resolve an address.** Given a stable user id, the wallet service returns the address for that user on that app and chain, or creates one.
+- **Hold a signing key.** Somewhere, a private key or key shares can produce signatures for that address. Where that key lives is the most important design decision.
+- **Sign and send.** When the user approves an action, the key signs and the transaction goes to the network. A sponsor often pays the fee.
+- **Recover.** If the user changes devices, a recovery path restores the ability to sign on the new device.
+
+Developers reach all of this through an [embedded wallet API](/blog/embedded-wallet-api), usually shipped as a client SDK. When the vendor runs the backend pieces for you, it is called [wallet as a service](/blog/wallet-as-a-service).
+
+## Who holds the key
+
+"Embedded" says where the wallet appears. It does not say who controls it. Three common key models:
+
+| Model | Where the key lives | What to ask |
+|---|---|---|
+| Device key | Created and used on the user's device | How does a new device restore it? |
+| MPC shares | Split between the device, the provider, and a recovery factor | Can the provider's share plus another factor sign without the user? |
+| Provider enclave or HSM | In hardware the provider operates | Who can authorize that hardware to sign? |
+
+A wallet is non-custodial when the provider cannot produce a valid signature on its own. The full test is in [non-custodial embedded wallets](/blog/non-custodial-embedded-wallet), and the legal side is on the [custody](/custody) page.
+
+## Embedded wallet vs other wallets
+
+| | Embedded wallet | Browser extension or wallet app | Exchange account |
+|---|---|---|---|
+| Install | None | User installs it | None |
+| Where approval happens | Inside your app | In the extension or app | Inside the exchange |
+| On-chain address per user | Yes | Yes | Usually pooled |
+| Works across many sites | Usually one app | Yes | No |
+| Seed phrase | Usually none | Usually yes | No |
+
+Embedded wallets trade portability across sites for onboarding inside one product. Many apps support both: an embedded wallet for new users, and external wallet connections for users who already have one.
+
+## When to use one
+
+An embedded wallet fits when:
+
+- Most of your users have never set up a crypto wallet.
+- Sign-up should look like any other app's sign-up.
+- On-chain actions such as payments, rewards, or ownership are a feature of the product, not the reason users came.
+- You want users to transact before they hold the chain's fee token.
+
+It is a weaker fit when your users already arrive with a wallet they use everywhere and expect to connect it.
+
+## A concrete example: Cavos
+
+[Cavos](/) is an embedded wallet SDK for Starknet, Solana, and Stellar. It maps onto the definition above like this:
+
+- **Provisioned by the app.** `Cavos.connect` looks up or claims the address for a user, app, chain, and network. Sign-in is Cavos-hosted (Google, Apple, email) or your own auth.
+- **Key model.** Custody is hardware-isolated and non-custodial. The signing key is derived and used on the user's device. Keys never leave the device in plaintext and are never used to sign on Cavos servers.
+- **Native accounts.** On Starknet the wallet is an audited OpenZeppelin account contract. On Solana it is a native Ed25519 account. On Stellar it is a classic G account.
+- **Fees.** Gas Sponsorship in Any Token, so a new user can transact without the chain's fee token.
+- **Recovery.** Another signed-in device, a synced passkey, or opt-in hardware-isolated recovery. The passkey and the enclave only hold an encrypted copy of the master key for restore. The enclave is open source at [cavos-labs/cavos-recovery](https://github.com/cavos-labs/cavos-recovery).
+
+```ts
+import { Cavos } from "@cavos/kit";
+
+const session = await Cavos.connect({
+  chains: ["stellar"],
+  defaultChain: "stellar",
+  network: "testnet",
+  appSalt: "my-app",
+  identity: { userId: user.id, email: user.email },
+  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+});
+
+const wallet = session.wallet("stellar");
+console.log(wallet.address); // the user's embedded wallet address
+```
+
+[Pricing](/pricing) is Free up to 1,000 wallets, Essential at $59 per month, and Complete at $139 per month.
+
+## What to read next
+
+- [Embedded wallet](/embedded-wallet): custody models, key management, and how to choose an SDK.
+- [Embedded wallet API](/blog/embedded-wallet-api): the developer surface, method by method.
+- [Non-custodial embedded wallets](/blog/non-custodial-embedded-wallet): who can sign and how to verify a claim.
+- [Embedded wallet vs browser extension](/blog/embedded-wallet-vs-browser-extension): where users should sign.
+- [Embedded wallet providers](/blog/embedded-wallet-providers): the vendor shortlist.
+- [How to add an embedded wallet to a React app](/blog/how-to-add-an-embedded-wallet): install to first transaction.

@@ -24,6 +24,8 @@ import {
     EMBEDDED_WALLET_API_PATH,
     EMBEDDED_WALLET_API_TITLE,
     NON_CUSTODIAL_EMBEDDED_WALLET_PATH,
+    WHAT_IS_AN_EMBEDDED_WALLET_PATH,
+    WHAT_IS_AN_EMBEDDED_WALLET_TITLE,
     NON_CUSTODIAL_EMBEDDED_WALLET_TITLE,
     EMBEDDED_WALLET_PROVIDERS_PATH,
     EMBEDDED_WALLET_PROVIDERS_TITLE,
@@ -889,31 +891,37 @@ export default function EmbeddedWalletGuidePage() {
                     </p>
                     <ul className="mt-6 list-disc space-y-3 pl-5 text-sm leading-relaxed text-muted">
                         <li>
+                            <Link href={WHAT_IS_AN_EMBEDDED_WALLET_PATH} className={linkClass}>
+                                {WHAT_IS_AN_EMBEDDED_WALLET_TITLE}
+                            </Link>
+                            {': '}a plain definition for readers new to the term.
+                        </li>
+                        <li>
                             <Link href={WALLET_AS_A_SERVICE_PATH} className={linkClass}>
                                 {WALLET_AS_A_SERVICE_TITLE}
                             </Link>
-                            {' — '}auth, keys, signing, gas, recovery, pricing, and
+                            {': '}auth, keys, signing, gas, recovery, pricing, and
                             build versus buy.
                         </li>
                         <li>
                             <Link href={EMBEDDED_WALLET_API_PATH} className={linkClass}>
                                 {EMBEDDED_WALLET_API_TITLE}
                             </Link>
-                            {' — '}auth, wallet create, key handling, signing, gas, and
+                            {': '}auth, wallet create, key handling, signing, gas, and
                             recovery.
                         </li>
                         <li>
                             <Link href={NON_CUSTODIAL_EMBEDDED_WALLET_PATH} className={linkClass}>
                                 {NON_CUSTODIAL_EMBEDDED_WALLET_TITLE}
                             </Link>
-                            {' — '}who can sign, key models, and how to verify a
+                            {': '}who can sign, key models, and how to verify a
                             vendor&apos;s claim.
                         </li>
                         <li>
                             <Link href={EMBEDDED_WALLET_INTEGRATION_PATH} className={linkClass}>
                                 {EMBEDDED_WALLET_INTEGRATION_TITLE}
                             </Link>
-                            {' — '}
+                            {': '}
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
                                 @cavos/kit
                             </code>{' '}
@@ -923,25 +931,25 @@ export default function EmbeddedWalletGuidePage() {
                             <Link href={EMBEDDED_WALLET_REACT_SDK_PATH} className={linkClass}>
                                 {EMBEDDED_WALLET_REACT_SDK_TITLE}
                             </Link>
-                            {' — '}best practices for embedding a wallet SDK in a React app.
+                            {': '}best practices for embedding a wallet SDK in a React app.
                         </li>
                         <li>
                             <Link href={EMBEDDED_WALLET_PROVIDERS_PATH} className={linkClass}>
                                 {EMBEDDED_WALLET_PROVIDERS_TITLE}
                             </Link>
-                            {' — '}pricing, chains, and key models.
+                            {': '}pricing, chains, and key models.
                         </li>
                         <li>
                             <Link href={PRIVY_VS_TURNKEY_PATH} className={linkClass}>
                                 {PRIVY_VS_TURNKEY_TITLE}
                             </Link>
-                            {' — '}finished auth and wallets versus signing infrastructure.
+                            {': '}finished auth and wallets versus signing infrastructure.
                         </li>
                         <li>
                             <Link href={ALCHEMY_VS_PRIVY_PATH} className={linkClass}>
                                 {ALCHEMY_VS_PRIVY_TITLE}
                             </Link>
-                            {' — '}Account Kit deprecated; Wallet APIs plus Privy as signer.
+                            {': '}Account Kit deprecated; Wallet APIs plus Privy as signer.
                         </li>
                     </ul>
                 </section>

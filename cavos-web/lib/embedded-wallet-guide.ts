@@ -54,6 +54,11 @@ export const EMBEDDED_WALLET_API_PATH = '/blog/embedded-wallet-api'
 export const EMBEDDED_WALLET_API_TITLE =
   'Embedded Wallet API (2026): SDK Methods & Auth'
 
+export const WHAT_IS_AN_EMBEDDED_WALLET_PATH = '/blog/what-is-an-embedded-wallet'
+
+export const WHAT_IS_AN_EMBEDDED_WALLET_TITLE =
+  'What Is an Embedded Wallet? A Developer Definition'
+
 export const NON_CUSTODIAL_EMBEDDED_WALLET_PATH =
   '/blog/non-custodial-embedded-wallet'
 
@@ -63,7 +68,7 @@ export const NON_CUSTODIAL_EMBEDDED_WALLET_TITLE =
 export const WALLET_AS_A_SERVICE_PATH = '/blog/wallet-as-a-service'
 
 export const WALLET_AS_A_SERVICE_TITLE =
-  'Wallet-as-a-Service (WaaS): How Embedded Wallet Platforms Work (2026)'
+  'Wallet-as-a-Service (WaaS): How It Works (2026)'
 
 export const EMBEDDED_WALLET_REACT_SDK_PATH = '/blog/embedded-wallet-react-sdk'
 

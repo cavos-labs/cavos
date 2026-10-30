@@ -2251,7 +2251,7 @@ describe('marketing SEO', () => {
     assert.match(source, /docs\.cavos\.xyz\/docs\/auth/)
     assert.match(source, /docs\.cavos\.xyz\/docs\/wallet-actions/)
     assert.match(source, /docs\.cavos\.xyz\/docs\/recovery/)
-    assert.match(source, /@cavos\/kit` 0\.4\.4/)
+    assert.match(source, /@cavos\/kit` 0\.5\.0/)
     assert.match(source, /CavosProvider/)
     assert.match(source, /Cavos\.connect/)
     assert.match(source, /useCavos/)
@@ -2521,7 +2521,7 @@ describe('marketing SEO', () => {
     assert.equal(WALLET_AS_A_SERVICE_PATH, '/blog/wallet-as-a-service')
     assert.equal(
       WALLET_AS_A_SERVICE_TITLE,
-      'Wallet-as-a-Service (WaaS): How Embedded Wallet Platforms Work (2026)',
+      'Wallet-as-a-Service (WaaS): How It Works (2026)',
     )
 
     const hub = fs.readFileSync(
@@ -3718,5 +3718,39 @@ describe('comparison copy style', () => {
         .join('\n')
       assert.ok(!code.includes('\u2014'), `${f} contains an em-dash`)
     }
+  })
+})
+
+describe('embedded wallet definitional and API posts', () => {
+  const read = (p: string) => fs.readFileSync(path.join(process.cwd(), p), 'utf8')
+
+  it('what-is-an-embedded-wallet is a definitional post with FAQ that points at the pillar', () => {
+    const raw = read('content/blog/what-is-an-embedded-wallet.mdx')
+    assert.match(raw, /^slug: "what-is-an-embedded-wallet"$/m)
+    assert.match(raw, /^faq:$/m)
+    assert.match(raw, /question: "What is an embedded wallet\?"/)
+    assert.match(raw, /\]\(\/embedded-wallet\)/)
+    assert.match(raw, /\]\(\/blog\/embedded-wallet-api\)/)
+    assert.match(raw, /audited OpenZeppelin account contract/)
+    assert.match(raw, /Gas Sponsorship in Any Token/)
+    assert.match(raw, /Free up to 1,000 wallets/)
+    assert.match(raw, /github\.com\/cavos-labs\/cavos-recovery/)
+    assert.doesNotMatch(raw, /—|trustless|impossible/i)
+  })
+
+  it('the embedded wallet pillar, blog index, and llms.txt link the definitional post', () => {
+    assert.match(read('app/embedded-wallet/page.tsx'), /WHAT_IS_AN_EMBEDDED_WALLET_PATH/)
+    assert.match(read('app/blog/page.tsx'), /WHAT_IS_AN_EMBEDDED_WALLET_PATH/)
+    assert.match(read('public/llms.txt'), /blog\/what-is-an-embedded-wallet/)
+    assert.match(read('public/llms.txt'), /blog\/embedded-wallet-api/)
+  })
+
+  it('embedded-wallet-api opens with a runnable @cavos/kit example and house copy', () => {
+    const raw = read('content/blog/embedded-wallet-api.mdx')
+    assert.match(raw, /## The embedded wallet API in 15 lines/)
+    assert.match(raw, /import \{ Cavos \} from "@cavos\/kit"/)
+    assert.match(raw, /\/blog\/what-is-an-embedded-wallet/)
+    assert.match(raw, /Free up to 1,000 wallets/)
+    assert.doesNotMatch(raw, /—|trustless/i)
   })
 })

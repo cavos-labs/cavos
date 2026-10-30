@@ -337,7 +337,7 @@ Hello
   })
 
   it('keeps the indexable marketing URLs including the React integration guide', () => {
-    assert.equal(entries.length, 42)
+    assert.equal(entries.length, 43)
     assert.ok(
       urls.includes(`${MARKETING_ORIGIN}/blog/how-to-add-an-embedded-wallet`),
     )
@@ -359,6 +359,7 @@ Hello
     )
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/privy-vs-turnkey`))
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/embedded-wallet-api`))
+    assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/what-is-an-embedded-wallet`))
     assert.ok(
       urls.includes(`${MARKETING_ORIGIN}/blog/non-custodial-embedded-wallet`),
     )
