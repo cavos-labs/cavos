@@ -63,7 +63,7 @@ export default function EmbeddedWalletGuidePage() {
         dateModified: EMBEDDED_WALLET_MODIFIED,
         crumbs: [
             { name: 'Home', path: '/' },
-            { name: 'What is an embedded wallet', path: EMBEDDED_WALLET_PATH },
+            { name: 'Embedded wallets', path: EMBEDDED_WALLET_PATH },
         ],
         faq: [...EMBEDDED_WALLET_FAQ],
         howTo: EMBEDDED_WALLET_HOW_TO,
@@ -81,17 +81,25 @@ export default function EmbeddedWalletGuidePage() {
             <article className="mx-auto max-w-4xl px-6 pb-24 pt-32 md:px-8">
                 <header className="max-w-3xl">
                     <h1 className="text-balance text-[clamp(2.5rem,6vw,4.5rem)] font-medium leading-[0.98] tracking-[-0.045em]">
-                        What is an embedded wallet?
+                        Embedded wallets
                     </h1>
                     <p className="mt-7 max-w-2xl text-lg leading-relaxed text-muted">
                         {EMBEDDED_WALLET_DEFINITION}
                     </p>
                     <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted">
-                        This guide covers how embedded wallets work, the{' '}
+                        This guide covers how an embedded wallet works: the{' '}
                         <Link href={EMBEDDED_WALLET_API_PATH} className={linkClass}>
                             embedded wallet API
                         </Link>{' '}
-                        and SDK, how they compare to a{' '}
+                        and SDK,{' '}
+                        <Link href={WALLET_AS_A_SERVICE_PATH} className={linkClass}>
+                            wallet as a service
+                        </Link>
+                        ,{' '}
+                        <Link href={NON_CUSTODIAL_EMBEDDED_WALLET_PATH} className={linkClass}>
+                            non-custodial
+                        </Link>{' '}
+                        keys, payments, how they compare to a{' '}
                         <Link href={EMBEDDED_WALLET_VS_EXTENSION_PATH} className={linkClass}>
                             browser extension
                         </Link>
@@ -121,7 +129,7 @@ export default function EmbeddedWalletGuidePage() {
 
                 <section className="mt-16 max-w-3xl">
                     <h2 className="text-2xl font-medium tracking-[-0.03em]">
-                        What an embedded wallet is
+                        What is an embedded wallet?
                     </h2>
                     <div className="mt-5 space-y-4 text-sm leading-relaxed text-muted">
                         <p>
@@ -518,6 +526,32 @@ export default function EmbeddedWalletGuidePage() {
                         </Link>{' '}
                         covers ground Cavos does not.
                     </p>
+                </section>
+
+                <section className="mt-16 max-w-3xl" id="embedded-wallet-payments">
+                    <h2 className="text-2xl font-medium tracking-[-0.03em]">
+                        Embedded wallet payments
+                    </h2>
+                    <div className="mt-5 space-y-4 text-sm leading-relaxed text-muted">
+                        <p>
+                            Embedded wallet payments are pay, receive, and sign from inside
+                            the application. The user does not install an extension, paste a
+                            seed, or approve in someone else&apos;s popup. Authentication
+                            selects which user this is. The SDK resolves an on-chain account.
+                            A signer bound to the device authorizes the spend in your UI.
+                        </p>
+                        <p>
+                            The remaining wall is the native gas token. An embedded wallet
+                            that still asks the user to hold ETH, STRK, SOL, or XLM before
+                            the first payment has not removed the wallet.{' '}
+                            <Link href="#gas-sponsorship-in-any-token" className={linkClass}>
+                                Gas Sponsorship in Any Token
+                            </Link>{' '}
+                            takes that wall down: the product can sponsor fees, or settle
+                            them in a token the user already holds. USDC is one example of
+                            such a token, not a required asset.
+                        </p>
+                    </div>
                 </section>
 
                 <section className="mt-16 max-w-3xl" id="gas-sponsorship-in-any-token">

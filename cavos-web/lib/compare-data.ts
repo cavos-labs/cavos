@@ -62,6 +62,9 @@ const ALCHEMY_PRICING =
 
 export const PROVIDER_PRICING_AS_OF = 'October 2026'
 
+/** Sitemap lastmod for /compare/[slug] when competitor copy in this file changes. */
+export const COMPARE_PAGES_MODIFIED = '2026-10-30'
+
 export const EMBEDDED_WALLET_MARKET_NOTE =
     'The category has consolidated. Stripe acquired Privy in 2025. Fireblocks acquired Dynamic in 2025. Consensys acquired Web3Auth in 2025 and now ships it as MetaMask Embedded Wallets. In 2026 Payward, the parent of Kraken, acquired Magic Labs wallet infrastructure.'
 
@@ -137,14 +140,16 @@ export const COMPETITORS: Competitor[] = [
             { question: 'Which is better for non-crypto users?', answer: 'Cavos is designed so a user never selects a wallet: they sign in with an identity you already own and a self-custodial account is resolved (the first device to claim names the address). Dynamic can also hide this, but its surface area is broader because it also serves crypto-native connection flows.' },
             { question: 'How does Cavos pricing compare to Dynamic?', answer: 'Cavos is free up to 1,000 wallets, then Essential at $59/mo and Complete at $139/mo. Dynamic lists $249/mo for up to 5,000 MAUs, then $0.05 per extra MAU, with a free sandbox.' },
             { question: 'Which chains does each support?', answer: 'Cavos ships one SDK with chain-native adapters for Starknet, Solana, and Stellar. Dynamic is multi-chain, with EVM breadth and additional non-EVM support; parity varies by chain.' },
+            { question: 'How do Web3Auth and Dynamic embedded wallets compare?', answer: 'They sit at different layers. Dynamic is strongest as a unified login and wallet-connection layer that also ships embedded wallets (TSS-MPC; public docs list native chains including EVM, Solana, Bitcoin, Sui, TON, Stellar, Tempo, and Arc). Web3Auth / MetaMask Embedded Wallets is a social-login MPC wallet layer with broad multi-chain coverage and key export. Dynamic vs Web3Auth is usually connect-and-configure versus social-login chain coverage. Cavos is neither: three native adapters and a device-native key.' },
         ],
     },
     {
         slug: 'turnkey',
         name: 'Turnkey',
-        pageTitle: 'Cavos vs Turnkey (2026): Pricing, Chains, Custody',
+        pageTitle: 'Cavos vs Turnkey (2026): Embedded Wallet',
+        pageH1: 'Cavos vs Turnkey: embedded wallet compared',
         pageDescription:
-            'Cavos vs Turnkey on pricing, chains, and custody. Free up to 1,000 wallets. Finished embedded wallet vs enclave key-management infrastructure.',
+            'Cavos vs Turnkey as an embedded wallet. Free up to 1,000 wallets. Finished SDK vs enclaves. Turnkey alternatives and Turnkey vs Privy linked below.',
         summary:
             'Turnkey provides secure key management infrastructure running in hardware-backed secure enclaves, exposed as a low-level API for building wallets and signing systems.',
         positioning:
@@ -172,7 +177,8 @@ export const COMPETITORS: Competitor[] = [
             { question: 'Is Turnkey a competitor or a building block?', answer: 'Mostly a building block. Teams frequently use Turnkey to build something similar to what Cavos ships as a product. The decision is usually build-versus-buy rather than a feature comparison.' },
             { question: 'Does Cavos ever use enclaves?', answer: 'Only for opt-in hardware-isolated social recovery, which runs in an AWS Nitro Enclave with pinned attestation measurements and unwraps a MasterDEK onto a new device. It is off by default and is not a general server-side signing capability. On Starknet the account is the standard OpenZeppelin AccountUpgradeable; the enclave has no on-chain recovery role.' },
             { question: 'How does Cavos pricing compare to Turnkey?', answer: 'Cavos is free up to 1,000 wallets, then Essential at $59/mo and Complete at $139/mo. Turnkey’s public pay as you go tier includes 1,000 wallets and 25 free signatures per month, then $0.10 per signature; Pro is $99/mo.' },
-            { question: 'Where do the keys live?', answer: 'On Cavos, keys live on the end user’s device and are non-exportable. On Turnkey, keys live in hardware-backed secure enclaves operated as infrastructure.' },
+            { question: 'Who are Turnkey embedded wallet competitors?', answer: 'If you want a finished embedded wallet instead of Turnkey’s signing infrastructure, the usual shortlist is Cavos, Privy, Dynamic, Web3Auth / MetaMask Embedded Wallets, and Magic. Turnkey vs Privy is build-versus-buy. The shortlist is Turnkey alternatives; the Privy write-up is Privy vs Turnkey.' },
+            { question: 'What is Turnkey vs Privy?', answer: 'Turnkey vs Privy is finished SDK versus enclave infrastructure. Privy is a finished auth and wallet product. Turnkey is a signing API you build a wallet on. The worked write-up is Privy vs Turnkey. This page is Cavos vs Turnkey.' },
         ],
     },
     {
@@ -210,6 +216,7 @@ export const COMPETITORS: Competitor[] = [
             { question: 'Can I export my key from Cavos?', answer: 'No. The device key is non-exportable, which is the property that makes the model work. Portability is handled through passkey and enclave restore instead of key export.' },
             { question: 'How does Cavos pricing compare to Web3Auth?', answer: 'Cavos is free up to 1,000 wallets, then Essential at $59/mo and Complete at $139/mo. Web3Auth lists a free 1,000 monthly active wallets, Growth at $69/mo, and Scale at $399/mo.' },
             { question: 'Which chains does each support?', answer: 'Cavos ships one SDK with chain-native adapters for Starknet, Solana, and Stellar. Web3Auth documents broad multi-chain coverage.' },
+            { question: 'How do Web3Auth and Dynamic embedded wallets compare?', answer: 'They sit at different layers. Dynamic is strongest as a unified login and wallet-connection layer that also ships embedded wallets (TSS-MPC; public docs list native chains including EVM, Solana, Bitcoin, Sui, TON, Stellar, Tempo, and Arc). Web3Auth / MetaMask Embedded Wallets is a social-login MPC wallet layer with broad multi-chain coverage and key export. Dynamic vs Web3Auth is usually connect-and-configure versus social-login chain coverage. Cavos is neither: three native adapters and a device-native key.' },
         ],
     },
     {

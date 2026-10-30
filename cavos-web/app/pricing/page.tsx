@@ -6,6 +6,7 @@ import {
     pricingPageJsonLd,
     PRICING_DESCRIPTION,
     PRICING_FAQ,
+    PRICING_MODIFIED,
     PRICING_PATH,
     PRICING_TITLE,
 } from '@/lib/marketing-seo'
@@ -62,6 +63,7 @@ export const metadata = marketingPageMetadata({
     title: PRICING_TITLE,
     description: PRICING_DESCRIPTION,
     path: PRICING_PATH,
+    modifiedTime: PRICING_MODIFIED,
 })
 
 /* ── Domain model: one source of truth ── */
