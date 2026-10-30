@@ -3707,3 +3707,16 @@ it('chain landing pages link to their best-embedded-wallets shortlist', () => {
     assert.ok(src.includes(`/blog/best-embedded-wallets-${chain}`), chain)
   }
 })
+
+describe('comparison copy style', () => {
+  it('has no em-dashes in comparison and Privy alternatives copy', () => {
+    for (const f of ['compare-data.ts', 'privy-alternatives.ts']) {
+      const code = fs
+        .readFileSync(path.join(process.cwd(), 'lib', f), 'utf8')
+        .split('\n')
+        .filter((l) => !l.trim().startsWith('//'))
+        .join('\n')
+      assert.ok(!code.includes('\u2014'), `${f} contains an em-dash`)
+    }
+  })
+})

@@ -75,7 +75,7 @@ export const COMPETITORS: Competitor[] = [
         pageTitle: 'Privy vs Cavos (2026): Pricing, Chains, Review',
         pageH1: 'Privy vs Cavos: pricing, chains, and custody',
         pageDescription:
-            'Privy vs Cavos: a Privy wallet alternative — not the Shopify popup. Pricing, chains, custody. Free up to 1,000 wallets on Starknet, Solana, and Stellar.',
+            'Privy vs Cavos: a Privy wallet alternative, not the Shopify app. Pricing, chains, custody. Free up to 1,000 wallets on Starknet, Solana, and Stellar.',
         summary:
             'Privy is a widely adopted embedded wallet and authentication provider focused primarily on EVM chains, offering both embedded wallets and external wallet connection. This page is the one-to-one Privy vs Cavos comparison; the broader Privy alternative shortlist lives on a separate page.',
         positioning:
@@ -153,7 +153,7 @@ export const COMPETITORS: Competitor[] = [
         summary:
             'Turnkey provides secure key management infrastructure running in hardware-backed secure enclaves, exposed as a low-level API for building wallets and signing systems.',
         positioning:
-            'Turnkey and Cavos both take hardware-backed security seriously, but they sit at different layers. Turnkey is key-management infrastructure you build a wallet product on top of. Cavos is a finished embedded wallet product where the user’s own device — not a remote enclave — is the default signing authority.',
+            'Turnkey and Cavos both take hardware-backed security seriously, but they sit at different layers. Turnkey is key-management infrastructure you build a wallet product on top of. Cavos is a finished embedded wallet product where the user’s own device, not a remote enclave, is the default signing authority.',
         chooseThem: [
             'You are building your own wallet or custody product and want raw, policy-driven signing primitives.',
             'You need server-side signing for automated or backend-initiated transactions at scale.',
@@ -275,7 +275,7 @@ export const COMPETITORS: Competitor[] = [
         positioning:
             'This is not a like-for-like embedded-wallet swap. Cavos is a finished embedded wallet SDK: auth, a device-native account, recovery, and Gas Sponsorship in Any Token. Alchemy Wallet APIs sponsor gas, batch calls, and upgrade an existing EOA to a smart wallet with EIP-7702; they do not replace the signer. Alchemy documents Privy as the recommended signer, alongside Turnkey, Openfort, and any viem-compatible signer.',
         chooseThem: [
-            'You need a transaction layer — gas sponsorship, batching, and EIP-7702 — on many EVM chains, and already have a signer such as Privy or Turnkey.',
+            'You need a transaction layer (gas sponsorship, batching, and EIP-7702) on many EVM chains, and already have a signer such as Privy or Turnkey.',
             'You want ERC-20 gas payments or Bundler Sponsored Operations on EVM, which Alchemy documents on Wallet APIs.',
             'You are migrating an existing Account Kit or Alchemy Signer integration and need Alchemy’s remaining login endpoints while you switch signers.',
         ],
