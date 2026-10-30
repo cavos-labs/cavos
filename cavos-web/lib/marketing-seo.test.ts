@@ -3697,3 +3697,13 @@ describe('best embedded wallets per chain', () => {
     assert.doesNotMatch(llms, /—|trustless/)
   })
 })
+
+it('chain landing pages link to their best-embedded-wallets shortlist', () => {
+  for (const chain of ['solana', 'starknet', 'stellar']) {
+    const src = fs.readFileSync(
+      path.join(process.cwd(), `app/embedded-${chain}-wallet/page.tsx`),
+      'utf8',
+    )
+    assert.ok(src.includes(`/blog/best-embedded-wallets-${chain}`), chain)
+  }
+})

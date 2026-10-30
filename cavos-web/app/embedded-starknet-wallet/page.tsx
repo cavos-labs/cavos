@@ -322,6 +322,14 @@ export default function EmbeddedStarknetWalletPage() {
                         >
                             wallet-as-a-service
                         </Link>
+                        .{' '}
+                        For a side-by-side of other providers, see the{' '}
+                        <Link
+                            href="/blog/best-embedded-wallets-starknet"
+                            className={MARKETING_PROSE_LINK}
+                        >
+                            best embedded wallets for Starknet
+                        </Link>
                         .
                     </p>
                     <div className="mt-6 overflow-x-auto rounded-xl border border-line bg-[#1a1a1a] p-5 text-sm">
