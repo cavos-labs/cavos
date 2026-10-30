@@ -1,5 +1,9 @@
 import type { Metadata } from 'next'
-import { MARKETING_HOME_URL, MARKETING_ORIGIN } from './marketing-sitemap'
+import {
+  MARKETING_HOME_URL,
+  MARKETING_ORIGIN,
+  PRICING_SITEMAP_MODIFIED,
+} from './marketing-sitemap'
 
 export const OG_IMAGE = {
   url: `${MARKETING_ORIGIN}/og-image.png`,
@@ -123,6 +127,8 @@ export const PRICING_TITLE = 'Embedded Wallet Pricing (2026): Free to $139'
 export const PRICING_DESCRIPTION =
   'Embedded wallet pricing (2026): Free up to 1,000 wallets, Essential $59/month, Complete $139/month. Self-custodial SDK for Starknet, Solana, and Stellar.'
 
+export const PRICING_MODIFIED = PRICING_SITEMAP_MODIFIED
+
 export const PRICING_FAQ = [
   {
     q: 'What does Cavos embedded wallet pricing cost?',
@@ -139,6 +145,14 @@ export const PRICING_FAQ = [
   {
     q: 'What is enclave recovery?',
     a: 'Complete includes AWS Nitro enclave recovery. If a user loses their passkey, they can rewrap their device encryption key to a new device through a hardware-isolated flow. The enclave never holds your Stellar control seed or signs transactions.',
+  },
+  {
+    q: "What's the cheapest way to create wallets for millions of users?",
+    a: 'Cavos prices on wallet creates, not monthly active users or signatures. The published path is Free for the first 1,000 wallet creates, then Essential at $59/month with unlimited creates, or Complete at $139/month with unlimited creates plus enclave recovery. Gas sponsorship is funded separately. Other vendors meter MAU or signatures, which can change the bill as usage grows. This page does not claim a lowest market price.',
+  },
+  {
+    q: 'What capabilities should an enterprise evaluate for pricing transparency in embedded wallets?',
+    a: 'Ask what the invoice meters (wallet creates, MAU, or signatures), what is included on every plan versus add-on (recovery, gas sponsorship), whether prices are published or sales-gated, and how the free tier is defined. Cavos publishes Free up to 1,000 wallet creates, Essential at $59/month, and Complete at $139/month. The full SDK ships on every plan. Gas sponsorship is funded separately.',
   },
 ] as const
 

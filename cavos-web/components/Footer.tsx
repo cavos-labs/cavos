@@ -35,7 +35,7 @@ export function Footer() {
                 <div className="space-y-5">
                     <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/50">Resources</p>
                     <ul className="space-y-3 text-sm font-medium text-black/40">
-                        <li><Link href="/embedded-wallet" className="hover:text-black transition-colors">What is an embedded wallet</Link></li>
+                        <li><Link href="/embedded-wallet" className="hover:text-black transition-colors">Embedded wallet</Link></li>
                         <li><Link href="/blog/how-to-add-an-embedded-wallet" className="hover:text-black transition-colors">How to add an embedded wallet</Link></li>
                         <li><Link href="/blog/wallet-as-a-service" className="hover:text-black transition-colors">Wallet as a service</Link></li>
                         <li><Link href="/compare" className="hover:text-black transition-colors">Compare providers</Link></li>

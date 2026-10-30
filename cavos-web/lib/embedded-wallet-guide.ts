@@ -1,18 +1,18 @@
 export const EMBEDDED_WALLET_PATH = '/embedded-wallet'
 
 export const EMBEDDED_WALLET_TITLE =
-  'Embedded Wallet: What It Is, API & SDK (2026)'
+  'Embedded Wallets: What They Are, API & SDK'
 
 export const EMBEDDED_WALLET_DESCRIPTION =
-  'An embedded wallet lives in your app with no extension or seed phrase. Use the API and SDK to ship self-custodial wallets on Starknet, Solana, and Stellar.'
+  'Embedded wallets live in your app: no extension or seed. API, SDK, wallet-as-a-service, non-custodial keys, and payments on Starknet, Solana, Stellar.'
 
 export const EMBEDDED_WALLET_PUBLISHED = '2026-10-07'
 
-export const EMBEDDED_WALLET_MODIFIED = '2026-10-27'
+export const EMBEDDED_WALLET_MODIFIED = '2026-10-30'
 
 /** Featured-snippet definition rendered under the H1. Keep 40–60 words. */
 export const EMBEDDED_WALLET_DEFINITION =
-  'An embedded wallet is a crypto wallet built into your application instead of a browser extension or a separate wallet app. Users sign in the way they already do, and the product resolves an on-chain account they can pay, receive, and sign with. There is no install, no seed phrase, and no trip to another app.'
+  'An embedded wallet is a crypto wallet built into your application instead of a browser extension or a separate wallet app. Embedded wallets let users sign in the way they already do, and the product resolves an on-chain account they can pay, receive, and sign with. There is no install, no seed phrase, and no trip to another app.'
 
 export const EMBEDDED_WALLET_INTEGRATION_PATH =
   '/blog/how-to-add-an-embedded-wallet'
@@ -192,5 +192,10 @@ export const EMBEDDED_WALLET_FAQ = [
     question: 'How should I choose an embedded wallet SDK?',
     answer:
       'Ask who can produce a valid signature without the user, where the key lives, which chains are native rather than compatibility layers, how a second device is authorized, and what recovery actually does. Then match that to the product: provision new accounts, or connect existing ones. Worked comparisons live on the Cavos compare pages.',
+  },
+  {
+    question: 'What are embedded wallet payments?',
+    answer:
+      'Embedded wallet payments are pay, receive, and sign from inside the app: the user does not open an extension or paste a seed. Gas Sponsorship in Any Token removes the native-token wall so the product can sponsor fees, or settle them in a token the user already holds. USDC is one example of such a token, not a required asset.',
   },
 ] as const

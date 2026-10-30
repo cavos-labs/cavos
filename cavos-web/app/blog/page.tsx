@@ -39,7 +39,7 @@ export const metadata: Metadata = marketingPageMetadata({
 const GUIDES = [
   {
     href: '/embedded-wallet',
-    title: 'What is an embedded wallet?',
+    title: 'Embedded wallet',
     body: 'Custody models, key management, and how to choose an SDK.',
   },
   {
