@@ -24,7 +24,7 @@ export const EMBEDDED_WALLET_VS_EXTENSION_PATH =
   '/blog/embedded-wallet-vs-browser-extension'
 
 export const EMBEDDED_WALLET_VS_EXTENSION_TITLE =
-  'Embedded Wallet vs Browser Extension: Where Should Users Sign?'
+  'Embedded Wallet vs Browser Extension: Where to Sign'
 
 export const STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH =
   '/blog/stellar-embedded-wallet-tutorial'

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 import { blogOgImageUrl, blogOgVersion } from './blog-og-version'
+import { getAllPosts } from './blog'
 import {
   ABOUT_DESCRIPTION,
   ABOUT_PATH,
@@ -401,13 +402,12 @@ describe('marketing SEO', () => {
     assert.equal(meta.alternates?.canonical, 'https://cavos.xyz/about')
     assert.equal(
       meta.openGraph?.title,
-      'About Cavos: Embedded Wallet SDK for Starknet, Solana & Stellar | Cavos',
+      'About Cavos: Multichain Embedded Wallet SDK | Cavos',
     )
     assert.match(ABOUT_TITLE, /Embedded Wallet SDK/)
-    assert.match(ABOUT_TITLE, /Starknet/)
-    assert.match(ABOUT_TITLE, /Solana/)
-    assert.match(ABOUT_TITLE, /Stellar/)
-    assert.ok(ABOUT_TITLE.length > 0 && ABOUT_TITLE.length <= 70)
+    // Rendered with the "| Cavos" template, the title must stay at 60 or fewer.
+    assert.match(ABOUT_TITLE, /Multichain/)
+    assert.ok(ABOUT_TITLE.length > 0 && ABOUT_TITLE.length <= 52)
     assert.ok(ABOUT_DESCRIPTION.length > 0 && ABOUT_DESCRIPTION.length <= 155)
 
     const data = aboutPageJsonLd()
@@ -1810,7 +1810,7 @@ describe('marketing SEO', () => {
     assert.equal(EMBEDDED_WALLET_VS_EXTENSION_PATH, '/blog/embedded-wallet-vs-browser-extension')
     assert.equal(
       EMBEDDED_WALLET_VS_EXTENSION_TITLE,
-      'Embedded Wallet vs Browser Extension: Where Should Users Sign?',
+      'Embedded Wallet vs Browser Extension: Where to Sign',
     )
 
     const data = blogPostJsonLd({
@@ -3752,5 +3752,30 @@ describe('embedded wallet definitional and API posts', () => {
     assert.match(raw, /\/blog\/what-is-an-embedded-wallet/)
     assert.match(raw, /Free up to 1,000 wallets/)
     assert.doesNotMatch(raw, /—|trustless/i)
+  })
+})
+
+describe('SERP length limits', () => {
+  // Rendered <title> uses the "%s | Cavos" template and HTML-escapes & and '.
+  const renderedTitleLength = (title: string) =>
+    `${title} | Cavos`.replace(/&/g, '&amp;').replace(/'/g, '&#x27;').length
+
+  it('keeps every blog title at 60 characters or fewer once rendered', () => {
+    for (const post of getAllPosts()) {
+      assert.ok(
+        renderedTitleLength(post.title) <= 60,
+        `${post.slug} title renders at ${renderedTitleLength(post.title)} characters`,
+      )
+    }
+  })
+
+  it('keeps every blog excerpt at 160 characters or fewer', () => {
+    for (const post of getAllPosts()) {
+      assert.ok(post.excerpt.length <= 160, `${post.slug} excerpt is ${post.excerpt.length} characters`)
+    }
+  })
+
+  it('keeps the about title at 60 characters or fewer once rendered', () => {
+    assert.ok(renderedTitleLength(ABOUT_TITLE) <= 60, ABOUT_TITLE)
   })
 })

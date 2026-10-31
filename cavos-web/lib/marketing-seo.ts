@@ -27,7 +27,7 @@ export const FRAMEZZ_APP_URL = 'https://app.studioframezz.com/en'
 export const FRAMEZZ_GALLERIES_URL = 'https://galleries.studioframezz.com/'
 
 export const ABOUT_PATH = '/about'
-export const ABOUT_TITLE = 'About Cavos: Embedded Wallet SDK for Starknet, Solana & Stellar'
+export const ABOUT_TITLE = 'About Cavos: Multichain Embedded Wallet SDK'
 export const ABOUT_DESCRIPTION =
   'Cavos, LLC is a software and SaaS company. The Cavos wallet is the main product. It also builds Framezz event photography software and Framezz Galleries.'
 
