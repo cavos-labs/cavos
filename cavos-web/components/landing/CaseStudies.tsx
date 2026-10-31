@@ -329,7 +329,7 @@ export function CaseStudies() {
                     The wallet your users never have to think about.
                 </h2>
                 <p className="max-w-[44ch] self-end text-[15px] leading-relaxed text-muted">
-                    Real teams shipping Cavos in production — embedded self-custody woven so
+                    Real teams shipping Cavos in production, with embedded self-custody woven so
                     deep into their products that people pay, play, and trade without ever
                     meeting a seed phrase.
                 </p>

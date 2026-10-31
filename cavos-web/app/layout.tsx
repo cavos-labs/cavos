@@ -53,7 +53,7 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Cavos — device-native embedded wallet infrastructure for Starknet, Solana, and Stellar",
+        alt: "Cavos: device-native embedded wallet infrastructure for Starknet, Solana, and Stellar",
       },
     ],
     locale: "en_US",
@@ -69,7 +69,7 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Cavos — device-native embedded wallet infrastructure for Starknet, Solana, and Stellar",
+        alt: "Cavos: device-native embedded wallet infrastructure for Starknet, Solana, and Stellar",
       },
     ],
   },
@@ -97,7 +97,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="icon" href="/favicon.ico" />
-        <link rel="alternate" type="text/plain" href="/llms.txt" title="LLMs.txt — Cavos for AI" />
+        <link rel="alternate" type="text/plain" href="/llms.txt" title="LLMs.txt: Cavos for AI" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(globalJsonLd) }}

@@ -14,6 +14,7 @@ Cavos (`@cavos/kit`) is an embedded wallet SDK for web and React Native. The sig
 - Gas Sponsorship in Any Token on all three chains (USDC is one example).
 - Recovery: a new device restores access with another signed-in device, a synced passkey, or opt-in hardware-isolated recovery in an AWS Nitro Enclave.
 - Auth: Cavos-hosted login or bring your own auth with `identity: { userId, email }`.
+- Recovery enclave is open source: https://github.com/cavos-labs/cavos-recovery. The passkey and the enclave only hold an encrypted copy of the master key for restore; they never sign.
 
 ## Pricing
 
@@ -43,6 +44,27 @@ Cavos (`@cavos/kit`) is an embedded wallet SDK for web and React Native. The sig
 - [Turnkey alternatives](https://cavos.xyz/turnkey-alternatives)
 - [Dynamic alternatives](https://cavos.xyz/dynamic-alternatives)
 - [Magic alternatives](https://cavos.xyz/magic-alternatives)
+- [Cavos vs Privy](https://cavos.xyz/compare/privy)
+- [Cavos vs Dynamic](https://cavos.xyz/compare/dynamic)
+- [Cavos vs Turnkey](https://cavos.xyz/compare/turnkey)
+- [Cavos vs Web3Auth](https://cavos.xyz/compare/web3auth)
+- [Cavos vs Magic](https://cavos.xyz/compare/magic)
+- [Cavos vs Alchemy](https://cavos.xyz/compare/alchemy)
+- [Privy vs Turnkey](https://cavos.xyz/blog/privy-vs-turnkey): auth product vs signing infrastructure
+- [Alchemy vs Privy](https://cavos.xyz/blog/alchemy-vs-privy): transaction layer vs finished embedded wallet
+
+## Guides
+
+- [What is an embedded wallet?](https://cavos.xyz/blog/what-is-an-embedded-wallet): plain definition and key models
+- [Embedded wallet API](https://cavos.xyz/blog/embedded-wallet-api): auth, connect, execute, gas, recovery in `@cavos/kit`
+- [Non-custodial embedded wallets](https://cavos.xyz/blog/non-custodial-embedded-wallet)
+- [Wallet-as-a-service](https://cavos.xyz/blog/wallet-as-a-service)
+- [How to add an embedded wallet to a React app](https://cavos.xyz/blog/how-to-add-an-embedded-wallet)
+- [Embedded wallet React SDK best practices](https://cavos.xyz/blog/embedded-wallet-react-sdk)
+- [Embedded wallet vs browser extension](https://cavos.xyz/blog/embedded-wallet-vs-browser-extension): where users should sign
+- [How to send gasless Starknet transactions](https://cavos.xyz/blog/gasless-starknet-transactions)
+- [How to set up a Stellar wallet in your app](https://cavos.xyz/blog/stellar-embedded-wallet-tutorial)
+- [The Cavos enclave is open source (Kit 0.5.0)](https://cavos.xyz/blog/cavos-kit-0-5-0)
 
 ## Docs
 

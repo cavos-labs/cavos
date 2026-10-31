@@ -37,7 +37,7 @@ export const TURNKEY_ALTERNATIVES_H1 =
 
 export const TURNKEY_ALTERNATIVES_PUBLISHED = '2026-10-27'
 
-export const TURNKEY_ALTERNATIVES_MODIFIED = '2026-10-30'
+export const TURNKEY_ALTERNATIVES_MODIFIED = '2026-10-31'
 
 export const TURNKEY_ALTERNATIVES_CRUMB = 'Turnkey alternatives'
 
@@ -95,7 +95,7 @@ export const TURNKEY_ALTERNATIVES_FAQ = [
   {
     question: 'What is the best Turnkey alternative?',
     answer:
-      'There is no single best Turnkey alternative — the right pick depends on whether you want a finished SDK or signing infrastructure. Cavos is the alternative when the product is on Starknet, Solana, or Stellar and the review requires a device-native key. Privy is the more mature finished SDK across EVM. Dynamic is stronger when you must connect wallets users already hold. Web3Auth / MetaMask Embedded Wallets fits broad social-login chain coverage. Magic fits simple email-first EVM onboarding. Turnkey itself remains the better pick when you are building a wallet or custody product on policy-driven enclaves.',
+      'There is no single best Turnkey alternative. The right pick depends on whether you want a finished SDK or signing infrastructure. Cavos is the alternative when the product is on Starknet, Solana, or Stellar and the review requires a device-native key. Privy is the more mature finished SDK across EVM. Dynamic is stronger when you must connect wallets users already hold. Web3Auth / MetaMask Embedded Wallets fits broad social-login chain coverage. Magic fits simple email-first EVM onboarding. Turnkey itself remains the better pick when you are building a wallet or custody product on policy-driven enclaves.',
   },
   {
     question: 'Is there a free Turnkey alternative?',
@@ -178,7 +178,7 @@ export const turnkeyAlternativesGuide: AlternativesGuide = {
   howToChooseOutro: DEFAULT_HOW_TO_CHOOSE_OUTRO,
   stayHeading: 'When Turnkey is still the right choice',
   stayIntro:
-    'Turnkey is the better pick when you are building a wallet or custody product on policy-driven enclaves. It is not the weaker product — it covers ground Cavos does not. Stay with Turnkey when the following are true.',
+    'Turnkey is the better pick when you are building a wallet or custody product on policy-driven enclaves. It is not the weaker product; it covers ground Cavos does not. Stay with Turnkey when the following are true.',
   chooseThem: turnkeyChooseThem,
   faq: TURNKEY_ALTERNATIVES_FAQ,
   itemListName: 'Turnkey alternatives',

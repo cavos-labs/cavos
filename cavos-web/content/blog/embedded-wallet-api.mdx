@@ -23,15 +23,42 @@ faq:
     answer: "Recovery is how a new device restores the means to sign. In Cavos that is a restore of the MasterDEK, not an on-chain device list. After login, enrollPasskeyDefault() stores an encrypted DEK copy under a passkey. Opt-in hardware-isolated social recovery unwraps the same DEK when the user signs in again. There is no on-chain social recovery and no on-chain device signers."
 ---
 
-Search for **embedded wallet API** and you usually want the developer surface: authenticate a user, create or look up a wallet, sign, send, sponsor gas, recover a device. An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain account they can pay, receive, and sign with — no [browser extension](/blog/embedded-wallet-vs-browser-extension), no seed phrase, no trip to another app.
+Search for **embedded wallet API** and you usually want the developer surface: authenticate a user, create or look up a wallet, sign, send, sponsor gas, recover a device. An [embedded wallet](/embedded-wallet) lives inside your application ([what is an embedded wallet?](/blog/what-is-an-embedded-wallet) has the plain definition). The user signs in the way they already do. The product resolves an on-chain account they can pay, receive, and sign with. There is no [browser extension](/blog/embedded-wallet-vs-browser-extension), no seed phrase, and no trip to another app.
 
-The **embedded wallet API** is that surface on a [wallet as a service](/blog/wallet-as-a-service) platform. Cavos ships it as a **client SDK**, not a public REST create-wallet endpoint. The packages are `@cavos/kit`, `@cavos/kit/react`, and `@cavos/kit/react-native`. Hosted registry, paymaster, and relayer calls happen inside the kit behind an App ID. This guide is the docs-style map of that contract in `@cavos/kit` 0.4.4, grounded in the [API reference](https://docs.cavos.xyz/docs/api-reference). The [React integration](/blog/how-to-add-an-embedded-wallet) is the install. Best practices for embedding that wallet SDK — custody, passkeys, Gas Sponsorship in Any Token, errors, and testnet — are in the [embedded wallet React SDK](/blog/embedded-wallet-react-sdk) guide. The [non-custodial guide](/blog/non-custodial-embedded-wallet) is the custody test. The [providers comparison](/blog/embedded-wallet-providers) is the shortlist. Adapters ship today for [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), and [Stellar](/embedded-stellar-wallet).
+The **embedded wallet API** is that surface on a [wallet as a service](/blog/wallet-as-a-service) platform. Cavos ships it as a **client SDK**, not a public REST create-wallet endpoint. The packages are `@cavos/kit`, `@cavos/kit/react`, and `@cavos/kit/react-native`. Hosted registry, paymaster, and relayer calls happen inside the kit behind an App ID. This guide is the docs-style map of that contract in `@cavos/kit` 0.5.0, grounded in the [API reference](https://docs.cavos.xyz/docs/api-reference). The [React integration](/blog/how-to-add-an-embedded-wallet) is the install. Best practices for embedding that wallet SDK (custody, passkeys, Gas Sponsorship in Any Token, errors, and testnet) are in the [embedded wallet React SDK](/blog/embedded-wallet-react-sdk) guide. The [non-custodial guide](/blog/non-custodial-embedded-wallet) is the custody test. The [providers comparison](/blog/embedded-wallet-providers) is the shortlist. Adapters ship today for [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), and [Stellar](/embedded-stellar-wallet).
+
+## The embedded wallet API in 15 lines
+
+This is the whole contract with `@cavos/kit`: authenticate, connect, then execute. Everything else in this guide expands one of these calls.
+
+```ts
+import { Cavos } from "@cavos/kit";
+
+// 1. Authenticate: Cavos login, or your own stable user id.
+const identity = { userId: user.id, email: user.email };
+
+// 2. Connect: look up or claim the address for (userId, appId, chain, network).
+const session = await Cavos.connect({
+  chains: ["solana"],
+  defaultChain: "solana",
+  network: "testnet",
+  appSalt: "my-app", // never change after users exist
+  identity,
+  appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+});
+
+// 3. Execute: signed on this device, fee paid by the hosted relayer.
+const wallet = session.wallet("solana");
+const txHash = await wallet.execute(1_000_000n, destinationAddress); // lamports
+```
+
+There is no server-side key and no create-wallet HTTP call in your backend. The signature is produced on the user’s device. Keys never leave the device in plaintext and are never used to sign on Cavos servers.
 
 Cavos, LLC is a software and SaaS company. The wallet is the main product: a device-native, self-custodial embedded wallet. Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds.
 
 ## What an embedded wallet API is
 
-An embedded wallet API is not a wallet the user downloads. It is the library — and the hosted services behind it — that your product calls to:
+An embedded wallet API is not a wallet the user downloads. It is the library, plus the hosted services behind it, that your product calls to:
 
 - **Authenticate a session.** Login selects which user this is. It should not, by itself, authorize a spend.
 - **Create or look up a wallet.** Given a stable user id, return the on-chain address for this app and chain, or claim a new one.
@@ -49,11 +76,11 @@ Write the answers down before you compare SDKs.
 
 **Custody model.** Who can produce a valid signature without the user present? Device-native keys, MPC shares, a provider-operated HSM or TEE, and a remote enclave are different answers. “Non-custodial” is a claim. The test is who can move the assets.
 
-**Chains.** Which networks are native — that chain’s account model, signatures, and fee path — and which are a compatibility layer around an EOA-shaped key. Cavos is Starknet, Solana, and Stellar only. It is not an EVM-wide wallet layer.
+**Chains.** Which networks are native (that chain’s account model, signatures, and fee path) and which are a compatibility layer around an EOA-shaped key. Cavos is Starknet, Solana, and Stellar only. It is not an EVM-wide wallet layer.
 
 **Client SDK vs REST.** A finished SDK gives you `connect` and `execute` inside the app. A signing API gives you keys, policies, and an HTTP surface; you assemble login and approval. Confirm which layer you are buying. Cavos is the first. Turnkey-style infrastructure is the second.
 
-**Rate limits and pricing.** Units differ: wallet creates, monthly active users, monthly active wallets, signatures, volume. Ask what is metered, what is rate-limited, and whether gas sponsorship is on the public plan. [Cavos pricing](/pricing) publishes a free 1,000 wallet creates, Essential at $59/mo, and Complete at $139/mo with enclave recovery. Bind any client-visible sponsorship credential by app, environment, origin, rate, and spend.
+**Rate limits and pricing.** Units differ: wallet creates, monthly active users, monthly active wallets, signatures, volume. Ask what is metered, what is rate-limited, and whether gas sponsorship is on the public plan. [Cavos pricing](/pricing) publishes Free up to 1,000 wallets, Essential at $59 per month, and Complete at $139 per month with enclave recovery. Bind any client-visible sponsorship credential by app, environment, origin, rate, and spend.
 
 **Export.** Can the user export a private key or seed, or only restore the same address on a new device? Addresses are derived differently across vendors. Migration is a project. Cavos restores the MasterDEK on a new device. It does not advertise a seed or private-key export.
 
@@ -88,7 +115,7 @@ This is the map from the job you searched for to the export you call. None of th
 
 Authentication exists for one reason: a stable `userId` (plus optional email) that the registry keys on. **The login never signs transactions.** That is always the device key.
 
-Hosted login is Google, Apple, or email. In React:
+Hosted login is Google, Apple, or email. Since 0.5.0, GitHub is an optional web-only provider: add `'github'` to `modal.providers`, or call `login("github")`. It is not available in React Native. In React:
 
 ```tsx
 import { useCavos } from "@cavos/kit/react";
@@ -96,7 +123,7 @@ import { useCavos } from "@cavos/kit/react";
 const { openModal, login, sendOtp, verifyOtp, logout } = useCavos();
 
 openModal();           // hosted modal
-login("google");       // or login("apple")
+login("google");       // or "apple"; "github" if enabled
 await sendOtp(email);
 await verifyOtp(email, code); // 9 characters, lowercase letters and digits
 ```
@@ -135,9 +162,9 @@ The registry is insert-only. The first device to register wins. A second device 
 
 | Status | Meaning | Can execute? |
 |--------|---------|--------------|
-| `undeployed` | Address derived but no on-chain account yet. | Yes — first execute deploys and runs atomically. |
+| `undeployed` | Address derived but no on-chain account yet. | Yes. The first execute deploys and runs atomically. |
 | `ready` | Account deployed and this device holds the key. | Yes |
-| `needs-device-approval` | This device has no key yet. Restore the MasterDEK. | No — restore with a passkey or the enclave. |
+| `needs-device-approval` | This device has no key yet. Restore the MasterDEK. | No. Restore with a passkey or the enclave. |
 
 In React, wrap the tree once in `CavosProvider` and read `address`, `walletStatus`, and `wallet` from `useCavos()`. Never change `appSalt` after users exist: on Solana and Stellar it is also the HKDF salt for the spend key.
 
@@ -147,7 +174,7 @@ The wallet’s account key is derived on the user’s device from a MasterDEK. A
 
 Each adapter keeps the chain’s native account model:
 
-- **[Starknet](/embedded-starknet-wallet).** An audited OpenZeppelin account contract — AccountUpgradeable v3.0.0 — controlled by one stark key derived from the MasterDEK and `appSalt`. Cavos does not ship its own account implementation. There are no on-chain device signers.
+- **[Starknet](/embedded-starknet-wallet).** An audited OpenZeppelin account contract (AccountUpgradeable v3.0.0) controlled by one stark key derived from the MasterDEK and `appSalt`. Cavos does not ship its own account implementation. There are no on-chain device signers.
 - **[Solana](/embedded-solana-wallet).** A native Ed25519 system account. The spend key is HKDF of the same MasterDEK. A relayer co-signs as fee payer. The address is an ordinary Solana public key, not a PDA.
 - **[Stellar](/embedded-stellar-wallet).** A classic G… account, not a Soroban contract account. The spend key is one Ed25519 key, HKDF of the MasterDEK (`cavos-ed25519-stellar-v1`, salted by `appSalt`). A new device restores that DEK and derives the same key.
 
@@ -207,25 +234,26 @@ if (walletStatus.needsDeviceApproval) {
 }
 
 if (!walletStatus.hasPasskey) {
-  await enrollPasskeyDefault(); // after login — sign-up never prompts
+  await enrollPasskeyDefault(); // after login; sign-up never prompts
 }
 ```
 
 `walletStatus.recovery` is `{ protected: boolean; methods: ("passkey" | "social")[] }`. It starts `false` and flips once the lookup returns. Read it as “not known to be protected” during the first moments of a connect.
 
-The kit documents three paths: another signed-in device, a passkey, and opt-in hardware-isolated recovery in an AWS Nitro Enclave that can only unwrap a MasterDEK. If every device and every restore factor is gone, Cavos cannot recover the wallet. See [recovery](https://docs.cavos.xyz/docs/recovery).
+The kit documents three paths: another signed-in device, a passkey, and opt-in hardware-isolated recovery in an AWS Nitro Enclave. The enclave holds only an encrypted copy of the MasterDEK for restore. It cannot sign or move funds, and its code is open source at [cavos-labs/cavos-recovery](https://github.com/cavos-labs/cavos-recovery). If every device and every restore factor is gone, Cavos cannot recover the wallet. See [recovery](https://docs.cavos.xyz/docs/recovery).
 
 ## What to read next
 
-- [embedded wallet](/embedded-wallet) — custody, key models, and how to choose an SDK.
-- [Wallet-as-a-service](/blog/wallet-as-a-service) — platform parts, pricing models, and build versus buy.
-- [Non-custodial embedded wallets](/blog/non-custodial-embedded-wallet) — who can sign, key models, and how to verify a vendor’s claim.
-- [How to add an embedded wallet to a React app](/blog/how-to-add-an-embedded-wallet) — `CavosProvider`, first sponsored transaction.
-- [Embedded wallet React SDK](/blog/embedded-wallet-react-sdk) — best practices for embedding a wallet SDK in an app.
-- [Embedded wallet providers compared](/blog/embedded-wallet-providers) — pricing, chains, and key models.
-- [Embedded wallet vs browser extension](/blog/embedded-wallet-vs-browser-extension) — where users should sign.
-- [How to add an embedded Stellar wallet](/blog/stellar-embedded-wallet-tutorial) — social login, the G… before create, first sponsored execute.
+- [What is an embedded wallet?](/blog/what-is-an-embedded-wallet): a plain definition, key models, and when to use one.
+- [embedded wallet](/embedded-wallet): custody, key models, and how to choose an SDK.
+- [Wallet-as-a-service](/blog/wallet-as-a-service): platform parts, pricing models, and build versus buy.
+- [Non-custodial embedded wallets](/blog/non-custodial-embedded-wallet): who can sign, key models, and how to verify a vendor’s claim.
+- [How to add an embedded wallet to a React app](/blog/how-to-add-an-embedded-wallet): `CavosProvider`, first sponsored transaction.
+- [Embedded wallet React SDK](/blog/embedded-wallet-react-sdk): best practices for embedding a wallet SDK in an app.
+- [Embedded wallet providers compared](/blog/embedded-wallet-providers): pricing, chains, and key models.
+- [Embedded wallet vs browser extension](/blog/embedded-wallet-vs-browser-extension): where users should sign.
+- [How to add an embedded Stellar wallet](/blog/stellar-embedded-wallet-tutorial): social login, the G… before create, first sponsored execute.
 - Chain pages: [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), [Stellar](/embedded-stellar-wallet).
 - [Quickstart](https://docs.cavos.xyz/docs/quickstart), [React](https://docs.cavos.xyz/docs/react), and [API reference](https://docs.cavos.xyz/docs/api-reference).
 - [Open-sourcing the Cavos enclave (Kit 0.5.0)](/blog/cavos-kit-0-5-0): the open-source recovery enclave, GitHub sign-in, and signed enclave releases.
-- [Pricing](/pricing) for the free 1,000 creates and paid recovery options.
+- [Pricing](/pricing) for Free up to 1,000 wallets, Essential at $59, and Complete at $139.

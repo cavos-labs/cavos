@@ -1,7 +1,7 @@
 ---
 title: "Alchemy vs Privy: Pricing & Custody (2026)"
 date: "2026-10-27"
-updated: "2026-10-30"
+updated: "2026-10-31"
 excerpt: "Alchemy vs Privy in 2026: Account Kit is deprecated, Wallet APIs are the successor, Alchemy recommends Privy as the signer, and where Cavos fits."
 category: "Guide"
 ogQuote: "Alchemy vs Privy is a transaction layer versus a signer, not an SDK swap."
@@ -31,7 +31,7 @@ faq:
     Privy pricing: https://privy.io/pricing
 */}
 
-An [embedded wallet](/embedded-wallet) lives inside your application. **Alchemy vs Privy** is the question Search Console keeps sending at that category, and it is easy to treat them as two SDKs with different logos. They are not. Alchemy’s wallet offering is a transaction layer after Account Kit’s deprecation. Privy is a finished auth and wallet product — and Alchemy’s own docs recommend it as the signer.
+An [embedded wallet](/embedded-wallet) lives inside your application. **Alchemy vs Privy** is the question Search Console keeps sending at that category, and it is easy to treat them as two SDKs with different logos. They are not. Alchemy’s wallet offering is a transaction layer after Account Kit’s deprecation. Privy is a finished auth and wallet product, and Alchemy’s own docs recommend it as the signer.
 
 This guide is that comparison: product scope, key model, chains, developer experience, pricing, and who each is for. Cavos, LLC is a software and SaaS company. Positioning for Cavos comes after the table is fair. If the honest answer is Alchemy Wallet APIs plus Privy, that is the answer. One-to-one pages live at [Cavos vs Alchemy](/compare/alchemy) and [Cavos vs Privy](/compare/privy). Teams leaving Privy for a broader shortlist can start at [Privy alternatives](/privy-alternatives). Sibling shortlists: [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), [Magic alternatives](/magic-alternatives).
 
@@ -96,7 +96,7 @@ The practical fork: Privy is stronger when you want **managed send** on EVM and 
 
 **Privy** is the shorter path to a consumer wallet in a React or mobile app. You get hosted or JWT login, an embedded wallet bound to that user, optional connectors, and SDKs listed for web, mobile, and gaming. You are integrating a product.
 
-**Alchemy Wallet APIs** are the shorter path to a transaction layer. You prepare calls, the signer signs, Wallet APIs submit, sponsor, bump fees, and track status. The TypeScript SDK and REST APIs are both documented. You still own login, key custody, and recovery unless Privy (or another signer) supplies them. Account Kit’s React SDK, embedded UI, and login methods are the deprecated path — do not start there.
+**Alchemy Wallet APIs** are the shorter path to a transaction layer. You prepare calls, the signer signs, Wallet APIs submit, sponsor, bump fees, and track status. The TypeScript SDK and REST APIs are both documented. You still own login, key custody, and recovery unless Privy (or another signer) supplies them. Account Kit’s React SDK, embedded UI, and login methods are the deprecated path, do not start there.
 
 Time-to-first-signature is not the same as time-to-product. Privy collapses login, wallet, and connectors. Alchemy collapses sponsorship and smart-wallet execution; the signer is a second vendor.
 
@@ -116,17 +116,17 @@ They do not sell the same unit. Figures below are from each vendor’s public pr
 </thead>
 <tbody>
 <tr>
-<td>Developer — Free</td>
+<td>Developer: Free</td>
 <td>$0</td>
 <td>0–499 MAU; 50,000 signatures and $1M volume / month</td>
 </tr>
 <tr>
-<td>Developer — Core</td>
+<td>Developer: Core</td>
 <td>$299 / month</td>
 <td>500–2,499 MAU</td>
 </tr>
 <tr>
-<td>Developer — Scale</td>
+<td>Developer: Scale</td>
 <td>$499 / month</td>
 <td>2,500–9,999 MAU</td>
 </tr>
@@ -207,8 +207,8 @@ They do not sell the same unit. Figures below are from each vendor’s public pr
 </tr>
 <tr>
 <td>Best for</td>
-<td>Teams that already have a signer and want a transaction layer — gas sponsorship, batching, EIP-7702 — on many EVM chains.</td>
-<td>Teams that want one vendor for login, an in-app wallet, and connecting wallets users already hold — especially on EVM.</td>
+<td>Teams that already have a signer and want a transaction layer (gas sponsorship, batching, EIP-7702) on many EVM chains.</td>
+<td>Teams that want one vendor for login, an in-app wallet, and connecting wallets users already hold, especially on EVM.</td>
 </tr>
 </tbody>
 </table>
@@ -219,7 +219,7 @@ Worked Cavos comparisons: [Cavos vs Alchemy](/compare/alchemy), [Cavos vs Privy]
 
 **Choose Privy** when the user should get an in-app wallet from a login you already understand, and you also need to connect MetaMask, Phantom, or WalletConnect for people who already hold assets. EVM-first consumer apps sit here. Alchemy’s own docs put Privy in this seat as the recommended signer when you add Wallet APIs.
 
-**Choose Alchemy Wallet APIs** when you already have a signer — Privy, Turnkey, Openfort, or a viem-compatible key — and want gas sponsorship, batching, session keys, and EIP-7702 Modular Account v2 on many EVM networks (and Solana sponsorship without a bundler). Do not choose Account Kit for a new integration; it is deprecated.
+**Choose Alchemy Wallet APIs** when you already have a signer (Privy, Turnkey, Openfort, or a viem-compatible key) and want gas sponsorship, batching, session keys, and EIP-7702 Modular Account v2 on many EVM networks (and Solana sponsorship without a bundler). Do not choose Account Kit for a new integration; it is deprecated.
 
 **Choose both** when that is the documented architecture: Privy (or another signer) for login and keys, Wallet APIs for the transaction layer. That is Alchemy’s recommended path, not a competition between two embedded-wallet SDKs.
 
@@ -231,7 +231,7 @@ Cavos is an [embedded wallet](/embedded-wallet), not an extension, not a connect
 
 Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds. Login produces a stable identity for a registry lookup; it never signs a transaction. There is no MPC. There is no hosted spend key.
 
-On Starknet the on-chain account is an **audited OpenZeppelin account contract** (AccountUpgradeable v3.0.0). Cavos does not ship its own account implementation. There is no on-chain device-signer list and no on-chain social recovery. Execution is paymaster-sponsored. Connect does not deploy — the first execute deploys and runs atomically.
+On Starknet the on-chain account is an **audited OpenZeppelin account contract** (AccountUpgradeable v3.0.0). Cavos does not ship its own account implementation. There is no on-chain device-signer list and no on-chain social recovery. Execution is paymaster-sponsored. Connect does not deploy, the first execute deploys and runs atomically.
 
 Solana and Stellar are native adapters. Solana provisions a native Ed25519 system account; a relayer co-signs as fee payer. Stellar provisions a classic G… account; the relayer can sponsor reserves and fee-bumps. Both restore the same MasterDEK on a new device rather than adding a second on-chain signer.
 
@@ -245,13 +245,14 @@ The one-to-one write-ups are [Cavos vs Alchemy](/compare/alchemy) and [Cavos vs 
 
 ## What to read next
 
-- [Cavos vs Alchemy](/compare/alchemy) — Wallet APIs versus a finished embedded wallet SDK, including when Alchemy is the better pick.
-- [Cavos vs Privy](/compare/privy) — when Privy covers ground Cavos does not.
-- [Privy alternatives](/privy-alternatives) — Cavos, Dynamic, Turnkey, Web3Auth, and Magic as replacements for Privy.
-- [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), and [Magic alternatives](/magic-alternatives) — the same vendors for those stacks.
-- [Privy vs Turnkey](/blog/privy-vs-turnkey) — finished auth and wallets versus signing infrastructure.
-- [Embedded wallet providers](/blog/embedded-wallet-providers) — the named-vendor table.
-- [embedded wallet](/embedded-wallet) — definitions, key models, and how to choose an SDK.
-- [How to add an embedded wallet](/blog/how-to-add-an-embedded-wallet) — `@cavos/kit` install and the first sponsored transaction.
-- [Pricing](/pricing) — Cavos fees. Alchemy and Privy set theirs independently.
-- [Custody](/custody) — the control test, not the UX label.
+- [Cavos vs Alchemy](/compare/alchemy): Wallet APIs versus a finished embedded wallet SDK, including when Alchemy is the better pick.
+- [Cavos vs Privy](/compare/privy): when Privy covers ground Cavos does not.
+- [Privy alternatives](/privy-alternatives): Cavos, Dynamic, Turnkey, Web3Auth, and Magic as replacements for Privy.
+- [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), and [Magic alternatives](/magic-alternatives): the same vendors for those stacks.
+- [Privy vs Turnkey](/blog/privy-vs-turnkey): finished auth and wallets versus signing infrastructure.
+- [Embedded wallet providers](/blog/embedded-wallet-providers): the named-vendor table.
+- [embedded wallet](/embedded-wallet): definitions, key models, and how to choose an SDK.
+- [How to add an embedded wallet](/blog/how-to-add-an-embedded-wallet): `@cavos/kit` install and the first sponsored transaction.
+- [What is an embedded wallet?](/blog/what-is-an-embedded-wallet): the plain definition, how it works, and who holds the key.
+- [Pricing](/pricing): Cavos fees. Alchemy and Privy set theirs independently.
+- [Custody](/custody): the control test, not the UX label.

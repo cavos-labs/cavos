@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Cavos Docs — multichain embedded wallets',
+    default: 'Cavos Docs: Multichain Embedded Wallets',
     template: '%s | Cavos Docs',
   },
   description:
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     'gasless transactions',
   ],
   openGraph: {
-    title: 'Cavos Docs — multichain embedded wallets',
+    title: 'Cavos Docs: Multichain Embedded Wallets',
     description:
       'Integrate device-native smart accounts across Starknet, Solana, Stellar, and the chains that come next.',
     url: 'https://docs.cavos.xyz',
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Cavos Docs — multichain embedded wallets',
+    title: 'Cavos Docs: Multichain Embedded Wallets',
     description:
       'Integrate device-native smart accounts across Starknet, Solana, Stellar, and the chains that come next.',
     images: ['/og-docs.png'],
@@ -122,7 +122,7 @@ export default function Layout({ children }: LayoutProps<'/'>) {
           rel="alternate"
           type="text/plain"
           href="/llms-full.txt"
-          title="LLMs-full.txt — complete Cavos docs as plain text"
+          title="LLMs-full.txt: complete Cavos docs as plain text"
         />
       </head>
       <body className="flex flex-col min-h-screen font-sans antialiased">

@@ -318,8 +318,8 @@ Hello
     )
     assert.ok(providers)
     assert.ok(privy)
-    assert.equal(providers.lastModified.toISOString().startsWith('2026-10-30'), true)
-    assert.equal(privy.lastModified.toISOString().startsWith('2026-10-30'), true)
+    assert.equal(providers.lastModified.toISOString().startsWith('2026-10-31'), true)
+    assert.equal(privy.lastModified.toISOString().startsWith('2026-10-31'), true)
 
     const reactSdk = publishedBlogPosts().find(
       (item) => item.slug === 'embedded-wallet-react-sdk',
@@ -329,15 +329,15 @@ Hello
     )
     assert.ok(reactSdk)
     assert.ok(alchemyVsPrivy)
-    assert.equal(reactSdk.lastModified.toISOString().startsWith('2026-10-30'), true)
+    assert.equal(reactSdk.lastModified.toISOString().startsWith('2026-10-31'), true)
     assert.equal(
-      alchemyVsPrivy.lastModified.toISOString().startsWith('2026-10-30'),
+      alchemyVsPrivy.lastModified.toISOString().startsWith('2026-10-31'),
       true,
     )
   })
 
   it('keeps the indexable marketing URLs including the React integration guide', () => {
-    assert.equal(entries.length, 42)
+    assert.equal(entries.length, 43)
     assert.ok(
       urls.includes(`${MARKETING_ORIGIN}/blog/how-to-add-an-embedded-wallet`),
     )
@@ -359,6 +359,7 @@ Hello
     )
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/privy-vs-turnkey`))
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/embedded-wallet-api`))
+    assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/what-is-an-embedded-wallet`))
     assert.ok(
       urls.includes(`${MARKETING_ORIGIN}/blog/non-custodial-embedded-wallet`),
     )

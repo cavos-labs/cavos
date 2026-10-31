@@ -181,7 +181,7 @@ function MockupVerify() {
                 </div>
                 <div className="flex items-center gap-2 border-t border-line bg-surface px-4 py-3">
                     <svg width="13" height="13" viewBox="0 0 256 256" fill="currentColor" className="shrink-0 text-ink/55" aria-hidden><path d="M208 80h-24V56a56 56 0 0 0-112 0v24H48a16 16 0 0 0-16 16v112a16 16 0 0 0 16 16h160a16 16 0 0 0 16-16V96a16 16 0 0 0-16-16ZM88 56a40 40 0 0 1 80 0v24H88Zm48 132v12a8 8 0 0 1-16 0v-12a20 20 0 1 1 16 0Z" /></svg>
-                    <p className="text-[11px] font-medium text-ink/60">Cavos never holds your keys — non-custodial</p>
+                    <p className="text-[11px] font-medium text-ink/60">Cavos never holds your keys. Non-custodial.</p>
                 </div>
             </div>
         </div>
@@ -257,13 +257,13 @@ export function FeaturesGrid() {
                     <Cell
                         className="lg:col-span-2"
                         title="Chain-native accounts from your existing identity"
-                        body="Bring a stable user identity and resolve a self-custodial account — the first device to claim names the address. No extensions or seed phrases."
+                        body="Bring a stable user identity and resolve a self-custodial account. The first device to claim names the address. No extensions or seed phrases."
                     >
                         <MockupAccount />
                     </Cell>
                     <Cell
                         title="Gas Sponsorship in Any Token"
-                        body="Integrators fund gas so users transact from the very first tap — sponsorable on every chain, gasless when you choose."
+                        body="Integrators fund gas so users transact from the very first tap: sponsorable on every chain, gasless when you choose."
                     >
                         <MockupGas />
                     </Cell>

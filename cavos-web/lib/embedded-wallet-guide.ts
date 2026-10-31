@@ -8,7 +8,7 @@ export const EMBEDDED_WALLET_DESCRIPTION =
 
 export const EMBEDDED_WALLET_PUBLISHED = '2026-10-07'
 
-export const EMBEDDED_WALLET_MODIFIED = '2026-10-30'
+export const EMBEDDED_WALLET_MODIFIED = '2026-10-31'
 
 /** Featured-snippet definition rendered under the H1. Keep 40–60 words. */
 export const EMBEDDED_WALLET_DEFINITION =
@@ -24,7 +24,7 @@ export const EMBEDDED_WALLET_VS_EXTENSION_PATH =
   '/blog/embedded-wallet-vs-browser-extension'
 
 export const EMBEDDED_WALLET_VS_EXTENSION_TITLE =
-  'Embedded Wallet vs Browser Extension: Where Should Users Sign?'
+  'Embedded Wallet vs Browser Extension: Where to Sign'
 
 export const STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH =
   '/blog/stellar-embedded-wallet-tutorial'
@@ -54,6 +54,11 @@ export const EMBEDDED_WALLET_API_PATH = '/blog/embedded-wallet-api'
 export const EMBEDDED_WALLET_API_TITLE =
   'Embedded Wallet API (2026): SDK Methods & Auth'
 
+export const WHAT_IS_AN_EMBEDDED_WALLET_PATH = '/blog/what-is-an-embedded-wallet'
+
+export const WHAT_IS_AN_EMBEDDED_WALLET_TITLE =
+  'What Is an Embedded Wallet? A Developer Definition'
+
 export const NON_CUSTODIAL_EMBEDDED_WALLET_PATH =
   '/blog/non-custodial-embedded-wallet'
 
@@ -63,7 +68,7 @@ export const NON_CUSTODIAL_EMBEDDED_WALLET_TITLE =
 export const WALLET_AS_A_SERVICE_PATH = '/blog/wallet-as-a-service'
 
 export const WALLET_AS_A_SERVICE_TITLE =
-  'Wallet-as-a-Service (WaaS): How Embedded Wallet Platforms Work (2026)'
+  'Wallet-as-a-Service (WaaS): How It Works (2026)'
 
 export const EMBEDDED_WALLET_REACT_SDK_PATH = '/blog/embedded-wallet-react-sdk'
 
@@ -146,7 +151,7 @@ export const EMBEDDED_WALLET_FAQ = [
   {
     question: 'What is an embedded wallet?',
     answer:
-      'An embedded wallet is a crypto wallet that lives inside an application instead of in a browser extension or a separate wallet app. The user signs in with an identity the product already owns, and the app resolves an on-chain account they can pay, receive, and sign with — without installing software or handling a seed phrase.',
+      'An embedded wallet is a crypto wallet that lives inside an application instead of in a browser extension or a separate wallet app. The user signs in with an identity the product already owns, and the app resolves an on-chain account they can pay, receive, and sign with, without installing software or handling a seed phrase.',
   },
   {
     question: 'How is an embedded wallet different from a browser extension?',
@@ -176,7 +181,7 @@ export const EMBEDDED_WALLET_FAQ = [
   {
     question: 'What is a non-custodial embedded wallet?',
     answer:
-      'A non-custodial embedded wallet is one the provider cannot spend from. The wallet still lives inside the application, but the signing key is created and used on the user’s device and is not reconstructed from provider-held shares. Calling a product non-custodial does not make it so — the test is who can move the assets.',
+      'A non-custodial embedded wallet is one the provider cannot spend from. The wallet still lives inside the application, but the signing key is created and used on the user’s device and is not reconstructed from provider-held shares. Calling a product non-custodial does not make it so. The test is who can move the assets.',
   },
   {
     question: 'Which chains does Cavos support for embedded wallets?',

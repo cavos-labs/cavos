@@ -3,6 +3,8 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 import { blogOgImageUrl, blogOgVersion } from './blog-og-version'
+import { getAllPosts } from './blog'
+import { isBlogPostNoindex } from './marketing-sitemap'
 import {
   ABOUT_DESCRIPTION,
   ABOUT_PATH,
@@ -401,13 +403,12 @@ describe('marketing SEO', () => {
     assert.equal(meta.alternates?.canonical, 'https://cavos.xyz/about')
     assert.equal(
       meta.openGraph?.title,
-      'About Cavos: Embedded Wallet SDK for Starknet, Solana & Stellar | Cavos',
+      'About Cavos: Multichain Embedded Wallet SDK | Cavos',
     )
     assert.match(ABOUT_TITLE, /Embedded Wallet SDK/)
-    assert.match(ABOUT_TITLE, /Starknet/)
-    assert.match(ABOUT_TITLE, /Solana/)
-    assert.match(ABOUT_TITLE, /Stellar/)
-    assert.ok(ABOUT_TITLE.length > 0 && ABOUT_TITLE.length <= 70)
+    // Rendered with the "| Cavos" template, the title must stay at 60 or fewer.
+    assert.match(ABOUT_TITLE, /Multichain/)
+    assert.ok(ABOUT_TITLE.length > 0 && ABOUT_TITLE.length <= 52)
     assert.ok(ABOUT_DESCRIPTION.length > 0 && ABOUT_DESCRIPTION.length <= 155)
 
     const data = aboutPageJsonLd()
@@ -554,7 +555,7 @@ describe('marketing SEO', () => {
     assert.ok(
       EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What are embedded wallet payments?'),
     )
-    assert.equal(EMBEDDED_WALLET_MODIFIED, '2026-10-30')
+    assert.equal(EMBEDDED_WALLET_MODIFIED, '2026-10-31')
   })
 
   it('keeps a single H1 and adds how-it-works plus a compare-data provider table', () => {
@@ -1030,7 +1031,7 @@ describe('marketing SEO', () => {
         assert.match(guide.h1, /Turnkey alternatives and embedded wallet competitors/)
         assert.match(guide.description, /embedded wallet competitors/)
         assert.match(guide.description, /Turnkey vs Privy/)
-        assert.equal(guide.modified, '2026-10-30')
+        assert.equal(guide.modified, '2026-10-31')
         assert.ok(
           guide.faq.some(
             (item) => item.question === 'Who are Turnkey embedded wallet competitors?',
@@ -1042,7 +1043,7 @@ describe('marketing SEO', () => {
         assert.match(guide.title, /Free 1,000 Wallets/)
         assert.match(guide.h1, new RegExp(`5 ${guide.incumbent} alternatives`))
         assert.match(guide.description, /Starknet, Solana, Stellar/)
-        assert.equal(guide.modified, '2026-10-27')
+        assert.equal(guide.modified, '2026-10-31')
       }
       assert.match(guide.description, /1,000 wallets/)
       const fullTitle = `${guide.title} | Cavos`
@@ -1605,8 +1606,8 @@ describe('marketing SEO', () => {
     assert.equal(privy.title, PRIVY_VS_TURNKEY_TITLE)
     assert.ok(providers.excerpt.length >= 140 && providers.excerpt.length <= 155)
     assert.ok(privy.excerpt.length >= 140 && privy.excerpt.length <= 155)
-    assert.equal(providers.updated, '2026-10-30')
-    assert.equal(privy.updated, '2026-10-30')
+    assert.equal(providers.updated, '2026-10-31')
+    assert.equal(privy.updated, '2026-10-31')
     assert.match(EMBEDDED_WALLET_PROVIDERS_TITLE, /Embedded Wallet Providers/)
     assert.match(PRIVY_VS_TURNKEY_TITLE, /Privy vs Turnkey/)
     assert.match(privy.excerpt, /Turnkey vs Privy/)
@@ -1810,7 +1811,7 @@ describe('marketing SEO', () => {
     assert.equal(EMBEDDED_WALLET_VS_EXTENSION_PATH, '/blog/embedded-wallet-vs-browser-extension')
     assert.equal(
       EMBEDDED_WALLET_VS_EXTENSION_TITLE,
-      'Embedded Wallet vs Browser Extension: Where Should Users Sign?',
+      'Embedded Wallet vs Browser Extension: Where to Sign',
     )
 
     const data = blogPostJsonLd({
@@ -2251,7 +2252,7 @@ describe('marketing SEO', () => {
     assert.match(source, /docs\.cavos\.xyz\/docs\/auth/)
     assert.match(source, /docs\.cavos\.xyz\/docs\/wallet-actions/)
     assert.match(source, /docs\.cavos\.xyz\/docs\/recovery/)
-    assert.match(source, /@cavos\/kit` 0\.4\.4/)
+    assert.match(source, /@cavos\/kit` 0\.5\.0/)
     assert.match(source, /CavosProvider/)
     assert.match(source, /Cavos\.connect/)
     assert.match(source, /useCavos/)
@@ -2521,7 +2522,7 @@ describe('marketing SEO', () => {
     assert.equal(WALLET_AS_A_SERVICE_PATH, '/blog/wallet-as-a-service')
     assert.equal(
       WALLET_AS_A_SERVICE_TITLE,
-      'Wallet-as-a-Service (WaaS): How Embedded Wallet Platforms Work (2026)',
+      'Wallet-as-a-Service (WaaS): How It Works (2026)',
     )
 
     const hub = fs.readFileSync(
@@ -2650,7 +2651,7 @@ describe('marketing SEO', () => {
 
     const fields = parseBlogFrontmatter(source)
     assert.equal(fields.title, EMBEDDED_WALLET_REACT_SDK_TITLE)
-    assert.equal(fields.updated, '2026-10-30')
+    assert.equal(fields.updated, '2026-10-31')
     assert.equal(fields.date, '2026-10-27')
 
     const hub = fs.readFileSync(
@@ -2775,7 +2776,7 @@ describe('marketing SEO', () => {
 
     const fields = parseBlogFrontmatter(source)
     assert.equal(fields.title, ALCHEMY_VS_PRIVY_TITLE)
-    assert.equal(fields.updated, '2026-10-30')
+    assert.equal(fields.updated, '2026-10-31')
     assert.equal(fields.date, '2026-10-27')
 
     const compareSource = fs.readFileSync(
@@ -3717,6 +3718,143 @@ describe('comparison copy style', () => {
         .filter((l) => !l.trim().startsWith('//'))
         .join('\n')
       assert.ok(!code.includes('\u2014'), `${f} contains an em-dash`)
+    }
+  })
+})
+
+describe('embedded wallet definitional and API posts', () => {
+  const read = (p: string) => fs.readFileSync(path.join(process.cwd(), p), 'utf8')
+
+  it('what-is-an-embedded-wallet is a definitional post with FAQ that points at the pillar', () => {
+    const raw = read('content/blog/what-is-an-embedded-wallet.mdx')
+    assert.match(raw, /^slug: "what-is-an-embedded-wallet"$/m)
+    assert.match(raw, /^faq:$/m)
+    assert.match(raw, /question: "What is an embedded wallet\?"/)
+    assert.match(raw, /\]\(\/embedded-wallet\)/)
+    assert.match(raw, /\]\(\/blog\/embedded-wallet-api\)/)
+    assert.match(raw, /audited OpenZeppelin account contract/)
+    assert.match(raw, /Gas Sponsorship in Any Token/)
+    assert.match(raw, /Free up to 1,000 wallets/)
+    assert.match(raw, /github\.com\/cavos-labs\/cavos-recovery/)
+    assert.doesNotMatch(raw, /—|trustless|impossible/i)
+  })
+
+  it('the embedded wallet pillar, blog index, and llms.txt link the definitional post', () => {
+    assert.match(read('app/embedded-wallet/page.tsx'), /WHAT_IS_AN_EMBEDDED_WALLET_PATH/)
+    assert.match(read('app/blog/page.tsx'), /WHAT_IS_AN_EMBEDDED_WALLET_PATH/)
+    assert.match(read('public/llms.txt'), /blog\/what-is-an-embedded-wallet/)
+    assert.match(read('public/llms.txt'), /blog\/embedded-wallet-api/)
+  })
+
+  it('embedded-wallet-api opens with a runnable @cavos/kit example and house copy', () => {
+    const raw = read('content/blog/embedded-wallet-api.mdx')
+    assert.match(raw, /## The embedded wallet API in 15 lines/)
+    assert.match(raw, /import \{ Cavos \} from "@cavos\/kit"/)
+    assert.match(raw, /\/blog\/what-is-an-embedded-wallet/)
+    assert.match(raw, /Free up to 1,000 wallets/)
+    assert.doesNotMatch(raw, /—|trustless/i)
+  })
+})
+
+describe('SERP length limits', () => {
+  // Rendered <title> uses the "%s | Cavos" template and HTML-escapes & and '.
+  const renderedTitleLength = (title: string) =>
+    `${title} | Cavos`.replace(/&/g, '&amp;').replace(/'/g, '&#x27;').length
+
+  it('keeps every blog title at 60 characters or fewer once rendered', () => {
+    for (const post of getAllPosts()) {
+      assert.ok(
+        renderedTitleLength(post.title) <= 60,
+        `${post.slug} title renders at ${renderedTitleLength(post.title)} characters`,
+      )
+    }
+  })
+
+  it('keeps every blog excerpt at 160 characters or fewer', () => {
+    for (const post of getAllPosts()) {
+      assert.ok(post.excerpt.length <= 160, `${post.slug} excerpt is ${post.excerpt.length} characters`)
+    }
+  })
+
+  it('keeps the about title at 60 characters or fewer once rendered', () => {
+    assert.ok(renderedTitleLength(ABOUT_TITLE) <= 60, ABOUT_TITLE)
+  })
+})
+
+describe('pillar page copy rules', () => {
+  const stripComments = (source: string) =>
+    source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"])\/\/[^\n]*/g, '$1')
+
+  const files = [
+    'app/page.tsx',
+    'app/about/page.tsx',
+    'app/embedded-wallet/page.tsx',
+    'app/embedded-starknet-wallet/page.tsx',
+    'app/embedded-solana-wallet/page.tsx',
+    'app/embedded-stellar-wallet/page.tsx',
+    'app/custody/page.tsx',
+    'app/compare/page.tsx',
+    'app/compare/[slug]/page.tsx',
+    'app/contact-sales/page.tsx',
+    'app/layout.tsx',
+    'components/landing/CaseStudies.tsx',
+    'components/landing/FeaturesGrid.tsx',
+    'lib/alternatives-guide.ts',
+    'lib/chain-wallet-pages.ts',
+    'lib/compare-data.ts',
+    'lib/dynamic-alternatives.ts',
+    'lib/embedded-wallet-guide.ts',
+    'lib/magic-alternatives.ts',
+    'lib/privy-alternatives.ts',
+    'lib/turnkey-alternatives.ts',
+    'lib/marketing-seo.ts',
+  ]
+
+  for (const file of files) {
+    it(`${file} has no em-dashes in rendered copy`, () => {
+      const source = stripComments(fs.readFileSync(path.join(process.cwd(), file), 'utf8'))
+      assert.ok(!source.includes('\u2014'), `${file} contains an em-dash outside comments`)
+    })
+  }
+})
+
+describe('llms.txt completeness', () => {
+  const llms = fs.readFileSync(path.join(process.cwd(), 'public/llms.txt'), 'utf8')
+
+  it('lists every indexable blog post', () => {
+    for (const post of getAllPosts()) {
+      if (isBlogPostNoindex(post.slug)) continue
+      assert.ok(llms.includes(`https://cavos.xyz/blog/${post.slug})`), `llms.txt is missing /blog/${post.slug}`)
+    }
+  })
+
+  it('lists every compare page', () => {
+    for (const competitor of COMPETITORS) {
+      assert.ok(
+        llms.includes(`https://cavos.xyz/compare/${competitor.slug})`),
+        `llms.txt is missing /compare/${competitor.slug}`,
+      )
+    }
+  })
+})
+
+describe('blog FAQ coverage', () => {
+  it('gives every indexable blog post FAQPage JSON-LD', () => {
+    for (const meta of getAllPosts()) {
+      if (isBlogPostNoindex(meta.slug)) continue
+      assert.ok(meta.faq && meta.faq.length >= 2, `${meta.slug} has no FAQ`)
+      const graph = blogPostJsonLd({
+        title: meta.title,
+        description: meta.excerpt,
+        path: `/blog/${meta.slug}`,
+        datePublished: meta.date,
+        dateModified: meta.updated ?? meta.date,
+        crumbs: [{ name: 'Home', path: '/' }, { name: 'Blog', path: '/blog' }, { name: meta.title, path: `/blog/${meta.slug}` }],
+        faq: meta.faq,
+      })['@graph'] as { '@type': string; dateModified?: string }[]
+      assert.ok(graph.some((node) => node['@type'] === 'FAQPage'), `${meta.slug} FAQPage missing`)
+      assert.ok(graph.some((node) => node['@type'] === 'BreadcrumbList'), `${meta.slug} BreadcrumbList missing`)
+      assert.equal(graph[0].dateModified, meta.updated ?? meta.date)
     }
   })
 })

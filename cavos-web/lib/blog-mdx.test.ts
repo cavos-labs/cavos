@@ -36,3 +36,61 @@ describe('blog MDX compile', () => {
 })
 
 
+
+describe('blog MDX copy rules', () => {
+  it('has no em-dashes in any blog post', () => {
+    const files = fs.readdirSync(BLOG_DIR).filter((name) => name.endsWith('.mdx'))
+    for (const filename of files) {
+      const raw = fs.readFileSync(path.join(BLOG_DIR, filename), 'utf8')
+      assert.ok(!raw.includes('\u2014'), `${filename} contains an em-dash`)
+    }
+  })
+})
+
+describe('blog internal links', () => {
+  const read = (slug: string) => fs.readFileSync(path.join(BLOG_DIR, `${slug}.mdx`), 'utf8')
+
+  it('links the what-is explainer to chain pages, compare, and Privy alternatives', () => {
+    const raw = read('what-is-an-embedded-wallet')
+    for (const href of [
+      '/embedded-wallet',
+      '/embedded-starknet-wallet',
+      '/embedded-solana-wallet',
+      '/embedded-stellar-wallet',
+      '/compare',
+      '/privy-alternatives',
+    ]) {
+      assert.ok(raw.includes(`](${href})`), `what-is-an-embedded-wallet is missing a link to ${href}`)
+    }
+  })
+
+  it('links guides and comparisons back to the what-is explainer', () => {
+    for (const slug of [
+      'how-to-add-an-embedded-wallet',
+      'embedded-wallet-react-sdk',
+      'privy-vs-turnkey',
+      'alchemy-vs-privy',
+      'gasless-starknet-transactions',
+      'stellar-embedded-wallet-tutorial',
+    ]) {
+      assert.ok(read(slug).includes('](/blog/what-is-an-embedded-wallet)'), `${slug} does not link the explainer`)
+    }
+  })
+
+  it('links every best-of shortlist to the compare pages', () => {
+    for (const slug of ['best-embedded-wallets-starknet', 'best-embedded-wallets-stellar', 'best-embedded-wallets-solana']) {
+      assert.ok(read(slug).includes('](/compare'), `${slug} does not link /compare`)
+    }
+  })
+
+  it('gives every indexable post at least three inbound links from other posts', () => {
+    const files = fs.readdirSync(BLOG_DIR).filter((name) => name.endsWith('.mdx'))
+    const sources = files.map((name) => [name, fs.readFileSync(path.join(BLOG_DIR, name), 'utf8')] as const)
+    for (const name of files) {
+      const slug = name.replace(/\.mdx$/, '')
+      if (slug === 'v1-1-9-sdk-security') continue
+      const inbound = sources.filter(([other, raw]) => other !== name && raw.includes(`](/blog/${slug})`)).length
+      assert.ok(inbound >= 3, `${slug} has ${inbound} inbound blog links`)
+    }
+  })
+})

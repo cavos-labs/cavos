@@ -1,8 +1,8 @@
 ---
 title: "Embedded Wallet Providers: Who Fits in 2026"
 date: "2026-10-19"
-updated: "2026-10-30"
-excerpt: "Compare embedded wallet providers in 2026 — Cavos, Privy, Dynamic, Turnkey, Magic, Web3Auth — on custody, chains, pricing, and when each actually fits."
+updated: "2026-10-31"
+excerpt: "Compare embedded wallet providers in 2026 (Cavos, Privy, Dynamic, Turnkey, Magic, Web3Auth) on custody, chains, pricing, and when each actually fits."
 category: "Guide"
 ogQuote: "Picking a wallet provider is a scope question, not a feature checklist."
 slug: "embedded-wallet-providers"
@@ -21,7 +21,7 @@ faq:
     answer: "Among finished embedded-wallet SDKs, Web3Auth / MetaMask Embedded Wallets documents the broadest chain list. Dynamic lists native embedded-wallet chains including EVM, Solana, Bitcoin, Sui, TON, Stellar, Tempo, and Arc. Turnkey signs at the cryptographic-curve level rather than per-network, so coverage is not a chain count. Cavos ships three native adapters: Starknet, Solana, and Stellar. Most chains is not the same as a native account model on the chain you ship."
 ---
 
-An [embedded wallet](/embedded-wallet) lives inside your application. A [wallet as a service](/blog/wallet-as-a-service) platform is the commercial name for the same job: provision an on-chain account from a login, sign in your UI, and skip the browser-extension install. The words do not pick a key model. This guide is the 2026 listicle for **embedded wallet providers** — who provisions the wallet, who can produce a signature, which chains are native, and what the invoice meters. Searchers also type embedded wallet solutions and embedded wallets as a service; they want the same table.
+An [embedded wallet](/embedded-wallet) lives inside your application. A [wallet as a service](/blog/wallet-as-a-service) platform is the commercial name for the same job: provision an on-chain account from a login, sign in your UI, and skip the browser-extension install. The words do not pick a key model. This guide is the 2026 listicle for **embedded wallet providers**, who provisions the wallet, who can produce a signature, which chains are native, and what the invoice meters. Searchers also type embedded wallet solutions and embedded wallets as a service; they want the same table.
 
 Cavos, LLC is a software and SaaS company. Positioning for Cavos comes after the table is fair. If the honest answer is another vendor, that is the answer. One-to-one pages live under [compare](/compare). Teams leaving a named vendor can start at [Privy alternatives](/privy-alternatives), [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), or [Magic alternatives](/magic-alternatives). The current Cavos React release is [Cavos Kit 0.5.0](/blog/cavos-kit-0-5-0).
 
@@ -97,7 +97,7 @@ Write the answers down before you read a pricing page.
 - **Custody / key model.** Device-native, MPC, TEE or HSM, remote enclave. Who holds a share, a wrap, or a credential that can authorize a spend.
 - **Chains.** Which networks are native (account model, fees, signatures) versus a reused EOA-shaped key. Cavos is [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), and [Stellar](/embedded-stellar-wallet) only.
 - **Gas sponsorship.** Whether first transactions work with an empty native-token balance, and whether that feature is on the public plan or enterprise-only.
-- **Auth methods.** Email, social, SMS, passkeys, bring-your-own JWT. Login selects the user. It should not, by itself, be the spend key — unless you chose a hosted model on purpose.
+- **Auth methods.** Email, social, SMS, passkeys, bring-your-own JWT. Login selects the user. It should not, by itself, be the spend key, unless you chose a hosted model on purpose.
 - **Pricing.** Units differ: wallet creates, monthly active users, monthly active wallets, signatures, volume. A cheap free tier with a tight MAU cap is not the same as a flat wallet-create allowance.
 - **Lock-in.** Can the user export a key? Can you restore the same address on another vendor? Addresses are derived differently. Migration is a project. Confirm export, import, and what happens if you cancel the subscription.
 
@@ -107,7 +107,7 @@ The [compare](/compare) hub is the model-level table (device-native vs hosted vs
 
 Search Console shows people asking this as a scope question, not a feature checklist.
 
-**Privy** is a finished embedded wallet and authentication product. The public pricing page lists unified login (email, SMS, socials, passkeys), embedded wallets, and wallet connectors for EVM and Solana. Keys are managed in Privy’s TEE infrastructure. Privy’s own docs say neither Privy nor the application sees the user’s keys on the non-custodial path; secrets are reconstituted in a secure environment under the user’s control. In 2026 Privy also added optional custodial wallets, starting with Bridge, chosen per wallet. Use Privy when you want one vendor for login, an in-app wallet, and connecting wallets users already hold — especially on EVM.
+**Privy** is a finished embedded wallet and authentication product. The public pricing page lists unified login (email, SMS, socials, passkeys), embedded wallets, and wallet connectors for EVM and Solana. Keys are managed in Privy’s TEE infrastructure. Privy’s own docs say neither Privy nor the application sees the user’s keys on the non-custodial path; secrets are reconstituted in a secure environment under the user’s control. In 2026 Privy also added optional custodial wallets, starting with Bridge, chosen per wallet. Use Privy when you want one vendor for login, an in-app wallet, and connecting wallets users already hold, especially on EVM.
 
 **Turnkey** is key-management infrastructure. Private keys persist as ciphertext and decrypt only inside AWS Nitro Enclaves. Custody is determined by who holds the credentials that can authorize the enclave: the end user (non-custodial), your API key (custodial), or both under policy (hybrid). Auth includes passkeys, OAuth, email, and API keys. Gas sponsorship is listed on the Enterprise plan. Use Turnkey when you are building a wallet or custody product and want policy, quorums, and server-side signing primitives. Privy vs Turnkey is usually build-versus-buy.
 
@@ -115,13 +115,13 @@ Search Console shows people asking this as a scope question, not a feature check
 
 None of those three is “the Starknet / Solana / Stellar device-native SDK.” That is a different product shape.
 
-## When Cavos is the right pick — and when it is not
+## When Cavos is the right pick, and when it is not
 
 Cavos is a hardware-isolated, non-custodial [embedded wallet](/embedded-wallet), not an extension, and not a connector.
 
 Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds. Login produces a stable identity for a registry lookup; it never signs a transaction. There is no MPC. There is no hosted spend key.
 
-On Starknet the on-chain account is an **audited OpenZeppelin AccountUpgradeable** v3.0.0, controlled by one stark key derived from the wallet’s MasterDEK and app salt. Cavos does not ship its own account implementation. There is no on-chain device-signer list and no on-chain social recovery. A new device restores the MasterDEK off-chain with a passkey or an opt-in AWS Nitro Enclave; it does not `add_signer`. Execution is paymaster-sponsored. Connect does not deploy — the first execute deploys and runs atomically.
+On Starknet the on-chain account is an **audited OpenZeppelin AccountUpgradeable** v3.0.0, controlled by one stark key derived from the wallet’s MasterDEK and app salt. Cavos does not ship its own account implementation. There is no on-chain device-signer list and no on-chain social recovery. A new device restores the MasterDEK off-chain with a passkey or an opt-in AWS Nitro Enclave; it does not `add_signer`. Execution is paymaster-sponsored. Connect does not deploy, the first execute deploys and runs atomically.
 
 Solana and Stellar are native adapters, not EVM compatibility. Solana provisions a native Ed25519 system account; a relayer co-signs as fee payer. Stellar provisions a classic G… account so existing tools already understand the address; the relayer can sponsor reserves and fee-bumps. Both restore the same MasterDEK on a new device rather than adding a second on-chain signer.
 
@@ -133,19 +133,21 @@ Auth is hosted Google, Apple, or email, or an identity you pass in from your own
 
 ## What to read next
 
-- [embedded wallet](/embedded-wallet) — definitions, key models, and how to choose an SDK.
-- [Wallet-as-a-service](/blog/wallet-as-a-service) — platform parts, pricing models, and build versus buy.
-- [Non-custodial embedded wallets](/blog/non-custodial-embedded-wallet) — who can sign, key models, and how to verify a vendor’s claim.
-- [Embedded wallet API](/blog/embedded-wallet-api) — auth, create, keys, signing, gas, and recovery.
-- [Privy vs Turnkey](/blog/privy-vs-turnkey) — finished SDK versus signing infrastructure.
-- [Embedded wallet vs browser extension](/blog/embedded-wallet-vs-browser-extension) — where users should sign.
-- [Privy alternatives](/privy-alternatives) — the same vendors, framed as replacements for Privy.
-- [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), and [Magic alternatives](/magic-alternatives) — the same shortlist for those stacks.
+- [What is an embedded wallet?](/blog/what-is-an-embedded-wallet): a plain definition, key models, and when to use one.
+- [embedded wallet](/embedded-wallet): definitions, key models, and how to choose an SDK.
+- [Wallet-as-a-service](/blog/wallet-as-a-service): platform parts, pricing models, and build versus buy.
+- [Non-custodial embedded wallets](/blog/non-custodial-embedded-wallet): who can sign, key models, and how to verify a vendor’s claim.
+- [Embedded wallet API](/blog/embedded-wallet-api): auth, create, keys, signing, gas, and recovery.
+- [Privy vs Turnkey](/blog/privy-vs-turnkey): finished SDK versus signing infrastructure.
+- [Alchemy vs Privy](/blog/alchemy-vs-privy): a transaction layer versus a finished embedded wallet.
+- [Embedded wallet vs browser extension](/blog/embedded-wallet-vs-browser-extension): where users should sign.
+- [Privy alternatives](/privy-alternatives): the same vendors, framed as replacements for Privy.
+- [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), and [Magic alternatives](/magic-alternatives): the same shortlist for those stacks.
 - [Open-sourcing the Cavos enclave (Kit 0.5.0)](/blog/cavos-kit-0-5-0): the open-source recovery enclave, GitHub sign-in, and signed enclave releases.
-- [Compare embedded wallet providers](/compare) — Cavos vs Privy, Dynamic, Turnkey, Web3Auth, and Magic.
-- [How to add an embedded wallet](/blog/how-to-add-an-embedded-wallet) — `@cavos/kit` install and the first sponsored transaction.
-- [Embedded Starknet wallet](/embedded-starknet-wallet) — audited OpenZeppelin AccountUpgradeable, paymaster, SNIP-12. Also [Solana](/embedded-solana-wallet) and [Stellar](/embedded-stellar-wallet).
-- [Pricing](/pricing) — Cavos fees. Other vendors set theirs independently.
-- [Custody](/custody) — the control test, not the UX label.
-- [Quickstart](https://docs.cavos.xyz/docs/quickstart) — authenticate, connect, execute.
+- [Compare embedded wallet providers](/compare): Cavos vs Privy, Dynamic, Turnkey, Web3Auth, and Magic.
+- [How to add an embedded wallet](/blog/how-to-add-an-embedded-wallet): `@cavos/kit` install and the first sponsored transaction.
+- [Embedded Starknet wallet](/embedded-starknet-wallet): audited OpenZeppelin AccountUpgradeable, paymaster, SNIP-12. Also [Solana](/embedded-solana-wallet) and [Stellar](/embedded-stellar-wallet).
+- [Pricing](/pricing): Cavos fees. Other vendors set theirs independently.
+- [Custody](/custody): the control test, not the UX label.
+- [Quickstart](https://docs.cavos.xyz/docs/quickstart): authenticate, connect, execute.
 - Chain-specific shortlists: [best embedded wallets for Stellar](/blog/best-embedded-wallets-stellar), [Solana](/blog/best-embedded-wallets-solana), and [Starknet](/blog/best-embedded-wallets-starknet).

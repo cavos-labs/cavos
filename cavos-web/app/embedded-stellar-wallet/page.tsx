@@ -67,14 +67,14 @@ export default function EmbeddedStellarWalletPage() {
                             embedded wallet
                         </Link>{' '}
                         for Stellar. The signing key is created and used on the user&apos;s
-                        device — Cavos cannot see it, cannot sign with it, and cannot move funds.
+                        device. Cavos cannot see it, cannot sign with it, and cannot move funds.
                         Available via{' '}
                         <code className="text-sm bg-surface px-1.5 py-0.5 rounded">@cavos/kit</code>{' '}
                         for web and{' '}
                         <code className="text-sm bg-surface px-1.5 py-0.5 rounded">
                             @cavos/kit/react-native
                         </code>{' '}
-                        for mobile (Expo Development Builds, EAS, or bare React Native — Expo Go
+                        for mobile (Expo Development Builds, EAS, or bare React Native; Expo Go
                         is not supported).
                     </p>
                     <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted">
@@ -94,7 +94,7 @@ export default function EmbeddedStellarWalletPage() {
                     <div className="mt-5 space-y-4 text-sm leading-relaxed text-muted">
                         <p>
                             This page is for teams that need a Stellar embedded wallet inside the
-                            product — a classic{' '}
+                            product, a classic{' '}
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">G…</code>{' '}
                             the rest of the ecosystem already understands, not a Soroban contract
                             account and not a Freighter connect flow. Login selects the user.{' '}
@@ -131,7 +131,7 @@ export default function EmbeddedStellarWalletPage() {
                     </h2>
                     <div className="mt-5 space-y-4 text-sm leading-relaxed text-muted">
                         <p>
-                            Cavos provisions a <strong>classic G… Stellar account</strong> — not
+                            Cavos provisions a <strong>classic G… Stellar account</strong>, not
                             a Soroban contract. It is the same address format that wallets,
                             exchanges, and every Stellar tool already understand. That{' '}
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">G…</code>{' '}
@@ -198,7 +198,7 @@ export default function EmbeddedStellarWalletPage() {
                             account locks XLM reserves (a base reserve plus about 0.5 XLM per
                             subentry). With the relayer, those reserves and all fees are
                             sponsored, so the user locks no XLM. The relayer is only a fee payer
-                            and reserve sponsor — never a custodian or identity authority. A bad
+                            and reserve sponsor, never a custodian or identity authority. A bad
                             or absent relayer can cost fees; it cannot move funds or squat an
                             address. Pass{' '}
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
@@ -223,7 +223,7 @@ export default function EmbeddedStellarWalletPage() {
                                 invokeContract
                             </code>{' '}
                             simulates the call, re-signs only this account&apos;s auth entry, and
-                            submits it — sponsored by default.{' '}
+                            submits it, sponsored by default.{' '}
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
                                 invokeContract
                             </code>{' '}
@@ -301,11 +301,11 @@ export default function EmbeddedStellarWalletPage() {
                         >
                             How to add an embedded wallet
                         </Link>
-                        . The Stellar-only path — social login, the{' '}
+                        . The Stellar-only path (social login, the{' '}
                         <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
                             G…
                         </code>{' '}
-                        before create, and the first sponsored execute — is in{' '}
+                        before create, and the first sponsored execute) is in{' '}
                         <Link
                             href="/blog/stellar-embedded-wallet-tutorial"
                             className={MARKETING_PROSE_LINK}

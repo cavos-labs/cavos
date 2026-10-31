@@ -14,7 +14,7 @@ import {
 } from './marketing-seo'
 
 export const CHAIN_WALLET_PUBLISHED = '2026-10-09'
-export const CHAIN_WALLET_MODIFIED = '2026-10-27'
+export const CHAIN_WALLET_MODIFIED = '2026-10-31'
 
 export const STARKNET_FAQ = STARKNET_WALLET_FAQ
 export const SOLANA_FAQ = SOLANA_WALLET_FAQ
@@ -117,7 +117,7 @@ export const STARKNET_FEATURES: [string, string][] = [
   ],
   [
     'Arbitrary multicalls',
-    'Execute any contract calls: token transfers, DeFi interactions, NFT mints — all in one transaction. The kit refuses set_public_key on the account itself.',
+    'Execute any contract calls: token transfers, DeFi interactions, NFT mints, all in one transaction. The kit refuses set_public_key on the account itself.',
   ],
   [
     'Passkey and enclave restore',
@@ -136,7 +136,7 @@ export const SOLANA_FEATURES: [string, string][] = [
   ],
   [
     'Native account',
-    'A plain Ed25519 system account — no custom on-chain program and no PDA.',
+    'A plain Ed25519 system account: no custom on-chain program and no PDA.',
   ],
   [
     'Fee routes',

@@ -1,6 +1,6 @@
 ---
-title: "Embedded Wallet vs Browser Extension: Where Should Users Sign?"
-updated: "2026-10-30"
+title: "Embedded Wallet vs Browser Extension: Where to Sign"
+updated: "2026-10-31"
 date: "2026-10-14"
 excerpt: "When users should sign in an embedded wallet versus a browser extension: UX, custody, recovery, gas, and how to migrate an extension-first product."
 category: "Guide"
@@ -21,7 +21,7 @@ faq:
     answer: "No. Cavos, LLC is a software and SaaS company whose main product is a device-native, self-custodial embedded wallet. It provisions on-chain accounts on Starknet, Solana, and Stellar. It does not inject into window.ethereum or speak WalletConnect. If connecting an existing extension is a requirement, a connection-focused provider is the better fit."
 ---
 
-An [embedded wallet](/embedded-wallet) lives inside your application. A browser extension wallet lives in a separate program the user installed — MetaMask, Rabby, Phantom, Freighter, Argent X, Braavos. The product question is not which UI looks modern. It is **where the user signs**, who holds the key, and what happens when the phone is gone.
+An [embedded wallet](/embedded-wallet) lives inside your application. A browser extension wallet lives in a separate program the user installed: MetaMask, Rabby, Phantom, Freighter, Argent X, Braavos. The product question is not which UI looks modern. It is **where the user signs**, who holds the key, and what happens when the phone is gone.
 
 This guide is the developer comparison for that fork: embedded wallet vs extension, browser extension wallet vs embedded wallet, and when to use an embedded wallet. It stays on UX, custody, recovery, gas, multi-device, and migration. The [pillar page](/embedded-wallet) defines the category and how to choose an SDK. The [React integration guide](/blog/how-to-add-an-embedded-wallet) is the install path once you have already chosen embedded.
 
@@ -31,7 +31,7 @@ Cavos, LLC is a software and SaaS company. The wallet is the main product. Posit
 
 A **browser extension wallet** is a user-owned application. The user installs it, writes down a seed, picks a network, and approves transactions in a popup your product does not render. Your app requests access through an injected provider (`window.ethereum`, WalletConnect, a chain-specific kit). You do not create the account. You ask to use one that already exists.
 
-An **[embedded wallet](/embedded-wallet)** is provisioned by the product. The user signs in the way they already do — Google, Apple, email, or an identity you pass in from your own auth. The SDK looks up or creates an on-chain account for that identity. Approval happens in your UI. There is no install step and no seed phrase in the happy path.
+An **[embedded wallet](/embedded-wallet)** is provisioned by the product. The user signs in the way they already do: Google, Apple, email, or an identity you pass in from your own auth. The SDK looks up or creates an on-chain account for that identity. Approval happens in your UI. There is no install step and no seed phrase in the happy path.
 
 Those sentences are about **where the wallet appears**. They are not a custody claim. Some embedded wallets are self-custodial. Some are hosted. Some split a key with MPC. Some extension users have handed the seed to a “support agent” in a phishing tab. The architecture still differs in ways you can ship against:
 
@@ -45,7 +45,7 @@ Those sentences are about **where the wallet appears**. They are not a custody c
 
 **When the extension wins.** Users already have wallets. They must bring an existing address. They hold assets across many apps and expect the same account everywhere. Your product is a dapp among dapps, not the place their financial identity starts. Connecting MetaMask, Phantom, or Freighter is the feature.
 
-**When the embedded wallet wins.** The user has never used crypto. A wallet picker is a bounce. You need the first transaction to happen inside a flow you own — sign in, get an address, send — without a download, a seed backup modal, or a native token in the account. Games, consumer apps, and anything that looks like a normal SaaS product sit here.
+**When the embedded wallet wins.** The user has never used crypto. A wallet picker is a bounce. You need the first transaction to happen inside a flow you own (sign in, get an address, send) without a download, a seed backup modal, or a native token in the account. Games, consumer apps, and anything that looks like a normal SaaS product sit here.
 
 Neither default is moral. Shipping the wrong one is expensive: you either lose users at the connect modal, or you strand power users who refuse to leave their extension.
 
@@ -74,7 +74,7 @@ Write down who can produce a valid signature **without the user present**. That 
 
 The user holds a BIP-39 (or chain-equivalent) mnemonic. The extension derives accounts from it. Anyone with the seed can spend, on any device, forever, unless the account itself is a smart contract with extra policy. The vendor of the extension cannot sign. Your app cannot sign. That is the model users mean when they say “not your keys, not your coins.”
 
-Costs: the user is the backup system. Most users are bad at that. Seed extraction malware, fake support, and $0 “approvals” are the incident class. You also cannot sponsor the account into existence for someone who has no wallet yet — they must arrive with one.
+Costs: the user is the backup system. Most users are bad at that. Seed extraction malware, fake support, and $0 “approvals” are the incident class. You also cannot sponsor the account into existence for someone who has no wallet yet, they must arrive with one.
 
 ### Device-native embedded
 
@@ -92,7 +92,7 @@ This can be the right product. Exchanges, some neobanks, and “we will freeze t
 
 ### MPC embedded
 
-The private key is split into shares. Signing reconstructs or jointly computes a signature from those shares — typically some mix of the user’s device, the provider’s network, and a recovery factor. MPC is a legitimate design. It is not the same as “the provider never has a key.” The provider holds a share used in reconstruction. Export is often supported, which is a feature and a different threat model: a reconstructable key can leave the product and enter an extension.
+The private key is split into shares. Signing reconstructs or jointly computes a signature from those shares, typically some mix of the user’s device, the provider’s network, and a recovery factor. MPC is a legitimate design. It is not the same as “the provider never has a key.” The provider holds a share used in reconstruction. Export is often supported, which is a feature and a different threat model: a reconstructable key can leave the product and enter an extension.
 
 Broad chain coverage is the usual reason to pick MPC. You are trusting the share holders, the reconstruction protocol, and whoever can coerce enough shares. Read the [compare](/compare) pages for how that shows up in vendor copy.
 
@@ -107,7 +107,7 @@ Recovery is where marketing pages go quiet and incident tickets start.
 **Embedded recovery** has to be designed. The signing key lives on a device. A lost, wiped, or replaced device takes that key with it unless a second authority was set up *before* it was needed. Typical paths:
 
 - Another signed-in device that already holds the key.
-- A passkey that encrypts a copy of the wallet’s master secret. Anyone with the synced passkey (iCloud Keychain, Google Password Manager) can spend — which is also how a new laptop restores the wallet.
+- A passkey that encrypts a copy of the wallet’s master secret. Anyone with the synced passkey (iCloud Keychain, Google Password Manager) can spend, which is also how a new laptop restores the wallet.
 - A recovery code the user stored.
 - Opt-in social or hardware-isolated recovery that unwraps the secret under policy.
 
@@ -121,7 +121,7 @@ For users, the copy is simple: **extension = keep the seed; embedded = enroll re
 
 A user who just signed in with Google does not have ETH, STRK, SOL, or XLM. An extension user might. That one fact drives a surprising amount of architecture.
 
-Extension-first products usually assume the account is already funded, or they send the user to an on-ramp, or they ask the user to bridge. You can still sponsor — paymasters and fee-payer relayers work with connected wallets — but the extension still has to understand the sponsored transaction type. Support matrix: wallet × chain × paymaster. You will debug other people’s popups.
+Extension-first products usually assume the account is already funded, or they send the user to an on-ramp, or they ask the user to bridge. You can still sponsor (paymasters and fee-payer relayers work with connected wallets) but the extension still has to understand the sponsored transaction type. Support matrix: wallet × chain × paymaster. You will debug other people’s popups.
 
 Embedded-first products almost always sponsor the first transaction. Otherwise the “no seed, no install” pitch ends at an empty-gas error. Sponsorship is **chain-specific**, not a universal gas tank:
 
@@ -144,7 +144,7 @@ Practical consequences:
 - **Addresses are not portable across chains.** The Starknet account is not the Solana system account. Do not display one “your address” in the nav unless you mean one chain.
 - **Status is per chain.** One adapter can be ready while another is undeployed or waiting on restore.
 - **Connect is not deploy.** Looking up `(userId, appId, chain)` and returning an address does not put a contract on-chain. The first execute might.
-- **EVM-first vs native-first.** If the product is EVM-wide, an embedded vendor with that coverage — and likely an extension connector — is the default. If the product is Starknet, Solana, or Stellar, you want a native adapter, not a wrapped EOA.
+- **EVM-first vs native-first.** If the product is EVM-wide, an embedded vendor with that coverage (and likely an extension connector) is the default. If the product is Starknet, Solana, or Stellar, you want a native adapter, not a wrapped EOA.
 
 The [chain pages](/embedded-starknet-wallet) exist because those details do not fit a single paragraph. Do not duplicate them here; read them before you promise “one wallet, every chain” on a landing page.
 
@@ -154,7 +154,7 @@ Teams do not wake up wanting a new wallet stack. They wake up looking at a conne
 
 **Keep the extension** when the current users *are* the extension cohort: traders, existing NFT holders, people whose address is their identity in other apps. Adding embedded later is optional. Ripping out connect is how you lose the people who already paid you.
 
-**Add embedded alongside connect** when you want new users who will never install MetaMask, without stranding the ones who already did. Two buttons. Two account graphs. You will need a rule for “this email and this MetaMask address are the same person” if that matters — and it often should not. Linking identities is a custody and support decision, not a CSS decision.
+**Add embedded alongside connect** when you want new users who will never install MetaMask, without stranding the ones who already did. Two buttons. Two account graphs. You will need a rule for “this email and this MetaMask address are the same person” if that matters, and it often should not. Linking identities is a custody and support decision, not a CSS decision.
 
 **Move new activity to embedded** when the product is becoming the wallet. New users get an in-app account. Existing extension users keep their address until they choose to move assets. Do not auto-migrate balances. Addresses are derived differently across vendors; accounts do not transfer because you changed an npm package. Treat it as a migration project: provision new wallets against stable user IDs, then move assets deliberately.
 
@@ -174,26 +174,27 @@ Cavos is an [embedded wallet](/embedded-wallet), not an extension, and not a con
 
 Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds. Login produces a stable identity for a registry lookup; it never signs a transaction. There is no MPC. There is no hosted spend key. Device-native self-custody is the product, not a mode.
 
-On Starknet the on-chain account is an **audited OpenZeppelin AccountUpgradeable** v3.0.0, controlled by one stark key derived from the wallet’s MasterDEK and app salt. Cavos does not ship its own account implementation, and there is no on-chain device-signer list. A new device restores the MasterDEK off-chain; it does not `add_signer`. Execution is paymaster-sponsored; connect does not deploy — the first execute deploys and runs atomically.
+On Starknet the on-chain account is an **audited OpenZeppelin AccountUpgradeable** v3.0.0, controlled by one stark key derived from the wallet’s MasterDEK and app salt. Cavos does not ship its own account implementation, and there is no on-chain device-signer list. A new device restores the MasterDEK off-chain; it does not `add_signer`. Execution is paymaster-sponsored; connect does not deploy, the first execute deploys and runs atomically.
 
 Solana and Stellar are native adapters, not EVM compatibility. Solana provisions a native Ed25519 system account; a relayer co-signs as fee payer. Stellar provisions a classic G… account so existing tools already understand the address; the relayer can sponsor reserves and fee-bumps. Both restore the same MasterDEK on a new device rather than adding a second on-chain signer. Cavos is not an EVM-wide wallet layer. If the product is EVM-first, other vendors cover ground this one does not.
 
-Recovery is passkey restore and opt-in hardware-isolated social recovery (an AWS Nitro Enclave that can only unwrap a MasterDEK, off by default). The docs call that path non-custodial, and not trustless. Enroll it before the phone is gone. Kit details — `CavosProvider`, `connect`, `execute`, chain switching — live in the [React guide](/blog/how-to-add-an-embedded-wallet) and in the [Cavos docs](https://docs.cavos.xyz/docs/quickstart). This article does not repeat the install.
+Recovery is passkey restore and opt-in hardware-isolated social recovery (an AWS Nitro Enclave that can only unwrap a MasterDEK, off by default). The docs call that path non-custodial, and not trustless. Enroll it before the phone is gone. Kit details (`CavosProvider`, `connect`, `execute`, chain switching) live in the [React guide](/blog/how-to-add-an-embedded-wallet) and in the [Cavos docs](https://docs.cavos.xyz/docs/quickstart). This article does not repeat the install.
 
 Cavos does not inject into `window.ethereum` and does not speak WalletConnect. If the requirement is “connect the wallet they already have,” stop here and use a connection-focused provider, alone or beside an embedded SDK. The connector-plus-embedded shortlist is on [Dynamic alternatives](/dynamic-alternatives); Magic’s replacement list is [Magic alternatives](/magic-alternatives).
 
-Use Cavos when the user should never see a wallet picker, the chain is Starknet, Solana, or Stellar, and the review requires that the vendor cannot reconstruct a signing key. Use an extension — or a vendor that connects one — when the user already has an address you must honor.
+Use Cavos when the user should never see a wallet picker, the chain is Starknet, Solana, or Stellar, and the review requires that the vendor cannot reconstruct a signing key. Use an extension (or a vendor that connects one) when the user already has an address you must honor.
 
 ## What to read next
 
-- [embedded wallet](/embedded-wallet) — definitions, key models, provider table, and how to choose an SDK.
-- [Wallet-as-a-service](/blog/wallet-as-a-service) — platform parts, pricing models, and build versus buy.
-- [How to add an embedded wallet to a React app](/blog/how-to-add-an-embedded-wallet) — `@cavos/kit` install, `CavosProvider`, first sponsored transaction.
-- [Embedded wallet API](/blog/embedded-wallet-api) — auth, create, keys, signing, gas, and recovery.
-- [Non-custodial embedded wallets](/blog/non-custodial-embedded-wallet) — who can sign, and how to verify a vendor’s claim.
-- [Embedded wallet providers compared](/blog/embedded-wallet-providers) — pricing, chains, and key models.
-- [How to add an embedded Stellar wallet](/blog/stellar-embedded-wallet-tutorial) — social login versus a Freighter-style extension.
-- [Embedded Starknet wallet](/embedded-starknet-wallet) — audited OpenZeppelin AccountUpgradeable, paymaster, SNIP-12. Also [Solana](/embedded-solana-wallet) and [Stellar](/embedded-stellar-wallet).
-- [Compare embedded wallet providers](/compare) — Privy, Dynamic, Turnkey, Web3Auth, Magic, and when the other product is the better pick.
-- [Custody](/custody) — the control test, not the UX label.
-- [Quickstart](https://docs.cavos.xyz/docs/quickstart) — authenticate, connect, execute.
+- [What is an embedded wallet?](/blog/what-is-an-embedded-wallet): a plain definition, key models, and when to use one.
+- [embedded wallet](/embedded-wallet): definitions, key models, provider table, and how to choose an SDK.
+- [Wallet-as-a-service](/blog/wallet-as-a-service): platform parts, pricing models, and build versus buy.
+- [How to add an embedded wallet to a React app](/blog/how-to-add-an-embedded-wallet): `@cavos/kit` install, `CavosProvider`, first sponsored transaction.
+- [Embedded wallet API](/blog/embedded-wallet-api): auth, create, keys, signing, gas, and recovery.
+- [Non-custodial embedded wallets](/blog/non-custodial-embedded-wallet): who can sign, and how to verify a vendor’s claim.
+- [Embedded wallet providers compared](/blog/embedded-wallet-providers): pricing, chains, and key models.
+- [How to add an embedded Stellar wallet](/blog/stellar-embedded-wallet-tutorial): social login versus a Freighter-style extension.
+- [Embedded Starknet wallet](/embedded-starknet-wallet): audited OpenZeppelin AccountUpgradeable, paymaster, SNIP-12. Also [Solana](/embedded-solana-wallet) and [Stellar](/embedded-stellar-wallet).
+- [Compare embedded wallet providers](/compare): Privy, Dynamic, Turnkey, Web3Auth, Magic, and when the other product is the better pick.
+- [Custody](/custody): the control test, not the UX label.
+- [Quickstart](https://docs.cavos.xyz/docs/quickstart): authenticate, connect, execute.

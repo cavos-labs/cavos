@@ -67,14 +67,14 @@ export default function EmbeddedSolanaWalletPage() {
                             embedded wallet
                         </Link>{' '}
                         for Solana. The signing key is created and used on the user&apos;s
-                        device — Cavos cannot see it, cannot sign with it, and cannot move funds.
+                        device. Cavos cannot see it, cannot sign with it, and cannot move funds.
                         Available via{' '}
                         <code className="text-sm bg-surface px-1.5 py-0.5 rounded">@cavos/kit</code>{' '}
                         for web and{' '}
                         <code className="text-sm bg-surface px-1.5 py-0.5 rounded">
                             @cavos/kit/react-native
                         </code>{' '}
-                        for mobile (Expo Development Builds, EAS, or bare React Native — Expo Go
+                        for mobile (Expo Development Builds, EAS, or bare React Native; Expo Go
                         is not supported).
                     </p>
                     <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted">
@@ -97,7 +97,7 @@ export default function EmbeddedSolanaWalletPage() {
                     </h2>
                     <div className="mt-5 space-y-4 text-sm leading-relaxed text-muted">
                         <p>
-                            This page is for teams that need a Solana embedded wallet SDK — a
+                            This page is for teams that need a Solana embedded wallet SDK: a
                             native system account inside the product, not a Phantom connect
                             button and not a PDA wrapper. If your users should never install a
                             wallet app or handle a seed phrase, login selects the user,{' '}
@@ -128,8 +128,7 @@ export default function EmbeddedSolanaWalletPage() {
                     </h2>
                     <div className="mt-5 space-y-4 text-sm leading-relaxed text-muted">
                         <p>
-                            Cavos provisions a <strong>native Ed25519 system account</strong> —
-                            an ordinary Solana address, the same shape as Phantom, not a PDA and
+                            Cavos provisions a <strong>native Ed25519 system account</strong>, an ordinary Solana address, the same shape as Phantom, not a PDA and
                             not a P-256 program account. There is no on-chain Cavos program. The
                             spend key is HKDF of the MasterDEK ({' '}
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
@@ -205,7 +204,7 @@ export default function EmbeddedSolanaWalletPage() {
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
                                 &apos;self&apos;
                             </code>{' '}
-                            is the default on Solana — the account pays SOL — because a system
+                            is the default on Solana (the account pays SOL) because a system
                             account is signer and fee payer at once. A fresh Starknet or Stellar
                             account cannot deploy itself or meet the base reserve without help;
                             that is why those adapters sponsor by default.{' '}
@@ -288,8 +287,8 @@ export default function EmbeddedSolanaWalletPage() {
                         >
                             How to add an embedded wallet
                         </Link>
-                        . The method-level surface — auth, connect, execute, gas,
-                        recovery — is the{' '}
+                        . The method-level surface (auth, connect, execute, gas,
+                        recovery) is the{' '}
                         <Link
                             href="/blog/embedded-wallet-api"
                             className={MARKETING_PROSE_LINK}

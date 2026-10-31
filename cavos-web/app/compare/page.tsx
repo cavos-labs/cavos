@@ -112,8 +112,8 @@ export default function ComparePage() {
                         <Link href="/custody" className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
                             custody page
                         </Link>
-                        . For the category itself — what an embedded wallet is, and how
-                        extension, MPC, and device-native models differ — start with{' '}
+                        . For the category itself (what an embedded wallet is, and how
+                        extension, MPC, and device-native models differ) start with{' '}
                         <Link href="/embedded-wallet" className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
                             embedded wallet
                         </Link>
@@ -164,7 +164,7 @@ export default function ComparePage() {
                     <h2 className="text-3xl font-medium tracking-[-0.03em]">Compare with a specific provider</h2>
                     <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted">
                         Each page covers custody, chain support, signing authority, sponsorship, and
-                        recovery — including the cases where the other provider is the better choice.
+                        recovery, including the cases where the other provider is the better choice.
                         Teams comparing replacements can start with{' '}
                         <Link
                             href="/privy-alternatives"
@@ -201,14 +201,14 @@ export default function ComparePage() {
                         >
                             {EMBEDDED_WALLET_PROVIDERS_TITLE}
                         </Link>
-                        . The product-shape fork — when users should sign in an{' '}
+                        . The product-shape fork (when users should sign in an{' '}
                         <Link
                             href={EMBEDDED_WALLET_VS_EXTENSION_PATH}
                             className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
                         >
                             embedded wallet vs a browser extension
                         </Link>
-                        {' — '}is a separate guide. Platform parts and pricing models
+                        ) is a separate guide. Platform parts and pricing models
                         are in{' '}
                         <Link
                             href={WALLET_AS_A_SERVICE_PATH}

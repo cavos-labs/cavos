@@ -50,7 +50,7 @@ export default function LandingPage() {
                                     Your next million users shouldn&apos;t need to understand crypto.
                                 </h1>
                                 <p className="mt-3 max-w-4xl text-[clamp(1.05rem,1.6vw,1.25rem)] leading-snug tracking-[-0.02em] text-ink/45 text-balance">
-                                    Let them sign in, pay, earn, and own as naturally as they use any other product—while Cavos handles the wallet infrastructure underneath.
+                                    Let them sign in, pay, earn, and own as naturally as they use any other product, while Cavos handles the wallet infrastructure underneath.
                                 </p>
                             </div>
 

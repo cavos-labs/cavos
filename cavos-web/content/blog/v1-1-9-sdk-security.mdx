@@ -1,7 +1,7 @@
 ---
-title: "v1.1.9 — Cartridge Slot Support & Security Hardening"
+title: "v1.1.9: Cartridge Slot and Security Hardening"
 date: "2025-03-30"
-excerpt: "Native Cartridge Slot integration, built-in relayer, and security hardening in cavos-account — offset-injection protection, cross-provider issuer binding, and self-revocation guard."
+excerpt: "Cavos v1.1.9 adds native Cartridge Slot support, a built-in relayer, and cavos-account hardening: offset-injection protection and a self-revocation guard."
 category: "Release"
 ogQuote: "The fixes are live. No action required from SDK users."
 slug: "v1-1-9-sdk-security"
@@ -19,15 +19,15 @@ We're shipping **v1.1.9** of the Cavos React SDK along with a round of security 
 
 ### Cartridge Slot support
 
-[Cartridge Slot](https://docs.cartridge.gg/slot) is a private, fee-free Katana chain forked from Starknet mainnet. It is purpose-built for games and high-throughput apps that need instant, zero-cost transactions — no gas sponsorship required.
+[Cartridge Slot](https://docs.cartridge.gg/slot) is a private, fee-free Katana chain forked from Starknet mainnet. It is purpose-built for games and high-throughput apps that need instant, zero-cost transactions, no gas sponsorship required.
 
-Starting with v1.1.9, the Cavos SDK natively supports Slot. Users authenticate with Google or Apple as usual, their wallet is deployed on mainnet, and the SDK automatically mirrors it to your Slot instance. From that point on, every `executeOnSlot()` call goes directly to the Slot chain — instant and free.
+Starting with v1.1.9, the Cavos SDK natively supports Slot. Users authenticate with Google or Apple as usual, their wallet is deployed on mainnet, and the SDK automatically mirrors it to your Slot instance. From that point on, every `executeOnSlot()` call goes directly to the Slot chain, instant and free.
 
 **Use cases:**
 
-- **Onchain games** — submit moves, update state, and process rewards at any frequency without worrying about gas costs or paymaster limits
-- **High-frequency DeFi** — execute strategies, rebalance positions, or run automated actions in a private environment before settling to mainnet
-- **App-specific rollups** — give your users a dedicated chain with full Starknet account abstraction but none of the mainnet overhead
+- **Onchain games**: submit moves, update state, and process rewards at any frequency without worrying about gas costs or paymaster limits
+- **High-frequency DeFi**: execute strategies, rebalance positions, or run automated actions in a private environment before settling to mainnet
+- **App-specific rollups**: give your users a dedicated chain with full Starknet account abstraction but none of the mainnet overhead
 
 Configuring Slot takes a single field:
 
@@ -49,25 +49,25 @@ Then use `executeOnSlot()` anywhere you'd use `execute()`:
 ```tsx
 const { execute, executeOnSlot } = useCavos();
 
-// Mainnet — gas sponsored by Cavos Paymaster
+// Mainnet: gas sponsored by Cavos Paymaster
 await execute(settlementCall);
 
-// Slot — instant, free
+// Slot: instant, free
 await executeOnSlot(gameMoveCall);
 ```
 
 The first call to `executeOnSlot()` deploys the account on Slot and registers the session key. Every subsequent call goes straight through.
 
-### Built-in relayer — no configuration needed
+### Built-in relayer, no configuration needed
 
-Registering a session key on Slot requires a relayer to submit the first transaction via `execute_from_outside_v2` (JWT verification calls `call_contract`, which is not allowed inside `__validate__`). The SDK now ships with a built-in Cavos relayer for this purpose — developers don't need to configure anything.
+Registering a session key on Slot requires a relayer to submit the first transaction via `execute_from_outside_v2` (JWT verification calls `call_contract`, which is not allowed inside `__validate__`). The SDK now ships with a built-in Cavos relayer for this purpose, developers don't need to configure anything.
 
 If you were on an early build that required relayer credentials, remove them:
 
 ```tsx
 slot: {
   rpcUrl: 'https://api.cartridge.gg/x/your-project/katana',
-  // relayerAddress and relayerPrivateKey — no longer accepted
+  // relayerAddress and relayerPrivateKey: no longer accepted
 }
 ```
 
@@ -78,7 +78,7 @@ By default, the SDK fetches the chain ID from the Slot RPC on the first call. If
 ```tsx
 slot: {
   rpcUrl: 'https://api.cartridge.gg/x/your-project/katana',
-  chainId: '0x534e5f4d41494e', // optional — omit to auto-detect
+  chainId: '0x534e5f4d41494e', // optional: omit to auto-detect
 }
 ```
 
@@ -86,7 +86,7 @@ slot: {
 
 ## Security hardening in cavos-account
 
-The following fixes are live in the deployed `cavos-account` contract. No action required from SDK users — the SDK already targets the correct class hash.
+The following fixes are live in the deployed `cavos-account` contract. No action required from SDK users: the SDK already targets the correct class hash.
 
 ### Offset-injection attack prevention
 
@@ -99,7 +99,7 @@ The fix adds `assert_json_key_prefix()`, which validates that the bytes immediat
 // 34 'e' 'x' 'p' 34 ':' ' '  →  "exp":
 fn assert_json_key_prefix(jwt_bytes: @ByteArray, value_offset: u32, key: felt252) {
     // Checks that the field key appears exactly before the value in the raw JWT
-    // Panics on mismatch — prevents any offset-crafting attack
+    // Panics on mismatch: prevents any offset-crafting attack
 }
 ```
 

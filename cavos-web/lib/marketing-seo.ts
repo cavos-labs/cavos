@@ -9,7 +9,7 @@ export const OG_IMAGE = {
   url: `${MARKETING_ORIGIN}/og-image.png`,
   width: 1200,
   height: 630,
-  alt: 'Cavos — device-native embedded wallet infrastructure for Starknet, Solana, and Stellar',
+  alt: 'Cavos: device-native embedded wallet infrastructure for Starknet, Solana, and Stellar',
 } as const
 
 export const ORGANIZATION_ID = `${MARKETING_ORIGIN}/#organization`
@@ -27,7 +27,7 @@ export const FRAMEZZ_APP_URL = 'https://app.studioframezz.com/en'
 export const FRAMEZZ_GALLERIES_URL = 'https://galleries.studioframezz.com/'
 
 export const ABOUT_PATH = '/about'
-export const ABOUT_TITLE = 'About Cavos: Embedded Wallet SDK for Starknet, Solana & Stellar'
+export const ABOUT_TITLE = 'About Cavos: Multichain Embedded Wallet SDK'
 export const ABOUT_DESCRIPTION =
   'Cavos, LLC is a software and SaaS company. The Cavos wallet is the main product. It also builds Framezz event photography software and Framezz Galleries.'
 
@@ -628,7 +628,7 @@ export function walletSoftwareApplicationJsonLd() {
     applicationCategory: 'DeveloperApplication',
     applicationSubCategory: 'Embedded multichain wallet infrastructure',
     description:
-      "A device-native embedded wallet SDK. Applications resolve a self-custodial account from a stable user identity. Signing keys are created and used on the user's device — Cavos cannot see them, sign with them, or move funds. Adapters ship today for Starknet, Solana, and Stellar.",
+      "A device-native embedded wallet SDK. Applications resolve a self-custodial account from a stable user identity. Signing keys are created and used on the user's device. Cavos cannot see them, sign with them, or move funds. Adapters ship today for Starknet, Solana, and Stellar.",
     offers: freeTierOfferJsonLd({
       url: pageUrl('/pricing'),
       description: 'Free tier covers the first 1,000 wallet creates.',
@@ -637,7 +637,7 @@ export function walletSoftwareApplicationJsonLd() {
     publisher: { '@id': ORGANIZATION_ID },
     featureList: [
       'Account keys derived on-device from a MasterDEK',
-      'Self-custodial accounts — no provider-held signing key',
+      'Self-custodial accounts with no provider-held signing key',
       'Registry-first address resolution',
       'Gas Sponsorship in Any Token',
       'Starknet, Solana, and Stellar adapters',
@@ -741,7 +741,7 @@ export function sitewideJsonLd() {
       {
         ...websiteJsonLd(),
         description:
-          'Embedded wallet infrastructure for Starknet, Solana, and Stellar — device-native and verifiable.',
+          'Embedded wallet infrastructure for Starknet, Solana, and Stellar: device-native and verifiable.',
       },
     ],
   }

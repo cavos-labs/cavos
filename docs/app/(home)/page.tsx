@@ -96,8 +96,8 @@ export default function HomePage() {
               >
                 embedded wallet
               </a>{' '}
-              across blockchains with one chain-configurable SDK — an
-              OpenZeppelin account on{' '}
+              across blockchains with one chain-configurable SDK: an audited
+              OpenZeppelin account contract on{' '}
               <a
                 href="https://cavos.xyz/embedded-starknet-wallet"
                 className="text-ink underline decoration-ink/25 underline-offset-4 hover:decoration-ink"

@@ -69,7 +69,7 @@ export type AlternativesGuide = {
 }
 
 export const CAVOS_CHAIN_ACCOUNT_PARAGRAPH =
-  'One SDK ships chain-native adapters for those three networks. On Starknet each wallet is an audited OpenZeppelin account contract — AccountUpgradeable v3.0.0 — controlled by one stark key derived from the MasterDEK and app salt. Solana uses a native Ed25519 system account. Stellar uses a classic G-account. Recovery is off-chain: a new device restores the MasterDEK with a passkey or an opt-in hardware-isolated enclave. There is no on-chain device-signer list and no on-chain social recovery.'
+  'One SDK ships chain-native adapters for those three networks. On Starknet each wallet is an audited OpenZeppelin account contract (AccountUpgradeable v3.0.0) controlled by one stark key derived from the MasterDEK and app salt. Solana uses a native Ed25519 system account. Stellar uses a classic G-account. Recovery is off-chain: a new device restores the MasterDEK with a passkey or an opt-in hardware-isolated enclave. There is no on-chain device-signer list and no on-chain social recovery.'
 
 export const CAVOS_RELATED_LINKS: AlternativeRelatedLink[] = [
   { href: '/embedded-starknet-wallet', label: 'Embedded Starknet wallet' },
@@ -115,7 +115,7 @@ export const VENDOR_PARAGRAPHS = {
     'Choose Turnkey when you are building your own wallet or custody product. Choose a finished SDK when you want login, recovery, and sponsorship already wired. Turnkey’s public Pay as you go tier includes 1,000 wallets and 25 free signatures per month, then $0.10 per signature. Pro is $99/mo.',
   ],
   web3auth: [
-    'Web3Auth — shipped by Consensys as MetaMask Embedded Wallets after the 2025 acquisition — provides social-login wallets using multi-party computation. Key shares are split across the user’s device, the provider’s network, and recovery factors. Signing reconstructs or jointly computes a signature from those shares.',
+    'Web3Auth (shipped by Consensys as MetaMask Embedded Wallets after the 2025 acquisition) provides social-login wallets using multi-party computation. Key shares are split across the user’s device, the provider’s network, and recovery factors. Signing reconstructs or jointly computes a signature from those shares.',
     'That is the clearest architectural contrast with Cavos. Cavos never reconstructs a signing key: the device derives the account key and signs. MetaMask’s product page states that Embedded Wallets use MPC with threshold signatures and Shamir’s Secret Sharing, and that export is part of the model. The same page lists native support for EVM and Solana, plus additional networks including Bitcoin and StarkNet.',
     'Choose Web3Auth when you need very broad chain coverage from a single social-login wallet layer, or a key you can export and use in other tooling. Public pricing starts at a free Base plan with 1,000 monthly active wallets. Growth is $69/mo. Scale is $399/mo.',
   ],
@@ -162,7 +162,7 @@ export function alternativesItemList(
 
 export const DEFAULT_HOW_TO_CHOOSE = [
   'Who can produce a valid signature without the user present?',
-  'Where does the signing key live — device, MPC shares, HSM, or remote enclave?',
+  'Where does the signing key live: device, MPC shares, HSM, or remote enclave?',
   'Which chains are native, and which are a compatibility layer?',
   'Do you need to connect existing wallets, or only provision new ones?',
   'Do you want a finished embedded-wallet SDK, or key-management infrastructure you build on?',
@@ -170,12 +170,12 @@ export const DEFAULT_HOW_TO_CHOOSE = [
 ] as const
 
 export const DEFAULT_HOW_TO_CHOOSE_OUTRO: AlternativesInline[] = [
-  'Worked one-to-one comparisons live on the compare pages. For the category itself — what an embedded wallet is, and how ',
+  'Worked one-to-one comparisons live on the compare pages. For the category itself (what an embedded wallet is, and how ',
   {
     href: EMBEDDED_WALLET_VS_EXTENSION_PATH,
     label: 'embedded wallets vs browser extensions',
   },
-  ', MPC, and device-native models differ — start with the ',
+  ', MPC, and device-native models differ), start with the ',
   { href: '/embedded-wallet', label: 'pillar guide' },
   '.',
 ]
