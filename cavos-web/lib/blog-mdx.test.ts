@@ -82,4 +82,15 @@ describe('blog internal links', () => {
       assert.ok(read(slug).includes('](/compare'), `${slug} does not link /compare`)
     }
   })
+
+  it('gives every indexable post at least three inbound links from other posts', () => {
+    const files = fs.readdirSync(BLOG_DIR).filter((name) => name.endsWith('.mdx'))
+    const sources = files.map((name) => [name, fs.readFileSync(path.join(BLOG_DIR, name), 'utf8')] as const)
+    for (const name of files) {
+      const slug = name.replace(/\.mdx$/, '')
+      if (slug === 'v1-1-9-sdk-security') continue
+      const inbound = sources.filter(([other, raw]) => other !== name && raw.includes(`](/blog/${slug})`)).length
+      assert.ok(inbound >= 3, `${slug} has ${inbound} inbound blog links`)
+    }
+  })
 })
