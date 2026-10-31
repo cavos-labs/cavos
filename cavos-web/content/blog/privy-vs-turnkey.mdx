@@ -1,8 +1,8 @@
 ---
-title: "Privy vs Turnkey (2026): Auth vs Enclave Keys"
+title: "Privy vs Turnkey vs Dfns (2026) Comparison"
 date: "2026-10-20"
 updated: "2026-10-31"
-excerpt: "Privy vs Turnkey and Turnkey vs Privy in 2026: finished auth and wallets versus enclave signing, Dfns, published pricing, and who each is for."
+excerpt: "Turnkey vs Privy vs Dfns embedded wallets in 2026: Privy vs Turnkey product scope, Dynamic, low-level signing, published pricing, and who each is for."
 category: "Guide"
 ogQuote: "Not two SDKs with different logos. They sit at different layers."
 slug: "privy-vs-turnkey"
@@ -24,10 +24,10 @@ faq:
   - question: "Because Turnkey provides lower-level primitives, does it necessarily offer developers more flexibility than Privy?"
     answer: "No. Turnkey is more flexible at custody configuration, policy, quorums, server-side signing, and curve-level coverage. Privy is more flexible as a finished product: one vendor for login, an in-app wallet, and connecting wallets users already hold, plus managed send on EVM and Solana. Turnkey’s Embedded Wallet Kit shortens the React start. It does not add Privy’s connector suite. Pick the layer you actually need to own."
   - question: "How do Turnkey, Privy, and Dfns compare as embedded wallets?"
-    answer: "They sit at different layers. Privy is a finished authentication and embedded wallet product: unified login, an in-app wallet, and connectors; keys are a Shamir 2-of-2 reconstructed inside AWS Nitro Enclaves. Turnkey is lower-level signing infrastructure: keys decrypt only in a TEE, and custody is who can authorize the enclave. Dfns is MPC/TSS wallet infrastructure: official docs say the private key is never reconstructed, wallet keys never leave Dfns infrastructure and are not stored on the user’s device, and end-user wallets are delegated so only the user’s passkey can authorize a signature."
+    answer: "They sit at different layers. Privy is a finished authentication and embedded wallet product: unified login, an in-app wallet, and connectors; keys are a Shamir 2-of-2 reconstructed inside AWS Nitro Enclaves. Turnkey is lower-level signing infrastructure: keys decrypt only in a TEE, and custody is who can authorize the enclave. Dfns is MPC/TSS wallet infrastructure: official docs say the private key is never reconstructed, wallet keys never leave Dfns infrastructure and are not stored on the user’s device, and end-user wallets are delegated so only the user’s passkey can authorize a signature. Dynamic belongs on a different fork: TSS-MPC plus connecting wallets users already hold, which is provision-versus-connect, not this three-way."
 ---
 
-An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain account they can pay, receive, and sign with. **Privy vs Turnkey** is the question Search Console keeps sending at that category: one vendor is a finished auth and wallet product, the other is lower-level signing infrastructure. This guide is that comparison, product scope, key model, chains, developer experience, pricing, and who each is for.
+An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain account they can pay, receive, and sign with. **Privy vs Turnkey** is a layer question: Privy’s product scope is a finished auth and wallet product; Turnkey’s focus is low-level signing and key-management primitives. Search Console also asks **Turnkey vs Privy vs Dfns** and Privy vs Dynamic vs Turnkey. This guide is that comparison: product scope, key model, chains, developer experience, pricing, and who each is for.
 
 Cavos, LLC is a software and SaaS company. Positioning for Cavos comes after the table is fair. If the honest answer is Privy or Turnkey, that is the answer. One-to-one pages live at [Cavos vs Privy](/compare/privy) and [Cavos vs Turnkey](/compare/turnkey). Alchemy vs Privy is a different fork: Wallet APIs plus a recommended signer, not a like-for-like SDK swap, that comparison is [Alchemy vs Privy](/blog/alchemy-vs-privy). This post is Privy vs Turnkey, not a Privy alternatives shortlist. The replacement list is [Privy alternatives](/privy-alternatives). Teams listing Turnkey embedded wallet competitors can start at [Turnkey alternatives](/turnkey-alternatives). Sibling shortlists: [Dynamic alternatives](/dynamic-alternatives) and [Magic alternatives](/magic-alternatives). The multi-vendor listicle is [embedded wallet providers](/blog/embedded-wallet-providers). Search Console also asks Turnkey vs Privy vs Dfns; that layer check is below.
 
@@ -244,19 +244,70 @@ Worked Cavos comparisons: [Cavos vs Privy](/compare/privy), [Cavos vs Turnkey](/
 
 Search Console also asks this as a three-vendor shortlist. The vendors are not interchangeable SDKs. They sit at different layers.
 
-**Privy** is the finished product: unified login, an in-app wallet, and connectors for wallets users already hold. Keys are a Shamir 2-of-2 reconstructed inside AWS Nitro Enclaves. New chains follow Privy’s published send / sign-transaction / sign-only tiers.
+How Privy’s product scope compares with Turnkey’s focus on low-level signing infrastructure is the same split as above. Privy ships login, an in-app wallet, and connectors as one product. Turnkey ships keys in a TEE, a policy engine, and a signing API. Dfns sits next to Turnkey as wallet infrastructure, not next to Privy as a finished auth SDK: MPC/TSS instead of an enclave, with a published named-network table.
 
-**Turnkey** is enclave signing infrastructure. The key decrypts only inside a TEE. Custody is who holds the credentials that can authorize that enclave: the user, your API key, or both under policy. Signing is at the cryptographic-curve level; you assemble more of the wallet experience, or start from the Embedded Wallet Kit.
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Privy</th>
+<th>Turnkey</th>
+<th>Dfns</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Product scope</td>
+<td>Finished auth, embedded wallets, and connectors. Optional custodial wallets (Bridge).</td>
+<td>Key-management and signing infrastructure. Embedded Wallet Kit is the opinionated React path.</td>
+<td>MPC wallet infrastructure and API. Embed user wallets is the delegated path.</td>
+</tr>
+<tr>
+<td>Key / custody model</td>
+<td>Shamir 2-of-2 shares; reconstruct in AWS Nitro Enclaves. User wallets described as non-custodial with key export.</td>
+<td>Keys decrypt only in a TEE. Custody is who can authorize the enclave: user, your API key, or both under policy.</td>
+<td>TSS/MPC. Official docs: the private key is never reconstructed. Default cloud stores all shares in Dfns datacenters.</td>
+</tr>
+<tr>
+<td>Where the key lives</td>
+<td>Reconstructed inside Privy’s enclave for signing. Users can export.</td>
+<td>Ciphertext at rest; plaintext only inside the vendor TEE.</td>
+<td>Shares stay in Dfns infrastructure. Delegated wallets are not stored on the user’s device.</td>
+</tr>
+<tr>
+<td>Chains</td>
+<td>Managed send on EVM, Solana/SVM, Tempo, TRON. Sign-transaction and sign-only tiers for additional networks.</td>
+<td>Curve-level (secp256k1, Ed25519, P-256). All EVM and SVM. Deeper policy/parsing on a shorter published list.</td>
+<td>Named-network table includes Ethereum and other EVM networks, Bitcoin, Solana, Starknet, Stellar, Sui, TON, TRON, Cardano, and Cosmos Hub, among others. Tier-1 and tier-2 feature depth.</td>
+</tr>
+<tr>
+<td>Best for</td>
+<td>One vendor for login, an in-app wallet, and connecting wallets users already hold.</td>
+<td>Policy, quorums, and server-side signing primitives.</td>
+<td>MPC wallets with delegated passkeys, or hybrid/on-prem signers you operate.</td>
+</tr>
+</tbody>
+</table>
 
-**Dfns** is MPC wallet infrastructure. Official [MPC docs](https://docs.dfns.co/core-concepts/how-mpc-wallets-work) describe a threshold signature scheme: key shares participate in a ceremony and the private key is never reconstructed. In the default cloud, Dfns stores all shares in its geographically distributed datacenters, unlike providers that give a shard to the user. [Delegated wallets](https://docs.dfns.co/advanced/delegated-wallets) keep those shares in the Dfns network; they are not stored on the user’s device. The user’s passkey is the signing credential. Org-managed wallets stay under your service account. [Embed user wallets](https://docs.dfns.co/solutions/embed-user-wallets) is that delegated path. Policies do not apply to delegated wallets. Recovery is something you implement; Dfns cannot restore a wallet if the only passkey is gone. Signer deployments also include [hybrid and on-premise](https://docs.dfns.co/advanced/deployment-models/mpc) options; Dfns recommends a 3-out-of-5 threshold. A single key can power wallets on multiple supported networks, including Ethereum, Bitcoin, and Solana. This page does not invent unpublished Dfns pricing.
+**Privy** is the finished product: unified login, an in-app wallet, and connectors for wallets users already hold. Keys are a Shamir 2-of-2 reconstructed inside AWS Nitro Enclaves. New chains follow Privy’s published send / sign-transaction / sign-only tiers. The one-to-one is [Cavos vs Privy](/compare/privy). The replacement shortlist is [Privy alternatives](/privy-alternatives).
 
-None of the three is a device-native key on the user’s device. That is a different product shape.
+**Turnkey** is enclave signing infrastructure. The key decrypts only inside a TEE. Custody is who holds the credentials that can authorize that enclave: the user, your API key, or both under policy. Signing is at the cryptographic-curve level; you assemble more of the wallet experience, or start from the Embedded Wallet Kit. The one-to-one is [Cavos vs Turnkey](/compare/turnkey). The replacement shortlist is [Turnkey alternatives](/turnkey-alternatives).
+
+**Dfns** is MPC wallet infrastructure. Official [MPC docs](https://docs.dfns.co/core-concepts/how-mpc-wallets-work) describe a threshold signature scheme: key shares participate in a ceremony and the private key is never reconstructed. In the default cloud, Dfns stores all shares in its geographically distributed datacenters, unlike providers that give a shard to the user. [Delegated wallets](https://docs.dfns.co/advanced/delegated-wallets) keep those shares in the Dfns network; they are not stored on the user’s device. The user’s passkey is the signing credential. Org-managed wallets stay under your service account. [Embed user wallets](https://docs.dfns.co/solutions/embed-user-wallets) is that delegated path. Policies do not apply to delegated wallets. Recovery is something you implement; Dfns cannot restore a wallet if the only passkey is gone. Signer deployments also include [hybrid and on-premise](https://docs.dfns.co/advanced/deployment-models/mpc) options; Dfns recommends a 3-out-of-5 threshold. The [supported networks](https://docs.dfns.co/networks) page names Ethereum and many other EVM networks, plus Bitcoin, Solana, Starknet, Stellar, Sui, TON, TRON, Cardano, and Cosmos Hub, among others. Feature depth follows Dfns tier-1 and tier-2 rules. This page does not invent unpublished Dfns pricing. There is no Cavos vs Dfns compare page.
+
+Search Console also asks **Privy vs Dynamic vs Turnkey** for embedded wallets. Dynamic is the connector layer: TSS-MPC embedded wallets plus connecting wallets users already hold. That fork is provision-versus-connect, not the same layer as Turnkey vs Privy vs Dfns. See [Cavos vs Dynamic](/compare/dynamic) and [Dynamic alternatives](/dynamic-alternatives).
+
+None of these is a device-native key on the user’s device. That is a different product shape.
 
 ## Who each is best for
 
 **Choose Privy** when the user should get an in-app wallet from a login you already understand, and you also need to connect MetaMask, Phantom, or WalletConnect for people who already hold assets. EVM-first consumer apps, games, and anything that wants one vendor for auth plus wallet sit here. The optional Bridge custodial path matters if counsel wants a licensed custodian on some wallets and a non-custodial embedded wallet on others.
 
 **Choose Turnkey** when you are building the wallet or the custody layer. Server-side signing, organizational quorums, per-user sub-organizations, and a policy engine that runs inside the enclave are the reason to pick it. The Embedded Wallet Kit is there if you want a faster React start; it does not remove the need to own broadcast, chain semantics, and recovery UX if you go below that kit.
+
+**Choose Dfns** when you want MPC/TSS wallet infrastructure, delegated passkey wallets whose shares stay in Dfns infrastructure, or hybrid/on-prem signers you operate. Stay with Privy when you want a finished auth and connector SDK. Stay with Turnkey when the primitive you are buying is an enclave policy engine rather than an MPC ceremony.
+
+**Choose Dynamic** when users already hold wallets you must connect, or when you want that connector surface plus an embedded TSS-MPC fallback. That is not the Turnkey vs Privy vs Dfns fork.
 
 **Choose neither** when the requirement is a device-native key on Starknet, Solana, or Stellar, or when the review says the vendor must not be able to reconstruct a signing key in its infrastructure. That is a different product shape. The next section is that shape, not a third row pretending to be the same layer.
 

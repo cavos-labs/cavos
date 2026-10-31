@@ -47,7 +47,7 @@ export const EMBEDDED_WALLET_PROVIDERS_TITLE =
 export const PRIVY_VS_TURNKEY_PATH = '/blog/privy-vs-turnkey'
 
 export const PRIVY_VS_TURNKEY_TITLE =
-  'Privy vs Turnkey (2026): Auth vs Enclave Keys'
+  'Privy vs Turnkey vs Dfns (2026) Comparison'
 
 export const EMBEDDED_WALLET_API_PATH = '/blog/embedded-wallet-api'
 

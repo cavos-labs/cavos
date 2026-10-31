@@ -1675,8 +1675,12 @@ describe('marketing SEO', () => {
     assert.match(privySource, /docs\.dfns\.co\/core-concepts\/how-mpc-wallets-work/)
     assert.match(privySource, /docs\.dfns\.co\/advanced\/delegated-wallets/)
     assert.match(privySource, /docs\.dfns\.co\/solutions\/embed-user-wallets/)
+    assert.match(privySource, /docs\.dfns\.co\/networks/)
     assert.match(privySource, /never reconstructed/)
     assert.match(privySource, /not stored on the user’s device/)
+    assert.match(privySource, /<th>Dfns<\/th>/)
+    assert.match(privySource, /Privy vs Dynamic vs Turnkey/)
+    assert.match(privySource, /\]\(\/compare\/dynamic\)/)
     assert.match(privySource, /does not document TSS-MPC/)
     assert.match(privySource, /secp256k1/)
     assert.match(privySource, /\]\(\/dynamic-alternatives\)/)
@@ -2202,7 +2206,7 @@ describe('marketing SEO', () => {
     assert.equal(PRIVY_VS_TURNKEY_PATH, '/blog/privy-vs-turnkey')
     assert.equal(
       PRIVY_VS_TURNKEY_TITLE,
-      'Privy vs Turnkey (2026): Auth vs Enclave Keys',
+      'Privy vs Turnkey vs Dfns (2026) Comparison',
     )
 
     const compareSource = fs.readFileSync(
