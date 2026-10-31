@@ -670,9 +670,9 @@ describe('marketing SEO', () => {
     assert.match(PRIVY_ALTERNATIVES_TITLE, /Privy Alternatives/)
     assert.match(PRIVY_ALTERNATIVES_TITLE, /Competitors/)
     assert.match(PRIVY_ALTERNATIVES_TITLE, /2026/)
-    assert.match(PRIVY_ALTERNATIVES_H1, /What are some alternatives to Privy/)
+    assert.match(PRIVY_ALTERNATIVES_H1, /^Privy alternatives$/)
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Shopify/)
-    assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /alternatives to Privy/)
+    assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Privy alternatives/)
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Privy competitors/)
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Cavos, Dynamic, Turnkey, Web3Auth, Magic/)
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /1,000 wallets/)
@@ -705,7 +705,7 @@ describe('marketing SEO', () => {
       ),
     )
     assert.ok(
-      PRIVY_ALTERNATIVES_FAQ.some((item) => item.question === 'Who are Privy competitors?'),
+      PRIVY_ALTERNATIVES_FAQ.some((item) => item.question === 'Who are Privy wallet competitors?'),
     )
     assert.ok(PRIVY_WHY_LOOK.length >= 4)
     assert.ok(PRIVY_HOW_TO_CHOOSE.length >= 5)
@@ -724,7 +724,7 @@ describe('marketing SEO', () => {
       ],
     )
     assert.equal(PRIVY_ALTERNATIVES_PUBLISHED, '2026-10-11')
-    assert.equal(PRIVY_ALTERNATIVES_MODIFIED, '2026-10-30')
+    assert.equal(PRIVY_ALTERNATIVES_MODIFIED, '2026-10-31')
     assert.equal(PRIVY_ALTERNATIVES_CRUMB, 'Privy alternatives')
 
     const meta = marketingPageMetadata({
@@ -815,6 +815,23 @@ describe('marketing SEO', () => {
       dataSource,
       /Cavos, Dynamic, Turnkey, Web3Auth, and Magic are the five Privy/,
     )
+
+    const alchemyVsPrivy = fs.readFileSync(
+      path.join(process.cwd(), 'content/blog/alchemy-vs-privy.mdx'),
+      'utf8',
+    )
+    const privyVsTurnkey = fs.readFileSync(
+      path.join(process.cwd(), 'content/blog/privy-vs-turnkey.mdx'),
+      'utf8',
+    )
+    const alchemyFields = parseBlogFrontmatter(alchemyVsPrivy)
+    const privyTurnkeyFields = parseBlogFrontmatter(privyVsTurnkey)
+    assert.doesNotMatch(alchemyFields.title, /alternatives/i)
+    assert.doesNotMatch(privyTurnkeyFields.title, /alternatives/i)
+    assert.match(alchemyVsPrivy, /\[Privy alternatives\]\(\/privy-alternatives\)/)
+    assert.match(privyVsTurnkey, /\[Privy alternatives\]\(\/privy-alternatives\)/)
+    assert.match(alchemyVsPrivy, /not a Privy alternatives shortlist/)
+    assert.match(privyVsTurnkey, /not a Privy alternatives shortlist/)
     assert.equal((templateSource.match(/<h1[\s>]/g) ?? []).length, 1)
 
     const cavos = PRIVY_ALTERNATIVE_SECTIONS[0]
@@ -1628,7 +1645,9 @@ describe('marketing SEO', () => {
       /Are there native embedded wallets for Midnight, Aleo, Stellar, Cosmos, or Sui\?/,
     )
     assert.match(providersSource, /Which embedded wallet provider supports the most chains\?/)
+    assert.match(providersSource, /## Which embedded wallet provider supports the most chains\?/)
     assert.match(providersSource, /does not support Midnight, Aleo, Cosmos, or Sui/)
+    assert.match(providersSource, /Aleo, and Midnight/)
     assert.match(privySource, /Turnkey embedded wallet competitors/)
     assert.match(privySource, /What is the difference between Privy and Turnkey\?/)
     assert.match(privySource, /How does Privy vs Turnkey pricing compare\?/)
@@ -1658,8 +1677,12 @@ describe('marketing SEO', () => {
     assert.match(privySource, /docs\.dfns\.co\/core-concepts\/how-mpc-wallets-work/)
     assert.match(privySource, /docs\.dfns\.co\/advanced\/delegated-wallets/)
     assert.match(privySource, /docs\.dfns\.co\/solutions\/embed-user-wallets/)
+    assert.match(privySource, /docs\.dfns\.co\/networks/)
     assert.match(privySource, /never reconstructed/)
     assert.match(privySource, /not stored on the user’s device/)
+    assert.match(privySource, /<th>Dfns<\/th>/)
+    assert.match(privySource, /Privy vs Dynamic vs Turnkey/)
+    assert.match(privySource, /\]\(\/compare\/dynamic\)/)
     assert.match(privySource, /does not document TSS-MPC/)
     assert.match(privySource, /secp256k1/)
     assert.match(privySource, /\]\(\/dynamic-alternatives\)/)
@@ -2099,7 +2122,7 @@ describe('marketing SEO', () => {
     assert.equal(EMBEDDED_WALLET_PROVIDERS_PATH, '/blog/embedded-wallet-providers')
     assert.equal(
       EMBEDDED_WALLET_PROVIDERS_TITLE,
-      'Embedded Wallet Providers: Who Fits in 2026',
+      'Embedded Wallet Providers: 2026 Comparison',
     )
 
     const hub = fs.readFileSync(
@@ -2185,7 +2208,7 @@ describe('marketing SEO', () => {
     assert.equal(PRIVY_VS_TURNKEY_PATH, '/blog/privy-vs-turnkey')
     assert.equal(
       PRIVY_VS_TURNKEY_TITLE,
-      'Privy vs Turnkey (2026): Auth vs Enclave Keys',
+      'Privy vs Turnkey vs Dfns (2026) Comparison',
     )
 
     const compareSource = fs.readFileSync(

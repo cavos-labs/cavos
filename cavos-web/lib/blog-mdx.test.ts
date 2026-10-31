@@ -94,3 +94,46 @@ describe('blog internal links', () => {
     }
   })
 })
+
+describe('wallet-as-a-service guide', () => {
+  const raw = fs.readFileSync(path.join(BLOG_DIR, 'wallet-as-a-service.mdx'), 'utf8')
+  const body = raw.split(/^---$/m).slice(2).join('---').trim()
+
+  it('opens with a direct definition', () => {
+    const firstParagraph = body.split(/\n\n/)[0]
+    assert.match(firstParagraph, /^\*\*Wallet-as-a-service \(WaaS\) is /)
+    assert.ok(firstParagraph.includes('](/embedded-wallet)'))
+  })
+
+  it('uses the head term in its section headings and keeps a FAQ', () => {
+    const h2s = body.match(/^## .+$/gm) ?? []
+    assert.ok(h2s.filter((h) => /wallet-as-a-service/i.test(h)).length >= 4, h2s.join('\n'))
+    assert.match(raw, /^faq:/m)
+  })
+})
+
+describe('head-term canonical targets', () => {
+  const read = (slug: string) => fs.readFileSync(path.join(BLOG_DIR, `${slug}.mdx`), 'utf8')
+
+  for (const slug of ['privy-vs-turnkey', 'alchemy-vs-privy']) {
+    it(`${slug} defers "Privy alternatives" to /privy-alternatives`, () => {
+      const raw = read(slug)
+      assert.ok(raw.includes('[Privy alternatives](/privy-alternatives)'))
+      const title = raw.match(/^title:\s*"(.*)"$/m)?.[1] ?? ''
+      assert.doesNotMatch(title, /alternative/i)
+      for (const heading of raw.match(/^#{1,3} .+$/gm) ?? []) {
+        assert.doesNotMatch(heading, /privy alternative/i, heading)
+      }
+      for (const question of raw.match(/^\s+- question: .+$/gm) ?? []) {
+        assert.doesNotMatch(question, /alternative/i, question)
+      }
+    })
+  }
+
+  it('links every indexable guide to /embedded-wallet with the head-term anchor', () => {
+    for (const name of fs.readdirSync(BLOG_DIR).filter((f) => f.endsWith('.mdx'))) {
+      if (name === 'v1-1-9-sdk-security.mdx') continue
+      assert.ok(read(name.replace(/\.mdx$/, '')).includes('[embedded wallet](/embedded-wallet)'), name)
+    }
+  })
+})

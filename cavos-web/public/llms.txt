@@ -50,7 +50,7 @@ Cavos (`@cavos/kit`) is an embedded wallet SDK for web and React Native. The sig
 - [Cavos vs Web3Auth](https://cavos.xyz/compare/web3auth)
 - [Cavos vs Magic](https://cavos.xyz/compare/magic)
 - [Cavos vs Alchemy](https://cavos.xyz/compare/alchemy)
-- [Privy vs Turnkey](https://cavos.xyz/blog/privy-vs-turnkey): auth product vs signing infrastructure
+- [Privy vs Turnkey vs Dfns](https://cavos.xyz/blog/privy-vs-turnkey): finished auth vs enclave signing vs MPC infrastructure
 - [Alchemy vs Privy](https://cavos.xyz/blog/alchemy-vs-privy): transaction layer vs finished embedded wallet
 
 ## Guides
