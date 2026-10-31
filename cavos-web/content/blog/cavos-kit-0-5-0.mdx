@@ -6,6 +6,15 @@ excerpt: "The Cavos recovery enclave is now open source. Read the code that rest
 category: "Release"
 ogQuote: "Our enclave is open source. Read every line that touches recovery."
 slug: "cavos-kit-0-5-0"
+faq:
+  - question: "Is the Cavos recovery enclave open source?"
+    answer: "Yes. The code is public at github.com/cavos-labs/cavos-recovery, and every enclave image Cavos deploys is built from it. Release v1 ships enclave.eif, measurements.json, and a Sigstore bundle, so you can match the PCR0 of the running enclave to a public build."
+  - question: "What does the Cavos recovery enclave do?"
+    answer: "It restores a user's embedded wallet on a new device. It runs in a hardware-isolated AWS Nitro Enclave and wraps the key that protects the wallet backup. It cannot sign transactions and it cannot move funds. Wallet keys never leave the user's device in plaintext and are never used to sign on Cavos servers."
+  - question: "Do I need to upgrade to @cavos/kit 0.5.0?"
+    answer: "Yes. 0.4.x will not talk to the enclave that is now deployed. Email sign-in and hardware-isolated recovery fail until you are on ^0.5.0. Upgrade with npm install @cavos/kit@^0.5.0."
+  - question: "What is new in @cavos/kit 0.5.0?"
+    answer: "GitHub as an optional hosted login provider, and signed enclave releases: the SDK can accept an enclave whose PCR0 is not on the pinned list when a Sigstore bundle signed by the cavos-recovery release workflow verifies in the client."
 ---
 
 The Cavos recovery enclave is open source. The code is public at [cavos-labs/cavos-recovery](https://github.com/cavos-labs/cavos-recovery), and every enclave image we deploy is built from it.

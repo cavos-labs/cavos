@@ -3837,3 +3837,24 @@ describe('llms.txt completeness', () => {
     }
   })
 })
+
+describe('blog FAQ coverage', () => {
+  it('gives every indexable blog post FAQPage JSON-LD', () => {
+    for (const meta of getAllPosts()) {
+      if (isBlogPostNoindex(meta.slug)) continue
+      assert.ok(meta.faq && meta.faq.length >= 2, `${meta.slug} has no FAQ`)
+      const graph = blogPostJsonLd({
+        title: meta.title,
+        description: meta.excerpt,
+        path: `/blog/${meta.slug}`,
+        datePublished: meta.date,
+        dateModified: meta.updated ?? meta.date,
+        crumbs: [{ name: 'Home', path: '/' }, { name: 'Blog', path: '/blog' }, { name: meta.title, path: `/blog/${meta.slug}` }],
+        faq: meta.faq,
+      })['@graph'] as { '@type': string; dateModified?: string }[]
+      assert.ok(graph.some((node) => node['@type'] === 'FAQPage'), `${meta.slug} FAQPage missing`)
+      assert.ok(graph.some((node) => node['@type'] === 'BreadcrumbList'), `${meta.slug} BreadcrumbList missing`)
+      assert.equal(graph[0].dateModified, meta.updated ?? meta.date)
+    }
+  })
+})
