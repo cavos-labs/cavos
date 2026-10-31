@@ -21,13 +21,13 @@ faq:
     answer: "Cavos is a finished embedded-wallet SDK for Starknet, Solana, and Stellar. Auth is hosted Google, Apple, or email, or an identity you pass in. Signing keys are created and used on the user’s device. On Starknet the account is an audited OpenZeppelin account contract. Recovery is off-chain. Gas is sponsored. Cavos is not an EVM-wide layer and does not connect existing extensions."
 ---
 
-An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain account they can pay, receive, and sign with, no browser extension, no seed phrase, no trip to another app.
+**Wallet-as-a-service (WaaS) is an API or SDK that gives each of your users a crypto wallet inside your app.** The user signs in the way they already do, the platform looks up or creates an on-chain account for that login, and transactions are approved in your UI. There is no browser extension to install and no seed phrase to copy. The result is an [embedded wallet](/embedded-wallet); wallet-as-a-service is how that wallet is sold.
 
-**Wallet-as-a-service** (WaaS) is the commercial name for that job. An **embedded wallet platform** is the product that sells it. Searchers also type embedded wallet solution, embedded wallets as a service, and embedded wallet management software. They want the same answers: who provisions the wallet, who can sign, and what the invoice meters. This guide is the platform map. The [providers comparison](/blog/embedded-wallet-providers) is the shortlist. The [embedded wallet API](/blog/embedded-wallet-api) guide is the method-level surface. The [non-custodial guide](/blog/non-custodial-embedded-wallet) is the custody test.
+The label does not decide custody. Before you compare vendors, answer three questions: who provisions the wallet, who can produce a signature, and what the invoice meters. This guide is the platform map. The [providers comparison](/blog/embedded-wallet-providers) is the shortlist. The [embedded wallet API](/blog/embedded-wallet-api) guide is the method-level surface. The [non-custodial guide](/blog/non-custodial-embedded-wallet) is the custody test.
 
 Cavos, LLC is a software and SaaS company. The wallet is the main product: a device-native, self-custodial embedded wallet. Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds.
 
-## What wallet-as-a-service is
+## What is wallet-as-a-service?
 
 A wallet-as-a-service, or an **embedded wallet platform**, turns a login into an on-chain account. You call an SDK or an API. The platform authenticates the user, looks up or creates an address, signs from a key it manages or from a key on the device, and often sponsors the first fee. You do not ship a seed phrase or send the user to MetaMask.
 
@@ -41,7 +41,7 @@ Three product shapes cover almost every vendor in the category:
 
 Teams land here when the audience is not crypto-native. The tradeoff is that the application now owns recovery, device changes, gas, and how honest it is about who can sign.
 
-## The moving parts of an embedded wallet platform
+## How wallet-as-a-service works: the moving parts
 
 Write the answers down before you read a pricing page. Every WaaS product is some combination of the six parts below.
 
@@ -99,7 +99,7 @@ The dashboard is how a platform becomes software you operate: App IDs, environme
 
 Cavos ships a [dashboard](https://cavos.xyz/dashboard) where you create an app, copy an App ID, and operate gas sponsorship. The kit reads `NEXT_PUBLIC_CAVOS_APP_ID` in the browser. Published plans include dashboard and usage analytics. The [React integration](/blog/how-to-add-an-embedded-wallet) starts with that App ID.
 
-## Build versus buy
+## Wallet-as-a-service: build versus buy
 
 This is the decision most “embedded wallet platform” searches are actually making.
 
@@ -111,7 +111,7 @@ This is the decision most “embedded wallet platform” searches are actually m
 
 Migration is a project in every direction. Addresses are derived differently. Confirm export, import, and what happens if you cancel before you treat any platform as interchangeable.
 
-## How WaaS pricing models typically work
+## Wallet-as-a-service pricing models
 
 Vendors do not meter the same thing. A cheap free tier with a tight MAU cap is not the same as a flat wallet-create allowance. Read the unit before the dollar amount. Published figures below already appear on this site’s [compare](/compare) and [providers](/blog/embedded-wallet-providers) pages, as of October 2026. They can change. This page does not invent unpublished enterprise prices.
 
@@ -125,7 +125,7 @@ Vendors do not meter the same thing. A cheap free tier with a tight MAU cap is n
 
 **Volume.** Privy’s free tier publishes a $1M volume cap. That meter fits a checkout better than a game that signs often and settles little. Gas sponsorship is often a separate line, or reserved for a higher plan. Ask what is metered, what is rate-limited, and whether the first sponsored transaction is on the public plan.
 
-## Embedded wallet platforms compared
+## Wallet-as-a-service providers compared
 
 The rows below reuse facts already stated on the [compare](/compare) pages and the [providers](/blog/embedded-wallet-providers) guide. One-to-one write-ups: [Cavos vs Privy](/compare/privy), [Cavos vs Dynamic](/compare/dynamic), [Cavos vs Turnkey](/compare/turnkey), [Cavos vs Web3Auth](/compare/web3auth), [Cavos vs Magic](/compare/magic). Teams leaving a named vendor can start at [Privy alternatives](/privy-alternatives), [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), or [Magic alternatives](/magic-alternatives).
 
@@ -180,7 +180,7 @@ The rows below reuse facts already stated on the [compare](/compare) pages and t
 
 The category has consolidated. Stripe acquired Privy in 2025. Fireblocks acquired Dynamic in 2025. Consensys acquired Web3Auth in 2025 and now ships it as MetaMask Embedded Wallets. In 2026 Payward, the parent of Kraken, agreed to acquire Magic Labs’ wallet-as-a-service business. Acquisition is a vendor-risk and roadmap input. It does not change who can produce a signature.
 
-## Where Cavos fits
+## Where Cavos fits as a wallet-as-a-service
 
 Cavos is an [embedded wallet](/embedded-wallet) platform, not an extension, and not a connector. Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds. Login never signs a transaction. There is no MPC and no hosted spend key. Auth is hosted Google, Apple, or email, or an identity you pass in. Recovery is a passkey or opt-in enclave unwrap of the MasterDEK. Gas is sponsored.
 
