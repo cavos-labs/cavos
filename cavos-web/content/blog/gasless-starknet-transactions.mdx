@@ -1,8 +1,8 @@
 ---
 title: "How to Send Gasless Starknet Transactions"
-updated: "2026-10-30"
+updated: "2026-10-31"
 date: "2026-10-25"
-excerpt: "Install @cavos/kit, sign in with Google, Apple, or email, and send a paymaster-sponsored Starknet transaction from an embedded wallet — no ETH or STRK."
+excerpt: "Install @cavos/kit, sign in with Google, Apple, or email, and send a paymaster-sponsored Starknet transaction from an embedded wallet, no ETH or STRK."
 category: "Guide"
 ogQuote: "Gasless is the UX. Custody is a separate question."
 slug: "gasless-starknet-transactions"
@@ -16,20 +16,20 @@ faq:
   - question: "Does connect deploy the Starknet account?"
     answer: "No. Connect looks up (userId, appId, chain, network) in the registry, derives the address, and unwraps the stark key on this device. It never deploys. An undeployed wallet already has that address. The first execute deploys AccountUpgradeable and runs the user’s calls atomically. After that, status is ready."
   - question: "Who signs a Cavos Starknet transaction?"
-    answer: "The device. The stark key is grindKey(HKDF(MasterDEK, appSalt, \"cavos-stark-starknet-v1\")). Cavos cannot see it, cannot sign with it, and cannot move funds. Login selects which user this is; it never authorizes a spend. The on-chain account is an audited OpenZeppelin AccountUpgradeable v3.0.0 — the audit covers OpenZeppelin’s contract, not Cavos. There is no on-chain device list. A new device restores the MasterDEK off-chain."
+    answer: "The device. The stark key is grindKey(HKDF(MasterDEK, appSalt, \"cavos-stark-starknet-v1\")). Cavos cannot see it, cannot sign with it, and cannot move funds. Login selects which user this is; it never authorizes a spend. The on-chain account is an audited OpenZeppelin AccountUpgradeable v3.0.0, the audit covers OpenZeppelin’s contract, not Cavos. There is no on-chain device list. A new device restores the MasterDEK off-chain."
 ---
 
-An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain Starknet account they can pay, receive, and sign with — no browser extension, no seed phrase, no trip to Argent X or Braavos.
+An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain Starknet account they can pay, receive, and sign with, no browser extension, no seed phrase, no trip to Argent X or Braavos.
 
 This guide is the Starknet path for that model using `@cavos/kit` 0.4.4. It is the how-to companion to the [Starknet embedded wallet](/embedded-starknet-wallet) page: App ID, paymaster key, Google / Apple / email login, the address before deploy, the first sponsored `execute`, and React Native notes. The cross-chain React walkthrough is [how to add an embedded wallet](/blog/how-to-add-an-embedded-wallet).
 
-Cavos, LLC is a software and SaaS company. Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds. The Starknet adapter provisions an **audited OpenZeppelin account contract** — AccountUpgradeable v3.0.0 — not a Cavos-written class.
+Cavos, LLC is a software and SaaS company. Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds. The Starknet adapter provisions an **audited OpenZeppelin account contract** (AccountUpgradeable v3.0.0) not a Cavos-written class.
 
 [Pricing](/pricing) publishes the free 1,000 wallet creates and paid recovery options.
 
 ## What you are installing
 
-`@cavos/kit` is a **Starknet embedded wallet SDK** for apps that should never show a wallet picker. Authentication selects which user this is. The kit looks up `(userId, appId, chain, network)` in the registry and returns that address, or claims a new one. The first device to register wins. A stark key on the device authorizes transactions from inside your UI — the opposite of connecting Argent X.
+`@cavos/kit` is a **Starknet embedded wallet SDK** for apps that should never show a wallet picker. Authentication selects which user this is. The kit looks up `(userId, appId, chain, network)` in the registry and returns that address, or claims a new one. The first device to register wins. A stark key on the device authorizes transactions from inside your UI, the opposite of connecting Argent X.
 
 Custody is separate from that UX. Some embedded wallets hold a key, split one with MPC, or delegate signing to an HSM. Cavos does not. The stark key is derived on the device from a MasterDEK.
 
@@ -39,7 +39,7 @@ Custody is separate from that UX. Some embedded wallets hold a key, split one wi
 npm install @cavos/kit
 ```
 
-The React bindings live on the same package, under `@cavos/kit/react`. You do not install a second library. Mobile uses `@cavos/kit/react-native` — covered in the React Native section below. Expo Go is not supported.
+The React bindings live on the same package, under `@cavos/kit/react`. You do not install a second library. Mobile uses `@cavos/kit/react-native`, covered in the React Native section below. Expo Go is not supported.
 
 ## 2. Create an app and copy the keys
 
@@ -47,7 +47,7 @@ Create an app in the [Cavos dashboard](https://cavos.xyz/dashboard) and copy its
 
 Starknet also needs a paymaster API key (`NEXT_PUBLIC_CAVOS_PAYMASTER_API_KEY`). The current web SDK receives that value in browser code, so treat it as a **client-visible, app-scoped sponsorship credential**, never as an operator or treasury secret. Bind and limit it by app, environment, origin, rate, and spend. Without it, Starknet `connect` fails: the key is required, not optional.
 
-Register every callback URL for the app in **Dashboard → App → Callback URLs**, one per line, matched exactly — scheme, host, path, no trailing slash, and no wildcards. OAuth rejects a `redirect_uri` that is not registered. Add tunnel or preview domains while developing; each one is a distinct origin.
+Register every callback URL for the app in **Dashboard → App → Callback URLs**, one per line, matched exactly: scheme, host, path, no trailing slash, and no wildcards. OAuth rejects a `redirect_uri` that is not registered. Add tunnel or preview domains while developing; each one is a distinct origin.
 
 Never change `appSalt` after users exist. On Starknet it is the HKDF salt for the stark key, so changing it derives a different address that will not match the registry row.
 
@@ -83,9 +83,9 @@ export function Providers({ children }) {
 
 `network: "testnet"` resolves to Sepolia; `"mainnet"` resolves to Starknet mainnet. Passing `modal={{ appName: "My App" }}` mounts the hosted login modal. Omit `modal` if you will drive auth yourself.
 
-`deviceApproval: "enclave"` (with `socialRecovery`) is the current multi-factor path: the stark key is `grindKey(HKDF(MasterDEK, appSalt, "cavos-stark-starknet-v1"))`. `deviceApproval: "passkey"` is one chain — fine for a Starknet-only app, not for a shared login across Starknet, Solana, and Stellar.
+`deviceApproval: "enclave"` (with `socialRecovery`) is the current multi-factor path: the stark key is `grindKey(HKDF(MasterDEK, appSalt, "cavos-stark-starknet-v1"))`. `deviceApproval: "passkey"` is one chain, fine for a Starknet-only app, not for a shared login across Starknet, Solana, and Stellar.
 
-If you already authenticate users (Clerk, Auth0, your own session), pass a stable `userId` as `identity`. Cavos login turns off: the modal is not mounted and `login()` throws. Pass `null` while your auth is loading and once the user signs out. Use an immutable primary key, not an email that can change. If `userId` changes, the registry lookup is for a different user — a different wallet.
+If you already authenticate users (Clerk, Auth0, your own session), pass a stable `userId` as `identity`. Cavos login turns off: the modal is not mounted and `login()` throws. Pass `null` while your auth is loading and once the user signs out. Use an immutable primary key, not an email that can change. If `userId` changes, the registry lookup is for a different user, a different wallet.
 
 See the [React](https://docs.cavos.xyz/docs/react) and [authentication](https://docs.cavos.xyz/docs/auth) docs for `identity`, `deviceApproval`, and `socialRecovery`.
 
@@ -151,9 +151,9 @@ if (wallet?.chain === "starknet") {
 
 | Status | Meaning | Can execute? |
 |--------|---------|--------------|
-| `undeployed` | Address derived, no on-chain account yet. | Yes — first execute deploys, then runs the calls. |
+| `undeployed` | Address derived, no on-chain account yet. | Yes: first execute deploys, then runs the calls. |
 | `ready` | Account deployed and this device holds the stark key. | Yes |
-| `needs-device-approval` | This device has no key yet. Restore the MasterDEK. | No — restore with a passkey or the enclave. |
+| `needs-device-approval` | This device has no key yet. Restore the MasterDEK. | No: restore with a passkey or the enclave. |
 
 Both `undeployed` and `ready` wallets can execute and `signMessage`. Only `needs-device-approval` blocks transactions. That status means this device holds no key yet. It is not an on-chain device list. Do not create a second wallet for the same login.
 
@@ -163,7 +163,7 @@ The address is `calculateContractAddressFromHash` of the stark public key and th
 
 ## 6. First paymaster-sponsored execute (deploys the account)
 
-In React, use the context `execute(calls)` — that method is Starknet-only. Narrow on `wallet.chain === "starknet"` when you call `wallet.execute` on the handle instead.
+In React, use the context `execute(calls)`; that method is Starknet-only. Narrow on `wallet.chain === "starknet"` when you call `wallet.execute` on the handle instead.
 
 ```ts
 const { execute, wallet } = useCavos();
@@ -181,7 +181,7 @@ const { transactionHash } = await execute([
 ]);
 ```
 
-When status is `undeployed`, this call deploys the account first, then runs the multicall — atomically, in a single paymaster-sponsored transaction. After that, status is `ready`. The kit refuses `set_public_key` on the account itself: a rotated key would no longer be controlled by the DEK.
+When status is `undeployed`, this call deploys the account first, then runs the multicall, atomically, in a single paymaster-sponsored transaction. After that, status is `ready`. The kit refuses `set_public_key` on the account itself: a rotated key would no longer be controlled by the DEK.
 
 The same call from the wallet handle:
 
@@ -229,11 +229,11 @@ After the account is deployed, `fee: "self"` pays from the account’s own balan
 const { transactionHash } = await execute(calls, { fee: "self" });
 ```
 
-A self-funded first execute is refused — an undeployed account has no balance to deploy itself with. The kit has no single native-balance helper on Starknet; the fee token is an ERC-20. Read a token with `balanceOf`, or query the RPC with starknet.js. See [wallet actions](https://docs.cavos.xyz/docs/wallet-actions) and [Starknet](https://docs.cavos.xyz/docs/starknet).
+A self-funded first execute is refused: an undeployed account has no balance to deploy itself with. The kit has no single native-balance helper on Starknet; the fee token is an ERC-20. Read a token with `balanceOf`, or query the RPC with starknet.js. See [wallet actions](https://docs.cavos.xyz/docs/wallet-actions) and [Starknet](https://docs.cavos.xyz/docs/starknet).
 
 ## 7. Sign messages
 
-`signMessage` works on both `undeployed` and `ready` wallets — the stark key exists at connect time, before the account is deployed:
+`signMessage` works on both `undeployed` and `ready` wallets: the stark key exists at connect time, before the account is deployed:
 
 ```ts
 const sig = await wallet.signMessage("Hello, Cavos!");
@@ -259,7 +259,7 @@ See [recovery](https://docs.cavos.xyz/docs/recovery) and [hardware-isolated reco
 
 ## 8. React Native notes
 
-Use `@cavos/kit/react-native` with Expo Development Builds, EAS, or bare React Native. **Expo Go is not supported** — custom native modules require a development build. Minimum platforms are iOS 16 and Android 9 (API 28). Email sign-in is not available on React Native yet; use Google or Apple.
+Use `@cavos/kit/react-native` with Expo Development Builds, EAS, or bare React Native. **Expo Go is not supported**: custom native modules require a development build. Minimum platforms are iOS 16 and Android 9 (API 28). Email sign-in is not available on React Native yet; use Google or Apple.
 
 The native provider keeps the same configuration shape, with native-only `redirectUri`, `rpId`, and `minimumKeySecurity`. The chain field is singular (`chain`, not `chains`):
 
@@ -291,10 +291,10 @@ Register the exact `redirectUri` in Callback URLs. Import `@cavos/kit/react-nati
 ## What to read next
 
 - [Best embedded wallets for Starknet](/blog/best-embedded-wallets-starknet): Starknet embedded wallet providers compared on account contracts, gas, and pricing.
-- [Embedded Starknet wallet](/embedded-starknet-wallet) — OpenZeppelin AccountUpgradeable, paymaster, SNIP-12.
-- [embedded wallet](/embedded-wallet) — custody, key models, and how to choose an SDK.
-- [How to add an embedded wallet to a React app](/blog/how-to-add-an-embedded-wallet) — the same kit across Starknet, Solana, and Stellar.
-- [Embedded wallet API](/blog/embedded-wallet-api) — auth, create, keys, signing, gas, and recovery.
-- [Embedded wallet vs browser extension](/blog/embedded-wallet-vs-browser-extension) — why Argent X stays out of the first-run path.
+- [Embedded Starknet wallet](/embedded-starknet-wallet): OpenZeppelin AccountUpgradeable, paymaster, SNIP-12.
+- [embedded wallet](/embedded-wallet): custody, key models, and how to choose an SDK.
+- [How to add an embedded wallet to a React app](/blog/how-to-add-an-embedded-wallet): the same kit across Starknet, Solana, and Stellar.
+- [Embedded wallet API](/blog/embedded-wallet-api): auth, create, keys, signing, gas, and recovery.
+- [Embedded wallet vs browser extension](/blog/embedded-wallet-vs-browser-extension): why Argent X stays out of the first-run path.
 - [Starknet adapter](https://docs.cavos.xyz/docs/starknet), [quickstart](https://docs.cavos.xyz/docs/quickstart), and [wallet actions](https://docs.cavos.xyz/docs/wallet-actions).
 - [Pricing](/pricing) for the free 1,000 creates and paid recovery options.

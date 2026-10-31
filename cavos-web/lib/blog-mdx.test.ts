@@ -36,3 +36,13 @@ describe('blog MDX compile', () => {
 })
 
 
+
+describe('blog MDX copy rules', () => {
+  it('has no em-dashes in any blog post', () => {
+    const files = fs.readdirSync(BLOG_DIR).filter((name) => name.endsWith('.mdx'))
+    for (const filename of files) {
+      const raw = fs.readFileSync(path.join(BLOG_DIR, filename), 'utf8')
+      assert.ok(!raw.includes('\u2014'), `${filename} contains an em-dash`)
+    }
+  })
+})

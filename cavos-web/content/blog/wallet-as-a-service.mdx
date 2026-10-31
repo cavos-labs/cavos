@@ -1,8 +1,8 @@
 ---
 title: "Wallet-as-a-Service (WaaS): How It Works (2026)"
-updated: "2026-10-30"
+updated: "2026-10-31"
 date: "2026-10-23"
-excerpt: "What a wallet-as-a-service platform is: login, keys, signing, gas, recovery, pricing — and how Cavos compares to Privy, Dynamic, Turnkey, Magic, and Web3Auth."
+excerpt: "What a wallet-as-a-service platform is: login, keys, signing, gas, recovery, pricing, and how Cavos compares to Privy, Dynamic, Turnkey, Magic, and Web3Auth."
 category: "Guide"
 ogQuote: "Write the answers down before you read a pricing page."
 slug: "wallet-as-a-service"
@@ -21,7 +21,7 @@ faq:
     answer: "Cavos is a finished embedded-wallet SDK for Starknet, Solana, and Stellar. Auth is hosted Google, Apple, or email, or an identity you pass in. Signing keys are created and used on the user’s device. On Starknet the account is an audited OpenZeppelin account contract. Recovery is off-chain. Gas is sponsored. Cavos is not an EVM-wide layer and does not connect existing extensions."
 ---
 
-An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain account they can pay, receive, and sign with — no browser extension, no seed phrase, no trip to another app.
+An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain account they can pay, receive, and sign with, no browser extension, no seed phrase, no trip to another app.
 
 **Wallet-as-a-service** (WaaS) is the commercial name for that job. An **embedded wallet platform** is the product that sells it. Searchers also type embedded wallet solution, embedded wallets as a service, and embedded wallet management software. They want the same answers: who provisions the wallet, who can sign, and what the invoice meters. This guide is the platform map. The [providers comparison](/blog/embedded-wallet-providers) is the shortlist. The [embedded wallet API](/blog/embedded-wallet-api) guide is the method-level surface. The [non-custodial guide](/blog/non-custodial-embedded-wallet) is the custody test.
 
@@ -64,7 +64,7 @@ This is the part that decides whether the platform is a custodian in practice. F
 
 “Non-custodial” is a claim. The test is who can move the assets. Privy ships non-custodial embedded wallets and, separately, optional custodial wallets starting with Bridge. Counsel has to read recovery and export.
 
-On Starknet, Cavos wallets are an **audited OpenZeppelin account contract** — AccountUpgradeable v3.0.0 — controlled by one stark key derived from the MasterDEK and app salt. Cavos does not ship its own account implementation. There are no on-chain device signers.
+On Starknet, Cavos wallets are an **audited OpenZeppelin account contract** (AccountUpgradeable v3.0.0) controlled by one stark key derived from the MasterDEK and app salt. Cavos does not ship its own account implementation. There are no on-chain device signers.
 
 ### Signing
 
@@ -95,7 +95,7 @@ Cavos recovery is **off-chain**. A new device restores the MasterDEK with anothe
 
 ### Dashboard and app management
 
-The dashboard is how a platform becomes software you operate: App IDs, environments, API keys, origin and rate limits, sponsorship balances, allowlists, and usage. The invoice unit — MAU, wallet create, signature — should match a number you can see there.
+The dashboard is how a platform becomes software you operate: App IDs, environments, API keys, origin and rate limits, sponsorship balances, allowlists, and usage. The invoice unit (MAU, wallet create, signature) should match a number you can see there.
 
 Cavos ships a [dashboard](https://cavos.xyz/dashboard) where you create an app, copy an App ID, and operate gas sponsorship. The kit reads `NEXT_PUBLIC_CAVOS_APP_ID` in the browser. Published plans include dashboard and usage analytics. The [React integration](/blog/how-to-add-an-embedded-wallet) starts with that App ID.
 
@@ -186,7 +186,7 @@ Cavos is an [embedded wallet](/embedded-wallet) platform, not an extension, and 
 
 Adapters ship today for three chains:
 
-- **[Starknet](/embedded-starknet-wallet).** An audited OpenZeppelin account contract — AccountUpgradeable v3.0.0 — controlled by one stark key. Cavos does not ship its own account implementation. There are no on-chain device signers and no on-chain social recovery. The paymaster sponsors deploy and execute.
+- **[Starknet](/embedded-starknet-wallet).** An audited OpenZeppelin account contract (AccountUpgradeable v3.0.0) controlled by one stark key. Cavos does not ship its own account implementation. There are no on-chain device signers and no on-chain social recovery. The paymaster sponsors deploy and execute.
 - **[Solana](/embedded-solana-wallet).** A native Ed25519 system account. A relayer co-signs as fee payer.
 - **[Stellar](/embedded-stellar-wallet).** A classic G… account. One Ed25519 spend key is HKDF of the MasterDEK. The relayer can sponsor reserves and fee-bumps. A new device restores the MasterDEK and derives the same key.
 
@@ -200,12 +200,12 @@ The React path is `@cavos/kit`. Mobile is `@cavos/kit/react-native`. The current
 
 - [What is an embedded wallet?](/blog/what-is-an-embedded-wallet): a plain definition, key models, and when to use one.
 - Chain-specific shortlists: [best embedded wallets for Stellar](/blog/best-embedded-wallets-stellar), [Solana](/blog/best-embedded-wallets-solana), and [Starknet](/blog/best-embedded-wallets-starknet).
-- [embedded wallet](/embedded-wallet) — custody, key models, and how to choose an SDK.
-- [Embedded wallet API](/blog/embedded-wallet-api) — auth, create, keys, signing, gas, and recovery.
-- [Non-custodial embedded wallets](/blog/non-custodial-embedded-wallet) — who can sign, and how to verify a vendor’s claim.
-- [Embedded wallet providers compared](/blog/embedded-wallet-providers) — the named-vendor shortlist.
-- [Privy vs Turnkey](/blog/privy-vs-turnkey) — finished SDK versus signing infrastructure.
-- [How to add an embedded wallet](/blog/how-to-add-an-embedded-wallet) — `@cavos/kit` install and the first sponsored transaction.
-- [Embedded wallet vs browser extension](/blog/embedded-wallet-vs-browser-extension) — where users should sign.
+- [embedded wallet](/embedded-wallet): custody, key models, and how to choose an SDK.
+- [Embedded wallet API](/blog/embedded-wallet-api): auth, create, keys, signing, gas, and recovery.
+- [Non-custodial embedded wallets](/blog/non-custodial-embedded-wallet): who can sign, and how to verify a vendor’s claim.
+- [Embedded wallet providers compared](/blog/embedded-wallet-providers): the named-vendor shortlist.
+- [Privy vs Turnkey](/blog/privy-vs-turnkey): finished SDK versus signing infrastructure.
+- [How to add an embedded wallet](/blog/how-to-add-an-embedded-wallet): `@cavos/kit` install and the first sponsored transaction.
+- [Embedded wallet vs browser extension](/blog/embedded-wallet-vs-browser-extension): where users should sign.
 - Chain pages: [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), [Stellar](/embedded-stellar-wallet).
 - [Compare](/compare) for worked one-to-one pages. [Pricing](/pricing) for Cavos fees. [Custody](/custody) for the control test.

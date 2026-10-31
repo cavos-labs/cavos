@@ -1605,8 +1605,8 @@ describe('marketing SEO', () => {
     assert.equal(privy.title, PRIVY_VS_TURNKEY_TITLE)
     assert.ok(providers.excerpt.length >= 140 && providers.excerpt.length <= 155)
     assert.ok(privy.excerpt.length >= 140 && privy.excerpt.length <= 155)
-    assert.equal(providers.updated, '2026-10-30')
-    assert.equal(privy.updated, '2026-10-30')
+    assert.equal(providers.updated, '2026-10-31')
+    assert.equal(privy.updated, '2026-10-31')
     assert.match(EMBEDDED_WALLET_PROVIDERS_TITLE, /Embedded Wallet Providers/)
     assert.match(PRIVY_VS_TURNKEY_TITLE, /Privy vs Turnkey/)
     assert.match(privy.excerpt, /Turnkey vs Privy/)
@@ -2650,7 +2650,7 @@ describe('marketing SEO', () => {
 
     const fields = parseBlogFrontmatter(source)
     assert.equal(fields.title, EMBEDDED_WALLET_REACT_SDK_TITLE)
-    assert.equal(fields.updated, '2026-10-30')
+    assert.equal(fields.updated, '2026-10-31')
     assert.equal(fields.date, '2026-10-27')
 
     const hub = fs.readFileSync(
@@ -2775,7 +2775,7 @@ describe('marketing SEO', () => {
 
     const fields = parseBlogFrontmatter(source)
     assert.equal(fields.title, ALCHEMY_VS_PRIVY_TITLE)
-    assert.equal(fields.updated, '2026-10-30')
+    assert.equal(fields.updated, '2026-10-31')
     assert.equal(fields.date, '2026-10-27')
 
     const compareSource = fs.readFileSync(
