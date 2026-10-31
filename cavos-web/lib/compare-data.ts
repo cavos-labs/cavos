@@ -63,7 +63,7 @@ const ALCHEMY_PRICING =
 export const PROVIDER_PRICING_AS_OF = 'October 2026'
 
 /** Sitemap lastmod for /compare/[slug] when competitor copy in this file changes. */
-export const COMPARE_PAGES_MODIFIED = '2026-10-30'
+export const COMPARE_PAGES_MODIFIED = '2026-10-31'
 
 export const EMBEDDED_WALLET_MARKET_NOTE =
     'The category has consolidated. Stripe acquired Privy in 2025. Fireblocks acquired Dynamic in 2025. Consensys acquired Web3Auth in 2025 and now ships it as MetaMask Embedded Wallets. In 2026 Payward, the parent of Kraken, acquired Magic Labs wallet infrastructure.'

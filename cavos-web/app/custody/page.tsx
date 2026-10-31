@@ -76,7 +76,7 @@ const SOURCES = [
         note: 'License date of 1 July 2026',
     },
     {
-        label: 'DFPI, Digital Financial Assets Law — Preparing for your Application',
+        label: 'DFPI, Digital Financial Assets Law: Preparing for your Application',
         href: 'https://dfpi.ca.gov/regulated-industries/digital-financial-assets/digital-financial-assets-law-frequently-asked-questions/digital-financial-assets-law-preparing-for-your-application/',
         note: 'Initial tangible net worth of $100,000; bond amount set by DFPI',
     },
@@ -146,7 +146,7 @@ const SOURCES = [
         note: 'Updated June 2026. Practitioner cost estimates, not statutory fees',
     },
     {
-        label: 'Cavos docs, Concepts — non-custodial invariant',
+        label: 'Cavos docs, Concepts: non-custodial invariant',
         href: 'https://docs.cavos.xyz/docs/concepts',
         note: 'Product description, not a regulatory determination',
     },
@@ -248,8 +248,8 @@ export default function CustodyPage() {
                             self-custodial embedded wallet
                         </Link>{' '}
                         is the design where you cannot move the funds. The figures are in the
-                        table. The statutes are under it. The engineering test — who can
-                        sign, and how to verify a vendor&apos;s claim — is the{' '}
+                        table. The statutes are under it. The engineering test (who can
+                        sign, and how to verify a vendor&apos;s claim) is the{' '}
                         <Link href="/blog/non-custodial-embedded-wallet" className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
                             non-custodial embedded wallet
                         </Link>{' '}
@@ -823,8 +823,8 @@ export default function CustodyPage() {
                                 for categories 1 and 2, exchange, not for custody. Article 9 sets
                                 minimum net worth for categories 1, 2, and 4 at USD 150,000. Category
                                 3, transfer, is USD 75,000. If volume over the last 12 months is
-                                under USD 2,500,000 — transacted for categories 1 to 3, custodied
-                                for category 4 — the minimum is half. A firm in more than one category
+                                under USD 2,500,000 (transacted for categories 1 to 3, custodied
+                                for category 4), the minimum is half. A firm in more than one category
                                 meets the most demanding one. Exchange and transfer stay in
                                 categories 1 to 3 even when the wallet itself is outside category 4.
                             </p>

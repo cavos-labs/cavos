@@ -67,14 +67,14 @@ export default function EmbeddedStarknetWalletPage() {
                             embedded wallet
                         </Link>{' '}
                         for Starknet. The signing key is created and used on the user&apos;s
-                        device — Cavos cannot see it, cannot sign with it, and cannot move funds.
+                        device. Cavos cannot see it, cannot sign with it, and cannot move funds.
                         Available via{' '}
                         <code className="text-sm bg-surface px-1.5 py-0.5 rounded">@cavos/kit</code>{' '}
                         for web and{' '}
                         <code className="text-sm bg-surface px-1.5 py-0.5 rounded">
                             @cavos/kit/react-native
                         </code>{' '}
-                        for mobile (Expo Development Builds, EAS, or bare React Native — Expo Go
+                        for mobile (Expo Development Builds, EAS, or bare React Native; Expo Go
                         is not supported).
                     </p>
                     <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted">
@@ -133,8 +133,7 @@ export default function EmbeddedStarknetWalletPage() {
                     <div className="mt-5 space-y-4 text-sm leading-relaxed text-muted">
                         <p>
                             Cavos provisions an{' '}
-                            <strong>audited OpenZeppelin account contract</strong> —
-                            AccountUpgradeable v3.0.0. The audit covers OpenZeppelin&apos;s
+                            <strong>audited OpenZeppelin account contract</strong>, AccountUpgradeable v3.0.0. The audit covers OpenZeppelin&apos;s
                             contract, not Cavos. It is an upgradeable smart contract account
                             controlled by one stark key, the same shape as Argent or Braavos, not
                             a custom Cavos contract. The
@@ -177,7 +176,7 @@ export default function EmbeddedStarknetWalletPage() {
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
                                 set_public_key
                             </code>{' '}
-                            on the account itself — a rotated key would no longer be controlled
+                            on the account itself: a rotated key would no longer be controlled
                             by the DEK. Later implementation changes go through{' '}
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
                                 wallet.upgrade(newClassHash)
@@ -240,7 +239,7 @@ export default function EmbeddedStarknetWalletPage() {
                                 paymasterApiKey
                             </code>
                             . The current web SDK receives that value in browser code, so treat
-                            it as a client-visible, app-scoped sponsorship credential — never as
+                            it as a client-visible, app-scoped sponsorship credential, never as
                             an operator or treasury secret. Bind and limit it by app, environment,
                             origin, rate, and spend. Add it only when Starknet is in{' '}
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
@@ -299,16 +298,16 @@ export default function EmbeddedStarknetWalletPage() {
                         >
                             How to add an embedded wallet
                         </Link>
-                        . The Starknet-only path — paymaster-sponsored deploy and
-                        execute from an embedded wallet — is in{' '}
+                        . The Starknet-only path (paymaster-sponsored deploy and
+                        execute from an embedded wallet) is in{' '}
                         <Link
                             href="/blog/gasless-starknet-transactions"
                             className={MARKETING_PROSE_LINK}
                         >
                             How to send gasless Starknet transactions
                         </Link>
-                        . The method-level surface — auth, connect, execute, gas,
-                        recovery — is the{' '}
+                        . The method-level surface (auth, connect, execute, gas,
+                        recovery) is the{' '}
                         <Link
                             href="/blog/embedded-wallet-api"
                             className={MARKETING_PROSE_LINK}

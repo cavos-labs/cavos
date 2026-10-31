@@ -45,7 +45,7 @@ export default function ContactSalesPage() {
                                 Tell us about your product and we&rsquo;ll help you ship.
                             </h1>
                             <p className="mt-5 max-w-md text-[15px] leading-relaxed text-muted">
-                                A few quick details and the right person reaches out — usually
+                                A few quick details and the right person reaches out, usually
                                 within a business day. Prefer email?{' '}
                                 <a
                                     href="mailto:adrianvrj@cavos.xyz"

@@ -554,7 +554,7 @@ describe('marketing SEO', () => {
     assert.ok(
       EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What are embedded wallet payments?'),
     )
-    assert.equal(EMBEDDED_WALLET_MODIFIED, '2026-10-30')
+    assert.equal(EMBEDDED_WALLET_MODIFIED, '2026-10-31')
   })
 
   it('keeps a single H1 and adds how-it-works plus a compare-data provider table', () => {
@@ -1030,7 +1030,7 @@ describe('marketing SEO', () => {
         assert.match(guide.h1, /Turnkey alternatives and embedded wallet competitors/)
         assert.match(guide.description, /embedded wallet competitors/)
         assert.match(guide.description, /Turnkey vs Privy/)
-        assert.equal(guide.modified, '2026-10-30')
+        assert.equal(guide.modified, '2026-10-31')
         assert.ok(
           guide.faq.some(
             (item) => item.question === 'Who are Turnkey embedded wallet competitors?',
@@ -1042,7 +1042,7 @@ describe('marketing SEO', () => {
         assert.match(guide.title, /Free 1,000 Wallets/)
         assert.match(guide.h1, new RegExp(`5 ${guide.incumbent} alternatives`))
         assert.match(guide.description, /Starknet, Solana, Stellar/)
-        assert.equal(guide.modified, '2026-10-27')
+        assert.equal(guide.modified, '2026-10-31')
       }
       assert.match(guide.description, /1,000 wallets/)
       const fullTitle = `${guide.title} | Cavos`
@@ -3778,4 +3778,41 @@ describe('SERP length limits', () => {
   it('keeps the about title at 60 characters or fewer once rendered', () => {
     assert.ok(renderedTitleLength(ABOUT_TITLE) <= 60, ABOUT_TITLE)
   })
+})
+
+describe('pillar page copy rules', () => {
+  const stripComments = (source: string) =>
+    source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"])\/\/[^\n]*/g, '$1')
+
+  const files = [
+    'app/page.tsx',
+    'app/about/page.tsx',
+    'app/embedded-wallet/page.tsx',
+    'app/embedded-starknet-wallet/page.tsx',
+    'app/embedded-solana-wallet/page.tsx',
+    'app/embedded-stellar-wallet/page.tsx',
+    'app/custody/page.tsx',
+    'app/compare/page.tsx',
+    'app/compare/[slug]/page.tsx',
+    'app/contact-sales/page.tsx',
+    'app/layout.tsx',
+    'components/landing/CaseStudies.tsx',
+    'components/landing/FeaturesGrid.tsx',
+    'lib/alternatives-guide.ts',
+    'lib/chain-wallet-pages.ts',
+    'lib/compare-data.ts',
+    'lib/dynamic-alternatives.ts',
+    'lib/embedded-wallet-guide.ts',
+    'lib/magic-alternatives.ts',
+    'lib/privy-alternatives.ts',
+    'lib/turnkey-alternatives.ts',
+    'lib/marketing-seo.ts',
+  ]
+
+  for (const file of files) {
+    it(`${file} has no em-dashes in rendered copy`, () => {
+      const source = stripComments(fs.readFileSync(path.join(process.cwd(), file), 'utf8'))
+      assert.ok(!source.includes('\u2014'), `${file} contains an em-dash outside comments`)
+    })
+  }
 })

@@ -80,7 +80,7 @@ export default async function ComparisonPage({
                                     Privy alternatives
                                 </Link>
                                 ; this page is the head-to-head. For finished auth and wallets
-                                versus signing infrastructure, see{' '}
+                                versus signing infrastructure. See{' '}
                                 <Link href={PRIVY_VS_TURNKEY_PATH} className={linkClass}>
                                     Privy vs Turnkey
                                 </Link>
@@ -95,7 +95,7 @@ export default async function ComparisonPage({
                         {competitor.slug === 'turnkey' ? (
                             <>
                                 Turnkey vs Privy is finished SDK versus enclave
-                                infrastructure — see{' '}
+                                infrastructure. See{' '}
                                 <Link href={PRIVY_VS_TURNKEY_PATH} className={linkClass}>
                                     Privy vs Turnkey
                                 </Link>
@@ -141,8 +141,8 @@ export default async function ComparisonPage({
                         {competitor.positioning}
                     </p>
                     <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
-                        For the category itself — custody, key models, and what the SDK
-                        actually does — start with{' '}
+                        For the category itself (custody, key models, and what the SDK
+                        actually does) start with{' '}
                         <Link href="/embedded-wallet" className={linkClass}>
                             embedded wallet
                         </Link>

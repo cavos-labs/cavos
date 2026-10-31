@@ -31,13 +31,13 @@ export const MAGIC_ALTERNATIVES_TITLE =
 
 /** 150 characters. Document title omits "| Cavos"; the layout template adds it. */
 export const MAGIC_ALTERNATIVES_DESCRIPTION =
-  'Compare 5 Magic alternatives — Cavos, Privy, Dynamic, Turnkey, Web3Auth. Free to 1,000 wallets on Starknet, Solana, Stellar. Device keys vs email HSM.'
+  'Compare 5 Magic alternatives: Cavos, Privy, Dynamic, Turnkey, Web3Auth. Free to 1,000 wallets on Starknet, Solana, Stellar. Device keys vs email HSM.'
 
 export const MAGIC_ALTERNATIVES_H1 = '5 Magic alternatives compared in 2026'
 
 export const MAGIC_ALTERNATIVES_PUBLISHED = '2026-10-27'
 
-export const MAGIC_ALTERNATIVES_MODIFIED = '2026-10-27'
+export const MAGIC_ALTERNATIVES_MODIFIED = '2026-10-31'
 
 export const MAGIC_ALTERNATIVES_CRUMB = 'Magic alternatives'
 
@@ -95,7 +95,7 @@ export const MAGIC_ALTERNATIVES_FAQ = [
   {
     question: 'What is the best Magic alternative?',
     answer:
-      'There is no single best Magic alternative — the right pick depends on chain and key model. Cavos is the alternative when the product is on Starknet, Solana, or Stellar and the review requires a device-native key. Privy is the more mature choice across the EVM ecosystem. Dynamic is stronger when you must connect wallets users already hold. Turnkey is key-management infrastructure, not a finished SDK. Web3Auth / MetaMask Embedded Wallets fits broad social-login chain coverage. Magic itself remains a strong choice for simple email-first EVM onboarding.',
+      'There is no single best Magic alternative. The right pick depends on chain and key model. Cavos is the alternative when the product is on Starknet, Solana, or Stellar and the review requires a device-native key. Privy is the more mature choice across the EVM ecosystem. Dynamic is stronger when you must connect wallets users already hold. Turnkey is key-management infrastructure, not a finished SDK. Web3Auth / MetaMask Embedded Wallets fits broad social-login chain coverage. Magic itself remains a strong choice for simple email-first EVM onboarding.',
   },
   {
     question: 'Is there a free Magic alternative?',
@@ -161,12 +161,12 @@ export const magicAlternativesGuide: AlternativesGuide = {
   sections: MAGIC_ALTERNATIVE_SECTIONS,
   howToChooseHeading: 'How to choose a Magic alternative',
   howToChooseIntro:
-    'Ask the custody question first — whether email login can authorize a spend — then the chain question, then whether you are buying a wallet product or signing infrastructure.',
+    'Ask the custody question first (whether email login can authorize a spend), then the chain question, then whether you are buying a wallet product or signing infrastructure.',
   howToChoose: MAGIC_HOW_TO_CHOOSE,
   howToChooseOutro: DEFAULT_HOW_TO_CHOOSE_OUTRO,
   stayHeading: 'When Magic is still the right choice',
   stayIntro:
-    'Magic is a strong choice for simple email-first flows on EVM chains. It is not the weaker product — it covers ground Cavos does not. Stay with Magic when the following are true.',
+    'Magic is a strong choice for simple email-first flows on EVM chains. It is not the weaker product; it covers ground Cavos does not. Stay with Magic when the following are true.',
   chooseThem: magicChooseThem,
   faq: MAGIC_ALTERNATIVES_FAQ,
   itemListName: 'Magic alternatives',

@@ -30,13 +30,13 @@ export const DYNAMIC_ALTERNATIVES_TITLE =
 
 /** 153 characters. Document title omits "| Cavos"; the layout template adds it. */
 export const DYNAMIC_ALTERNATIVES_DESCRIPTION =
-  'Compare 5 Dynamic alternatives — Cavos, Privy, Turnkey, Web3Auth, Magic. Free to 1,000 wallets on Starknet, Solana, Stellar. Provision vs wallet connect.'
+  'Compare 5 Dynamic alternatives: Cavos, Privy, Turnkey, Web3Auth, Magic. Free to 1,000 wallets on Starknet, Solana, Stellar. Provision vs wallet connect.'
 
 export const DYNAMIC_ALTERNATIVES_H1 = '5 Dynamic alternatives compared in 2026'
 
 export const DYNAMIC_ALTERNATIVES_PUBLISHED = '2026-10-27'
 
-export const DYNAMIC_ALTERNATIVES_MODIFIED = '2026-10-27'
+export const DYNAMIC_ALTERNATIVES_MODIFIED = '2026-10-31'
 
 export const DYNAMIC_ALTERNATIVES_CRUMB = 'Dynamic alternatives'
 
@@ -94,7 +94,7 @@ export const DYNAMIC_ALTERNATIVES_FAQ = [
   {
     question: 'What is the best Dynamic alternative?',
     answer:
-      'There is no single best Dynamic alternative — the right pick depends on whether you must connect wallets users already hold. Cavos is the alternative when the product is on Starknet, Solana, or Stellar and users should never see a wallet picker. Privy is the more mature choice across EVM when you still want embedded wallets plus connectors. Turnkey is key-management infrastructure, not a finished SDK. Web3Auth / MetaMask Embedded Wallets fits broad social-login chain coverage. Magic fits simple email-first EVM onboarding. Dynamic itself remains the better pick for multi-wallet login.',
+      'There is no single best Dynamic alternative. The right pick depends on whether you must connect wallets users already hold. Cavos is the alternative when the product is on Starknet, Solana, or Stellar and users should never see a wallet picker. Privy is the more mature choice across EVM when you still want embedded wallets plus connectors. Turnkey is key-management infrastructure, not a finished SDK. Web3Auth / MetaMask Embedded Wallets fits broad social-login chain coverage. Magic fits simple email-first EVM onboarding. Dynamic itself remains the better pick for multi-wallet login.',
   },
   {
     question: 'Is there a free Dynamic alternative?',
@@ -165,7 +165,7 @@ export const dynamicAlternativesGuide: AlternativesGuide = {
   howToChooseOutro: DEFAULT_HOW_TO_CHOOSE_OUTRO,
   stayHeading: 'When Dynamic is still the right choice',
   stayIntro:
-    'Dynamic is the better pick when you need many external wallets alongside embedded ones in a single login flow. It is not the weaker product — it covers ground Cavos does not. Stay with Dynamic when the following are true.',
+    'Dynamic is the better pick when you need many external wallets alongside embedded ones in a single login flow. It is not the weaker product; it covers ground Cavos does not. Stay with Dynamic when the following are true.',
   chooseThem: dynamicChooseThem,
   faq: DYNAMIC_ALTERNATIVES_FAQ,
   itemListName: 'Dynamic alternatives',

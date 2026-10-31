@@ -153,7 +153,7 @@ export default function EmbeddedWalletGuidePage() {
                             Teams adopt this model when the audience is not crypto-native. Games,
                             commerce, and consumer finance cannot ask a first-time user to
                             understand seed phrases. The tradeoff is that the application now
-                            owns the wallet experience — including recovery, device changes, and
+                            owns the wallet experience, including recovery, device changes, and
                             how honest it is about who can sign. The commercial name for the
                             same job is{' '}
                             <Link href={WALLET_AS_A_SERVICE_PATH} className={linkClass}>
@@ -262,7 +262,7 @@ export default function EmbeddedWalletGuidePage() {
                                     ],
                                     [
                                         'Portability',
-                                        'High — the same wallet across many sites',
+                                        'High: the same wallet across many sites',
                                         'Product-scoped unless you also connect or export',
                                     ],
                                     [
@@ -320,7 +320,7 @@ export default function EmbeddedWalletGuidePage() {
                             ],
                             [
                                 'MPC',
-                                'The private key is split into shares. Signing reconstructs or jointly computes a signature from those shares — typically some mix of the user\u2019s device, the provider\u2019s network, and a recovery factor. MPC is a legitimate design. It is not the same as \u201cthe provider never has a key.\u201d The provider holds a share used in reconstruction. Export is often supported, which is a feature and a different threat model.',
+                                'The private key is split into shares. Signing reconstructs or jointly computes a signature from those shares, typically some mix of the user\u2019s device, the provider\u2019s network, and a recovery factor. MPC is a legitimate design. It is not the same as \u201cthe provider never has a key.\u201d The provider holds a share used in reconstruction. Export is often supported, which is a feature and a different threat model.',
                             ],
                             [
                                 'Self-custodial, device-native',
@@ -368,7 +368,7 @@ export default function EmbeddedWalletGuidePage() {
                         in the browser, the OS keystore on iOS and Android. The device signs, and a
                         new device restores the same MasterDEK instead of being added on-chain.
                         This is the Cavos default. Those platform primitives provide the
-                        isolation — WebCrypto cannot hold a stark key, so outside the Cavos vault
+                        isolation: WebCrypto cannot hold a stark key, so outside the Cavos vault
                         the Starknet key is re-derived into memory for the session, and the SDK
                         does not enforce non-extractability on Node or other server runtimes.
                     </p>
@@ -453,16 +453,14 @@ export default function EmbeddedWalletGuidePage() {
                         &ldquo;One embedded wallet, every chain&rdquo; usually means an
                         EOA-style key reused across networks, or an account-abstraction layer on
                         EVM. Chains that are not EVM do not share that account model. If you are
-                        building on Starknet, Solana, or Stellar, the adapter has to be native
-                        — address derivation, signatures, execution, and fees stay explicit per
+                        building on Starknet, Solana, or Stellar, the adapter has to be native: address derivation, signatures, execution, and fees stay explicit per
                         chain.
                     </p>
                     <div className="mt-8 grid gap-px overflow-hidden rounded-2xl border border-line bg-line md:grid-cols-3">
                         <article className="bg-white p-7">
                             <h3 className="text-lg font-semibold">Starknet</h3>
                             <p className="mt-3 text-sm leading-relaxed text-muted">
-                                Each wallet is an audited OpenZeppelin account contract —
-                                AccountUpgradeable v3.0.0 — controlled by one stark key
+                                Each wallet is an audited OpenZeppelin account contract (AccountUpgradeable v3.0.0) controlled by one stark key
                                 derived from the MasterDEK and app salt. There is no on-chain
                                 device list. Execution is paymaster-sponsored (SNIP-29); the
                                 account deploys lazily on first execute. Signatures are SNIP-12.
@@ -498,7 +496,7 @@ export default function EmbeddedWalletGuidePage() {
                         <article className="bg-white p-7">
                             <h3 className="text-lg font-semibold">Stellar</h3>
                             <p className="mt-3 text-sm leading-relaxed text-muted">
-                                Cavos provisions a classic G… account — not a Soroban contract —
+                                Cavos provisions a classic G… account (not a Soroban contract),
                                 so exchanges and existing tools already understand the address.
                                 The spend key is one Ed25519 key, HKDF of the same MasterDEK as
                                 Solana. A new device restores that DEK and derives the same key.
@@ -650,7 +648,7 @@ export default function EmbeddedWalletGuidePage() {
                     <ol className="mt-6 list-decimal space-y-3 pl-5 text-sm leading-relaxed text-muted">
                         <li>Who can produce a valid signature without the user present?</li>
                         <li>
-                            Where does the signing key live — device, MPC shares, HSM, or
+                            Where does the signing key live: device, MPC shares, HSM, or
                             enclave?
                         </li>
                         <li>
@@ -663,8 +661,8 @@ export default function EmbeddedWalletGuidePage() {
                         </li>
                     </ol>
                     <p className="mt-5 text-sm leading-relaxed text-muted">
-                        Worked comparisons — including when the other product is the better
-                        choice — are on the{' '}
+                        Worked comparisons (including when the other product is the better
+                        choice) are on the{' '}
                         <Link href="/compare" className={linkClass}>
                             compare pages
                         </Link>
@@ -775,8 +773,8 @@ export default function EmbeddedWalletGuidePage() {
                         <Link href="/compare" className={linkClass}>
                             compare
                         </Link>{' '}
-                        pages. The longer listicle — pricing, chains, and key models for
-                        the same vendors — is{' '}
+                        pages. The longer listicle (pricing, chains, and key models for
+                        the same vendors) is{' '}
                         <Link href={EMBEDDED_WALLET_PROVIDERS_PATH} className={linkClass}>
                             {EMBEDDED_WALLET_PROVIDERS_TITLE}
                         </Link>
@@ -831,7 +829,7 @@ export default function EmbeddedWalletGuidePage() {
                         <p>
                             Cavos is device-native embedded wallet infrastructure. Applications
                             resolve a self-custodial account from a stable user identity. Signing
-                            keys are created and used on the user&apos;s device — Cavos cannot
+                            keys are created and used on the user&apos;s device. Cavos cannot
                             see them, sign with them, or move funds. Adapters ship today for
                             Starknet, Solana, and Stellar, via{' '}
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
@@ -841,7 +839,7 @@ export default function EmbeddedWalletGuidePage() {
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
                                 @cavos/kit/react-native
                             </code>{' '}
-                            on mobile (Expo Development Builds, EAS, or bare React Native — Expo
+                            on mobile (Expo Development Builds, EAS, or bare React Native; Expo
                             Go is not supported).
                         </p>
                         <p>
