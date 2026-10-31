@@ -670,9 +670,9 @@ describe('marketing SEO', () => {
     assert.match(PRIVY_ALTERNATIVES_TITLE, /Privy Alternatives/)
     assert.match(PRIVY_ALTERNATIVES_TITLE, /Competitors/)
     assert.match(PRIVY_ALTERNATIVES_TITLE, /2026/)
-    assert.match(PRIVY_ALTERNATIVES_H1, /What are some alternatives to Privy/)
+    assert.match(PRIVY_ALTERNATIVES_H1, /^Privy alternatives$/)
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Shopify/)
-    assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /alternatives to Privy/)
+    assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Privy alternatives/)
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Privy competitors/)
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Cavos, Dynamic, Turnkey, Web3Auth, Magic/)
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /1,000 wallets/)
@@ -705,7 +705,7 @@ describe('marketing SEO', () => {
       ),
     )
     assert.ok(
-      PRIVY_ALTERNATIVES_FAQ.some((item) => item.question === 'Who are Privy competitors?'),
+      PRIVY_ALTERNATIVES_FAQ.some((item) => item.question === 'Who are Privy wallet competitors?'),
     )
     assert.ok(PRIVY_WHY_LOOK.length >= 4)
     assert.ok(PRIVY_HOW_TO_CHOOSE.length >= 5)
@@ -724,7 +724,7 @@ describe('marketing SEO', () => {
       ],
     )
     assert.equal(PRIVY_ALTERNATIVES_PUBLISHED, '2026-10-11')
-    assert.equal(PRIVY_ALTERNATIVES_MODIFIED, '2026-10-30')
+    assert.equal(PRIVY_ALTERNATIVES_MODIFIED, '2026-10-31')
     assert.equal(PRIVY_ALTERNATIVES_CRUMB, 'Privy alternatives')
 
     const meta = marketingPageMetadata({
@@ -815,6 +815,23 @@ describe('marketing SEO', () => {
       dataSource,
       /Cavos, Dynamic, Turnkey, Web3Auth, and Magic are the five Privy/,
     )
+
+    const alchemyVsPrivy = fs.readFileSync(
+      path.join(process.cwd(), 'content/blog/alchemy-vs-privy.mdx'),
+      'utf8',
+    )
+    const privyVsTurnkey = fs.readFileSync(
+      path.join(process.cwd(), 'content/blog/privy-vs-turnkey.mdx'),
+      'utf8',
+    )
+    const alchemyFields = parseBlogFrontmatter(alchemyVsPrivy)
+    const privyTurnkeyFields = parseBlogFrontmatter(privyVsTurnkey)
+    assert.doesNotMatch(alchemyFields.title, /alternatives/i)
+    assert.doesNotMatch(privyTurnkeyFields.title, /alternatives/i)
+    assert.match(alchemyVsPrivy, /\[Privy alternatives\]\(\/privy-alternatives\)/)
+    assert.match(privyVsTurnkey, /\[Privy alternatives\]\(\/privy-alternatives\)/)
+    assert.match(alchemyVsPrivy, /not a Privy alternatives shortlist/)
+    assert.match(privyVsTurnkey, /not a Privy alternatives shortlist/)
     assert.equal((templateSource.match(/<h1[\s>]/g) ?? []).length, 1)
 
     const cavos = PRIVY_ALTERNATIVE_SECTIONS[0]
