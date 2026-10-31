@@ -1645,7 +1645,9 @@ describe('marketing SEO', () => {
       /Are there native embedded wallets for Midnight, Aleo, Stellar, Cosmos, or Sui\?/,
     )
     assert.match(providersSource, /Which embedded wallet provider supports the most chains\?/)
+    assert.match(providersSource, /## Which embedded wallet provider supports the most chains\?/)
     assert.match(providersSource, /does not support Midnight, Aleo, Cosmos, or Sui/)
+    assert.match(providersSource, /Aleo, and Midnight/)
     assert.match(privySource, /Turnkey embedded wallet competitors/)
     assert.match(privySource, /What is the difference between Privy and Turnkey\?/)
     assert.match(privySource, /How does Privy vs Turnkey pricing compare\?/)
@@ -2120,7 +2122,7 @@ describe('marketing SEO', () => {
     assert.equal(EMBEDDED_WALLET_PROVIDERS_PATH, '/blog/embedded-wallet-providers')
     assert.equal(
       EMBEDDED_WALLET_PROVIDERS_TITLE,
-      'Embedded Wallet Providers: Who Fits in 2026',
+      'Embedded Wallet Providers: 2026 Comparison',
     )
 
     const hub = fs.readFileSync(
