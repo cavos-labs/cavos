@@ -90,7 +90,7 @@ It is a weaker fit when your users already arrive with a wallet they use everywh
 
 - **Provisioned by the app.** `Cavos.connect` looks up or claims the address for a user, app, chain, and network. Sign-in is Cavos-hosted (Google, Apple, email) or your own auth.
 - **Key model.** Custody is hardware-isolated and non-custodial. The signing key is derived and used on the user's device. Keys never leave the device in plaintext and are never used to sign on Cavos servers.
-- **Native accounts.** On Starknet the wallet is an audited OpenZeppelin account contract. On Solana it is a native Ed25519 account. On Stellar it is a classic G account.
+- **Native accounts.** On [Starknet](/embedded-starknet-wallet) the wallet is an audited OpenZeppelin account contract. On [Solana](/embedded-solana-wallet) it is a native Ed25519 account. On [Stellar](/embedded-stellar-wallet) it is a classic G account.
 - **Fees.** Gas Sponsorship in Any Token, so a new user can transact without the chain's fee token.
 - **Recovery.** Another signed-in device, a synced passkey, or opt-in hardware-isolated recovery. The passkey and the enclave only hold an encrypted copy of the master key for restore. The enclave is open source at [cavos-labs/cavos-recovery](https://github.com/cavos-labs/cavos-recovery).
 
@@ -120,3 +120,5 @@ console.log(wallet.address); // the user's embedded wallet address
 - [Embedded wallet vs browser extension](/blog/embedded-wallet-vs-browser-extension): where users should sign.
 - [Embedded wallet providers](/blog/embedded-wallet-providers): the vendor shortlist.
 - [How to add an embedded wallet to a React app](/blog/how-to-add-an-embedded-wallet): install to first transaction.
+- [Compare embedded wallet providers](/compare): Cavos vs Privy, Dynamic, Turnkey, Web3Auth, Magic, and Alchemy.
+- [Privy alternatives](/privy-alternatives): the same vendors, framed as replacements for Privy.

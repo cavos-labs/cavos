@@ -46,3 +46,40 @@ describe('blog MDX copy rules', () => {
     }
   })
 })
+
+describe('blog internal links', () => {
+  const read = (slug: string) => fs.readFileSync(path.join(BLOG_DIR, `${slug}.mdx`), 'utf8')
+
+  it('links the what-is explainer to chain pages, compare, and Privy alternatives', () => {
+    const raw = read('what-is-an-embedded-wallet')
+    for (const href of [
+      '/embedded-wallet',
+      '/embedded-starknet-wallet',
+      '/embedded-solana-wallet',
+      '/embedded-stellar-wallet',
+      '/compare',
+      '/privy-alternatives',
+    ]) {
+      assert.ok(raw.includes(`](${href})`), `what-is-an-embedded-wallet is missing a link to ${href}`)
+    }
+  })
+
+  it('links guides and comparisons back to the what-is explainer', () => {
+    for (const slug of [
+      'how-to-add-an-embedded-wallet',
+      'embedded-wallet-react-sdk',
+      'privy-vs-turnkey',
+      'alchemy-vs-privy',
+      'gasless-starknet-transactions',
+      'stellar-embedded-wallet-tutorial',
+    ]) {
+      assert.ok(read(slug).includes('](/blog/what-is-an-embedded-wallet)'), `${slug} does not link the explainer`)
+    }
+  })
+
+  it('links every best-of shortlist to the compare pages', () => {
+    for (const slug of ['best-embedded-wallets-starknet', 'best-embedded-wallets-stellar', 'best-embedded-wallets-solana']) {
+      assert.ok(read(slug).includes('](/compare'), `${slug} does not link /compare`)
+    }
+  })
+})
