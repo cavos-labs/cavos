@@ -4,6 +4,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { blogOgImageUrl, blogOgVersion } from './blog-og-version'
 import { getAllPosts } from './blog'
+import { isBlogPostNoindex } from './marketing-sitemap'
 import {
   ABOUT_DESCRIPTION,
   ABOUT_PATH,
@@ -3815,4 +3816,24 @@ describe('pillar page copy rules', () => {
       assert.ok(!source.includes('\u2014'), `${file} contains an em-dash outside comments`)
     })
   }
+})
+
+describe('llms.txt completeness', () => {
+  const llms = fs.readFileSync(path.join(process.cwd(), 'public/llms.txt'), 'utf8')
+
+  it('lists every indexable blog post', () => {
+    for (const post of getAllPosts()) {
+      if (isBlogPostNoindex(post.slug)) continue
+      assert.ok(llms.includes(`https://cavos.xyz/blog/${post.slug})`), `llms.txt is missing /blog/${post.slug}`)
+    }
+  })
+
+  it('lists every compare page', () => {
+    for (const competitor of COMPETITORS) {
+      assert.ok(
+        llms.includes(`https://cavos.xyz/compare/${competitor.slug})`),
+        `llms.txt is missing /compare/${competitor.slug}`,
+      )
+    }
+  })
 })
