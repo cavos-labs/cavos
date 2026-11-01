@@ -40,6 +40,8 @@ import {
     GASLESS_STARKNET_TRANSACTIONS_PATH,
     WALLET_AS_A_SERVICE_PATH,
     WALLET_AS_A_SERVICE_TITLE,
+    EMBEDDED_WALLET_PAYMENTS_PATH,
+    EMBEDDED_WALLET_PAYMENTS_TITLE,
 } from '@/lib/embedded-wallet-guide'
 import { guidePageJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
 
@@ -603,7 +605,12 @@ export default function EmbeddedWalletGuidePage() {
                             </Link>{' '}
                             takes that wall down: the product can sponsor fees, or settle
                             them in a token the user already holds. USDC is one example of
-                            such a token, not a required asset.
+                            such a token, not a required asset. The{' '}
+                            <Link href={EMBEDDED_WALLET_PAYMENTS_PATH} className={linkClass}>
+                                embedded wallet payments
+                            </Link>{' '}
+                            guide is the chain-by-chain walkthrough: Stellar trustlines,
+                            Solana SPL, and Starknet execute.
                         </p>
                     </div>
                 </section>
@@ -939,7 +946,7 @@ export default function EmbeddedWalletGuidePage() {
                     </h2>
                     <p className="mt-5 text-sm leading-relaxed text-muted">
                         The pillar is the category. These pages are the platform,
-                        the API, self-custody, the install, and the comparisons.
+                        the API, self-custody, payments, the install, and the comparisons.
                     </p>
                     <ul className="mt-6 list-disc space-y-3 pl-5 text-sm leading-relaxed text-muted">
                         <li>
@@ -968,6 +975,13 @@ export default function EmbeddedWalletGuidePage() {
                             </Link>
                             {': '}who can sign, key models, and how to verify a
                             vendor&apos;s claim.
+                        </li>
+                        <li>
+                            <Link href={EMBEDDED_WALLET_PAYMENTS_PATH} className={linkClass}>
+                                {EMBEDDED_WALLET_PAYMENTS_TITLE}
+                            </Link>
+                            {': '}USDC transfers on Stellar, Solana, and Starknet, plus
+                            Gas Sponsorship in Any Token.
                         </li>
                         <li>
                             <Link href={EMBEDDED_WALLET_INTEGRATION_PATH} className={linkClass}>
