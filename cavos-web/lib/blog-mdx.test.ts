@@ -134,6 +134,37 @@ describe('non-custodial embedded wallets guide', () => {
   })
 })
 
+describe('embedded wallet payments guide', () => {
+  const raw = fs.readFileSync(path.join(BLOG_DIR, 'embedded-wallet-payments.mdx'), 'utf8')
+  const body = raw.split(/^---$/m).slice(2).join('---').trim()
+
+  it('opens with a direct definition of the head term', () => {
+    const firstParagraph = body.split(/\n\n/)[0]
+    assert.match(firstParagraph, /^\*\*Embedded wallet payments\*\* are /)
+    assert.match(body, /\]\(\/embedded-wallet\)/)
+    assert.match(body, /addTrustline/)
+    assert.match(body, /executeInstructions/)
+    assert.match(body, /@cavos\/reserve/)
+    assert.match(body, /Gas Sponsorship in Any Token/)
+  })
+
+  it('uses the head term in its section headings and keeps a FAQ', () => {
+    const h2s = body.match(/^## .+$/gm) ?? []
+    assert.ok(
+      h2s.some((h) => /What are embedded wallet payments\?/i.test(h)),
+      h2s.join('\n'),
+    )
+    assert.ok(
+      h2s.filter((h) => /embedded wallet payments/i.test(h)).length >= 4,
+      h2s.join('\n'),
+    )
+    assert.match(raw, /question: "What are embedded wallet payments\?"/)
+    assert.match(raw, /^faq:/m)
+    assert.doesNotMatch(raw, /trustless|impossible/i)
+    assert.doesNotMatch(raw, /—/)
+  })
+})
+
 describe('head-term canonical targets', () => {
   const read = (slug: string) => fs.readFileSync(path.join(BLOG_DIR, `${slug}.mdx`), 'utf8')
 

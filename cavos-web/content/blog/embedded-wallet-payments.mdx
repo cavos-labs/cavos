@@ -1,0 +1,182 @@
+---
+title: "Embedded Wallet Payments (2026): USDC Guide"
+date: "2026-11-01"
+updated: "2026-11-01"
+excerpt: "Embedded wallet payments are in-app USDC transfers on Stellar, Solana, and Starknet. Gas Sponsorship in Any Token covers fees so users skip XLM, SOL, or STRK."
+category: "Guide"
+ogQuote: "Pay, receive, and sign in the app. USDC is one example of a held token."
+slug: "embedded-wallet-payments"
+faq:
+  - question: "What are embedded wallet payments?"
+    answer: "Embedded wallet payments are pay, receive, and sign from inside the application. The user does not install an extension, paste a seed, or approve in someone else's popup. Authentication selects which user this is. The SDK resolves an on-chain account. A signer bound to the device authorizes the spend in your UI. USDC is one example of a token a user might already hold, not a required asset."
+  - question: "How do I accept USDC with an embedded wallet?"
+    answer: "Install @cavos/kit 0.5.0, sign the user in, and execute a token transfer on the chain you ship. On Stellar, open a trustline with addTrustline, then pay with execute or @cavos/reserve plus signXdr. On Solana, submit an SPL transfer through executeInstructions. On Starknet, call execute with a USDC transfer. Relayers and paymasters are not signers."
+  - question: "Can users pay fees in USDC instead of the native gas token?"
+    answer: "Yes, that is Gas Sponsorship in Any Token. On Starknet the paymaster sponsors deploy and execute by default. On Solana, fee: { token } settles the fee in a held token such as USDC; fee: 'sponsored' makes the Cavos relayer the fee payer. On Stellar the kit relayer sponsors reserves and fees in XLM; @cavos/reserve is the separate path when the user should pay those same costs in USDC."
+  - question: "Which chains support embedded wallet payments in Cavos?"
+    answer: "Cavos currently ships native adapters for Starknet, Solana, and Stellar. It is not an EVM-wide wallet layer. Each adapter uses that chain's account model, signatures, and fee path. Connect never deploys Starknet or Stellar; the first execute deploys and runs atomically when status is undeployed or ready."
+  - question: "Who signs an embedded wallet payment?"
+    answer: "The user's device. Signing keys are created and used on the device. They never leave it in plaintext and never sign on Cavos servers. The passkey and the AWS Nitro Enclave only hold an encrypted copy of the MasterDEK for restore. Cavos cannot see the key, sign with it, or move funds. On Starknet the key controls an audited OpenZeppelin account contract."
+---
+
+**Embedded wallet payments** are pay, receive, and sign from inside your application. The user does not install an extension, paste a seed, or approve in someone else's popup. An [embedded wallet](/embedded-wallet) resolves an on-chain account at sign-in; a signer bound to the device authorizes the spend in your UI. USDC is one example of a token a user might already hold, not a required asset.
+
+This guide is the chain-by-chain path in `@cavos/kit` 0.5.0: Stellar trustlines and `@cavos/reserve`, Solana SPL via `executeInstructions`, Starknet `execute` transfers, and [Gas Sponsorship in Any Token](/embedded-wallet#gas-sponsorship-in-any-token) so the first payment does not require XLM, SOL, or STRK. The [React integration](/blog/how-to-add-an-embedded-wallet) is the install. The [embedded wallet API](/blog/embedded-wallet-api) guide is the surface map. Custody is a separate fact: see [non-custodial embedded wallets](/blog/non-custodial-embedded-wallet).
+
+Cavos, LLC is a software and SaaS company. Signing keys are created and used on the user's device. They never leave it in plaintext. Cavos cannot see them, sign with them, or move funds. [Pricing](/pricing) publishes Free up to 1,000 wallets, Essential at $59/mo, and Complete at $139/mo.
+
+## What are embedded wallet payments?
+
+**Embedded wallet payments** (plural) are that design at product scale: every user can pay, receive, and sign without leaving the app. An **embedded wallet payment** (singular) is one such transfer. Authentication selects which user this is. The SDK looks up or creates an on-chain account. Approval happens in your UI.
+
+The remaining wall is the native gas token. An embedded wallet that still asks the user to hold ETH, STRK, SOL, or XLM before the first payment has not removed the wallet. Gas Sponsorship in Any Token takes that wall down: the product can sponsor fees, or settle them in a token the user already holds.
+
+This page is the how-to. The [what is an embedded wallet](/blog/what-is-an-embedded-wallet) post is the primer. Chain pages: [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), [Stellar](/embedded-stellar-wallet).
+
+## What you are installing
+
+```bash
+npm install @cavos/kit@^0.5.0
+```
+
+Use `^0.5.0`. 0.4.x breaks email sign-in and enclave recovery against the current enclave. Stellar token-pay sponsorship is a **separate** package: `npm install @cavos/reserve @stellar/stellar-sdk`. See the [Reserve docs](https://docs.cavos.xyz/docs/reserve).
+
+Create an app in the [Cavos dashboard](https://cavos.xyz/dashboard) and copy its App ID. Wrap the tree in `CavosProvider` (or call `Cavos.connect`) with `network: "testnet"` while you develop. Narrow on `wallet.chain` before any execute. Both `undeployed` and `ready` wallets can execute. Only `needs-device-approval` blocks execution: this device has no key yet, so restore the MasterDEK with a passkey or the enclave. See [wallet actions](https://docs.cavos.xyz/docs/wallet-actions).
+
+## Stellar embedded wallet payments in USDC
+
+On Stellar, Cavos provisions a classic `G…` account. Native XLM `execute(amount, destination)` creates that account on first send (sponsored by the kit relayer by default). `invokeContract` and `addTrustline` require `status === "ready"`. Call `execute` first if the account is still undeployed.
+
+To hold or receive a classic asset such as USDC, open a trustline. A trustline adds a subentry (reserve), sponsored by the relayer by default:
+
+```ts
+if (wallet.chain === "stellar" && wallet.status === "ready") {
+  await wallet.addTrustline({
+    code: "USDC",
+    issuer: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN", // Circle mainnet
+  });
+  const bal = await wallet.tokenBalance({
+    code: "USDC",
+    issuer: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+  }); // "0" if none
+}
+```
+
+An asset code is not an identity. Always take the live `CODE:ISSUER` from `tokens()` in `@cavos/reserve`, or pin a documented issuer. Circle's **mainnet** USDC is `USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN`. On testnet, Cavos Testnet USDC is `USDC:GCKUFD5KAAM6DRSLODK55OVECMB5IJ5NSFQYFTBZRPOTJASUKTBZXGS2` (not Circle). Show the issuer or its `home_domain` in the UI, never the code "USDC" alone.
+
+The kit relayer (`appId`) sponsors **XLM** so the user never holds lumens; Cavos pays. That is the default for `execute`, trustlines, fee-bumps, and `invokeContract`.
+
+If the user should pay those same costs in USDC, use `@cavos/reserve` and sign with `wallet.signXdr`. Do not also call `wallet.execute` to create the account: that would take the relayer path instead.
+
+```ts
+import { Reserve } from "@cavos/reserve";
+
+const reserve = await Reserve.connect("testnet");
+const USDC = "USDC:GCKUFD5KAAM6DRSLODK55OVECMB5IJ5NSFQYFTBZRPOTJASUKTBZXGS2"; // Cavos Testnet USDC, not Circle
+
+if (wallet.chain === "stellar") {
+  await reserve.pay(
+    {
+      source: wallet.address,
+      destination,
+      amount: "10",
+      token: USDC,
+      maxSend: "0.05",
+    },
+    (xdr) => wallet.signXdr(xdr),
+  );
+}
+```
+
+Reserve is wallet-agnostic (any `G…` works) and does not need a Cavos `appId`. Classic operations only: no Soroban. `maxSend` is a ceiling; if liquidity moves past the quoted route, the inner transaction fails and the user is charged nothing. See the [Stellar tutorial](/blog/stellar-embedded-wallet-tutorial) for the first sponsored XLM payment.
+
+## Solana embedded wallet payments in USDC
+
+On Solana, Cavos provisions a native Ed25519 system account, the same shape as Phantom, not a PDA. `wallet.execute(amount, destination)` transfers SOL in lamports. SPL tokens, including USDC, go through `executeInstructions` (allowlisted programs).
+
+```ts
+import { PublicKey } from "@solana/web3.js";
+import { createTransferInstruction, getAssociatedTokenAddress } from "@solana/spl-token";
+import type { InstructionData } from "@cavos/kit";
+
+const source = await getAssociatedTokenAddress(usdcMint, new PublicKey(wallet.address));
+const dest = await getAssociatedTokenAddress(usdcMint, new PublicKey(recipientAddress));
+const ix = createTransferInstruction(source, dest, new PublicKey(wallet.address), amount);
+
+const instructions: InstructionData[] = [{
+  programId: ix.programId.toBase58(),
+  accounts: ix.keys.map((k) => ({
+    pubkey: k.pubkey.toBase58(),
+    isSigner: k.isSigner,
+    isWritable: k.isWritable,
+  })),
+  data: ix.data,
+}];
+
+if (wallet.chain === "solana" && wallet.status !== "needs-device-approval") {
+  await wallet.executeInstructions(instructions);
+}
+```
+
+Pin the mint your app already uses. Do not treat the ticker "USDC" as an identity. Sponsorship is allowlisted: the relayer only co-signs instructions whose program ids are in the app's **Solana program allowlist** (dashboard → your app → **Programs**) plus System, SPL Token, Token-2022, and Associated Token. A 1,000,000 CU cap also applies.
+
+Who pays the fee is one field:
+
+```ts
+await wallet.execute(amount, dest);                            // the account pays, in SOL
+await wallet.execute(amount, dest, { fee: "sponsored" });      // the Cavos relayer pays
+await wallet.execute(amount, dest, { fee: { token: usdcMint } }); // the user pays, in USDC
+```
+
+`'self'` is the default on Solana, unlike Starknet or Stellar. A system account is signer and fee payer at once, so it can pay its own way when it holds SOL. `fee: { token }` needs the account to hold that token. No co-signer ever becomes the source of a user transfer. See the [Solana wallet](/embedded-solana-wallet) page.
+
+## Starknet embedded wallet payments in USDC
+
+On Starknet, Cavos deploys an **audited OpenZeppelin account contract** (AccountUpgradeable v3.0.0), not a Cavos-written class. The stark key is derived on the device. Connect never deploys. The first `execute` deploys and runs the calls atomically, sponsored by the Cavos paymaster (SNIP-29).
+
+```ts
+const { execute } = useCavos();
+
+const { transactionHash } = await execute([
+  {
+    contractAddress: USDC,
+    entrypoint: "transfer",
+    calldata: [to, amountLow, amountHigh],
+  },
+]);
+```
+
+Pin the USDC contract your app already uses on that network. On the web the key lives inside the Cavos vault, which reads the calls before signing: `transfer` on ETH, STRK, and USDC counts against your app's limits. After deploy, `fee: "self"` pays from the account's own balance. A self-funded first execute is refused, because an undeployed account has no balance to deploy itself with.
+
+The [gasless Starknet](/blog/gasless-starknet-transactions) guide is the paymaster walkthrough. This page is the USDC transfer on top of that path.
+
+## Gas Sponsorship in Any Token
+
+Users should not need a native token to start. Sponsorship is chain-specific, not a universal gas tank. Relayers and paymasters transport, sponsor, or submit. They are not signers. Cavos cannot see the device key, sign with it, or move funds.
+
+| Adapter | Required configuration | Sponsored execution |
+|---|---|---|
+| **Starknet** | App ID, network, app salt, identity, `paymasterApiKey` | Paymaster sponsors deploy and execute. |
+| **Solana** | App ID, network, app salt, identity | Hosted relayer becomes fee payer; or `fee: { token }` settles in a held token. |
+| **Stellar** | App ID, network, app salt, identity | Hosted relayer sponsors reserves and fee bumps in XLM. `@cavos/reserve` is the user-pays-in-USDC path. |
+
+Add `paymasterApiKey` only when Starknet is in `chains`. A paymaster key on a chain that ignores it is a config error. Treat a client-visible paymaster key as an app-scoped sponsorship credential, never as an operator or treasury secret.
+
+## Who signs an embedded wallet payment
+
+The device. Signing keys are created and used on the user's device. They never leave it in plaintext and never sign on Cavos servers. The MasterDEK stays protected at rest by WebCrypto in the browser or the OS keystore on React Native. Recovery is hardware-isolated and non-custodial: a passkey or an opt-in AWS Nitro Enclave holds only an encrypted copy of the MasterDEK for restore. Neither path can sign a spend in the ordinary flow.
+
+Login selects which user this is. It never authorizes a spend. The [custody](/custody) page is the legal control test. The [non-custodial](/blog/non-custodial-embedded-wallet) guide is the vendor checklist.
+
+## What to read next
+
+- [embedded wallet](/embedded-wallet): custody, key models, and how to choose an SDK.
+- [What is an embedded wallet?](/blog/what-is-an-embedded-wallet): the plain definition, how it works, and who holds the key.
+- [How to add an embedded wallet to a React app](/blog/how-to-add-an-embedded-wallet): install to first sponsored transaction.
+- [Embedded wallet API](/blog/embedded-wallet-api): auth, create, keys, signing, gas, and recovery.
+- [How to add an embedded Stellar wallet](/blog/stellar-embedded-wallet-tutorial): social login, the G… before create, first sponsored execute.
+- [How to send gasless Starknet transactions](/blog/gasless-starknet-transactions): paymaster-sponsored deploy and execute.
+- [Non-custodial embedded wallets](/blog/non-custodial-embedded-wallet): who can sign, and how to verify a vendor's claim.
+- Chain pages: [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), [Stellar](/embedded-stellar-wallet).
+- [Wallet actions](https://docs.cavos.xyz/docs/wallet-actions), [Stellar](https://docs.cavos.xyz/docs/stellar), [Solana](https://docs.cavos.xyz/docs/solana), [Starknet](https://docs.cavos.xyz/docs/starknet), [Reserve](https://docs.cavos.xyz/docs/reserve).
+- [Pricing](/pricing) for the free 1,000 creates and paid recovery options.

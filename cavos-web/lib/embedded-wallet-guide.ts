@@ -80,6 +80,11 @@ export const ALCHEMY_VS_PRIVY_PATH = '/blog/alchemy-vs-privy'
 export const ALCHEMY_VS_PRIVY_TITLE =
   'Alchemy vs Privy: Pricing & Custody (2026)'
 
+export const EMBEDDED_WALLET_PAYMENTS_PATH = '/blog/embedded-wallet-payments'
+
+export const EMBEDDED_WALLET_PAYMENTS_TITLE =
+  'Embedded Wallet Payments (2026): USDC Guide'
+
 export const DOCS_ORIGIN = 'https://docs.cavos.xyz'
 
 export const DOCS_URLS = {

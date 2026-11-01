@@ -29,6 +29,8 @@ import {
   EMBEDDED_WALLET_REACT_SDK_TITLE,
   ALCHEMY_VS_PRIVY_PATH,
   ALCHEMY_VS_PRIVY_TITLE,
+  EMBEDDED_WALLET_PAYMENTS_PATH,
+  EMBEDDED_WALLET_PAYMENTS_TITLE,
 } from '@/lib/embedded-wallet-guide';
 
 export const metadata: Metadata = marketingPageMetadata({
@@ -103,6 +105,11 @@ const GUIDES = [
     href: GASLESS_STARKNET_TRANSACTIONS_PATH,
     title: GASLESS_STARKNET_TRANSACTIONS_TITLE,
     body: 'Install @cavos/kit, sign in with Google, Apple, or email, and send a paymaster-sponsored Starknet transaction.',
+  },
+  {
+    href: EMBEDDED_WALLET_PAYMENTS_PATH,
+    title: EMBEDDED_WALLET_PAYMENTS_TITLE,
+    body: 'Accept USDC with an embedded wallet on Stellar, Solana, or Starknet, with Gas Sponsorship in Any Token.',
   },
   {
     href: '/compare',
