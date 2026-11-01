@@ -927,20 +927,30 @@ describe('marketing SEO', () => {
 
     const privy = getCompetitor('privy')
     assert.ok(privy)
-    assert.match(privy.pageTitle ?? '', /Privy vs Cavos \(2026\): Pricing, Chains, Review/)
-    assert.match(privy.pageH1 ?? '', /Privy vs Cavos: pricing, chains, and custody/)
+    assert.match(privy.pageTitle ?? '', /Privy vs Cavos \(2026\): Comparison, Custody/)
+    assert.match(privy.pageH1 ?? '', /Privy vs Cavos: comparison, pricing, and custody/)
     assert.doesNotMatch(privy.pageTitle ?? '', /alternative/i)
     assert.doesNotMatch(privy.pageH1 ?? '', /alternative/i)
-    assert.match(privy.pageDescription ?? '', /Privy wallet alternative/)
+    assert.doesNotMatch(privy.pageDescription ?? '', /alternative/i)
+    assert.match(privy.pageDescription ?? '', /Privy vs Cavos comparison/)
     assert.match(privy.pageDescription ?? '', /Shopify/)
     assert.match(privy.pageDescription ?? '', /1,000 wallets/)
     assert.match(privy.summary, /Privy vs Cavos/)
+    assert.ok(privy.faq.some((item) => item.question === 'What is Privy vs Cavos?'))
+    assert.ok(
+      privy.faq.some((item) => item.question === 'How do Privy and Cavos compare on chains?'),
+    )
+    assert.equal(
+      privy.faq.some((item) => /alternative/i.test(item.question)),
+      false,
+    )
     const comparePrivyIntro = fs.readFileSync(
       path.join(process.cwd(), 'app/compare/[slug]/page.tsx'),
       'utf8',
     )
-    assert.match(comparePrivyIntro, /Privy vs Cavos/)
-    assert.match(comparePrivyIntro, /Privy alternative/)
+    assert.match(comparePrivyIntro, /Privy vs Cavos comparison/)
+    assert.match(comparePrivyIntro, /href="\/privy-alternatives"/)
+    assert.match(comparePrivyIntro, />\s*Privy alternatives\s*</)
     assert.match(privy.rows.find((row) => row.feature === 'Account model')?.cavos ?? '', /audited OpenZeppelin/i)
     assert.doesNotMatch(JSON.stringify(privy.rows), /PDA/)
   })
