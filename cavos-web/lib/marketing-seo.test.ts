@@ -363,6 +363,28 @@ describe('marketing SEO', () => {
     assert.equal('offers' in galleries, false)
   })
 
+  it('keeps Organization and WebSite JSON-LD name, url, logo, and sameAs', () => {
+    const data = homepageJsonLd()
+    const org = data['@graph'][0]
+    assert.equal(org['@type'], 'Organization')
+    assert.equal(org.name, 'Cavos')
+    assert.equal(org.url, 'https://cavos.xyz')
+    assert.equal(org.logo['@type'], 'ImageObject')
+    assert.equal(org.logo.url, 'https://cavos.xyz/CavosLogo.png')
+    assert.ok(org.sameAs.includes('https://x.com/cavosxyz'))
+    assert.ok(org.sameAs.includes('https://github.com/cavos-labs'))
+    assert.deepEqual(org.sameAs, [...ORGANIZATION_SAME_AS])
+    assert.ok(ORGANIZATION_SAME_AS.includes('https://x.com/cavosxyz'))
+    assert.ok(ORGANIZATION_SAME_AS.includes('https://github.com/cavos-labs'))
+
+    const website = data['@graph'].find(
+      (node: { '@type'?: string }) => node['@type'] === 'WebSite',
+    )
+    assert.ok(website)
+    assert.equal(website.name, 'Cavos')
+    assert.equal(website.url, 'https://cavos.xyz')
+  })
+
   it('keeps layout and homepage Organization nodes on the same @id', () => {
     const layoutOrg = organizationJsonLd('customer support', { includeBrands: false })
     const homeOrg = organizationJsonLd('sales')
