@@ -112,6 +112,28 @@ describe('wallet-as-a-service guide', () => {
   })
 })
 
+describe('non-custodial embedded wallets guide', () => {
+  const raw = fs.readFileSync(path.join(BLOG_DIR, 'non-custodial-embedded-wallet.mdx'), 'utf8')
+  const body = raw.split(/^---$/m).slice(2).join('---').trim()
+
+  it('opens with a direct definition of the plural head term', () => {
+    const firstParagraph = body.split(/\n\n/)[0]
+    assert.match(firstParagraph, /^\*\*Non-custodial embedded wallets\*\* are /)
+    assert.match(body, /\]\(\/embedded-wallet\)/)
+    assert.match(body, /\]\(\/custody\)/)
+  })
+
+  it('uses the head term in its section headings and keeps a FAQ', () => {
+    const h2s = body.match(/^## .+$/gm) ?? []
+    assert.ok(
+      h2s.some((h) => /What are non-custodial embedded wallets\?/i.test(h)),
+      h2s.join('\n'),
+    )
+    assert.match(raw, /question: "What are non-custodial embedded wallets\?"/)
+    assert.match(raw, /^faq:/m)
+  })
+})
+
 describe('head-term canonical targets', () => {
   const read = (slug: string) => fs.readFileSync(path.join(BLOG_DIR, `${slug}.mdx`), 'utf8')
 
