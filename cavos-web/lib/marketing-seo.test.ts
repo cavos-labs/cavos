@@ -524,24 +524,35 @@ describe('marketing SEO', () => {
     assert.ok(EMBEDDED_WALLET_TITLE.length > 0)
     assert.ok(EMBEDDED_WALLET_TITLE.length <= 60)
     assert.match(EMBEDDED_WALLET_TITLE, /Embedded Wallets: What They Are/)
-    assert.match(EMBEDDED_WALLET_TITLE, /API & SDK/)
+    assert.doesNotMatch(EMBEDDED_WALLET_TITLE, /API/i)
     assert.ok(`${EMBEDDED_WALLET_TITLE} | Cavos`.length <= 60)
     assert.ok(EMBEDDED_WALLET_DESCRIPTION.length > 0)
     assert.ok(EMBEDDED_WALLET_DESCRIPTION.length <= 155)
     assert.match(EMBEDDED_WALLET_DESCRIPTION, /[Ee]mbedded wallets/)
-    assert.match(EMBEDDED_WALLET_DESCRIPTION, /API/)
+    assert.doesNotMatch(EMBEDDED_WALLET_DESCRIPTION, /\bAPI\b/)
     assert.match(EMBEDDED_WALLET_DESCRIPTION, /SDK/)
-    assert.match(EMBEDDED_WALLET_DESCRIPTION, /wallet-as-a-service/)
+    assert.match(EMBEDDED_WALLET_DESCRIPTION, /platform/)
+    assert.match(EMBEDDED_WALLET_DESCRIPTION, /infrastructure/)
     assert.match(EMBEDDED_WALLET_DESCRIPTION, /non-custodial/)
-    assert.match(EMBEDDED_WALLET_DESCRIPTION, /payments/)
     assert.equal(EMBEDDED_WALLET_PATH, '/embedded-wallet')
     const definitionWords = EMBEDDED_WALLET_DEFINITION.trim().split(/\s+/).length
     assert.ok(definitionWords >= 40 && definitionWords <= 60, definitionWords)
+    assert.match(EMBEDDED_WALLET_DEFINITION, /^Embedded wallets are /)
+    assert.match(EMBEDDED_WALLET_DEFINITION, /An embedded wallet lets/)
     assert.ok(EMBEDDED_WALLET_FAQ.length >= 8 && EMBEDDED_WALLET_FAQ.length <= 12)
     assert.ok(EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What is an embedded wallet SDK?'))
-    assert.ok(EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What is an embedded wallet API?'))
+    assert.equal(
+      EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What is an embedded wallet API?'),
+      false,
+    )
     assert.ok(
       EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What is an embedded wallet as a service?'),
+    )
+    assert.ok(
+      EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What is an embedded wallet platform?'),
+    )
+    assert.ok(
+      EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What is an embedded wallet solution?'),
     )
     assert.ok(EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What are embedded wallet providers?'))
     assert.ok(
@@ -555,7 +566,7 @@ describe('marketing SEO', () => {
     assert.ok(
       EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What are embedded wallet payments?'),
     )
-    assert.equal(EMBEDDED_WALLET_MODIFIED, '2026-10-31')
+    assert.equal(EMBEDDED_WALLET_MODIFIED, '2026-11-01')
   })
 
   it('keeps a single H1 and adds how-it-works plus a compare-data provider table', () => {
@@ -613,8 +624,18 @@ describe('marketing SEO', () => {
     assert.ok(headings.includes('Embedded wallets'))
     assert.ok(headings.includes('What is an embedded wallet?'))
     assert.ok(headings.includes('How an embedded wallet works'))
-    assert.ok(headings.includes('Embedded wallet API and SDK'))
+    assert.ok(headings.includes('Embedded wallet SDK'))
+    assert.equal(headings.includes('Embedded wallet API and SDK'), false)
+    assert.ok(headings.includes('Embedded wallet platform and infrastructure'))
+    assert.ok(headings.includes('Embedded wallet solution'))
     assert.ok(headings.includes('Embedded wallet payments'))
+    assert.match(
+      pageSource,
+      /href=\{EMBEDDED_WALLET_API_PATH\}[^>]*>\s*embedded wallet API\s*</,
+    )
+    for (const heading of headings) {
+      assert.doesNotMatch(heading, /\bAPI\b/, heading)
+    }
     assert.ok(headings.includes('Embedded wallet vs browser extension'))
     assert.ok(headings.includes('Embedded wallet pricing'))
     assert.ok(headings.includes('Gas Sponsorship in Any Token'))
@@ -1188,6 +1209,7 @@ describe('marketing SEO', () => {
     assert.equal(article.headline, EMBEDDED_WALLET_TITLE)
     assert.equal(article.description, EMBEDDED_WALLET_DESCRIPTION)
     assert.equal(article.url, 'https://cavos.xyz/embedded-wallet')
+    assert.equal(article.mainEntityOfPage['@type'], 'WebPage')
     assert.equal(article.mainEntityOfPage['@id'], 'https://cavos.xyz/embedded-wallet')
     assert.equal(article.publisher['@id'], ORGANIZATION_ID)
     assert.equal(article.author['@id'], ORGANIZATION_ID)
@@ -1729,12 +1751,13 @@ describe('marketing SEO', () => {
       'lib/turnkey-alternatives.ts',
       'lib/dynamic-alternatives.ts',
       'lib/magic-alternatives.ts',
+      'lib/alternatives-guide.ts',
     ]
     for (const relative of alternativesData) {
       const source = fs.readFileSync(path.join(process.cwd(), relative), 'utf8')
       assert.match(
         source,
-        /href: '\/embedded-wallet', label: 'embedded wallet'/,
+        /href: ['"]\/embedded-wallet['"], label: ['"]embedded wallet['"]/,
         `${relative} missing embedded wallet intro link`,
       )
     }
@@ -1746,6 +1769,45 @@ describe('marketing SEO', () => {
       template,
       /font-semibold text-ink underline decoration-line underline-offset-4/,
     )
+  })
+
+  it('uses natural embedded wallet anchor text instead of learn more or here', () => {
+    const weak = /^(learn more|here|click here|this|this page|read more)$/i
+    const skipDir = new Set(['node_modules', '.next', 'dashboard', 'api'])
+    const stack = [process.cwd()]
+    const hits: string[] = []
+    while (stack.length > 0) {
+      const dir = stack.pop() as string
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name)
+        if (entry.isDirectory()) {
+          if (!skipDir.has(entry.name)) stack.push(full)
+          continue
+        }
+        if (!/\.(tsx|ts|mdx)$/.test(entry.name)) continue
+        if (entry.name.endsWith('.test.ts') || entry.name.endsWith('.test.tsx')) continue
+        const relative = path.relative(process.cwd(), full)
+        const text = fs.readFileSync(full, 'utf8')
+        const jsx = [
+          ...text.matchAll(
+            /href=["']\/embedded-wallet["'][^>]*>\s*([^<]+?)\s*</g,
+          ),
+        ]
+        const md = [...text.matchAll(/\[([^\]]+)\]\(\/embedded-wallet\)/g)]
+        const labeled = [
+          ...text.matchAll(
+            /href: ['"]\/embedded-wallet['"], label: ['"]([^'"]+)['"]/g,
+          ),
+        ]
+        for (const match of [...jsx, ...md, ...labeled]) {
+          const anchor = match[1].replace(/\s+/g, ' ').trim()
+          if (weak.test(anchor) || !/embedded wallet/i.test(anchor)) {
+            hits.push(`${relative}: "${anchor}"`)
+          }
+        }
+      }
+    }
+    assert.deepEqual(hits, [])
   })
 
   it('indexes the React integration guide as an Article with FAQ JSON-LD', () => {
