@@ -63,7 +63,7 @@ export const NON_CUSTODIAL_EMBEDDED_WALLET_PATH =
   '/blog/non-custodial-embedded-wallet'
 
 export const NON_CUSTODIAL_EMBEDDED_WALLET_TITLE =
-  'Non-Custodial Embedded Wallets: How Self-Custody Works (2026)'
+  'Non-Custodial Embedded Wallets: What They Are (2026)'
 
 export const WALLET_AS_A_SERVICE_PATH = '/blog/wallet-as-a-service'
 

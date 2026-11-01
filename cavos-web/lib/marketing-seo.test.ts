@@ -2495,8 +2495,11 @@ describe('marketing SEO', () => {
     )
     assert.equal(
       NON_CUSTODIAL_EMBEDDED_WALLET_TITLE,
-      'Non-Custodial Embedded Wallets: How Self-Custody Works (2026)',
+      'Non-Custodial Embedded Wallets: What They Are (2026)',
     )
+    assert.match(source, /^updated:\s*"2026-11-01"$/m)
+    assert.match(source, /\*\*Non-custodial embedded wallets\*\* are /)
+    assert.match(source, /## What are non-custodial embedded wallets\?/)
 
     const hub = fs.readFileSync(
       path.join(process.cwd(), 'app/embedded-wallet/page.tsx'),
