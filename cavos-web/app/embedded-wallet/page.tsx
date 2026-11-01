@@ -89,11 +89,13 @@ export default function EmbeddedWalletGuidePage() {
                         {EMBEDDED_WALLET_DEFINITION}
                     </p>
                     <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted">
-                        This guide covers how an embedded wallet works: the{' '}
+                        This guide covers how an embedded wallet works: the SDK, the
+                        platform and infrastructure, and the solution you ship. Method-level
+                        auth, create, sign, and recovery live in the{' '}
                         <Link href={EMBEDDED_WALLET_API_PATH} className={linkClass}>
                             embedded wallet API
                         </Link>{' '}
-                        and SDK,{' '}
+                        guide. Also covered:{' '}
                         <Link href={WALLET_AS_A_SERVICE_PATH} className={linkClass}>
                             wallet as a service
                         </Link>
@@ -166,23 +168,22 @@ export default function EmbeddedWalletGuidePage() {
 
                 <section className="mt-16 max-w-3xl" id="embedded-wallet-sdk">
                     <h2 className="text-2xl font-medium tracking-[-0.03em]">
-                        Embedded wallet API and SDK
+                        Embedded wallet SDK
                     </h2>
                     <div className="mt-5 space-y-4 text-sm leading-relaxed text-muted">
                         <p>
-                            An embedded wallet API is the developer surface that provisions that
-                            wallet inside your application. It covers authentication, wallet
-                            create or lookup, key handling, signing, sending transactions, gas
-                            sponsorship, and recovery. An embedded wallet SDK is the library
-                            that implements that surface in your app. Neither is a wallet app
-                            or a browser extension. The user never installs a second program.
+                            An embedded wallet SDK is the library that provisions the wallet
+                            and signs from inside your application. It is not a wallet app or a
+                            browser extension. The user never installs a second program.
+                            Authentication selects the user. The SDK looks up or creates an
+                            on-chain address. A signer bound to the device authorizes
+                            transactions from inside the app UI.
                         </p>
                         <p>
                             A wallet app or extension keeps keys in software the user manages.
                             The dapp requests access; it does not create the account. An
-                            embedded wallet API and SDK invert that: authentication selects the
-                            user, the SDK looks up or creates an on-chain address, and a signer
-                            bound to the device authorizes transactions from inside the app.
+                            embedded wallet SDK inverts that: login selects the user, the
+                            library resolves the account, and approval happens in the product.
                         </p>
                         <p>
                             Some vendors ship a finished client SDK. Some ship a REST or RPC
@@ -192,7 +193,7 @@ export default function EmbeddedWalletGuidePage() {
                                 @cavos/kit
                             </code>
                             . There is no public create-wallet REST endpoint. The method-level
-                            map is the{' '}
+                            map (auth, create, sign, gas, recovery) is the{' '}
                             <Link href={EMBEDDED_WALLET_API_PATH} className={linkClass}>
                                 embedded wallet API
                             </Link>{' '}
@@ -200,6 +201,59 @@ export default function EmbeddedWalletGuidePage() {
                             produce a valid signature without the user, which chains are
                             native, how a lost device is recovered, and whether approval
                             happens in your UI or in someone else&apos;s.
+                        </p>
+                    </div>
+                </section>
+
+                <section className="mt-16 max-w-3xl" id="embedded-wallet-platform">
+                    <h2 className="text-2xl font-medium tracking-[-0.03em]">
+                        Embedded wallet platform and infrastructure
+                    </h2>
+                    <div className="mt-5 space-y-4 text-sm leading-relaxed text-muted">
+                        <p>
+                            An embedded wallet platform is the hosted infrastructure the SDK
+                            talks to: authentication, a registry that looks up or claims an
+                            address, gas sponsorship, and recovery. Embedded wallet
+                            infrastructure is the same job from the operator side. The
+                            commercial name is{' '}
+                            <Link href={WALLET_AS_A_SERVICE_PATH} className={linkClass}>
+                                wallet as a service
+                            </Link>
+                            .
+                        </p>
+                        <p>
+                            The platform does not decide custody. Device-native keys, MPC
+                            shares, and a provider-operated HSM can sit behind the same login
+                            modal. Cavos is device-native embedded wallet infrastructure:
+                            signing keys are created and used on the user&apos;s device. Cavos
+                            cannot see them, sign with them, or move funds. Adapters ship today
+                            for Starknet, Solana, and Stellar.
+                        </p>
+                    </div>
+                </section>
+
+                <section className="mt-16 max-w-3xl" id="embedded-wallet-solution">
+                    <h2 className="text-2xl font-medium tracking-[-0.03em]">
+                        Embedded wallet solution
+                    </h2>
+                    <div className="mt-5 space-y-4 text-sm leading-relaxed text-muted">
+                        <p>
+                            An embedded wallet solution is what you ship to users: they sign
+                            in, they approve in your UI, they hold a chain-native account, and
+                            they can complete a payment without installing a second program.
+                            The SDK is how you embed that. The platform is how you run it.
+                        </p>
+                        <p>
+                            Choose a solution on the custody question, the native chain
+                            question, and the recovery question. Worked comparisons live on the{' '}
+                            <Link href="/compare" className={linkClass}>
+                                compare pages
+                            </Link>
+                            . To install, follow{' '}
+                            <Link href={EMBEDDED_WALLET_INTEGRATION_PATH} className={linkClass}>
+                                how to add an embedded wallet
+                            </Link>
+                            .
                         </p>
                     </div>
                 </section>
