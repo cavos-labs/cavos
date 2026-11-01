@@ -98,6 +98,8 @@ import {
   EMBEDDED_WALLET_REACT_SDK_TITLE,
   ALCHEMY_VS_PRIVY_PATH,
   ALCHEMY_VS_PRIVY_TITLE,
+  EMBEDDED_WALLET_PAYMENTS_PATH,
+  EMBEDDED_WALLET_PAYMENTS_TITLE,
 } from './embedded-wallet-guide'
 import {
   COMPETITORS,
@@ -361,6 +363,28 @@ describe('marketing SEO', () => {
     assert.equal('offers' in galleries, false)
   })
 
+  it('keeps Organization and WebSite JSON-LD name, url, logo, and sameAs', () => {
+    const data = homepageJsonLd()
+    const org = data['@graph'][0]
+    assert.equal(org['@type'], 'Organization')
+    assert.equal(org.name, 'Cavos')
+    assert.equal(org.url, 'https://cavos.xyz')
+    assert.equal(org.logo['@type'], 'ImageObject')
+    assert.equal(org.logo.url, 'https://cavos.xyz/CavosLogo.png')
+    assert.ok(org.sameAs.includes('https://x.com/cavosxyz'))
+    assert.ok(org.sameAs.includes('https://github.com/cavos-labs'))
+    assert.deepEqual(org.sameAs, [...ORGANIZATION_SAME_AS])
+    assert.ok(ORGANIZATION_SAME_AS.includes('https://x.com/cavosxyz'))
+    assert.ok(ORGANIZATION_SAME_AS.includes('https://github.com/cavos-labs'))
+
+    const website = data['@graph'].find(
+      (node: { '@type'?: string }) => node['@type'] === 'WebSite',
+    )
+    assert.ok(website)
+    assert.equal(website.name, 'Cavos')
+    assert.equal(website.url, 'https://cavos.xyz')
+  })
+
   it('keeps layout and homepage Organization nodes on the same @id', () => {
     const layoutOrg = organizationJsonLd('customer support', { includeBrands: false })
     const homeOrg = organizationJsonLd('sales')
@@ -524,24 +548,35 @@ describe('marketing SEO', () => {
     assert.ok(EMBEDDED_WALLET_TITLE.length > 0)
     assert.ok(EMBEDDED_WALLET_TITLE.length <= 60)
     assert.match(EMBEDDED_WALLET_TITLE, /Embedded Wallets: What They Are/)
-    assert.match(EMBEDDED_WALLET_TITLE, /API & SDK/)
+    assert.doesNotMatch(EMBEDDED_WALLET_TITLE, /API/i)
     assert.ok(`${EMBEDDED_WALLET_TITLE} | Cavos`.length <= 60)
     assert.ok(EMBEDDED_WALLET_DESCRIPTION.length > 0)
     assert.ok(EMBEDDED_WALLET_DESCRIPTION.length <= 155)
     assert.match(EMBEDDED_WALLET_DESCRIPTION, /[Ee]mbedded wallets/)
-    assert.match(EMBEDDED_WALLET_DESCRIPTION, /API/)
+    assert.doesNotMatch(EMBEDDED_WALLET_DESCRIPTION, /\bAPI\b/)
     assert.match(EMBEDDED_WALLET_DESCRIPTION, /SDK/)
-    assert.match(EMBEDDED_WALLET_DESCRIPTION, /wallet-as-a-service/)
+    assert.match(EMBEDDED_WALLET_DESCRIPTION, /platform/)
+    assert.match(EMBEDDED_WALLET_DESCRIPTION, /infrastructure/)
     assert.match(EMBEDDED_WALLET_DESCRIPTION, /non-custodial/)
-    assert.match(EMBEDDED_WALLET_DESCRIPTION, /payments/)
     assert.equal(EMBEDDED_WALLET_PATH, '/embedded-wallet')
     const definitionWords = EMBEDDED_WALLET_DEFINITION.trim().split(/\s+/).length
     assert.ok(definitionWords >= 40 && definitionWords <= 60, definitionWords)
+    assert.match(EMBEDDED_WALLET_DEFINITION, /^Embedded wallets are /)
+    assert.match(EMBEDDED_WALLET_DEFINITION, /An embedded wallet lets/)
     assert.ok(EMBEDDED_WALLET_FAQ.length >= 8 && EMBEDDED_WALLET_FAQ.length <= 12)
     assert.ok(EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What is an embedded wallet SDK?'))
-    assert.ok(EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What is an embedded wallet API?'))
+    assert.equal(
+      EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What is an embedded wallet API?'),
+      false,
+    )
     assert.ok(
       EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What is an embedded wallet as a service?'),
+    )
+    assert.ok(
+      EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What is an embedded wallet platform?'),
+    )
+    assert.ok(
+      EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What is an embedded wallet solution?'),
     )
     assert.ok(EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What are embedded wallet providers?'))
     assert.ok(
@@ -555,7 +590,7 @@ describe('marketing SEO', () => {
     assert.ok(
       EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What are embedded wallet payments?'),
     )
-    assert.equal(EMBEDDED_WALLET_MODIFIED, '2026-10-31')
+    assert.equal(EMBEDDED_WALLET_MODIFIED, '2026-11-01')
   })
 
   it('keeps a single H1 and adds how-it-works plus a compare-data provider table', () => {
@@ -613,8 +648,18 @@ describe('marketing SEO', () => {
     assert.ok(headings.includes('Embedded wallets'))
     assert.ok(headings.includes('What is an embedded wallet?'))
     assert.ok(headings.includes('How an embedded wallet works'))
-    assert.ok(headings.includes('Embedded wallet API and SDK'))
+    assert.ok(headings.includes('Embedded wallet SDK'))
+    assert.equal(headings.includes('Embedded wallet API and SDK'), false)
+    assert.ok(headings.includes('Embedded wallet platform and infrastructure'))
+    assert.ok(headings.includes('Embedded wallet solution'))
     assert.ok(headings.includes('Embedded wallet payments'))
+    assert.match(
+      pageSource,
+      /href=\{EMBEDDED_WALLET_API_PATH\}[^>]*>\s*embedded wallet API\s*</,
+    )
+    for (const heading of headings) {
+      assert.doesNotMatch(heading, /\bAPI\b/, heading)
+    }
     assert.ok(headings.includes('Embedded wallet vs browser extension'))
     assert.ok(headings.includes('Embedded wallet pricing'))
     assert.ok(headings.includes('Gas Sponsorship in Any Token'))
@@ -636,6 +681,11 @@ describe('marketing SEO', () => {
     assert.match(pageSource, /EMBEDDED_WALLET_VS_EXTENSION_PATH/)
     assert.match(pageSource, /EMBEDDED_WALLET_API_PATH/)
     assert.match(pageSource, /NON_CUSTODIAL_EMBEDDED_WALLET_PATH/)
+    assert.match(pageSource, /EMBEDDED_WALLET_PAYMENTS_PATH/)
+    assert.match(
+      pageSource,
+      /href=\{EMBEDDED_WALLET_PAYMENTS_PATH\}[^>]*>\s*embedded wallet payments\s*</,
+    )
     assert.match(pageSource, /WALLET_AS_A_SERVICE_PATH/)
     assert.match(pageSource, /PRIVY_VS_TURNKEY_PATH/)
     assert.match(pageSource, /Related guides/)
@@ -906,20 +956,30 @@ describe('marketing SEO', () => {
 
     const privy = getCompetitor('privy')
     assert.ok(privy)
-    assert.match(privy.pageTitle ?? '', /Privy vs Cavos \(2026\): Pricing, Chains, Review/)
-    assert.match(privy.pageH1 ?? '', /Privy vs Cavos: pricing, chains, and custody/)
+    assert.match(privy.pageTitle ?? '', /Privy vs Cavos \(2026\): Comparison, Custody/)
+    assert.match(privy.pageH1 ?? '', /Privy vs Cavos: comparison, pricing, and custody/)
     assert.doesNotMatch(privy.pageTitle ?? '', /alternative/i)
     assert.doesNotMatch(privy.pageH1 ?? '', /alternative/i)
-    assert.match(privy.pageDescription ?? '', /Privy wallet alternative/)
+    assert.doesNotMatch(privy.pageDescription ?? '', /alternative/i)
+    assert.match(privy.pageDescription ?? '', /Privy vs Cavos comparison/)
     assert.match(privy.pageDescription ?? '', /Shopify/)
     assert.match(privy.pageDescription ?? '', /1,000 wallets/)
     assert.match(privy.summary, /Privy vs Cavos/)
+    assert.ok(privy.faq.some((item) => item.question === 'What is Privy vs Cavos?'))
+    assert.ok(
+      privy.faq.some((item) => item.question === 'How do Privy and Cavos compare on chains?'),
+    )
+    assert.equal(
+      privy.faq.some((item) => /alternative/i.test(item.question)),
+      false,
+    )
     const comparePrivyIntro = fs.readFileSync(
       path.join(process.cwd(), 'app/compare/[slug]/page.tsx'),
       'utf8',
     )
-    assert.match(comparePrivyIntro, /Privy vs Cavos/)
-    assert.match(comparePrivyIntro, /Privy alternative/)
+    assert.match(comparePrivyIntro, /Privy vs Cavos comparison/)
+    assert.match(comparePrivyIntro, /href="\/privy-alternatives"/)
+    assert.match(comparePrivyIntro, />\s*Privy alternatives\s*</)
     assert.match(privy.rows.find((row) => row.feature === 'Account model')?.cavos ?? '', /audited OpenZeppelin/i)
     assert.doesNotMatch(JSON.stringify(privy.rows), /PDA/)
   })
@@ -1188,6 +1248,7 @@ describe('marketing SEO', () => {
     assert.equal(article.headline, EMBEDDED_WALLET_TITLE)
     assert.equal(article.description, EMBEDDED_WALLET_DESCRIPTION)
     assert.equal(article.url, 'https://cavos.xyz/embedded-wallet')
+    assert.equal(article.mainEntityOfPage['@type'], 'WebPage')
     assert.equal(article.mainEntityOfPage['@id'], 'https://cavos.xyz/embedded-wallet')
     assert.equal(article.publisher['@id'], ORGANIZATION_ID)
     assert.equal(article.author['@id'], ORGANIZATION_ID)
@@ -1460,6 +1521,7 @@ describe('marketing SEO', () => {
       WALLET_AS_A_SERVICE_PATH,
       EMBEDDED_WALLET_REACT_SDK_PATH,
       ALCHEMY_VS_PRIVY_PATH,
+      EMBEDDED_WALLET_PAYMENTS_PATH,
     ]
     for (const href of guides) {
       const sources = marketingInlinkSources(href)
@@ -1729,12 +1791,13 @@ describe('marketing SEO', () => {
       'lib/turnkey-alternatives.ts',
       'lib/dynamic-alternatives.ts',
       'lib/magic-alternatives.ts',
+      'lib/alternatives-guide.ts',
     ]
     for (const relative of alternativesData) {
       const source = fs.readFileSync(path.join(process.cwd(), relative), 'utf8')
       assert.match(
         source,
-        /href: '\/embedded-wallet', label: 'embedded wallet'/,
+        /href: ['"]\/embedded-wallet['"], label: ['"]embedded wallet['"]/,
         `${relative} missing embedded wallet intro link`,
       )
     }
@@ -1746,6 +1809,45 @@ describe('marketing SEO', () => {
       template,
       /font-semibold text-ink underline decoration-line underline-offset-4/,
     )
+  })
+
+  it('uses natural embedded wallet anchor text instead of learn more or here', () => {
+    const weak = /^(learn more|here|click here|this|this page|read more)$/i
+    const skipDir = new Set(['node_modules', '.next', 'dashboard', 'api'])
+    const stack = [process.cwd()]
+    const hits: string[] = []
+    while (stack.length > 0) {
+      const dir = stack.pop() as string
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name)
+        if (entry.isDirectory()) {
+          if (!skipDir.has(entry.name)) stack.push(full)
+          continue
+        }
+        if (!/\.(tsx|ts|mdx)$/.test(entry.name)) continue
+        if (entry.name.endsWith('.test.ts') || entry.name.endsWith('.test.tsx')) continue
+        const relative = path.relative(process.cwd(), full)
+        const text = fs.readFileSync(full, 'utf8')
+        const jsx = [
+          ...text.matchAll(
+            /href=["']\/embedded-wallet["'][^>]*>\s*([^<]+?)\s*</g,
+          ),
+        ]
+        const md = [...text.matchAll(/\[([^\]]+)\]\(\/embedded-wallet\)/g)]
+        const labeled = [
+          ...text.matchAll(
+            /href: ['"]\/embedded-wallet['"], label: ['"]([^'"]+)['"]/g,
+          ),
+        ]
+        for (const match of [...jsx, ...md, ...labeled]) {
+          const anchor = match[1].replace(/\s+/g, ' ').trim()
+          if (weak.test(anchor) || !/embedded wallet/i.test(anchor)) {
+            hits.push(`${relative}: "${anchor}"`)
+          }
+        }
+      }
+    }
+    assert.deepEqual(hits, [])
   })
 
   it('indexes the React integration guide as an Article with FAQ JSON-LD', () => {
@@ -2326,7 +2428,7 @@ describe('marketing SEO', () => {
     )
     const apiFields = parseBlogFrontmatter(source)
     assert.equal(apiFields.title, EMBEDDED_WALLET_API_TITLE)
-    assert.equal(apiFields.updated, '2026-10-30')
+    assert.equal(apiFields.updated, '2026-11-01')
 
     const hub = fs.readFileSync(
       path.join(process.cwd(), 'app/embedded-wallet/page.tsx'),
@@ -2423,8 +2525,11 @@ describe('marketing SEO', () => {
     )
     assert.equal(
       NON_CUSTODIAL_EMBEDDED_WALLET_TITLE,
-      'Non-Custodial Embedded Wallets: How Self-Custody Works (2026)',
+      'Non-Custodial Embedded Wallets: What They Are (2026)',
     )
+    assert.match(source, /^updated:\s*"2026-11-01"$/m)
+    assert.match(source, /\*\*Non-custodial embedded wallets\*\* are /)
+    assert.match(source, /## What are non-custodial embedded wallets\?/)
 
     const hub = fs.readFileSync(
       path.join(process.cwd(), 'app/embedded-wallet/page.tsx'),
@@ -2487,6 +2592,117 @@ describe('marketing SEO', () => {
       data['@graph'][0].mainEntityOfPage['@id'],
       'https://cavos.xyz/blog/non-custodial-embedded-wallet',
     )
+  })
+
+  it('indexes the embedded wallet payments guide as an Article with FAQ JSON-LD', () => {
+    const postPath = path.join(
+      process.cwd(),
+      'content/blog/embedded-wallet-payments.mdx',
+    )
+    assert.equal(fs.existsSync(postPath), true)
+    const source = fs.readFileSync(postPath, 'utf8')
+    const excerptMatch = source.match(/^excerpt:\s*"(.*)"$/m)
+    assert.ok(excerptMatch)
+    assert.ok(excerptMatch[1].length <= 160, excerptMatch[1].length)
+    assert.match(source, /^title: "Embedded Wallet Payments \(2026\): USDC Guide"$/m)
+    assert.match(source, /^updated:\s*"2026-11-01"$/m)
+    assert.match(source, /\*\*Embedded wallet payments\*\* are /)
+    assert.match(source, /## What are embedded wallet payments\?/)
+    assert.match(source, /## Stellar embedded wallet payments in USDC/)
+    assert.match(source, /## Solana embedded wallet payments in USDC/)
+    assert.match(source, /## Starknet embedded wallet payments in USDC/)
+    assert.match(source, /\[embedded wallet\]\(\/embedded-wallet\)/)
+    assert.match(source, /\]\(\/blog\/how-to-add-an-embedded-wallet\)/)
+    assert.match(source, /\]\(\/blog\/embedded-wallet-api\)/)
+    assert.match(source, /\]\(\/blog\/non-custodial-embedded-wallet\)/)
+    assert.match(source, /\]\(\/blog\/stellar-embedded-wallet-tutorial\)/)
+    assert.match(source, /\]\(\/blog\/gasless-starknet-transactions\)/)
+    assert.match(source, /embedded-starknet-wallet/)
+    assert.match(source, /embedded-solana-wallet/)
+    assert.match(source, /embedded-stellar-wallet/)
+    assert.match(source, /\]\(\/pricing\)/)
+    assert.match(source, /\]\(\/custody\)/)
+    assert.match(source, /docs\.cavos\.xyz\/docs\/wallet-actions/)
+    assert.match(source, /docs\.cavos\.xyz\/docs\/reserve/)
+    assert.match(source, /@cavos\/kit` 0\.5\.0/)
+    assert.match(source, /addTrustline/)
+    assert.match(source, /executeInstructions/)
+    assert.match(source, /Gas Sponsorship in Any Token/)
+    assert.match(source, /audited OpenZeppelin account contract/)
+    assert.match(source, /hardware-isolated and non-custodial/)
+    assert.match(source, /never leave it in plaintext/)
+    assert.match(source, /encrypted copy of the MasterDEK/)
+    assert.doesNotMatch(source, /audited Cavos/)
+    assert.doesNotMatch(source, /trustless|impossible/i)
+    assert.doesNotMatch(source, /—/)
+    assert.doesNotMatch(source, /Search Console|rankings|SEO/)
+    assert.equal(
+      EMBEDDED_WALLET_PAYMENTS_PATH,
+      '/blog/embedded-wallet-payments',
+    )
+    assert.equal(
+      EMBEDDED_WALLET_PAYMENTS_TITLE,
+      'Embedded Wallet Payments (2026): USDC Guide',
+    )
+    assert.ok(`${EMBEDDED_WALLET_PAYMENTS_TITLE} | Cavos`.length <= 60)
+
+    const hub = fs.readFileSync(
+      path.join(process.cwd(), 'app/embedded-wallet/page.tsx'),
+      'utf8',
+    )
+    assert.match(hub, /EMBEDDED_WALLET_PAYMENTS_PATH/)
+    assert.match(
+      hub,
+      /href=\{EMBEDDED_WALLET_PAYMENTS_PATH\}[^>]*>\s*embedded wallet payments\s*</,
+    )
+
+    const blogIndex = fs.readFileSync(
+      path.join(process.cwd(), 'app/blog/page.tsx'),
+      'utf8',
+    )
+    assert.match(blogIndex, /EMBEDDED_WALLET_PAYMENTS_PATH/)
+
+    const llms = fs.readFileSync(path.join(process.cwd(), 'public/llms.txt'), 'utf8')
+    assert.match(llms, /blog\/embedded-wallet-payments/)
+
+    const data = blogPostJsonLd({
+      title: EMBEDDED_WALLET_PAYMENTS_TITLE,
+      description:
+        'Embedded wallet payments are in-app USDC transfers on Stellar, Solana, and Starknet.',
+      path: EMBEDDED_WALLET_PAYMENTS_PATH,
+      datePublished: '2026-11-01',
+      dateModified: '2026-11-01',
+      type: 'Article',
+      faq: [
+        {
+          question: 'What are embedded wallet payments?',
+          answer:
+            'Embedded wallet payments are pay, receive, and sign from inside the application.',
+        },
+      ],
+      crumbs: [
+        { name: 'Home', path: '/' },
+        { name: 'Blog', path: '/blog' },
+        {
+          name: EMBEDDED_WALLET_PAYMENTS_TITLE,
+          path: EMBEDDED_WALLET_PAYMENTS_PATH,
+        },
+      ],
+    })
+    const json = JSON.stringify(data)
+    JSON.parse(json)
+    assert.equal(data['@graph'][0]['@type'], 'Article')
+    assert.equal(data['@graph'][1]['@type'], 'BreadcrumbList')
+    assert.equal(data['@graph'][2]['@type'], 'FAQPage')
+    assert.equal(
+      data['@graph'][0].url,
+      'https://cavos.xyz/blog/embedded-wallet-payments',
+    )
+    assert.equal(
+      data['@graph'][0].mainEntityOfPage['@id'],
+      'https://cavos.xyz/blog/embedded-wallet-payments',
+    )
+    assert.equal(data['@graph'][0].dateModified, '2026-11-01')
   })
 
   it('indexes the wallet-as-a-service guide as an Article with FAQ JSON-LD', () => {
@@ -2884,6 +3100,7 @@ describe('marketing SEO', () => {
     assert.match(source, /WALLET_AS_A_SERVICE_PATH/)
     assert.match(source, /EMBEDDED_WALLET_REACT_SDK_PATH/)
     assert.match(source, /ALCHEMY_VS_PRIVY_PATH/)
+    assert.match(source, /EMBEDDED_WALLET_PAYMENTS_PATH/)
     assert.match(source, /href: '\/compare'/)
     assert.match(source, /href: '\/custody'/)
     assert.match(source, /href: '\/privy-alternatives'/)
@@ -3556,6 +3773,7 @@ const GUIDE_PATH_CONSTANTS: Record<string, string> = {
   WALLET_AS_A_SERVICE_PATH: '/blog/wallet-as-a-service',
   EMBEDDED_WALLET_REACT_SDK_PATH: '/blog/embedded-wallet-react-sdk',
   ALCHEMY_VS_PRIVY_PATH: '/blog/alchemy-vs-privy',
+  EMBEDDED_WALLET_PAYMENTS_PATH: '/blog/embedded-wallet-payments',
 }
 
 const SELF_PAGE_FOR_HREF: Record<string, string> = {
@@ -3572,6 +3790,7 @@ const SELF_PAGE_FOR_HREF: Record<string, string> = {
   '/blog/wallet-as-a-service': 'content/blog/wallet-as-a-service.mdx',
   '/blog/embedded-wallet-react-sdk': 'content/blog/embedded-wallet-react-sdk.mdx',
   '/blog/alchemy-vs-privy': 'content/blog/alchemy-vs-privy.mdx',
+  '/blog/embedded-wallet-payments': 'content/blog/embedded-wallet-payments.mdx',
   '/privacy': 'app/privacy/page.tsx',
   '/dpa': 'app/dpa/page.tsx',
   '/user-privacy': 'app/user-privacy/page.tsx',

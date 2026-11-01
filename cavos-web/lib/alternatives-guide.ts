@@ -176,8 +176,8 @@ export const DEFAULT_HOW_TO_CHOOSE_OUTRO: AlternativesInline[] = [
     label: 'embedded wallets vs browser extensions',
   },
   ', MPC, and device-native models differ), start with the ',
-  { href: '/embedded-wallet', label: 'pillar guide' },
-  '.',
+  { href: '/embedded-wallet', label: 'embedded wallet' },
+  ' guide.',
 ]
 
 export const DYNAMIC_VS_EXTENSION_LINKS: AlternativeRelatedLink[] = [

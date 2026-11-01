@@ -63,6 +63,7 @@ Cavos (`@cavos/kit`) is an embedded wallet SDK for web and React Native. The sig
 - [Embedded wallet React SDK best practices](https://cavos.xyz/blog/embedded-wallet-react-sdk)
 - [Embedded wallet vs browser extension](https://cavos.xyz/blog/embedded-wallet-vs-browser-extension): where users should sign
 - [How to send gasless Starknet transactions](https://cavos.xyz/blog/gasless-starknet-transactions)
+- [Embedded wallet payments](https://cavos.xyz/blog/embedded-wallet-payments): USDC transfers on Stellar, Solana, and Starknet
 - [How to set up a Stellar wallet in your app](https://cavos.xyz/blog/stellar-embedded-wallet-tutorial)
 - [The Cavos enclave is open source (Kit 0.5.0)](https://cavos.xyz/blog/cavos-kit-0-5-0)
 

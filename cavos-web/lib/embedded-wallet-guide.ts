@@ -1,18 +1,18 @@
 export const EMBEDDED_WALLET_PATH = '/embedded-wallet'
 
 export const EMBEDDED_WALLET_TITLE =
-  'Embedded Wallets: What They Are, API & SDK'
+  'Embedded Wallets: What They Are (2026)'
 
 export const EMBEDDED_WALLET_DESCRIPTION =
-  'Embedded wallets live in your app: no extension or seed. API, SDK, wallet-as-a-service, non-custodial keys, and payments on Starknet, Solana, Stellar.'
+  'Embedded wallets live in your app: no extension or seed. SDK, platform, and infrastructure for non-custodial keys on Starknet, Solana, and Stellar.'
 
 export const EMBEDDED_WALLET_PUBLISHED = '2026-10-07'
 
-export const EMBEDDED_WALLET_MODIFIED = '2026-10-31'
+export const EMBEDDED_WALLET_MODIFIED = '2026-11-01'
 
 /** Featured-snippet definition rendered under the H1. Keep 40–60 words. */
 export const EMBEDDED_WALLET_DEFINITION =
-  'An embedded wallet is a crypto wallet built into your application instead of a browser extension or a separate wallet app. Embedded wallets let users sign in the way they already do, and the product resolves an on-chain account they can pay, receive, and sign with. There is no install, no seed phrase, and no trip to another app.'
+  'Embedded wallets are crypto wallets built into an application instead of a browser extension or a separate wallet app. An embedded wallet lets users sign in the way they already do, and the product resolves an on-chain account they can pay, receive, and sign with. No install, no seed phrase, no trip to another app.'
 
 export const EMBEDDED_WALLET_INTEGRATION_PATH =
   '/blog/how-to-add-an-embedded-wallet'
@@ -63,7 +63,7 @@ export const NON_CUSTODIAL_EMBEDDED_WALLET_PATH =
   '/blog/non-custodial-embedded-wallet'
 
 export const NON_CUSTODIAL_EMBEDDED_WALLET_TITLE =
-  'Non-Custodial Embedded Wallets: How Self-Custody Works (2026)'
+  'Non-Custodial Embedded Wallets: What They Are (2026)'
 
 export const WALLET_AS_A_SERVICE_PATH = '/blog/wallet-as-a-service'
 
@@ -79,6 +79,11 @@ export const ALCHEMY_VS_PRIVY_PATH = '/blog/alchemy-vs-privy'
 
 export const ALCHEMY_VS_PRIVY_TITLE =
   'Alchemy vs Privy: Pricing & Custody (2026)'
+
+export const EMBEDDED_WALLET_PAYMENTS_PATH = '/blog/embedded-wallet-payments'
+
+export const EMBEDDED_WALLET_PAYMENTS_TITLE =
+  'Embedded Wallet Payments (2026): USDC Guide'
 
 export const DOCS_ORIGIN = 'https://docs.cavos.xyz'
 
@@ -159,11 +164,6 @@ export const EMBEDDED_WALLET_FAQ = [
       'An extension wallet keeps keys in a separate application the user installs and manages. An embedded wallet is provisioned by the product: login selects the user, the SDK looks up or creates an on-chain account, and approval happens in the app UI. Extensions are the better fit when users already hold wallets you must connect to.',
   },
   {
-    question: 'What is an embedded wallet API?',
-    answer:
-      'An embedded wallet API is the developer surface that provisions a crypto wallet inside an application. It covers authentication, wallet create or lookup, key handling, signing, sending transactions, gas sponsorship, and recovery. Cavos exposes that surface as a client SDK, @cavos/kit, not a public create-wallet REST endpoint.',
-  },
-  {
     question: 'What is an embedded wallet SDK?',
     answer:
       'An embedded wallet SDK is the library that provisions the wallet and signs from inside your application. It is not a wallet app or a browser extension the user installs. Authentication selects the user; the SDK looks up or creates an on-chain account; a signer bound to the session or the device authorizes transactions in your UI. Cavos ships that as @cavos/kit on web and @cavos/kit/react-native on mobile.',
@@ -171,7 +171,17 @@ export const EMBEDDED_WALLET_FAQ = [
   {
     question: 'What is an embedded wallet as a service?',
     answer:
-      'Embedded wallet as a service, also called wallet-as-a-service, is the commercial name for provisioning a crypto wallet through an API or SDK instead of asking the user to install an extension. Login selects the user, the platform looks up or creates an on-chain account, and approval happens in the product UI. The label does not decide who can sign.',
+      'Embedded wallet as a service, also called wallet-as-a-service, is the commercial name for provisioning a crypto wallet through an SDK instead of asking the user to install an extension. Login selects the user, the platform looks up or creates an on-chain account, and approval happens in the product UI. The label does not decide who can sign.',
+  },
+  {
+    question: 'What is an embedded wallet platform?',
+    answer:
+      'An embedded wallet platform is the hosted infrastructure behind the SDK: authentication, registry lookup or create, gas sponsorship, and recovery. Embedded wallet infrastructure is the same job from the operator side. The commercial name is wallet-as-a-service. The label does not decide who can sign. Cavos is device-native embedded wallet infrastructure for Starknet, Solana, and Stellar.',
+  },
+  {
+    question: 'What is an embedded wallet solution?',
+    answer:
+      'An embedded wallet solution is the product you ship: login, an in-app approval UI, a chain-native account, and a fee path the user can complete. The SDK and the platform are how you build that. Cavos ships the SDK as @cavos/kit. Compare solutions on custody, native chains, and recovery, not on the login modal.',
   },
   {
     question: 'What are embedded wallet providers?',
