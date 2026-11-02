@@ -322,8 +322,8 @@ Hello
     )
     assert.ok(providers)
     assert.ok(privy)
-    assert.equal(providers.lastModified.toISOString().startsWith('2026-10-31'), true)
-    assert.equal(privy.lastModified.toISOString().startsWith('2026-10-31'), true)
+    assert.equal(providers.lastModified.toISOString().startsWith('2026-11-02'), true)
+    assert.equal(privy.lastModified.toISOString().startsWith('2026-11-02'), true)
 
     const reactSdk = publishedBlogPosts().find(
       (item) => item.slug === 'embedded-wallet-react-sdk',
@@ -341,7 +341,8 @@ Hello
   })
 
   it('keeps the indexable marketing URLs including the React integration guide', () => {
-    assert.equal(entries.length, 44)
+    assert.equal(entries.length, 45)
+    assert.ok(urls.includes(`${MARKETING_ORIGIN}/para-alternatives`))
     assert.ok(
       urls.includes(`${MARKETING_ORIGIN}/blog/how-to-add-an-embedded-wallet`),
     )
