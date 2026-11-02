@@ -47,6 +47,12 @@ describe('verifyUserToken', () => {
         assert.equal((await verifyUserToken(req(token), () => keys))?.sub, 'user-1');
     });
 
+    it('exposes the issued-at time in seconds', async () => {
+        const token = await sign({ iss: GOOGLE, aud: 'client-123', sub: 'user-1' });
+        const user = await verifyUserToken(req(token), () => keys);
+        assert.ok(user && user.issuedAt !== null && Math.abs(user.issuedAt - Date.now() / 1000) < 60);
+    });
+
     it('rejects a missing token', async () => {
         assert.equal(await verifyUserToken(req(), () => keys), null);
     });

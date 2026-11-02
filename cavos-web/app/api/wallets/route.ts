@@ -298,7 +298,7 @@ export async function POST(request: Request) {
         // Another device got here first. The address is already named; this
         // caller must adopt it and go through device approval instead.
         if (result.status === 'exists' && result.row.address !== address) {
-            logger.warn('Wallet address already claimed', { user_social_id, network });
+            logger.warn('Wallet address already claimed', { network });
             logger.complete(true);
             return ApiResponse.conflict('address_already_registered', { address: result.row.address });
         }

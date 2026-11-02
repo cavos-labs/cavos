@@ -17,6 +17,7 @@
     "multi-device",
     "recovery-codes",
     "hardware-isolated-recovery",
+    "account-deletion",
     "---Chains---",
     "chains",
     "starknet",
