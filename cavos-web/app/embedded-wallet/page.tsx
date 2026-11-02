@@ -826,9 +826,13 @@ export default function EmbeddedWalletGuidePage() {
                         <Link href="/dynamic-alternatives" className={linkClass}>
                             Dynamic alternatives
                         </Link>
-                        , or{' '}
+                        ,{' '}
                         <Link href="/magic-alternatives" className={linkClass}>
                             Magic alternatives
+                        </Link>
+                        , or{' '}
+                        <Link href="/para-alternatives" className={linkClass}>
+                            Para alternatives
                         </Link>
                         . One-to-one write-ups live on the{' '}
                         <Link href="/compare" className={linkClass}>

@@ -136,6 +136,20 @@ import {
   magicAlternativesItemList,
 } from './magic-alternatives'
 import {
+  PARA_ALTERNATIVE_SECTIONS,
+  PARA_ALTERNATIVES_CRUMB,
+  PARA_ALTERNATIVES_DESCRIPTION,
+  PARA_ALTERNATIVES_FAQ,
+  PARA_ALTERNATIVES_H1,
+  PARA_ALTERNATIVES_MODIFIED,
+  PARA_ALTERNATIVES_PATH,
+  PARA_ALTERNATIVES_PUBLISHED,
+  PARA_ALTERNATIVES_TITLE,
+  PARA_HOW_TO_CHOOSE,
+  PARA_WHY_LOOK,
+  paraAlternativesItemList,
+} from './para-alternatives'
+import {
   PRIVY_ALTERNATIVE_SECTIONS,
   PRIVY_ALTERNATIVES_CRUMB,
   PRIVY_ALTERNATIVES_DESCRIPTION,
@@ -951,8 +965,11 @@ describe('marketing SEO', () => {
     assert.match(compareSource, /href="\/turnkey-alternatives"/)
     assert.match(compareSource, /href="\/dynamic-alternatives"/)
     assert.match(compareSource, /href="\/magic-alternatives"/)
+    assert.match(compareSource, /href="\/para-alternatives"/)
     assert.match(compareIndex, /href="\/turnkey-alternatives"/)
+    assert.match(compareIndex, /href="\/para-alternatives"/)
     assert.match(embeddedWallet, /href="\/turnkey-alternatives"/)
+    assert.match(embeddedWallet, /href="\/para-alternatives"/)
 
     const privy = getCompetitor('privy')
     assert.ok(privy)
@@ -1225,6 +1242,174 @@ describe('marketing SEO', () => {
     }
   })
 
+  it('replicates the Privy alternatives template for Para (getpara.com)', () => {
+    assert.equal(PARA_ALTERNATIVES_PATH, '/para-alternatives')
+    assert.equal(PARA_ALTERNATIVES_TITLE.includes('| Cavos'), false)
+    assert.match(PARA_ALTERNATIVES_TITLE, /5 Para Alternatives/)
+    assert.match(PARA_ALTERNATIVES_TITLE, /2026/)
+    assert.match(PARA_ALTERNATIVES_TITLE, /Free 1,000 Wallets/)
+    assert.match(PARA_ALTERNATIVES_H1, /5 Para alternatives/)
+    assert.match(PARA_ALTERNATIVES_DESCRIPTION, /getpara.com/)
+    assert.match(PARA_ALTERNATIVES_DESCRIPTION, /Para alternatives/)
+    assert.match(PARA_ALTERNATIVES_DESCRIPTION, /Starknet, Solana, Stellar/)
+    assert.match(PARA_ALTERNATIVES_DESCRIPTION, /1,000 wallets/)
+    assert.match(PARA_ALTERNATIVES_DESCRIPTION, /ParaSwap/)
+    const fullTitle = `${PARA_ALTERNATIVES_TITLE} | Cavos`
+    assert.ok(fullTitle.length >= 50 && fullTitle.length <= 60, fullTitle)
+    assert.ok(
+      PARA_ALTERNATIVES_DESCRIPTION.length >= 140 &&
+        PARA_ALTERNATIVES_DESCRIPTION.length <= 155,
+      String(PARA_ALTERNATIVES_DESCRIPTION.length),
+    )
+    assert.ok(PARA_ALTERNATIVES_FAQ.length >= 5 && PARA_ALTERNATIVES_FAQ.length <= 8)
+    assert.ok(
+      PARA_ALTERNATIVES_FAQ.some(
+        (item) => item.question === 'What is the best Para alternative?',
+      ),
+    )
+    assert.ok(
+      PARA_ALTERNATIVES_FAQ.some(
+        (item) => item.question === 'Is there a free Para alternative?',
+      ),
+    )
+    assert.ok(
+      PARA_ALTERNATIVES_FAQ.some((item) =>
+        /Starknet, Solana, or Stellar/.test(item.question),
+      ),
+    )
+    assert.ok(
+      PARA_ALTERNATIVES_FAQ.some((item) =>
+        /ParaSwap or a Cosmos chain named Para/.test(item.question),
+      ),
+    )
+    assert.ok(
+      PARA_ALTERNATIVES_FAQ.some(
+        (item) => item.question === 'Who are getpara.com competitors?',
+      ),
+    )
+    assert.ok(PARA_WHY_LOOK.length >= 4)
+    assert.ok(PARA_HOW_TO_CHOOSE.length >= 5)
+    assert.deepEqual(
+      PARA_ALTERNATIVE_SECTIONS.map((section) => section.name),
+      ['Cavos', 'Privy', 'Dynamic', 'Turnkey', 'Web3Auth'],
+    )
+    assert.deepEqual(
+      PARA_ALTERNATIVE_SECTIONS.map((section) => section.href),
+      [
+        '/compare',
+        '/compare/privy',
+        '/compare/dynamic',
+        '/compare/turnkey',
+        '/compare/web3auth',
+      ],
+    )
+    assert.equal(PARA_ALTERNATIVES_PUBLISHED, '2026-11-02')
+    assert.equal(PARA_ALTERNATIVES_MODIFIED, '2026-11-02')
+    assert.equal(PARA_ALTERNATIVES_CRUMB, 'Para alternatives')
+
+    const meta = marketingPageMetadata({
+      title: PARA_ALTERNATIVES_TITLE,
+      description: PARA_ALTERNATIVES_DESCRIPTION,
+      path: PARA_ALTERNATIVES_PATH,
+      type: 'article',
+      publishedTime: PARA_ALTERNATIVES_PUBLISHED,
+      modifiedTime: PARA_ALTERNATIVES_MODIFIED,
+    })
+    assert.equal(meta.alternates?.canonical, 'https://cavos.xyz/para-alternatives')
+    assert.equal(meta.openGraph?.url, 'https://cavos.xyz/para-alternatives')
+    assert.equal(meta.openGraph?.modifiedTime, PARA_ALTERNATIVES_MODIFIED)
+
+    const jsonLd = guidePageJsonLd({
+      title: PARA_ALTERNATIVES_TITLE,
+      description: PARA_ALTERNATIVES_DESCRIPTION,
+      path: PARA_ALTERNATIVES_PATH,
+      datePublished: PARA_ALTERNATIVES_PUBLISHED,
+      dateModified: PARA_ALTERNATIVES_MODIFIED,
+      crumbs: [
+        { name: 'Home', path: '/' },
+        { name: 'Compare', path: '/compare' },
+        { name: PARA_ALTERNATIVES_CRUMB, path: PARA_ALTERNATIVES_PATH },
+      ],
+      faq: [...PARA_ALTERNATIVES_FAQ],
+      itemList: paraAlternativesItemList(),
+    })
+    JSON.parse(JSON.stringify(jsonLd))
+    assert.equal(jsonLd['@graph'][0]['@type'], 'Article')
+    assert.equal(jsonLd['@graph'][1]['@type'], 'BreadcrumbList')
+    assert.equal(jsonLd['@graph'][2]['@type'], 'FAQPage')
+    const alternativesList = jsonLd['@graph'].find(
+      (node: { '@type'?: string }) => node['@type'] === 'ItemList',
+    )
+    assert.ok(alternativesList)
+    assert.equal(alternativesList['@id'], 'https://cavos.xyz/para-alternatives#itemlist')
+    assert.deepEqual(
+      alternativesList.itemListElement.map(
+        (item: { name: string; url: string; position: number }) => ({
+          position: item.position,
+          name: item.name,
+          url: item.url,
+        }),
+      ),
+      [
+        { position: 1, name: 'Cavos', url: 'https://cavos.xyz/compare' },
+        { position: 2, name: 'Privy', url: 'https://cavos.xyz/compare/privy' },
+        { position: 3, name: 'Dynamic', url: 'https://cavos.xyz/compare/dynamic' },
+        { position: 4, name: 'Turnkey', url: 'https://cavos.xyz/compare/turnkey' },
+        { position: 5, name: 'Web3Auth', url: 'https://cavos.xyz/compare/web3auth' },
+      ],
+    )
+    assert.doesNotMatch(JSON.stringify(jsonLd), /"@type":"Product"/)
+
+    const pageSource = fs.readFileSync(
+      path.join(process.cwd(), 'app/para-alternatives/page.tsx'),
+      'utf8',
+    )
+    const dataSource = fs.readFileSync(
+      path.join(process.cwd(), 'lib/para-alternatives.ts'),
+      'utf8',
+    )
+    assert.match(pageSource, /AlternativesGuidePage/)
+    assert.match(pageSource, /paraAlternativesGuide/)
+    assert.match(
+      dataSource,
+      /Cavos, Privy, Dynamic, Turnkey, and Web3Auth are the five Para/,
+    )
+    assert.match(dataSource, /href: '\/privy-alternatives'/)
+    assert.match(dataSource, /href: '\/compare'/)
+    assert.match(dataSource, /getpara.com/)
+    assert.match(dataSource, /formerly Capsule/)
+    assert.match(dataSource, /docs\.getpara.com\/v3\/concepts\/key-management/)
+    assert.match(dataSource, /docs\.getpara.com\/v3\/introduction\/chain-support/)
+    assert.match(dataSource, /getpara.com\/pricing/)
+    assert.match(dataSource, /audited OpenZeppelin account contract/)
+    assert.match(dataSource, /Gas Sponsorship in Any Token/)
+    assert.match(dataSource, /2-of-2 MPC/)
+    assert.doesNotMatch(dataSource, /audited Cavos/)
+    assert.doesNotMatch(dataSource, /on-chain device approval/)
+    assert.doesNotMatch(dataSource, /trustless/)
+    assert.doesNotMatch(dataSource, /impossible/)
+    const cavos = PARA_ALTERNATIVE_SECTIONS[0]
+    assert.equal(cavos.href, '/compare')
+    assert.match(cavos.paragraphs.join(' '), /audited OpenZeppelin/)
+    assert.match(cavos.paragraphs.join(' '), /2-of-2 MPC/)
+
+    const solanaShortlist = fs.readFileSync(
+      path.join(process.cwd(), 'content/blog/best-embedded-wallets-solana.mdx'),
+      'utf8',
+    )
+    assert.match(solanaShortlist, /\[Para alternatives\]\(\/para-alternatives\)/)
+    const compareIndex = fs.readFileSync(
+      path.join(process.cwd(), 'app/compare/page.tsx'),
+      'utf8',
+    )
+    assert.match(
+      compareIndex,
+      /href="\/para-alternatives"[^>]*>\s*Para alternatives\s*</,
+    )
+    const llms = fs.readFileSync(path.join(process.cwd(), 'public/llms.txt'), 'utf8')
+    assert.match(llms, /https:\/\/cavos\.xyz\/para-alternatives/)
+  })
+
   it('builds Article, BreadcrumbList, and FAQPage JSON-LD for the guide', () => {
     const data = guidePageJsonLd({
       title: EMBEDDED_WALLET_TITLE,
@@ -1474,6 +1659,7 @@ describe('marketing SEO', () => {
       ['/turnkey-alternatives', 'Turnkey wallet alternatives'],
       ['/dynamic-alternatives', 'Dynamic wallet alternatives'],
       ['/magic-alternatives', 'Magic wallet alternatives'],
+      ['/para-alternatives', 'Para wallet alternatives'],
       ['/embedded-wallet', 'Embedded wallet'],
       ['/blog/how-to-add-an-embedded-wallet', 'How to add an embedded wallet'],
       ['/blog/wallet-as-a-service', 'Wallet as a service'],
@@ -1749,12 +1935,14 @@ describe('marketing SEO', () => {
     assert.match(privySource, /secp256k1/)
     assert.match(privySource, /\]\(\/dynamic-alternatives\)/)
     assert.match(privySource, /\]\(\/magic-alternatives\)/)
+    assert.match(privySource, /\]\(\/para-alternatives\)/)
     assert.match(privySource, /\]\(\/blog\/cavos-kit-0-5-0\)/)
     assert.match(providersSource, /\]\(\/blog\/cavos-kit-0-5-0\)/)
     assert.match(providersSource, /\[Turnkey alternatives\]\(\/turnkey-alternatives\)/)
     assert.match(providersSource, /\[Dynamic alternatives\]\(\/dynamic-alternatives\)/)
     assert.match(providersSource, /\[Magic alternatives\]\(\/magic-alternatives\)/)
     assert.match(providersSource, /\[Privy alternatives\]\(\/privy-alternatives\)/)
+    assert.match(providersSource, /\[Para alternatives\]\(\/para-alternatives\)/)
   })
 
   it('puts a non-footer in-text link to /embedded-wallet on ranking pages', () => {
@@ -1791,6 +1979,7 @@ describe('marketing SEO', () => {
       'lib/turnkey-alternatives.ts',
       'lib/dynamic-alternatives.ts',
       'lib/magic-alternatives.ts',
+      'lib/para-alternatives.ts',
       'lib/alternatives-guide.ts',
     ]
     for (const relative of alternativesData) {
@@ -2288,6 +2477,7 @@ describe('marketing SEO', () => {
     assert.match(source, /\]\(\/turnkey-alternatives\)/)
     assert.match(source, /\]\(\/dynamic-alternatives\)/)
     assert.match(source, /\]\(\/magic-alternatives\)/)
+    assert.match(source, /\]\(\/para-alternatives\)/)
     assert.match(source, /\]\(\/blog\/cavos-kit-0-5-0\)/)
     assert.match(source, /\]\(\/blog\/embedded-wallet-providers\)/)
     assert.match(source, /<table>/)
@@ -3107,6 +3297,7 @@ describe('marketing SEO', () => {
     assert.match(source, /href: '\/turnkey-alternatives'/)
     assert.match(source, /href: '\/dynamic-alternatives'/)
     assert.match(source, /href: '\/magic-alternatives'/)
+    assert.match(source, /href: '\/para-alternatives'/)
     assert.match(source, /href: '\/embedded-starknet-wallet'/)
     assert.match(source, /href: '\/embedded-solana-wallet'/)
     assert.match(source, /href: '\/embedded-stellar-wallet'/)
@@ -4047,6 +4238,7 @@ describe('pillar page copy rules', () => {
     'lib/dynamic-alternatives.ts',
     'lib/embedded-wallet-guide.ts',
     'lib/magic-alternatives.ts',
+    'lib/para-alternatives.ts',
     'lib/privy-alternatives.ts',
     'lib/turnkey-alternatives.ts',
     'lib/marketing-seo.ts',

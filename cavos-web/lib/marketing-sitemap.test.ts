@@ -6,6 +6,7 @@ import { COMPARE_PAGES_MODIFIED, COMPETITORS } from './compare-data'
 import { DYNAMIC_ALTERNATIVES_MODIFIED } from './dynamic-alternatives'
 import { EMBEDDED_WALLET_MODIFIED } from './embedded-wallet-guide'
 import { MAGIC_ALTERNATIVES_MODIFIED } from './magic-alternatives'
+import { PARA_ALTERNATIVES_MODIFIED } from './para-alternatives'
 import { PRIVY_ALTERNATIVES_MODIFIED } from './privy-alternatives'
 import { TURNKEY_ALTERNATIVES_MODIFIED } from './turnkey-alternatives'
 import {
@@ -73,6 +74,7 @@ describe('marketing sitemap', () => {
       '/turnkey-alternatives',
       '/dynamic-alternatives',
       '/magic-alternatives',
+      '/para-alternatives',
       '/custody',
       '/pricing',
       '/stats',
@@ -142,6 +144,7 @@ describe('marketing sitemap', () => {
       '/turnkey-alternatives',
       '/dynamic-alternatives',
       '/magic-alternatives',
+      '/para-alternatives',
       '/custody',
       '/pricing',
       '/stats',
@@ -213,6 +216,7 @@ describe('marketing sitemap', () => {
       ['/turnkey-alternatives', TURNKEY_ALTERNATIVES_MODIFIED],
       ['/dynamic-alternatives', DYNAMIC_ALTERNATIVES_MODIFIED],
       ['/magic-alternatives', MAGIC_ALTERNATIVES_MODIFIED],
+      ['/para-alternatives', PARA_ALTERNATIVES_MODIFIED],
     ] as const
     for (const [routePath, modified] of expected) {
       const entry = entries.find(

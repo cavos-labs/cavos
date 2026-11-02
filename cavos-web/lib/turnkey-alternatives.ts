@@ -160,6 +160,8 @@ export const turnkeyAlternativesGuide: AlternativesGuide = {
       { href: PRIVY_VS_TURNKEY_PATH, label: 'Privy vs Turnkey' },
       '. The replacement shortlist for Privy is ',
       { href: '/privy-alternatives', label: 'Privy alternatives' },
+      '; for Para (getpara.com) see ',
+      { href: '/para-alternatives', label: 'Para alternatives' },
       '. Migration is a project, not a config change: wallet addresses are derived differently, so accounts do not transfer automatically.',
     ],
   ],
