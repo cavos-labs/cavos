@@ -1,8 +1,7 @@
 import { ed25519 } from '@noble/curves/ed25519';
 import { PublicKey } from '@solana/web3.js';
 import { StrKey } from '@stellar/stellar-sdk';
-import { ec, hash } from 'starknet';
-import { starknetAddressFromPublicKey } from '@cavos/kit';
+import { CallData, ec, hash } from 'starknet';
 import { signOAuthState, verifyOAuthState } from '@/lib/oauth/state';
 
 export type ConsentAction = 'delete_account' | 'disable_recovery' | 'enable_recovery';
@@ -24,6 +23,14 @@ interface ConsentScope {
 }
 
 const CONSENT_MAX_AGE_MS = 5 * 60_000;
+
+/** The OpenZeppelin AccountUpgradeable v3.0.0 class every Cavos Starknet wallet deploys, as in `@cavos/kit`. */
+const OZ_ACCOUNT_CLASS_HASH = '0x01d1777db36cdd06dd62cfde77b1b6ae06412af95d57a13dc40ac77b8a702381';
+
+/** The counterfactual address of a Cavos Starknet wallet for a stark public key, computed as the kit does. */
+function starknetAddress(publicKey: string): string {
+    return hash.calculateContractAddressFromHash(publicKey, OZ_ACCOUNT_CLASS_HASH, CallData.compile({ publicKey }), 0);
+}
 
 /** Signs a short-lived challenge bound to the user, action and current recovery state. */
 export function issueConsentChallenge(scope: ConsentScope): string {
@@ -107,7 +114,7 @@ function verifyStark(proof: ConsentProof, message: string, wallets: { network: s
     if (!isHex(proof.public_key, 130) || !proof.public_key.startsWith('04')) return false;
     if (proof.signature.length !== 2 || !/^0x[0-9a-f]+$/i.test(r) || !/^0x[0-9a-f]+$/i.test(s)) return false;
     const xHex = proof.public_key.slice(2, 66);
-    const address = starknetAddressFromPublicKey(`0x${xHex}`);
+    const address = starknetAddress(`0x${xHex}`);
     if (!ownsAddress('starknet', address, wallets)) return false;
     const digest = hash.starknetKeccak(message).toString(16).padStart(64, '0');
     return ec.starkCurve.verify(
