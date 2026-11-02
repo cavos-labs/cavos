@@ -1686,7 +1686,7 @@ describe('marketing SEO', () => {
     assert.ok(providers.excerpt.length >= 140 && providers.excerpt.length <= 155)
     assert.ok(privy.excerpt.length >= 140 && privy.excerpt.length <= 155)
     assert.equal(providers.updated, '2026-10-31')
-    assert.equal(privy.updated, '2026-10-31')
+    assert.equal(privy.updated, '2026-11-02')
     assert.match(EMBEDDED_WALLET_PROVIDERS_TITLE, /Embedded Wallet Providers/)
     assert.match(PRIVY_VS_TURNKEY_TITLE, /Privy vs Turnkey/)
     assert.match(privy.excerpt, /Turnkey vs Privy/)
@@ -2310,7 +2310,7 @@ describe('marketing SEO', () => {
     assert.equal(PRIVY_VS_TURNKEY_PATH, '/blog/privy-vs-turnkey')
     assert.equal(
       PRIVY_VS_TURNKEY_TITLE,
-      'Privy vs Turnkey vs Dfns (2026) Comparison',
+      'Privy vs Turnkey vs Dfns (2026): Buy or Build?',
     )
 
     const compareSource = fs.readFileSync(
