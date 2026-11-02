@@ -139,12 +139,21 @@ export async function POST(request: Request) {
   // The wallet lookup below is what keeps the address to this app/environment.
   const { data: wallet } = await admin
     .from('wallets')
-    .select('id, address, network')
+    .select('id, address, network, user_social_id')
     .eq('app_id', appId)
     .eq('environment_id', environment.id)
     .eq('address', body.wallet_address)
     .maybeSingle()
   if (!wallet) return NextResponse.json({ error: 'wallet_not_found' }, { status: 404 })
+
+  const { data: optOut } = await admin
+    .from('recovery_opt_outs')
+    .select('user_social_id')
+    .eq('app_id', appId)
+    .eq('environment_id', environment.id)
+    .eq('user_social_id', wallet.user_social_id)
+    .maybeSingle()
+  if (optOut) return NextResponse.json({ error: 'recovery_revoked' }, { status: 403 })
 
   // One credential, one session per wallet.
   //

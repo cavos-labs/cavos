@@ -1,0 +1,103 @@
+---
+title: Account deletion
+description: "Let users delete their Cavos account data, or turn off recovery by sign-in so Cavos no longer holds a sealed copy of their key."
+---
+
+Two actions, both started by your app and confirmed by the user in a sheet the
+Cavos vault draws. Your page cannot draw, skip, or fake that sheet: the vault
+signs the request with the wallet's own key only after the user confirms.
+
+| Action | What Cavos removes | What stays |
+| --- | --- | --- |
+| `disableEnclaveRecovery()` | The sealed recovery copy of the key, for every chain of this user | Wallet, devices, passkey |
+| `enableEnclaveRecovery()` | Nothing. The next sign-in seals a new recovery copy | Everything |
+| `deleteAccount()` | Wallet registration, devices, passkey backup, recovery copy and events, in the current environment | The wallet on-chain and its funds |
+
+All three need the vault (on by default when `appId` is set) and act on the
+environment the provider is configured for. Production and development are
+separate.
+
+## React
+
+```tsx title="Settings.tsx"
+import { useCavos } from '@cavos/kit/react';
+
+export function AccountSettings() {
+  const { deleteAccount, disableEnclaveRecovery, enableEnclaveRecovery, walletStatus } = useCavos();
+  const social = walletStatus.recovery.methods.includes('social');
+
+  return (
+    <>
+      {social
+        ? <button onClick={() => disableEnclaveRecovery()}>Turn off recovery by sign-in</button>
+        : <button onClick={() => enableEnclaveRecovery()}>Turn on recovery by sign-in</button>}
+      <button onClick={() => deleteAccount()}>Delete account</button>
+    </>
+  );
+}
+```
+
+`deleteAccount()` signs the user out and removes this browser's copy of the key
+when it succeeds. Each call rejects if the user cancels the sheet.
+
+## What deletion does not do
+
+- **It does not touch the blockchain.** Addresses, balances and history are
+  public and permanent. Deletion is not blocked when the wallet holds funds.
+  The sheet warns that, if no other device holds the key, those funds become
+  unreachable.
+- **Other devices keep their key.** Signing in again on a device that still
+  holds it registers the same wallet again. Signing in on a new device creates
+  a new wallet with a new address.
+- **Backups.** Database backups keep a copy until they expire. The sealed
+  recovery copy in them opens only inside the recovery enclave and only with
+  the user's own sign-in.
+
+## A device without the key
+
+The vault signs with the wallet key, so the device has to hold it:
+
+- If Cavos still holds recovery for the account (a sealed copy or a passkey
+  backup), `deleteAccount()` fails with `consent_proof_required`. Restore the
+  wallet on this device first, then delete.
+- If nothing is left to protect, a sign-in from the last ten minutes is enough.
+
+## Turning recovery off
+
+After `disableEnclaveRecovery()`, a lost device can only be replaced with a
+passkey or from another device that holds the key. The sheet says so, and
+offers nothing else: add a passkey first with `enrollPasskeyDefault()` if the
+user has none.
+
+`enableEnclaveRecovery()` lifts the opt-out. The recovery copy is sealed the
+next time the user signs in.
+
+## Webhooks
+
+Subscribe an endpoint to these events in the [dashboard](/docs/dashboard) to
+delete your own records for the user:
+
+| Event | When |
+| --- | --- |
+| `user.deleted` | The account data was deleted |
+| `user.recovery_disabled` | The user turned recovery by sign-in off |
+| `user.recovery_enabled` | The user turned it back on |
+
+`metadata.user_social_id` is the user's `userId` in the kit. No addresses are
+sent. Each event is delivered once and is not retried, so treat the result of
+the call in your app as the primary signal.
+
+## HTTP API
+
+The provider calls these for you. Every request carries the user's sign-in
+token as `Authorization: Bearer`.
+
+| Route | Body |
+| --- | --- |
+| `POST /api/end-users/me/challenge` | `{ app_id, environment?, action }` → `{ challenge }` |
+| `POST /api/end-users/me/recovery` | `{ app_id, environment?, enabled, challenge, proof }` |
+| `DELETE /api/end-users/me` | `{ app_id, environment?, challenge, proof? }` |
+
+`action` is `delete_account`, `disable_recovery` or `enable_recovery`. A
+challenge expires after five minutes and is bound to the user, the action and
+the current recovery state.

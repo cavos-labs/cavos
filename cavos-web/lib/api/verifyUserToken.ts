@@ -72,6 +72,8 @@ export function bearerToken(request: Request): string | null {
 /** A caller whose provider token verified. */
 export interface VerifiedUser {
     sub: string;
+    /** The token's `iat` in seconds, or null when it carries none. */
+    issuedAt: number | null;
     /**
      * Whether this token was issued to a login `appId` started. Google, Apple
      * and enclave email and GitHub tokens name the app in their nonce; password tokens
@@ -109,6 +111,7 @@ export async function verifyUserToken(
         const { nonce } = payload;
         return {
             sub: payload.sub,
+            issuedAt: typeof payload.iat === 'number' ? payload.iat : null,
             issuedTo: (appId) => !config.appInNonce || nonceNamesApp(nonce, appId),
         };
     } catch {

@@ -37,6 +37,7 @@ export async function recordCavosEvent(input: {
   durationMs?: number | null
   errorCode?: string | null
   metadata?: Record<string, unknown>
+  expiresAt?: Date
 }) {
   try {
     const admin = createAdminClient()
@@ -62,6 +63,7 @@ export async function recordCavosEvent(input: {
       duration_ms: input.durationMs ?? null,
       error_code: input.errorCode?.slice(0, 100) ?? null,
       metadata: sanitizeEventMetadata(input.metadata),
+      ...(input.expiresAt ? { expires_at: input.expiresAt.toISOString() } : {}),
     }).select().maybeSingle()
     if (error) {
       if (error.code === '23505') return // duplicate (request_id, event_type) retry — already recorded
