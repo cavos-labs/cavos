@@ -6,6 +6,7 @@ import { COMPARE_PAGES_MODIFIED, COMPETITORS } from './compare-data'
 import { DYNAMIC_ALTERNATIVES_MODIFIED } from './dynamic-alternatives'
 import { EMBEDDED_WALLET_MODIFIED } from './embedded-wallet-guide'
 import { MAGIC_ALTERNATIVES_MODIFIED } from './magic-alternatives'
+import { PARA_ALTERNATIVES_MODIFIED } from './para-alternatives'
 import { PRIVY_ALTERNATIVES_MODIFIED } from './privy-alternatives'
 import { TURNKEY_ALTERNATIVES_MODIFIED } from './turnkey-alternatives'
 import {
@@ -73,6 +74,7 @@ describe('marketing sitemap', () => {
       '/turnkey-alternatives',
       '/dynamic-alternatives',
       '/magic-alternatives',
+      '/para-alternatives',
       '/custody',
       '/pricing',
       '/stats',
@@ -142,6 +144,7 @@ describe('marketing sitemap', () => {
       '/turnkey-alternatives',
       '/dynamic-alternatives',
       '/magic-alternatives',
+      '/para-alternatives',
       '/custody',
       '/pricing',
       '/stats',
@@ -213,6 +216,7 @@ describe('marketing sitemap', () => {
       ['/turnkey-alternatives', TURNKEY_ALTERNATIVES_MODIFIED],
       ['/dynamic-alternatives', DYNAMIC_ALTERNATIVES_MODIFIED],
       ['/magic-alternatives', MAGIC_ALTERNATIVES_MODIFIED],
+      ['/para-alternatives', PARA_ALTERNATIVES_MODIFIED],
     ] as const
     for (const [routePath, modified] of expected) {
       const entry = entries.find(
@@ -318,8 +322,8 @@ Hello
     )
     assert.ok(providers)
     assert.ok(privy)
-    assert.equal(providers.lastModified.toISOString().startsWith('2026-10-31'), true)
-    assert.equal(privy.lastModified.toISOString().startsWith('2026-10-31'), true)
+    assert.equal(providers.lastModified.toISOString().startsWith('2026-11-02'), true)
+    assert.equal(privy.lastModified.toISOString().startsWith('2026-11-02'), true)
 
     const reactSdk = publishedBlogPosts().find(
       (item) => item.slug === 'embedded-wallet-react-sdk',
@@ -337,7 +341,8 @@ Hello
   })
 
   it('keeps the indexable marketing URLs including the React integration guide', () => {
-    assert.equal(entries.length, 44)
+    assert.equal(entries.length, 45)
+    assert.ok(urls.includes(`${MARKETING_ORIGIN}/para-alternatives`))
     assert.ok(
       urls.includes(`${MARKETING_ORIGIN}/blog/how-to-add-an-embedded-wallet`),
     )

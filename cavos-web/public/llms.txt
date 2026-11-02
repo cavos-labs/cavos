@@ -44,6 +44,7 @@ Cavos (`@cavos/kit`) is an embedded wallet SDK for web and React Native. The sig
 - [Turnkey alternatives](https://cavos.xyz/turnkey-alternatives)
 - [Dynamic alternatives](https://cavos.xyz/dynamic-alternatives)
 - [Magic alternatives](https://cavos.xyz/magic-alternatives)
+- [Para alternatives](https://cavos.xyz/para-alternatives)
 - [Cavos vs Privy](https://cavos.xyz/compare/privy)
 - [Cavos vs Dynamic](https://cavos.xyz/compare/dynamic)
 - [Cavos vs Turnkey](https://cavos.xyz/compare/turnkey)

@@ -219,12 +219,19 @@ export default function PricingPage() {
                         >
                             Dynamic alternatives
                         </Link>
-                        , or{' '}
+                        ,{' '}
                         <Link
                             href="/magic-alternatives"
                             className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
                         >
                             Magic alternatives
+                        </Link>
+                        , or{' '}
+                        <Link
+                            href="/para-alternatives"
+                            className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                        >
+                            Para alternatives
                         </Link>{' '}
                         if you are comparing providers.
                     </p>

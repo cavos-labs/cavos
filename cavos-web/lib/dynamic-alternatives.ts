@@ -147,6 +147,8 @@ export const dynamicAlternativesGuide: AlternativesGuide = {
       { href: '/compare/dynamic', label: 'Cavos vs Dynamic' },
       '. The replacement shortlist for Privy is ',
       { href: '/privy-alternatives', label: 'Privy alternatives' },
+      '; for Para (getpara.com) see ',
+      { href: '/para-alternatives', label: 'Para alternatives' },
       '. Migration is a project, not a config change: wallet addresses are derived differently, so accounts do not transfer automatically.',
     ],
   ],

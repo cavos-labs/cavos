@@ -5,6 +5,7 @@ import { COMPARE_PAGES_MODIFIED, COMPETITORS } from './compare-data'
 import { DYNAMIC_ALTERNATIVES_MODIFIED } from './dynamic-alternatives'
 import { EMBEDDED_WALLET_MODIFIED } from './embedded-wallet-guide'
 import { MAGIC_ALTERNATIVES_MODIFIED } from './magic-alternatives'
+import { PARA_ALTERNATIVES_MODIFIED } from './para-alternatives'
 import { PRIVY_ALTERNATIVES_MODIFIED } from './privy-alternatives'
 import { TURNKEY_ALTERNATIVES_MODIFIED } from './turnkey-alternatives'
 
@@ -185,6 +186,12 @@ export function getMarketingSitemapEntries(): SitemapEntry[] {
         'monthly',
         0.8,
         parseStableDate(MAGIC_ALTERNATIVES_MODIFIED),
+      ),
+      page(
+        '/para-alternatives',
+        'monthly',
+        0.8,
+        parseStableDate(PARA_ALTERNATIVES_MODIFIED),
       ),
       page('/custody', 'monthly', 0.8),
       page(

@@ -186,12 +186,19 @@ export default function ComparePage() {
                         >
                             Dynamic alternatives
                         </Link>
-                        , or{' '}
+                        ,{' '}
                         <Link
                             href="/magic-alternatives"
                             className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
                         >
                             Magic alternatives
+                        </Link>
+                        , or{' '}
+                        <Link
+                            href="/para-alternatives"
+                            className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                        >
+                            Para alternatives
                         </Link>
                         . For a single pricing, chain, and key-model table of the
                         same vendors, see{' '}

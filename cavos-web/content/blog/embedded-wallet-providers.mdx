@@ -1,8 +1,8 @@
 ---
 title: "Embedded Wallet Providers: 2026 Comparison"
 date: "2026-10-19"
-updated: "2026-10-31"
-excerpt: "Compare embedded wallet providers in 2026: Cavos, Privy, Dynamic, Turnkey, Magic, Web3Auth on custody, chains, pricing, and who supports the most chains."
+updated: "2026-11-02"
+excerpt: "Compare embedded wallet providers in November 2026: chain-support matrix for Privy, Dynamic, Turnkey, Para, Web3Auth, Magic, Dfns, and Cavos."
 category: "Guide"
 ogQuote: "Picking a wallet provider is a scope question, not a feature checklist."
 slug: "embedded-wallet-providers"
@@ -16,14 +16,14 @@ faq:
   - question: "What is the difference between Privy, Turnkey, and Dynamic?"
     answer: "Privy is a finished embedded wallet and authentication product, including external wallet connectors. Turnkey is low-level key-management and signing infrastructure in AWS Nitro Enclaves; you build the wallet experience. Dynamic combines wallet connection, embedded wallets, and authentication, with TSS-MPC keys. Privy vs Turnkey is usually build-versus-buy. Privy vs Dynamic is usually provision-versus-connect."
   - question: "Are there native embedded wallets for Midnight, Aleo, Stellar, Cosmos, or Sui?"
-    answer: "Cavos ships native adapters for Stellar, Solana, and Starknet. It does not support Midnight, Aleo, Cosmos, or Sui. Dynamic’s public embedded-wallet chain page for JavaScript, React, and React Native lists Tier 1 send-and-sign on all EVM networks, Solana, Bitcoin, Sui, Tempo, Arc, TON, Stellar, Tron, Aleo, and Midnight. Cosmos is not on that Tier 1 table."
+    answer: "Cavos ships native adapters for Stellar, Solana, and Starknet. It does not support Midnight, Aleo, Cosmos, or Sui. Dynamic’s public embedded-wallet chain page for JavaScript, React, and React Native lists Tier 1 send-and-sign on all EVM networks, Solana, Bitcoin, Sui, Tempo, Arc, TON, Stellar, Tron, Aleo, and Midnight. Cosmos is not on that Tier 1 table. Para’s named chain-support table lists Stellar and Cosmos chains (Noble, Initia, Osmosis). Dfns names Stellar, Sui, and Cosmos Hub as tier-1. Among this set, only Dynamic’s JS/React Tier 1 table lists both Aleo and Midnight."
   - question: "Which embedded wallet provider supports the most chains?"
-    answer: "It depends what supports means. Among finished embedded-wallet SDKs, Web3Auth / MetaMask Embedded Wallets documents the broadest chain-agnostic stance (secp256k1 and ed25519, native EVM and Solana, plus other-chain guides). Dynamic publishes the longest named native Tier 1 list in this table (EVM, Solana, Bitcoin, Sui, Tempo, Arc, TON, Stellar, Tron, Aleo, Midnight on JS/React). Turnkey signs at the curve, so coverage is not a chain count. Cavos ships three native adapters: Starknet, Solana, and Stellar. Most chains is not the same as a native account model on the chain you ship."
+    answer: "It depends what supports means. As of November 2026: among finished embedded-wallet SDKs, Web3Auth / MetaMask Embedded Wallets documents the broadest chain-agnostic stance (secp256k1 and ed25519, native EVM and Solana, plus other-chain guides). Dynamic publishes the longest named native Tier 1 list in this table (EVM, Solana, Bitcoin, Sui, Tempo, Arc, TON, Stellar, Tron, Aleo, Midnight on JS/React). Dfns publishes a long named-network table (EVM networks plus Bitcoin, Solana, Starknet, Stellar, Sui, Cosmos Hub, and others). Turnkey signs at the curve, so coverage is not a chain count. Para’s named table is EVM, Solana, Cosmos, and Stellar. Cavos ships three native adapters: Starknet, Solana, and Stellar. Most chains is not the same as a native account model on the chain you ship."
 ---
 
 An [embedded wallet](/embedded-wallet) lives inside your application. A [wallet as a service](/blog/wallet-as-a-service) platform is the commercial name for the same job: provision an on-chain account from a login, sign in your UI, and skip the browser-extension install. The words do not pick a key model. This guide is the 2026 listicle for **embedded wallet providers**, who provisions the wallet, who can produce a signature, which chains are native, and what the invoice meters. Searchers also type embedded wallet solutions and embedded wallets as a service; they want the same table.
 
-Cavos, LLC is a software and SaaS company. Positioning for Cavos comes after the table is fair. If the honest answer is another vendor, that is the answer. One-to-one pages live under [compare](/compare). Teams leaving a named vendor can start at [Privy alternatives](/privy-alternatives), [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), or [Magic alternatives](/magic-alternatives). The current Cavos React release is [Cavos Kit 0.5.0](/blog/cavos-kit-0-5-0).
+Cavos, LLC is a software and SaaS company. Positioning for Cavos comes after the table is fair. If the honest answer is another vendor, that is the answer. One-to-one pages live under [compare](/compare). Teams leaving a named vendor can start at [Privy alternatives](/privy-alternatives), [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), [Magic alternatives](/magic-alternatives), or [Para alternatives](/para-alternatives). The current Cavos React release is [Cavos Kit 0.5.0](/blog/cavos-kit-0-5-0).
 
 ## Embedded wallet providers compared
 
@@ -82,19 +82,133 @@ Read the one-to-one pages for the cases where the other product is the better pi
 
 ## Which embedded wallet provider supports the most chains?
 
-It depends what "supports" means. A named list, a curve-level signing API, and a native account model are not the same claim.
+It depends what "supports" means. A named list, a curve-level signing API, and a native account model are not the same claim. The matrix below is **as of November 2026**, from each vendor's public docs.
+
+<table>
+<thead>
+<tr>
+<th>Provider</th>
+<th>EVM</th>
+<th>Solana</th>
+<th>Stellar</th>
+<th>Sui</th>
+<th>Cosmos</th>
+<th>Starknet</th>
+<th>Aleo</th>
+<th>Midnight</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cavos</td>
+<td>No</td>
+<td>Native</td>
+<td>Native</td>
+<td>No</td>
+<td>No</td>
+<td>Native</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Privy</td>
+<td>Send</td>
+<td>Send</td>
+<td>Sign tx</td>
+<td>Sign tx</td>
+<td>Sign</td>
+<td>Sign</td>
+<td>Not listed</td>
+<td>Not listed</td>
+</tr>
+<tr>
+<td>Dynamic</td>
+<td>T1</td>
+<td>T1</td>
+<td>T1 (JS/React)</td>
+<td>T1</td>
+<td>Not T1</td>
+<td>Not T1</td>
+<td>T1</td>
+<td>T1</td>
+</tr>
+<tr>
+<td>Turnkey</td>
+<td>Curve</td>
+<td>Curve</td>
+<td>Not listed</td>
+<td>Curve</td>
+<td>Curve</td>
+<td>Not listed</td>
+<td>Not listed</td>
+<td>Not listed</td>
+</tr>
+<tr>
+<td>Para</td>
+<td>Named</td>
+<td>Named</td>
+<td>Named</td>
+<td>Intro</td>
+<td>Named</td>
+<td>Not listed</td>
+<td>Not listed</td>
+<td>Not listed</td>
+</tr>
+<tr>
+<td>Web3Auth</td>
+<td>Native</td>
+<td>Native</td>
+<td>Not listed</td>
+<td>Guide</td>
+<td>Guide</td>
+<td>Guide</td>
+<td>Not listed</td>
+<td>Not listed</td>
+</tr>
+<tr>
+<td>Magic</td>
+<td>Yes</td>
+<td>Yes</td>
+<td>Not listed</td>
+<td>Not listed</td>
+<td>Yes</td>
+<td>Not listed</td>
+<td>Not listed</td>
+<td>Not listed</td>
+</tr>
+<tr>
+<td>Dfns</td>
+<td>Named</td>
+<td>Named</td>
+<td>Named</td>
+<td>Named</td>
+<td>Named</td>
+<td>Named</td>
+<td>Not listed</td>
+<td>Not listed</td>
+</tr>
+</tbody>
+</table>
+
+**How to read the cells.** Privy **Send / Sign tx / Sign** are the published send, sign-transaction, and sign-only tiers. Dynamic **T1** is native send-and-sign on the JS/React/React Native table; Cosmos and Starknet are not on that Tier 1 list. Turnkey **Curve** is secp256k1, Ed25519, or P-256 signing; Stellar, Starknet, Aleo, and Midnight are not named on Turnkey's published tier table. Para **Named** is a row on the [chain-support](https://docs.getpara.com/v3/introduction/chain-support) table (EVM networks, Solana, Noble, Initia, Osmosis, Stellar). Para **Intro** means the same page's intro (and the public pricing FAQ) mention Sui, but there is no Sui row in that table. Web3Auth **Native** is EVM and Solana; **Guide** is a non-EVM connect guide (Cosmos, Sui, Starknet). Magic **Yes** follows its blockchain overview (EVM, Solana, Bitcoin, Cosmos, Hedera). Dfns **Named** is a row on the [supported networks](https://docs.dfns.co/networks) table, including Cosmos Hub, Stellar, Sui, and Starknet. **Not listed** means this page did not find that chain on the cited public page.
 
 **Among finished embedded-wallet SDKs in this table, Web3Auth / MetaMask Embedded Wallets documents the broadest chain-agnostic stance.** Official docs call the product chain agnostic: secp256k1 and ed25519 keys, native EVM and Solana providers, and guides for other networks including Algorand, Aptos, Cosmos, Near, Polkadot, Starknet, Sui, and Tezos. Custom EVM networks can be added in the dashboard.
 
 **Dynamic publishes the longest named native (Tier 1) list among those finished SDKs.** Its [embedded-wallet chain page](https://www.dynamic.xyz/docs/embedded-wallets/chains/overview) for JavaScript, React, and React Native lists send-and-sign on all EVM networks, Solana, Bitcoin, Sui, Tempo, Arc, TON, Stellar, Tron, Aleo, and Midnight. Swift, Kotlin, Flutter, and Unity omit some of those rows. Tier 2 and Tier 3 add derived addresses, not the same native path.
 
-**Turnkey is not a chain count.** Official docs work at the curve (secp256k1, Ed25519, P-256) and say you do not wait for a per-network integration to sign if the curve is supported. All EVM and SVM are in that model. Deeper parsing and policy sit on a shorter published list.
+**Dfns publishes a long named-network table**, not a curve claim: Ethereum and many other EVM networks, plus Bitcoin, Solana, Starknet, Stellar, Sui, TON, TRON, Cardano, and Cosmos Hub, among others, with tier-1 and tier-2 feature depth.
+
+**Turnkey is not a chain count.** Official docs work at the curve (secp256k1, Ed25519, P-256) and say you do not wait for a per-network integration to sign if the curve is supported. All EVM and SVM are in that model. Deeper parsing and policy sit on a shorter published list. ATOM and SUI appear at curve and address tiers; Starknet is not on that table.
 
 **Privy** publishes three named tiers: managed send on Ethereum/EVM, Solana/SVM, Tempo, and TRON; sign-transaction on XRPL, Sui, Stellar, Aptos, and Near; sign-only on Bitcoin, Cosmos, TON, Starknet, Pearl, and other supported secp256k1 / Ed25519 chains.
 
-**Magic** documents EVM chains plus Solana, Bitcoin, Cosmos, and Hedera, and describes 30+ networks.
+**Para** documents EVM, Solana, Cosmos, Stellar, and (in the chain-support intro and pricing FAQ) Sui. The named table does not include Aleo, Midnight, or Starknet.
+
+**Magic** documents EVM chains plus Solana, Bitcoin, Cosmos, and Hedera, and describes 30+ networks. Stellar, Sui, Aleo, Midnight, and Starknet are not on that blockchain overview.
 
 **Cavos** ships three native adapters: Starknet, Solana, and Stellar. It does not support Midnight, Aleo, Cosmos, or Sui.
+
+Native embedded wallets for Midnight, Aleo, Stellar, Cosmos, or Sui: only Dynamic's JS/React Tier 1 table in this set lists both Aleo and Midnight. Stellar native or named rows: Cavos, Dynamic T1 (JS/React), Para, and Dfns. Sui named or T1: Dynamic, Privy (sign-transaction), Turnkey (curve), Dfns; Para intro only. Cosmos named: Privy (sign-only), Turnkey (ATOM), Para (Noble, Initia, Osmosis), Magic, Dfns (Cosmos Hub), Web3Auth (guide); not Dynamic T1, not Cavos.
 
 Most chains is not the same as a native account model on the chain you ship. Confirm the current vendor page before you promise a network.
 
@@ -160,7 +274,7 @@ Auth is hosted Google, Apple, or email, or an identity you pass in from your own
 - [Alchemy vs Privy](/blog/alchemy-vs-privy): a transaction layer versus a finished embedded wallet.
 - [Embedded wallet vs browser extension](/blog/embedded-wallet-vs-browser-extension): where users should sign.
 - [Privy alternatives](/privy-alternatives): the same vendors, framed as replacements for Privy.
-- [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), and [Magic alternatives](/magic-alternatives): the same shortlist for those stacks.
+- [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), [Magic alternatives](/magic-alternatives), and [Para alternatives](/para-alternatives): the same shortlist for those stacks.
 - [Open-sourcing the Cavos enclave (Kit 0.5.0)](/blog/cavos-kit-0-5-0): the open-source recovery enclave, GitHub sign-in, and signed enclave releases.
 - [Compare embedded wallet providers](/compare): Cavos vs Privy, Dynamic, Turnkey, Web3Auth, and Magic.
 - [How to add an embedded wallet](/blog/how-to-add-an-embedded-wallet): `@cavos/kit` install and the first sponsored transaction.

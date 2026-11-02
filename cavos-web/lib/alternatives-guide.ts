@@ -18,7 +18,7 @@ import { getCompetitor } from './compare-data'
 
 /**
  * Shared types and vendor copy for /privy-alternatives, /turnkey-alternatives,
- * /dynamic-alternatives, and /magic-alternatives. Competitor facts and public
+ * /dynamic-alternatives, /magic-alternatives, and /para-alternatives. Competitor facts and public
  * pricing as of October 2026 come from `lib/compare-data.ts`:
  * privy.io/pricing, dynamic.xyz/pricing, turnkey.com/pricing,
  * metamask.io/developer/embedded-wallets, magic.link/pricing.

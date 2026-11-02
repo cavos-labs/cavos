@@ -142,6 +142,11 @@ const GUIDES = [
     body: 'Device-native keys versus Magic’s email-first delegated HSM wallets.',
   },
   {
+    href: '/para-alternatives',
+    title: 'Para wallet alternatives',
+    body: 'Device-native keys versus Para’s 2-of-2 MPC wallet at getpara.com.',
+  },
+  {
     href: '/embedded-starknet-wallet',
     title: 'Embedded Starknet wallet',
     body: 'Audited OpenZeppelin AccountUpgradeable v3.0.0 with a native stark key.',
