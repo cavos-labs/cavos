@@ -83,7 +83,7 @@ export const EMBEDDED_WALLET_REACT_SDK_TITLE =
 export const ALCHEMY_VS_PRIVY_PATH = '/blog/alchemy-vs-privy'
 
 export const ALCHEMY_VS_PRIVY_TITLE =
-  'Alchemy vs Privy: Pricing & Custody (2026)'
+  'Alchemy vs Privy (2026): Kit Deprecated'
 
 export const EMBEDDED_WALLET_PAYMENTS_PATH = '/blog/embedded-wallet-payments'
 

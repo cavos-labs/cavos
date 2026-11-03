@@ -101,7 +101,7 @@ const GUIDES = [
   {
     href: ALCHEMY_VS_PRIVY_PATH,
     title: ALCHEMY_VS_PRIVY_TITLE,
-    body: 'Account Kit is deprecated; Wallet APIs are the successor, with Privy as the recommended signer.',
+    body: 'Account Kit is deprecated. Wallet APIs are the successor; Alchemy recommends Privy as the signer.',
   },
   {
     href: STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,

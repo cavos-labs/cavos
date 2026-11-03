@@ -1,8 +1,8 @@
 ---
-title: "Alchemy vs Privy: Pricing & Custody (2026)"
+title: "Alchemy vs Privy (2026): Kit Deprecated"
 date: "2026-10-27"
-updated: "2026-10-31"
-excerpt: "Alchemy vs Privy in 2026: Account Kit is deprecated, Wallet APIs are the successor, Alchemy recommends Privy as the signer, and where Cavos fits."
+updated: "2026-11-03"
+excerpt: "Alchemy vs Privy: Account Kit is deprecated. Use Wallet APIs; Alchemy recommends Privy as the signer. Pricing, custody, and who each is for."
 category: "Guide"
 ogQuote: "Alchemy vs Privy is a transaction layer versus a signer, not an SDK swap."
 slug: "alchemy-vs-privy"
@@ -12,7 +12,7 @@ faq:
   - question: "Is Alchemy Account Kit still supported?"
     answer: "No. Alchemy documents Account Kit (v4), including embedded wallets, signer support, and key management, as deprecated. Wallet APIs are the supported successor. New sign-ups for the Alchemy Signer, Account Kit, and Embedded Wallets have been turned off since 18 June 2026. Login endpoints remain live so existing users can migrate."
   - question: "Does Alchemy recommend Privy as a signer?"
-    answer: "Yes. Alchemy’s Account Kit deprecation page and Wallet APIs docs recommend Privy or another provider for signer support alongside Wallet APIs. Wallet APIs also document Turnkey, Openfort, and any viem-compatible signer. Recovery belongs to the signer you bring, not to Wallet APIs."
+    answer: "Yes. Alchemy’s Account Kit deprecation page and Wallet APIs docs recommend Privy or another provider for signer support alongside Wallet APIs. Wallet APIs also document Turnkey, Dynamic, Openfort, and any viem-compatible signer. Recovery belongs to the signer you bring, not to Wallet APIs."
   - question: "When should I choose Cavos instead of Alchemy or Privy?"
     answer: "Choose Cavos when the chain is Starknet, Solana, or Stellar and the review requires a device-native key the vendor cannot reconstruct. Stay with Privy, or with Alchemy Wallet APIs plus a signer, when the product is EVM-first, when you must connect an existing extension, or when you want gas sponsorship, batching, and EIP-7702 as a transaction layer on many EVM networks."
 ---
@@ -43,7 +43,7 @@ The usual mistake is a like-for-like SDK swap. Alchemy vs Privy is **transaction
 
 **Privy** is a finished authentication and embedded wallet product. The public pricing page lists unified login (email, SMS, socials, passkeys), embedded wallets, JWT-based authentication (Auth0, Firebase, or homegrown), and wallet connectors for EVM and Solana. Privy’s user-wallet docs describe wallets with no separate extension, plus the option to connect MetaMask or Phantom. In 2026 Privy also documents optional custodial wallets backed by Bridge, a Stripe company. Stripe announced it was acquiring Privy in June 2025. Acquisition is a vendor-risk input. It does not change who can produce a signature.
 
-Alchemy’s deprecation page is explicit: use Wallet APIs for new integrations, and **recommend Privy or another provider for signer support** alongside those APIs. Wallet APIs also document Turnkey, Openfort, and any viem-compatible signer. Signers that cannot sign EIP-7702 authorizations use non-7702 mode, which creates a separate smart wallet address.
+Alchemy’s deprecation page is explicit: use Wallet APIs for new integrations, and **recommend Privy or another provider for signer support** alongside those APIs. Wallet APIs also document Turnkey, Dynamic, Openfort, and any viem-compatible signer. Signers that cannot sign EIP-7702 authorizations use non-7702 mode, which creates a separate smart wallet address.
 
 Buy Privy when login, an in-app wallet, and connectors should arrive as one product. Add Alchemy Wallet APIs when you already have that signer and want EVM (and Solana) gas sponsorship, batching, and EIP-7702 on top.
 
@@ -182,7 +182,7 @@ They do not sell the same unit. Figures below are from each vendor’s public pr
 </tr>
 <tr>
 <td>Key / custody model</td>
-<td>Bring-your-own signer. Wallet APIs leave login and keys to Privy (recommended), Turnkey, Openfort, or a viem-compatible signer.</td>
+<td>Bring-your-own signer. Wallet APIs leave login and keys to Privy (recommended), Turnkey, Dynamic, Openfort, or a viem-compatible signer.</td>
 <td>Shamir 2-of-2 shares; reconstruct in AWS Nitro Enclaves. User wallets described as non-custodial with key export. Separate custodial path via Bridge.</td>
 </tr>
 <tr>
@@ -219,7 +219,7 @@ Worked Cavos comparisons: [Cavos vs Alchemy](/compare/alchemy), [Cavos vs Privy]
 
 **Choose Privy** when the user should get an in-app wallet from a login you already understand, and you also need to connect MetaMask, Phantom, or WalletConnect for people who already hold assets. EVM-first consumer apps sit here. Alchemy’s own docs put Privy in this seat as the recommended signer when you add Wallet APIs.
 
-**Choose Alchemy Wallet APIs** when you already have a signer (Privy, Turnkey, Openfort, or a viem-compatible key) and want gas sponsorship, batching, session keys, and EIP-7702 Modular Account v2 on many EVM networks (and Solana sponsorship without a bundler). Do not choose Account Kit for a new integration; it is deprecated.
+**Choose Alchemy Wallet APIs** when you already have a signer (Privy, Turnkey, Dynamic, Openfort, or a viem-compatible key) and want gas sponsorship, batching, session keys, and EIP-7702 Modular Account v2 on many EVM networks (and Solana sponsorship without a bundler). Do not choose Account Kit for a new integration; it is deprecated.
 
 **Choose both** when that is the documented architecture: Privy (or another signer) for login and keys, Wallet APIs for the transaction layer. That is Alchemy’s recommended path, not a competition between two embedded-wallet SDKs.
 
