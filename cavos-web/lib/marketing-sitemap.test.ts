@@ -272,6 +272,7 @@ describe('marketing sitemap', () => {
     assert.equal(isBlogPostNoindex('wallet-as-a-service'), false)
     assert.equal(isBlogPostNoindex('embedded-wallet-react-sdk'), false)
     assert.equal(isBlogPostNoindex('alchemy-vs-privy'), false)
+    assert.equal(isBlogPostNoindex('privy-vs-dynamic'), false)
     assert.equal(isBlogPostNoindex('cavos-kit-0-5-0'), false)
     assert.equal(
       urls.includes(`${MARKETING_ORIGIN}/blog/v1-1-9-sdk-security`),
@@ -335,13 +336,30 @@ Hello
     assert.ok(alchemyVsPrivy)
     assert.equal(reactSdk.lastModified.toISOString().startsWith('2026-10-31'), true)
     assert.equal(
-      alchemyVsPrivy.lastModified.toISOString().startsWith('2026-10-31'),
+      alchemyVsPrivy.lastModified.toISOString().startsWith('2026-11-03'),
+      true,
+    )
+
+    const privyVsDynamic = publishedBlogPosts().find(
+      (item) => item.slug === 'privy-vs-dynamic',
+    )
+    const walletAsAService = publishedBlogPosts().find(
+      (item) => item.slug === 'wallet-as-a-service',
+    )
+    assert.ok(privyVsDynamic)
+    assert.ok(walletAsAService)
+    assert.equal(
+      privyVsDynamic.lastModified.toISOString().startsWith('2026-11-03'),
+      true,
+    )
+    assert.equal(
+      walletAsAService.lastModified.toISOString().startsWith('2026-11-03'),
       true,
     )
   })
 
   it('keeps the indexable marketing URLs including the React integration guide', () => {
-    assert.equal(entries.length, 45)
+    assert.equal(entries.length, 46)
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/para-alternatives`))
     assert.ok(
       urls.includes(`${MARKETING_ORIGIN}/blog/how-to-add-an-embedded-wallet`),
@@ -363,6 +381,7 @@ Hello
       urls.includes(`${MARKETING_ORIGIN}/blog/embedded-wallet-providers`),
     )
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/privy-vs-turnkey`))
+    assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/privy-vs-dynamic`))
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/embedded-wallet-api`))
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/what-is-an-embedded-wallet`))
     assert.ok(

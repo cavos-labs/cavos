@@ -14,7 +14,7 @@ faq:
   - question: "Which embedded wallet providers are non-custodial?"
     answer: "Embedded is a UX label, not a custody claim. Cavos is device-native: the provider cannot see the key or move funds. Dynamic describes TSS-MPC wallets as end-user owned. Web3Auth / MetaMask Embedded Wallets describes MPC with threshold signatures and Shamir sharing as self-custodial. Turnkey custody depends on who holds the credentials that authorize the enclave. Privy ships non-custodial embedded wallets and, separately, optional custodial wallets. Magic’s public docs describe non-custodial embedded wallets using a TEE key-management system. Counsel still has to read recovery and export."
   - question: "What is the difference between Privy, Turnkey, and Dynamic?"
-    answer: "Privy is a finished embedded wallet and authentication product, including external wallet connectors. Turnkey is low-level key-management and signing infrastructure in AWS Nitro Enclaves; you build the wallet experience. Dynamic combines wallet connection, embedded wallets, and authentication, with TSS-MPC keys. Privy vs Turnkey is usually build-versus-buy. Privy vs Dynamic is usually provision-versus-connect."
+    answer: "Privy is a finished embedded wallet and authentication product, including external wallet connectors. Turnkey is low-level key-management and signing infrastructure in AWS Nitro Enclaves; you build the wallet experience. Dynamic combines wallet connection, embedded wallets, and authentication, with TSS-MPC keys. Privy vs Turnkey is usually build-versus-buy. Privy vs Dynamic is usually provision-versus-connect; that two-way is the Privy vs Dynamic guide."
   - question: "Are there native embedded wallets for Midnight, Aleo, Stellar, Cosmos, or Sui?"
     answer: "Cavos ships native adapters for Stellar, Solana, and Starknet. It does not support Midnight, Aleo, Cosmos, or Sui. Dynamic’s public embedded-wallet chain page for JavaScript, React, and React Native lists Tier 1 send-and-sign on all EVM networks, Solana, Bitcoin, Sui, Tempo, Arc, TON, Stellar, Tron, Aleo, and Midnight. Cosmos is not on that Tier 1 table. Para’s named chain-support table lists Stellar and Cosmos chains (Noble, Initia, Osmosis). Dfns names Stellar, Sui, and Cosmos Hub as tier-1. Among this set, only Dynamic’s JS/React Tier 1 table lists both Aleo and Midnight."
   - question: "Which embedded wallet provider supports the most chains?"
@@ -23,7 +23,7 @@ faq:
 
 An [embedded wallet](/embedded-wallet) lives inside your application. A [wallet as a service](/blog/wallet-as-a-service) platform is the commercial name for the same job: provision an on-chain account from a login, sign in your UI, and skip the browser-extension install. The words do not pick a key model. This guide is the 2026 listicle for **embedded wallet providers**, who provisions the wallet, who can produce a signature, which chains are native, and what the invoice meters. Searchers also type embedded wallet solutions and embedded wallets as a service; they want the same table.
 
-Cavos, LLC is a software and SaaS company. Positioning for Cavos comes after the table is fair. If the honest answer is another vendor, that is the answer. One-to-one pages live under [compare](/compare). Teams leaving a named vendor can start at [Privy alternatives](/privy-alternatives), [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), [Magic alternatives](/magic-alternatives), or [Para alternatives](/para-alternatives). The current Cavos React release is [Cavos Kit 0.5.0](/blog/cavos-kit-0-5-0).
+Cavos, LLC is a software and SaaS company. Positioning for Cavos comes after the table is fair. If the honest answer is another vendor, that is the answer. One-to-one pages live under [compare](/compare). Teams leaving a named vendor can start at [Privy alternatives](/privy-alternatives), [Turnkey alternatives](/turnkey-alternatives) (a [turnkey alternative](/turnkey-alternatives) list of [Turnkey embedded wallet competitors](/turnkey-alternatives)), [Dynamic alternatives](/dynamic-alternatives), [Magic alternatives](/magic-alternatives), or [Para alternatives](/para-alternatives). The current Cavos React release is [Cavos Kit 0.5.0](/blog/cavos-kit-0-5-0).
 
 ## Embedded wallet providers compared
 
@@ -271,6 +271,7 @@ Auth is hosted Google, Apple, or email, or an identity you pass in from your own
 - [Non-custodial embedded wallets](/blog/non-custodial-embedded-wallet): who can sign, key models, and how to verify a vendor’s claim.
 - [Embedded wallet API](/blog/embedded-wallet-api): auth, create, keys, signing, gas, and recovery.
 - [Privy vs Turnkey](/blog/privy-vs-turnkey): finished SDK versus signing infrastructure.
+- [Privy vs Dynamic](/blog/privy-vs-dynamic): provision versus connect between two finished SDKs.
 - [Alchemy vs Privy](/blog/alchemy-vs-privy): a transaction layer versus a finished embedded wallet.
 - [Embedded wallet vs browser extension](/blog/embedded-wallet-vs-browser-extension): where users should sign.
 - [Privy alternatives](/privy-alternatives): the same vendors, framed as replacements for Privy.

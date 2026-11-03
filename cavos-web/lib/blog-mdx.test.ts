@@ -69,6 +69,7 @@ describe('blog internal links', () => {
       'how-to-add-an-embedded-wallet',
       'embedded-wallet-react-sdk',
       'privy-vs-turnkey',
+      'privy-vs-dynamic',
       'alchemy-vs-privy',
       'gasless-starknet-transactions',
       'stellar-embedded-wallet-tutorial',
@@ -168,7 +169,7 @@ describe('embedded wallet payments guide', () => {
 describe('head-term canonical targets', () => {
   const read = (slug: string) => fs.readFileSync(path.join(BLOG_DIR, `${slug}.mdx`), 'utf8')
 
-  for (const slug of ['privy-vs-turnkey', 'alchemy-vs-privy']) {
+  for (const slug of ['privy-vs-turnkey', 'privy-vs-dynamic', 'alchemy-vs-privy']) {
     it(`${slug} defers "Privy alternatives" to /privy-alternatives`, () => {
       const raw = read(slug)
       assert.ok(raw.includes('[Privy alternatives](/privy-alternatives)'))

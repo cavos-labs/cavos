@@ -19,6 +19,8 @@ import {
   NON_CUSTODIAL_EMBEDDED_WALLET_TITLE,
   PRIVY_VS_TURNKEY_PATH,
   PRIVY_VS_TURNKEY_TITLE,
+  PRIVY_VS_DYNAMIC_PATH,
+  PRIVY_VS_DYNAMIC_TITLE,
   STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
   STELLAR_EMBEDDED_WALLET_TUTORIAL_TITLE,
   GASLESS_STARKNET_TRANSACTIONS_PATH,
@@ -54,7 +56,7 @@ const GUIDES = [
   {
     href: WALLET_AS_A_SERVICE_PATH,
     title: WALLET_AS_A_SERVICE_TITLE,
-    body: 'What an embedded wallet platform is: auth, keys, signing, gas, recovery, pricing, and build versus buy.',
+    body: 'Wallet as a service providers and embedded wallet as a service: definition, dated shortlist, pricing, and build versus buy.',
   },
   {
     href: EMBEDDED_WALLET_API_PATH,
@@ -92,9 +94,14 @@ const GUIDES = [
     body: 'Finished auth and embedded wallets versus low-level key management and signing infrastructure.',
   },
   {
+    href: PRIVY_VS_DYNAMIC_PATH,
+    title: PRIVY_VS_DYNAMIC_TITLE,
+    body: 'Provision versus connect: TEE user wallets versus TSS-MPC, plus a short Turnkey note.',
+  },
+  {
     href: ALCHEMY_VS_PRIVY_PATH,
     title: ALCHEMY_VS_PRIVY_TITLE,
-    body: 'Account Kit is deprecated; Wallet APIs are the successor, with Privy as the recommended signer.',
+    body: 'Account Kit is deprecated. Wallet APIs are the successor; Alchemy recommends Privy as the signer.',
   },
   {
     href: STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,

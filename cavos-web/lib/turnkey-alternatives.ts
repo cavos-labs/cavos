@@ -26,18 +26,18 @@ import { getCompetitor } from './compare-data'
 export const TURNKEY_ALTERNATIVES_PATH = '/turnkey-alternatives'
 
 export const TURNKEY_ALTERNATIVES_TITLE =
-  '5 Turnkey Alternatives & Competitors (2026)'
+  'Turnkey Alternatives (2026): 5 Competitors'
 
-/** 154 characters. Document title omits "| Cavos"; the layout template adds it. */
+/** 152 characters. Document title omits "| Cavos"; the layout template adds it. */
 export const TURNKEY_ALTERNATIVES_DESCRIPTION =
-  'Turnkey alternatives and embedded wallet competitors: Cavos, Privy, Dynamic, Web3Auth, Magic. Turnkey vs Privy, SDK vs enclaves. Free to 1,000 wallets.'
+  'Turnkey alternative, plus Turnkey alternatives and embedded wallet competitors: Cavos, Privy, Dynamic, Web3Auth, Magic. Turnkey vs Privy. 1,000 wallets.'
 
 export const TURNKEY_ALTERNATIVES_H1 =
   'Turnkey alternatives and embedded wallet competitors'
 
 export const TURNKEY_ALTERNATIVES_PUBLISHED = '2026-10-27'
 
-export const TURNKEY_ALTERNATIVES_MODIFIED = '2026-10-31'
+export const TURNKEY_ALTERNATIVES_MODIFIED = '2026-11-03'
 
 export const TURNKEY_ALTERNATIVES_CRUMB = 'Turnkey alternatives'
 
@@ -132,6 +132,16 @@ export const TURNKEY_ALTERNATIVES_FAQ = [
     answer:
       'Turnkey vs Privy is the same layer split as Privy vs Turnkey. Privy is a finished auth and wallet product. Turnkey is enclave key-management infrastructure you build on. The worked write-up is Privy vs Turnkey; the Cavos one-to-one is Cavos vs Turnkey.',
   },
+  {
+    question: "What is Turnkey's embedded wallet product?",
+    answer:
+      'Turnkey’s embedded wallet is wallet infrastructure, not a finished consumer SDK. Official docs: authenticate a user, create keys in a secure enclave, configure custodial, non-custodial, or hybrid custody, enforce a policy engine, and get a signature back. The Embedded Wallet Kit is the opinionated React start. It does not turn Turnkey into Privy or Cavos.',
+  },
+  {
+    question: "How does Turnkey's embedded wallet compare to alternatives?",
+    answer:
+      'A Turnkey alternative in this shortlist is a finished embedded-wallet SDK: login, recovery, and sponsorship already wired. Turnkey remains the better pick when you are building a wallet or custody product on policy-driven enclaves and server-side signing. Cavos, Privy, Dynamic, Web3Auth, and Magic compete as products you integrate; Turnkey competes as infrastructure you assemble.',
+  },
 ] as const
 
 export const turnkeyAlternativesGuide: AlternativesGuide = {
@@ -143,11 +153,26 @@ export const turnkeyAlternativesGuide: AlternativesGuide = {
   modified: TURNKEY_ALTERNATIVES_MODIFIED,
   crumb: TURNKEY_ALTERNATIVES_CRUMB,
   jsonLdId: 'turnkey-alternatives-json-ld',
+  answerHeading: "Turnkey's embedded wallet versus alternatives",
+  answerParagraphs: [
+    [
+      "Turnkey’s embedded wallet product is wallet infrastructure. Official docs: authenticate a user, create keys that decrypt only inside a trusted execution environment, configure custodial, non-custodial, or hybrid custody, enforce a programmable policy engine, and get a signature back. You broadcast through another provider or with Turnkey Transaction Management. The recommended React start is the Embedded Wallet Kit. That kit does not turn Turnkey into a finished consumer wallet SDK.",
+    ],
+    [
+      'A Turnkey alternative on this page is a finished ',
+      { href: '/embedded-wallet', label: 'embedded wallet' },
+      ' SDK: login, recovery, and Gas Sponsorship in Any Token already wired. Cavos, Privy, Dynamic, Web3Auth / MetaMask Embedded Wallets, and Magic sit there. They are the usual Turnkey embedded wallet competitors when you do not want to assemble auth, approval UI, and chain adapters on top of an enclave. Stay with Turnkey when policy, quorums, and server-side signing are the product. The one-to-one is ',
+      { href: '/compare/turnkey', label: 'Cavos vs Turnkey' },
+      '. The worked layer split is ',
+      { href: PRIVY_VS_TURNKEY_PATH, label: 'Privy vs Turnkey' },
+      '.',
+    ],
+  ],
   introParagraphs: [
     [
       'Cavos, Privy, Dynamic, Web3Auth, and Magic are the five Turnkey alternatives and embedded wallet competitors compared here for an ',
       { href: '/embedded-wallet', label: 'embedded wallet' },
-      '. Turnkey vs Privy is finished SDK versus enclave infrastructure.',
+      '. Each is a Turnkey alternative when you want a finished SDK instead of Turnkey’s embedded wallet infrastructure. Turnkey vs Privy is finished SDK versus enclave infrastructure.',
     ],
     [
       'The sections below use the same facts as the ',

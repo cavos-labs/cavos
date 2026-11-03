@@ -9,6 +9,7 @@ import {
     EMBEDDED_WALLET_API_PATH,
     EMBEDDED_WALLET_INTEGRATION_PATH,
     EMBEDDED_WALLET_PROVIDERS_PATH,
+    PRIVY_VS_DYNAMIC_PATH,
     PRIVY_VS_TURNKEY_PATH,
     WALLET_AS_A_SERVICE_PATH,
 } from '@/lib/embedded-wallet-guide'
@@ -85,10 +86,15 @@ export default async function ComparisonPage({
                                 <Link href={PRIVY_VS_TURNKEY_PATH} className={linkClass}>
                                     Privy vs Turnkey
                                 </Link>
-                                . For Alchemy Wallet APIs versus Privy’s finished embedded
+                                .                                 For Alchemy Wallet APIs versus Privy’s finished embedded
                                 wallet, see{' '}
                                 <Link href={ALCHEMY_VS_PRIVY_PATH} className={linkClass}>
                                     Alchemy vs Privy
+                                </Link>
+                                . Privy vs Dynamic is provision versus connect between
+                                two finished SDKs, not this Cavos comparison; see{' '}
+                                <Link href={PRIVY_VS_DYNAMIC_PATH} className={linkClass}>
+                                    Privy vs Dynamic
                                 </Link>
                                 .{' '}
                             </>
@@ -100,7 +106,15 @@ export default async function ComparisonPage({
                                 <Link href={PRIVY_VS_TURNKEY_PATH} className={linkClass}>
                                     Privy vs Turnkey
                                 </Link>
-                                . For Turnkey embedded wallet competitors, see{' '}
+                                . For a{' '}
+                                <Link href="/turnkey-alternatives" className={linkClass}>
+                                    turnkey alternative
+                                </Link>
+                                , or for{' '}
+                                <Link href="/turnkey-alternatives" className={linkClass}>
+                                    Turnkey embedded wallet competitors
+                                </Link>
+                                , see{' '}
                                 <Link href="/turnkey-alternatives" className={linkClass}>
                                     Turnkey alternatives
                                 </Link>
@@ -109,7 +123,13 @@ export default async function ComparisonPage({
                         ) : null}
                         {competitor.slug === 'dynamic' ? (
                             <>
-                                For a multi-vendor shortlist, see{' '}
+                                This page is Cavos vs Dynamic, not Privy vs Dynamic.
+                                Privy vs Dynamic is provision versus connect between two
+                                finished SDKs; see{' '}
+                                <Link href={PRIVY_VS_DYNAMIC_PATH} className={linkClass}>
+                                    Privy vs Dynamic
+                                </Link>
+                                . For a multi-vendor shortlist, see{' '}
                                 <Link href="/dynamic-alternatives" className={linkClass}>
                                     Dynamic alternatives
                                 </Link>

@@ -88,6 +88,8 @@ import {
   EMBEDDED_WALLET_VS_EXTENSION_TITLE,
   PRIVY_VS_TURNKEY_PATH,
   PRIVY_VS_TURNKEY_TITLE,
+  PRIVY_VS_DYNAMIC_PATH,
+  PRIVY_VS_DYNAMIC_TITLE,
   STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
   STELLAR_EMBEDDED_WALLET_TUTORIAL_TITLE,
   GASLESS_STARKNET_TRANSACTIONS_PATH,
@@ -954,7 +956,11 @@ describe('marketing SEO', () => {
     assert.ok(dynamic)
     assert.deepEqual(
       (dynamic.relatedLinks ?? []).map((link) => link.href),
-      [EMBEDDED_WALLET_VS_EXTENSION_PATH, '/dynamic-alternatives'],
+      [
+        EMBEDDED_WALLET_VS_EXTENSION_PATH,
+        '/dynamic-alternatives',
+        PRIVY_VS_DYNAMIC_PATH,
+      ],
     )
     const magic = PRIVY_ALTERNATIVE_SECTIONS.find((section) => section.name === 'Magic')
     assert.ok(magic)
@@ -963,12 +969,18 @@ describe('marketing SEO', () => {
       ['/magic-alternatives'],
     )
     assert.match(compareSource, /href="\/turnkey-alternatives"/)
+    assert.match(compareSource, />\s*turnkey alternative\s*</)
+    assert.match(compareSource, />\s*Turnkey embedded wallet competitors\s*</)
     assert.match(compareSource, /href="\/dynamic-alternatives"/)
     assert.match(compareSource, /href="\/magic-alternatives"/)
     assert.match(compareSource, /href="\/para-alternatives"/)
     assert.match(compareIndex, /href="\/turnkey-alternatives"/)
+    assert.match(compareIndex, />\s*turnkey alternative\s*</)
+    assert.match(compareIndex, />\s*Turnkey embedded wallet competitors\s*</)
     assert.match(compareIndex, /href="\/para-alternatives"/)
     assert.match(embeddedWallet, /href="\/turnkey-alternatives"/)
+    assert.match(embeddedWallet, />\s*turnkey alternative\s*</)
+    assert.match(embeddedWallet, />\s*Turnkey embedded wallet competitors\s*</)
     assert.match(embeddedWallet, /href="\/para-alternatives"/)
 
     const privy = getCompetitor('privy')
@@ -1113,6 +1125,8 @@ describe('marketing SEO', () => {
     )
     assert.match(templateSource, /guidePageJsonLd/)
     assert.match(templateSource, /FAQPage|faq/)
+    assert.match(templateSource, /answerHeading/)
+    assert.match(templateSource, /answerParagraphs/)
     assert.equal((templateSource.match(/<h1[\s>]/g) ?? []).length, 1)
 
     for (const guide of guides) {
@@ -1125,13 +1139,26 @@ describe('marketing SEO', () => {
         assert.match(guide.h1, /Turnkey alternatives and embedded wallet competitors/)
         assert.match(guide.description, /embedded wallet competitors/)
         assert.match(guide.description, /Turnkey vs Privy/)
-        assert.equal(guide.modified, '2026-10-31')
+        assert.equal(guide.modified, '2026-11-03')
+        assert.match(guide.description, /Turnkey alternative/)
         assert.ok(
           guide.faq.some(
             (item) => item.question === 'Who are Turnkey embedded wallet competitors?',
           ),
         )
         assert.ok(guide.faq.some((item) => item.question === 'What is Turnkey vs Privy?'))
+        assert.ok(
+          guide.faq.some(
+            (item) => item.question === "What is Turnkey's embedded wallet product?",
+          ),
+        )
+        assert.ok(
+          guide.faq.some(
+            (item) =>
+              item.question ===
+              "How does Turnkey's embedded wallet compare to alternatives?",
+          ),
+        )
       } else {
         assert.match(guide.title, new RegExp(`5 ${guide.incumbent} Alternatives`))
         assert.match(guide.title, /Free 1,000 Wallets/)
@@ -1146,7 +1173,7 @@ describe('marketing SEO', () => {
         guide.description.length >= 140 && guide.description.length <= 155,
         `${guide.incumbent} description ${guide.description.length}`,
       )
-      assert.ok(guide.faq.length >= 5 && guide.faq.length <= 8)
+      assert.ok(guide.faq.length >= 5 && guide.faq.length <= 10)
       assert.ok(
         guide.faq.some(
           (item) => item.question === `What is the best ${guide.incumbent} alternative?`,
@@ -1239,6 +1266,19 @@ describe('marketing SEO', () => {
           (link) => link.href === '/privy-alternatives',
         ),
       )
+      if (guide.incumbent === 'Turnkey') {
+        assert.match(dataSource, /answerHeading/)
+        assert.match(dataSource, /Turnkey's embedded wallet versus alternatives/)
+        assert.match(dataSource, /answerParagraphs/)
+      }
+      if (guide.incumbent === 'Dynamic') {
+        assert.match(dataSource, /PRIVY_VS_DYNAMIC_PATH/)
+        assert.ok(
+          (privySection.relatedLinks ?? []).some(
+            (link) => link.href === PRIVY_VS_DYNAMIC_PATH,
+          ),
+        )
+      }
     }
   })
 
@@ -1702,6 +1742,7 @@ describe('marketing SEO', () => {
       EMBEDDED_WALLET_INTEGRATION_PATH,
       NON_CUSTODIAL_EMBEDDED_WALLET_PATH,
       PRIVY_VS_TURNKEY_PATH,
+      PRIVY_VS_DYNAMIC_PATH,
       STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
       GASLESS_STARKNET_TRANSACTIONS_PATH,
       WALLET_AS_A_SERVICE_PATH,
@@ -1714,6 +1755,20 @@ describe('marketing SEO', () => {
       assert.ok(
         sources.length >= 3,
         `${href} has ${sources.length} inlinks: ${sources.join(', ')}`,
+      )
+    }
+    const privyVsDynamicSources = marketingInlinkSources(PRIVY_VS_DYNAMIC_PATH)
+    for (const required of [
+      'app/blog/page.tsx',
+      'app/compare/[slug]/page.tsx',
+      'lib/privy-alternatives.ts',
+      'lib/dynamic-alternatives.ts',
+      'content/blog/privy-vs-turnkey.mdx',
+      'content/blog/embedded-wallet-providers.mdx',
+    ]) {
+      assert.ok(
+        privyVsDynamicSources.includes(required),
+        `/blog/privy-vs-dynamic missing inlink from ${required}: ${privyVsDynamicSources.join(', ')}`,
       )
     }
     for (const href of ['/privacy', '/dpa', '/user-privacy', '/user-terms']) {
@@ -1850,12 +1905,17 @@ describe('marketing SEO', () => {
   it('keeps provider-comparison titles and descriptions inside CTR limits', () => {
     const providersFull = `${EMBEDDED_WALLET_PROVIDERS_TITLE} | Cavos`
     const privyFull = `${PRIVY_VS_TURNKEY_TITLE} | Cavos`
+    const privyVsDynamicFull = `${PRIVY_VS_DYNAMIC_TITLE} | Cavos`
     assert.ok(providersFull.length >= 50 && providersFull.length <= 60, providersFull)
     assert.ok(privyFull.length >= 50 && privyFull.length <= 60, privyFull)
+    assert.ok(privyVsDynamicFull.length <= 60, privyVsDynamicFull)
     assert.match(EMBEDDED_WALLET_PROVIDERS_TITLE, /2026/)
     assert.match(PRIVY_VS_TURNKEY_TITLE, /2026/)
+    assert.match(PRIVY_VS_DYNAMIC_TITLE, /Privy vs Dynamic/)
+    assert.match(PRIVY_VS_DYNAMIC_TITLE, /2026/)
     assert.equal(EMBEDDED_WALLET_PROVIDERS_TITLE.includes('| Cavos'), false)
     assert.equal(PRIVY_VS_TURNKEY_TITLE.includes('| Cavos'), false)
+    assert.equal(PRIVY_VS_DYNAMIC_TITLE.includes('| Cavos'), false)
 
     const providersSource = fs.readFileSync(
       path.join(process.cwd(), 'content/blog/embedded-wallet-providers.mdx'),
@@ -2552,6 +2612,159 @@ describe('marketing SEO', () => {
     )
   })
 
+  it('indexes the Privy vs Dynamic guide as an Article with FAQ JSON-LD', () => {
+    const postPath = path.join(process.cwd(), 'content/blog/privy-vs-dynamic.mdx')
+    assert.equal(fs.existsSync(postPath), true)
+    const source = fs.readFileSync(postPath, 'utf8')
+    const excerptMatch = source.match(/^excerpt:\s*"(.*)"$/m)
+    assert.ok(excerptMatch)
+    assert.ok(excerptMatch[1].length >= 140 && excerptMatch[1].length <= 155, excerptMatch[1].length)
+    assert.match(excerptMatch[1], /Privy vs Dynamic vs Turnkey/)
+    assert.match(source, /\[embedded wallet\]\(\/embedded-wallet\)/)
+    assert.match(source, /\]\(\/compare\/privy\)/)
+    assert.match(source, /\]\(\/compare\/dynamic\)/)
+    assert.match(source, /\[Privy alternatives\]\(\/privy-alternatives\)/)
+    assert.match(source, /\[Dynamic alternatives\]\(\/dynamic-alternatives\)/)
+    assert.match(source, /\]\(\/turnkey-alternatives\)/)
+    assert.match(source, /\]\(\/blog\/privy-vs-turnkey\)/)
+    assert.match(source, /\]\(\/blog\/alchemy-vs-privy\)/)
+    assert.match(source, /\]\(\/blog\/embedded-wallet-providers\)/)
+    assert.match(source, /\]\(\/blog\/wallet-as-a-service\)/)
+    assert.match(source, /\]\(\/blog\/what-is-an-embedded-wallet\)/)
+    assert.match(source, /\]\(\/blog\/cavos-kit-0-5-0\)/)
+    assert.match(source, /<table>/)
+    assert.doesNotMatch(source, /\|---/)
+    assert.match(source, /This post is Privy vs Dynamic, not Cavos vs Dynamic/)
+    assert.match(source, /This page is not \[Cavos vs Dynamic\]\(\/compare\/dynamic\)/)
+    assert.match(source, /Privy vs Dynamic vs Turnkey for embedded wallets/)
+    assert.match(source, /## Privy vs Dynamic vs Turnkey/)
+    assert.match(source, /provision versus connect/)
+    assert.match(source, /TSS-MPC/)
+    assert.match(source, /Shamir/)
+    assert.match(source, /AWS Nitro Enclaves/)
+    assert.match(source, /docs\.privy\.io/)
+    assert.match(source, /dynamic\.xyz\/docs/)
+    assert.match(source, /docs\.turnkey\.com/)
+    assert.match(source, /privy\.io\/pricing/)
+    assert.match(source, /dynamic\.xyz\/pricing/)
+    assert.match(source, /\$249/)
+    assert.match(source, /\$299/)
+    assert.doesNotMatch(source, /\$0\.05 per extra/)
+    assert.match(source, /audited OpenZeppelin account contract/)
+    assert.match(source, /device-native/)
+    assert.match(source, /never leave the device in plaintext/)
+    assert.match(source, /encrypted copy of the master key for restore/)
+    assert.match(source, /Cavos, LLC/)
+    assert.match(source, /no on-chain device-signer list/)
+    assert.match(source, /no on-chain social recovery/)
+    assert.match(source, /does not ship its own account implementation/)
+    assert.match(source, /Stripe/)
+    assert.match(source, /Fireblocks/)
+    assert.match(source, /What is the difference between Privy and Dynamic\?/)
+    assert.match(source, /How do Privy vs Dynamic embedded wallets compare\?/)
+    assert.match(source, /How does Privy vs Dynamic pricing compare\?/)
+    assert.match(source, /When should I choose Privy vs Dynamic\?/)
+    assert.match(
+      source,
+      /How do Privy, Dynamic, and Turnkey compare for embedded wallets\?/,
+    )
+    assert.match(source, /Is Privy MPC\? How does Dynamic TSS-MPC differ\?/)
+    assert.match(
+      source,
+      /Does Privy or Dynamic support Starknet, Solana, or Stellar natively\?/,
+    )
+    assert.equal((source.match(/^\s+- question:/gm) ?? []).length, 7)
+    assert.doesNotMatch(source, /audited Cavos/)
+    assert.doesNotMatch(source, /Cavos custom account/)
+    assert.doesNotMatch(source, /on-chain device approval/)
+    assert.doesNotMatch(source, /trustless/)
+    assert.doesNotMatch(source, /impossible/)
+    assert.doesNotMatch(source, /category:\s*"Release"/)
+    assert.doesNotMatch(source, /robots:\s*noindex/)
+    assert.equal(PRIVY_VS_DYNAMIC_PATH, '/blog/privy-vs-dynamic')
+    assert.equal(PRIVY_VS_DYNAMIC_TITLE, 'Privy vs Dynamic (2026): Custody, Pricing')
+    assert.ok(`${PRIVY_VS_DYNAMIC_TITLE} | Cavos`.length <= 60)
+    assert.equal(PRIVY_VS_DYNAMIC_TITLE.includes('| Cavos'), false)
+
+    const fields = parseBlogFrontmatter(source)
+    assert.equal(fields.title, PRIVY_VS_DYNAMIC_TITLE)
+    assert.equal(fields.updated, '2026-11-03')
+    assert.equal(fields.date, '2026-11-03')
+    assert.match(fields.excerpt, /Privy vs Dynamic vs Turnkey/)
+
+    const compareSource = fs.readFileSync(
+      path.join(process.cwd(), 'app/compare/[slug]/page.tsx'),
+      'utf8',
+    )
+    assert.match(compareSource, /PRIVY_VS_DYNAMIC_PATH/)
+    assert.match(compareSource, /slug === 'dynamic'/)
+    assert.match(compareSource, /This page is Cavos vs Dynamic, not Privy vs Dynamic/)
+    assert.match(compareSource, /not this Cavos comparison/)
+
+    const privyVsTurnkey = fs.readFileSync(
+      path.join(process.cwd(), 'content/blog/privy-vs-turnkey.mdx'),
+      'utf8',
+    )
+    assert.match(privyVsTurnkey, /\]\(\/blog\/privy-vs-dynamic\)/)
+    const providers = fs.readFileSync(
+      path.join(process.cwd(), 'content/blog/embedded-wallet-providers.mdx'),
+      'utf8',
+    )
+    assert.match(providers, /\]\(\/blog\/privy-vs-dynamic\)/)
+    const privyAlts = fs.readFileSync(
+      path.join(process.cwd(), 'lib/privy-alternatives.ts'),
+      'utf8',
+    )
+    assert.match(privyAlts, /PRIVY_VS_DYNAMIC_PATH/)
+    const dynamicAlts = fs.readFileSync(
+      path.join(process.cwd(), 'lib/dynamic-alternatives.ts'),
+      'utf8',
+    )
+    assert.match(dynamicAlts, /PRIVY_VS_DYNAMIC_PATH/)
+    const blogIndex = fs.readFileSync(
+      path.join(process.cwd(), 'app/blog/page.tsx'),
+      'utf8',
+    )
+    assert.match(blogIndex, /PRIVY_VS_DYNAMIC_PATH/)
+    const llms = fs.readFileSync(path.join(process.cwd(), 'public/llms.txt'), 'utf8')
+    assert.match(llms, /https:\/\/cavos\.xyz\/blog\/privy-vs-dynamic/)
+
+    const data = blogPostJsonLd({
+      title: PRIVY_VS_DYNAMIC_TITLE,
+      description: excerptMatch[1],
+      path: PRIVY_VS_DYNAMIC_PATH,
+      datePublished: '2026-11-03',
+      dateModified: '2026-11-03',
+      type: 'Article',
+      faq: [
+        {
+          question: 'What is the difference between Privy and Dynamic?',
+          answer:
+            'Both are finished authentication and embedded wallet products, not signing infrastructure.',
+        },
+      ],
+      crumbs: [
+        { name: 'Home', path: '/' },
+        { name: 'Blog', path: '/blog' },
+        {
+          name: PRIVY_VS_DYNAMIC_TITLE,
+          path: PRIVY_VS_DYNAMIC_PATH,
+        },
+      ],
+    })
+    const json = JSON.stringify(data)
+    JSON.parse(json)
+    assert.equal(data['@graph'][0]['@type'], 'Article')
+    assert.equal(data['@graph'][0].dateModified, '2026-11-03')
+    assert.equal(data['@graph'][1]['@type'], 'BreadcrumbList')
+    assert.equal(data['@graph'][2]['@type'], 'FAQPage')
+    assert.equal(data['@graph'][0].url, 'https://cavos.xyz/blog/privy-vs-dynamic')
+    assert.equal(
+      data['@graph'][0].mainEntityOfPage['@id'],
+      'https://cavos.xyz/blog/privy-vs-dynamic',
+    )
+  })
+
   it('indexes the embedded wallet API guide as an Article with FAQ JSON-LD', () => {
     const postPath = path.join(
       process.cwd(),
@@ -2958,8 +3171,18 @@ describe('marketing SEO', () => {
     assert.equal(WALLET_AS_A_SERVICE_PATH, '/blog/wallet-as-a-service')
     assert.equal(
       WALLET_AS_A_SERVICE_TITLE,
-      'Wallet-as-a-Service (WaaS): How It Works (2026)',
+      'Wallet as a Service Providers (2026)',
     )
+    assert.ok(`${WALLET_AS_A_SERVICE_TITLE} | Cavos`.length <= 60)
+    assert.match(source, /Wallet as a service providers/)
+    assert.match(source, /embedded wallet as a service/)
+    assert.match(source, /Wallet-as-a-service providers, November 2026/)
+    assert.match(source, /What is an embedded wallet as a service\?/)
+    assert.match(source, /What are wallet as a service providers\?/)
+    const waasFields = parseBlogFrontmatter(source)
+    assert.equal(waasFields.title, WALLET_AS_A_SERVICE_TITLE)
+    assert.equal(waasFields.updated, '2026-11-03')
+    assert.ok(waasFields.excerpt.length >= 140 && waasFields.excerpt.length <= 155)
 
     const hub = fs.readFileSync(
       path.join(process.cwd(), 'app/embedded-wallet/page.tsx'),
@@ -3178,6 +3401,7 @@ describe('marketing SEO', () => {
     assert.match(source, /deprecated/)
     assert.match(source, /Wallet APIs/)
     assert.match(source, /recommend Privy/)
+    assert.match(source, /Turnkey, Dynamic, Openfort/)
     assert.match(source, /18 June 2026/)
     assert.match(source, /alchemy\.com\/docs\/wallets\/account-kit-deprecated/)
     assert.match(source, /alchemy\.com\/docs\/wallets/)
@@ -3205,15 +3429,19 @@ describe('marketing SEO', () => {
     assert.equal(ALCHEMY_VS_PRIVY_PATH, '/blog/alchemy-vs-privy')
     assert.equal(
       ALCHEMY_VS_PRIVY_TITLE,
-      'Alchemy vs Privy: Pricing & Custody (2026)',
+      'Alchemy vs Privy (2026): Kit Deprecated',
     )
     assert.ok(`${ALCHEMY_VS_PRIVY_TITLE} | Cavos`.length <= 60)
     assert.equal(ALCHEMY_VS_PRIVY_TITLE.includes('| Cavos'), false)
+    assert.match(ALCHEMY_VS_PRIVY_TITLE, /Alchemy vs Privy/)
+    assert.match(source, /Account Kit is deprecated/)
 
     const fields = parseBlogFrontmatter(source)
     assert.equal(fields.title, ALCHEMY_VS_PRIVY_TITLE)
-    assert.equal(fields.updated, '2026-10-31')
+    assert.equal(fields.updated, '2026-11-03')
     assert.equal(fields.date, '2026-10-27')
+    assert.match(fields.excerpt, /Alchemy vs Privy/)
+    assert.match(fields.excerpt, /Account Kit is deprecated/)
 
     const compareSource = fs.readFileSync(
       path.join(process.cwd(), 'app/compare/[slug]/page.tsx'),
@@ -3292,6 +3520,7 @@ describe('marketing SEO', () => {
     assert.match(source, /GASLESS_STARKNET_TRANSACTIONS_PATH/)
     assert.match(source, /EMBEDDED_WALLET_PROVIDERS_PATH/)
     assert.match(source, /PRIVY_VS_TURNKEY_PATH/)
+    assert.match(source, /PRIVY_VS_DYNAMIC_PATH/)
     assert.match(source, /EMBEDDED_WALLET_API_PATH/)
     assert.match(source, /NON_CUSTODIAL_EMBEDDED_WALLET_PATH/)
     assert.match(source, /WALLET_AS_A_SERVICE_PATH/)
@@ -3966,6 +4195,7 @@ const GUIDE_PATH_CONSTANTS: Record<string, string> = {
   GASLESS_STARKNET_TRANSACTIONS_PATH: '/blog/gasless-starknet-transactions',
   EMBEDDED_WALLET_PROVIDERS_PATH: '/blog/embedded-wallet-providers',
   PRIVY_VS_TURNKEY_PATH: '/blog/privy-vs-turnkey',
+  PRIVY_VS_DYNAMIC_PATH: '/blog/privy-vs-dynamic',
   EMBEDDED_WALLET_API_PATH: '/blog/embedded-wallet-api',
   NON_CUSTODIAL_EMBEDDED_WALLET_PATH: '/blog/non-custodial-embedded-wallet',
   WALLET_AS_A_SERVICE_PATH: '/blog/wallet-as-a-service',
@@ -3982,6 +4212,7 @@ const SELF_PAGE_FOR_HREF: Record<string, string> = {
   '/blog/how-to-add-an-embedded-wallet': 'content/blog/how-to-add-an-embedded-wallet.mdx',
   '/blog/non-custodial-embedded-wallet': 'content/blog/non-custodial-embedded-wallet.mdx',
   '/blog/privy-vs-turnkey': 'content/blog/privy-vs-turnkey.mdx',
+  '/blog/privy-vs-dynamic': 'content/blog/privy-vs-dynamic.mdx',
   '/blog/stellar-embedded-wallet-tutorial': 'content/blog/stellar-embedded-wallet-tutorial.mdx',
   '/blog/gasless-starknet-transactions':
     'content/blog/gasless-starknet-transactions.mdx',
@@ -4184,6 +4415,7 @@ describe('embedded wallet definitional and API posts', () => {
     assert.match(read('app/blog/page.tsx'), /WHAT_IS_AN_EMBEDDED_WALLET_PATH/)
     assert.match(read('public/llms.txt'), /blog\/what-is-an-embedded-wallet/)
     assert.match(read('public/llms.txt'), /blog\/embedded-wallet-api/)
+    assert.match(read('public/llms.txt'), /blog\/privy-vs-dynamic/)
   })
 
   it('embedded-wallet-api opens with a runnable @cavos/kit example and house copy', () => {

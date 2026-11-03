@@ -49,6 +49,11 @@ export const PRIVY_VS_TURNKEY_PATH = '/blog/privy-vs-turnkey'
 export const PRIVY_VS_TURNKEY_TITLE =
   'Privy vs Turnkey vs Dfns (2026): Buy or Build?'
 
+export const PRIVY_VS_DYNAMIC_PATH = '/blog/privy-vs-dynamic'
+
+export const PRIVY_VS_DYNAMIC_TITLE =
+  'Privy vs Dynamic (2026): Custody, Pricing'
+
 export const EMBEDDED_WALLET_API_PATH = '/blog/embedded-wallet-api'
 
 export const EMBEDDED_WALLET_API_TITLE =
@@ -68,7 +73,7 @@ export const NON_CUSTODIAL_EMBEDDED_WALLET_TITLE =
 export const WALLET_AS_A_SERVICE_PATH = '/blog/wallet-as-a-service'
 
 export const WALLET_AS_A_SERVICE_TITLE =
-  'Wallet-as-a-Service (WaaS): How It Works (2026)'
+  'Wallet as a Service Providers (2026)'
 
 export const EMBEDDED_WALLET_REACT_SDK_PATH = '/blog/embedded-wallet-react-sdk'
 
@@ -78,7 +83,7 @@ export const EMBEDDED_WALLET_REACT_SDK_TITLE =
 export const ALCHEMY_VS_PRIVY_PATH = '/blog/alchemy-vs-privy'
 
 export const ALCHEMY_VS_PRIVY_TITLE =
-  'Alchemy vs Privy: Pricing & Custody (2026)'
+  'Alchemy vs Privy (2026): Kit Deprecated'
 
 export const EMBEDDED_WALLET_PAYMENTS_PATH = '/blog/embedded-wallet-payments'
 

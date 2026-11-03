@@ -9,7 +9,10 @@ import {
   type AlternativesGuide,
   vendorSection,
 } from './alternatives-guide'
-import { PRIVY_VS_TURNKEY_PATH } from './embedded-wallet-guide'
+import {
+  PRIVY_VS_DYNAMIC_PATH,
+  PRIVY_VS_TURNKEY_PATH,
+} from './embedded-wallet-guide'
 import { getCompetitor } from './compare-data'
 
 export const PRIVY_ALTERNATIVES_PATH = '/privy-alternatives'
@@ -47,6 +50,7 @@ export const PRIVY_ALTERNATIVE_SECTIONS: AlternativeSection[] = [
   vendorSection('dynamic', [
     ...DYNAMIC_VS_EXTENSION_LINKS,
     { href: '/dynamic-alternatives', label: 'Dynamic alternatives' },
+    { href: PRIVY_VS_DYNAMIC_PATH, label: 'Privy vs Dynamic' },
   ]),
   vendorSection('turnkey', [
     ...TURNKEY_VS_PRIVY_LINKS,
@@ -165,6 +169,8 @@ export const privyAlternativesGuide: AlternativesGuide = {
       { href: '/pricing', label: 'pricing page' },
       '; other vendors set theirs independently. If the question is a finished SDK versus key-management infrastructure, start with ',
       { href: PRIVY_VS_TURNKEY_PATH, label: 'Privy vs Turnkey' },
+      '. Privy vs Dynamic (provision versus connect) is ',
+      { href: PRIVY_VS_DYNAMIC_PATH, label: 'Privy vs Dynamic' },
       '. Replacement shortlists also exist for ',
       { href: '/turnkey-alternatives', label: 'Turnkey' },
       ', ',

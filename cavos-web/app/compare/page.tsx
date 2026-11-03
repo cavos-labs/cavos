@@ -179,6 +179,22 @@ export default function ComparePage() {
                         >
                             Turnkey alternatives
                         </Link>
+                        {' '}
+                        (a{' '}
+                        <Link
+                            href="/turnkey-alternatives"
+                            className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                        >
+                            turnkey alternative
+                        </Link>
+                        {' '}list of{' '}
+                        <Link
+                            href="/turnkey-alternatives"
+                            className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                        >
+                            Turnkey embedded wallet competitors
+                        </Link>
+                        )
                         ,{' '}
                         <Link
                             href="/dynamic-alternatives"
