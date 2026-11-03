@@ -83,6 +83,22 @@ export function AlternativesGuidePage({ guide }: { guide: AlternativesGuide }) {
                     ))}
                 </header>
 
+                {guide.answerHeading && guide.answerParagraphs ? (
+                    <section className="mt-24 max-w-3xl">
+                        <h2 className="text-3xl font-medium tracking-[-0.03em]">
+                            {guide.answerHeading}
+                        </h2>
+                        {guide.answerParagraphs.map((parts, index) => (
+                            <p
+                                key={index}
+                                className="mt-4 text-sm leading-relaxed text-muted"
+                            >
+                                <InlineCopy parts={parts} />
+                            </p>
+                        ))}
+                    </section>
+                ) : null}
+
                 <section className="mt-24">
                     <h2 className="text-3xl font-medium tracking-[-0.03em]">
                         {guide.whyLookHeading}

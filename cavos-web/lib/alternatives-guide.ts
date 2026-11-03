@@ -51,6 +51,8 @@ export type AlternativesGuide = {
   crumb: string
   jsonLdId: string
   introParagraphs: AlternativesInline[][]
+  answerHeading?: string
+  answerParagraphs?: AlternativesInline[][]
   whyLookHeading: string
   whyLookIntro: string
   whyLook: readonly { title: string; body: string }[]

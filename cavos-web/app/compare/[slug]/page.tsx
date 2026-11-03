@@ -106,7 +106,15 @@ export default async function ComparisonPage({
                                 <Link href={PRIVY_VS_TURNKEY_PATH} className={linkClass}>
                                     Privy vs Turnkey
                                 </Link>
-                                . For Turnkey embedded wallet competitors, see{' '}
+                                . For a{' '}
+                                <Link href="/turnkey-alternatives" className={linkClass}>
+                                    turnkey alternative
+                                </Link>
+                                , or for{' '}
+                                <Link href="/turnkey-alternatives" className={linkClass}>
+                                    Turnkey embedded wallet competitors
+                                </Link>
+                                , see{' '}
                                 <Link href="/turnkey-alternatives" className={linkClass}>
                                     Turnkey alternatives
                                 </Link>

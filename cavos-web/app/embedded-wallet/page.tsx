@@ -822,6 +822,16 @@ export default function EmbeddedWalletGuidePage() {
                         <Link href="/turnkey-alternatives" className={linkClass}>
                             Turnkey alternatives
                         </Link>
+                        {' '}
+                        (
+                        <Link href="/turnkey-alternatives" className={linkClass}>
+                            turnkey alternative
+                        </Link>
+                        ,{' '}
+                        <Link href="/turnkey-alternatives" className={linkClass}>
+                            Turnkey embedded wallet competitors
+                        </Link>
+                        )
                         ,{' '}
                         <Link href="/dynamic-alternatives" className={linkClass}>
                             Dynamic alternatives
