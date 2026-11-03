@@ -9,6 +9,7 @@ import {
   alternativesItemList,
   vendorSection,
 } from './alternatives-guide'
+import { PRIVY_VS_DYNAMIC_PATH } from './embedded-wallet-guide'
 import { getCompetitor } from './compare-data'
 
 /**
@@ -55,6 +56,7 @@ export const DYNAMIC_ALTERNATIVE_SECTIONS: AlternativeSection[] = [
   },
   vendorSection('privy', [
     { href: '/privy-alternatives', label: 'Privy alternatives' },
+    { href: PRIVY_VS_DYNAMIC_PATH, label: 'Privy vs Dynamic' },
   ]),
   vendorSection('turnkey', TURNKEY_VS_PRIVY_LINKS),
   vendorSection('web3auth'),
@@ -145,6 +147,8 @@ export const dynamicAlternativesGuide: AlternativesGuide = {
       { href: '/pricing', label: 'pricing page' },
       '; other vendors set theirs independently. The one-to-one write-up is ',
       { href: '/compare/dynamic', label: 'Cavos vs Dynamic' },
+      '. Privy vs Dynamic (provision versus connect, not this Cavos page) is ',
+      { href: PRIVY_VS_DYNAMIC_PATH, label: 'Privy vs Dynamic' },
       '. The replacement shortlist for Privy is ',
       { href: '/privy-alternatives', label: 'Privy alternatives' },
       '; for Para (getpara.com) see ',

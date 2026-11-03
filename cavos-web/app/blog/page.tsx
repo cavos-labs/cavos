@@ -19,6 +19,8 @@ import {
   NON_CUSTODIAL_EMBEDDED_WALLET_TITLE,
   PRIVY_VS_TURNKEY_PATH,
   PRIVY_VS_TURNKEY_TITLE,
+  PRIVY_VS_DYNAMIC_PATH,
+  PRIVY_VS_DYNAMIC_TITLE,
   STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
   STELLAR_EMBEDDED_WALLET_TUTORIAL_TITLE,
   GASLESS_STARKNET_TRANSACTIONS_PATH,
@@ -90,6 +92,11 @@ const GUIDES = [
     href: PRIVY_VS_TURNKEY_PATH,
     title: PRIVY_VS_TURNKEY_TITLE,
     body: 'Finished auth and embedded wallets versus low-level key management and signing infrastructure.',
+  },
+  {
+    href: PRIVY_VS_DYNAMIC_PATH,
+    title: PRIVY_VS_DYNAMIC_TITLE,
+    body: 'Provision versus connect: TEE user wallets versus TSS-MPC, plus a short Turnkey note.',
   },
   {
     href: ALCHEMY_VS_PRIVY_PATH,

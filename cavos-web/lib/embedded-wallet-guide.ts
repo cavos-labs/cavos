@@ -49,6 +49,11 @@ export const PRIVY_VS_TURNKEY_PATH = '/blog/privy-vs-turnkey'
 export const PRIVY_VS_TURNKEY_TITLE =
   'Privy vs Turnkey vs Dfns (2026): Buy or Build?'
 
+export const PRIVY_VS_DYNAMIC_PATH = '/blog/privy-vs-dynamic'
+
+export const PRIVY_VS_DYNAMIC_TITLE =
+  'Privy vs Dynamic (2026): Custody, Pricing'
+
 export const EMBEDDED_WALLET_API_PATH = '/blog/embedded-wallet-api'
 
 export const EMBEDDED_WALLET_API_TITLE =
