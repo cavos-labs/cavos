@@ -73,7 +73,7 @@ export const NON_CUSTODIAL_EMBEDDED_WALLET_TITLE =
 export const WALLET_AS_A_SERVICE_PATH = '/blog/wallet-as-a-service'
 
 export const WALLET_AS_A_SERVICE_TITLE =
-  'Wallet-as-a-Service (WaaS): How It Works (2026)'
+  'Wallet as a Service Providers (2026)'
 
 export const EMBEDDED_WALLET_REACT_SDK_PATH = '/blog/embedded-wallet-react-sdk'
 

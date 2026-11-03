@@ -56,7 +56,7 @@ const GUIDES = [
   {
     href: WALLET_AS_A_SERVICE_PATH,
     title: WALLET_AS_A_SERVICE_TITLE,
-    body: 'What an embedded wallet platform is: auth, keys, signing, gas, recovery, pricing, and build versus buy.',
+    body: 'Wallet as a service providers and embedded wallet as a service: definition, dated shortlist, pricing, and build versus buy.',
   },
   {
     href: EMBEDDED_WALLET_API_PATH,
