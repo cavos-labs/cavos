@@ -8,7 +8,7 @@ export const EMBEDDED_WALLET_DESCRIPTION =
 
 export const EMBEDDED_WALLET_PUBLISHED = '2026-10-07'
 
-export const EMBEDDED_WALLET_MODIFIED = '2026-11-01'
+export const EMBEDDED_WALLET_MODIFIED = '2026-11-04'
 
 /** Featured-snippet definition rendered under the H1. Keep 40–60 words. */
 export const EMBEDDED_WALLET_DEFINITION =
