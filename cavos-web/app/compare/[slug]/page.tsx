@@ -76,12 +76,11 @@ export default async function ComparisonPage({
                             <>
                                 This is the Privy vs Cavos comparison: Privy the embedded
                                 crypto wallet, not the Shopify popup of the same name.
-                                Pricing, chains, and custody, one-to-one. For a multi-vendor
-                                shortlist, start at{' '}
+                                Pricing, chains, and custody, one-to-one.                                 For Privy alternatives, start at{' '}
                                 <Link href="/privy-alternatives" className={linkClass}>
                                     Privy alternatives
                                 </Link>
-                                . For finished auth and wallets versus signing infrastructure,
+                                . This page is the one-to-one, not that shortlist. For finished auth and wallets versus signing infrastructure,
                                 see{' '}
                                 <Link href={PRIVY_VS_TURNKEY_PATH} className={linkClass}>
                                     Privy vs Turnkey
@@ -262,7 +261,7 @@ export default async function ComparisonPage({
                                 href="/privy-alternatives"
                                 className="rounded-md border border-line px-4 py-2 text-sm font-medium transition-colors hover:border-ink"
                             >
-                                Privy wallet alternatives
+                                Privy alternatives
                             </Link>
                         ) : null}
                         {competitor.slug === 'turnkey' ? (

@@ -63,7 +63,7 @@ const ALCHEMY_PRICING =
 export const PROVIDER_PRICING_AS_OF = 'October 2026'
 
 /** Sitemap lastmod for /compare/[slug] when competitor copy in this file changes. */
-export const COMPARE_PAGES_MODIFIED = '2026-11-01'
+export const COMPARE_PAGES_MODIFIED = '2026-11-04'
 
 export const EMBEDDED_WALLET_MARKET_NOTE =
     'The category has consolidated. Stripe acquired Privy in 2025. Fireblocks acquired Dynamic in 2025. Consensys acquired Web3Auth in 2025 and now ships it as MetaMask Embedded Wallets. In 2026 Payward, the parent of Kraken, acquired Magic Labs wallet infrastructure.'
@@ -77,7 +77,7 @@ export const COMPETITORS: Competitor[] = [
         pageDescription:
             'Privy vs Cavos comparison: pricing, chains, and custody. Not the Shopify app. Free up to 1,000 wallets on Starknet, Solana, and Stellar.',
         summary:
-            'Privy is a widely adopted embedded wallet and authentication provider focused primarily on EVM chains, offering both embedded wallets and external wallet connection. This page is the Privy vs Cavos comparison; the broader shortlist lives on Privy alternatives.',
+            'Privy is a widely adopted embedded wallet and authentication provider focused primarily on EVM chains, offering both embedded wallets and external wallet connection. This page is the Privy vs Cavos comparison. The multi-vendor shortlist for Privy alternatives lives on that page, not here.',
         positioning:
             'Both products embed a wallet into your application and remove the extension requirement. The architectural difference is where signing authority lives and which chains are treated as native. Privy’s published security model reconstitutes a 2-of-2 Shamir split inside AWS Nitro Enclaves; Cavos never reconstructs a signing key because a non-exportable device key signs. Privy is the more mature choice across the EVM ecosystem; Cavos ships native adapters for Starknet, Solana, and Stellar.',
         chooseThem: [
