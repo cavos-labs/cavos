@@ -10,6 +10,7 @@ import {
   vendorSection,
 } from './alternatives-guide'
 import {
+  EMBEDDED_WALLET_COST_PATH,
   PRIVY_VS_DYNAMIC_PATH,
   PRIVY_VS_TURNKEY_PATH,
 } from './embedded-wallet-guide'
@@ -171,6 +172,8 @@ export const privyAlternativesGuide: AlternativesGuide = {
       { href: PRIVY_VS_TURNKEY_PATH, label: 'Privy vs Turnkey' },
       '. Privy vs Dynamic (provision versus connect) is ',
       { href: PRIVY_VS_DYNAMIC_PATH, label: 'Privy vs Dynamic' },
+      '. Cross-vendor list prices, including Privy wallets cost, are ',
+      { href: EMBEDDED_WALLET_COST_PATH, label: 'how much embedded wallets cost' },
       '. Replacement shortlists also exist for ',
       { href: '/turnkey-alternatives', label: 'Turnkey' },
       ', ',

@@ -75,6 +75,11 @@ export const WALLET_AS_A_SERVICE_PATH = '/blog/wallet-as-a-service'
 export const WALLET_AS_A_SERVICE_TITLE =
   'Wallet as a Service Providers (2026)'
 
+export const EMBEDDED_WALLET_COST_PATH = '/blog/embedded-wallet-cost'
+
+export const EMBEDDED_WALLET_COST_TITLE =
+  'Embedded Wallet Cost (2026): Privy, Dynamic'
+
 export const EMBEDDED_WALLET_REACT_SDK_PATH = '/blog/embedded-wallet-react-sdk'
 
 export const EMBEDDED_WALLET_REACT_SDK_TITLE =
