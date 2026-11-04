@@ -92,8 +92,9 @@ export default function EmbeddedWalletGuidePage() {
                     </p>
                     <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted">
                         This guide covers how an embedded wallet works: the SDK, the
-                        platform and infrastructure, and the solution you ship. Method-level
-                        auth, create, sign, and recovery live in the{' '}
+                        platform and infrastructure, and the solution you ship. It is not
+                        an API reference. Method-level auth, create, sign, and recovery live
+                        in the{' '}
                         <Link href={EMBEDDED_WALLET_API_PATH} className={linkClass}>
                             embedded wallet API
                         </Link>{' '}

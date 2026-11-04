@@ -27,7 +27,7 @@ faq:
 
 **Wallet-as-a-service (WaaS) is an API or SDK that gives each of your users a crypto wallet inside your app.** The user signs in the way they already do, the platform looks up or creates an on-chain account for that login, and transactions are approved in your UI. There is no browser extension to install and no seed phrase to copy. That UX is an [embedded wallet](/embedded-wallet). **Embedded wallet as a service** is the same product, named from where the wallet appears. **Wallet as a service providers** are the vendors that sell it.
 
-The label does not decide custody. Before you compare vendors, answer three questions: who provisions the wallet, who can produce a signature, and what the invoice meters. This guide is the platform map plus a dated provider shortlist. The [embedded wallet providers](/blog/embedded-wallet-providers) comparison is the named-vendor table. The [embedded wallet API](/blog/embedded-wallet-api) guide is the method-level surface. The [non-custodial guide](/blog/non-custodial-embedded-wallet) is the custody test.
+The label does not decide custody. Before you compare vendors, answer three questions: who provisions the wallet, who can produce a signature, and what the invoice meters. This guide is the platform map plus a dated provider shortlist. The [embedded wallet providers](/blog/embedded-wallet-providers) comparison is the named-vendor table. [How much embedded wallets cost](/blog/embedded-wallet-cost) is the per-MAU vs per-wallet vs per-signature worked example. The [embedded wallet API](/blog/embedded-wallet-api) guide is the method-level surface. The [non-custodial guide](/blog/non-custodial-embedded-wallet) is the custody test.
 
 Cavos, LLC is a software and SaaS company. The wallet is the main product: a device-native, self-custodial embedded wallet. Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds.
 
@@ -216,4 +216,5 @@ The React path is `@cavos/kit`. Mobile is `@cavos/kit/react-native`. The current
 - [Embedded wallet vs browser extension](/blog/embedded-wallet-vs-browser-extension): where users should sign.
 - [Alchemy vs Privy](/blog/alchemy-vs-privy): a transaction layer versus a finished embedded wallet.
 - Chain pages: [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), [Stellar](/embedded-stellar-wallet).
+- [How much embedded wallets cost](/blog/embedded-wallet-cost): per-MAU vs per-wallet vs per-signature, with a 10k / 100k / 1M example.
 - [Compare](/compare) for worked one-to-one pages. [Pricing](/pricing) for Cavos fees. [Custody](/custody) for the control test.

@@ -8,7 +8,7 @@ export const EMBEDDED_WALLET_DESCRIPTION =
 
 export const EMBEDDED_WALLET_PUBLISHED = '2026-10-07'
 
-export const EMBEDDED_WALLET_MODIFIED = '2026-11-01'
+export const EMBEDDED_WALLET_MODIFIED = '2026-11-04'
 
 /** Featured-snippet definition rendered under the H1. Keep 40–60 words. */
 export const EMBEDDED_WALLET_DEFINITION =
@@ -42,7 +42,7 @@ export const EMBEDDED_WALLET_PROVIDERS_PATH =
   '/blog/embedded-wallet-providers'
 
 export const EMBEDDED_WALLET_PROVIDERS_TITLE =
-  'Embedded Wallet Providers: 2026 Comparison'
+  'Best Embedded Wallet Providers (2026 Guide)'
 
 export const PRIVY_VS_TURNKEY_PATH = '/blog/privy-vs-turnkey'
 
@@ -74,6 +74,11 @@ export const WALLET_AS_A_SERVICE_PATH = '/blog/wallet-as-a-service'
 
 export const WALLET_AS_A_SERVICE_TITLE =
   'Wallet as a Service Providers (2026)'
+
+export const EMBEDDED_WALLET_COST_PATH = '/blog/embedded-wallet-cost'
+
+export const EMBEDDED_WALLET_COST_TITLE =
+  'Embedded Wallet Cost (2026): Privy, Dynamic'
 
 export const EMBEDDED_WALLET_REACT_SDK_PATH = '/blog/embedded-wallet-react-sdk'
 

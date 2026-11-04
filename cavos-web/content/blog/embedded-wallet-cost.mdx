@@ -1,0 +1,258 @@
+---
+title: "Embedded Wallet Cost (2026): Privy, Dynamic"
+date: "2026-11-04"
+updated: "2026-11-04"
+excerpt: "How much embedded wallets cost in 2026: Privy, Dynamic, Turnkey, Para, Web3Auth, Alchemy vs Cavos. Per wallet, MAU, and signature at 10k to 1M."
+category: "Guide"
+ogQuote: "The invoice meters MAU, wallets, or signatures. Those are not the same bill."
+slug: "embedded-wallet-cost"
+faq:
+  - question: "How much do embedded wallets cost in 2026?"
+    answer: "It depends what the invoice meters. Privy, Dynamic, Para, and Web3Auth / MetaMask Embedded Wallets bill monthly active users or wallets. Turnkey bills signatures, with wallet caps on self-serve plans. Cavos bills wallet creates: free for the first 1,000, then Essential at $59/month or Complete at $139/month. Alchemy Wallet APIs bill compute units, not wallets. Those figures are from each vendor’s public pricing page as of November 2026 and can change. Unpublished enterprise rates are not guessed here."
+  - question: "How much does Privy cost?"
+    answer: "Privy wallets cost, on the public Developer page as of November 2026: Free at 0–499 MAU with 50,000 signatures and $1M volume per month; Core at $299/month for 500–2,499 MAU; Scale at $499/month for 2,500–9,999 MAU. If usage exceeds 10,000 MAU or 50,000 signatures in a month, Privy publishes pay-as-you-go: a $2,000 volume base, $0.05 per MAU above 10,000, and $0.01 per signature above 50,000. Enterprise is custom, per transaction or transacting wallet, with signature-based pricing listed as low as $0.001/signature. Privy wallet pricing on Enterprise is not a public quote."
+  - question: "What's the cheapest way to create wallets for millions of users?"
+    answer: "Among vendors in this table with a published self-serve price that does not meter MAU or signatures as the primary unit, Cavos Essential is $59/month with unlimited wallet creates after the first 1,000 free. At one million monthly active users, Privy’s public PAYG MAU floor is $51,500/month before signature overage, and MetaMask Embedded Wallets’ public Scale overage is $39,999/month. Para’s public FAQ sends 100k MAU to Enterprise. Turnkey’s self-serve wallet caps are 1,000 (Pay as you go) and 2,000 (Pro); unlimited wallets are Enterprise. This is not a lowest-market-price claim. Enterprise volume discounts are unpublished. Gas sponsorship is a separate cost on every vendor that publishes it that way, including Cavos."
+  - question: "How does per-MAU pricing compare to per-wallet and per-signature pricing?"
+    answer: "Per-MAU (or per monthly active wallet) charges each user who authenticates or holds an active session in the month, whether they sign once or a thousand times. Per-wallet or per-create charges provisioning, not activity. Per-signature charges each authorization. At millions of users, MAU and signature meters dominate the bill; a flat create allowance does not. Confirm the unit, the free cap, overage, and what is enterprise-only before you model cost."
+  - question: "How much does Dynamic, Turnkey, Para, or Web3Auth cost for embedded wallets?"
+    answer: "Dynamic’s public Growth plan is $249/month for up to 5,000 MAUs; the sandbox is free; extra-MAU is billed, but the public plan card and FAQ currently disagree on the per-MAU rate, so that rate is omitted here. Turnkey Pay as you go is 1,000 wallets and 25 free signatures per month, then $0.10 per signature; Pro is $99/month and $0.05 per signature. Para is free to 1,200 MAUs, then Starter $200/month (2,500 MAUs), Growth $500/month (10,000), Scale $1,000/month (25,000), with published extra-MAU of $0.06 / $0.05 / $0.04. Web3Auth / MetaMask Embedded Wallets is free at 1,000 MAWs then $0.050 extra; Growth $69/month (3,000 MAWs, $0.045 extra); Scale $399/month (10,000 MAWs, $0.040 extra)."
+  - question: "Does Alchemy publish embedded wallet pricing per user?"
+    answer: "No. Alchemy Account Kit, including embedded wallets, is deprecated, with new sign-ups off since 18 June 2026. Wallet APIs are the successor and bill infrastructure in compute units: free 30 million CUs per month, PAYG $0.525 per million CUs, and Gas Manager at an 8% admin fee on PAYG. Alchemy recommends Privy as a signer. There is no public per-wallet or per-MAU embedded-wallet price on Alchemy’s pricing plans page."
+  - question: "What capabilities should an enterprise evaluate for pricing transparency in embedded wallets?"
+    answer: "Ask what the invoice meters (creates, MAU, MAW, signatures, compute units, or volume), what the public free tier includes, what happens at 10k / 100k / 1M users on list prices, which features are enterprise-only (SLAs, gas sponsorship, SSO, webhooks), whether extra-MAU or extra-signature rates are published and internally consistent, and whether SOC 2, key export, and custody are documented on a public page. Where a number is not public, treat it as unknown. Do not model an unpublished enterprise quote as a list price."
+---
+
+{/* Vendor pricing as of November 2026:
+    Privy: https://privy.io/pricing
+    Dynamic: https://www.dynamic.xyz/pricing
+    Turnkey: https://www.turnkey.com/pricing
+    Para: https://www.getpara.com/pricing
+    Web3Auth / MetaMask Embedded Wallets: https://metamask.io/developer/embedded-wallets
+    Alchemy: https://www.alchemy.com/docs/reference/pricing-plans
+    Cavos: https://cavos.xyz/pricing
+    Do not invent unpublished enterprise rates or extra-MAU figures where the public page disagrees with itself.
+*/}
+
+An [embedded wallet](/embedded-wallet) lives inside your application. **Embedded wallet cost** is the invoice for provisioning that wallet: per monthly active user, per wallet create, or per signature. This guide is how much embedded wallets cost in 2026 on published list prices for Privy, Dynamic, Turnkey, Para, Web3Auth / MetaMask Embedded Wallets, Alchemy, and Cavos. It is not [Cavos pricing](/pricing). That page is Cavos’s own fees. This page is the cross-vendor model, a worked example at 10,000 / 100,000 / 1,000,000 users using only public numbers, and a pricing-transparency checklist for enterprises.
+
+Cavos, LLC is a software and SaaS company. Positioning for Cavos comes after the table is fair. If the honest published number is another vendor’s, that is the number. Where a public page omits a figure, or disagrees with itself, this page says so instead of guessing.
+
+## The short answer (November 2026)
+
+**How much embedded wallets cost** depends on the meter, not the logo.
+
+- **Per-MAU / per-MAW:** Privy, Dynamic, Para, and Web3Auth / MetaMask Embedded Wallets. A user who logs in once in the month is billed; extra signatures may or may not add a second meter.
+- **Per-signature:** Turnkey. Self-serve wallet caps are 1,000 (Pay as you go) and 2,000 (Pro). Unlimited wallets are Enterprise.
+- **Per-wallet-create:** Cavos. Free for the first 1,000 creates, then a flat Essential $59/month or Complete $139/month. See [pricing](/pricing). Gas sponsorship is funded separately.
+- **Not a wallet-create product:** Alchemy Wallet APIs bill compute units. Account Kit embedded wallets are deprecated.
+
+**Privy wallets cost**, on the public Developer page: Free 0–499 MAU, Core $299/month, Scale $499/month. Past 10,000 MAU or 50,000 signatures, Privy publishes PAYG at a $2,000 base plus $0.05 per extra MAU plus $0.01 per extra signature. That is Privy wallet pricing as listed, not an Enterprise quote.
+
+**What's the cheapest way to create wallets for millions of users?** On published self-serve list prices in this set, a flat create allowance (Cavos Essential at $59/month after 1,000 free creates) does not grow with MAU. MAU and signature meters do. Enterprise volume discounts are unpublished, so this page does not call any vendor the cheapest in the market.
+
+The named-vendor product table is [embedded wallet providers](/blog/embedded-wallet-providers). Privy vs Dynamic as products is [Privy vs Dynamic](/blog/privy-vs-dynamic). Finished SDK versus signing infrastructure is [Privy vs Turnkey](/blog/privy-vs-turnkey).
+
+## How vendors meter
+
+Write the unit down before you multiply.
+
+<table>
+<thead>
+<tr>
+<th>Vendor</th>
+<th>Published meter</th>
+<th>Public free tier</th>
+<th>Public paid list</th>
+<th>Enterprise</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://privy.io/pricing">Privy</a></td>
+<td>MAU, plus signature and volume allowances on Developer</td>
+<td>0–499 MAU; 50,000 signatures and $1M volume / month</td>
+<td>Core $299/mo (500–2,499 MAU). Scale $499/mo (2,500–9,999 MAU). PAYG above 10,000 MAU or 50,000 signatures: $2,000 base, $0.05 / MAU above 10,000, $0.01 / signature above 50,000</td>
+<td>Custom per transaction or transacting wallet. Signature-based pricing listed as low as $0.001 / signature. Premium SLAs</td>
+</tr>
+<tr>
+<td><a href="https://www.dynamic.xyz/pricing">Dynamic</a></td>
+<td>MAU</td>
+<td>Sandbox is free for build and test; live mode is a paid plan</td>
+<td>Growth $249/mo up to 5,000 MAUs. Extra-MAU is billed; the public plan card lists $0.05 per extra MAU and the FAQ lists $0.005, so the extra-MAU dollar rate is omitted here</td>
+<td>Custom. SSO, webhooks, gasless transactions, Fireblocks Flow and Business Accounts, dedicated support, and SLAs are listed here</td>
+</tr>
+<tr>
+<td><a href="https://www.turnkey.com/pricing">Turnkey</a></td>
+<td>Signatures, with a wallet cap</td>
+<td>Pay as you go: 1,000 wallets and 25 signatures / month</td>
+<td>Then $0.10 / signature. Pro $99/mo, $0.05 / signature, 2,000 wallets. Managed Secrets $0.15 / secret / month after a small free band on Pay as you go</td>
+<td>Unlimited wallets. Signature pricing listed as low as $0.0015 / signature. SLAs, dedicated support</td>
+</tr>
+<tr>
+<td><a href="https://www.getpara.com/pricing">Para</a></td>
+<td>MAU only. Official FAQ: never per signature</td>
+<td>Up to 1,200 MAUs</td>
+<td>Starter $200/mo (2,500 MAUs, $0.06 extra). Growth $500/mo (10,000, $0.05 extra). Scale $1,000/mo (25,000, $0.04 extra)</td>
+<td>Custom. Public FAQ: at 100k MAUs most teams move to Enterprise</td>
+</tr>
+<tr>
+<td><a href="https://metamask.io/developer/embedded-wallets">Web3Auth / MetaMask Embedded Wallets</a></td>
+<td>Monthly active wallets (MAW)</td>
+<td>Base: 1,000 MAWs, then $0.050 / extra MAW</td>
+<td>Growth $69/mo (3,000 MAWs, $0.045 extra). Scale $399/mo (10,000 MAWs, $0.040 extra)</td>
+<td>Custom. Volume MAW discounts, uptime SLA, dedicated support. SOC 2 Type II is listed on the product page</td>
+</tr>
+<tr>
+<td><a href="https://www.alchemy.com/docs/reference/pricing-plans">Alchemy</a></td>
+<td>Compute units. Gas Manager admin fee on PAYG</td>
+<td>30 million CU / month</td>
+<td>PAYG $0.525 per million CUs. Gas Manager 8% admin fee on PAYG</td>
+<td>Custom CU, custom Gas Manager admin fee, custom SLAs</td>
+</tr>
+<tr>
+<td><a href="/pricing">Cavos</a></td>
+<td>Wallet creates</td>
+<td>First 1,000 wallet creates</td>
+<td>Essential $59/mo unlimited creates. Complete $139/mo unlimited creates plus enclave recovery</td>
+<td>Not a separate public list. The published plans are Free, Essential, and Complete</td>
+</tr>
+</tbody>
+</table>
+
+A MAU on Privy is a Privy-authenticated user with at least one session in the last 30 days. A Dynamic MAU is a login or an embedded-wallet create in the month. A Para MAU is a user authenticated to or created in the application that month. A MetaMask Embedded Wallets MAW is a user who logs in or has an active session at least once in a calendar month. Those definitions are close, not identical. Do not mix them in a spreadsheet without a footnote.
+
+Cavos counts **wallet creates**, not monthly actives. Existing wallets, reads, and signatures are not the create cap. When Free hits 1,000 creates, only new creates pause.
+
+## Worked example: 10k / 100k / 1M users
+
+Assume one user maps to one billable MAU, MAW, or created wallet, and that live usage (not sandbox) is in view. Signature counts per user are **not published** by these vendors, so rows that meter signatures cannot be a full bill. Extra-MAU on Dynamic is omitted because the public page disagrees with itself. Enterprise quotes are omitted because they are not public.
+
+<table>
+<thead>
+<tr>
+<th>Published list, November 2026</th>
+<th>10,000 users</th>
+<th>100,000 users</th>
+<th>1,000,000 users</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cavos (wallet creates)</td>
+<td>Essential $59/mo or Complete $139/mo. Past the 1,000-create Free cap. Unlimited creates on both paid plans</td>
+<td>Same $59 or $139</td>
+<td>Same $59 or $139. Gas sponsorship is funded separately</td>
+</tr>
+<tr>
+<td>Privy (MAU)</td>
+<td>Past Scale (2,500–9,999 MAU at $499/mo). PAYG: $2,000 base plus $0.05 per MAU above 10,000 plus $0.01 per signature above 50,000. At 10,000 MAU the extra-MAU line is $0; signature overage is unknown. MAU-only floor $2,000/mo</td>
+<td>$2,000 + $0.05 × 90,000 = $6,500/mo MAU floor, plus unknown signature overage</td>
+<td>$2,000 + $0.05 × 990,000 = $51,500/mo MAU floor, plus unknown signature overage. Privy’s FAQ says Enterprise is typically cheaper than monthly PAYG; that rate is unpublished</td>
+</tr>
+<tr>
+<td>Dynamic (MAU)</td>
+<td>$249/mo for the first 5,000 MAUs plus extra-MAU on the next 5,000. Extra-MAU dollar rate omitted (plan card $0.05 vs FAQ $0.005)</td>
+<td>$249 plus extra-MAU on 95,000 users. Dollar total omitted for the same reason. Enterprise is custom</td>
+<td>Same: Growth list plus extra-MAU, or Enterprise. No public 1M quote</td>
+</tr>
+<tr>
+<td>Turnkey (signatures + wallet cap)</td>
+<td>Past Pay as you go (1,000 wallets) and Pro (2,000 wallets). Unlimited wallets are Enterprise. Signature cost cannot be computed without a published signatures-per-user figure</td>
+<td>Enterprise for the wallet cap. Signature list “as low as $0.0015” is not a quote</td>
+<td>Same. Do not multiply $0.10 or $0.05 by a guessed signature count</td>
+</tr>
+<tr>
+<td>Para (MAU)</td>
+<td>Growth $500/mo (includes 10,000 MAUs)</td>
+<td>Scale list math would be $1,000 + $0.04 × 75,000 = $4,000/mo. Para’s public FAQ says at 100k MAUs most teams move to Enterprise; that rate is unpublished</td>
+<td>Enterprise, unpublished</td>
+</tr>
+<tr>
+<td>Web3Auth / MetaMask Embedded Wallets (MAW)</td>
+<td>Scale $399/mo (includes 10,000 MAWs)</td>
+<td>$399 + $0.040 × 90,000 = $3,999/mo on Scale overage</td>
+<td>$399 + $0.040 × 990,000 = $39,999/mo on Scale overage. Enterprise volume discounts are unpublished</td>
+</tr>
+<tr>
+<td>Alchemy (compute units)</td>
+<td>Cannot be expressed as a per-user wallet cost from the public pricing-plans page</td>
+<td>Same</td>
+<td>Same. Account Kit embedded wallets are deprecated</td>
+</tr>
+</tbody>
+</table>
+
+Treat the dollar cells as **floors from list prices**, not invoices. Signature overage, gas sponsorship, compute units, managed secrets, and sales-gated Enterprise bands are extra when the vendor publishes them that way.
+
+## What drives cost at millions of users
+
+At a few hundred users, free tiers dominate and the vendors look similar. At millions, the meter is the product.
+
+**MAU and MAW scale linearly** once you are off the included band. Privy’s public PAYG MAU line is $0.05 above 10,000. MetaMask Embedded Wallets’ public Scale overage is $0.040 above 10,000 MAWs. Para’s published extra-MAU falls from $0.06 to $0.04 as the plan steps up, then the FAQ hands 100k to sales.
+
+**Signatures scale with activity, not headcount.** Turnkey’s public self-serve rates are $0.10 then $0.05 per signature. Privy adds a second meter at $0.01 per signature above 50,000 on PAYG. A quiet million-user app and a trading app are different bills on the same logo. This page does not invent a typical signatures-per-user number.
+
+**Wallet caps become a sales conversation.** Turnkey Pay as you go lists 1,000 wallets; Pro lists 2,000; unlimited is Enterprise. You cannot stay on those self-serve wallet caps at 10,000 users.
+
+**A create allowance does not grow with MAU.** Cavos Essential and Complete are flat after the first 1,000 creates. That is why the 10k / 100k / 1M cells do not change. It is also why this page must not be confused with [pricing](/pricing): that page is the Cavos fee table, not a market ranking.
+
+**Enterprise is where most millions-of-users deals actually close**, and those rates are not on the public page. Privy, Dynamic, Turnkey, Para, Web3Auth, and Alchemy all say so. Modeling PAYG list prices as the production bill at 1M users is a starting bound, not a contract.
+
+**Gas, RPC, and secrets sit next to the wallet fee.** Turnkey publishes gas-sponsorship caps on Pay as you go and Pro, and Managed Secrets at $0.15 per secret per month. Alchemy Gas Manager takes an 8% admin fee on PAYG. Cavos funds gas sponsorship separately from the org fee. Include those lines in a real model; do not hide them inside “wallet cost.”
+
+## Privy wallets cost, in more detail
+
+Searchers type **privy wallets cost** and **privy wallet pricing**. The public source is [privy.io/pricing](https://privy.io/pricing), read in November 2026.
+
+Developer plans share unified login, embedded wallets, JWT-based authentication, and wallet connectors for EVM and Solana. All Developer plans include 50,000 signatures and $1M volume per month on the page’s “all plans include” copy; Free also states 0–499 MAU.
+
+Exceeding a paid Developer MAU cap auto-upgrades to the next plan the following month. Exceeding 10,000 MAU or 50,000 signatures in a month moves usage to PAYG: $2,000 volume base, $0.05 per MAU above 10,000, $0.01 per signature above 50,000. Privy tells teams that anticipate sustained PAYG to talk to sales; Enterprise is described as typically cheaper and more predictable than monthly PAYG. That cheaper rate is not listed.
+
+Canceling a subscription drops feature access and support beyond 500 MAUs; if the app has already reached 500 MAUs, new users can no longer sign up, per the public FAQ.
+
+None of that is a Cavos comparison. Cavos vs Privy is [Cavos vs Privy](/compare/privy). The replacement shortlist is [Privy alternatives](/privy-alternatives).
+
+## Pricing-transparency checklist for enterprises
+
+Counsel and procurement should get written answers. If a vendor cannot answer on a public page, ask for it in the MSA. Do not fill the blank from a blog post.
+
+- **Meter.** Creates, MAU, MAW, signatures, compute units, transacting wallets, or volume. Who counts as active, and over what window.
+- **Public list versus sales-gated.** Which numbers are on the pricing page, and which appear only after a call.
+- **Overage.** Extra-MAU, extra-signature, extra-secret, compute-unit, and gas-admin lines. Whether two public sources on the same site disagree (Dynamic’s extra-MAU is the current example).
+- **Included versus add-on.** Recovery, gas sponsorship, webhooks, SSO, pregenerated wallets, SLAs, dedicated support. Which of those flip at Enterprise.
+- **Custody and export.** Who can produce a signature without the user. Whether key export is documented. Cavos restores a MasterDEK on a new device and does not advertise seed or private-key export. Privy user wallets document export. Dynamic documents export. Turnkey lists import and export keys.
+- **SOC 2 and audits, as published.** MetaMask Embedded Wallets lists SOC 2 Type II on the product page. Para’s pricing FAQ lists SOC 2 Type II. Cavos does not publish a SOC 2 report on this site; the Starknet account is an **audited OpenZeppelin account contract**. The audit covers OpenZeppelin’s contract, not Cavos. Do not treat an account-contract audit as a vendor SOC 2.
+- **SLAs.** Privy, Dynamic, Turnkey, and MetaMask Embedded Wallets list SLAs on Enterprise. Cavos does not publish an uptime SLA on [pricing](/pricing).
+- **Lock-in.** What happens if you cancel (Privy publishes a 500-MAU cutoff for new sign-ups). Whether addresses migrate. They usually do not.
+
+The [custody](/custody) page is the control test. The [wallet-as-a-service](/blog/wallet-as-a-service) guide is the platform map. This page is the invoice.
+
+## Where Cavos fits
+
+Cavos is a hardware-isolated, non-custodial [embedded wallet](/embedded-wallet), not an extension, and not a connector. Signing keys are created and used on the user’s device. Private keys never leave the device in plaintext. Signing always happens on the user’s device. The Nitro enclave and passkey only store an encrypted copy of the master key for restore. Cavos cannot see keys, sign with them, or move funds. There is no MPC and no hosted spend key.
+
+On Starknet the on-chain account is an **audited OpenZeppelin account contract** (AccountUpgradeable v3.0.0). Cavos does not ship its own account implementation. Solana and Stellar are native adapters. Auth is hosted Google, Apple, or email, or an identity you pass in.
+
+**Published Cavos fees**, short and only so this comparison has a Cavos row: Free for the first 1,000 wallet creates, Essential at $59/month, Complete at $139/month with enclave recovery. The full SDK ships on every plan. Gas sponsorship is funded separately. The fee table, recovery fork, and FAQ live on [pricing](/pricing). This post does not restate that page.
+
+**Choose Cavos** when the chain is Starknet, Solana, or Stellar, the review requires that the vendor cannot reconstruct a signing key, and a published create-based fee is the commercial constraint.
+
+**Choose someone else** when the product is EVM-first, when you must connect an existing extension, when you need server-side signing as a product feature, or when a sales-gated Enterprise pack (SLA, SSO, volume MAU) is the deal you are actually buying. Cavos does not inject into `window.ethereum` and does not speak WalletConnect.
+
+## What to read next
+
+- [Pricing](/pricing): Cavos fees. This post is the cross-vendor cost model, not a restatement of that page.
+- [Embedded wallet providers](/blog/embedded-wallet-providers): chains, custody, and a short pricing column in one table.
+- [Wallet-as-a-service](/blog/wallet-as-a-service): platform parts, pricing units, and build versus buy.
+- [Privy vs Dynamic](/blog/privy-vs-dynamic): provision versus connect, including the high-level pricing fork.
+- [Privy vs Turnkey](/blog/privy-vs-turnkey): finished SDK versus signing infrastructure, with Dfns.
+- [Alchemy vs Privy](/blog/alchemy-vs-privy): Account Kit deprecated; Wallet APIs as successor; Privy as recommended signer.
+- [Privy alternatives](/privy-alternatives): Cavos, Dynamic, Turnkey, Web3Auth, and Magic as replacements for Privy.
+- [embedded wallet](/embedded-wallet): definitions, key models, and how to choose an SDK.
+- [What is an embedded wallet?](/blog/what-is-an-embedded-wallet): the plain definition.
+- [Embedded wallet API](/blog/embedded-wallet-api): auth, create, keys, signing, gas, and recovery.
+- [Non-custodial embedded wallets](/blog/non-custodial-embedded-wallet): who can sign.
+- [Cavos vs Privy](/compare/privy), [Cavos vs Dynamic](/compare/dynamic), [Cavos vs Turnkey](/compare/turnkey), [Cavos vs Web3Auth](/compare/web3auth).
+- [Custody](/custody): the control test, not the UX label.
+- Chain-specific shortlists: [best embedded wallets for Stellar](/blog/best-embedded-wallets-stellar), [Solana](/blog/best-embedded-wallets-solana), and [Starknet](/blog/best-embedded-wallets-starknet).

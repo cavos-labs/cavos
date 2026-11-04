@@ -61,6 +61,7 @@ Cavos (`@cavos/kit`) is an embedded wallet SDK for web and React Native. The sig
 - [Embedded wallet API](https://cavos.xyz/blog/embedded-wallet-api): auth, connect, execute, gas, recovery in `@cavos/kit`
 - [Non-custodial embedded wallets](https://cavos.xyz/blog/non-custodial-embedded-wallet)
 - [Wallet-as-a-service](https://cavos.xyz/blog/wallet-as-a-service)
+- [Embedded wallet cost (2026)](https://cavos.xyz/blog/embedded-wallet-cost): Privy, Dynamic, Turnkey, Para, Web3Auth, Alchemy vs Cavos on published list prices
 - [How to add an embedded wallet to a React app](https://cavos.xyz/blog/how-to-add-an-embedded-wallet)
 - [Embedded wallet React SDK best practices](https://cavos.xyz/blog/embedded-wallet-react-sdk)
 - [Embedded wallet vs browser extension](https://cavos.xyz/blog/embedded-wallet-vs-browser-extension): where users should sign

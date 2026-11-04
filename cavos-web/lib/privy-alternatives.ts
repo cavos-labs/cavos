@@ -10,6 +10,7 @@ import {
   vendorSection,
 } from './alternatives-guide'
 import {
+  EMBEDDED_WALLET_COST_PATH,
   PRIVY_VS_DYNAMIC_PATH,
   PRIVY_VS_TURNKEY_PATH,
 } from './embedded-wallet-guide'
@@ -18,17 +19,17 @@ import { getCompetitor } from './compare-data'
 export const PRIVY_ALTERNATIVES_PATH = '/privy-alternatives'
 
 export const PRIVY_ALTERNATIVES_TITLE =
-  'Privy Alternatives and Competitors Guide (2026)'
+  'Privy Alternatives (2026): Five Competitors'
 
-/** 140 characters. Document title omits "| Cavos"; the layout template adds it. */
+/** 152 characters. Document title omits "| Cavos"; the layout template adds it. */
 export const PRIVY_ALTERNATIVES_DESCRIPTION =
-  'Privy alternatives compared: Cavos, Dynamic, Turnkey, Web3Auth, Magic. Five Privy competitors. Free to 1,000 wallets. Not the Shopify popup.'
+  'Privy alternatives and Privy competitors: Cavos, Dynamic, Turnkey, Web3Auth, Magic. Alternatives to Privy. Free to 1,000 wallets. Not the Shopify popup.'
 
-export const PRIVY_ALTERNATIVES_H1 = 'Privy alternatives'
+export const PRIVY_ALTERNATIVES_H1 = 'Privy alternatives and competitors'
 
 export const PRIVY_ALTERNATIVES_PUBLISHED = '2026-10-11'
 
-export const PRIVY_ALTERNATIVES_MODIFIED = '2026-10-31'
+export const PRIVY_ALTERNATIVES_MODIFIED = '2026-11-04'
 
 export const PRIVY_ALTERNATIVES_CRUMB = 'Privy alternatives'
 
@@ -156,9 +157,24 @@ export const privyAlternativesGuide: AlternativesGuide = {
   modified: PRIVY_ALTERNATIVES_MODIFIED,
   crumb: PRIVY_ALTERNATIVES_CRUMB,
   jsonLdId: 'privy-alternatives-json-ld',
+  answerHeading: 'What are some alternatives to Privy? (November 2026)',
+  answerParagraphs: [
+    [
+      'Cavos, Dynamic, Turnkey, Web3Auth / MetaMask Embedded Wallets, and Magic are the five Privy alternatives compared here. They are also the Privy competitors and the usual answer to alternatives to Privy, for an ',
+      { href: '/embedded-wallet', label: 'embedded wallet' },
+      ', not the Shopify popup of the same name. This page is the shortlist. Head-to-head write-ups stay on their own URLs.',
+    ],
+    [
+      'Cavos fits Starknet, Solana, or Stellar with a device-native key. Dynamic fits connecting wallets users already hold; that two-way is ',
+      { href: PRIVY_VS_DYNAMIC_PATH, label: 'Privy vs Dynamic' },
+      '. Turnkey is signing infrastructure. Web3Auth fits broad social-login chain coverage. Magic fits email-first EVM onboarding. Privy remains the more mature EVM choice. Published list prices, including Privy wallets cost, are ',
+      { href: EMBEDDED_WALLET_COST_PATH, label: 'how much embedded wallets cost' },
+      '.',
+    ],
+  ],
   introParagraphs: [
     [
-      'Cavos, Dynamic, Turnkey, Web3Auth, and Magic are the five Privy alternatives and competitors compared here. This page is the shortlist for that query: an ',
+      'Cavos, Dynamic, Turnkey, Web3Auth, and Magic are the five Privy alternatives and competitors compared here. This page is the shortlist for Privy alternative, Privy alternatives, Privy competitors, and alternatives to Privy: an ',
       { href: '/embedded-wallet', label: 'embedded wallet' },
       ' replacement for Privy, not the Shopify popup of the same name. A Privy alternative is a different product in this category, not a drop-in.',
     ],
@@ -171,6 +187,8 @@ export const privyAlternativesGuide: AlternativesGuide = {
       { href: PRIVY_VS_TURNKEY_PATH, label: 'Privy vs Turnkey' },
       '. Privy vs Dynamic (provision versus connect) is ',
       { href: PRIVY_VS_DYNAMIC_PATH, label: 'Privy vs Dynamic' },
+      '. Cross-vendor list prices, including Privy wallets cost, are ',
+      { href: EMBEDDED_WALLET_COST_PATH, label: 'how much embedded wallets cost' },
       '. Replacement shortlists also exist for ',
       { href: '/turnkey-alternatives', label: 'Turnkey' },
       ', ',

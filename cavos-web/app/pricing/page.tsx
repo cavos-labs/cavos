@@ -233,7 +233,15 @@ export default function PricingPage() {
                         >
                             Para alternatives
                         </Link>{' '}
-                        if you are comparing providers.
+                        if you are comparing providers. Cross-vendor list prices,
+                        including Privy wallets cost, are in{' '}
+                        <Link
+                            href="/blog/embedded-wallet-cost"
+                            className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                        >
+                            how much embedded wallets cost
+                        </Link>
+                        .
                     </p>
                 </header>
 

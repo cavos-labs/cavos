@@ -27,6 +27,8 @@ import {
   GASLESS_STARKNET_TRANSACTIONS_TITLE,
   WALLET_AS_A_SERVICE_PATH,
   WALLET_AS_A_SERVICE_TITLE,
+  EMBEDDED_WALLET_COST_PATH,
+  EMBEDDED_WALLET_COST_TITLE,
   EMBEDDED_WALLET_REACT_SDK_PATH,
   EMBEDDED_WALLET_REACT_SDK_TITLE,
   ALCHEMY_VS_PRIVY_PATH,
@@ -87,6 +89,11 @@ const GUIDES = [
     href: EMBEDDED_WALLET_PROVIDERS_PATH,
     title: EMBEDDED_WALLET_PROVIDERS_TITLE,
     body: 'Pricing, chains, and key models for Cavos, Privy, Dynamic, Turnkey, Magic, and Web3Auth.',
+  },
+  {
+    href: EMBEDDED_WALLET_COST_PATH,
+    title: EMBEDDED_WALLET_COST_TITLE,
+    body: 'How much embedded wallets cost in 2026: per-MAU, per-wallet, and per-signature list prices at 10k to 1M users.',
   },
   {
     href: PRIVY_VS_TURNKEY_PATH,

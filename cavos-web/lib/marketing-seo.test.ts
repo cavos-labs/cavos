@@ -82,6 +82,8 @@ import {
   EMBEDDED_WALLET_API_TITLE,
   NON_CUSTODIAL_EMBEDDED_WALLET_PATH,
   NON_CUSTODIAL_EMBEDDED_WALLET_TITLE,
+  EMBEDDED_WALLET_COST_PATH,
+  EMBEDDED_WALLET_COST_TITLE,
   EMBEDDED_WALLET_PROVIDERS_PATH,
   EMBEDDED_WALLET_PROVIDERS_TITLE,
   EMBEDDED_WALLET_VS_EXTENSION_PATH,
@@ -606,7 +608,7 @@ describe('marketing SEO', () => {
     assert.ok(
       EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What are embedded wallet payments?'),
     )
-    assert.equal(EMBEDDED_WALLET_MODIFIED, '2026-11-01')
+    assert.equal(EMBEDDED_WALLET_MODIFIED, '2026-11-04')
   })
 
   it('keeps a single H1 and adds how-it-works plus a compare-data provider table', () => {
@@ -669,6 +671,7 @@ describe('marketing SEO', () => {
     assert.ok(headings.includes('Embedded wallet platform and infrastructure'))
     assert.ok(headings.includes('Embedded wallet solution'))
     assert.ok(headings.includes('Embedded wallet payments'))
+    assert.match(pageSource, /It is not\s+an API reference/)
     assert.match(
       pageSource,
       /href=\{EMBEDDED_WALLET_API_PATH\}[^>]*>\s*embedded wallet API\s*</,
@@ -736,7 +739,7 @@ describe('marketing SEO', () => {
     assert.match(PRIVY_ALTERNATIVES_TITLE, /Privy Alternatives/)
     assert.match(PRIVY_ALTERNATIVES_TITLE, /Competitors/)
     assert.match(PRIVY_ALTERNATIVES_TITLE, /2026/)
-    assert.match(PRIVY_ALTERNATIVES_H1, /^Privy alternatives$/)
+    assert.equal(PRIVY_ALTERNATIVES_H1, 'Privy alternatives and competitors')
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Shopify/)
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Privy alternatives/)
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Privy competitors/)
@@ -790,7 +793,7 @@ describe('marketing SEO', () => {
       ],
     )
     assert.equal(PRIVY_ALTERNATIVES_PUBLISHED, '2026-10-11')
-    assert.equal(PRIVY_ALTERNATIVES_MODIFIED, '2026-10-31')
+    assert.equal(PRIVY_ALTERNATIVES_MODIFIED, '2026-11-04')
     assert.equal(PRIVY_ALTERNATIVES_CRUMB, 'Privy alternatives')
 
     const meta = marketingPageMetadata({
@@ -881,6 +884,9 @@ describe('marketing SEO', () => {
       dataSource,
       /Cavos, Dynamic, Turnkey, Web3Auth, and Magic are the five Privy/,
     )
+    assert.match(dataSource, /What are some alternatives to Privy\? \(November 2026\)/)
+    assert.match(dataSource, /how much embedded wallets cost/)
+    assert.match(dataSource, /href: PRIVY_VS_DYNAMIC_PATH/)
 
     const alchemyVsPrivy = fs.readFileSync(
       path.join(process.cwd(), 'content/blog/alchemy-vs-privy.mdx'),
@@ -912,6 +918,7 @@ describe('marketing SEO', () => {
         '/blog/non-custodial-embedded-wallet',
         '/blog/embedded-wallet-providers',
         '/blog/wallet-as-a-service',
+        '/blog/embedded-wallet-cost',
       ],
     )
     assert.match(dataSource, /audited OpenZeppelin account contract/)
@@ -1749,6 +1756,7 @@ describe('marketing SEO', () => {
       EMBEDDED_WALLET_REACT_SDK_PATH,
       ALCHEMY_VS_PRIVY_PATH,
       EMBEDDED_WALLET_PAYMENTS_PATH,
+      EMBEDDED_WALLET_COST_PATH,
     ]
     for (const href of guides) {
       const sources = marketingInlinkSources(href)
@@ -1931,9 +1939,11 @@ describe('marketing SEO', () => {
     assert.equal(privy.title, PRIVY_VS_TURNKEY_TITLE)
     assert.ok(providers.excerpt.length >= 140 && providers.excerpt.length <= 155)
     assert.ok(privy.excerpt.length >= 140 && privy.excerpt.length <= 155)
-    assert.equal(providers.updated, '2026-11-02')
-    assert.equal(privy.updated, '2026-11-02')
+    assert.equal(providers.updated, '2026-11-04')
+    assert.equal(privy.updated, '2026-11-04')
+    assert.match(EMBEDDED_WALLET_PROVIDERS_TITLE, /Best Embedded Wallet Providers/)
     assert.match(EMBEDDED_WALLET_PROVIDERS_TITLE, /Embedded Wallet Providers/)
+    assert.match(providers.excerpt, /best embedded wallet providers 2026/i)
     assert.match(PRIVY_VS_TURNKEY_TITLE, /Privy vs Turnkey/)
     assert.match(privy.excerpt, /Turnkey vs Privy/)
     assert.match(privy.excerpt, /Dfns/)
@@ -1942,7 +1952,7 @@ describe('marketing SEO', () => {
         providersSource.indexOf('## How to evaluate providers'),
       'comparison table should sit above the evaluation checklist',
     )
-    assert.equal((providersSource.match(/^\s+- question:/gm) ?? []).length, 6)
+    assert.equal((providersSource.match(/^\s+- question:/gm) ?? []).length, 9)
     assert.equal((privySource.match(/^\s+- question:/gm) ?? []).length, 9)
     assert.match(providersSource, /What are the best embedded wallet providers in 2026\?/)
     assert.match(providersSource, /How much do embedded wallet providers cost\?/)
@@ -1953,7 +1963,15 @@ describe('marketing SEO', () => {
       /Are there native embedded wallets for Midnight, Aleo, Stellar, Cosmos, or Sui\?/,
     )
     assert.match(providersSource, /Which embedded wallet provider supports the most chains\?/)
+    assert.match(providersSource, /How do Web3Auth and Dynamic embedded wallets compare\?/)
+    assert.match(providersSource, /How do Para and Dynamic embedded wallets compare\?/)
+    assert.match(providersSource, /What should an enterprise evaluate in an embedded wallet provider\?/)
+    assert.match(providersSource, /## The short answer \(November 2026\)/)
+    assert.match(providersSource, /## How do Web3Auth and Dynamic embedded wallets compare\?/)
+    assert.match(providersSource, /## How do Para and Dynamic embedded wallets compare\?/)
+    assert.match(providersSource, /## What an enterprise should evaluate/)
     assert.match(providersSource, /## Which embedded wallet provider supports the most chains\?/)
+    assert.match(providersSource, /\]\(\/blog\/embedded-wallet-cost\)/)
     assert.match(providersSource, /does not support Midnight, Aleo, Cosmos, or Sui/)
     assert.match(providersSource, /Aleo, and Midnight/)
     assert.match(providersSource, /as of November 2026/)
@@ -2480,8 +2498,11 @@ describe('marketing SEO', () => {
     assert.equal(EMBEDDED_WALLET_PROVIDERS_PATH, '/blog/embedded-wallet-providers')
     assert.equal(
       EMBEDDED_WALLET_PROVIDERS_TITLE,
-      'Embedded Wallet Providers: 2026 Comparison',
+      'Best Embedded Wallet Providers (2026 Guide)',
     )
+    assert.ok(`${EMBEDDED_WALLET_PROVIDERS_TITLE} | Cavos`.length <= 60)
+    assert.match(source, /\]\(\/blog\/embedded-wallet-cost\)/)
+    assert.match(source, /## The short answer \(November 2026\)/)
 
     const hub = fs.readFileSync(
       path.join(process.cwd(), 'app/embedded-wallet/page.tsx'),
@@ -2530,6 +2551,120 @@ describe('marketing SEO', () => {
     assert.equal(
       data['@graph'][0].mainEntityOfPage['@id'],
       'https://cavos.xyz/blog/embedded-wallet-providers',
+    )
+  })
+
+  it('indexes the embedded wallet cost guide as an Article with FAQ JSON-LD', () => {
+    const postPath = path.join(
+      process.cwd(),
+      'content/blog/embedded-wallet-cost.mdx',
+    )
+    assert.equal(fs.existsSync(postPath), true)
+    const source = fs.readFileSync(postPath, 'utf8')
+    const excerptMatch = source.match(/^excerpt:\s*"(.*)"$/m)
+    assert.ok(excerptMatch)
+    assert.ok(
+      excerptMatch[1].length >= 140 && excerptMatch[1].length <= 155,
+      String(excerptMatch[1].length),
+    )
+    assert.match(excerptMatch[1], /How much embedded wallets cost/)
+    assert.equal(EMBEDDED_WALLET_COST_PATH, '/blog/embedded-wallet-cost')
+    assert.equal(
+      EMBEDDED_WALLET_COST_TITLE,
+      'Embedded Wallet Cost (2026): Privy, Dynamic',
+    )
+    assert.ok(`${EMBEDDED_WALLET_COST_TITLE} | Cavos`.length <= 60)
+    assert.equal(EMBEDDED_WALLET_COST_TITLE.includes('| Cavos'), false)
+    const fields = parseBlogFrontmatter(source)
+    assert.equal(fields.title, EMBEDDED_WALLET_COST_TITLE)
+    assert.equal(fields.date, '2026-11-04')
+    assert.equal(fields.updated, '2026-11-04')
+    assert.match(source, /\[embedded wallet\]\(\/embedded-wallet\)/)
+    assert.match(source, /\]\(\/pricing\)/)
+    assert.match(source, /\]\(\/blog\/embedded-wallet-providers\)/)
+    assert.match(source, /\]\(\/blog\/privy-vs-dynamic\)/)
+    assert.match(source, /\]\(\/blog\/privy-vs-turnkey\)/)
+    assert.match(source, /\]\(\/privy-alternatives\)/)
+    assert.match(source, /How much does Privy cost\?/)
+    assert.match(
+      source,
+      /What's the cheapest way to create wallets for millions of users\?/,
+    )
+    assert.match(
+      source,
+      /What capabilities should an enterprise evaluate for pricing transparency in embedded wallets\?/,
+    )
+    assert.match(source, /## The short answer \(November 2026\)/)
+    assert.match(source, /## Worked example: 10k \/ 100k \/ 1M users/)
+    assert.match(source, /## Pricing-transparency checklist for enterprises/)
+    assert.match(source, /## Where Cavos fits/)
+    assert.match(source, /privy\.io\/pricing/)
+    assert.match(source, /dynamic\.xyz\/pricing/)
+    assert.match(source, /turnkey\.com\/pricing/)
+    assert.match(source, /getpara\.com\/pricing/)
+    assert.match(source, /metamask\.io\/developer\/embedded-wallets/)
+    assert.match(source, /alchemy\.com\/docs\/reference\/pricing-plans/)
+    assert.match(source, /audited OpenZeppelin account contract/)
+    assert.match(source, /Private keys never leave the device in plaintext/)
+    assert.match(source, /hardware-isolated, non-custodial/)
+    assert.doesNotMatch(source, /audited Cavos/)
+    assert.doesNotMatch(source, /trustless|impossible/i)
+    assert.doesNotMatch(source, /Horizon signer/)
+    assert.doesNotMatch(source, /category:\s*"Release"/)
+    assert.doesNotMatch(source, /robots:\s*noindex/)
+    assert.equal((source.match(/^\s+- question:/gm) ?? []).length, 7)
+
+    const pricing = fs.readFileSync(
+      path.join(process.cwd(), 'app/pricing/page.tsx'),
+      'utf8',
+    )
+    assert.match(pricing, /href="\/blog\/embedded-wallet-cost"/)
+    assert.match(pricing, /how much embedded wallets cost/)
+
+    const providersGuide = fs.readFileSync(
+      path.join(process.cwd(), 'content/blog/embedded-wallet-providers.mdx'),
+      'utf8',
+    )
+    assert.match(providersGuide, /\]\(\/blog\/embedded-wallet-cost\)/)
+
+    const data = blogPostJsonLd({
+      title: EMBEDDED_WALLET_COST_TITLE,
+      description: excerptMatch[1],
+      path: EMBEDDED_WALLET_COST_PATH,
+      datePublished: '2026-11-04',
+      dateModified: '2026-11-04',
+      type: 'Article',
+      faq: [
+        {
+          question: 'How much does Privy cost?',
+          answer:
+            'Privy wallets cost, on the public Developer page as of November 2026: Free, Core, and Scale, then PAYG above 10,000 MAU.',
+        },
+        {
+          question: "What's the cheapest way to create wallets for millions of users?",
+          answer:
+            'Among vendors in this table with a published self-serve create allowance, Cavos Essential is $59/month. Enterprise volume discounts are unpublished.',
+        },
+      ],
+      crumbs: [
+        { name: 'Home', path: '/' },
+        { name: 'Blog', path: '/blog' },
+        {
+          name: EMBEDDED_WALLET_COST_TITLE,
+          path: EMBEDDED_WALLET_COST_PATH,
+        },
+      ],
+    })
+    const json = JSON.stringify(data)
+    JSON.parse(json)
+    assert.equal(data['@graph'][0]['@type'], 'Article')
+    assert.equal(data['@graph'][0].dateModified, '2026-11-04')
+    assert.equal(data['@graph'][1]['@type'], 'BreadcrumbList')
+    assert.equal(data['@graph'][2]['@type'], 'FAQPage')
+    assert.equal(data['@graph'][0].url, 'https://cavos.xyz/blog/embedded-wallet-cost')
+    assert.equal(
+      data['@graph'][0].mainEntityOfPage['@id'],
+      'https://cavos.xyz/blog/embedded-wallet-cost',
     )
   })
 
@@ -2838,7 +2973,9 @@ describe('marketing SEO', () => {
     )
     const apiFields = parseBlogFrontmatter(source)
     assert.equal(apiFields.title, EMBEDDED_WALLET_API_TITLE)
-    assert.equal(apiFields.updated, '2026-11-01')
+    assert.equal(apiFields.updated, '2026-11-04')
+    assert.match(excerptMatch[1], /^Embedded Wallet API/)
+    assert.match(source, /## Embedded Wallet API overview \(November 2026\)/)
 
     const hub = fs.readFileSync(
       path.join(process.cwd(), 'app/embedded-wallet/page.tsx'),
@@ -2847,6 +2984,7 @@ describe('marketing SEO', () => {
     assert.match(hub, /EMBEDDED_WALLET_API_PATH/)
     assert.match(hub, /PRIVY_VS_TURNKEY_PATH/)
     assert.match(hub, /Related guides/)
+    assert.match(hub, /It is not\s+an API reference/)
 
     const reactGuide = fs.readFileSync(
       path.join(process.cwd(), 'content/blog/how-to-add-an-embedded-wallet.mdx'),
@@ -3438,7 +3576,7 @@ describe('marketing SEO', () => {
 
     const fields = parseBlogFrontmatter(source)
     assert.equal(fields.title, ALCHEMY_VS_PRIVY_TITLE)
-    assert.equal(fields.updated, '2026-11-03')
+    assert.equal(fields.updated, '2026-11-04')
     assert.equal(fields.date, '2026-10-27')
     assert.match(fields.excerpt, /Alchemy vs Privy/)
     assert.match(fields.excerpt, /Account Kit is deprecated/)
@@ -3519,6 +3657,7 @@ describe('marketing SEO', () => {
     assert.match(source, /STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH/)
     assert.match(source, /GASLESS_STARKNET_TRANSACTIONS_PATH/)
     assert.match(source, /EMBEDDED_WALLET_PROVIDERS_PATH/)
+    assert.match(source, /EMBEDDED_WALLET_COST_PATH/)
     assert.match(source, /PRIVY_VS_TURNKEY_PATH/)
     assert.match(source, /PRIVY_VS_DYNAMIC_PATH/)
     assert.match(source, /EMBEDDED_WALLET_API_PATH/)
@@ -3722,6 +3861,8 @@ describe('marketing SEO', () => {
     assert.match(source, /href=["']\/embedded-solana-wallet["']/)
     assert.match(source, /href=["']\/embedded-stellar-wallet["']/)
     assert.match(source, /href=["']\/privy-alternatives["']/)
+    assert.match(source, /href="\/blog\/embedded-wallet-cost"/)
+    assert.match(source, /how much embedded wallets cost/)
     assert.doesNotMatch(source, /session key|sessionKey|session-key/)
     assert.doesNotMatch(source, /audited Cavos/)
     assert.doesNotMatch(source, /Horizon signer|grandfathered/)
@@ -4202,6 +4343,7 @@ const GUIDE_PATH_CONSTANTS: Record<string, string> = {
   EMBEDDED_WALLET_REACT_SDK_PATH: '/blog/embedded-wallet-react-sdk',
   ALCHEMY_VS_PRIVY_PATH: '/blog/alchemy-vs-privy',
   EMBEDDED_WALLET_PAYMENTS_PATH: '/blog/embedded-wallet-payments',
+  EMBEDDED_WALLET_COST_PATH: '/blog/embedded-wallet-cost',
 }
 
 const SELF_PAGE_FOR_HREF: Record<string, string> = {
@@ -4220,6 +4362,7 @@ const SELF_PAGE_FOR_HREF: Record<string, string> = {
   '/blog/embedded-wallet-react-sdk': 'content/blog/embedded-wallet-react-sdk.mdx',
   '/blog/alchemy-vs-privy': 'content/blog/alchemy-vs-privy.mdx',
   '/blog/embedded-wallet-payments': 'content/blog/embedded-wallet-payments.mdx',
+  '/blog/embedded-wallet-cost': 'content/blog/embedded-wallet-cost.mdx',
   '/privacy': 'app/privacy/page.tsx',
   '/dpa': 'app/dpa/page.tsx',
   '/user-privacy': 'app/user-privacy/page.tsx',
@@ -4333,12 +4476,45 @@ describe('best embedded wallets per chain', () => {
       assert.match(source, /non-custodial embedded wallet for Starknet, Solana and Stellar/)
       assert.match(source, /\]\(\/pricing\)/)
       assert.match(source, /\]\(\/custody\)/)
+      assert.match(source, /## The short answer \(November 2026\)/)
+      assert.match(source, /as of November 2026/)
       assert.doesNotMatch(source, /—/)
       assert.doesNotMatch(source, /trustless|impossible/i)
-      const excerpt = source.match(/^excerpt:\s*"(.*)"$/m)
-      assert.ok(excerpt && excerpt[1].length <= 160)
+      const fields = parseBlogFrontmatter(source)
+      assert.equal(fields.updated, '2026-11-04')
+      assert.match(fields.title, /Best Embedded Wallets for/)
+      assert.match(fields.title, /\(2026 Guide\)/)
+      assert.ok(`${fields.title} | Cavos`.length <= 60, fields.title)
+      assert.ok(fields.excerpt.length >= 140 && fields.excerpt.length <= 155)
     })
   }
+
+  it('cross-links the three chain best-ofs to each other and the landing pages', () => {
+    const stellar = fs.readFileSync(
+      path.join(process.cwd(), 'content/blog/best-embedded-wallets-stellar.mdx'),
+      'utf8',
+    )
+    const solana = fs.readFileSync(
+      path.join(process.cwd(), 'content/blog/best-embedded-wallets-solana.mdx'),
+      'utf8',
+    )
+    const starknet = fs.readFileSync(
+      path.join(process.cwd(), 'content/blog/best-embedded-wallets-starknet.mdx'),
+      'utf8',
+    )
+    assert.match(stellar, /\]\(\/blog\/best-embedded-wallets-solana\)/)
+    assert.match(stellar, /\]\(\/blog\/best-embedded-wallets-starknet\)/)
+    assert.match(stellar, /\]\(\/embedded-stellar-wallet\)/)
+    assert.match(solana, /\]\(\/blog\/best-embedded-wallets-stellar\)/)
+    assert.match(solana, /\]\(\/blog\/best-embedded-wallets-starknet\)/)
+    assert.match(solana, /\]\(\/embedded-solana-wallet\)/)
+    assert.match(starknet, /\]\(\/blog\/best-embedded-wallets-stellar\)/)
+    assert.match(starknet, /\]\(\/blog\/best-embedded-wallets-solana\)/)
+    assert.match(starknet, /\]\(\/embedded-starknet-wallet\)/)
+    assert.match(starknet, /What is the best wallet for Starknet\?/)
+    assert.match(starknet, /app developer/)
+    assert.match(solana, /\[Para alternatives\]\(\/para-alternatives\)/)
+  })
 
   it('emits ItemList JSON-LD with absolute URLs', () => {
     const data = blogPostJsonLd({
@@ -4416,10 +4592,12 @@ describe('embedded wallet definitional and API posts', () => {
     assert.match(read('public/llms.txt'), /blog\/what-is-an-embedded-wallet/)
     assert.match(read('public/llms.txt'), /blog\/embedded-wallet-api/)
     assert.match(read('public/llms.txt'), /blog\/privy-vs-dynamic/)
+    assert.match(read('public/llms.txt'), /blog\/embedded-wallet-cost/)
   })
 
   it('embedded-wallet-api opens with a runnable @cavos/kit example and house copy', () => {
     const raw = read('content/blog/embedded-wallet-api.mdx')
+    assert.match(raw, /## Embedded Wallet API overview \(November 2026\)/)
     assert.match(raw, /## The embedded wallet API in 15 lines/)
     assert.match(raw, /import \{ Cavos \} from "@cavos\/kit"/)
     assert.match(raw, /\/blog\/what-is-an-embedded-wallet/)

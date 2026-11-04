@@ -1,8 +1,8 @@
 ---
 title: "Embedded Wallet API (2026): SDK Methods & Auth"
 date: "2026-10-21"
-updated: "2026-11-01"
-excerpt: "Search for an embedded wallet API: auth, create, sign, gas, recovery. Cavos ships a client SDK, not a public REST create-wallet endpoint, in @cavos/kit."
+updated: "2026-11-04"
+excerpt: "Embedded Wallet API in 2026: auth, create, sign, gas, recovery. Cavos ships a client SDK, not a public REST create-wallet endpoint, in @cavos/kit."
 category: "Guide"
 ogQuote: "Authenticate, connect, then execute. The same contract on every adapter."
 slug: "embedded-wallet-api"
@@ -26,6 +26,18 @@ faq:
 Search for **embedded wallet API** and you usually want the developer surface: authenticate a user, create or look up a wallet, sign, send, sponsor gas, recover a device. An [embedded wallet](/embedded-wallet) lives inside your application ([what is an embedded wallet?](/blog/what-is-an-embedded-wallet) has the plain definition). The user signs in the way they already do. The product resolves an on-chain account they can pay, receive, and sign with. There is no [browser extension](/blog/embedded-wallet-vs-browser-extension), no seed phrase, and no trip to another app.
 
 The **embedded wallet API** is that surface on a [wallet as a service](/blog/wallet-as-a-service) platform. Cavos ships it as a **client SDK**, not a public REST create-wallet endpoint. The packages are `@cavos/kit`, `@cavos/kit/react`, and `@cavos/kit/react-native`. Hosted registry, paymaster, and relayer calls happen inside the kit behind an App ID. This guide is the docs-style map of that contract in `@cavos/kit` 0.5.0, grounded in the [API reference](https://docs.cavos.xyz/docs/api-reference). The [React integration](/blog/how-to-add-an-embedded-wallet) is the install. Best practices for embedding that wallet SDK (custody, passkeys, Gas Sponsorship in Any Token, errors, and testnet) are in the [embedded wallet React SDK](/blog/embedded-wallet-react-sdk) guide. The [non-custodial guide](/blog/non-custodial-embedded-wallet) is the custody test. The [providers comparison](/blog/embedded-wallet-providers) is the shortlist. Adapters ship today for [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), and [Stellar](/embedded-stellar-wallet).
+
+## Embedded Wallet API overview (November 2026)
+
+Authenticate, connect, then execute. That is the whole public surface.
+
+- **Auth.** `CavosAuth` and `useCavos().login`, `sendOtp`, `verifyOtp`. Login selects the user. It never signs.
+- **Create or look up.** `Cavos.connect` and `CavosProvider`. Registry key: `(userId, appId, chain, network)`. Connect never deploys Starknet or Stellar.
+- **Sign and send.** `wallet.execute`, `signMessage`, `signTransaction`; Solana `executeInstructions`; Stellar `invokeContract`.
+- **Gas.** Starknet `paymasterApiKey`; Solana and Stellar hosted relayers. Relayers are not signers.
+- **Recover.** `enrollPasskeyDefault()`, `approveDeviceWithPasskey()`. The passkey and Nitro enclave store an encrypted MasterDEK copy for restore.
+
+There is no public REST create-wallet endpoint and no server-side key. The method list is the [API reference](https://docs.cavos.xyz/docs/api-reference). The 15-line example below is the same contract.
 
 ## The embedded wallet API in 15 lines
 
