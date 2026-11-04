@@ -166,6 +166,36 @@ describe('embedded wallet payments guide', () => {
   })
 })
 
+describe('embedded wallet cost guide', () => {
+  const raw = fs.readFileSync(path.join(BLOG_DIR, 'embedded-wallet-cost.mdx'), 'utf8')
+  const body = raw.split(/^---$/m).slice(2).join('---').trim()
+
+  it('opens as a cross-vendor cost model and does not restate Cavos pricing', () => {
+    assert.match(body, /\*\*Embedded wallet cost\*\*/)
+    assert.match(body, /\[embedded wallet\]\(\/embedded-wallet\)/)
+    assert.match(body, /It is not \[Cavos pricing\]\(\/pricing\)/)
+    assert.match(body, /This post does not restate that page/)
+  })
+
+  it('covers published list prices, the 10k/100k/1M example, and the target FAQs', () => {
+    assert.match(raw, /question: "How much does Privy cost\?"/)
+    assert.match(
+      raw,
+      /question: "What's the cheapest way to create wallets for millions of users\?"/,
+    )
+    assert.match(body, /## Worked example: 10k \/ 100k \/ 1M users/)
+    assert.match(body, /## Pricing-transparency checklist for enterprises/)
+    assert.match(body, /privy\.io\/pricing/)
+    assert.match(body, /dynamic\.xyz\/pricing/)
+    assert.match(body, /turnkey\.com\/pricing/)
+    assert.match(body, /getpara\.com\/pricing/)
+    assert.match(body, /audited OpenZeppelin account contract/)
+    assert.doesNotMatch(body, /audited Cavos/)
+    assert.doesNotMatch(body, /trustless|impossible/i)
+    assert.doesNotMatch(raw, /<!--/)
+  })
+})
+
 describe('head-term canonical targets', () => {
   const read = (slug: string) => fs.readFileSync(path.join(BLOG_DIR, `${slug}.mdx`), 'utf8')
 

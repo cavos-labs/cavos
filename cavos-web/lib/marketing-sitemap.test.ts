@@ -323,8 +323,8 @@ Hello
     )
     assert.ok(providers)
     assert.ok(privy)
-    assert.equal(providers.lastModified.toISOString().startsWith('2026-11-02'), true)
-    assert.equal(privy.lastModified.toISOString().startsWith('2026-11-02'), true)
+    assert.equal(providers.lastModified.toISOString().startsWith('2026-11-04'), true)
+    assert.equal(privy.lastModified.toISOString().startsWith('2026-11-04'), true)
 
     const reactSdk = publishedBlogPosts().find(
       (item) => item.slug === 'embedded-wallet-react-sdk',
@@ -336,7 +336,42 @@ Hello
     assert.ok(alchemyVsPrivy)
     assert.equal(reactSdk.lastModified.toISOString().startsWith('2026-10-31'), true)
     assert.equal(
-      alchemyVsPrivy.lastModified.toISOString().startsWith('2026-11-03'),
+      alchemyVsPrivy.lastModified.toISOString().startsWith('2026-11-04'),
+      true,
+    )
+
+    const cost = publishedBlogPosts().find(
+      (item) => item.slug === 'embedded-wallet-cost',
+    )
+    const api = publishedBlogPosts().find(
+      (item) => item.slug === 'embedded-wallet-api',
+    )
+    const stellarBest = publishedBlogPosts().find(
+      (item) => item.slug === 'best-embedded-wallets-stellar',
+    )
+    const solanaBest = publishedBlogPosts().find(
+      (item) => item.slug === 'best-embedded-wallets-solana',
+    )
+    const starknetBest = publishedBlogPosts().find(
+      (item) => item.slug === 'best-embedded-wallets-starknet',
+    )
+    assert.ok(cost)
+    assert.ok(api)
+    assert.ok(stellarBest)
+    assert.ok(solanaBest)
+    assert.ok(starknetBest)
+    assert.equal(cost.lastModified.toISOString().startsWith('2026-11-04'), true)
+    assert.equal(api.lastModified.toISOString().startsWith('2026-11-04'), true)
+    assert.equal(
+      stellarBest.lastModified.toISOString().startsWith('2026-11-04'),
+      true,
+    )
+    assert.equal(
+      solanaBest.lastModified.toISOString().startsWith('2026-11-04'),
+      true,
+    )
+    assert.equal(
+      starknetBest.lastModified.toISOString().startsWith('2026-11-04'),
       true,
     )
 
@@ -359,7 +394,7 @@ Hello
   })
 
   it('keeps the indexable marketing URLs including the React integration guide', () => {
-    assert.equal(entries.length, 46)
+    assert.equal(entries.length, 47)
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/para-alternatives`))
     assert.ok(
       urls.includes(`${MARKETING_ORIGIN}/blog/how-to-add-an-embedded-wallet`),
@@ -380,6 +415,7 @@ Hello
     assert.ok(
       urls.includes(`${MARKETING_ORIGIN}/blog/embedded-wallet-providers`),
     )
+    assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/embedded-wallet-cost`))
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/privy-vs-turnkey`))
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/privy-vs-dynamic`))
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/embedded-wallet-api`))
