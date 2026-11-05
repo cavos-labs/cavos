@@ -72,6 +72,7 @@ Cavos (`@cavos/kit`) is a hardware-isolated, non-custodial embedded wallet SDK f
 - [Embedded wallet payments](https://cavos.xyz/blog/embedded-wallet-payments): USDC transfers on Stellar, Solana, and Starknet
 - [How to set up a Stellar wallet in your app](https://cavos.xyz/blog/stellar-embedded-wallet-tutorial)
 - [The Cavos enclave is open source (Kit 0.5.0)](https://cavos.xyz/blog/cavos-kit-0-5-0)
+- [Sign in with Telegram (Kit 0.5.2)](https://cavos.xyz/blog/cavos-kit-0-5-2)
 
 ## Docs
 

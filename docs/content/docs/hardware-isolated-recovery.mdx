@@ -8,7 +8,7 @@ not. **Hardware-isolated recovery** lets them recover the
 [embedded wallet](https://cavos.xyz/embedded-wallet)
 ([embedded wallets](https://cavos.xyz/embedded-wallet),
 [embedded wallet SDK](https://cavos.xyz/embedded-wallet)) the way they expect to:
-by signing in again with Google, Apple, GitHub, or an email code.
+by signing in again with Google, Apple, GitHub, Telegram, or an email code.
 
 The obvious way to build that would be for Cavos to hold a key and hand it over
 once a login checks out. That would make Cavos custodial and every Cavos
@@ -113,6 +113,14 @@ the authorization code with the client's PKCE verifier and signs an ES256 token
 `hex(SHA-256("cavos-github-subject-v1:" + client_id + ":" + github_id))`, so
 identity is per OAuth app (see
 [Authentication → GitHub](/docs/auth#bring-your-own-github-oauth-app)).
+Telegram follows the same pattern with its own issuer: the enclave redeems the
+code, verifies Telegram's id_token, and signs an ES256 token (`iss`
+`https://enclave.cavos.xyz/telegram`, `aud` `cavos-telegram`). Unlike GitHub,
+the job carries the login secret, and the enclave derives the nonce from it.
+The subject is
+`hex(SHA-256("cavos-telegram-subject-v1:" + bot_id + ":" + telegram_user_id))`,
+so identity is per bot (see
+[Authentication → Telegram](/docs/auth#bring-your-own-telegram-bot)).
 Cavos-signed compatibility
 tokens are never accepted.
 
@@ -175,7 +183,7 @@ formality:
 - **The sign-in.** Recovery follows whoever completes a fresh sign-in as the
   enrolled identity. That means the identity provider, and the service that
   runs the sign-in flow: Cavos, when you use Cavos-hosted Google, Apple,
-  GitHub, or email login.
+  GitHub, Telegram, or email login.
 
 In short, recovery is as strong as the measured enclave image and the
 sign-in behind it. Nobody, Cavos included, can take a sealed key out of the
@@ -186,11 +194,14 @@ treat social recovery as one path among several rather than the only one.
 
 ## Turning it on
 
-Enable it in **Dashboard → App → Environments**. Google, Apple, email, and
-GitHub are all accepted; each wallet recovers through the provider its owner
-signed in with. GitHub is live and tested in production, optional, web only,
+Enable it in **Dashboard → App → Environments**. Google, Apple, email,
+GitHub, and Telegram are all accepted; each wallet recovers through the provider
+its owner signed in with. GitHub is live and tested in production, optional, web only,
 and not recommended over Google, Apple, or email. See
-[Authentication → GitHub](/docs/auth#github).
+[Authentication → GitHub](/docs/auth#github). Telegram (kit 0.5.2) is live and
+tested in production, optional, and web only. See
+[Authentication → Telegram](/docs/auth#telegram) and
+[Telegram account security](#telegram-account-security).
 
 ```tsx title="app/provider.tsx"
 <CavosProvider
@@ -229,8 +240,7 @@ paths, in this order:
 
 1. **Pinned PCR0.** The live Nitro attestation's PCR0 is in
    `DEFAULT_SOCIAL_RECOVERY_ATTESTATION.pcr0`. The list is transitional: it
-   covers currently deployed images, including ones that predate signed
-   releases, and it is meant to shrink once those images are replaced.
+   covers images deployed before signed releases, and it is meant to shrink once those images are replaced.
 2. **Signed release.** The SDK fetches
    `{backendUrl}/api/enclave/releases/{pcr0}` (default host `https://cavos.xyz`)
    and verifies a Sigstore v0.3 bundle **in the client**: Rekor inclusion, the
@@ -262,12 +272,27 @@ for that repository and owner, using that workflow, on a `refs/tags/vN` push
 (`N` a positive integer that matches the statement's `version`). The signature
 is public in Rekor. On `cavos-labs/cavos-recovery`, the `Release` workflow
 runs in the `release` environment with required reviewers, so pushing a tag
-does not publish a release on its own. The currently deployed image is
-accepted through the PCR0 list; the signed-release path is how later deploys
-can ship without a kit release. No production enclave has been accepted
-through this path yet. The browser library that checks the bundle
-(`@freedomofpress/sigstore-browser` 0.1.15) has not received an independent
-security audit.
+does not publish a release on its own. The browser library that checks the
+bundle (`@freedomofpress/sigstore-browser` 0.1.15) has not received an
+independent security audit.
+
+### Release v2
+
+The current production enclave is
+[release v2](https://github.com/cavos-labs/cavos-recovery/releases/tag/v2)
+(version 2, expires 2027-11-05). Its PCR0 is **not** on the kit's pinned list.
+Kits from 0.5.0 on accept it through the signed-release path, so it is the
+first production enclave accepted that way.
+
+| Measurement | Value |
+|---|---|
+| `PCR0` | `36d3ceb0759af00c1c1b3f055c271b4fe628235036c67b6e3234199454167f41bfc0c6387061481ba3331740891974ea` |
+| `PCR1` | `3b4a7e1b5f13c5a1000b3ed32ef8995ee13e9876329f9bc72650b918329ef9cf4e2e4d1e1e37375dab0ba56ba0974d03` |
+| `PCR2` | `4d1f328b79d4220fc278f9c3c41957a9a49de24061a51ba2c40370a7738afb8a8dcc8549cffa311c81a26de103d711b8` |
+
+Kits 0.5.0 and 0.5.1 keep working with release v2 for Google, Apple, email, and
+GitHub. Only Telegram sign-in needs 0.5.2. Verify these values against the
+release's `measurements.json`, as described below.
 
 The AWS signature on the attestation document still anchors authenticity
 outside Cavos. The policy only fixes *which workload* you are willing to talk
@@ -300,16 +325,16 @@ Do not copy hashes out of older docs. Each signed release publishes three
 assets: `enclave.eif` (the image), `measurements.json`, and
 `enclave-<pcr0>.sigstore.json` (the bundle the SDK verifies).
 `measurements.json` is the output of `nitro-cli build-enclave`. For
-[release v1](https://github.com/cavos-labs/cavos-recovery/releases/tag/v1) it
+[release v2](https://github.com/cavos-labs/cavos-recovery/releases/tag/v2) it
 is:
 
-```json title="measurements.json (v1)"
+```json title="measurements.json (v2)"
 {
   "Measurements": {
     "HashAlgorithm": "Sha384 { ... }",
-    "PCR0": "7f32a8b51fabf733339db5425d31851ad2919322581fe21793db17975c44a33702fa9be0c81a391b32049a0daf220cdb",
+    "PCR0": "36d3ceb0759af00c1c1b3f055c271b4fe628235036c67b6e3234199454167f41bfc0c6387061481ba3331740891974ea",
     "PCR1": "3b4a7e1b5f13c5a1000b3ed32ef8995ee13e9876329f9bc72650b918329ef9cf4e2e4d1e1e37375dab0ba56ba0974d03",
-    "PCR2": "b35174fa3d4134a71a17d46a91afa2367cfb1f226e349c09c79262644743713ca59c9ca5303ff83c579bc951263d5979"
+    "PCR2": "4d1f328b79d4220fc278f9c3c41957a9a49de24061a51ba2c40370a7738afb8a8dcc8549cffa311c81a26de103d711b8"
   }
 }
 ```
@@ -319,7 +344,7 @@ the application. The SDK requires all three to equal the live attestation.
 To check a release yourself:
 
 ```bash title="Terminal"
-gh release download v1 -R cavos-labs/cavos-recovery -p measurements.json
+gh release download v2 -R cavos-labs/cavos-recovery -p measurements.json
 jq -r '.Measurements.PCR0' measurements.json
 ```
 
@@ -327,7 +352,7 @@ The enclave build is reproducible. Rebuild the tagged source and compare the
 `PCR0` it reports with the one above:
 
 ```bash title="Terminal"
-git clone --branch v1 https://github.com/cavos-labs/cavos-recovery
+git clone --branch v2 https://github.com/cavos-labs/cavos-recovery
 cd cavos-recovery/enclave
 ./scripts/build-enclave.sh
 ```
@@ -345,6 +370,16 @@ A strict `connect-src` must allow:
 
 The hosted vault already uses `connect-src 'self' https:`.
 
+## Telegram account security
+
+Per Telegram's FAQ, a Telegram account is reachable with an SMS code to its
+phone number unless Two-Step Verification (a cloud password) is on. Inactive
+Telegram accounts are deleted after 18 months by default. Recommend that users
+turn on Two-Step Verification and keep a second recovery method, for example a
+[passkey](/docs/passkeys). Recovery follows whoever completes a fresh sign-in
+as the enrolled identity, so a Telegram wallet is only as safe as that Telegram
+account.
+
 ## With your own auth
 
 Social recovery works when you authenticate users yourself (Clerk, Auth0,
@@ -357,6 +392,11 @@ Cavos-hosted GitHub flow (`getGitHubOAuthUrl` / `login('github')`), not a
 token from Clerk or Auth0. You can still bring your own **GitHub OAuth app**
 per environment so the consent screen shows your app: see
 [Authentication → GitHub](/docs/auth#github).
+Telegram is the same: a Telegram user recovers by signing in with Telegram
+again through the Cavos-hosted flow (`getTelegramOAuthUrl` /
+`login('telegram')`), not with a token from Clerk or Auth0. You can bring your
+own **Telegram bot** per environment: see
+[Authentication → Telegram](/docs/auth#bring-your-own-telegram-bot).
 
 <Callout type="warn">
 **Not available for Google and Apple (since 0.2.6).** The enclave requires the
@@ -422,6 +462,7 @@ pool, they describe that design; none of it exists now.
 ## Related
 
 - [Cavos Kit 0.5.0](https://cavos.xyz/blog/cavos-kit-0-5-0): signed enclave releases and GitHub sign-in.
+- [Cavos Kit 0.5.2](https://cavos.xyz/blog/cavos-kit-0-5-2): Telegram sign-in and enclave release v2.
 - [Recovery codes](/docs/recovery-codes): why Cavos wallets do not use them.
 - [Multi-device](/docs/multi-device): restoring the MasterDEK on a new device.
 - [Passkeys](/docs/passkeys): a synced passkey as the approval factor.

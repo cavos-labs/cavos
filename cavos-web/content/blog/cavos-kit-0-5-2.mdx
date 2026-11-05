@@ -1,0 +1,129 @@
+---
+title: "Sign in with Telegram (Kit 0.5.2)"
+date: "2026-11-05"
+excerpt: "@cavos/kit 0.5.2 adds Telegram as an optional hosted login, verified inside the attested enclave. Plus enclave release v2, accepted through signed releases."
+category: "Release"
+ogQuote: "Telegram sign-in, verified inside the enclave. A stolen code is useless without the login secret."
+slug: "cavos-kit-0-5-2"
+faq:
+  - question: "How do I add Sign in with Telegram to my app?"
+    answer: "Upgrade to @cavos/kit 0.5.2 with npm install @cavos/kit@^0.5.2, then add 'telegram' to the modal providers: modal={{ providers: [\"google\", \"apple\", \"email\", \"telegram\"] }}. You can also call login('telegram') from useCavos, or CavosAuth.getTelegramOAuthUrl(redirectUri?) followed by handleCallback. Telegram sign-in is optional and web only."
+  - question: "Does Telegram sign-in work in React Native?"
+    answer: "No. The native build cannot verify the enclave attestation this flow needs, the same reason email and GitHub sign-in are not available there."
+  - question: "What is a Telegram user's wallet identity?"
+    answer: "Telegram's numeric user id (the id claim), hashed with the bot id into the token's sub. It is per bot, and a username change does not change it. Switching an environment's bot gives every Telegram user a new identity and a new, empty wallet."
+  - question: "Is a Telegram account safe enough to recover a wallet?"
+    answer: "A Telegram account is reachable with an SMS code to its phone number unless Two-Step Verification is on, and inactive accounts are deleted after 18 months by default. Recommend that users turn on Two-Step Verification and keep a second recovery method, for example a passkey."
+---
+
+`@cavos/kit` **0.5.2** is on npm and adds **Sign in with Telegram** to the Cavos [embedded wallet](/embedded-wallet) SDK. It is live and tested in production.
+
+Telegram sign-in is optional and web only. The default modal providers are unchanged. It needs the current Cavos backend and recovery enclave [release v2](https://github.com/cavos-labs/cavos-recovery/releases/tag/v2). Both are live.
+
+## What shipped
+
+- `login('telegram')` in `useCavos`, and `CavosAuth.getTelegramOAuthUrl(redirectUri?)` followed by `handleCallback`, as with the other providers.
+- `'telegram'` as a modal provider. Add it to offer the button.
+- `SocialRecoveryProvider` is now `"google" | "apple" | "email" | "github" | "telegram"`.
+- An optional Telegram bot per environment, so Telegram's consent screen shows your bot.
+- Enclave release v2, the first production enclave accepted through signed releases.
+
+Upgrade:
+
+```bash
+npm install @cavos/kit@^0.5.2
+```
+
+Kits 0.5.0 and 0.5.1 keep working with the v2 enclave for Google, Apple, email, and GitHub. Only Telegram needs 0.5.2.
+
+```tsx
+modal={{ providers: ["google", "apple", "email", "telegram"] }}
+```
+
+Docs: [Authentication → Telegram](https://docs.cavos.xyz/docs/auth#telegram), [Hardware-isolated recovery](https://docs.cavos.xyz/docs/hardware-isolated-recovery), [API reference](https://docs.cavos.xyz/docs/api-reference), [Troubleshooting](https://docs.cavos.xyz/docs/troubleshooting#telegram-sign-in-errors).
+
+## How it works
+
+1. `getTelegramOAuthUrl` keeps a login secret and a PKCE verifier in `sessionStorage` and asks the backend for the authorize URL. It refuses the URL unless it is `https://oauth.telegram.org/auth` with this login's `code_challenge`, `code_challenge_method=S256`, `nonce` exactly `<app_id>.<BASE64URL(SHA-256(login secret))>`, `scope` exactly `openid profile`, and `response_type=code`.
+2. Telegram redirects to the Cavos callback, which never talks to Telegram. It returns a one-time `telegram_grant`.
+3. `handleCallback` sends `verify_telegram {code_verifier, login_secret}` into the attested enclave through `/api/oauth/telegram/verify`. Unlike GitHub, the job carries the login secret itself, and the enclave derives the nonce from it. A stolen authorization code is useless without the secret, whether or not Telegram enforces PKCE.
+4. The enclave redeems the code at `oauth.telegram.org/token` and verifies Telegram's id_token: the signature against `https://oauth.telegram.org/.well-known/jwks.json` (RS256 or ES256 on P-256), `iss` `https://oauth.telegram.org`, `aud` equal to the bot id, `exp`, `iat` no older than 5 minutes, the `nonce` as above, and the numeric Telegram user id in the `id` claim.
+5. The enclave signs its own ES256 login token. Telegram's id_token lives about 30 seconds, and its `sub` differs per bot.
+
+The enclave's token carries:
+
+- `iss` `https://enclave.cavos.xyz/telegram`
+- `aud` `cavos-telegram`
+- `sub` `hex(SHA-256("cavos-telegram-subject-v1:" + bot_id + ":" + telegram_user_id))`
+- `azp` the bot id
+- `nonce` `<app_id>.<BASE64URL(SHA-256(login secret))>`
+- `name` and `preferred_username` when Telegram sends them
+
+There is no email and no phone number: the `phone` scope is never requested. JWKS: `https://enclave.cavos.xyz/.well-known/jwks.json`.
+
+The identity is Telegram's numeric user id (the `id` claim), not Telegram's `sub`. It is per bot, because the bot id is hashed into `sub`. A Telegram username change does not change the identity.
+
+Not in React Native. The native build cannot verify the enclave attestation this flow needs, same as email and GitHub.
+
+Enclave codes: `telegram_rejected` (SDK: "Telegram did not accept this sign-in. Try again.") and `telegram_unreachable` (the enclave could not reach `oauth.telegram.org`). The hosted `/api/oauth/telegram/verify` route returns `telegram_rejected` as is and other enclave failures as `enclave_unavailable`. A stale or reused grant is `invalid_grant`, now shown as "This sign-in expired. Sign in again." for both Telegram and GitHub.
+
+### Bring your own Telegram bot
+
+Leave **Dashboard → App → Environments → Telegram sign-in** empty to use Cavos's bot. To show your own bot name and avatar on Telegram's consent screen, create a bot with @BotFather. Then open the @BotFather mini app, select the bot, and open **Login Widget**:
+
+- Add the callback the dashboard shows to **Allowed URLs**: `https://cavos.xyz/api/oauth/telegram/callback`. It is Telegram's callback into Cavos; do not add it to your app's Callback URLs.
+- Copy the **Client ID** (the bot id) and the **Client Secret**.
+
+Save the Bot ID and Client Secret on the environment. The secret is encrypted at rest and never returned. Leave the field empty on later saves to keep the stored value. Changing the Bot ID requires a new secret.
+
+Use the OIDC Client Secret, not the Bot API token from `/newbot`. The dashboard refuses anything shaped like a bot token (`<digits>:<35 chars>`), because a bot token controls the bot.
+
+Keep the bot's signing algorithm on RS256 (the default) or ES256. Telegram restricts EdDSA and ES256K bots to the `openid` scope, so they do not return the user id, and the login fails.
+
+Switching an environment's bot, in either direction, gives every Telegram user a **new identity and a new, empty wallet**.
+
+### Switching Telegram accounts
+
+Telegram has no `prompt=login`, and remembers the signed-in user in a cookie on `oauth.telegram.org` for about a year. To sign in with another Telegram account, use a private window, or end the web session in Telegram → Settings → Devices.
+
+### Account security
+
+Per Telegram's FAQ, a Telegram account is reachable with an SMS code to its phone number unless Two-Step Verification (a cloud password) is on. Inactive Telegram accounts are deleted after 18 months by default. Recommend that users turn on Two-Step Verification and keep a second recovery method, for example a passkey.
+
+A Telegram user recovers by signing in with Telegram again through the Cavos-hosted flow (`login('telegram')` / `getTelegramOAuthUrl`), not with a token from Clerk or Auth0. Same rule as GitHub.
+
+## Enclave release v2
+
+The production enclave is now [release v2](https://github.com/cavos-labs/cavos-recovery/releases/tag/v2) (version 2, expires 2027-11-05). Its PCR0 is not on the kit's pinned list. Kits from 0.5.0 on accept it through the signed-release path, so this is the first production enclave accepted that way.
+
+```text
+PCR0 36d3ceb0759af00c1c1b3f055c271b4fe628235036c67b6e3234199454167f41bfc0c6387061481ba3331740891974ea
+PCR1 3b4a7e1b5f13c5a1000b3ed32ef8995ee13e9876329f9bc72650b918329ef9cf4e2e4d1e1e37375dab0ba56ba0974d03
+PCR2 4d1f328b79d4220fc278f9c3c41957a9a49de24061a51ba2c40370a7738afb8a8dcc8549cffa311c81a26de103d711b8
+```
+
+Verify these against the release's `measurements.json`. The [0.5.0 post](/blog/cavos-kit-0-5-0) describes the signed-release path; its statements that no production enclave had used it yet are now out of date.
+
+## Engineering notes
+
+Three things we found while building it:
+
+- **State length.** Telegram rejects an OAuth `state` longer than 256 characters, so Cavos uses a fixed 122-character signed state for this flow.
+- **JWKS parsing.** Telegram's JWKS includes an ES256K key. The Rust `jsonwebtoken` 9 crate cannot parse that as part of a key set, so the enclave selects the key by `kid` before parsing it.
+- **Gzip.** Telegram serves its JWKS gzip-compressed even when not asked, so the enclave accepts gzip with a 64 KiB cap.
+
+## What did not change
+
+Google, Apple, email, and GitHub behaviour is unchanged. The enclave still wraps the MasterDEK; it does not sign transfers. Wallet keys never leave the user's device in plaintext.
+
+## What to read next
+
+- [cavos-recovery on GitHub](https://github.com/cavos-labs/cavos-recovery): the enclave source and [release v2](https://github.com/cavos-labs/cavos-recovery/releases/tag/v2)
+- [Authentication → Telegram](https://docs.cavos.xyz/docs/auth#telegram): flow, token claims, bring your own bot, account security
+- [Hardware-isolated recovery](https://docs.cavos.xyz/docs/hardware-isolated-recovery): release v2, the two accept paths, Telegram account security
+- [Troubleshooting](https://docs.cavos.xyz/docs/troubleshooting#telegram-sign-in-errors): Telegram errors
+- [Cavos Kit 0.5.0](/blog/cavos-kit-0-5-0): GitHub sign-in and signed enclave releases
+- [Changelog](/blog): other product updates
+- [embedded wallet](/embedded-wallet), [embedded wallets](/embedded-wallet), and the [embedded wallet SDK](/embedded-wallet): custody, key models, and how to choose.
+- [Best embedded wallet](/blog/best-embedded-wallet): chain first, then custody, then connect versus provision.
+- [How to add an embedded wallet to Next.js](/blog/embedded-wallet-nextjs): App Router client boundary.

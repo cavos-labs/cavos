@@ -1,6 +1,6 @@
 ---
 title: Authentication
-description: Use Cavos hosted login (Google / Apple / GitHub / email code) or bring your own identity.
+description: Use Cavos hosted login (Google / Apple / GitHub / Telegram / email code) or bring your own identity.
 ---
 
 Authentication exists for **one reason**: to produce a stable `userId` (plus
@@ -69,7 +69,7 @@ Social recovery also works from your own auth on Starknet, Solana, and Stellar
 
 ## Option B: Cavos hosted auth (`CavosAuth`)
 
-`CavosAuth` provides Google, Apple, GitHub, and email-code login that resolves
+`CavosAuth` provides Google, Apple, GitHub, Telegram, and email-code login that resolves
 to a Cavos `Identity` you pass straight into `connect`.
 
 ```ts title="TypeScript"
@@ -189,6 +189,138 @@ every other enclave failure, including `github_unreachable`, as
 [Troubleshooting](/docs/troubleshooting#github-sign-in-errors) and the
 [0.5.0 changelog](https://cavos.xyz/blog/cavos-kit-0-5-0).
 
+### Telegram
+
+Telegram sign-in is live and tested in production (`@cavos/kit` 0.5.2). It is
+an **optional** web provider. The default modal providers are unchanged; add
+`'telegram'` to show the button, or call `login('telegram')` /
+`auth.getTelegramOAuthUrl()`. React Native does not offer Telegram: like email
+and GitHub, the flow has to verify the enclave's attestation, which that build
+cannot do. It needs the current Cavos backend and recovery enclave
+[release v2](/docs/hardware-isolated-recovery#release-v2), both live.
+
+```ts title="TypeScript"
+const url = await auth.getTelegramOAuthUrl(/* redirectUri? */);
+window.location.href = url;
+
+const identity = await auth.handleCallback(window.location.search);
+```
+
+`getTelegramOAuthUrl` keeps a login secret and a PKCE verifier in
+`sessionStorage` and asks the backend for the authorize URL. It refuses the URL
+unless it is `https://oauth.telegram.org/auth` with:
+
+- this login's `code_challenge` and `code_challenge_method=S256`;
+- `nonce` exactly `<app_id>.<BASE64URL(SHA-256(login secret))>`;
+- `scope` exactly `openid profile`;
+- `response_type=code`.
+
+The callback never talks to Telegram. It returns a one-time `telegram_grant`.
+`handleCallback` sends `verify_telegram` with `{code_verifier, login_secret}`
+into the attested enclave through `/api/oauth/telegram/verify`. Unlike GitHub,
+the job carries the login secret itself, and the enclave derives the nonce
+from it. A stolen authorization code is useless without the secret, whether or
+not Telegram enforces PKCE.
+
+The enclave redeems the code at `oauth.telegram.org/token` and verifies
+Telegram's id_token:
+
+- signature against `https://oauth.telegram.org/.well-known/jwks.json`, RS256
+  or ES256 on P-256;
+- `iss` is `https://oauth.telegram.org`;
+- `aud` is the bot id;
+- `exp` has not passed, and `iat` is no older than 5 minutes;
+- `nonce` matches exactly as above;
+- the numeric Telegram user id is in the `id` claim.
+
+The enclave then signs its own ES256 login token. Telegram's id_token lives
+about 30 seconds, and its `sub` differs per bot.
+
+| Claim | Value |
+|---|---|
+| `iss` | `https://enclave.cavos.xyz/telegram` |
+| `aud` | `cavos-telegram` |
+| `sub` | `hex(SHA-256("cavos-telegram-subject-v1:" + bot_id + ":" + telegram_user_id))` |
+| `azp` | the bot id |
+| `nonce` | `<app_id>.<BASE64URL(SHA-256(login secret))>` |
+| `name`, `preferred_username` | only when Telegram sends them |
+
+The token has no email and no phone number: the `phone` scope is never
+requested. JWKS: `https://enclave.cavos.xyz/.well-known/jwks.json`.
+
+The identity is Telegram's numeric user id (the `id` claim), not Telegram's
+`sub`. It is per bot, because the bot id is hashed into `sub`. A Telegram
+username change does not change the identity.
+
+#### Bring your own Telegram bot
+
+Leave **Dashboard → App → Environments → Telegram sign-in** empty to use
+Cavos's bot. To show your own bot name and avatar on Telegram's consent
+screen:
+
+1. Create a bot with @BotFather.
+2. Open the @BotFather mini app, select the bot, and open **Login Widget**.
+3. Add the callback the dashboard shows to **Allowed URLs**: the Cavos
+   dashboard origin followed by `/api/oauth/telegram/callback`, that is
+   `https://cavos.xyz/api/oauth/telegram/callback`. This is Telegram's callback
+   into Cavos; do **not** add it to your app's **Callback URLs**.
+4. Copy the **Client ID** (the bot id) and the **Client Secret**.
+
+Save the **Bot ID** and **Client Secret** on the environment. The secret is
+encrypted at rest and **never returned**. Leave the field empty on later saves
+to keep the stored value. Changing the Bot ID requires a new secret.
+
+Use the OIDC **Client Secret**, not the Bot API token from `/newbot`. The
+dashboard refuses anything shaped like a bot token (`<digits>:<35 chars>`),
+because a bot token controls the bot.
+
+Keep the bot's signing algorithm on RS256 (the default) or ES256. Telegram
+restricts EdDSA and ES256K bots to the `openid` scope, so they do not return
+the user id, and the login fails.
+
+Switching an environment's bot, in either direction, gives every Telegram user
+a **new identity and a new, empty wallet**.
+
+The built-in modal only shows Telegram when `providers` includes `'telegram'`:
+
+```tsx title="app/provider.tsx"
+<CavosProvider
+  config={{ appId, environment, chains, defaultChain, network, appSalt }}
+  modal={{ appName: "My App", providers: ["google", "apple", "email", "telegram"] }}
+>
+  {children}
+</CavosProvider>
+```
+
+#### Switching Telegram accounts
+
+Telegram has no `prompt=login`. It remembers the signed-in user in a cookie on
+`oauth.telegram.org` for about a year. To sign in with another Telegram
+account, use a private window, or end the web session in Telegram → Settings →
+Devices.
+
+#### Telegram account security
+
+Per Telegram's FAQ, a Telegram account is reachable with an SMS code to its
+phone number unless Two-Step Verification (a cloud password) is on. Inactive
+Telegram accounts are deleted after 18 months by default. Recommend that users
+turn on Two-Step Verification and keep a second recovery method, for example a
+[passkey](/docs/passkeys).
+
+A Telegram user recovers by signing in with Telegram again through the
+Cavos-hosted flow (`login('telegram')` / `getTelegramOAuthUrl`), not with a
+token from Clerk or Auth0.
+
+Enclave failure codes: `telegram_rejected` (Telegram refused the code, or its
+id_token failed a check) and `telegram_unreachable` (the enclave could not
+reach `oauth.telegram.org`). The SDK maps `telegram_rejected` to `Telegram did
+not accept this sign-in. Try again.` The hosted `/api/oauth/telegram/verify`
+route returns `telegram_rejected` as is and every other enclave failure,
+including `telegram_unreachable`, as `enclave_unavailable`. A stale or reused
+grant is `invalid_grant`. See
+[Troubleshooting](/docs/troubleshooting#telegram-sign-in-errors) and the
+[0.5.2 changelog](https://cavos.xyz/blog/cavos-kit-0-5-2).
+
 <Callout type="warn">
 Register every callback URL for your app in **Dashboard → App → Settings → Callback URLs**,
 one per line, matched **exactly**: scheme, host, path, no trailing slash, and no
@@ -222,7 +354,7 @@ its own signed token (issuer `https://enclave.cavos.xyz`, keys at
 `https://enclave.cavos.xyz/.well-known/jwks.json`), bound to a login secret the
 SDK keeps, the same binding Google and Apple tokens have. Email users therefore
 get [hardware-isolated recovery](/docs/hardware-isolated-recovery) like Google,
-Apple, and GitHub users. The user ID of an email login is derived from the address.
+Apple, GitHub, and Telegram users. The user ID of an email login is derived from the address.
 
 - **Lifetime.** A code expires after 5 minutes and allows 3 attempts. A new code
   for the same address can be requested after 60 seconds.
@@ -234,8 +366,8 @@ Apple, and GitHub users. The user ID of an email login is derived from the addre
   testing mode). Other domains get `This email provider is not supported yet.`
   (error code `email_undeliverable`).
 - **React Native.** Email sign-in is not available yet: `sendOtp` and
-  `verifyOtp` throw an `unsupported` error there. GitHub is not on the native
-  API either. Use Google or Apple.
+  `verifyOtp` throw an `unsupported` error there. GitHub and Telegram are not on
+  the native API either. Use Google or Apple.
 
 `CavosAuthModal` shows a 9-character code screen and accepts a pasted code with
 spaces or hyphens. For the errors the code flow can return, see
@@ -245,7 +377,7 @@ spaces or hyphens. For the errors the code flow can return, see
 
 React Native apps use `NativeCavosAuth` from `@cavos/kit/react-native`. It opens
 Google or Apple in the system browser and returns through the registered
-`redirectUri`. Email and GitHub sign-in are not available on React Native yet.
+`redirectUri`. Email, GitHub, and Telegram sign-in are not available on React Native yet.
 
 ```ts title="TypeScript"
 import { Cavos, NativeCavosAuth } from "@cavos/kit/react-native";

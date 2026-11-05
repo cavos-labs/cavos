@@ -1927,6 +1927,40 @@ describe('marketing SEO', () => {
     assert.doesNotMatch(source, /Horizon signer/i)
   })
 
+  it('keeps the Kit 0.5.2 changelog title inside the SERP limit', () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), 'content/blog/cavos-kit-0-5-2.mdx'),
+      'utf8',
+    )
+    const fields = parseBlogFrontmatter(source)
+    assert.equal(fields.slug, 'cavos-kit-0-5-2')
+    assert.equal(fields.category, 'Release')
+    assert.equal(fields.date, '2026-11-05')
+    assert.equal(fields.title.includes('| Cavos'), false)
+    const fullTitle = `${fields.title} | Cavos`
+    assert.ok(
+      fullTitle.length <= 60,
+      `Kit 0.5.2 SERP title length ${fullTitle.length}: ${fullTitle}`,
+    )
+    assert.match(source, /\[embedded wallet\]\(\/embedded-wallet\)/)
+    assert.match(source, /docs\.cavos\.xyz\/docs\/hardware-isolated-recovery/)
+    assert.match(source, /npm install @cavos\/kit@\^0\.5\.2/)
+    assert.match(source, /getTelegramOAuthUrl/)
+    assert.match(source, /live and tested in production/)
+    assert.match(source, /https:\/\/enclave\.cavos\.xyz\/telegram/)
+    assert.match(source, /cavos-telegram/)
+    assert.match(source, /Bring your own Telegram bot/)
+    assert.match(source, /encrypted at rest and never returned/)
+    assert.match(source, /Two-Step Verification/)
+    assert.match(source, /Enclave release v2/)
+    assert.match(source, /releases\/tag\/v2/)
+    assert.match(source, /36d3ceb0759af00c/)
+    assert.match(source, /first production enclave accepted that way/)
+    assert.match(source, /122-character signed state/)
+    assert.doesNotMatch(source, /grandfathered/i)
+    assert.doesNotMatch(source, /Horizon signer/i)
+  })
+
   it('emits Article JSON-LD with dateModified, author, and breadcrumbs for every blog post', () => {
     const pageSource = fs.readFileSync(
       path.join(process.cwd(), 'app/blog/[slug]/page.tsx'),
@@ -3741,6 +3775,7 @@ describe('marketing SEO', () => {
     assert.match(source, /href: '\/embedded-solana-wallet'/)
     assert.match(source, /href: '\/embedded-stellar-wallet'/)
     assert.match(source, /href="\/blog\/cavos-kit-0-5-0"/)
+    assert.match(source, /href="\/blog\/cavos-kit-0-5-2"/)
     assert.match(
       source,
       /Classic G… account, one Ed25519 key from the MasterDEK, sponsored reserves and fees\./,

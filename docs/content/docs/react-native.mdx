@@ -118,10 +118,10 @@ export function Providers({ children }) {
 
 The provider exports `useCavos`, `CavosAuthModal`, `NativeCavosAuth`, and the
 native passkey and key classes. `NativeCavosAuth` supports Google and Apple
-through the registered deep/universal link. Email and GitHub sign-in are not
-available on React Native yet: both need to verify the enclave's attestation,
+through the registered deep/universal link. Email, GitHub, and Telegram sign-in are not
+available on React Native yet: all need to verify the enclave's attestation,
 which this build cannot do. The native `providers` type is
-`("google" | "apple" | "email")[]`; `'github'` is not accepted.
+`("google" | "apple" | "email")[]`; `'github'` and `'telegram'` are not accepted.
 
 ## Keys and security levels
 

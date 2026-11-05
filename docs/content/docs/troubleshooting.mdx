@@ -70,7 +70,8 @@ Four causes, in the order worth checking:
    half; the environment must also have it enabled in the dashboard. It is off
    by default. A GitHub user recovers only by signing in with GitHub again, so
    your app must still offer it (`'github'` in `modal.providers`, or
-   `login('github')`).
+   `login('github')`). The same holds for Telegram (`'telegram'` in
+   `modal.providers`, or `login('telegram')`).
 2. **No `appId`.** The enclave session is scoped to the app; without it the
    feature cannot start. Flagged as `[social-recovery-without-app-id]`.
 3. **Your own auth, with no provider token supplied.** If you authenticate users
@@ -129,7 +130,7 @@ React Native. The callback has to land where that secret is:
 - **React Native:** the app has to stay alive between opening the browser and
   receiving the deep link. If the OS killed it, start the login again.
 - **A stale URL:** each sign-in URL is single-use. Call `getGoogleOAuthUrl()` /
-  `getAppleOAuthUrl()` / `getGitHubOAuthUrl()` right before redirecting rather
+  `getAppleOAuthUrl()` / `getGitHubOAuthUrl()` / `getTelegramOAuthUrl()` right before redirecting rather
   than caching the result.
 
 ## Google or Apple login stopped working after a backend update
@@ -159,7 +160,7 @@ and the [0.5.0 changelog](https://cavos.xyz/blog/cavos-kit-0-5-0).
 | Message | Code | Meaning |
 |---|---|---|
 | `GitHub did not accept this sign-in. Try again.` | `github_rejected` | GitHub refused the authorization code (denied, expired, or a verifier mismatch). Start the login again. |
-| `This GitHub sign-in expired. Sign in again.` | `invalid_grant` | The one-time grant wrapped around the code is stale or reused. |
+| `This sign-in expired. Sign in again.` | `invalid_grant` | The one-time grant wrapped around the code is stale or reused. Before 0.5.2 the SDK message was `This GitHub sign-in expired. Sign in again.` |
 | `kit/auth: the GitHub sign-in URL is not the one this login asked for` | none | The authorize URL from the backend was not `https://github.com/login/oauth/authorize` with this login's PKCE `code_challenge` and `S256`. |
 | `kit/auth: the GitHub token was not issued by the enclave` | none | The token's `iss` was not `https://enclave.cavos.xyz/github`. |
 
@@ -172,6 +173,29 @@ If GitHub users suddenly have new, empty wallets, check whether the
 environment's GitHub OAuth app changed. Identity is per OAuth client ID, so
 that is expected; see
 [Authentication → GitHub](/docs/auth#bring-your-own-github-oauth-app).
+
+## Telegram sign-in errors
+
+| Message | Code | Meaning |
+|---|---|---|
+| `Telegram did not accept this sign-in. Try again.` | `telegram_rejected` | Telegram refused the code, or its id_token failed a check. Start the login again. |
+| `This sign-in expired. Sign in again.` | `invalid_grant` | The one-time grant wrapped around the code is stale or reused. |
+| `kit/auth: the Telegram sign-in URL is not the one this login asked for` | none | The authorize URL did not carry exactly this login's challenge, nonce and scope. |
+| `kit/auth: the Telegram token was not issued by the enclave` | none | The token's `iss` was not `https://enclave.cavos.xyz/telegram`. |
+
+`telegram_unreachable` is the enclave's code when it cannot reach
+`oauth.telegram.org`. The hosted `/api/oauth/telegram/verify` returns
+`telegram_rejected` as is, and other enclave failures as `enclave_unavailable`.
+
+Telegram sign-in needs `@cavos/kit` 0.5.2 or later. Kits 0.5.0 and 0.5.1 keep
+working with the current enclave for Google, Apple, email, and GitHub.
+
+If Telegram users suddenly have new, empty wallets, check whether the
+environment's bot changed. Identity is per bot, so that is expected; see
+[Authentication → Telegram](/docs/auth#bring-your-own-telegram-bot).
+
+To sign in with another Telegram account, see
+[Switching Telegram accounts](/docs/auth#switching-telegram-accounts).
 
 ## `connect-src` blocks enclave release lookup
 

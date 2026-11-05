@@ -251,7 +251,7 @@ domain prefix before signing.
 ## Unlock factors & silent signing
 
 One spend key, restored by an enclave unwrap or a passkey's encrypted copy.
-Signing in again with the enrolled Google, Apple, GitHub, or email identity
+Signing in again with the enrolled Google, Apple, GitHub, Telegram, or email identity
 **does** restore the account.
 
 | Factor | Role |
@@ -273,7 +273,7 @@ synced passkey can open the wallet. It is *not* 2FA and does not add a signer
 to the account. See [Passkeys](/docs/passkeys) for how the copy is protected.
 
 <Callout type="warn">
-Use the enclave if you want Google/Apple/GitHub/email restore without giving a synced
+Use the enclave if you want Google/Apple/GitHub/Telegram/email restore without giving a synced
 credential spending power by itself. `deviceApproval: "passkey"` is one chain.
 </Callout>
 

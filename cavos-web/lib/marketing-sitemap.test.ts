@@ -290,6 +290,7 @@ describe('marketing sitemap', () => {
     assert.equal(isBlogPostNoindex('alchemy-vs-privy'), false)
     assert.equal(isBlogPostNoindex('privy-vs-dynamic'), false)
     assert.equal(isBlogPostNoindex('cavos-kit-0-5-0'), false)
+    assert.equal(isBlogPostNoindex('cavos-kit-0-5-2'), false)
     assert.equal(
       urls.includes(`${MARKETING_ORIGIN}/blog/v1-1-9-sdk-security`),
       false,
@@ -424,7 +425,7 @@ Hello
   })
 
   it('keeps the indexable marketing URLs including the React integration guide', () => {
-    assert.equal(entries.length, 50)
+    assert.equal(entries.length, 51)
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/para-alternatives`))
     assert.ok(
       urls.includes(`${MARKETING_ORIGIN}/blog/how-to-add-an-embedded-wallet`),
@@ -459,6 +460,7 @@ Hello
     )
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/alchemy-vs-privy`))
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/cavos-kit-0-5-0`))
+    assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/cavos-kit-0-5-2`))
     assert.ok(
       urls.includes(`${MARKETING_ORIGIN}/blog/embedded-wallet-payments`),
     )
