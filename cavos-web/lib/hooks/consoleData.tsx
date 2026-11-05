@@ -23,11 +23,12 @@ export type ConsoleApp = {
 type ConsoleData = {
   organizations: ConsoleOrganization[]
   organizationId: string
-  setOrganizationId: (value: string) => void
+  setOrganizationId: (value: string) => string
   upsertOrganization: (value: unknown) => string | null
   apps: ConsoleApp[]
   appId: string
   setAppId: (value: string, organization?: string) => void
+  adoptApp: (id: string) => boolean
   upsertApp: (value: unknown) => void
   removeApp: (id: string) => string | null
   loading: boolean
@@ -167,9 +168,21 @@ export function ConsoleDataProvider({ children }: { children: ReactNode }) {
 
   const setOrganizationId = useCallback((value: string) => {
     setOrganizationIdState(value)
-    if (!value) return
+    if (!value) return ''
     window.localStorage.setItem(ORG_STORAGE_KEY, value)
-    setAppIdState(pickAppId(value, apps))
+    const next = pickAppId(value, apps)
+    setAppIdState(next)
+    return next
+  }, [apps])
+
+  const adoptApp = useCallback((id: string) => {
+    const organization = apps.find((app) => app.id === id)?.organization_id
+    if (!organization) return false
+    setOrganizationIdState(organization)
+    window.localStorage.setItem(ORG_STORAGE_KEY, organization)
+    window.localStorage.setItem(appStorageKey(organization), id)
+    setAppIdState(id)
+    return true
   }, [apps])
 
   const setAppId = useCallback((value: string, organization = organizationId) => {
@@ -225,12 +238,13 @@ export function ConsoleDataProvider({ children }: { children: ReactNode }) {
     apps,
     appId,
     setAppId,
+    adoptApp,
     upsertApp,
     removeApp,
     loading,
     error,
     appsError,
-  }), [appId, apps, appsError, error, loading, organizationId, organizations, removeApp, setAppId, setOrganizationId, upsertApp, upsertOrganization])
+  }), [adoptApp, appId, apps, appsError, error, loading, organizationId, organizations, removeApp, setAppId, setOrganizationId, upsertApp, upsertOrganization])
 
   return <ConsoleDataContext.Provider value={value}>{children}</ConsoleDataContext.Provider>
 }
