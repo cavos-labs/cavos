@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server'
 import { organizationForApp } from '@/lib/operations/access'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { encryptJson } from '@/lib/oauth/encryption'
+import { isTelegramBotId, looksLikeBotToken } from '@/lib/oauth/telegram'
 
-const SOCIAL_RECOVERY_PROVIDERS = ['google', 'apple', 'email', 'github']
+const SOCIAL_RECOVERY_PROVIDERS = ['google', 'apple', 'email', 'github', 'telegram']
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -11,14 +12,15 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   if (!access) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   const { data, error } = await access.supabase
     .from('app_environments')
-    .select('id,public_id,kind,is_active,allowed_origins,low_balance_threshold_usd,social_recovery_enabled,social_recovery_provider,social_recovery_audiences,github_client_id,github_client_secret_ciphertext,created_at,updated_at')
+    .select('id,public_id,kind,is_active,allowed_origins,low_balance_threshold_usd,social_recovery_enabled,social_recovery_provider,social_recovery_audiences,github_client_id,github_client_secret_ciphertext,telegram_bot_id,telegram_client_secret_ciphertext,created_at,updated_at')
     .eq('app_id', id)
     .order('kind', { ascending: false })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   const environments = (data ?? []).map(
-    ({ github_client_secret_ciphertext, ...environment }) => ({
+    ({ github_client_secret_ciphertext, telegram_client_secret_ciphertext, ...environment }) => ({
       ...environment,
       github_client_secret_set: !!github_client_secret_ciphertext,
+      telegram_client_secret_set: !!telegram_client_secret_ciphertext,
     }),
   )
   return NextResponse.json({ environments })
@@ -32,7 +34,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!body.environment_id) return NextResponse.json({ error: 'environment_id is required' }, { status: 400 })
   const { data: currentEnvironment } = await access.supabase
     .from('app_environments')
-    .select('id,social_recovery_enabled,social_recovery_provider,social_recovery_audiences,github_client_id,github_client_secret_ciphertext')
+    .select('id,social_recovery_enabled,social_recovery_provider,social_recovery_audiences,github_client_id,github_client_secret_ciphertext,telegram_bot_id,telegram_client_secret_ciphertext')
     .eq('id', body.environment_id)
     .eq('app_id', id)
     .maybeSingle()
@@ -120,6 +122,52 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       }
     }
   }
+  if (body.telegram_bot_id !== undefined || body.telegram_client_secret !== undefined) {
+    const botId = body.telegram_bot_id
+    const clientSecret = body.telegram_client_secret
+    if (botId !== undefined && botId !== null && typeof botId !== 'string') {
+      return NextResponse.json({ error: 'Invalid Telegram bot ID' }, { status: 400 })
+    }
+    if (clientSecret !== undefined && clientSecret !== null && typeof clientSecret !== 'string') {
+      return NextResponse.json({ error: 'Invalid Telegram client secret' }, { status: 400 })
+    }
+    const trimmedId = typeof botId === 'string' ? botId.trim() : botId
+    if (typeof trimmedId === 'string' && trimmedId !== '' && !isTelegramBotId(trimmedId)) {
+      return NextResponse.json({ error: 'Telegram bot ID must be a number' }, { status: 400 })
+    }
+    if (typeof clientSecret === 'string' && clientSecret.length > 255) {
+      return NextResponse.json({ error: 'Telegram client secret is too long' }, { status: 400 })
+    }
+    if (typeof clientSecret === 'string' && looksLikeBotToken(clientSecret.trim())) {
+      return NextResponse.json(
+        {
+          error:
+            'This is a Bot API token. Paste the OIDC Client Secret from BotFather → Bot Settings → Web Login instead.',
+        },
+        { status: 400 },
+      )
+    }
+    if (botId === null || trimmedId === '') {
+      updates.telegram_bot_id = null
+      updates.telegram_client_secret_ciphertext = null
+    } else {
+      const effectiveId = typeof trimmedId === 'string' ? trimmedId : currentEnvironment.telegram_bot_id
+      const newSecret = typeof clientSecret === 'string' ? clientSecret.trim() : ''
+      const hasNewSecret = newSecret !== ''
+      const botChanged = typeof trimmedId === 'string' && trimmedId !== currentEnvironment.telegram_bot_id
+      if (typeof trimmedId === 'string') updates.telegram_bot_id = trimmedId
+      if (hasNewSecret) updates.telegram_client_secret_ciphertext = encryptJson(newSecret)
+      if (botChanged && !hasNewSecret) {
+        return NextResponse.json({ error: 'A new bot needs its own Telegram client secret' }, { status: 400 })
+      }
+      if (effectiveId && !hasNewSecret && !currentEnvironment.telegram_client_secret_ciphertext) {
+        return NextResponse.json({ error: 'A Telegram client secret is required with a bot ID' }, { status: 400 })
+      }
+      if (!effectiveId && hasNewSecret) {
+        return NextResponse.json({ error: 'A Telegram bot ID is required with a client secret' }, { status: 400 })
+      }
+    }
+  }
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'No supported fields provided' }, { status: 400 })
   }
@@ -143,8 +191,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     .select()
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  const { github_client_secret_ciphertext, ...environment } = data
+  const { github_client_secret_ciphertext, telegram_client_secret_ciphertext, ...environment } = data
   return NextResponse.json({
-    environment: { ...environment, github_client_secret_set: !!github_client_secret_ciphertext },
+    environment: {
+      ...environment,
+      github_client_secret_set: !!github_client_secret_ciphertext,
+      telegram_client_secret_set: !!telegram_client_secret_ciphertext,
+    },
   })
 }
