@@ -105,6 +105,12 @@ import {
   ALCHEMY_VS_PRIVY_TITLE,
   EMBEDDED_WALLET_PAYMENTS_PATH,
   EMBEDDED_WALLET_PAYMENTS_TITLE,
+  EMBEDDED_WALLET_VS_SMART_WALLET_PATH,
+  EMBEDDED_WALLET_VS_SMART_WALLET_TITLE,
+  EMBEDDED_WALLET_NEXTJS_PATH,
+  EMBEDDED_WALLET_NEXTJS_TITLE,
+  BEST_EMBEDDED_WALLET_PATH,
+  BEST_EMBEDDED_WALLET_TITLE,
 } from './embedded-wallet-guide'
 import {
   COMPETITORS,
@@ -584,7 +590,7 @@ describe('marketing SEO', () => {
     assert.ok(definitionWords >= 40 && definitionWords <= 60, definitionWords)
     assert.match(EMBEDDED_WALLET_DEFINITION, /^Embedded wallets are /)
     assert.match(EMBEDDED_WALLET_DEFINITION, /An embedded wallet lets/)
-    assert.ok(EMBEDDED_WALLET_FAQ.length >= 8 && EMBEDDED_WALLET_FAQ.length <= 14)
+    assert.ok(EMBEDDED_WALLET_FAQ.length >= 8 && EMBEDDED_WALLET_FAQ.length <= 16)
     assert.ok(EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What is an embedded wallet SDK?'))
     assert.ok(EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What are embedded wallets?'))
     assert.ok(
@@ -616,6 +622,16 @@ describe('marketing SEO', () => {
     )
     assert.ok(
       EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What are embedded wallet payments?'),
+    )
+    assert.ok(
+      EMBEDDED_WALLET_FAQ.some(
+        (item) =>
+          item.question ===
+          'What is the difference between an embedded wallet and a smart wallet?',
+      ),
+    )
+    assert.ok(
+      EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What is the best embedded wallet?'),
     )
     assert.equal(EMBEDDED_WALLET_MODIFIED, '2026-11-05')
   })
@@ -693,6 +709,7 @@ describe('marketing SEO', () => {
       assert.doesNotMatch(heading, /\bAPI\b/, heading)
     }
     assert.ok(headings.includes('Embedded wallet vs browser extension'))
+    assert.ok(headings.includes('Embedded wallet vs smart wallet'))
     assert.ok(headings.includes('Embedded wallet pricing'))
     assert.ok(headings.includes('Gas Sponsorship in Any Token'))
     assert.ok(headings.includes('How to integrate an embedded wallet'))
@@ -1531,6 +1548,25 @@ describe('marketing SEO', () => {
     assert.ok(software)
     assert.equal(software.name, 'Cavos Embedded Wallet SDK')
     assert.equal(software.offers.price, '0')
+
+    const product = data['@graph'].find(
+      (node: { '@type'?: string }) => node['@type'] === 'Product',
+    ) as {
+      name: string
+      offers: { name: string; price: string }[]
+      brand: { '@id': string }
+    }
+    assert.ok(product)
+    assert.equal(product.name, 'Cavos Embedded Wallet SDK')
+    assert.equal(product.brand['@id'], ORGANIZATION_ID)
+    assert.deepEqual(
+      product.offers.map((offer) => [offer.name, offer.price]),
+      [
+        ['Free', '0'],
+        ['Essential', '59'],
+        ['Complete', '139'],
+      ],
+    )
   })
 
   it('rewrites chain page titles for CTR and query coverage inside snippet bounds', () => {
@@ -1782,6 +1818,9 @@ describe('marketing SEO', () => {
       ALCHEMY_VS_PRIVY_PATH,
       EMBEDDED_WALLET_PAYMENTS_PATH,
       EMBEDDED_WALLET_COST_PATH,
+      EMBEDDED_WALLET_VS_SMART_WALLET_PATH,
+      EMBEDDED_WALLET_NEXTJS_PATH,
+      BEST_EMBEDDED_WALLET_PATH,
     ]
     for (const href of guides) {
       const sources = marketingInlinkSources(href)
@@ -2164,7 +2203,7 @@ describe('marketing SEO', () => {
     assert.match(source, /embedded-stellar-wallet/)
     assert.match(source, /CavosProvider/)
     assert.match(source, /@cavos\/kit/)
-    assert.match(source, /@cavos\/kit` 0\.4\.2/)
+    assert.match(source, /@cavos\/kit` 0\.5\.1/)
     assert.match(source, /npm install @cavos\/kit/)
     assert.doesNotMatch(source, /0\.3\.\d/)
     assert.doesNotMatch(source, /category:\s*"Release"/)
@@ -2523,7 +2562,7 @@ describe('marketing SEO', () => {
     assert.equal(EMBEDDED_WALLET_PROVIDERS_PATH, '/blog/embedded-wallet-providers')
     assert.equal(
       EMBEDDED_WALLET_PROVIDERS_TITLE,
-      'Best Embedded Wallet Providers (2026): Free',
+      'Best Embedded Wallet Providers 2026: Compared',
     )
     assert.ok(`${EMBEDDED_WALLET_PROVIDERS_TITLE} | Cavos`.length <= 60)
     assert.match(source, /\]\(\/blog\/embedded-wallet-cost\)/)
@@ -2727,7 +2766,7 @@ describe('marketing SEO', () => {
     assert.equal(PRIVY_VS_TURNKEY_PATH, '/blog/privy-vs-turnkey')
     assert.equal(
       PRIVY_VS_TURNKEY_TITLE,
-      'Privy vs Turnkey vs Dfns (2026): Who Signs',
+      'Privy vs Turnkey (2026): Who Holds the Key',
     )
 
     const compareSource = fs.readFileSync(
@@ -3334,7 +3373,7 @@ describe('marketing SEO', () => {
     assert.equal(WALLET_AS_A_SERVICE_PATH, '/blog/wallet-as-a-service')
     assert.equal(
       WALLET_AS_A_SERVICE_TITLE,
-      'Wallet as a Service Providers (2026)',
+      'Wallet as a Service (2026): Providers, Pricing',
     )
     assert.ok(`${WALLET_AS_A_SERVICE_TITLE} | Cavos`.length <= 60)
     assert.match(source, /Wallet as a service providers/)
@@ -3344,7 +3383,7 @@ describe('marketing SEO', () => {
     assert.match(source, /What are wallet as a service providers\?/)
     const waasFields = parseBlogFrontmatter(source)
     assert.equal(waasFields.title, WALLET_AS_A_SERVICE_TITLE)
-    assert.equal(waasFields.updated, '2026-11-03')
+    assert.equal(waasFields.updated, '2026-11-05')
     assert.ok(waasFields.excerpt.length >= 140 && waasFields.excerpt.length <= 155)
 
     const hub = fs.readFileSync(
@@ -3426,7 +3465,7 @@ describe('marketing SEO', () => {
     assert.match(source, /docs\.cavos\.xyz\/docs\/quickstart/)
     assert.match(source, /docs\.cavos\.xyz\/docs\/passkeys/)
     assert.match(source, /docs\.cavos\.xyz\/docs\/troubleshooting/)
-    assert.match(source, /@cavos\/kit` 0\.4\.4/)
+    assert.match(source, /@cavos\/kit` 0\.5\.1/)
     assert.match(source, /npm install @cavos\/kit/)
     assert.match(source, /CavosProvider/)
     assert.match(source, /useCavos/)
@@ -4369,6 +4408,9 @@ const GUIDE_PATH_CONSTANTS: Record<string, string> = {
   ALCHEMY_VS_PRIVY_PATH: '/blog/alchemy-vs-privy',
   EMBEDDED_WALLET_PAYMENTS_PATH: '/blog/embedded-wallet-payments',
   EMBEDDED_WALLET_COST_PATH: '/blog/embedded-wallet-cost',
+  EMBEDDED_WALLET_VS_SMART_WALLET_PATH: '/blog/embedded-wallet-vs-smart-wallet',
+  EMBEDDED_WALLET_NEXTJS_PATH: '/blog/embedded-wallet-nextjs',
+  BEST_EMBEDDED_WALLET_PATH: '/blog/best-embedded-wallet',
 }
 
 const SELF_PAGE_FOR_HREF: Record<string, string> = {
@@ -4388,6 +4430,10 @@ const SELF_PAGE_FOR_HREF: Record<string, string> = {
   '/blog/alchemy-vs-privy': 'content/blog/alchemy-vs-privy.mdx',
   '/blog/embedded-wallet-payments': 'content/blog/embedded-wallet-payments.mdx',
   '/blog/embedded-wallet-cost': 'content/blog/embedded-wallet-cost.mdx',
+  '/blog/embedded-wallet-vs-smart-wallet':
+    'content/blog/embedded-wallet-vs-smart-wallet.mdx',
+  '/blog/embedded-wallet-nextjs': 'content/blog/embedded-wallet-nextjs.mdx',
+  '/blog/best-embedded-wallet': 'content/blog/best-embedded-wallet.mdx',
   '/privacy': 'app/privacy/page.tsx',
   '/dpa': 'app/dpa/page.tsx',
   '/user-privacy': 'app/user-privacy/page.tsx',
@@ -4563,7 +4609,7 @@ describe('best embedded wallets per chain', () => {
 
   it('llms.txt leads with the positioning line and pricing', () => {
     const llms = fs.readFileSync(path.join(process.cwd(), 'public/llms.txt'), 'utf8')
-    assert.match(llms, /> Cavos: non-custodial embedded wallet for Starknet, Solana and Stellar\./)
+    assert.match(llms, /> Cavos is an embedded wallet SDK for Stellar, Solana and Starknet\./)
     assert.match(llms, /Free: up to 1,000 wallets/)
     assert.match(llms, /\$59/)
     assert.match(llms, /\$139/)
@@ -4685,6 +4731,7 @@ describe('pillar page copy rules', () => {
     'lib/privy-alternatives.ts',
     'lib/turnkey-alternatives.ts',
     'lib/marketing-seo.ts',
+    'components/MarketingBreadcrumbs.tsx',
   ]
 
   for (const file of files) {
@@ -4733,5 +4780,89 @@ describe('blog FAQ coverage', () => {
       assert.ok(graph.some((node) => node['@type'] === 'BreadcrumbList'), `${meta.slug} BreadcrumbList missing`)
       assert.equal(graph[0].dateModified, meta.updated ?? meta.date)
     }
+  })
+})
+
+describe('November 5 topic cluster', () => {
+  const read = (p: string) => fs.readFileSync(path.join(process.cwd(), p), 'utf8')
+
+  it('adds vs-smart-wallet, Next.js, and best-embedded-wallet posts with FAQ and pillar links', () => {
+    assert.equal(EMBEDDED_WALLET_VS_SMART_WALLET_PATH, '/blog/embedded-wallet-vs-smart-wallet')
+    assert.equal(EMBEDDED_WALLET_NEXTJS_PATH, '/blog/embedded-wallet-nextjs')
+    assert.equal(BEST_EMBEDDED_WALLET_PATH, '/blog/best-embedded-wallet')
+    assert.equal(
+      EMBEDDED_WALLET_VS_SMART_WALLET_TITLE,
+      'Embedded Wallet vs Smart Wallet (2026)',
+    )
+    assert.equal(
+      EMBEDDED_WALLET_NEXTJS_TITLE,
+      'How to Add an Embedded Wallet to Next.js (2026)',
+    )
+    assert.equal(BEST_EMBEDDED_WALLET_TITLE, 'Best Embedded Wallet (2026): How to Choose')
+    assert.ok(`${EMBEDDED_WALLET_VS_SMART_WALLET_TITLE} | Cavos`.length <= 60)
+    assert.ok(`${EMBEDDED_WALLET_NEXTJS_TITLE} | Cavos`.length <= 60)
+    assert.ok(`${BEST_EMBEDDED_WALLET_TITLE} | Cavos`.length <= 60)
+
+    for (const [slug, title] of [
+      ['embedded-wallet-vs-smart-wallet', EMBEDDED_WALLET_VS_SMART_WALLET_TITLE],
+      ['embedded-wallet-nextjs', EMBEDDED_WALLET_NEXTJS_TITLE],
+      ['best-embedded-wallet', BEST_EMBEDDED_WALLET_TITLE],
+    ] as const) {
+      const raw = read(`content/blog/${slug}.mdx`)
+      const fields = parseBlogFrontmatter(raw)
+      assert.equal(fields.title, title, slug)
+      assert.equal(fields.updated, '2026-11-05', slug)
+      assert.ok(fields.excerpt.length >= 140 && fields.excerpt.length <= 160, `${slug} excerpt ${fields.excerpt.length}`)
+      assert.match(raw, /\[embedded wallet\]\(\/embedded-wallet\)/)
+      assert.match(raw, /\[embedded wallets\]\(\/embedded-wallet\)/)
+      assert.match(raw, /\[embedded wallet SDK\]\(\/embedded-wallet\)/)
+      assert.match(raw, /^faq:$/m)
+      assert.doesNotMatch(raw, /—|trustless|impossible/i)
+      assert.doesNotMatch(raw, /Horizon signer/)
+      assert.doesNotMatch(raw, /grandfathered/)
+    }
+  })
+
+  it('links the pillar, blog index, footer, and llms.txt to the new cluster', () => {
+    const hub = read('app/embedded-wallet/page.tsx')
+    assert.match(hub, /MarketingBreadcrumbs/)
+    assert.match(hub, /EMBEDDED_WALLET_VS_SMART_WALLET_PATH/)
+    assert.match(hub, /EMBEDDED_WALLET_NEXTJS_PATH/)
+    assert.match(hub, /BEST_EMBEDDED_WALLET_PATH/)
+    assert.match(hub, /software:/)
+
+    const blogIndex = read('app/blog/page.tsx')
+    assert.match(blogIndex, /EMBEDDED_WALLET_VS_SMART_WALLET_PATH/)
+    assert.match(blogIndex, /EMBEDDED_WALLET_NEXTJS_PATH/)
+    assert.match(blogIndex, /BEST_EMBEDDED_WALLET_PATH/)
+
+    const footer = read('components/Footer.tsx')
+    assert.match(footer, /href="\/blog\/embedded-wallet-vs-smart-wallet"/)
+    assert.match(footer, /href="\/blog\/embedded-wallet-nextjs"/)
+    assert.match(footer, /href="\/blog\/best-embedded-wallet"/)
+    assert.match(
+      footer,
+      /href="\/embedded-wallet"[^>]*>Embedded wallet SDK</,
+    )
+
+    const llms = read('public/llms.txt')
+    assert.match(llms, /blog\/embedded-wallet-vs-smart-wallet/)
+    assert.match(llms, /blog\/embedded-wallet-nextjs/)
+    assert.match(llms, /blog\/best-embedded-wallet/)
+    assert.match(llms, /embedded wallet SDK for Stellar, Solana and Starknet/)
+  })
+
+  it('shows dateModified and an Organization byline on blog posts', () => {
+    const page = read('app/blog/[slug]/page.tsx')
+    assert.match(page, /MarketingBreadcrumbs/)
+    assert.match(page, /Updated \{formatDate\(post\.meta\.updated\)\}/)
+    assert.match(page, /By Cavos/)
+    assert.match(page, /dateModified/)
+    const seo = read('lib/marketing-seo.ts')
+    assert.match(seo, /export function blogPostJsonLd/)
+    assert.match(
+      seo,
+      /author:\s*\{\s*'@type':\s*'Organization',\s*'@id':\s*ORGANIZATION_ID,\s*name:\s*'Cavos',/,
+    )
   })
 })

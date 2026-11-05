@@ -19,7 +19,7 @@ faq:
 
 An [embedded wallet](/embedded-wallet) lives inside your application. Search for **embedded wallet React SDK** and you want a library, not a Chrome extension: install it, wrap a provider, sign the user in, and send a sponsored transaction from React or Next.js.
 
-This guide is that path with `@cavos/kit` 0.4.4, plus the **best practices for embedding a wallet SDK in an app**. Code follows the same contract as the [Cavos React docs](https://docs.cavos.xyz/docs/react) and [quickstart](https://docs.cavos.xyz/docs/quickstart): authenticate, connect, then execute. The [how-to-add walkthrough](/blog/how-to-add-an-embedded-wallet) is the first install. The [embedded wallet API](/blog/embedded-wallet-api) guide is the surface map. For platform parts, pricing models, and build versus buy, see [wallet as a service](/blog/wallet-as-a-service).
+This guide is that path with `@cavos/kit` 0.5.1, plus the **best practices for embedding a wallet SDK in an app**. The App Router wiring is [how to add an embedded wallet to Next.js](/blog/embedded-wallet-nextjs). Code follows the same contract as the [Cavos React docs](https://docs.cavos.xyz/docs/react) and [quickstart](https://docs.cavos.xyz/docs/quickstart): authenticate, connect, then execute. The [how-to-add walkthrough](/blog/how-to-add-an-embedded-wallet) is the first install. The [embedded wallet API](/blog/embedded-wallet-api) guide is the surface map. For platform parts, pricing models, and build versus buy, see [wallet as a service](/blog/wallet-as-a-service).
 
 Cavos, LLC is a software and SaaS company. The wallet is the main product: a device-native, self-custodial embedded wallet. Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds. Adapters ship today for [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), and [Stellar](/embedded-stellar-wallet). [Pricing](/pricing) publishes Free up to 1,000 wallets, Essential at $59/mo, and Complete at $139/mo.
 
@@ -200,6 +200,9 @@ Confirm status per chain after `setChain`. One chain might be `ready` while anot
 ## What to read next
 
 - [How to add an embedded wallet](/blog/how-to-add-an-embedded-wallet): the install walkthrough this page assumes.
+- [How to add an embedded wallet to Next.js](/blog/embedded-wallet-nextjs): App Router `CavosProvider`, env vars, vault origins.
+- [Embedded wallet vs smart wallet](/blog/embedded-wallet-vs-smart-wallet): contract account versus in-app UX.
+- [Best embedded wallet](/blog/best-embedded-wallet): how to choose a provider.
 - [Embedded wallet API](/blog/embedded-wallet-api): auth, create, keys, signing, gas, and recovery.
 - [Non-custodial embedded wallets](/blog/non-custodial-embedded-wallet): who can sign, and how to verify a vendor’s claim.
 - [embedded wallet](/embedded-wallet), [embedded wallets](/embedded-wallet), and the [embedded wallet SDK](/embedded-wallet): custody, key models, and how to choose.

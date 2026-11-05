@@ -35,6 +35,12 @@ import {
   ALCHEMY_VS_PRIVY_TITLE,
   EMBEDDED_WALLET_PAYMENTS_PATH,
   EMBEDDED_WALLET_PAYMENTS_TITLE,
+  EMBEDDED_WALLET_VS_SMART_WALLET_PATH,
+  EMBEDDED_WALLET_VS_SMART_WALLET_TITLE,
+  EMBEDDED_WALLET_NEXTJS_PATH,
+  EMBEDDED_WALLET_NEXTJS_TITLE,
+  BEST_EMBEDDED_WALLET_PATH,
+  BEST_EMBEDDED_WALLET_TITLE,
 } from '@/lib/embedded-wallet-guide';
 
 export const metadata: Metadata = marketingPageMetadata({
@@ -74,6 +80,21 @@ const GUIDES = [
     href: EMBEDDED_WALLET_INTEGRATION_PATH,
     title: EMBEDDED_WALLET_INTEGRATION_TITLE,
     body: 'Install @cavos/kit, wrap CavosProvider, sign in, and send a sponsored transaction.',
+  },
+  {
+    href: EMBEDDED_WALLET_NEXTJS_PATH,
+    title: EMBEDDED_WALLET_NEXTJS_TITLE,
+    body: 'App Router client boundary, env vars, callback URLs, vault origins, first sponsored execute.',
+  },
+  {
+    href: EMBEDDED_WALLET_VS_SMART_WALLET_PATH,
+    title: EMBEDDED_WALLET_VS_SMART_WALLET_TITLE,
+    body: 'In-app UX versus a contract account. They can be the same wallet.',
+  },
+  {
+    href: BEST_EMBEDDED_WALLET_PATH,
+    title: BEST_EMBEDDED_WALLET_TITLE,
+    body: 'Chain first, then custody, then connect versus provision. Not a single winner.',
   },
   {
     href: EMBEDDED_WALLET_REACT_SDK_PATH,

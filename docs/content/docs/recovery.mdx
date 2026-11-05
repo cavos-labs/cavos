@@ -4,12 +4,15 @@ description: The ways a Cavos user regains access to their wallet after losing a
 ---
 
 Private keys never leave the user's device in plaintext and are never used to
-sign on a server. Every account key is derived on the device from the wallet's
-master key (the MasterDEK), and every signature is made there. The enclave and
-a passkey hold only an encrypted copy of the MasterDEK, used to restore it on a
-device: the enclave opens its sealed copy only inside the attested enclave and
-re-encrypts it to the requesting device's key, and a passkey's copy is
-decrypted on the device with the passkey's PRF output.
+sign on a server. That is the Cavos [embedded wallet](https://cavos.xyz/embedded-wallet)
+([embedded wallets](https://cavos.xyz/embedded-wallet),
+[embedded wallet SDK](https://cavos.xyz/embedded-wallet)) custody model. Every
+account key is derived on the device from the wallet's master key (the
+MasterDEK), and every signature is made there. The enclave and a passkey hold
+only an encrypted copy of the MasterDEK, used to restore it on a device: the
+enclave opens its sealed copy only inside the attested enclave and re-encrypts
+it to the requesting device's key, and a passkey's copy is decrypted on the
+device with the passkey's PRF output.
 
 That is the point, and it is also the risk: **a device that is lost, wiped, or
 replaced takes its local copy with it.**

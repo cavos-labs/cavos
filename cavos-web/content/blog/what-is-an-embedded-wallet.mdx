@@ -35,7 +35,7 @@ An embedded wallet has three properties. A product needs all three to fit the te
 2. **Approval happens in the app's UI.** The user confirms a payment or a signature on a screen the product controls, not in a popup from a third-party extension.
 3. **It is a real on-chain account.** The address can hold assets and sign transactions on the target chain. It is not a balance in the app's database.
 
-The third point is what separates an embedded wallet from a custodial account balance at an exchange. The second is what separates it from a [browser extension](/blog/embedded-wallet-vs-browser-extension).
+The third point is what separates an embedded wallet from a custodial account balance at an exchange. The second is what separates it from a [browser extension](/blog/embedded-wallet-vs-browser-extension). [Embedded wallet vs smart wallet](/blog/embedded-wallet-vs-smart-wallet) is a different split: smart usually means a contract account, which can be embedded or not.
 
 ## How an embedded wallet works
 
@@ -120,6 +120,9 @@ console.log(wallet.address); // the user's embedded wallet address
 - [Embedded wallet vs browser extension](/blog/embedded-wallet-vs-browser-extension): where users should sign.
 - [Embedded wallet providers](/blog/embedded-wallet-providers): the vendor shortlist.
 - [How to add an embedded wallet to a React app](/blog/how-to-add-an-embedded-wallet): install to first transaction.
+- [How to add an embedded wallet to Next.js](/blog/embedded-wallet-nextjs): App Router client boundary, env vars, callback URLs.
+- [Embedded wallet vs smart wallet](/blog/embedded-wallet-vs-smart-wallet): contract account versus in-app UX.
+- [Best embedded wallet](/blog/best-embedded-wallet): how to choose on chain, custody, and connectors.
 - [Embedded wallet payments](/blog/embedded-wallet-payments): in-app USDC transfers on Stellar, Solana, and Starknet.
 - [Embedded wallet React SDK](/blog/embedded-wallet-react-sdk): best practices for embedding a wallet SDK in React.
 - [Compare embedded wallet providers](/compare): Cavos vs Privy, Dynamic, Turnkey, Web3Auth, Magic, and Alchemy.

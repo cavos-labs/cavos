@@ -4,7 +4,10 @@ description: Open an existing wallet on a new device by restoring its MasterDEK,
 ---
 
 A wallet's address is looked up in the registry by `(userId, appId, chain, network)`,
-so the **same user on a new device lands on the same wallet**.
+so the **same user on a new device lands on the same
+[embedded wallet](https://cavos.xyz/embedded-wallet)**
+([embedded wallets](https://cavos.xyz/embedded-wallet),
+[embedded wallet SDK](https://cavos.xyz/embedded-wallet)).
 
 On **Starknet, Solana, and Stellar**, there is one account key, derived
 from the MasterDEK. A new device does not get a key of its own and there is no

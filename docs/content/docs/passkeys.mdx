@@ -3,9 +3,12 @@ title: Passkeys
 description: "Add a passkey after sign-up so a new device can open the wallet. It holds an encrypted copy of the wallet key on Starknet, Solana, and Stellar."
 ---
 
-Signing up with Google / Apple / GitHub / email **never** asks for a passkey. The wallet
-exists without one. The app decides when to add it (`enrollPasskeyDefault`), and
-from then on a new device asks for it when it needs the wallet's key.
+Signing up with Google / Apple / GitHub / email **never** asks for a passkey. The
+[embedded wallet](https://cavos.xyz/embedded-wallet)
+([embedded wallets](https://cavos.xyz/embedded-wallet),
+[embedded wallet SDK](https://cavos.xyz/embedded-wallet)) exists without one. The
+app decides when to add it (`enrollPasskeyDefault`), and from then on a new
+device asks for it when it needs the wallet's key.
 
 On **Starknet, Solana, and Stellar** the passkey holds an **encrypted
 copy of the wallet's key** (the MasterDEK). Cavos stores the ciphertext; only

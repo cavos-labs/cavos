@@ -1,0 +1,106 @@
+---
+title: "Best Embedded Wallet (2026): How to Choose"
+date: "2026-11-05"
+updated: "2026-11-05"
+excerpt: "Best embedded wallet in 2026: choose on chain, custody, and connect versus provision. Cavos, Privy, Dynamic, Turnkey. Free up to 1,000 wallets."
+category: "Guide"
+ogQuote: "Best is a chain question, then a custody question."
+slug: "best-embedded-wallet"
+faq:
+  - question: "What is the best embedded wallet in 2026?"
+    answer: "There is no single best embedded wallet. Choose on native chain, who can produce a signature without the user, and whether you provision new accounts or connect existing ones. Cavos fits Starknet, Solana, or Stellar with a device-native key. Privy and Dynamic cover EVM-first products and connectors. Turnkey is signing infrastructure you assemble."
+  - question: "What is the best embedded wallet for Stellar?"
+    answer: "Cavos provisions a classic G account with one Ed25519 spend key derived on the device, plus Gas Sponsorship in Any Token. Dynamic's public JS/React Tier 1 table also names Stellar. Privy documents Stellar as sign-transaction, not managed send. The Stellar shortlist is the best embedded wallets for Stellar guide."
+  - question: "What is the best embedded wallet for Solana?"
+    answer: "Cavos, Privy, Dynamic, Turnkey, Para, Web3Auth, and Magic all document Solana at some depth. Cavos is a native Ed25519 system account with a device-native key and a relayer that can pay fees. If you also need to connect Phantom, a connector-first product is the better fit. The Solana shortlist is the best embedded wallets for Solana guide."
+  - question: "What is the best embedded wallet for Starknet?"
+    answer: "Cavos ships a native adapter: an audited OpenZeppelin account contract (AccountUpgradeable v3.0.0) with a stark key derived on the device. Privy documents Starknet as sign-only. Web3Auth has a connect guide. Dynamic's JS/React Tier 1 table does not include Starknet. The Starknet shortlist is the best embedded wallets for Starknet guide."
+  - question: "Is there a free embedded wallet SDK?"
+    answer: "Cavos is free up to 1,000 wallets, then Essential at $59/month and Complete at $139/month. Other vendors publish free tiers on different meters: Privy on MAU, Web3Auth and Magic on monthly active wallets, Turnkey on wallets plus signatures. Compare the unit, not only the dollar amount. The dated table is the embedded wallet providers guide."
+---
+
+The **best embedded wallet** is the one that matches the chain you ship, the custody your review requires, and whether you create accounts or connect ones users already hold. There is no single winner. This page is the decision tree. The dated vendor table is [embedded wallet providers](/blog/embedded-wallet-providers). The category definition is the [embedded wallet](/embedded-wallet) pillar.
+
+An [embedded wallet SDK](/embedded-wallet) provisions an on-chain account inside your app. Login selects the user. Approval happens in your UI. [Embedded wallets](/embedded-wallet) still differ on keys, chains, and what the invoice meters. "Best" without those three is a feature checklist, which is how teams buy the wrong layer.
+
+Cavos, LLC is a software and SaaS company. Positioning for Cavos comes after the questions are fair. If the honest answer is Privy, Dynamic, or Turnkey, that is the answer.
+
+## The short answer (November 2026)
+
+**Best embedded wallet if the chain is Starknet, Solana, or Stellar and the review requires a device-native key.** Cavos. Hardware-isolated, non-custodial. Keys never leave the device in plaintext and never sign on Cavos servers. Free up to 1,000 wallets. Essential $59/month. Complete $139/month. Gas Sponsorship in Any Token on every plan, funded separately.
+
+**Best embedded wallet if the product is EVM-first or must connect MetaMask / Phantom.** Privy or Dynamic. Cavos does not connect existing extensions and is not an EVM-wide layer.
+
+**Best embedded wallet if the wallet *is* the product and you need policy, quorums, or server-side signing.** Turnkey. That is infrastructure, not a finished login-to-signature SDK. [Privy vs Turnkey](/blog/privy-vs-turnkey) is that split.
+
+**Best embedded wallet as a shopping list.** The [providers](/blog/embedded-wallet-providers) table. This page does not reprint it.
+
+## Decision tree
+
+Walk the questions in order. Stop when one answer eliminates a vendor.
+
+### 1. Which chain is native?
+
+"Supports Starknet" in a footer is not an adapter. You need address derivation, signatures, execution, and fees for that chain.
+
+- **Starknet.** Cavos ships an audited OpenZeppelin account contract (AccountUpgradeable v3.0.0). Privy documents sign-only. Web3Auth has a connect guide. Dynamic's JS/React Tier 1 table does not include Starknet. Details: [best embedded wallets for Starknet](/blog/best-embedded-wallets-starknet) and the [Starknet landing](/embedded-starknet-wallet).
+- **Solana.** Native or managed-send appears across Cavos, Privy, Dynamic, Turnkey, Para, Web3Auth, and Magic. Cavos is a native Ed25519 system account, not a PDA. Details: [best embedded wallets for Solana](/blog/best-embedded-wallets-solana) and the [Solana landing](/embedded-solana-wallet).
+- **Stellar.** Cavos provisions a classic G account. Dynamic T1 (JS/React), Para, and Dfns name Stellar. Privy is sign-transaction, not managed send. Details: [best embedded wallets for Stellar](/blog/best-embedded-wallets-stellar) and the [Stellar landing](/embedded-stellar-wallet).
+- **EVM-wide.** Privy, Dynamic, Magic, Web3Auth. Cavos does not ship this.
+
+If the chain is not in that list for a vendor, do not grade them on recovery polish.
+
+### 2. Who can produce a signature without the user?
+
+Embedded is a UX label. It is not a custody claim.
+
+- **Device-native.** The account key is created and used on the device. The provider cannot see it or sign with it. Cavos is this model.
+- **MPC / TSS.** Shares live on the device and on a provider network. Web3Auth, Dynamic, Para sit here. Export is often a feature.
+- **Remote TEE.** The key decrypts inside hardware the vendor operates. Turnkey and Privy user wallets sit here. Custody is who can authorize that hardware.
+- **Hosted.** Access to the login is enough to spend. Some optional paths at finished SDKs; Privy also documents custodial wallets backed by Bridge.
+
+The test is on the [custody](/custody) page. The developer checklist is [non-custodial embedded wallets](/blog/non-custodial-embedded-wallet).
+
+### 3. Provision new accounts, or connect existing ones?
+
+- **Provision only.** The product creates the wallet. Users should never see a picker. Cavos is this.
+- **Connect + embed.** The product also talks to MetaMask, Phantom, WalletConnect. Dynamic and Privy are this. Cavos is not.
+
+If existing extensions are a requirement, a connector is the better fit, and the two models can coexist. [Embedded wallet vs browser extension](/blog/embedded-wallet-vs-browser-extension) is that fork. [Embedded wallet vs smart wallet](/blog/embedded-wallet-vs-smart-wallet) is the account-model fork (contract vs native key), which is a different question.
+
+### 4. What does the invoice meter?
+
+Cavos prices on wallet creates: free for the first 1,000, then a flat month. Privy meters MAU plus signature and volume caps. Dynamic meters MAUs. Turnkey meters wallets and signatures. Web3Auth and Magic meter monthly active wallets. A cheap free tier with a tight MAU cap is not the same as a 1,000-create allowance. Worked cost at 10k / 100k / 1M users is [how much embedded wallets cost](/blog/embedded-wallet-cost). Published Cavos fees are on [pricing](/pricing).
+
+## Where Cavos is the wrong pick
+
+Say this out loud before a demo:
+
+- The product is Ethereum-first across many L2s.
+- Users arrive with MetaMask and must keep that address.
+- You need server-side signing or organizational quorums as a product feature.
+- You need a published SOC 2 report or an uptime SLA on a public page. Cavos does not publish those on this site. The Starknet account is an audited OpenZeppelin account contract. That audit covers OpenZeppelin's contract, not Cavos.
+
+Those are honest gaps. [Privy alternatives](/privy-alternatives), [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), [Magic alternatives](/magic-alternatives), and [Para alternatives](/para-alternatives) exist so a replacement search does not have to guess.
+
+## Where Cavos is the closer pick
+
+- The chain is Starknet, Solana, or Stellar, and you want that chain's account model, not an EVM wrapper.
+- The review requires that the vendor cannot reconstruct a signing key.
+- Users should never install an extension or paste a seed.
+- You want published fees: Free up to 1,000 wallets, Essential $59/month, Complete $139/month, Gas Sponsorship in Any Token on every plan.
+
+Setup is minutes: `npm install @cavos/kit`, wrap `CavosProvider`, sign in, execute. The React path is [how to add an embedded wallet](/blog/how-to-add-an-embedded-wallet). The App Router path is [how to add an embedded wallet to Next.js](/blog/embedded-wallet-nextjs).
+
+Signing is hardware-isolated and non-custodial. The passkey and the Nitro Enclave only hold an encrypted copy of the master key for restore. They never sign.
+
+## What to read next
+
+- [embedded wallet](/embedded-wallet), [embedded wallets](/embedded-wallet), and the [embedded wallet SDK](/embedded-wallet): the pillar this page decides from.
+- [Embedded wallet providers](/blog/embedded-wallet-providers): pricing, chains, and key models in one table.
+- [Wallet as a service](/blog/wallet-as-a-service): how the platform is sold, and build versus buy.
+- [Privy vs Turnkey](/blog/privy-vs-turnkey): finished auth versus signing infrastructure.
+- [What is an embedded wallet?](/blog/what-is-an-embedded-wallet): the plain definition.
+- [How to add an embedded wallet](/blog/how-to-add-an-embedded-wallet) and the [Next.js guide](/blog/embedded-wallet-nextjs).
+- Chain shortlists: [Stellar](/blog/best-embedded-wallets-stellar), [Solana](/blog/best-embedded-wallets-solana), [Starknet](/blog/best-embedded-wallets-starknet).
+- [Compare](/compare) for one-to-one pages. [Pricing](/pricing) for Cavos fees.

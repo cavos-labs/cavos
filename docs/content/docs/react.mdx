@@ -4,9 +4,16 @@ description: "Drop-in React bindings for @cavos/kit: provider, hooks, and the cu
 ---
 
 `@cavos/kit` ships React bindings under the `@cavos/kit/react` subpath (same
-package). Wrap your app once in `<CavosProvider>` and every descendant can call
-`useCavos()` to read wallet state and trigger actions: no prop drilling, no
-imperative `connect` calls.
+package) for the Cavos [embedded wallet](https://cavos.xyz/embedded-wallet)
+([embedded wallets](https://cavos.xyz/embedded-wallet),
+[embedded wallet SDK](https://cavos.xyz/embedded-wallet)). Wrap your app once in
+`<CavosProvider>` and every descendant can call `useCavos()` to read wallet
+state and trigger actions: no prop drilling, no imperative `connect` calls. In
+Next.js App Router, keep that provider in a `'use client'` module. The
+[Next.js embedded wallet guide](https://cavos.xyz/blog/embedded-wallet-nextjs)
+is that wiring. The generic React install is the
+[how to add an embedded wallet](https://cavos.xyz/blog/how-to-add-an-embedded-wallet)
+walkthrough.
 
 ```bash title="Terminal"
 npm install @cavos/kit@^0.5.0

@@ -98,6 +98,22 @@ describe('blog internal links', () => {
     }
   })
 
+  it('gives the November 5 cluster pages inbound links and the required pillar anchors', () => {
+    for (const slug of [
+      'embedded-wallet-vs-smart-wallet',
+      'embedded-wallet-nextjs',
+      'best-embedded-wallet',
+    ]) {
+      const raw = read(slug)
+      assert.ok(raw.includes('[embedded wallet](/embedded-wallet)'), slug)
+      assert.ok(raw.includes('[embedded wallets](/embedded-wallet)'), slug)
+      assert.ok(raw.includes('[embedded wallet SDK](/embedded-wallet)'), slug)
+    }
+    assert.ok(read('what-is-an-embedded-wallet').includes('](/blog/embedded-wallet-vs-smart-wallet)'))
+    assert.ok(read('how-to-add-an-embedded-wallet').includes('](/blog/embedded-wallet-nextjs)'))
+    assert.ok(read('embedded-wallet-providers').includes('](/blog/best-embedded-wallet)'))
+  })
+
   it('links every best-of shortlist to the compare pages', () => {
     for (const slug of ['best-embedded-wallets-starknet', 'best-embedded-wallets-stellar', 'best-embedded-wallets-solana']) {
       assert.ok(read(slug).includes('](/compare'), `${slug} does not link /compare`)
