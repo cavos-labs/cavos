@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { randomBytes } from 'crypto';
 import { validateAppRedirect } from '@/lib/oauth/redirects';
 import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier';
-import { signOAuthState } from '@/lib/oauth/state';
+import { signTelegramState } from '@/lib/oauth/telegramState';
 import { isCodeChallenge } from '@/lib/oauth/github';
 import { telegramAuthorizationUrl, telegramCredentials } from '@/lib/oauth/telegram';
 import { bindNonceToApp } from '@/lib/oauth/loginNonce';
@@ -14,8 +13,10 @@ import { bindNonceToApp } from '@/lib/oauth/loginNonce';
  * redeems the code with the PKCE verifier the client keeps and signs the login
  * token itself. This route only builds the authorization URL: the
  * `code_challenge` commits to that verifier, the `nonce` carries the app and the
- * client's login hash, and the signed state binds the flow to the app and
- * environment. Only the `openid profile` scope is requested.
+ * client's login hash, and the signed state binds the flow to the app,
+ * environment and redirect. Telegram caps `state` at 256 characters, so it is
+ * the compact form from `lib/oauth/telegramState`. Only the `openid profile`
+ * scope is requested.
  *
  * Required env vars unless the environment brings its own Telegram bot:
  * - TELEGRAM_BOT_ID, TELEGRAM_CLIENT_SECRET
@@ -68,11 +69,10 @@ export async function GET(request: NextRequest) {
       botId,
       codeChallenge,
       nonce,
-      state: signOAuthState({
-        csrf: randomBytes(16).toString('hex'),
-        redirect_uri: redirectUri,
-        app_id: appId,
-        environment_id: environmentId ?? null,
+      state: signTelegramState({
+        appId,
+        environmentId: environmentId ?? null,
+        redirectUri,
       }),
     });
 

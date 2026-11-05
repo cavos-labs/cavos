@@ -12,6 +12,11 @@ function signature(payload: string): Buffer {
   return createHmac('sha256', stateSecret()).update(`v1.${payload}`, 'utf8').digest();
 }
 
+/** HMAC-SHA256 under the OAuth state secret, domain-separated by `label`. */
+export function oauthStateMac(label: string, data: string): Buffer {
+  return createHmac('sha256', stateSecret()).update(`${label}.${data}`, 'utf8').digest();
+}
+
 export function signOAuthState(payload: Record<string, unknown>): string {
   const encoded = Buffer.from(JSON.stringify({ ...payload, issued_at: Date.now() }), 'utf8').toString('base64url');
   return `v1.${encoded}.${signature(encoded).toString('base64url')}`;

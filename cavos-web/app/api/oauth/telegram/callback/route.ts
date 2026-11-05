@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateAppRedirect } from '@/lib/oauth/redirects';
 import { issueOAuthCallbackCode } from '@/lib/oauth/callback-codes';
-import { signOAuthState, verifyOAuthState } from '@/lib/oauth/state';
+import { signOAuthState } from '@/lib/oauth/state';
+import { openTelegramState, registeredRedirect, type TelegramState } from '@/lib/oauth/telegramState';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 /**
  * Telegram OAuth callback.
@@ -12,15 +14,12 @@ import { signOAuthState, verifyOAuthState } from '@/lib/oauth/state';
  * callback code, and redirects. The client later hands the grant to
  * `/api/oauth/telegram/verify`, which forwards it to the recovery enclave. The
  * authorization code is never logged.
+ *
+ * The state names the redirect only by digest (Telegram caps `state` at 256
+ * characters), so the redirect is the app's registered callback with that
+ * digest. The login could only start with a registered callback, so there is
+ * always exactly one.
  */
-
-interface StatePayload {
-  csrf: string;
-  redirect_uri: string;
-  app_id?: string | null;
-  environment_id?: string | null;
-  issued_at?: number;
-}
 
 export async function GET(request: NextRequest) {
   try {
@@ -45,19 +44,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Missing state parameter' }, { status: 400 });
     }
 
-    let statePayload: StatePayload;
+    let state: TelegramState;
     try {
-      statePayload = verifyOAuthState<StatePayload>(stateParam);
+      state = openTelegramState(stateParam);
     } catch {
       return NextResponse.json({ error: 'Invalid state parameter' }, { status: 400 });
     }
+    const { appId, environmentId } = state;
 
-    const { redirect_uri: finalRedirectUri, app_id: appId, environment_id: environmentId } = statePayload;
-
+    const { data: app, error: appError } = await createAdminClient()
+      .from('apps')
+      .select('callback_urls,is_active')
+      .eq('id', appId)
+      .single();
+    if (appError || !app?.is_active) throw new Error('Invalid app_id');
+    const finalRedirectUri = registeredRedirect(app.callback_urls ?? [], state.redirectDigest);
     if (!finalRedirectUri) {
-      return NextResponse.json({ error: 'Missing redirect_uri in state' }, { status: 400 });
+      return NextResponse.json({ error: 'redirect_uri is not registered for this app' }, { status: 400 });
     }
-    if (!appId) throw new Error('OAuth state names no app');
     await validateAppRedirect(appId, finalRedirectUri, true);
 
     const redirectUrl = new URL(finalRedirectUri);
