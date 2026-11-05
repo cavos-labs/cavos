@@ -1,4 +1,4 @@
-export type SocialRecoveryProvider = 'google' | 'apple' | 'email' | 'github'
+export type SocialRecoveryProvider = 'google' | 'apple' | 'email' | 'github' | 'telegram'
 export type SocialRecoveryAction = 'enroll' | 'recover'
 export type SocialRecoveryStatus =
   | 'ready'

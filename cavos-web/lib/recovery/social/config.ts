@@ -10,7 +10,7 @@ export interface ProviderPolicy {
 /** Per-provider client the environment accepts tokens for. */
 export type ProviderAudiences = Partial<Record<SocialRecoveryProvider, string>>
 
-const PROVIDERS: SocialRecoveryProvider[] = ['google', 'apple', 'email', 'github']
+const PROVIDERS: SocialRecoveryProvider[] = ['google', 'apple', 'email', 'github', 'telegram']
 
 export function isSocialRecoveryProvider(value: unknown): value is SocialRecoveryProvider {
   return typeof value === 'string' && (PROVIDERS as string[]).includes(value)
@@ -29,7 +29,7 @@ export function providerAudiences(raw: unknown): ProviderAudiences {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
   const audiences: ProviderAudiences = {}
   for (const provider of PROVIDERS) {
-    if (provider === 'github') continue
+    if (provider === 'github' || provider === 'telegram') continue
     const value = (raw as Record<string, unknown>)[provider]
     if (typeof value === 'string' && value.trim()) audiences[provider] = value.trim()
   }
@@ -62,6 +62,9 @@ export function providerAudiences(raw: unknown): ProviderAudiences {
  *   github         none. The enclave redeems the GitHub code itself and signs
  *                  the login token under a fixed issuer and audience. The
  *                  GitHub OAuth app lives in its own columns, not here.
+ *   telegram       none. The enclave redeems the Telegram code itself and signs
+ *                  the login token under a fixed issuer and audience. The
+ *                  Telegram bot lives in its own columns, not here.
  */
 export function providerPolicy(
   provider: SocialRecoveryProvider,
@@ -90,6 +93,14 @@ export function providerPolicy(
       provider,
       issuer: 'https://enclave.cavos.xyz/github',
       audience: 'cavos-github',
+      jwks_uri: 'https://enclave.cavos.xyz/.well-known/jwks.json',
+    }
+  }
+  if (provider === 'telegram') {
+    return {
+      provider,
+      issuer: 'https://enclave.cavos.xyz/telegram',
+      audience: 'cavos-telegram',
       jwks_uri: 'https://enclave.cavos.xyz/.well-known/jwks.json',
     }
   }

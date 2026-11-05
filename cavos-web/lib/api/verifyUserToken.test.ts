@@ -91,6 +91,16 @@ describe('verifyUserToken', () => {
         assert.equal(await verifyUserToken(req(token), () => enclaveKeys), null);
     });
 
+    it('accepts an enclave-issued Telegram token', async () => {
+        const token = await signEnclave({ iss: `${ENCLAVE}/telegram`, aud: 'cavos-telegram', sub: 'c'.repeat(64) });
+        assert.equal((await verifyUserToken(req(token), () => enclaveKeys))?.sub, 'c'.repeat(64));
+    });
+
+    it('rejects a Telegram token carrying the GitHub audience', async () => {
+        const token = await signEnclave({ iss: `${ENCLAVE}/telegram`, aud: 'cavos-github', sub: 'c'.repeat(64) });
+        assert.equal(await verifyUserToken(req(token), () => enclaveKeys), null);
+    });
+
     it('rejects an enclave token minted for another audience', async () => {
         const token = await signEnclave({ iss: ENCLAVE, aud: 'someone-else', sub: 'a'.repeat(64) });
         assert.equal(await verifyUserToken(req(token), () => enclaveKeys), null);
@@ -159,5 +169,15 @@ describe('isUserOfApp', () => {
         assert.equal(isUserOfApp(user, 'b'.repeat(64), APP), true);
         assert.equal(isUserOfApp(user, 'b'.repeat(64), OTHER_APP), false);
         assert.equal(isUserOfApp(await github(), 'b'.repeat(64), APP), false);
+    });
+
+    it('checks the app of an enclave Telegram token by its nonce', async () => {
+        const telegram = (nonce?: string) =>
+            signEnclave({ iss: `${ENCLAVE}/telegram`, aud: 'cavos-telegram', sub: 'c'.repeat(64), ...(nonce ? { nonce } : {}) })
+                .then((token) => verifyUserToken(req(token), () => enclaveKeys));
+        const user = await telegram(`${APP}.${HASH}`);
+        assert.equal(isUserOfApp(user, 'c'.repeat(64), APP), true);
+        assert.equal(isUserOfApp(user, 'c'.repeat(64), OTHER_APP), false);
+        assert.equal(isUserOfApp(await telegram(), 'c'.repeat(64), APP), false);
     });
 });

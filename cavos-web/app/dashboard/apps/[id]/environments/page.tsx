@@ -19,6 +19,8 @@ interface Environment {
   social_recovery_audiences: Partial<Record<Provider, string>> | null
   github_client_id: string | null
   github_client_secret_set: boolean
+  telegram_bot_id: string | null
+  telegram_client_secret_set: boolean
 }
 
 /** Every provider is available once recovery is on; these only set whose client. */
@@ -38,6 +40,9 @@ export default function EnvironmentsPage() {
   const [githubSecrets, setGithubSecrets] = useState<Record<string, string>>({})
   const [githubSaving, setGithubSaving] = useState('')
   const [githubMessage, setGithubMessage] = useState<Record<string, string>>({})
+  const [telegramSecrets, setTelegramSecrets] = useState<Record<string, string>>({})
+  const [telegramSaving, setTelegramSaving] = useState('')
+  const [telegramMessage, setTelegramMessage] = useState<Record<string, string>>({})
 
   useEffect(() => {
     fetch(`/api/apps/${id}/environments`)
@@ -120,6 +125,38 @@ export default function EnvironmentsPage() {
   }
 
   const githubCallback = `${window.location.origin}/api/oauth/github/callback`
+
+  const saveTelegram = async (environment: Environment) => {
+    setTelegramSaving(environment.id)
+    setTelegramMessage((current) => ({ ...current, [environment.id]: '' }))
+    try {
+      const botId = (environment.telegram_bot_id ?? '').trim()
+      const secret = telegramSecrets[environment.id] ?? ''
+      const response = await fetch(`/api/apps/${id}/environments`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          environment_id: environment.id,
+          telegram_bot_id: botId,
+          ...(secret ? { telegram_client_secret: secret } : {}),
+        }),
+      })
+      const body = await response.json()
+      if (!response.ok) throw new Error(body.error || 'Could not save Telegram sign-in')
+      updateLocal(environment.id, body.environment)
+      setTelegramSecrets((current) => ({ ...current, [environment.id]: '' }))
+      setTelegramMessage((current) => ({ ...current, [environment.id]: 'Saved' }))
+    } catch (error) {
+      setTelegramMessage((current) => ({
+        ...current,
+        [environment.id]: error instanceof Error ? error.message : 'Could not save',
+      }))
+    } finally {
+      setTelegramSaving('')
+    }
+  }
+
+  const telegramCallback = `${window.location.origin}/api/oauth/telegram/callback`
 
   return (
     <div className="space-y-6">
@@ -320,6 +357,81 @@ export default function EnvironmentsPage() {
                     }`}
                   >
                     {githubMessage[env.id]}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-xl border border-line bg-surface/40 p-4">
+              <h3 className="text-sm font-semibold">Telegram sign-in</h3>
+              <p className="mt-1 max-w-xl text-xs leading-5 text-black/50">
+                Leave empty to use Cavos&apos;s Telegram bot. Switching bots gives every Telegram
+                user in this environment a new identity and a new, empty wallet.
+              </p>
+              <p className="mt-2 max-w-xl text-xs leading-5 text-black/50">
+                In BotFather, open Bot Settings → Web Login and add this URL to Allowed URLs.
+                Paste the bot ID and the OIDC Client Secret shown there, not the Bot API token.
+              </p>
+              <div className="mt-4">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-black/40">
+                  Allowed URL
+                </label>
+                <div className="mt-2 flex items-center gap-2">
+                  <code className="min-w-0 flex-1 truncate rounded-lg bg-surface px-3 py-2.5 font-mono text-xs text-black/65">
+                    {telegramCallback}
+                  </code>
+                  <button
+                    onClick={() => copy(telegramCallback)}
+                    className="rounded-lg border border-line px-3 py-2.5 text-xs font-semibold transition-transform active:scale-[.97] focus-visible:outline-2 focus-visible:outline-brand"
+                  >
+                    {copied === telegramCallback ? <Icon.Check size={14} /> : <Icon.Copy size={14} />}
+                    <span className="sr-only">Copy Telegram callback URL</span>
+                  </button>
+                </div>
+              </div>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <label className="text-xs font-semibold">
+                  Telegram bot ID
+                  <input
+                    type="text"
+                    spellCheck={false}
+                    placeholder="Bot ID"
+                    value={env.telegram_bot_id ?? ''}
+                    onChange={(event) => updateLocal(env.id, { telegram_bot_id: event.target.value })}
+                    className="mt-2 w-full rounded-lg border border-line bg-white px-3 py-2.5 font-mono text-xs"
+                  />
+                </label>
+                <label className="text-xs font-semibold">
+                  Telegram client secret
+                  <input
+                    type="password"
+                    autoComplete="off"
+                    placeholder={
+                      env.telegram_client_secret_set ? 'Saved — leave empty to keep' : 'OIDC client secret'
+                    }
+                    value={telegramSecrets[env.id] ?? ''}
+                    onChange={(event) =>
+                      setTelegramSecrets((current) => ({ ...current, [env.id]: event.target.value }))
+                    }
+                    className="mt-2 w-full rounded-lg border border-line bg-white px-3 py-2.5 font-mono text-xs"
+                  />
+                </label>
+              </div>
+              <div className="mt-4 flex items-center gap-3">
+                <button
+                  onClick={() => saveTelegram(env)}
+                  disabled={telegramSaving === env.id}
+                  className="rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
+                >
+                  {telegramSaving === env.id ? 'Saving…' : 'Save Telegram sign-in'}
+                </button>
+                {telegramMessage[env.id] && (
+                  <span
+                    className={`text-xs ${
+                      telegramMessage[env.id] === 'Saved' ? 'text-emerald-700' : 'text-red-600'
+                    }`}
+                  >
+                    {telegramMessage[env.id]}
                   </span>
                 )}
               </div>
