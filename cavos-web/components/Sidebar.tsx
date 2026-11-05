@@ -85,18 +85,20 @@ export function Sidebar() {
         router.push(`/dashboard/apps/${id}`)
     }
 
+    const switchOrganization = (id: string) => {
+        if (id === organizationId) return
+        const next = setOrganizationId(id)
+        if (pathname.startsWith('/dashboard/apps/')) router.push(next ? `/dashboard/apps/${next}` : '/dashboard/apps')
+    }
+
     useEffect(() => {
         if (appsLoading || appsError) return
         const match = pathname.match(/^\/dashboard\/apps\/([^/]+)/)
         const currentId = match?.[1]
         if (!currentId || currentId === 'new') return
-        if (apps.some((item) => item.id === currentId)) return
-        if (hasApp(currentId) && apps.some((item) => item.id === appId)) {
-            router.replace(`/dashboard/apps/${appId}`)
-            return
-        }
+        if (hasApp(currentId)) return
         router.replace('/dashboard/apps')
-    }, [appId, apps, appsError, appsLoading, hasApp, pathname, router])
+    }, [appsError, appsLoading, hasApp, pathname, router])
 
     const billingActive = pathname.startsWith('/dashboard/billing')
     const settingsHref = appId ? `/dashboard/apps/${appId}${appSettings.suffix}` : null
@@ -141,24 +143,26 @@ export function Sidebar() {
                 >
                     {(close) => (
                         <>
-                            <div className="px-3 pb-2">
-                                <label className="block">
-                                    <span className="mb-1.5 block text-[11px] font-medium text-muted">Organization</span>
-                                    <select
-                                        aria-label="Current organization"
-                                        value={organizationId}
-                                        onChange={(event) => setOrganizationId(event.target.value)}
-                                        disabled={organizationsLoading || organizations.length === 0}
-                                        className="h-9 w-full appearance-none truncate rounded-lg border border-line-strong bg-surface px-2.5 pr-7 text-xs font-semibold text-ink outline-none focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-50"
-                                    >
-                                        {organizations.map((organization) => (
-                                            <option key={organization.id} value={organization.id}>
-                                                {organization.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
-                            </div>
+                            {organizations.length > 1 && (
+                                <>
+                                    <p className="px-3 pb-1 text-[11px] font-medium text-muted">Organizations</p>
+                                    {organizations.map((organization) => (
+                                        <button
+                                            key={organization.id}
+                                            role="menuitemradio"
+                                            aria-checked={organization.id === organizationId}
+                                            onClick={() => switchOrganization(organization.id)}
+                                            disabled={organizationsLoading}
+                                            className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm ${organization.id === organizationId ? 'bg-surface font-semibold text-ink' : 'text-ink hover:bg-black/[0.03]'}`}
+                                        >
+                                            <Icon.Org size={15} className="shrink-0 text-muted" />
+                                            <span className="min-w-0 truncate">{organization.name}</span>
+                                            {organization.id === organizationId && <Icon.Check size={13} className="ml-auto shrink-0 text-muted" />}
+                                        </button>
+                                    ))}
+                                    <div className="my-2 border-t border-line" />
+                                </>
+                            )}
 
                             <p className="px-3 pb-1 text-[11px] font-medium text-muted">Applications</p>
                             {apps.length === 0 && !appsLoading && (
