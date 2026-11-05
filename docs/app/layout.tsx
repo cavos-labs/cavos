@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     template: '%s | Cavos Docs',
   },
   description:
-    'Build device-native, verifiable smart accounts across blockchains with @cavos/kit. Guides for Starknet, Solana, Stellar, React, and React Native.',
+    'Cavos is an embedded wallet SDK for Stellar, Solana and Starknet. Guides for @cavos/kit on web, React, and React Native.',
   metadataBase: new URL('https://docs.cavos.xyz'),
   alternates: {
     canonical: 'https://docs.cavos.xyz',
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Cavos Docs: Multichain Embedded Wallets',
     description:
-      'Integrate device-native smart accounts across Starknet, Solana, Stellar, and the chains that come next.',
+      'Cavos is an embedded wallet SDK for Stellar, Solana and Starknet. Device-native keys, chain-native adapters.',
     url: 'https://docs.cavos.xyz',
     siteName: 'Cavos Docs',
     type: 'website',
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Cavos Docs: Multichain Embedded Wallets',
     description:
-      'Integrate device-native smart accounts across Starknet, Solana, Stellar, and the chains that come next.',
+      'Cavos is an embedded wallet SDK for Stellar, Solana and Starknet. Device-native keys, chain-native adapters.',
     images: ['/og-docs.png'],
   },
   robots: {
@@ -74,7 +74,7 @@ const siteJsonLd = {
       name: 'Cavos Labs',
       url: 'https://cavos.xyz',
       description:
-        'Cavos Labs builds device-native, verifiable smart-account infrastructure for every blockchain.',
+        'Cavos is an embedded wallet SDK for Stellar, Solana and Starknet. Hardware-isolated, non-custodial.',
       sameAs: ['https://x.com/cavosxyz', 'https://github.com/cavos-labs'],
     },
     {
@@ -92,7 +92,7 @@ const siteJsonLd = {
       applicationCategory: 'DeveloperApplication',
       operatingSystem: 'Web, iOS, Android',
       description:
-        'Device-native, self-custodial embedded wallet SDK with chain-native adapters for Starknet, Solana, and Stellar.',
+        'Cavos is an embedded wallet SDK for Stellar, Solana and Starknet. Device-native, self-custodial keys with chain-native adapters.',
       url: 'https://docs.cavos.xyz',
       publisher: { '@id': 'https://cavos.xyz/#organization' },
       offers: {

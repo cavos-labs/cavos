@@ -1,0 +1,115 @@
+---
+title: "Embedded Wallet vs Smart Wallet (2026)"
+date: "2026-11-05"
+updated: "2026-11-05"
+excerpt: "Embedded wallet vs smart wallet: in-app UX vs smart account. They can be the same wallet. Cavos on Starknet is an audited OpenZeppelin account contract."
+category: "Guide"
+ogQuote: "Embedded is where it appears. Smart is what the account is."
+slug: "embedded-wallet-vs-smart-wallet"
+faq:
+  - question: "What is the difference between an embedded wallet and a smart wallet?"
+    answer: "Embedded describes where the wallet lives: inside the app, provisioned at login, with approval in the product UI. Smart wallet usually means a smart-account or account-abstraction wallet: a contract that can enforce policy, batch calls, or sponsor gas. The two are not opposites. An embedded wallet can be a smart account. A browser-extension wallet can be a smart account too."
+  - question: "Is an embedded wallet a smart contract wallet?"
+    answer: "Only if that product uses a contract account. Cavos on Starknet is an audited OpenZeppelin account contract (AccountUpgradeable v3.0.0) controlled by one stark key. Cavos on Solana is a native Ed25519 system account. Cavos on Stellar is a classic G account. Those last two are embedded wallets and are not contract wallets."
+  - question: "Is account abstraction the same as an embedded wallet?"
+    answer: "No. Account abstraction (ERC-4337 on EVM, SNIP-29 paymasters on Starknet) is how a chain lets a contract account pay fees, batch calls, or apply policy. Embedded is how the product provisions and presents the wallet. You can ship ERC-4337 behind MetaMask. You can ship an embedded EOA with no abstraction. Ask both questions separately."
+  - question: "Should I pick a smart wallet or an embedded wallet?"
+    answer: "Pick the account model the chain requires, then pick where the user signs. If users should never install an extension, you want an embedded wallet. If you need session keys, spending limits, or a paymaster on EVM, you may also want a smart account. Cavos ships the first on Starknet, Solana, and Stellar. It is not an EVM ERC-4337 layer."
+  - question: "Does Cavos ship a smart wallet?"
+    answer: "On Starknet, yes in the account-model sense: each wallet is an audited OpenZeppelin account contract. Signing is still hardware-isolated and non-custodial. The key is derived and used on the user's device. Keys never leave the device in plaintext and are never used to sign on Cavos servers. On Solana and Stellar the accounts are native, not contract wallets."
+---
+
+An [embedded wallet](/embedded-wallet) lives inside your application. A **smart wallet** is usually a smart-account or account-abstraction wallet: a contract that can enforce policy, batch calls, or sponsor gas. Searchers type **embedded wallet vs smart wallet** as if those were two products on a shelf. They are two different questions.
+
+**Embedded** is where the wallet appears and who provisions it. **Smart** is what the on-chain account is. An [embedded wallet SDK](/embedded-wallet) can wrap a smart account, a native system account, or an EOA-style key. A browser extension can wrap any of those too. The [embedded wallets](/embedded-wallet) pillar is the category definition. This post is the split.
+
+Cavos, LLC is a software and SaaS company. The wallet is the main product. On [Starknet](/embedded-starknet-wallet) Cavos provisions an audited OpenZeppelin account contract. On [Solana](/embedded-solana-wallet) and [Stellar](/embedded-stellar-wallet) it provisions native accounts, not contract wallets. If the honest answer is an EVM ERC-4337 stack, that stack is not Cavos.
+
+## Embedded wallet vs smart wallet, in one table
+
+| Question | Embedded wallet | Smart wallet / smart account |
+|---|---|---|
+| What it names | Where the wallet appears, and who creates it | What the on-chain account is |
+| User install | None, in the happy path | Independent of install. Can live in an app or an extension |
+| Approval UI | Product UI | Product UI, extension popup, or both |
+| Account type | Native key, MPC key, hosted key, or a contract | A contract account (EVM ERC-4337, Starknet account, similar) |
+| Typical reason to pick it | Users should never see a wallet picker | Policy, batching, session keys, or a paymaster |
+
+The overlap is the interesting case. A Starknet account *is* a contract. An embedded Starknet wallet is therefore both: in-app UX, contract account. Calling that "smart wallet vs embedded wallet" as a fork is a category error.
+
+## What people mean by smart wallet
+
+The phrase is not a spec. Three uses show up in vendor copy and in RFPs:
+
+1. **Account abstraction on EVM.** ERC-4337 (and related EIPs) lets a contract account validate UserOperations, pay fees through a paymaster, and batch calls. Teams often say "smart wallet" when they mean that stack.
+2. **Chain-native contract accounts.** Starknet accounts are contracts. There is no EOA in the Ethereum sense. A product that ships an OpenZeppelin account on Starknet is shipping a smart account whether or not it uses the words.
+3. **Consumer branding.** Some mobile apps call any in-app wallet a smart wallet. That usage is marketing. It does not tell you who can sign.
+
+Ask for the account type, the signature scheme, and who can produce a valid signature without the user. The [non-custodial embedded wallet](/blog/non-custodial-embedded-wallet) guide is that test. The [custody](/custody) page is the control test counsel actually cites.
+
+## What people mean by embedded wallet
+
+Embedded is a UX and provisioning label. Login selects the user. The SDK looks up or creates an on-chain address. Approval happens in the app. There is no extension to install and no seed phrase to copy. That is the same definition as on [what is an embedded wallet](/blog/what-is-an-embedded-wallet).
+
+It does not decide:
+
+- whether the account is a contract
+- whether gas is sponsored
+- whether the vendor can sign
+
+Privy's public docs describe smart account support through integrations. Dynamic lists gasless transactions on EVM through account abstraction as an Enterprise feature. Those are smart-account features on finished [embedded wallet](/embedded-wallet) products. They are not evidence that "smart wallet" and "embedded wallet" are competitors.
+
+The commercial name for the hosted path is [wallet as a service](/blog/wallet-as-a-service). Same job, sold as a platform.
+
+## Orthogonal, not a fork
+
+Four combinations are all real:
+
+- **Embedded + native account.** Cavos on Solana (Ed25519 system account) and Stellar (classic G account). Phantom-style extensions are the non-embedded version of the same account shape.
+- **Embedded + smart account.** Cavos on Starknet: an audited OpenZeppelin account contract (AccountUpgradeable v3.0.0) controlled by one stark key derived from the MasterDEK. EVM products that provision an ERC-4337 account at login sit here too.
+- **Extension + native account.** MetaMask as an EOA, Phantom as a Solana system account, Freighter as a Stellar G account.
+- **Extension + smart account.** An ERC-4337 wallet the user installed, or a Starknet wallet app that is not embedded in your product.
+
+The [embedded wallet vs browser extension](/blog/embedded-wallet-vs-browser-extension) guide is the install-and-approval fork. This page is the account-model fork. You usually need both answers.
+
+## Account abstraction is not a custody model
+
+A paymaster can sponsor fees for a contract account. A bundler can submit UserOperations. Relayers on Solana and Stellar can pay fees. **None of those are signers.** Gas Sponsorship in Any Token on Cavos is the same idea, chain-native: SNIP-29 paymaster on Starknet, relayer as fee payer on Solana, sponsored reserves and fee-bumps on Stellar.
+
+Account abstraction also does not make a vendor non-custodial. A hosted key that drives an ERC-4337 account is still hosted. A device-native key that drives an OpenZeppelin account is still device-native. Read the key model, not the AA badge.
+
+Cavos custody is hardware-isolated and non-custodial. Private keys never leave the device in plaintext and are never used for signing on servers. Signing always happens on the user's device. The Nitro Enclave and the passkey only hold an encrypted copy of the master key for restore. Cavos cannot see the key, sign with it, or move funds.
+
+## What Cavos ships, chain by chain
+
+**Starknet.** Each wallet is an audited OpenZeppelin account contract. Cavos does not ship its own account implementation. One stark key, derived from the MasterDEK and app salt, controls the account. There is no on-chain device list and no on-chain social recovery. `execute` is a multicall through the paymaster. If your RFP says "smart wallet on Starknet," this is the account you are asking for, inside an embedded SDK.
+
+**Solana.** A native Ed25519 system account, the same shape as a Phantom address, not a PDA and not a program-derived smart account. A relayer can pay the fee. Arbitrary program calls go through an allowlist.
+
+**Stellar.** A classic G account, not a Soroban contract wallet. One Ed25519 spend key is HKDF of the same MasterDEK. Exchanges already understand the address. The relayer can sponsor reserves and fee-bumps.
+
+Cavos is not an EVM-wide ERC-4337 wallet layer. If the product is Ethereum-first and the requirement is a 4337 smart account plus MetaMask connection, [Privy](/compare/privy) or [Dynamic](/compare/dynamic) cover ground Cavos does not. The dated vendor table is [embedded wallet providers](/blog/embedded-wallet-providers). The decision tree is [best embedded wallet](/blog/best-embedded-wallet).
+
+## How to choose
+
+Write four answers down before you read a pricing page:
+
+1. Which chain is native, not a compatibility layer?
+2. Is the account a contract, a native key, or either?
+3. Who can produce a valid signature without the user?
+4. Does the user install something, or does login create the wallet?
+
+If (4) is login, you want an [embedded wallet](/embedded-wallet). If (2) is a contract on Starknet, Cavos already is that. If (2) is ERC-4337 on Ethereum, look at EVM-first providers. If (4) is "connect the wallet they already have," you want a connector, which Cavos is not.
+
+Setup is minutes: `npm install @cavos/kit`, wrap `CavosProvider`, sign in, execute. Free up to 1,000 wallets. Essential is $59/month. Complete is $139/month. The React path is [how to add an embedded wallet](/blog/how-to-add-an-embedded-wallet). The App Router path is [how to add an embedded wallet to Next.js](/blog/embedded-wallet-nextjs).
+
+## What to read next
+
+- [embedded wallet](/embedded-wallet), [embedded wallets](/embedded-wallet), and the [embedded wallet SDK](/embedded-wallet): the category, key models, and pricing.
+- [Best embedded wallet](/blog/best-embedded-wallet): chain first, then custody, then connect versus provision.
+- [Embedded wallet vs browser extension](/blog/embedded-wallet-vs-browser-extension): where users should sign.
+- [What is an embedded wallet?](/blog/what-is-an-embedded-wallet): the plain definition.
+- [Non-custodial embedded wallets](/blog/non-custodial-embedded-wallet): who can sign.
+- [Wallet as a service](/blog/wallet-as-a-service): how the platform is sold.
+- [Embedded wallet providers](/blog/embedded-wallet-providers): the dated vendor table.
+- Chain pages: [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), [Stellar](/embedded-stellar-wallet).

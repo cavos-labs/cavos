@@ -404,13 +404,27 @@ Hello
       true,
     )
     assert.equal(
-      walletAsAService.lastModified.toISOString().startsWith('2026-11-03'),
+      walletAsAService.lastModified.toISOString().startsWith('2026-11-05'),
       true,
     )
+
+    for (const slug of [
+      'embedded-wallet-vs-smart-wallet',
+      'embedded-wallet-nextjs',
+      'best-embedded-wallet',
+    ]) {
+      const post = publishedBlogPosts().find((item) => item.slug === slug)
+      assert.ok(post, slug)
+      assert.equal(
+        post.lastModified.toISOString().startsWith('2026-11-05'),
+        true,
+        slug,
+      )
+    }
   })
 
   it('keeps the indexable marketing URLs including the React integration guide', () => {
-    assert.equal(entries.length, 47)
+    assert.equal(entries.length, 50)
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/para-alternatives`))
     assert.ok(
       urls.includes(`${MARKETING_ORIGIN}/blog/how-to-add-an-embedded-wallet`),
@@ -448,7 +462,14 @@ Hello
     assert.ok(
       urls.includes(`${MARKETING_ORIGIN}/blog/embedded-wallet-payments`),
     )
-    for (const slug of ['best-embedded-wallets-stellar', 'best-embedded-wallets-solana', 'best-embedded-wallets-starknet']) {
+    for (const slug of [
+      'best-embedded-wallets-stellar',
+      'best-embedded-wallets-solana',
+      'best-embedded-wallets-starknet',
+      'embedded-wallet-vs-smart-wallet',
+      'embedded-wallet-nextjs',
+      'best-embedded-wallet',
+    ]) {
       assert.ok(urls.includes(`${MARKETING_ORIGIN}/blog/${slug}`))
     }
     assert.equal(

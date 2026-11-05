@@ -44,12 +44,12 @@ export const EMBEDDED_WALLET_PROVIDERS_PATH =
   '/blog/embedded-wallet-providers'
 
 export const EMBEDDED_WALLET_PROVIDERS_TITLE =
-  'Best Embedded Wallet Providers (2026): Free'
+  'Best Embedded Wallet Providers 2026: Compared'
 
 export const PRIVY_VS_TURNKEY_PATH = '/blog/privy-vs-turnkey'
 
 export const PRIVY_VS_TURNKEY_TITLE =
-  'Privy vs Turnkey vs Dfns (2026): Who Signs'
+  'Privy vs Turnkey (2026): Who Holds the Key'
 
 export const PRIVY_VS_DYNAMIC_PATH = '/blog/privy-vs-dynamic'
 
@@ -75,7 +75,7 @@ export const NON_CUSTODIAL_EMBEDDED_WALLET_TITLE =
 export const WALLET_AS_A_SERVICE_PATH = '/blog/wallet-as-a-service'
 
 export const WALLET_AS_A_SERVICE_TITLE =
-  'Wallet as a Service Providers (2026)'
+  'Wallet as a Service (2026): Providers, Pricing'
 
 export const EMBEDDED_WALLET_COST_PATH = '/blog/embedded-wallet-cost'
 
@@ -96,6 +96,22 @@ export const EMBEDDED_WALLET_PAYMENTS_PATH = '/blog/embedded-wallet-payments'
 
 export const EMBEDDED_WALLET_PAYMENTS_TITLE =
   'Embedded Wallet Payments (2026): USDC Guide'
+
+export const EMBEDDED_WALLET_VS_SMART_WALLET_PATH =
+  '/blog/embedded-wallet-vs-smart-wallet'
+
+export const EMBEDDED_WALLET_VS_SMART_WALLET_TITLE =
+  'Embedded Wallet vs Smart Wallet (2026)'
+
+export const EMBEDDED_WALLET_NEXTJS_PATH = '/blog/embedded-wallet-nextjs'
+
+export const EMBEDDED_WALLET_NEXTJS_TITLE =
+  'How to Add an Embedded Wallet to Next.js (2026)'
+
+export const BEST_EMBEDDED_WALLET_PATH = '/blog/best-embedded-wallet'
+
+export const BEST_EMBEDDED_WALLET_TITLE =
+  'Best Embedded Wallet (2026): How to Choose'
 
 export const DOCS_ORIGIN = 'https://docs.cavos.xyz'
 
@@ -257,5 +273,15 @@ export const EMBEDDED_WALLET_FAQ = [
     question: 'How long does it take to add an embedded wallet SDK?',
     answer:
       'Setup is minutes, not a week: npm install @cavos/kit, create an app in the dashboard for an App ID, wrap the tree in CavosProvider or call Cavos.connect, sign the user in, then execute. Connect never deploys Starknet or Stellar; the first execute deploys and runs atomically. The free tier covers the first 1,000 wallets.',
+  },
+  {
+    question: 'What is the difference between an embedded wallet and a smart wallet?',
+    answer:
+      'They answer different questions. Embedded says where the wallet appears: inside the app, provisioned at login. Smart wallet usually means a smart-account or account-abstraction wallet, a contract that can enforce policy, batch calls, or sponsor gas. An embedded wallet can be a smart account. Cavos on Starknet is an audited OpenZeppelin account contract. Cavos on Solana and Stellar uses native system accounts, not contract wallets. A browser extension can also be a smart account.',
+  },
+  {
+    question: 'What is the best embedded wallet?',
+    answer:
+      'There is no single best embedded wallet. Choose on chain, custody, and whether you provision new accounts or connect existing ones. Cavos is the closer fit when the product is Starknet, Solana, or Stellar and the review requires a device-native key. If the product is EVM-first or must connect MetaMask, Privy or Dynamic cover ground Cavos does not. The dated vendor table is the embedded wallet providers guide.',
   },
 ] as const

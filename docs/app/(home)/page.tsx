@@ -202,7 +202,14 @@ export default function HomePage() {
               >
                 React integration guide
               </a>{' '}
-              is the install path;{' '}
+              is the install path; the{' '}
+              <a
+                href="https://cavos.xyz/blog/embedded-wallet-nextjs"
+                className="text-ink underline decoration-ink/25 underline-offset-4 hover:decoration-ink"
+              >
+                Next.js App Router guide
+              </a>{' '}
+              is the client boundary;{' '}
               <a
                 href="https://cavos.xyz/blog/embedded-wallet-vs-browser-extension"
                 className="text-ink underline decoration-ink/25 underline-offset-4 hover:decoration-ink"

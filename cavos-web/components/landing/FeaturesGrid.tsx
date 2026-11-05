@@ -235,14 +235,29 @@ export function FeaturesGrid() {
                     >
                         embedded wallet
                     </Link>
-                    {' '}is, then{' '}
+                    {' '}
+                    (
+                    <Link
+                        href="/embedded-wallet"
+                        className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                    >
+                        embedded wallet SDK
+                    </Link>
+                    ) is, then{' '}
                     <Link
                         href="/compare"
                         className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
                     >
                         compare providers
                     </Link>
-                    {' '}on custody, signing, and chain coverage.
+                    {' '}on custody, signing, and chain coverage. The shopping list is{' '}
+                    <Link
+                        href="/blog/best-embedded-wallet"
+                        className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+                    >
+                        best embedded wallet
+                    </Link>
+                    .
                 </p>
             </div>
 

@@ -1,0 +1,232 @@
+---
+title: "How to Add an Embedded Wallet to Next.js (2026)"
+date: "2026-11-05"
+updated: "2026-11-05"
+excerpt: "Add an embedded wallet to a Next.js App Router app with @cavos/kit: client provider, env vars, callback URLs, vault origins, and a first sponsored execute."
+category: "Guide"
+ogQuote: "The kit is a client component. The layout is not. Split them."
+slug: "embedded-wallet-nextjs"
+faq:
+  - question: "How do I add an embedded wallet to a Next.js app?"
+    answer: "Install @cavos/kit, create an App ID, put a 'use client' CavosProvider in app/providers.tsx, wrap children from app/layout.tsx, set NEXT_PUBLIC_CAVOS_APP_ID, register callback URLs and vault origins, then call useCavos() from client components. Server Components cannot hold the device key. The first execute deploys Starknet or Stellar atomically."
+  - question: "Can I use @cavos/kit in a Next.js Server Component?"
+    answer: "No. The signing key lives on the user's device. @cavos/kit/react is marked 'use client'. Import CavosProvider and useCavos only from Client Components. A Server Component can render a client WalletButton. It cannot call execute, read the address during SSR, or hold a key."
+  - question: "What Next.js env vars does an embedded wallet SDK need?"
+    answer: "The App ID is public and belongs in NEXT_PUBLIC_CAVOS_APP_ID so the browser can read it. Starknet also needs a paymaster API key as a client-visible, app-scoped sponsorship credential, typically NEXT_PUBLIC_CAVOS_PAYMASTER_API_KEY. Never put an operator or treasury secret in NEXT_PUBLIC_*. Bind the paymaster key by app, origin, rate, and spend in the dashboard."
+  - question: "How do callback URLs and vault origins work on Vercel preview deploys?"
+    answer: "Cavos does not accept wildcards. Each origin and each callback URL must match exactly: scheme, host, path, no trailing slash. localhost, a tunnel, and every Vercel preview URL are distinct origins. Register them under Callback URLs and allowed web origins. OAuth that starts on one origin cannot finish on another."
+  - question: "Is this the same as the React embedded wallet guide?"
+    answer: "No. The React guide is the generic install: provider, login, execute. This page is the Next.js App Router path: the client boundary, layout wiring, env files, callback URLs, and vault origins. Use both. Best practices live in the embedded wallet React SDK guide."
+---
+
+An [embedded wallet](/embedded-wallet) lives inside your application. In Next.js that means the wallet is a Client Component tree, not a Server Component, because the signing key lives on the user's device. [Embedded wallets](/embedded-wallet) still sign on the device. The server never holds the key.
+
+This guide is how to add an [embedded wallet SDK](/embedded-wallet) to a **Next.js App Router** app with `@cavos/kit` 0.5.1. It covers the client boundary, `app/layout.tsx`, env vars, callback URLs, vault origins, and a first sponsored execute. The generic React install is [how to add an embedded wallet](/blog/how-to-add-an-embedded-wallet). Best practices (passkeys, errors, testnet) live in the [embedded wallet React SDK](/blog/embedded-wallet-react-sdk) guide. The method map is the [embedded wallet API](/blog/embedded-wallet-api).
+
+Cavos, LLC is a software and SaaS company. The wallet is the main product: a device-native, self-custodial embedded wallet. Signing keys are created and used on the user's device. Keys never leave the device in plaintext and are never used to sign on Cavos servers. Custody is hardware-isolated and non-custodial. Adapters ship today for [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), and [Stellar](/embedded-stellar-wallet).
+
+If you are still choosing a provider, start with [what an embedded wallet is](/blog/what-is-an-embedded-wallet) and the [compare](/compare) pages. For platform parts and build versus buy, read [wallet as a service](/blog/wallet-as-a-service).
+
+## 1. Install @cavos/kit
+
+```bash
+npm install @cavos/kit@^0.5.1
+```
+
+Use 0.5.x. 0.4.x breaks email sign-in and enclave recovery against the current enclave. The React bindings live on the same package, under `@cavos/kit/react`. You do not install a second library.
+
+Create an app in the [Cavos dashboard](https://cavos.xyz/dashboard) and copy the App ID. Free up to 1,000 wallets. Essential is $59/month. Complete is $139/month.
+
+## 2. Put secrets in the right place
+
+Create `.env.local` (gitignored) in the Next.js app root:
+
+```bash
+NEXT_PUBLIC_CAVOS_APP_ID=your-app-id
+# Starknet only. Client-visible, app-scoped sponsorship credential.
+NEXT_PUBLIC_CAVOS_PAYMASTER_API_KEY=your-paymaster-key
+```
+
+`NEXT_PUBLIC_*` is inlined into the browser bundle. That is correct for `appId`. It is also why a Starknet `paymasterApiKey` must be treated as a **client-visible, app-scoped sponsorship credential**, never as an operator or treasury secret. Before production, bind it by app, environment, origin, rate, and spend.
+
+Do not put a Cavos secret in a Server Action, a Route Handler, or `CAVOS_*` without `NEXT_PUBLIC_` and then expect the client kit to read it. The kit runs in the browser. The device signs there.
+
+Restart `next dev` after changing env files. Next.js will not pick up new `NEXT_PUBLIC_*` values in a running process.
+
+## 3. Split the client provider from the root layout
+
+App Router layouts are Server Components by default. `@cavos/kit/react` is marked `'use client'`. If you import `CavosProvider` from `app/layout.tsx` directly, you pull the kit into a server module graph and you will see `window is not defined` or a hydration mismatch.
+
+Create a client module. Keep the layout as a server file that only renders it.
+
+```tsx
+// app/providers.tsx
+'use client';
+
+import { CavosProvider } from "@cavos/kit/react";
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <CavosProvider
+      config={{
+        chains: ["solana", "stellar"],
+        defaultChain: "solana",
+        network: "testnet",
+        environment: "development",
+        appSalt: "my-app",
+        appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+      }}
+      modal={{ appName: "My App" }}
+    >
+      {children}
+    </CavosProvider>
+  );
+}
+```
+
+```tsx
+// app/layout.tsx
+import { Providers } from "./providers";
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
+  );
+}
+```
+
+Never change `appSalt` after users exist. On Solana and Stellar it is the HKDF salt for the spend key. Changing it derives a different address that will not match the registry row.
+
+Passing `modal={{ appName: "My App" }}` mounts hosted login. If you already authenticate users (Auth.js, Clerk, your own session), pass a stable `userId` as `identity` instead. Cavos login turns off. Pass `null` while your auth is loading and once the user signs out. Use an immutable primary key, not an email that can change.
+
+Add Starknet to `chains` only when you also pass `paymasterApiKey: process.env.NEXT_PUBLIC_CAVOS_PAYMASTER_API_KEY`. A paymaster key on a chain that ignores it is a config error; the provider reports that in development.
+
+See the [React](https://docs.cavos.xyz/docs/react) and [authentication](https://docs.cavos.xyz/docs/auth) docs for `identity`, `deviceApproval`, `socialRecovery`, and the [vault](https://docs.cavos.xyz/docs/vault).
+
+## 4. Register callback URLs and vault origins
+
+OAuth and the vault are origin-strict. Next.js local, tunnel, and preview URLs are different origins.
+
+In **Dashboard → App → Callback URLs**, add each redirect exactly: scheme, host, path, no trailing slash, no wildcards. Typical entries while developing:
+
+- `http://localhost:3000`
+- `http://localhost:3000/auth/callback` if you set an explicit `redirectUri`
+- each `*.vercel.app` preview host you actually use (each one is a new line)
+- the production host
+
+Register the same hosts as allowed web origins so the [Cavos vault](https://docs.cavos.xyz/docs/vault) iframe can talk to your page. With `appId` set, keys live in an iframe on `vault.cavos.xyz`, not in your bundle. Connect fails if the page origin is not on that list.
+
+Google or Apple login is tied to a one-time secret in `sessionStorage`. The callback has to land on the **same tab and origin** that started it. A preview URL is not `localhost`. A `www` host is not the apex. Start and finish on one registered origin.
+
+## 5. Call the kit only from Client Components
+
+A Server Component can render a client island. It cannot call `useCavos()`. Wallet state is not available during SSR: the device key is not on the server. Gate the first paint on `isLoading` rather than expecting an address immediately.
+
+```tsx
+// app/wallet-button.tsx
+'use client';
+
+import { useCavos } from "@cavos/kit/react";
+
+export function WalletButton() {
+  const { address, isAuthenticated, isLoading, walletStatus, openModal, logout } =
+    useCavos();
+
+  if (isLoading) return <p>Connecting…</p>;
+  if (!isAuthenticated) return <button onClick={openModal}>Sign in</button>;
+
+  return (
+    <div>
+      <p>{address}</p>
+      <p>ready={String(walletStatus.isReady)} undeployed={String(walletStatus.isUndeployed)}</p>
+      <button onClick={logout}>Log out</button>
+    </div>
+  );
+}
+```
+
+```tsx
+// app/page.tsx  (Server Component, no 'use client')
+import { WalletButton } from "./wallet-button";
+
+export default function Page() {
+  return (
+    <main>
+      <h1>App</h1>
+      <WalletButton />
+    </main>
+  );
+}
+```
+
+`logout()` clears the kit session. It does not sign the user out of Google, Apple, or GitHub.
+
+## 6. Send the first sponsored transaction
+
+Connect never deploys Starknet or Stellar. Native Solana is `ready` once this device has the spend key. Both `undeployed` and `ready` wallets can execute. Only `needs-device-approval` blocks transactions.
+
+Keep execute in a Client Component. Narrow on `wallet.chain`:
+
+```tsx
+'use client';
+
+import { useCavos } from "@cavos/kit/react";
+
+export function SendButton({ destination }: { destination: string }) {
+  const { wallet, execute } = useCavos();
+
+  async function onSend() {
+    if (wallet?.status === "needs-device-approval") {
+      throw new Error("This device has no key yet. Restore the MasterDEK.");
+    }
+
+    if (wallet?.chain === "solana") {
+      await wallet.execute(1_000_000n, destination); // lamports
+      return;
+    }
+    if (wallet?.chain === "stellar") {
+      await wallet.execute(1_000_000n, destination); // stroops
+      return;
+    }
+    if (wallet?.chain === "starknet") {
+      await execute([
+        { contractAddress: TOKEN, entrypoint: "transfer", calldata: [to, amountLow, amountHigh] },
+      ]);
+    }
+  }
+
+  return <button onClick={onSend}>Send</button>;
+}
+```
+
+Gas Sponsorship in Any Token is chain-native, not a universal gas tank. Starknet uses the paymaster. Solana can name the relayer as fee payer. Stellar can sponsor reserves and fee-bumps. Relayers and paymasters are not signers.
+
+If `status === "needs-device-approval"`, restore the MasterDEK with a [passkey](https://docs.cavos.xyz/docs/passkeys) or the [enclave](https://docs.cavos.xyz/docs/hardware-isolated-recovery). There is no on-chain device list. The passkey and the enclave only hold an encrypted copy of the master key for restore.
+
+## Next.js pitfalls that are not the kit
+
+- **Importing the kit in a Route Handler to "sign on the server."** Cavos does not sign on servers. There is no create-wallet REST endpoint that returns a spend key.
+- **Reading `address` during SSR for Open Graph or a database write.** The address is not known until the client connects. Look it up after `isAuthenticated`, or persist it from a client callback to your backend.
+- **Middleware that blocks `/` from unknown browsers.** OAuth redirects must reach the registered callback path.
+- **Strict CSP.** `connect-src` must allow the Cavos backend, `vault.cavos.xyz`, and (if you use enclave recovery) `{backendUrl}/api/enclave/releases/*` plus `https://tuf-repo-cdn.sigstore.dev/`. See [troubleshooting](https://docs.cavos.xyz/docs/troubleshooting).
+- **Pages Router.** The same client boundary applies: a `_app.tsx` provider still needs `'use client'` semantics and browser-only hooks. This page stays on App Router because that is the default Next.js app in 2026.
+
+## What to read next
+
+- [embedded wallet](/embedded-wallet), [embedded wallets](/embedded-wallet), and the [embedded wallet SDK](/embedded-wallet): custody, key models, and how to choose.
+- [How to add an embedded wallet](/blog/how-to-add-an-embedded-wallet): the generic React install this page specializes.
+- [Embedded wallet React SDK](/blog/embedded-wallet-react-sdk): passkeys, Gas Sponsorship in Any Token, errors, testnet.
+- [Embedded wallet API](/blog/embedded-wallet-api): auth, connect, execute, gas, recovery.
+- [Embedded wallet vs smart wallet](/blog/embedded-wallet-vs-smart-wallet): account model versus in-app UX.
+- [Wallet as a service](/blog/wallet-as-a-service): platform parts, pricing, build versus buy.
+- [Quickstart](https://docs.cavos.xyz/docs/quickstart) and [React](https://docs.cavos.xyz/docs/react): the full kit surface.
+- Chain pages: [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), [Stellar](/embedded-stellar-wallet).
+- [Pricing](/pricing) for the free 1,000 creates. [Custody](/custody) for the control test.

@@ -23,7 +23,7 @@ export function Footer() {
                 <div className="space-y-5">
                     <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-black/50">Products</p>
                     <ul className="space-y-3 text-sm font-medium text-black/40">
-                        <li><Link href="/" className="hover:text-black transition-colors">Wallet SDK</Link></li>
+                        <li><Link href="/embedded-wallet" className="hover:text-black transition-colors">Embedded wallet SDK</Link></li>
                         <li><Link href="/embedded-starknet-wallet" className="hover:text-black transition-colors">Starknet wallet</Link></li>
                         <li><Link href="/embedded-solana-wallet" className="hover:text-black transition-colors">Solana wallet</Link></li>
                         <li><Link href="/embedded-stellar-wallet" className="hover:text-black transition-colors">Stellar wallet</Link></li>
@@ -37,6 +37,9 @@ export function Footer() {
                     <ul className="space-y-3 text-sm font-medium text-black/40">
                         <li><Link href="/embedded-wallet" className="hover:text-black transition-colors">Embedded wallet</Link></li>
                         <li><Link href="/blog/how-to-add-an-embedded-wallet" className="hover:text-black transition-colors">How to add an embedded wallet</Link></li>
+                        <li><Link href="/blog/embedded-wallet-nextjs" className="hover:text-black transition-colors">Embedded wallet for Next.js</Link></li>
+                        <li><Link href="/blog/embedded-wallet-vs-smart-wallet" className="hover:text-black transition-colors">Embedded wallet vs smart wallet</Link></li>
+                        <li><Link href="/blog/best-embedded-wallet" className="hover:text-black transition-colors">Best embedded wallet</Link></li>
                         <li><Link href="/blog/wallet-as-a-service" className="hover:text-black transition-colors">Wallet as a service</Link></li>
                         <li><Link href="/compare" className="hover:text-black transition-colors">Compare providers</Link></li>
                         <li><Link href="/privy-alternatives" className="hover:text-black transition-colors">Privy wallet alternatives</Link></li>

@@ -36,6 +36,7 @@ const RESOURCES_MENU: Omit<MegaMenuProps, 'onOpenChange'> = {
         heading: 'Contact',
         items: [
             { title: 'Embedded wallet', description: 'Custody models, key management, and how to choose an SDK.', href: '/embedded-wallet' },
+            { title: 'Best embedded wallet', description: 'Chain first, then custody, then connect versus provision.', href: '/blog/best-embedded-wallet' },
             { title: 'Contact sales', description: 'Talk to us about your integration and pricing.', href: '/contact-sales' },
             { title: 'Custody', description: 'What it costs when your app can move a user’s crypto.', href: '/custody' },
             { title: 'Email us', description: 'adrianvrj@cavos.xyz', href: 'mailto:adrianvrj@cavos.xyz' },

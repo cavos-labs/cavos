@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import { MarketingBreadcrumbs } from '@/components/MarketingBreadcrumbs'
 import {
     EMBEDDED_WALLET_MARKET_NOTE,
     PROVIDER_PRICING_AS_OF,
@@ -44,6 +45,12 @@ import {
     WALLET_AS_A_SERVICE_TITLE,
     EMBEDDED_WALLET_PAYMENTS_PATH,
     EMBEDDED_WALLET_PAYMENTS_TITLE,
+    EMBEDDED_WALLET_VS_SMART_WALLET_PATH,
+    EMBEDDED_WALLET_VS_SMART_WALLET_TITLE,
+    EMBEDDED_WALLET_NEXTJS_PATH,
+    EMBEDDED_WALLET_NEXTJS_TITLE,
+    BEST_EMBEDDED_WALLET_PATH,
+    BEST_EMBEDDED_WALLET_TITLE,
 } from '@/lib/embedded-wallet-guide'
 import { guidePageJsonLd, marketingPageMetadata } from '@/lib/marketing-seo'
 
@@ -98,7 +105,13 @@ export default function EmbeddedWalletGuidePage() {
 
             <article className="mx-auto max-w-4xl px-6 pb-24 pt-32 md:px-8">
                 <header className="max-w-3xl">
-                    <h1 className="text-balance text-[clamp(2.5rem,6vw,4.5rem)] font-medium leading-[0.98] tracking-[-0.045em]">
+                    <MarketingBreadcrumbs
+                        crumbs={[
+                            { name: 'Home', href: '/' },
+                            { name: 'Embedded wallet SDK', href: EMBEDDED_WALLET_PATH },
+                        ]}
+                    />
+                    <h1 className="mt-6 text-balance text-[clamp(2.5rem,6vw,4.5rem)] font-medium leading-[0.98] tracking-[-0.045em]">
                         {EMBEDDED_WALLET_H1}
                     </h1>
                     <p className="mt-7 max-w-2xl text-lg leading-relaxed text-muted">
@@ -143,6 +156,22 @@ export default function EmbeddedWalletGuidePage() {
                         . To install, follow{' '}
                         <Link href={EMBEDDED_WALLET_INTEGRATION_PATH} className={linkClass}>
                             how to add an embedded wallet
+                        </Link>
+                        {' '}
+                        or the{' '}
+                        <Link href={EMBEDDED_WALLET_NEXTJS_PATH} className={linkClass}>
+                            Next.js App Router guide
+                        </Link>
+                        . The shopping list is{' '}
+                        <Link href={BEST_EMBEDDED_WALLET_PATH} className={linkClass}>
+                            best embedded wallet
+                        </Link>
+                        . Account model versus in-app UX is{' '}
+                        <Link
+                            href={EMBEDDED_WALLET_VS_SMART_WALLET_PATH}
+                            className={linkClass}
+                        >
+                            embedded wallet vs smart wallet
                         </Link>
                         .
                     </p>
@@ -401,6 +430,43 @@ export default function EmbeddedWalletGuidePage() {
                         </Link>
                         .
                     </p>
+                </section>
+
+                <section className="mt-16 max-w-3xl">
+                    <h2 className="text-2xl font-medium tracking-[-0.03em]">
+                        Embedded wallet vs smart wallet
+                    </h2>
+                    <div className="mt-5 space-y-4 text-sm leading-relaxed text-muted">
+                        <p>
+                            Embedded says where the wallet appears. Smart wallet usually means
+                            a smart-account or account-abstraction wallet: a contract that can
+                            enforce policy, batch calls, or sponsor gas. Those are not
+                            opposites. An embedded wallet can be a smart account. A browser
+                            extension can be a smart account too.
+                        </p>
+                        <p>
+                            Cavos on Starknet is both: an in-app wallet whose on-chain account
+                            is an audited OpenZeppelin account contract (AccountUpgradeable
+                            v3.0.0). Cavos on Solana and Stellar is embedded and native, not a
+                            contract wallet. Account abstraction does not decide custody. A
+                            paymaster or relayer is not a signer.
+                        </p>
+                        <p>
+                            The full split, including ERC-4337 and when to pick a contract
+                            account, is{' '}
+                            <Link
+                                href={EMBEDDED_WALLET_VS_SMART_WALLET_PATH}
+                                className={linkClass}
+                            >
+                                embedded wallet vs smart wallet
+                            </Link>
+                            . The shopping-list version of best embedded wallet is{' '}
+                            <Link href={BEST_EMBEDDED_WALLET_PATH} className={linkClass}>
+                                how to choose
+                            </Link>
+                            .
+                        </p>
+                    </div>
                 </section>
 
                 <section className="mt-16 max-w-3xl">
@@ -846,9 +912,10 @@ export default function EmbeddedWalletGuidePage() {
                     </h2>
                     <p className="mt-5 max-w-3xl text-sm leading-relaxed text-muted">
                         Cavos, Privy, Dynamic, Turnkey, Web3Auth / MetaMask Embedded Wallets,
-                        and Magic all ship an embedded wallet. They do not share a key model,
-                        the same native chain coverage, or the same pricing. Each name opens
-                        the full comparison except Cavos, which links to published fees.
+                        Magic, and Para all ship an embedded wallet. They do not share a key
+                        model, the same native chain coverage, or the same pricing. Each name
+                        opens the full comparison except Cavos, which links to published fees,
+                        and Para, which has no Cavos vs Para compare page.
                     </p>
                     <div className="mt-8 overflow-x-auto rounded-2xl border border-line">
                         <table className="w-full min-w-[860px] border-collapse text-left text-sm">
@@ -894,6 +961,29 @@ export default function EmbeddedWalletGuidePage() {
                                         </td>
                                     </tr>
                                 ))}
+                                <tr className="border-t border-line">
+                                    <th
+                                        scope="row"
+                                        className="px-5 py-4 align-top font-semibold"
+                                    >
+                                        <Link href="/para-alternatives" className={linkClass}>
+                                            Para
+                                        </Link>
+                                    </th>
+                                    <td className="border-l border-line px-5 py-4 align-top text-muted">
+                                        Free to 1,200 MAUs. Starter $200/mo (2,500 MAUs). Growth
+                                        $500/mo (10,000). Scale $1,000/mo (25,000). Public pricing
+                                        page does not charge per signature.
+                                    </td>
+                                    <td className="border-l border-line px-5 py-4 align-top text-muted">
+                                        Named table: EVM, Solana, Cosmos chains (Noble, Initia,
+                                        Osmosis), and Stellar. No Starknet native adapter.
+                                    </td>
+                                    <td className="border-l border-line px-5 py-4 align-top text-muted">
+                                        2-of-2 MPC. User share on the device. Para share in cloud
+                                        HSMs.
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -1095,6 +1185,29 @@ export default function EmbeddedWalletGuidePage() {
                                 @cavos/kit
                             </code>{' '}
                             install and the first sponsored transaction.
+                        </li>
+                        <li>
+                            <Link href={EMBEDDED_WALLET_NEXTJS_PATH} className={linkClass}>
+                                {EMBEDDED_WALLET_NEXTJS_TITLE}
+                            </Link>
+                            {': '}App Router client boundary, env vars, callback URLs, and vault
+                            origins.
+                        </li>
+                        <li>
+                            <Link
+                                href={EMBEDDED_WALLET_VS_SMART_WALLET_PATH}
+                                className={linkClass}
+                            >
+                                {EMBEDDED_WALLET_VS_SMART_WALLET_TITLE}
+                            </Link>
+                            {': '}in-app UX versus a contract account. They can be the same
+                            wallet.
+                        </li>
+                        <li>
+                            <Link href={BEST_EMBEDDED_WALLET_PATH} className={linkClass}>
+                                {BEST_EMBEDDED_WALLET_TITLE}
+                            </Link>
+                            {': '}chain first, then custody, then connect versus provision.
                         </li>
                         <li>
                             <Link href={EMBEDDED_WALLET_REACT_SDK_PATH} className={linkClass}>

@@ -455,6 +455,17 @@ export function guidePageJsonLd(input: {
         ? { featureList: input.software.featureList }
         : {}),
     })
+    graph.push({
+      '@type': 'Product',
+      '@id': `${url}#product`,
+      name: input.software.name,
+      description: input.software.description,
+      url,
+      image: OG_IMAGE.url,
+      brand: { '@id': ORGANIZATION_ID },
+      category: 'Embedded wallet SDK',
+      offers: cavosPublishedPlanOffersJsonLd(),
+    })
   }
 
   return {

@@ -4,6 +4,7 @@ import { MDXRemote } from 'next-mdx-remote/rsc';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { MarketingSignupCta } from '@/components/MarketingSignupCta';
+import { MarketingBreadcrumbs } from '@/components/MarketingBreadcrumbs';
 import { getAllPosts, getPostBySlug, formatDate, CATEGORY_COLORS, PostCategory } from '@/lib/blog';
 import { Metadata } from 'next';
 import { blogPostJsonLd, marketingPageMetadata } from '@/lib/marketing-seo';
@@ -92,12 +93,16 @@ export default async function BlogPostPage({ params }: Props) {
         />
 
         <div className="relative max-w-[1400px] mx-auto px-6 md:px-12 py-14 md:py-20">
-          <Link
-            href="/blog"
-            className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-white/35 hover:text-white/70 transition-colors mb-8"
-          >
-            <span>←</span> Blog
-          </Link>
+          <div className="mb-8">
+            <MarketingBreadcrumbs
+              tone="dark"
+              crumbs={[
+                { name: 'Home', href: '/' },
+                { name: 'Blog', href: '/blog' },
+                { name: post.meta.title, href: `/blog/${slug}` },
+              ]}
+            />
+          </div>
 
           <div className="flex items-center gap-3 mb-5">
             {post.meta.category !== 'Guide' ? (
@@ -109,6 +114,14 @@ export default async function BlogPostPage({ params }: Props) {
             ) : null}
             <span className="text-[11px] uppercase tracking-[0.18em] text-white/30">
               {formatDate(post.meta.date)}
+            </span>
+            {post.meta.updated && post.meta.updated !== post.meta.date ? (
+              <span className="text-[11px] uppercase tracking-[0.18em] text-white/30">
+                Updated {formatDate(post.meta.updated)}
+              </span>
+            ) : null}
+            <span className="text-[11px] uppercase tracking-[0.18em] text-white/30">
+              By Cavos
             </span>
           </div>
 

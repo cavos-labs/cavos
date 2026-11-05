@@ -5,7 +5,11 @@ description: Pay Stellar reserves and fees in a held token with @cavos/reserve. 
 
 `@cavos/reserve` sponsors the two XLM costs Stellar charges, **reserves**
 (locked) and **fees** (spent), and collects both in a token the user already
-holds. Classic `G…` accounts only. No Cavos app, no API key, no wallet lock-in.
+holds. Classic `G…` accounts only. It is wallet-agnostic: not the Cavos
+[embedded wallet](https://cavos.xyz/embedded-wallet)
+([embedded wallets](https://cavos.xyz/embedded-wallet),
+[embedded wallet SDK](https://cavos.xyz/embedded-wallet)) Stellar relayer. No Cavos
+app, no API key, no wallet lock-in.
 
 ```bash title="Terminal"
 npm install @cavos/reserve @stellar/stellar-sdk

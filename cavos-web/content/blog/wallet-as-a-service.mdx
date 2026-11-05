@@ -1,8 +1,8 @@
 ---
-title: "Wallet as a Service Providers (2026)"
-updated: "2026-11-03"
+title: "Wallet as a Service (2026): Providers, Pricing"
+updated: "2026-11-05"
 date: "2026-10-23"
-excerpt: "Wallet as a service providers (2026): embedded wallet as a service definition, a dated provider shortlist, pricing units, and how Cavos compares."
+excerpt: "Wallet as a service (WaaS) in 2026: definition, a dated provider shortlist, pricing units, and how Cavos compares on Starknet, Solana, and Stellar."
 category: "Guide"
 ogQuote: "Write the answers down before you read a pricing page."
 slug: "wallet-as-a-service"
@@ -30,6 +30,12 @@ faq:
 The label does not decide custody. Before you compare vendors, answer three questions: who provisions the wallet, who can produce a signature, and what the invoice meters. This guide is the platform map plus a dated provider shortlist. The [embedded wallet providers](/blog/embedded-wallet-providers) comparison is the named-vendor table. [How much embedded wallets cost](/blog/embedded-wallet-cost) is the per-MAU vs per-wallet vs per-signature worked example. The [embedded wallet API](/blog/embedded-wallet-api) guide is the method-level surface. The [non-custodial guide](/blog/non-custodial-embedded-wallet) is the custody test.
 
 Cavos, LLC is a software and SaaS company. The wallet is the main product: a device-native, self-custodial embedded wallet. Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds.
+
+## What is wallet as a service?
+
+**Wallet as a service** is the unhyphenated form of the same query as wallet-as-a-service. Teams type both. The product is an API or SDK that turns a login into an on-chain account inside your app: authenticate the user, look up or create an address, sign from a key the platform manages or from a key on the device, and often sponsor the first fee. You do not ship a seed phrase or send the user to MetaMask.
+
+That is how **wallet as a service** is sold. It is not a custody claim. Device-native keys, MPC shares, a remote enclave, and a delegated HSM are all sold under the same label. Write down who can produce a signature before you compare prices.
 
 ## What is wallet-as-a-service?
 
@@ -204,6 +210,9 @@ The React path is `@cavos/kit`. Mobile is `@cavos/kit/react-native`. The current
 
 ## What to read next
 
+- [Best embedded wallet](/blog/best-embedded-wallet): chain first, then custody, then connect versus provision.
+- [Embedded wallet vs smart wallet](/blog/embedded-wallet-vs-smart-wallet): account model versus in-app UX.
+- [How to add an embedded wallet to Next.js](/blog/embedded-wallet-nextjs): App Router provider, env vars, callback URLs.
 - [What is an embedded wallet?](/blog/what-is-an-embedded-wallet): a plain definition, key models, and when to use one.
 - Chain-specific shortlists: [best embedded wallets for Stellar](/blog/best-embedded-wallets-stellar), [Solana](/blog/best-embedded-wallets-solana), and [Starknet](/blog/best-embedded-wallets-starknet).
 - [embedded wallet](/embedded-wallet), [embedded wallets](/embedded-wallet), and the [embedded wallet SDK](/embedded-wallet): custody, key models, and how to choose.

@@ -3,9 +3,12 @@ title: Account deletion
 description: "Let users delete their Cavos account data, or turn off recovery by sign-in so Cavos no longer holds a sealed copy of their key."
 ---
 
-Two actions, both started by your app and confirmed by the user in a sheet the
-Cavos vault draws. Your page cannot draw, skip, or fake that sheet: the vault
-signs the request with the wallet's own key only after the user confirms.
+Two actions on a Cavos [embedded wallet](https://cavos.xyz/embedded-wallet)
+([embedded wallets](https://cavos.xyz/embedded-wallet),
+[embedded wallet SDK](https://cavos.xyz/embedded-wallet)), both started by your
+app and confirmed by the user in a sheet the Cavos vault draws. Your page
+cannot draw, skip, or fake that sheet: the vault signs the request with the
+wallet's own key only after the user confirms.
 
 | Action | What Cavos removes | What stays |
 | --- | --- | --- |
