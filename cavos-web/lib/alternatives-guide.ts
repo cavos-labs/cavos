@@ -183,9 +183,13 @@ export const DEFAULT_HOW_TO_CHOOSE_OUTRO: AlternativesInline[] = [
     href: EMBEDDED_WALLET_VS_EXTENSION_PATH,
     label: 'embedded wallets vs browser extensions',
   },
-  ', MPC, and device-native models differ), start with the ',
+  ', MPC, and device-native models differ), start with ',
+  { href: '/embedded-wallet', label: 'embedded wallets' },
+  ' and the ',
+  { href: '/embedded-wallet', label: 'embedded wallet SDK' },
+  '. The ',
   { href: '/embedded-wallet', label: 'embedded wallet' },
-  ' guide.',
+  ' guide is that page.',
 ]
 
 export const DYNAMIC_VS_EXTENSION_LINKS: AlternativeRelatedLink[] = [

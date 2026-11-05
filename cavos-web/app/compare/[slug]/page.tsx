@@ -164,9 +164,19 @@ export default async function ComparisonPage({
                         For the category itself (custody, key models, and what the SDK
                         actually does) start with{' '}
                         <Link href="/embedded-wallet" className={linkClass}>
+                            embedded wallets
+                        </Link>
+                        {' '}
+                        and the{' '}
+                        <Link href="/embedded-wallet" className={linkClass}>
+                            embedded wallet SDK
+                        </Link>
+                        . The{' '}
+                        <Link href="/embedded-wallet" className={linkClass}>
                             embedded wallet
                         </Link>
-                        . The named-vendor table is{' '}
+                        {' '}
+                        guide is that page. The named-vendor table is{' '}
                         <Link href={EMBEDDED_WALLET_PROVIDERS_PATH} className={linkClass}>
                             embedded wallet providers
                         </Link>

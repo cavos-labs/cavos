@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { MarketingSignupCta } from '@/components/MarketingSignupCta';
 import { getAllPosts, getPostBySlug, formatDate, CATEGORY_COLORS, PostCategory } from '@/lib/blog';
 import { Metadata } from 'next';
 import { blogPostJsonLd, marketingPageMetadata } from '@/lib/marketing-seo';
@@ -143,6 +144,10 @@ export default async function BlogPostPage({ params }: Props) {
             </div>
           </div>
         ) : null}
+
+        <div className="max-w-2xl">
+          <MarketingSignupCta />
+        </div>
 
         <div className="max-w-2xl mt-16 pt-8 border-t border-black/[0.06]">
           <Link

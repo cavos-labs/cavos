@@ -115,9 +115,19 @@ export default function ComparePage() {
                         . For the category itself (what an embedded wallet is, and how
                         extension, MPC, and device-native models differ) start with{' '}
                         <Link href="/embedded-wallet" className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
+                            embedded wallets
+                        </Link>
+                        {' '}
+                        and the{' '}
+                        <Link href="/embedded-wallet" className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
+                            embedded wallet SDK
+                        </Link>
+                        . The{' '}
+                        <Link href="/embedded-wallet" className="font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
                             embedded wallet
                         </Link>
-                        .
+                        {' '}
+                        guide is that page.
                     </p>
                 </header>
 

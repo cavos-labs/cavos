@@ -95,7 +95,16 @@ export default function HomePage() {
                 className="text-ink underline decoration-ink/25 underline-offset-4 hover:decoration-ink"
               >
                 embedded wallet
-              </a>{' '}
+              </a>
+              {' '}
+              (
+              <a
+                href="https://cavos.xyz/embedded-wallet"
+                className="text-ink underline decoration-ink/25 underline-offset-4 hover:decoration-ink"
+              >
+                embedded wallet SDK
+              </a>
+              ){' '}
               across blockchains with one chain-configurable SDK: an audited
               OpenZeppelin account contract on{' '}
               <a

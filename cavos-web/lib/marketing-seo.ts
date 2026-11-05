@@ -35,10 +35,11 @@ export const ORGANIZATION_DESCRIPTION =
   'Cavos, LLC is a software and SaaS company. The Cavos wallet is the main product. It also builds Framezz event photography software and Framezz Galleries.'
 
 export const STARKNET_WALLET_PATH = '/embedded-starknet-wallet'
-/** Document title omits "| Cavos"; the layout template adds it. SERP: 53 chars. */
-export const STARKNET_WALLET_TITLE = 'Starknet Embedded Wallet (2026): Self-Custody'
+/** Document title omits "| Cavos"; the layout template adds it. SERP: 51 chars. */
+export const STARKNET_WALLET_TITLE = 'Starknet Embedded Wallet (2026): Free to 1k'
+export const STARKNET_WALLET_H1 = 'Starknet embedded wallet'
 export const STARKNET_WALLET_DESCRIPTION =
-  'Starknet embedded wallet SDK (2026): device-native and self-custodial. Signing key derived on-device. Audited OpenZeppelin AccountUpgradeable v3.0.0.'
+  'Starknet embedded wallet SDK (2026): non-custodial, setup in minutes. Free up to 1,000 wallets. Audited OpenZeppelin AccountUpgradeable v3.0.0.'
 
 export const STARKNET_WALLET_FAQ = [
   {
@@ -61,13 +62,19 @@ export const STARKNET_WALLET_FAQ = [
     answer:
       'Install @cavos/kit, create an app in the Cavos dashboard, and pass the App ID plus a paymaster API key into Cavos.connect or CavosProvider. Call session.wallet("starknet"), then execute a multicall. Connect never deploys; the first execute deploys and runs atomically.',
   },
+  {
+    question: 'How long does it take to add a Starknet embedded wallet?',
+    answer:
+      'Setup is minutes: npm install @cavos/kit, create an app for an App ID and paymaster key, call Cavos.connect with chains: ["starknet"], then execute. The first execute deploys the audited OpenZeppelin account and runs atomically. Free up to 1,000 wallets. Hardware-isolated, non-custodial.',
+  },
 ] as const
 
 export const SOLANA_WALLET_PATH = '/embedded-solana-wallet'
-/** Document title omits "| Cavos"; the layout template adds it. SERP: 55 chars. */
-export const SOLANA_WALLET_TITLE = 'Solana Embedded Wallet SDK (2026): Self-Custody'
+/** Document title omits "| Cavos"; the layout template adds it. SERP: 53 chars. */
+export const SOLANA_WALLET_TITLE = 'Solana Embedded Wallet SDK (2026): Free to 1k'
+export const SOLANA_WALLET_H1 = 'Solana embedded wallet'
 export const SOLANA_WALLET_DESCRIPTION =
-  'Solana embedded wallet SDK (2026): device-native and self-custodial. Signing key derived on-device. Native Ed25519 system account. Relayer can pay fees.'
+  'Solana embedded wallet SDK (2026): device-native and non-custodial. Free up to 1,000 wallets. Native Ed25519 system account. Relayer can pay fees.'
 
 export const SOLANA_WALLET_FAQ = [
   {
@@ -90,13 +97,19 @@ export const SOLANA_WALLET_FAQ = [
     answer:
       'Install @cavos/kit, create an app in the Cavos dashboard, and pass the App ID into Cavos.connect or CavosProvider with chains: ["solana"]. Narrow on wallet.chain === "solana", then call execute(amount, destination) in lamports, or executeInstructions for allowlisted programs. Connect does not airdrop SOL.',
   },
+  {
+    question: 'How long does it take to add a Solana embedded wallet?',
+    answer:
+      'Setup is minutes: npm install @cavos/kit, create an app for an App ID, call Cavos.connect with chains: ["solana"], then execute a native transfer or executeInstructions. The relayer can pay fees so the user holds no SOL to start. Free up to 1,000 wallets. Hardware-isolated, non-custodial.',
+  },
 ] as const
 
 export const STELLAR_WALLET_PATH = '/embedded-stellar-wallet'
-/** Document title omits "| Cavos"; the layout template adds it. SERP: 52 chars. */
-export const STELLAR_WALLET_TITLE = 'Stellar Embedded Wallet (2026): Self-Custody'
+/** Document title omits "| Cavos"; the layout template adds it. SERP: 50 chars. */
+export const STELLAR_WALLET_TITLE = 'Stellar Embedded Wallet (2026): Free to 1k'
+export const STELLAR_WALLET_H1 = 'Stellar embedded wallet'
 export const STELLAR_WALLET_DESCRIPTION =
-  'Stellar embedded wallet SDK (2026): self-custodial classic G accounts. Signing key on-device. Gas Sponsorship in Any Token: pay fees and reserves in USDC.'
+  'Stellar embedded wallet SDK (2026): non-custodial classic G accounts. Free up to 1,000 wallets. Gas Sponsorship in Any Token: pay fees in USDC.'
 
 export const STELLAR_WALLET_FAQ = [
   {
@@ -118,6 +131,11 @@ export const STELLAR_WALLET_FAQ = [
     question: 'Can a Stellar embedded wallet invoke Soroban contracts?',
     answer:
       'Yes. invokeContract simulates the call, re-signs this account’s Soroban auth entry with the control key, and submits it. The G… can satisfy require_auth in on-chain apps. invokeContract and addTrustline require a deployed account (status ready). Native XLM transfers can create the account on first execute.',
+  },
+  {
+    question: 'How long does it take to add a Stellar embedded wallet?',
+    answer:
+      'Setup is minutes: npm install @cavos/kit, create an app for an App ID, call Cavos.connect with chains: ["stellar"], then execute. Connect never creates the Horizon account; the first execute creates it and runs atomically. Free up to 1,000 wallets. Hardware-isolated, non-custodial.',
   },
 ] as const
 
@@ -336,6 +354,11 @@ export function guidePageJsonLd(input: {
   faq: GuideFaqItem[]
   howTo?: GuideHowTo
   itemList?: GuideItemList
+  software?: {
+    name: string
+    description: string
+    featureList?: string[]
+  }
 }) {
   const url = pageUrl(input.path)
   const datePublished = input.datePublished
@@ -408,6 +431,29 @@ export function guidePageJsonLd(input: {
         ...(item.path ? { url: pageUrl(item.path) } : {}),
         ...(item.description ? { description: item.description } : {}),
       })),
+    })
+  }
+
+  if (input.software) {
+    graph.push({
+      '@type': 'SoftwareApplication',
+      '@id': `${url}#software`,
+      name: input.software.name,
+      url,
+      operatingSystem: 'Web, iOS, Android',
+      applicationCategory: 'DeveloperApplication',
+      applicationSubCategory: 'Embedded wallet SDK',
+      description: input.software.description,
+      offers: freeTierOfferJsonLd({
+        url: pageUrl('/pricing'),
+        description: 'Free tier covers the first 1,000 wallet creates.',
+      }),
+      author: { '@id': ORGANIZATION_ID },
+      image: OG_IMAGE.url,
+      screenshot: OG_IMAGE.url,
+      ...(input.software.featureList
+        ? { featureList: input.software.featureList }
+        : {}),
     })
   }
 

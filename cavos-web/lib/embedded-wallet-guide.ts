@@ -1,14 +1,16 @@
 export const EMBEDDED_WALLET_PATH = '/embedded-wallet'
 
 export const EMBEDDED_WALLET_TITLE =
-  'Embedded Wallets: What They Are (2026)'
+  'Embedded Wallet SDK: Free to 1,000 Wallets'
 
 export const EMBEDDED_WALLET_DESCRIPTION =
-  'Embedded wallets live in your app: no extension or seed. SDK, platform, and infrastructure for non-custodial keys on Starknet, Solana, and Stellar.'
+  'Embedded wallets: non-custodial SDK, platform and infrastructure in your app. Free up to 1,000 wallets. Setup in minutes on Starknet, Solana, and Stellar.'
 
 export const EMBEDDED_WALLET_PUBLISHED = '2026-10-07'
 
-export const EMBEDDED_WALLET_MODIFIED = '2026-11-04'
+export const EMBEDDED_WALLET_MODIFIED = '2026-11-05'
+
+export const EMBEDDED_WALLET_H1 = 'Embedded wallet SDK'
 
 /** Featured-snippet definition rendered under the H1. Keep 40–60 words. */
 export const EMBEDDED_WALLET_DEFINITION =
@@ -42,12 +44,12 @@ export const EMBEDDED_WALLET_PROVIDERS_PATH =
   '/blog/embedded-wallet-providers'
 
 export const EMBEDDED_WALLET_PROVIDERS_TITLE =
-  'Best Embedded Wallet Providers (2026 Guide)'
+  'Best Embedded Wallet Providers (2026): Free'
 
 export const PRIVY_VS_TURNKEY_PATH = '/blog/privy-vs-turnkey'
 
 export const PRIVY_VS_TURNKEY_TITLE =
-  'Privy vs Turnkey vs Dfns (2026): Buy or Build?'
+  'Privy vs Turnkey vs Dfns (2026): Who Signs'
 
 export const PRIVY_VS_DYNAMIC_PATH = '/blog/privy-vs-dynamic'
 
@@ -57,7 +59,7 @@ export const PRIVY_VS_DYNAMIC_TITLE =
 export const EMBEDDED_WALLET_API_PATH = '/blog/embedded-wallet-api'
 
 export const EMBEDDED_WALLET_API_TITLE =
-  'Embedded Wallet API (2026): SDK Methods & Auth'
+  'Embedded Wallet API (2026): Setup in Minutes'
 
 export const WHAT_IS_AN_EMBEDDED_WALLET_PATH = '/blog/what-is-an-embedded-wallet'
 
@@ -162,11 +164,39 @@ export const EMBEDDED_WALLET_HOW_TO = {
   steps: EMBEDDED_WALLET_HOW_TO_INTEGRATE,
 } as const
 
+export const EMBEDDED_WALLET_SDK_KEY_MODELS = [
+  [
+    'Device-native',
+    'The signing key is created and used on the user device. The provider cannot see it, sign with it, or move funds.',
+    'Cavos',
+  ],
+  [
+    'MPC',
+    'The private key is split into shares. Signing uses some mix of the user device, the provider network, and a recovery factor.',
+    'Web3Auth / MetaMask Embedded Wallets, Dynamic, Para',
+  ],
+  [
+    'Remote TEE',
+    'Key material decrypts inside a measured enclave. Who can authorize that enclave decides custody.',
+    'Turnkey, Privy user wallets',
+  ],
+  [
+    'Hosted',
+    'The provider, or an HSM it operates, can produce a signature. Access to the login is often enough to spend.',
+    'Custodial wallet products; some optional paths at finished SDKs',
+  ],
+] as const
+
 export const EMBEDDED_WALLET_FAQ = [
   {
     question: 'What is an embedded wallet?',
     answer:
       'An embedded wallet is a crypto wallet that lives inside an application instead of in a browser extension or a separate wallet app. The user signs in with an identity the product already owns, and the app resolves an on-chain account they can pay, receive, and sign with, without installing software or handling a seed phrase.',
+  },
+  {
+    question: 'What are embedded wallets?',
+    answer:
+      'Embedded wallets are in-app crypto wallets. The plural names the category: wallets provisioned inside products so users never install an extension or copy a seed phrase. An embedded wallet SDK is the library that does that job. Cavos ships that SDK as @cavos/kit, hardware-isolated and non-custodial, free up to 1,000 wallets.',
   },
   {
     question: 'How is an embedded wallet different from a browser extension?',
@@ -222,5 +252,10 @@ export const EMBEDDED_WALLET_FAQ = [
     question: 'What are embedded wallet payments?',
     answer:
       'Embedded wallet payments are pay, receive, and sign from inside the app: the user does not open an extension or paste a seed. Gas Sponsorship in Any Token removes the native-token wall so the product can sponsor fees, or settle them in a token the user already holds. USDC is one example of such a token, not a required asset.',
+  },
+  {
+    question: 'How long does it take to add an embedded wallet SDK?',
+    answer:
+      'Setup is minutes, not a week: npm install @cavos/kit, create an app in the dashboard for an App ID, wrap the tree in CavosProvider or call Cavos.connect, sign the user in, then execute. Connect never deploys Starknet or Stellar; the first execute deploys and runs atomically. The free tier covers the first 1,000 wallets.',
   },
 ] as const
