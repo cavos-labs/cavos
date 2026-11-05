@@ -59,14 +59,22 @@ export default function EmbeddedStarknetWalletPage() {
             <article className="mx-auto max-w-4xl px-6 pb-24 pt-32 md:px-8">
                 <header className="max-w-3xl">
                     <h1 className="text-balance text-[clamp(2.5rem,6vw,4.5rem)] font-medium leading-[0.98] tracking-[-0.045em]">
-                        Embedded Starknet Wallet
+                        {meta.h1}
                     </h1>
                     <p className="mt-7 max-w-2xl text-lg leading-relaxed text-muted">
                         A device-native, self-custodial{' '}
                         <Link href="/embedded-wallet" className={MARKETING_PROSE_LINK}>
                             embedded wallet
                         </Link>{' '}
-                        for Starknet. The signing key is created and used on the user&apos;s
+                        for Starknet, one of the{' '}
+                        <Link href="/embedded-wallet" className={MARKETING_PROSE_LINK}>
+                            embedded wallets
+                        </Link>{' '}
+                        you can ship with an{' '}
+                        <Link href="/embedded-wallet" className={MARKETING_PROSE_LINK}>
+                            embedded wallet SDK
+                        </Link>
+                        . The signing key is created and used on the user&apos;s
                         device. Cavos cannot see it, cannot sign with it, and cannot move funds.
                         Available via{' '}
                         <code className="text-sm bg-surface px-1.5 py-0.5 rounded">@cavos/kit</code>{' '}
@@ -85,6 +93,73 @@ export default function EmbeddedStarknetWalletPage() {
                         does not enforce non-extractability on Node or other server runtimes.
                     </p>
                 </header>
+
+                <section className="mt-16 max-w-3xl">
+                    <h2 className="text-2xl font-medium tracking-[-0.03em]">
+                        Starknet embedded wallet in November 2026
+                    </h2>
+                    <p className="mt-5 text-sm leading-relaxed text-muted">
+                        A Starknet embedded wallet is an on-chain Starknet account inside your
+                        application. Login selects the user.{' '}
+                        <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
+                            @cavos/kit
+                        </code>{' '}
+                        looks up or claims the address. The spend key is one stark key, derived
+                        on the device, controlling an audited OpenZeppelin account contract.
+                        Setup is minutes. Free up to 1,000 wallets. Hardware-isolated,
+                        non-custodial. Argent X and Braavos remain the usual extension wallets
+                        a crypto-native user already holds; they are not this product model.
+                    </p>
+                    <div className="mt-8 overflow-x-auto rounded-2xl border border-line">
+                        <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+                            <thead className="bg-brand text-white">
+                                <tr>
+                                    <th className="px-5 py-4 font-semibold">Question</th>
+                                    <th className="border-l border-white/10 px-5 py-4 font-semibold">
+                                        Argent X / Braavos
+                                    </th>
+                                    <th className="border-l border-white/10 px-5 py-4 font-semibold">
+                                        Starknet embedded wallet
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {[
+                                    [
+                                        'Who creates the account',
+                                        'The user, in an extension',
+                                        'The product, from a login the user already has',
+                                    ],
+                                    [
+                                        'Where approval happens',
+                                        'A wallet popup the app does not control',
+                                        'In the product UI',
+                                    ],
+                                    [
+                                        'Typical audience',
+                                        'People who already hold a Starknet wallet',
+                                        'People who should never see a wallet picker',
+                                    ],
+                                ].map(([question, extension, embedded]) => (
+                                    <tr key={question} className="border-t border-line">
+                                        <th
+                                            scope="row"
+                                            className="px-5 py-4 align-top font-semibold"
+                                        >
+                                            {question}
+                                        </th>
+                                        <td className="border-l border-line px-5 py-4 align-top text-muted">
+                                            {extension}
+                                        </td>
+                                        <td className="border-l border-line bg-brand/[0.035] px-5 py-4 align-top">
+                                            {embedded}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
 
                 <section className="mt-16 max-w-3xl">
                     <h2 className="text-2xl font-medium tracking-[-0.03em]">

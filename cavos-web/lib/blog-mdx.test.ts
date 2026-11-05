@@ -6,6 +6,26 @@ import { getAllPosts, getPostBySlug } from './blog'
 
 const BLOG_DIR = path.join(process.cwd(), 'content/blog')
 
+describe('blog post signup CTA', () => {
+  it('renders the shared signup CTA on every post', () => {
+    const page = fs.readFileSync(
+      path.join(process.cwd(), 'app/blog/[slug]/page.tsx'),
+      'utf8',
+    )
+    assert.match(page, /MarketingSignupCta/)
+    const cta = fs.readFileSync(
+      path.join(process.cwd(), 'components/MarketingSignupCta.tsx'),
+      'utf8',
+    )
+    assert.match(cta, /Create an account/)
+    assert.match(cta, /Read the docs/)
+    assert.match(cta, /https:\/\/docs\.cavos\.xyz/)
+    assert.match(cta, /Free up to 1,000 wallets/)
+    assert.match(cta, /Hardware-isolated, non-custodial/)
+    assert.doesNotMatch(cta, /—|trustless|impossible/)
+  })
+})
+
 describe('blog MDX compile', () => {
   it('rejects HTML comments that next-mdx-remote cannot parse', () => {
     const files = fs.readdirSync(BLOG_DIR).filter((name) => name.endsWith('.mdx'))
@@ -217,7 +237,10 @@ describe('head-term canonical targets', () => {
   it('links every indexable guide to /embedded-wallet with the head-term anchor', () => {
     for (const name of fs.readdirSync(BLOG_DIR).filter((f) => f.endsWith('.mdx'))) {
       if (name === 'v1-1-9-sdk-security.mdx') continue
-      assert.ok(read(name.replace(/\.mdx$/, '')).includes('[embedded wallet](/embedded-wallet)'), name)
+      const raw = read(name.replace(/\.mdx$/, ''))
+      assert.ok(raw.includes('[embedded wallet](/embedded-wallet)'), name)
+      assert.ok(raw.includes('[embedded wallets](/embedded-wallet)'), `${name} missing embedded wallets anchor`)
+      assert.ok(raw.includes('[embedded wallet SDK](/embedded-wallet)'), `${name} missing embedded wallet SDK anchor`)
     }
   })
 })

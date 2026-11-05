@@ -12,6 +12,9 @@ import { TURNKEY_ALTERNATIVES_MODIFIED } from './turnkey-alternatives'
 /** Sitemap lastmod for /pricing when published fees or FAQ copy change. */
 export const PRICING_SITEMAP_MODIFIED = '2026-10-30'
 
+/** Sitemap lastmod for chain landing pages when copy, titles, or FAQ change. */
+export const CHAIN_WALLET_SITEMAP_MODIFIED = '2026-11-05'
+
 export const MARKETING_ORIGIN = 'https://cavos.xyz'
 
 /** Homepage URL as Google stores the canonical, including the trailing slash. */
@@ -159,9 +162,24 @@ export function getMarketingSitemapEntries(): SitemapEntry[] {
         0.9,
         parseStableDate(EMBEDDED_WALLET_MODIFIED),
       ),
-      page('/embedded-stellar-wallet', 'monthly', 0.9),
-      page('/embedded-solana-wallet', 'monthly', 0.9),
-      page('/embedded-starknet-wallet', 'monthly', 0.9),
+      page(
+        '/embedded-stellar-wallet',
+        'monthly',
+        0.9,
+        parseStableDate(CHAIN_WALLET_SITEMAP_MODIFIED),
+      ),
+      page(
+        '/embedded-solana-wallet',
+        'monthly',
+        0.9,
+        parseStableDate(CHAIN_WALLET_SITEMAP_MODIFIED),
+      ),
+      page(
+        '/embedded-starknet-wallet',
+        'monthly',
+        0.9,
+        parseStableDate(CHAIN_WALLET_SITEMAP_MODIFIED),
+      ),
       page('/compare', 'monthly', 0.9),
       page(
         '/privy-alternatives',

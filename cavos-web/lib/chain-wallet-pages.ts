@@ -1,20 +1,23 @@
 import {
   SOLANA_WALLET_DESCRIPTION,
   SOLANA_WALLET_FAQ,
+  SOLANA_WALLET_H1,
   SOLANA_WALLET_PATH,
   SOLANA_WALLET_TITLE,
   STARKNET_WALLET_DESCRIPTION,
   STARKNET_WALLET_FAQ,
+  STARKNET_WALLET_H1,
   STARKNET_WALLET_PATH,
   STARKNET_WALLET_TITLE,
   STELLAR_WALLET_DESCRIPTION,
   STELLAR_WALLET_FAQ,
+  STELLAR_WALLET_H1,
   STELLAR_WALLET_PATH,
   STELLAR_WALLET_TITLE,
 } from './marketing-seo'
 
 export const CHAIN_WALLET_PUBLISHED = '2026-10-09'
-export const CHAIN_WALLET_MODIFIED = '2026-10-31'
+export const CHAIN_WALLET_MODIFIED = '2026-11-05'
 
 export const STARKNET_FAQ = STARKNET_WALLET_FAQ
 export const SOLANA_FAQ = SOLANA_WALLET_FAQ
@@ -233,18 +236,21 @@ export const CHAIN_WALLET_META = {
     title: STARKNET_WALLET_TITLE,
     description: STARKNET_WALLET_DESCRIPTION,
     path: STARKNET_WALLET_PATH,
-    crumbName: 'Embedded Starknet Wallet',
+    h1: STARKNET_WALLET_H1,
+    crumbName: 'Starknet embedded wallet',
   },
   solana: {
     title: SOLANA_WALLET_TITLE,
     description: SOLANA_WALLET_DESCRIPTION,
     path: SOLANA_WALLET_PATH,
-    crumbName: 'Embedded Solana Wallet',
+    h1: SOLANA_WALLET_H1,
+    crumbName: 'Solana embedded wallet',
   },
   stellar: {
     title: STELLAR_WALLET_TITLE,
     description: STELLAR_WALLET_DESCRIPTION,
     path: STELLAR_WALLET_PATH,
-    crumbName: 'Embedded Stellar Wallet',
+    h1: STELLAR_WALLET_H1,
+    crumbName: 'Stellar embedded wallet',
   },
 } as const

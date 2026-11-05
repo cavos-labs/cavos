@@ -20,7 +20,9 @@ import {
     EMBEDDED_WALLET_MODIFIED,
     EMBEDDED_WALLET_PATH,
     EMBEDDED_WALLET_PUBLISHED,
+    EMBEDDED_WALLET_H1,
     EMBEDDED_WALLET_TITLE,
+    EMBEDDED_WALLET_SDK_KEY_MODELS,
     EMBEDDED_WALLET_API_PATH,
     EMBEDDED_WALLET_API_TITLE,
     NON_CUSTODIAL_EMBEDDED_WALLET_PATH,
@@ -67,10 +69,22 @@ export default function EmbeddedWalletGuidePage() {
         dateModified: EMBEDDED_WALLET_MODIFIED,
         crumbs: [
             { name: 'Home', path: '/' },
-            { name: 'Embedded wallets', path: EMBEDDED_WALLET_PATH },
+            { name: 'Embedded wallet SDK', path: EMBEDDED_WALLET_PATH },
         ],
         faq: [...EMBEDDED_WALLET_FAQ],
         howTo: EMBEDDED_WALLET_HOW_TO,
+        software: {
+            name: 'Cavos Embedded Wallet SDK',
+            description: EMBEDDED_WALLET_DESCRIPTION,
+            featureList: [
+                'Account keys derived on-device from a MasterDEK',
+                'Hardware-isolated, non-custodial signing',
+                'Free up to 1,000 wallets',
+                'Gas Sponsorship in Any Token',
+                'Starknet, Solana, and Stellar adapters',
+                'React and React Native SDKs',
+            ],
+        },
     })
 
     return (
@@ -85,7 +99,7 @@ export default function EmbeddedWalletGuidePage() {
             <article className="mx-auto max-w-4xl px-6 pb-24 pt-32 md:px-8">
                 <header className="max-w-3xl">
                     <h1 className="text-balance text-[clamp(2.5rem,6vw,4.5rem)] font-medium leading-[0.98] tracking-[-0.045em]">
-                        Embedded wallets
+                        {EMBEDDED_WALLET_H1}
                     </h1>
                     <p className="mt-7 max-w-2xl text-lg leading-relaxed text-muted">
                         {EMBEDDED_WALLET_DEFINITION}
@@ -133,6 +147,35 @@ export default function EmbeddedWalletGuidePage() {
                         .
                     </p>
                 </header>
+
+                <section className="mt-16 max-w-3xl" id="embedded-wallets-2026">
+                    <h2 className="text-2xl font-medium tracking-[-0.03em]">
+                        Embedded wallets in November 2026
+                    </h2>
+                    <div className="mt-5 space-y-4 text-sm leading-relaxed text-muted">
+                        <p>
+                            Embedded wallets are in-app crypto wallets. The user signs in the
+                            way they already do. An{' '}
+                            <Link href="#embedded-wallet-sdk" className={linkClass}>
+                                embedded wallet SDK
+                            </Link>{' '}
+                            looks up or creates an on-chain account. Approval happens in the
+                            product UI. There is no extension to install and no seed phrase to
+                            copy. That is the whole category.
+                        </p>
+                        <p>
+                            Cavos ships that SDK as{' '}
+                            <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
+                                @cavos/kit
+                            </code>
+                            : hardware-isolated, non-custodial, free up to 1,000 wallets, setup
+                            in minutes on Starknet, Solana, and Stellar. Keys never leave the
+                            device in plaintext and are never used to sign on servers. Essential
+                            is $59/month. Complete is $139/month. Gas Sponsorship in Any Token
+                            is on every plan and funded separately.
+                        </p>
+                    </div>
+                </section>
 
                 <section className="mt-16 max-w-3xl">
                     <h2 className="text-2xl font-medium tracking-[-0.03em]">
@@ -416,6 +459,42 @@ export default function EmbeddedWalletGuidePage() {
                         category.
                     </p>
 
+                    <div className="mt-8 overflow-x-auto rounded-2xl border border-line">
+                        <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+                            <thead className="bg-brand text-white">
+                                <tr>
+                                    <th className="px-5 py-4 font-semibold">SDK key model</th>
+                                    <th className="border-l border-white/10 px-5 py-4 font-semibold">
+                                        Who can sign
+                                    </th>
+                                    <th className="border-l border-white/10 px-5 py-4 font-semibold">
+                                        Typical vendors
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {EMBEDDED_WALLET_SDK_KEY_MODELS.map(
+                                    ([model, who, vendors]) => (
+                                        <tr key={model} className="border-t border-line">
+                                            <th
+                                                scope="row"
+                                                className="px-5 py-4 align-top font-semibold"
+                                            >
+                                                {model}
+                                            </th>
+                                            <td className="border-l border-line px-5 py-4 align-top text-muted">
+                                                {who}
+                                            </td>
+                                            <td className="border-l border-line px-5 py-4 align-top text-muted">
+                                                {vendors}
+                                            </td>
+                                        </tr>
+                                    ),
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
                     <h3 className="mt-10 text-xl font-medium tracking-[-0.02em]">
                         Device-native keys
                     </h3>
@@ -673,8 +752,17 @@ export default function EmbeddedWalletGuidePage() {
                         How to integrate an embedded wallet
                     </h2>
                     <p className="mt-5 text-sm leading-relaxed text-muted">
-                        The product path is sign-in, wallet resolve, sign and send, then
-                        recovery. The{' '}
+                        Setup is minutes: install{' '}
+                        <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
+                            @cavos/kit
+                        </code>
+                        , create an app for an App ID, wrap the tree or call{' '}
+                        <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
+                            Cavos.connect
+                        </code>
+                        , sign the user in, then execute. The free tier covers the first 1,000
+                        wallets. The product path is sign-in, wallet resolve, sign and send,
+                        then recovery. The{' '}
                         <Link href={EMBEDDED_WALLET_INTEGRATION_PATH} className={linkClass}>
                             step-by-step integration guide
                         </Link>{' '}

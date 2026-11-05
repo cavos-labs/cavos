@@ -10,6 +10,7 @@ import { PARA_ALTERNATIVES_MODIFIED } from './para-alternatives'
 import { PRIVY_ALTERNATIVES_MODIFIED } from './privy-alternatives'
 import { TURNKEY_ALTERNATIVES_MODIFIED } from './turnkey-alternatives'
 import {
+  CHAIN_WALLET_SITEMAP_MODIFIED,
   MARKETING_HOME_URL,
   MARKETING_ORIGIN,
   PRICING_SITEMAP_MODIFIED,
@@ -183,6 +184,21 @@ describe('marketing sitemap', () => {
       pricing.lastModified.toISOString().slice(0, 10),
       PRICING_SITEMAP_MODIFIED,
     )
+    for (const chainPath of [
+      '/embedded-stellar-wallet',
+      '/embedded-solana-wallet',
+      '/embedded-starknet-wallet',
+    ]) {
+      const chain = entries.find(
+        (item) => item.url === `${MARKETING_ORIGIN}${chainPath}`,
+      )
+      assert.ok(chain, chainPath)
+      assert.equal(
+        chain.lastModified?.toISOString().slice(0, 10),
+        CHAIN_WALLET_SITEMAP_MODIFIED,
+        chainPath,
+      )
+    }
   })
 
   it('lists compare pages with the content dateModified', () => {
@@ -323,8 +339,8 @@ Hello
     )
     assert.ok(providers)
     assert.ok(privy)
-    assert.equal(providers.lastModified.toISOString().startsWith('2026-11-04'), true)
-    assert.equal(privy.lastModified.toISOString().startsWith('2026-11-04'), true)
+    assert.equal(providers.lastModified.toISOString().startsWith('2026-11-05'), true)
+    assert.equal(privy.lastModified.toISOString().startsWith('2026-11-05'), true)
 
     const reactSdk = publishedBlogPosts().find(
       (item) => item.slug === 'embedded-wallet-react-sdk',
@@ -361,17 +377,17 @@ Hello
     assert.ok(solanaBest)
     assert.ok(starknetBest)
     assert.equal(cost.lastModified.toISOString().startsWith('2026-11-04'), true)
-    assert.equal(api.lastModified.toISOString().startsWith('2026-11-04'), true)
+    assert.equal(api.lastModified.toISOString().startsWith('2026-11-05'), true)
     assert.equal(
-      stellarBest.lastModified.toISOString().startsWith('2026-11-04'),
+      stellarBest.lastModified.toISOString().startsWith('2026-11-05'),
       true,
     )
     assert.equal(
-      solanaBest.lastModified.toISOString().startsWith('2026-11-04'),
+      solanaBest.lastModified.toISOString().startsWith('2026-11-05'),
       true,
     )
     assert.equal(
-      starknetBest.lastModified.toISOString().startsWith('2026-11-04'),
+      starknetBest.lastModified.toISOString().startsWith('2026-11-05'),
       true,
     )
 

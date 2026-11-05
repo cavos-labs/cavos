@@ -19,17 +19,17 @@ import { getCompetitor } from './compare-data'
 export const PRIVY_ALTERNATIVES_PATH = '/privy-alternatives'
 
 export const PRIVY_ALTERNATIVES_TITLE =
-  'Privy Alternatives (2026): Five Competitors'
+  'Privy Alternatives 2026: Free to 1,000 Wallets'
 
 /** 152 characters. Document title omits "| Cavos"; the layout template adds it. */
 export const PRIVY_ALTERNATIVES_DESCRIPTION =
   'Privy alternatives and Privy competitors: Cavos, Dynamic, Turnkey, Web3Auth, Magic. Alternatives to Privy. Free to 1,000 wallets. Not the Shopify popup.'
 
-export const PRIVY_ALTERNATIVES_H1 = 'Privy alternatives and competitors'
+export const PRIVY_ALTERNATIVES_H1 = 'Privy alternatives'
 
 export const PRIVY_ALTERNATIVES_PUBLISHED = '2026-10-11'
 
-export const PRIVY_ALTERNATIVES_MODIFIED = '2026-11-04'
+export const PRIVY_ALTERNATIVES_MODIFIED = '2026-11-05'
 
 export const PRIVY_ALTERNATIVES_CRUMB = 'Privy alternatives'
 
