@@ -28,11 +28,12 @@ apart:
   per environment, so your development integration doesn't fire production hooks.
 - **Social recovery**: enable or disable [hardware-isolated
   recovery](/docs/hardware-isolated-recovery) for **Starknet, Solana, and
-  Stellar** wallets in that environment. Google, Apple, email, and GitHub
+  Stellar** wallets in that environment. Google, Apple, email, GitHub, and Telegram
   are all accepted; each wallet recovers through the provider its owner signed
   in with. Register your own Google or Apple OAuth client ID if you authenticate
   users yourself. GitHub needs no OAuth client ID here; its OAuth app is set
-  under **GitHub sign-in** (next item). All settings are independent per environment, so you can rehearse recovery in development
+  under **GitHub sign-in** and its Telegram bot under **Telegram sign-in** (next
+  items). All settings are independent per environment, so you can rehearse recovery in development
   without touching production. The email provider's "Firebase project ID" field
   no longer affects email sign-in codes, which the enclave issues itself.
 - **GitHub sign-in**: leave empty to use Cavos's GitHub app, or save your own
@@ -40,6 +41,12 @@ apart:
   app. Switching apps gives every GitHub user in that environment a new
   identity and a new, empty wallet. See
   [Authentication → GitHub](/docs/auth#bring-your-own-github-oauth-app).
+- **Telegram sign-in**: leave empty to use Cavos's Telegram bot, or save your own
+  **Bot ID** and **Client Secret** so Telegram's consent screen shows your bot
+  name and avatar. Use the OIDC Client Secret from @BotFather, not the Bot API
+  token. Switching bots gives every Telegram user in that environment a new
+  identity and a new, empty wallet. See
+  [Authentication → Telegram](/docs/auth#bring-your-own-telegram-bot).
 
 <Callout type="info">
 **Callback URLs and allowed web origins are per app, not per environment.**

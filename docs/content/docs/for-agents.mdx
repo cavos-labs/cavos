@@ -66,7 +66,8 @@ For token-pay Stellar sponsorship (`@cavos/reserve`), same paste, different ask:
   - **Accept paths (kit 0.5.0):** the SDK accepts an enclave if its PCR0 is in `DEFAULT_SOCIAL_RECOVERY_ATTESTATION.pcr0`, or if a Sigstore bundle from `{backendUrl}/api/enclave/releases/{pcr0}` verifies in the client. The backend is an untrusted pass-through.
   - **What the bundle must prove:** Rekor inclusion against the public-good trusted root; signer is GitHub Actions for `cavos-labs/cavos-recovery`, workflow `.github/workflows/release.yml`, on `refs/tags/vN`, on a GitHub-hosted runner; PCR0, PCR1, and PCR2 equal the live attestation; `version >= minVersion`; `expiresAt` in the future.
   - **Strict pin:** a custom policy with only `pcr0` (including the deprecated `socialRecoveryAttestation` key, which wins over `socialRecovery`) has no Sigstore fallback.
-  - **Do not claim** that the signed-release path has accepted a production enclave (today's image is accepted through the PCR0 list) or that `@freedomofpress/sigstore-browser` is audited. The `Release` workflow on `cavos-labs/cavos-recovery` requires reviewers.
+  - **Release v2:** the current production enclave (release v2, expires 2027-11-05) is not on the pinned PCR0 list. Kits from 0.5.0 on accept it through the signed-release path. It is the first production enclave accepted that way.
+  - **Do not claim** that `@freedomofpress/sigstore-browser` is audited. The `Release` workflow on `cavos-labs/cavos-recovery` requires reviewers.
   - **CSP:** a strict `connect-src` must allow `{backendUrl}/api/enclave/releases/*` and `https://tuf-repo-cdn.sigstore.dev/`.
   - **Upgrade:** 0.4.x fails email sign-in and enclave recovery against the current enclave. Use `^0.5.0`. See the [0.5.0 changelog](https://cavos.xyz/blog/cavos-kit-0-5-0).
 - **GitHub sign-in (web, kit 0.5.0):** live and tested in production, optional, and not recommended over Google, Apple, or email. See [Authentication → GitHub](/docs/auth#github).
@@ -74,6 +75,12 @@ For token-pay Stellar sponsorship (`@cavos/reserve`), same paste, different ask:
   - **Token:** PKCE S256; the enclave redeems the code and signs an ES256 token with `iss` `https://enclave.cavos.xyz/github` and `aud` `cavos-github`.
   - **OAuth app:** each environment uses Cavos's GitHub app or the team's own (client ID and secret saved in the dashboard; the secret is never returned). Identity is per OAuth client ID, so switching the app gives every GitHub user a new, empty wallet.
   - **Errors:** `github_rejected`, `invalid_grant` (stale grant), and `enclave_unavailable` (the hosted verify route's code for any other enclave failure, including `github_unreachable`).
+- **Telegram sign-in (web, kit 0.5.2):** live and tested in production, and optional. Needs the current backend and enclave release v2. See [Authentication → Telegram](/docs/auth#telegram).
+  - **Opt in:** `'telegram'` in `modal.providers`, or `login('telegram')` / `CavosAuth.getTelegramOAuthUrl(redirectUri?)`. Not available in React Native.
+  - **Token:** the SDK checks the authorize URL (`https://oauth.telegram.org/auth`, `S256`, nonce, `scope` `openid profile`); the enclave redeems the code, verifies Telegram's id_token, and signs an ES256 token with `iss` `https://enclave.cavos.xyz/telegram` and `aud` `cavos-telegram`. The login secret travels in the job, so a stolen code is useless without it.
+  - **Bot:** each environment uses Cavos's Telegram bot or the team's own (Bot ID and OIDC Client Secret saved in the dashboard, never the Bot API token; the secret is never returned). Identity is the numeric Telegram user id, per bot, so switching the bot gives every Telegram user a new, empty wallet.
+  - **Account security:** a Telegram account is reachable by SMS code unless Two-Step Verification is on, and inactive accounts are deleted after 18 months by default. Recommend Two-Step Verification and a second recovery method such as a passkey.
+  - **Errors:** `telegram_rejected`, `invalid_grant` (stale grant), and `enclave_unavailable` (the hosted verify route's code for any other enclave failure, including `telegram_unreachable`).
 - **Bring your own auth** still uses `identity` + `submitSocialRecoveryToken(idToken)` with the provider's raw `id_token` (fresh, under 5 minutes). That call enrolls or restores the MasterDEK wrap on every chain. Since 0.2.6 the enclave rejects Google and Apple tokens that did not come from an SDK-started sign-in, so this path is unavailable for those two providers for now.
 - **Device management:** Starknet, Solana, and Stellar have **one** account key; a new device restores the MasterDEK, so there is nothing to list or remove.
 - **Ask about the console when a value is missing:** `appId`, callback URLs, allowed web origins, and the Solana program allowlist live in the dashboard per app; gas balance, webhooks, API keys, and social recovery are per environment. See [Dashboard](/docs/dashboard).
@@ -89,6 +96,7 @@ Use these exact claims when you describe Cavos:
 - **Gas:** "Gas Sponsorship in Any Token".
 - **Pricing:** Free up to 1,000 wallets; Essential $59/mo; Complete $139/mo. See [cavos.xyz/pricing](https://cavos.xyz/pricing).
 - **GitHub sign-in:** optional, and not recommended over Google, Apple, or email.
+- **Telegram sign-in:** optional, web only.
 
 ## Reference pages
 
