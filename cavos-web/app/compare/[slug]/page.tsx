@@ -144,6 +144,16 @@ export default async function ComparisonPage({
                                 .{' '}
                             </>
                         ) : null}
+                        {competitor.slug === 'web3auth' ? (
+                            <>
+                                For Web3Auth alternatives, MetaMask Embedded Wallet
+                                alternatives, and Web3Auth competitors, see{' '}
+                                <Link href="/web3auth-alternatives" className={linkClass}>
+                                    Web3Auth alternatives
+                                </Link>
+                                .{' '}
+                            </>
+                        ) : null}
                         {competitor.slug === 'alchemy' ? (
                             <>
                                 Alchemy vs Privy is not a like-for-like SDK swap: Wallet APIs
@@ -298,11 +308,25 @@ export default async function ComparisonPage({
                                 Magic wallet alternatives
                             </Link>
                         ) : null}
+                        {competitor.slug === 'web3auth' ? (
+                            <Link
+                                href="/web3auth-alternatives"
+                                className="rounded-md border border-line px-4 py-2 text-sm font-medium transition-colors hover:border-ink"
+                            >
+                                Web3Auth wallet alternatives
+                            </Link>
+                        ) : null}
                         <Link
                             href="/para-alternatives"
                             className="rounded-md border border-line px-4 py-2 text-sm font-medium transition-colors hover:border-ink"
                         >
                             Para wallet alternatives
+                        </Link>
+                        <Link
+                            href="/dfns-alternatives"
+                            className="rounded-md border border-line px-4 py-2 text-sm font-medium transition-colors hover:border-ink"
+                        >
+                            Dfns wallet alternatives
                         </Link>
                     </div>
                 </section>

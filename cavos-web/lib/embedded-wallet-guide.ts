@@ -59,7 +59,7 @@ export const PRIVY_VS_DYNAMIC_TITLE =
 export const EMBEDDED_WALLET_API_PATH = '/blog/embedded-wallet-api'
 
 export const EMBEDDED_WALLET_API_TITLE =
-  'Embedded Wallet API (2026): Setup in Minutes'
+  'Embedded Wallet API (2026): Auth, Sign, Gas'
 
 export const WHAT_IS_AN_EMBEDDED_WALLET_PATH = '/blog/what-is-an-embedded-wallet'
 
