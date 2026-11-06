@@ -37,7 +37,7 @@ export const TURNKEY_ALTERNATIVES_H1 =
 
 export const TURNKEY_ALTERNATIVES_PUBLISHED = '2026-10-27'
 
-export const TURNKEY_ALTERNATIVES_MODIFIED = '2026-11-03'
+export const TURNKEY_ALTERNATIVES_MODIFIED = '2026-11-06'
 
 export const TURNKEY_ALTERNATIVES_CRUMB = 'Turnkey alternatives'
 
@@ -57,8 +57,14 @@ export const TURNKEY_ALTERNATIVE_SECTIONS: AlternativeSection[] = [
   vendorSection('privy', [
     { href: '/privy-alternatives', label: 'Privy alternatives' },
   ]),
-  vendorSection('dynamic', DYNAMIC_VS_EXTENSION_LINKS),
-  vendorSection('web3auth'),
+  vendorSection('dynamic', [
+    ...DYNAMIC_VS_EXTENSION_LINKS,
+    { href: '/dynamic-alternatives', label: 'Dynamic alternatives' },
+  ]),
+  vendorSection('web3auth', [
+    { href: '/web3auth-alternatives', label: 'Web3Auth alternatives' },
+    { href: '/dfns-alternatives', label: 'Dfns alternatives' },
+  ]),
   vendorSection('magic'),
 ]
 
@@ -185,7 +191,11 @@ export const turnkeyAlternativesGuide: AlternativesGuide = {
       { href: PRIVY_VS_TURNKEY_PATH, label: 'Privy vs Turnkey' },
       '. The replacement shortlist for Privy is ',
       { href: '/privy-alternatives', label: 'Privy alternatives' },
-      '; for Para (getpara.com) see ',
+      '. Sibling shortlists: ',
+      { href: '/web3auth-alternatives', label: 'Web3Auth alternatives' },
+      ', ',
+      { href: '/dfns-alternatives', label: 'Dfns alternatives' },
+      ', and ',
       { href: '/para-alternatives', label: 'Para alternatives' },
       '. Migration is a project, not a config change: wallet addresses are derived differently, so accounts do not transfer automatically.',
     ],
@@ -194,6 +204,44 @@ export const turnkeyAlternativesGuide: AlternativesGuide = {
   whyLookIntro:
     'Turnkey is not the weaker product. It covers ground several of these alternatives do not, especially policy-driven server-side signing. Teams still shortlist replacements when they want a finished wallet SDK rather than infrastructure they assemble.',
   whyLook: TURNKEY_WHY_LOOK,
+  decisionHeading: 'Custody, pricing, and architecture across Turnkey alternatives',
+  decisionIntro: [
+    'This table is the decision layer for Turnkey alternatives: whether you are buying a finished ',
+    { href: '/embedded-wallet', label: 'embedded wallet' },
+    ' SDK or signing infrastructure, who can produce a signature, and how the invoice is metered. Figures are from each vendor’s public docs and pricing pages as of October 2026 and can change. Cavos fees are on the ',
+    { href: '/pricing', label: 'pricing' },
+    ' page. The worked layer split is ',
+    { href: PRIVY_VS_TURNKEY_PATH, label: 'Privy vs Turnkey' },
+    '. Sibling shortlists: ',
+    { href: '/privy-alternatives', label: 'Privy alternatives' },
+    ', ',
+    { href: '/web3auth-alternatives', label: 'Web3Auth alternatives' },
+    ', and ',
+    { href: '/dfns-alternatives', label: 'Dfns alternatives' },
+    '.',
+  ],
+  decisionRows: [
+    {
+      point: 'Product layer',
+      detail:
+        'Turnkey is key-management infrastructure: hardware-backed enclaves, a signing API, and a policy engine you build a wallet on. The Embedded Wallet Kit is the opinionated React start; it does not turn Turnkey into a finished consumer SDK. Privy, Dynamic, Magic, and Cavos are finished embedded-wallet products: login, an in-app wallet, and recovery already wired. Dfns is MPC/TSS wallet infrastructure, closer to Turnkey’s layer than to Privy’s. That shortlist is Dfns alternatives. Web3Auth / MetaMask Embedded Wallets is a social-login MPC wallet layer.',
+    },
+    {
+      point: 'Who can produce a signature',
+      detail:
+        'Turnkey decrypts a key only inside a TEE; custody is who can authorize that enclave (the user, your API key, or both under policy). Server-side signing, quorums, and approval workflows are the point of that design. Privy’s public security docs describe a 2-of-2 Shamir split reconstituted only inside AWS Nitro Enclaves. Dynamic documents TSS-MPC (default 2-of-2) and states a complete private key never exists. Web3Auth uses MPC with threshold signatures and Shamir’s Secret Sharing. Magic delegates signing to provider-operated HSMs. Cavos is hardware-isolated and non-custodial: a non-exportable device key signs on the user’s device, Cavos holds no spend key, and recovery stores an encrypted copy of the master key for restore.',
+    },
+    {
+      point: 'Pricing unit and published free tier',
+      detail:
+        'Turnkey meters signatures: Pay as you go includes 1,000 wallets and 25 free signatures per month, then $0.10 per signature; Pro is $99/mo. Privy meters monthly active users: Developer free is 0–499 MAU with 50,000 signatures and $1M volume per month; Core is $299/mo and Scale is $499/mo. Dynamic meters MAUs: Growth is $249/mo for up to 5,000 MAUs and the sandbox is free; the extra-MAU rate is omitted because the public plan card and FAQ disagree. Web3Auth starts free at 1,000 monthly active wallets (Growth $69/mo, Scale $399/mo). Magic’s Developer plan includes 1,000 monthly active wallets and 50,000 signatures at $0/mo. Cavos meters wallet creates: free up to 1,000 wallets, Essential $59/mo, Complete $139/mo. Those figures are published list prices, not a quote.',
+    },
+    {
+      point: 'Native chains versus a compatibility layer',
+      detail:
+        'Turnkey is broad at the cryptographic-curve and signing-primitive level (secp256k1, Ed25519, P-256); you still assemble the wallet UX. Privy’s published coverage is broad EVM plus Solana at managed send. Dynamic is multi-chain, with EVM breadth and additional non-EVM support; parity varies by chain. MetaMask Embedded Wallets lists EVM, Solana, and additional networks including StarkNet; feature parity still varies by chain. Magic is strongest on email-first EVM onboarding. Cavos ships native adapters for Starknet (an audited OpenZeppelin account contract), Solana, and Stellar, and is not an EVM-wide wallet layer.',
+    },
+  ],
   comparedHeading: 'Turnkey alternatives and competitors',
   comparedIntro:
     'Cavos, Privy, Dynamic, Turnkey, Web3Auth / MetaMask Embedded Wallets, and Magic all ship an embedded wallet or the signing layer one is built on. They do not share a key model, the same native chain coverage, or the same pricing. Each name opens the full comparison except Cavos, which links to published fees.',

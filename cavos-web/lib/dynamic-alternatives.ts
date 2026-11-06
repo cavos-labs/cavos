@@ -37,7 +37,7 @@ export const DYNAMIC_ALTERNATIVES_H1 = '5 Dynamic alternatives compared in 2026'
 
 export const DYNAMIC_ALTERNATIVES_PUBLISHED = '2026-10-27'
 
-export const DYNAMIC_ALTERNATIVES_MODIFIED = '2026-10-31'
+export const DYNAMIC_ALTERNATIVES_MODIFIED = '2026-11-06'
 
 export const DYNAMIC_ALTERNATIVES_CRUMB = 'Dynamic alternatives'
 
@@ -58,8 +58,14 @@ export const DYNAMIC_ALTERNATIVE_SECTIONS: AlternativeSection[] = [
     { href: '/privy-alternatives', label: 'Privy alternatives' },
     { href: PRIVY_VS_DYNAMIC_PATH, label: 'Privy vs Dynamic' },
   ]),
-  vendorSection('turnkey', TURNKEY_VS_PRIVY_LINKS),
-  vendorSection('web3auth'),
+  vendorSection('turnkey', [
+    ...TURNKEY_VS_PRIVY_LINKS,
+    { href: '/turnkey-alternatives', label: 'Turnkey alternatives' },
+  ]),
+  vendorSection('web3auth', [
+    { href: '/web3auth-alternatives', label: 'Web3Auth alternatives' },
+    { href: '/dfns-alternatives', label: 'Dfns alternatives' },
+  ]),
   vendorSection('magic'),
 ]
 
@@ -151,7 +157,13 @@ export const dynamicAlternativesGuide: AlternativesGuide = {
       { href: PRIVY_VS_DYNAMIC_PATH, label: 'Privy vs Dynamic' },
       '. The replacement shortlist for Privy is ',
       { href: '/privy-alternatives', label: 'Privy alternatives' },
-      '; for Para (getpara.com) see ',
+      '. Sibling shortlists: ',
+      { href: '/turnkey-alternatives', label: 'Turnkey alternatives' },
+      ', ',
+      { href: '/web3auth-alternatives', label: 'Web3Auth alternatives' },
+      ', ',
+      { href: '/dfns-alternatives', label: 'Dfns alternatives' },
+      ', and ',
       { href: '/para-alternatives', label: 'Para alternatives' },
       '. Migration is a project, not a config change: wallet addresses are derived differently, so accounts do not transfer automatically.',
     ],
@@ -160,6 +172,46 @@ export const dynamicAlternativesGuide: AlternativesGuide = {
   whyLookIntro:
     'Dynamic is not the weaker product. It covers ground several of these alternatives do not, especially multi-wallet login. Teams still shortlist replacements when they only need to provision new accounts, or when the chain is not an EVM connection layer.',
   whyLook: DYNAMIC_WHY_LOOK,
+  decisionHeading: 'Provision vs connect, pricing, and chains across Dynamic alternatives',
+  decisionIntro: [
+    'This table is the decision layer for Dynamic alternatives: whether you must connect wallets users already hold, how the invoice is metered, and which chains are native. Figures are from each vendor’s public docs and pricing pages as of October 2026 and can change. Cavos fees are on the ',
+    { href: '/pricing', label: 'pricing' },
+    ' page. The worked two-way is ',
+    { href: PRIVY_VS_DYNAMIC_PATH, label: 'Privy vs Dynamic' },
+    '. The product page is the ',
+    { href: '/embedded-wallet', label: 'embedded wallet' },
+    ' guide. Sibling shortlists: ',
+    { href: '/privy-alternatives', label: 'Privy alternatives' },
+    ', ',
+    { href: '/turnkey-alternatives', label: 'Turnkey alternatives' },
+    ', ',
+    { href: '/web3auth-alternatives', label: 'Web3Auth alternatives' },
+    ', and ',
+    { href: '/dfns-alternatives', label: 'Dfns alternatives' },
+    '.',
+  ],
+  decisionRows: [
+    {
+      point: 'Provision versus connect',
+      detail:
+        'Dynamic is strongest as a unified login and wallet-connection layer. Connecting MetaMask, Phantom, WalletConnect, and other wallets the user already holds is a core capability, with TSS-MPC embedded wallets as a fallback. Privy also ships connectors for EVM and Solana, but the product is built around the in-app wallet. Cavos only provisions a hardware-isolated, non-custodial device-native account and does not connect existing extensions. Turnkey and Dfns are signing infrastructure, not a connector suite. Web3Auth / MetaMask Embedded Wallets is a social-login MPC wallet layer with key export. Magic is email-first EVM onboarding.',
+    },
+    {
+      point: 'Pricing unit and published free tier',
+      detail:
+        'Dynamic meters monthly active users: Growth is $249/mo for up to 5,000 MAUs and the sandbox is free; the extra-MAU rate is omitted because the public plan card and FAQ disagree. Privy also meters MAUs: Developer free is 0–499 MAU with 50,000 signatures and $1M volume per month; Core is $299/mo and Scale is $499/mo. Turnkey meters signatures: Pay as you go includes 1,000 wallets and 25 free signatures per month, then $0.10 per signature; Pro is $99/mo. Web3Auth starts free at 1,000 monthly active wallets (Growth $69/mo, Scale $399/mo). Magic’s Developer plan includes 1,000 monthly active wallets and 50,000 signatures at $0/mo. Cavos meters wallet creates: free up to 1,000 wallets, Essential $59/mo, Complete $139/mo. Those figures are published list prices, not a quote.',
+    },
+    {
+      point: 'Native chains versus a compatibility layer',
+      detail:
+        'Dynamic is multi-chain, with EVM breadth and additional non-EVM support; parity varies by chain. JS/React Tier 1 send-and-sign on Dynamic’s public chain table includes EVM, Solana, Bitcoin, Sui, TON, Stellar, and others; Starknet is experimental or derived, not on that native table. Privy’s published coverage is broad EVM plus Solana at managed send. Turnkey is broad at the cryptographic-curve and signing-primitive level; you still assemble the wallet UX. MetaMask Embedded Wallets lists EVM, Solana, and additional networks including StarkNet. Magic is strongest on email-first EVM onboarding. Cavos ships native adapters for Starknet (an audited OpenZeppelin account contract), Solana, and Stellar, and is not an EVM-wide wallet layer.',
+    },
+    {
+      point: 'Who can produce a signature',
+      detail:
+        'Dynamic documents TSS-MPC (default 2-of-2): a user share on the device and a server share in a TEE; public docs say a complete private key never exists. Privy reconstitutes a 2-of-2 Shamir split inside AWS Nitro Enclaves, with an optional custodial path via Bridge. Turnkey decrypts a key only inside a TEE. Web3Auth uses MPC with threshold signatures and Shamir’s Secret Sharing. Magic delegates signing to provider-operated HSMs. Cavos is hardware-isolated and non-custodial: a non-exportable device key signs, Cavos holds no spend key, and recovery stores an encrypted copy of the master key for restore.',
+    },
+  ],
   comparedHeading: 'Dynamic alternatives compared',
   comparedIntro:
     'Cavos, Privy, Dynamic, Turnkey, Web3Auth / MetaMask Embedded Wallets, and Magic all ship an embedded wallet. They do not share a key model, the same native chain coverage, or the same pricing. Each name opens the full comparison except Cavos, which links to published fees.',
