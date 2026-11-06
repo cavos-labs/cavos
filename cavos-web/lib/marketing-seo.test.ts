@@ -1243,7 +1243,7 @@ describe('marketing SEO', () => {
         assert.match(guide.h1, /Turnkey alternatives and embedded wallet competitors/)
         assert.match(guide.description, /embedded wallet competitors/)
         assert.match(guide.description, /Turnkey vs Privy/)
-        assert.equal(guide.modified, '2026-11-03')
+        assert.equal(guide.modified, '2026-11-06')
         assert.match(guide.description, /Turnkey alternative/)
         assert.ok(
           guide.faq.some(
@@ -1268,7 +1268,11 @@ describe('marketing SEO', () => {
         assert.match(guide.title, /Free 1,000 Wallets/)
         assert.match(guide.h1, new RegExp(`5 ${guide.incumbent} alternatives`))
         assert.match(guide.description, /Starknet, Solana, Stellar/)
-        assert.equal(guide.modified, '2026-10-31')
+        if (guide.incumbent === 'Dynamic') {
+          assert.equal(guide.modified, '2026-11-06')
+        } else {
+          assert.equal(guide.modified, '2026-10-31')
+        }
       }
       assert.match(guide.description, /1,000 wallets/)
       const fullTitle = `${guide.title} | Cavos`
@@ -1374,6 +1378,13 @@ describe('marketing SEO', () => {
         assert.match(dataSource, /answerHeading/)
         assert.match(dataSource, /Turnkey's embedded wallet versus alternatives/)
         assert.match(dataSource, /answerParagraphs/)
+        assert.match(
+          dataSource,
+          /Custody, pricing, and architecture across Turnkey alternatives/,
+        )
+        assert.match(dataSource, /href: '\/web3auth-alternatives'/)
+        assert.match(dataSource, /href: '\/dfns-alternatives'/)
+        assert.match(dataSource, /hardware-isolated/)
       }
       if (guide.incumbent === 'Dynamic') {
         assert.match(dataSource, /PRIVY_VS_DYNAMIC_PATH/)
@@ -1382,6 +1393,14 @@ describe('marketing SEO', () => {
             (link) => link.href === PRIVY_VS_DYNAMIC_PATH,
           ),
         )
+        assert.match(
+          dataSource,
+          /Provision vs connect, pricing, and chains across Dynamic alternatives/,
+        )
+        assert.match(dataSource, /href: '\/web3auth-alternatives'/)
+        assert.match(dataSource, /href: '\/dfns-alternatives'/)
+        assert.match(dataSource, /href: '\/turnkey-alternatives'/)
+        assert.match(dataSource, /hardware-isolated/)
       }
     }
   })
