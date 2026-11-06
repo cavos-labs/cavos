@@ -119,6 +119,20 @@ import {
   getCompetitor,
 } from './compare-data'
 import {
+  DFNS_ALTERNATIVE_SECTIONS,
+  DFNS_ALTERNATIVES_CRUMB,
+  DFNS_ALTERNATIVES_DESCRIPTION,
+  DFNS_ALTERNATIVES_FAQ,
+  DFNS_ALTERNATIVES_H1,
+  DFNS_ALTERNATIVES_MODIFIED,
+  DFNS_ALTERNATIVES_PATH,
+  DFNS_ALTERNATIVES_PUBLISHED,
+  DFNS_ALTERNATIVES_TITLE,
+  DFNS_HOW_TO_CHOOSE,
+  DFNS_WHY_LOOK,
+  dfnsAlternativesItemList,
+} from './dfns-alternatives'
+import {
   DYNAMIC_ALTERNATIVE_SECTIONS,
   DYNAMIC_ALTERNATIVES_CRUMB,
   DYNAMIC_ALTERNATIVES_DESCRIPTION,
@@ -188,6 +202,20 @@ import {
   TURNKEY_WHY_LOOK,
   turnkeyAlternativesItemList,
 } from './turnkey-alternatives'
+import {
+  WEB3AUTH_ALTERNATIVE_SECTIONS,
+  WEB3AUTH_ALTERNATIVES_CRUMB,
+  WEB3AUTH_ALTERNATIVES_DESCRIPTION,
+  WEB3AUTH_ALTERNATIVES_FAQ,
+  WEB3AUTH_ALTERNATIVES_H1,
+  WEB3AUTH_ALTERNATIVES_MODIFIED,
+  WEB3AUTH_ALTERNATIVES_PATH,
+  WEB3AUTH_ALTERNATIVES_PUBLISHED,
+  WEB3AUTH_ALTERNATIVES_TITLE,
+  WEB3AUTH_HOW_TO_CHOOSE,
+  WEB3AUTH_WHY_LOOK,
+  web3authAlternativesItemList,
+} from './web3auth-alternatives'
 import { parseBlogFrontmatter } from './marketing-sitemap'
 
 const PRODUCT_LIKE_TYPES = new Set(['Product', 'SoftwareApplication'])
@@ -1487,6 +1515,366 @@ describe('marketing SEO', () => {
     assert.match(llms, /https:\/\/cavos\.xyz\/para-alternatives/)
   })
 
+  it('replicates the Privy alternatives template for Web3Auth / MetaMask Embedded Wallets', () => {
+    assert.equal(WEB3AUTH_ALTERNATIVES_PATH, '/web3auth-alternatives')
+    assert.equal(WEB3AUTH_ALTERNATIVES_TITLE.includes('| Cavos'), false)
+    assert.match(WEB3AUTH_ALTERNATIVES_TITLE, /5 Web3Auth Alternatives/)
+    assert.match(WEB3AUTH_ALTERNATIVES_TITLE, /2026/)
+    assert.match(WEB3AUTH_ALTERNATIVES_TITLE, /Free 1,000 Wallets/)
+    assert.match(WEB3AUTH_ALTERNATIVES_H1, /5 Web3Auth alternatives/)
+    assert.match(WEB3AUTH_ALTERNATIVES_DESCRIPTION, /Web3Auth alternatives/)
+    assert.match(WEB3AUTH_ALTERNATIVES_DESCRIPTION, /Web3Auth competitors/)
+    assert.match(WEB3AUTH_ALTERNATIVES_DESCRIPTION, /MetaMask Embedded Wallet alternatives/)
+    assert.match(WEB3AUTH_ALTERNATIVES_DESCRIPTION, /1,000 wallets/)
+    const fullTitle = `${WEB3AUTH_ALTERNATIVES_TITLE} | Cavos`
+    assert.ok(fullTitle.length >= 50 && fullTitle.length <= 60, fullTitle)
+    assert.ok(
+      WEB3AUTH_ALTERNATIVES_DESCRIPTION.length >= 140 &&
+        WEB3AUTH_ALTERNATIVES_DESCRIPTION.length <= 155,
+      String(WEB3AUTH_ALTERNATIVES_DESCRIPTION.length),
+    )
+    assert.ok(WEB3AUTH_ALTERNATIVES_FAQ.length >= 5 && WEB3AUTH_ALTERNATIVES_FAQ.length <= 10)
+    assert.ok(
+      WEB3AUTH_ALTERNATIVES_FAQ.some(
+        (item) => item.question === 'What is the best Web3Auth alternative?',
+      ),
+    )
+    assert.ok(
+      WEB3AUTH_ALTERNATIVES_FAQ.some(
+        (item) => item.question === 'Is there a free Web3Auth alternative?',
+      ),
+    )
+    assert.ok(
+      WEB3AUTH_ALTERNATIVES_FAQ.some((item) =>
+        /Starknet, Solana, or Stellar/.test(item.question),
+      ),
+    )
+    assert.ok(
+      WEB3AUTH_ALTERNATIVES_FAQ.some(
+        (item) => item.question === 'Is Web3Auth the same as MetaMask Embedded Wallets?',
+      ),
+    )
+    assert.ok(
+      WEB3AUTH_ALTERNATIVES_FAQ.some(
+        (item) => item.question === 'What are MetaMask Embedded Wallet alternatives?',
+      ),
+    )
+    assert.ok(
+      WEB3AUTH_ALTERNATIVES_FAQ.some(
+        (item) => item.question === 'Who are Web3Auth competitors?',
+      ),
+    )
+    assert.ok(WEB3AUTH_WHY_LOOK.length >= 4)
+    assert.ok(WEB3AUTH_HOW_TO_CHOOSE.length >= 5)
+    assert.deepEqual(
+      WEB3AUTH_ALTERNATIVE_SECTIONS.map((section) => section.name),
+      ['Cavos', 'Privy', 'Dynamic', 'Turnkey', 'Magic'],
+    )
+    assert.deepEqual(
+      WEB3AUTH_ALTERNATIVE_SECTIONS.map((section) => section.href),
+      [
+        '/compare/web3auth',
+        '/compare/privy',
+        '/compare/dynamic',
+        '/compare/turnkey',
+        '/compare/magic',
+      ],
+    )
+    assert.equal(WEB3AUTH_ALTERNATIVES_PUBLISHED, '2026-11-06')
+    assert.equal(WEB3AUTH_ALTERNATIVES_MODIFIED, '2026-11-06')
+    assert.equal(WEB3AUTH_ALTERNATIVES_CRUMB, 'Web3Auth alternatives')
+
+    const meta = marketingPageMetadata({
+      title: WEB3AUTH_ALTERNATIVES_TITLE,
+      description: WEB3AUTH_ALTERNATIVES_DESCRIPTION,
+      path: WEB3AUTH_ALTERNATIVES_PATH,
+      type: 'article',
+      publishedTime: WEB3AUTH_ALTERNATIVES_PUBLISHED,
+      modifiedTime: WEB3AUTH_ALTERNATIVES_MODIFIED,
+    })
+    assert.equal(meta.alternates?.canonical, 'https://cavos.xyz/web3auth-alternatives')
+    assert.equal(meta.openGraph?.url, 'https://cavos.xyz/web3auth-alternatives')
+    assert.equal(meta.openGraph?.modifiedTime, WEB3AUTH_ALTERNATIVES_MODIFIED)
+
+    const jsonLd = guidePageJsonLd({
+      title: WEB3AUTH_ALTERNATIVES_TITLE,
+      description: WEB3AUTH_ALTERNATIVES_DESCRIPTION,
+      path: WEB3AUTH_ALTERNATIVES_PATH,
+      datePublished: WEB3AUTH_ALTERNATIVES_PUBLISHED,
+      dateModified: WEB3AUTH_ALTERNATIVES_MODIFIED,
+      crumbs: [
+        { name: 'Home', path: '/' },
+        { name: 'Compare', path: '/compare' },
+        { name: WEB3AUTH_ALTERNATIVES_CRUMB, path: WEB3AUTH_ALTERNATIVES_PATH },
+      ],
+      faq: [...WEB3AUTH_ALTERNATIVES_FAQ],
+      itemList: web3authAlternativesItemList(),
+    })
+    JSON.parse(JSON.stringify(jsonLd))
+    assert.equal(jsonLd['@graph'][0]['@type'], 'Article')
+    assert.equal(jsonLd['@graph'][1]['@type'], 'BreadcrumbList')
+    assert.equal(jsonLd['@graph'][2]['@type'], 'FAQPage')
+    const alternativesList = jsonLd['@graph'].find(
+      (node: { '@type'?: string }) => node['@type'] === 'ItemList',
+    )
+    assert.ok(alternativesList)
+    assert.equal(
+      alternativesList['@id'],
+      'https://cavos.xyz/web3auth-alternatives#itemlist',
+    )
+    assert.deepEqual(
+      alternativesList.itemListElement.map(
+        (item: { name: string; url: string; position: number }) => ({
+          position: item.position,
+          name: item.name,
+          url: item.url,
+        }),
+      ),
+      [
+        { position: 1, name: 'Cavos', url: 'https://cavos.xyz/compare/web3auth' },
+        { position: 2, name: 'Privy', url: 'https://cavos.xyz/compare/privy' },
+        { position: 3, name: 'Dynamic', url: 'https://cavos.xyz/compare/dynamic' },
+        { position: 4, name: 'Turnkey', url: 'https://cavos.xyz/compare/turnkey' },
+        { position: 5, name: 'Magic', url: 'https://cavos.xyz/compare/magic' },
+      ],
+    )
+    assert.doesNotMatch(JSON.stringify(jsonLd), /"@type":"Product"/)
+
+    const pageSource = fs.readFileSync(
+      path.join(process.cwd(), 'app/web3auth-alternatives/page.tsx'),
+      'utf8',
+    )
+    const dataSource = fs.readFileSync(
+      path.join(process.cwd(), 'lib/web3auth-alternatives.ts'),
+      'utf8',
+    )
+    assert.match(pageSource, /AlternativesGuidePage/)
+    assert.match(pageSource, /web3authAlternativesGuide/)
+    assert.match(
+      dataSource,
+      /Cavos, Privy, Dynamic, Turnkey, and Magic are the five Web3Auth/,
+    )
+    assert.match(dataSource, /href: '\/privy-alternatives'/)
+    assert.match(dataSource, /href: '\/compare\/web3auth'/)
+    assert.match(dataSource, /href: '\/dfns-alternatives'/)
+    assert.match(dataSource, /MetaMask Embedded Wallets/)
+    assert.match(dataSource, /audited OpenZeppelin account contract/)
+    assert.match(dataSource, /Gas Sponsorship in Any Token/)
+    assert.match(dataSource, /USDC is one example/)
+    assert.match(dataSource, /keys never leave the device in plaintext/)
+    assert.match(dataSource, /cannot decrypt/)
+    assert.match(dataSource, /answerHeading/)
+    assert.doesNotMatch(dataSource, /audited Cavos/)
+    assert.doesNotMatch(dataSource, /on-chain device approval/)
+    assert.doesNotMatch(dataSource, /trustless/)
+    assert.doesNotMatch(dataSource, /impossible/)
+    const cavos = WEB3AUTH_ALTERNATIVE_SECTIONS[0]
+    assert.equal(cavos.href, '/compare/web3auth')
+    assert.match(cavos.paragraphs.join(' '), /audited OpenZeppelin/)
+    const privySection = WEB3AUTH_ALTERNATIVE_SECTIONS.find(
+      (section) => section.name === 'Privy',
+    )
+    assert.ok(privySection)
+    assert.ok(
+      (privySection.relatedLinks ?? []).some(
+        (link) => link.href === '/privy-alternatives',
+      ),
+    )
+
+    const compareIndex = fs.readFileSync(
+      path.join(process.cwd(), 'app/compare/page.tsx'),
+      'utf8',
+    )
+    const compareSlug = fs.readFileSync(
+      path.join(process.cwd(), 'app/compare/[slug]/page.tsx'),
+      'utf8',
+    )
+    assert.match(
+      compareIndex,
+      /href="\/web3auth-alternatives"[^>]*>\s*Web3Auth alternatives\s*</,
+    )
+    assert.match(compareSlug, /slug === 'web3auth'/)
+    assert.match(compareSlug, /href="\/web3auth-alternatives"/)
+    const llms = fs.readFileSync(path.join(process.cwd(), 'public/llms.txt'), 'utf8')
+    assert.match(llms, /https:\/\/cavos\.xyz\/web3auth-alternatives/)
+  })
+
+  it('replicates the Para alternatives template for Dfns (MPC infrastructure)', () => {
+    assert.equal(DFNS_ALTERNATIVES_PATH, '/dfns-alternatives')
+    assert.equal(DFNS_ALTERNATIVES_TITLE.includes('| Cavos'), false)
+    assert.match(DFNS_ALTERNATIVES_TITLE, /5 Dfns Alternatives/)
+    assert.match(DFNS_ALTERNATIVES_TITLE, /2026/)
+    assert.match(DFNS_ALTERNATIVES_TITLE, /Free 1,000 Wallets/)
+    assert.match(DFNS_ALTERNATIVES_H1, /5 Dfns alternatives/)
+    assert.match(DFNS_ALTERNATIVES_DESCRIPTION, /Dfns alternatives/)
+    assert.match(DFNS_ALTERNATIVES_DESCRIPTION, /competitors/)
+    assert.match(DFNS_ALTERNATIVES_DESCRIPTION, /MPC\/TSS/)
+    assert.match(DFNS_ALTERNATIVES_DESCRIPTION, /1,000 wallets/)
+    const fullTitle = `${DFNS_ALTERNATIVES_TITLE} | Cavos`
+    assert.ok(fullTitle.length >= 50 && fullTitle.length <= 60, fullTitle)
+    assert.ok(
+      DFNS_ALTERNATIVES_DESCRIPTION.length >= 140 &&
+        DFNS_ALTERNATIVES_DESCRIPTION.length <= 155,
+      String(DFNS_ALTERNATIVES_DESCRIPTION.length),
+    )
+    assert.ok(DFNS_ALTERNATIVES_FAQ.length >= 5 && DFNS_ALTERNATIVES_FAQ.length <= 10)
+    assert.ok(
+      DFNS_ALTERNATIVES_FAQ.some(
+        (item) => item.question === 'What is the best Dfns alternative?',
+      ),
+    )
+    assert.ok(
+      DFNS_ALTERNATIVES_FAQ.some(
+        (item) => item.question === 'Is there a free Dfns alternative?',
+      ),
+    )
+    assert.ok(
+      DFNS_ALTERNATIVES_FAQ.some((item) =>
+        /Starknet, Solana, or Stellar/.test(item.question),
+      ),
+    )
+    assert.ok(
+      DFNS_ALTERNATIVES_FAQ.some(
+        (item) => item.question === 'Is Dfns an embedded wallet or wallet infrastructure?',
+      ),
+    )
+    assert.ok(
+      DFNS_ALTERNATIVES_FAQ.some(
+        (item) => item.question === 'Who are Dfns competitors?',
+      ),
+    )
+    assert.ok(
+      DFNS_ALTERNATIVES_FAQ.some(
+        (item) => item.question === 'Does Dfns reconstruct the private key?',
+      ),
+    )
+    assert.ok(DFNS_WHY_LOOK.length >= 4)
+    assert.ok(DFNS_HOW_TO_CHOOSE.length >= 5)
+    assert.deepEqual(
+      DFNS_ALTERNATIVE_SECTIONS.map((section) => section.name),
+      ['Cavos', 'Privy', 'Dynamic', 'Turnkey', 'Web3Auth'],
+    )
+    assert.deepEqual(
+      DFNS_ALTERNATIVE_SECTIONS.map((section) => section.href),
+      [
+        '/compare',
+        '/compare/privy',
+        '/compare/dynamic',
+        '/compare/turnkey',
+        '/compare/web3auth',
+      ],
+    )
+    assert.equal(DFNS_ALTERNATIVES_PUBLISHED, '2026-11-06')
+    assert.equal(DFNS_ALTERNATIVES_MODIFIED, '2026-11-06')
+    assert.equal(DFNS_ALTERNATIVES_CRUMB, 'Dfns alternatives')
+
+    const meta = marketingPageMetadata({
+      title: DFNS_ALTERNATIVES_TITLE,
+      description: DFNS_ALTERNATIVES_DESCRIPTION,
+      path: DFNS_ALTERNATIVES_PATH,
+      type: 'article',
+      publishedTime: DFNS_ALTERNATIVES_PUBLISHED,
+      modifiedTime: DFNS_ALTERNATIVES_MODIFIED,
+    })
+    assert.equal(meta.alternates?.canonical, 'https://cavos.xyz/dfns-alternatives')
+    assert.equal(meta.openGraph?.url, 'https://cavos.xyz/dfns-alternatives')
+    assert.equal(meta.openGraph?.modifiedTime, DFNS_ALTERNATIVES_MODIFIED)
+
+    const jsonLd = guidePageJsonLd({
+      title: DFNS_ALTERNATIVES_TITLE,
+      description: DFNS_ALTERNATIVES_DESCRIPTION,
+      path: DFNS_ALTERNATIVES_PATH,
+      datePublished: DFNS_ALTERNATIVES_PUBLISHED,
+      dateModified: DFNS_ALTERNATIVES_MODIFIED,
+      crumbs: [
+        { name: 'Home', path: '/' },
+        { name: 'Compare', path: '/compare' },
+        { name: DFNS_ALTERNATIVES_CRUMB, path: DFNS_ALTERNATIVES_PATH },
+      ],
+      faq: [...DFNS_ALTERNATIVES_FAQ],
+      itemList: dfnsAlternativesItemList(),
+    })
+    JSON.parse(JSON.stringify(jsonLd))
+    assert.equal(jsonLd['@graph'][0]['@type'], 'Article')
+    assert.equal(jsonLd['@graph'][1]['@type'], 'BreadcrumbList')
+    assert.equal(jsonLd['@graph'][2]['@type'], 'FAQPage')
+    const alternativesList = jsonLd['@graph'].find(
+      (node: { '@type'?: string }) => node['@type'] === 'ItemList',
+    )
+    assert.ok(alternativesList)
+    assert.equal(alternativesList['@id'], 'https://cavos.xyz/dfns-alternatives#itemlist')
+    assert.deepEqual(
+      alternativesList.itemListElement.map(
+        (item: { name: string; url: string; position: number }) => ({
+          position: item.position,
+          name: item.name,
+          url: item.url,
+        }),
+      ),
+      [
+        { position: 1, name: 'Cavos', url: 'https://cavos.xyz/compare' },
+        { position: 2, name: 'Privy', url: 'https://cavos.xyz/compare/privy' },
+        { position: 3, name: 'Dynamic', url: 'https://cavos.xyz/compare/dynamic' },
+        { position: 4, name: 'Turnkey', url: 'https://cavos.xyz/compare/turnkey' },
+        { position: 5, name: 'Web3Auth', url: 'https://cavos.xyz/compare/web3auth' },
+      ],
+    )
+    assert.doesNotMatch(JSON.stringify(jsonLd), /"@type":"Product"/)
+
+    const pageSource = fs.readFileSync(
+      path.join(process.cwd(), 'app/dfns-alternatives/page.tsx'),
+      'utf8',
+    )
+    const dataSource = fs.readFileSync(
+      path.join(process.cwd(), 'lib/dfns-alternatives.ts'),
+      'utf8',
+    )
+    assert.match(pageSource, /AlternativesGuidePage/)
+    assert.match(pageSource, /dfnsAlternativesGuide/)
+    assert.match(
+      dataSource,
+      /Cavos, Privy, Dynamic, Turnkey, and Web3Auth are the five Dfns/,
+    )
+    assert.match(dataSource, /href: '\/privy-alternatives'/)
+    assert.match(dataSource, /href: '\/compare'/)
+    assert.match(dataSource, /href: '\/web3auth-alternatives'/)
+    assert.match(dataSource, /docs\.dfns\.co\/core-concepts\/how-mpc-wallets-work/)
+    assert.match(dataSource, /docs\.dfns\.co\/advanced\/delegated-wallets/)
+    assert.match(dataSource, /docs\.dfns\.co\/solutions\/embed-user-wallets/)
+    assert.match(dataSource, /docs\.dfns\.co\/networks/)
+    assert.match(dataSource, /dfns\.co\/pricing/)
+    assert.match(dataSource, /audited OpenZeppelin account contract/)
+    assert.match(dataSource, /Gas Sponsorship in Any Token/)
+    assert.match(dataSource, /USDC is one example/)
+    assert.match(dataSource, /keys never leave the device in plaintext/)
+    assert.match(dataSource, /private key is never reconstructed/)
+    assert.match(dataSource, /answerHeading/)
+    assert.doesNotMatch(dataSource, /audited Cavos/)
+    assert.doesNotMatch(dataSource, /on-chain device approval/)
+    assert.doesNotMatch(dataSource, /trustless/)
+    assert.doesNotMatch(dataSource, /impossible/)
+    const cavos = DFNS_ALTERNATIVE_SECTIONS[0]
+    assert.equal(cavos.href, '/compare')
+    assert.match(cavos.paragraphs.join(' '), /audited OpenZeppelin/)
+    assert.match(cavos.paragraphs.join(' '), /MPC/)
+
+    const compareIndex = fs.readFileSync(
+      path.join(process.cwd(), 'app/compare/page.tsx'),
+      'utf8',
+    )
+    const compareSlug = fs.readFileSync(
+      path.join(process.cwd(), 'app/compare/[slug]/page.tsx'),
+      'utf8',
+    )
+    assert.match(
+      compareIndex,
+      /href="\/dfns-alternatives"[^>]*>\s*Dfns alternatives\s*</,
+    )
+    assert.match(compareSlug, /href="\/dfns-alternatives"/)
+    const llms = fs.readFileSync(path.join(process.cwd(), 'public/llms.txt'), 'utf8')
+    assert.match(llms, /https:\/\/cavos\.xyz\/dfns-alternatives/)
+  })
+
   it('builds Article, BreadcrumbList, and FAQPage JSON-LD for the guide', () => {
     const data = guidePageJsonLd({
       title: EMBEDDED_WALLET_TITLE,
@@ -1768,6 +2156,8 @@ describe('marketing SEO', () => {
       ['/dynamic-alternatives', 'Dynamic wallet alternatives'],
       ['/magic-alternatives', 'Magic wallet alternatives'],
       ['/para-alternatives', 'Para wallet alternatives'],
+      ['/web3auth-alternatives', 'Web3Auth wallet alternatives'],
+      ['/dfns-alternatives', 'Dfns wallet alternatives'],
       ['/embedded-wallet', 'Embedded wallet'],
       ['/blog/how-to-add-an-embedded-wallet', 'How to add an embedded wallet'],
       ['/blog/wallet-as-a-service', 'Wallet as a service'],
@@ -2163,6 +2553,8 @@ describe('marketing SEO', () => {
       'lib/dynamic-alternatives.ts',
       'lib/magic-alternatives.ts',
       'lib/para-alternatives.ts',
+      'lib/web3auth-alternatives.ts',
+      'lib/dfns-alternatives.ts',
       'lib/alternatives-guide.ts',
     ]
     for (const relative of alternativesData) {
@@ -3020,7 +3412,7 @@ describe('marketing SEO', () => {
     assert.match(source, /docs\.cavos\.xyz\/docs\/auth/)
     assert.match(source, /docs\.cavos\.xyz\/docs\/wallet-actions/)
     assert.match(source, /docs\.cavos\.xyz\/docs\/recovery/)
-    assert.match(source, /@cavos\/kit` 0\.5\.0/)
+    assert.match(source, /@cavos\/kit` 0\.5\.2/)
     assert.match(source, /CavosProvider/)
     assert.match(source, /Cavos\.connect/)
     assert.match(source, /useCavos/)
@@ -3062,7 +3454,7 @@ describe('marketing SEO', () => {
     assert.equal(EMBEDDED_WALLET_API_PATH, '/blog/embedded-wallet-api')
     assert.equal(
       EMBEDDED_WALLET_API_TITLE,
-      'Embedded Wallet API (2026): Setup in Minutes',
+      'Embedded Wallet API (2026): Auth, Sign, Gas',
     )
     assert.ok(`${EMBEDDED_WALLET_API_TITLE} | Cavos`.length <= 60)
     assert.ok(
@@ -3074,6 +3466,16 @@ describe('marketing SEO', () => {
     assert.equal(apiFields.updated, '2026-11-06')
     assert.match(excerptMatch[1], /^Embedded Wallet API/)
     assert.match(source, /## Embedded Wallet API overview \(November 2026\)/)
+    assert.match(source, /This post owns those API and developer-surface queries/)
+    assert.match(source, /How does authentication work in the Cavos embedded wallet API\?/)
+    assert.match(source, /How does signing work in the Cavos embedded wallet API\?/)
+    assert.match(
+      source,
+      /Which chains does the Cavos embedded wallet API support\?/,
+    )
+    assert.match(source, /Does the Cavos embedded wallet API have rate limits\?/)
+    assert.match(source, /docs\.cavos\.xyz\/docs\/dashboard/)
+    assert.match(source, /no published numeric REST rate-limit table/)
 
     const hub = fs.readFileSync(
       path.join(process.cwd(), 'app/embedded-wallet/page.tsx'),
@@ -3784,6 +4186,8 @@ describe('marketing SEO', () => {
     assert.match(source, /href: '\/dynamic-alternatives'/)
     assert.match(source, /href: '\/magic-alternatives'/)
     assert.match(source, /href: '\/para-alternatives'/)
+    assert.match(source, /href: '\/web3auth-alternatives'/)
+    assert.match(source, /href: '\/dfns-alternatives'/)
     assert.match(source, /href: '\/embedded-starknet-wallet'/)
     assert.match(source, /href: '\/embedded-solana-wallet'/)
     assert.match(source, /href: '\/embedded-stellar-wallet'/)
@@ -4777,6 +5181,8 @@ describe('pillar page copy rules', () => {
     'lib/embedded-wallet-guide.ts',
     'lib/magic-alternatives.ts',
     'lib/para-alternatives.ts',
+    'lib/web3auth-alternatives.ts',
+    'lib/dfns-alternatives.ts',
     'lib/privy-alternatives.ts',
     'lib/turnkey-alternatives.ts',
     'lib/marketing-seo.ts',

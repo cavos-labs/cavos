@@ -182,6 +182,16 @@ const GUIDES = [
     body: 'Device-native keys versus Para’s 2-of-2 MPC wallet at getpara.com.',
   },
   {
+    href: '/web3auth-alternatives',
+    title: 'Web3Auth wallet alternatives',
+    body: 'Device-native keys versus Web3Auth / MetaMask Embedded Wallets MPC shares.',
+  },
+  {
+    href: '/dfns-alternatives',
+    title: 'Dfns wallet alternatives',
+    body: 'Finished embedded-wallet SDKs versus Dfns MPC/TSS wallet infrastructure.',
+  },
+  {
     href: '/embedded-starknet-wallet',
     title: 'Embedded Starknet wallet',
     body: 'Audited OpenZeppelin AccountUpgradeable v3.0.0 with a native stark key.',

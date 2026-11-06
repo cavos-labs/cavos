@@ -47,6 +47,8 @@ export function Footer() {
                         <li><Link href="/dynamic-alternatives" className="hover:text-black transition-colors">Dynamic wallet alternatives</Link></li>
                         <li><Link href="/magic-alternatives" className="hover:text-black transition-colors">Magic wallet alternatives</Link></li>
                         <li><Link href="/para-alternatives" className="hover:text-black transition-colors">Para wallet alternatives</Link></li>
+                        <li><Link href="/web3auth-alternatives" className="hover:text-black transition-colors">Web3Auth wallet alternatives</Link></li>
+                        <li><Link href="/dfns-alternatives" className="hover:text-black transition-colors">Dfns wallet alternatives</Link></li>
                         <li><Link href="/blog" className="hover:text-black transition-colors">Changelog</Link></li>
                         <li><Link href="https://docs.cavos.xyz" target="_blank" className="hover:text-black transition-colors">Documentation</Link></li>
                     </ul>

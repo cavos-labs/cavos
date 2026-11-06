@@ -5,9 +5,11 @@ import { COMPARE_PAGES_MODIFIED, COMPETITORS } from './compare-data'
 import { DYNAMIC_ALTERNATIVES_MODIFIED } from './dynamic-alternatives'
 import { EMBEDDED_WALLET_MODIFIED } from './embedded-wallet-guide'
 import { MAGIC_ALTERNATIVES_MODIFIED } from './magic-alternatives'
+import { DFNS_ALTERNATIVES_MODIFIED } from './dfns-alternatives'
 import { PARA_ALTERNATIVES_MODIFIED } from './para-alternatives'
 import { PRIVY_ALTERNATIVES_MODIFIED } from './privy-alternatives'
 import { TURNKEY_ALTERNATIVES_MODIFIED } from './turnkey-alternatives'
+import { WEB3AUTH_ALTERNATIVES_MODIFIED } from './web3auth-alternatives'
 
 /** Sitemap lastmod for /pricing when published fees or FAQ copy change. */
 export const PRICING_SITEMAP_MODIFIED = '2026-10-30'
@@ -210,6 +212,18 @@ export function getMarketingSitemapEntries(): SitemapEntry[] {
         'monthly',
         0.8,
         parseStableDate(PARA_ALTERNATIVES_MODIFIED),
+      ),
+      page(
+        '/web3auth-alternatives',
+        'monthly',
+        0.8,
+        parseStableDate(WEB3AUTH_ALTERNATIVES_MODIFIED),
+      ),
+      page(
+        '/dfns-alternatives',
+        'monthly',
+        0.8,
+        parseStableDate(DFNS_ALTERNATIVES_MODIFIED),
       ),
       page('/custody', 'monthly', 0.8),
       page(
