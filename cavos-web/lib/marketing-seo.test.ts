@@ -2037,8 +2037,8 @@ describe('marketing SEO', () => {
     assert.equal(privy.title, PRIVY_VS_TURNKEY_TITLE)
     assert.ok(providers.excerpt.length >= 140 && providers.excerpt.length <= 155)
     assert.ok(privy.excerpt.length >= 140 && privy.excerpt.length <= 155)
-    assert.equal(providers.updated, '2026-11-05')
-    assert.equal(privy.updated, '2026-11-05')
+    assert.equal(providers.updated, '2026-11-06')
+    assert.equal(privy.updated, '2026-11-06')
     assert.match(EMBEDDED_WALLET_PROVIDERS_TITLE, /Best Embedded Wallet Providers/)
     assert.match(EMBEDDED_WALLET_PROVIDERS_TITLE, /Embedded Wallet Providers/)
     assert.match(providers.excerpt, /best embedded wallet providers 2026/i)
@@ -2800,7 +2800,7 @@ describe('marketing SEO', () => {
     assert.equal(PRIVY_VS_TURNKEY_PATH, '/blog/privy-vs-turnkey')
     assert.equal(
       PRIVY_VS_TURNKEY_TITLE,
-      'Privy vs Turnkey (2026): Who Holds the Key',
+      'Privy vs Turnkey (2026): SDK vs Infrastructure',
     )
 
     const compareSource = fs.readFileSync(
@@ -3071,7 +3071,7 @@ describe('marketing SEO', () => {
     )
     const apiFields = parseBlogFrontmatter(source)
     assert.equal(apiFields.title, EMBEDDED_WALLET_API_TITLE)
-    assert.equal(apiFields.updated, '2026-11-05')
+    assert.equal(apiFields.updated, '2026-11-06')
     assert.match(excerptMatch[1], /^Embedded Wallet API/)
     assert.match(source, /## Embedded Wallet API overview \(November 2026\)/)
 
@@ -3173,9 +3173,14 @@ describe('marketing SEO', () => {
       NON_CUSTODIAL_EMBEDDED_WALLET_TITLE,
       'Non-Custodial Embedded Wallets: What They Are (2026)',
     )
-    assert.match(source, /^updated:\s*"2026-11-01"$/m)
+    assert.match(source, /^updated:\s*"2026-11-06"$/m)
     assert.match(source, /\*\*Non-custodial embedded wallets\*\* are /)
     assert.match(source, /## What are non-custodial embedded wallets\?/)
+    assert.match(source, /## Custodial vs MPC vs hardware-isolated passkeys/)
+    assert.match(source, /What is the difference between custodial, MPC, and hardware-isolated embedded wallets\?/)
+    assert.match(source, /\]\(\/blog\/what-is-an-embedded-wallet\)/)
+    assert.match(source, /never leave the device in plaintext/)
+    assert.match(source, /Signing always happens on the device/)
 
     const hub = fs.readFileSync(
       path.join(process.cwd(), 'app/embedded-wallet/page.tsx'),
@@ -3415,9 +3420,17 @@ describe('marketing SEO', () => {
     assert.match(source, /Wallet-as-a-service providers, November 2026/)
     assert.match(source, /What is an embedded wallet as a service\?/)
     assert.match(source, /What are wallet as a service providers\?/)
+    assert.match(source, /What is wallet as a service\?/)
+    assert.match(source, /What is WaaS vs an embedded wallet\?/)
+    assert.match(source, /Who offers non-custodial WaaS\?/)
+    assert.match(source, /dfns\.co\/pricing/)
+    assert.match(source, /getpara\.com\/pricing/)
+    assert.match(source, /\]\(\/privy-alternatives\)/)
+    assert.match(source, /\]\(\/turnkey-alternatives\)/)
+    assert.match(source, /never leave the device in plaintext/)
     const waasFields = parseBlogFrontmatter(source)
     assert.equal(waasFields.title, WALLET_AS_A_SERVICE_TITLE)
-    assert.equal(waasFields.updated, '2026-11-05')
+    assert.equal(waasFields.updated, '2026-11-06')
     assert.ok(waasFields.excerpt.length >= 140 && waasFields.excerpt.length <= 155)
 
     const hub = fs.readFileSync(
@@ -3665,7 +3678,7 @@ describe('marketing SEO', () => {
     assert.equal(ALCHEMY_VS_PRIVY_PATH, '/blog/alchemy-vs-privy')
     assert.equal(
       ALCHEMY_VS_PRIVY_TITLE,
-      'Alchemy vs Privy (2026): Kit Deprecated',
+      'Alchemy vs Privy (2026): APIs vs Signer',
     )
     assert.ok(`${ALCHEMY_VS_PRIVY_TITLE} | Cavos`.length <= 60)
     assert.equal(ALCHEMY_VS_PRIVY_TITLE.includes('| Cavos'), false)
@@ -3674,7 +3687,7 @@ describe('marketing SEO', () => {
 
     const fields = parseBlogFrontmatter(source)
     assert.equal(fields.title, ALCHEMY_VS_PRIVY_TITLE)
-    assert.equal(fields.updated, '2026-11-04')
+    assert.equal(fields.updated, '2026-11-06')
     assert.equal(fields.date, '2026-10-27')
     assert.match(fields.excerpt, /Alchemy vs Privy/)
     assert.match(fields.excerpt, /Account Kit is deprecated/)
@@ -4684,6 +4697,7 @@ describe('embedded wallet definitional and API posts', () => {
     assert.match(raw, /^faq:$/m)
     assert.match(raw, /question: "What is an embedded wallet\?"/)
     assert.match(raw, /\]\(\/embedded-wallet\)/)
+    assert.match(raw, /full product and SDK page/)
     assert.match(raw, /\]\(\/blog\/embedded-wallet-api\)/)
     assert.match(raw, /audited OpenZeppelin account contract/)
     assert.match(raw, /Gas Sponsorship in Any Token/)
@@ -4846,7 +4860,11 @@ describe('November 5 topic cluster', () => {
       const raw = read(`content/blog/${slug}.mdx`)
       const fields = parseBlogFrontmatter(raw)
       assert.equal(fields.title, title, slug)
-      assert.equal(fields.updated, '2026-11-05', slug)
+      assert.equal(
+        fields.updated,
+        slug === 'best-embedded-wallet' ? '2026-11-06' : '2026-11-05',
+        slug,
+      )
       assert.ok(fields.excerpt.length >= 140 && fields.excerpt.length <= 160, `${slug} excerpt ${fields.excerpt.length}`)
       assert.match(raw, /\[embedded wallet\]\(\/embedded-wallet\)/)
       assert.match(raw, /\[embedded wallets\]\(\/embedded-wallet\)/)

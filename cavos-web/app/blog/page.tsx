@@ -64,7 +64,7 @@ const GUIDES = [
   {
     href: WALLET_AS_A_SERVICE_PATH,
     title: WALLET_AS_A_SERVICE_TITLE,
-    body: 'Wallet as a service providers and embedded wallet as a service: definition, dated shortlist, pricing, and build versus buy.',
+    body: 'Wallet as a service in 2026: definition, Privy, Dynamic, Turnkey, Dfns, Para vs Cavos, pricing units, and build versus buy.',
   },
   {
     href: EMBEDDED_WALLET_API_PATH,
@@ -74,7 +74,7 @@ const GUIDES = [
   {
     href: NON_CUSTODIAL_EMBEDDED_WALLET_PATH,
     title: NON_CUSTODIAL_EMBEDDED_WALLET_TITLE,
-    body: 'Who can sign, which key models are actually self-custodial, and how to verify a vendor’s claim.',
+    body: 'Custodial vs MPC vs hardware-isolated passkeys: who can sign, and how to verify a vendor’s claim.',
   },
   {
     href: EMBEDDED_WALLET_INTEGRATION_PATH,
@@ -119,7 +119,7 @@ const GUIDES = [
   {
     href: PRIVY_VS_TURNKEY_PATH,
     title: PRIVY_VS_TURNKEY_TITLE,
-    body: 'Finished auth and embedded wallets versus low-level key management and signing infrastructure.',
+    body: 'Finished auth SDK versus enclave signing infrastructure, with Dfns.',
   },
   {
     href: PRIVY_VS_DYNAMIC_PATH,
@@ -129,7 +129,7 @@ const GUIDES = [
   {
     href: ALCHEMY_VS_PRIVY_PATH,
     title: ALCHEMY_VS_PRIVY_TITLE,
-    body: 'Account Kit is deprecated. Wallet APIs are the successor; Alchemy recommends Privy as the signer.',
+    body: 'Wallet APIs versus a signer. Account Kit is deprecated; Alchemy recommends Privy.',
   },
   {
     href: STELLAR_EMBEDDED_WALLET_TUTORIAL_PATH,
