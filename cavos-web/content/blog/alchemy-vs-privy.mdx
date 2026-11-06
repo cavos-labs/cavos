@@ -100,6 +100,49 @@ The practical fork: Privy is stronger when you want **managed send** on EVM and 
 
 Time-to-first-signature is not the same as time-to-product. Privy collapses login, wallet, and connectors. Alchemy collapses sponsorship and smart-wallet execution; the signer is a second vendor.
 
+
+## Does Alchemy still offer Account Kit or embedded wallets?
+
+**No.** Account Kit (v4), including embedded wallets, signer support, and key management, is deprecated. New sign-ups for the Alchemy Signer, Account Kit, and Embedded Wallets have been turned off since 18 June 2026. Alchemy's successor product is Wallet APIs, which is signer-agnostic: you bring your own signer (Privy, Turnkey, Dynamic, or another), and Wallet APIs handle gas sponsorship, batching, retries, and EIP-7702.
+
+What developers should use instead depends on what they need:
+
+<table>
+<thead>
+<tr>
+<th>What you need</th>
+<th>What to use instead</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Login, embedded wallet, connectors</td>
+<td><a href="/compare/privy">Privy</a></td>
+<td>Alchemy's deprecation page recommends Privy for signer support. Privy is a finished auth and wallet product.</td>
+</tr>
+<tr>
+<td>Signing infrastructure, policy, quorums</td>
+<td><a href="/turnkey-alternatives">Turnkey</a>, <a href="/dfns-alternatives">Dfns</a></td>
+<td>Key-management infrastructure you assemble into a wallet. Wallet APIs document Turnkey as a signer option.</td>
+</tr>
+<tr>
+<td>Gas sponsorship, batching, EIP-7702</td>
+<td>Alchemy Wallet APIs + a signer</td>
+<td>Wallet APIs are the supported successor. They require a separate signer for login and keys.</td>
+</tr>
+<tr>
+<td>Device-native keys on Starknet, Solana, or Stellar</td>
+<td><a href="/pricing">Cavos</a></td>
+<td>When the review requires that the vendor cannot reconstruct a signing key, and the chain is Starknet, Solana, or Stellar.</td>
+</tr>
+</tbody>
+</table>
+
+If you were using Alchemy Account Kit and need to migrate, the typical path is: (1) pick a signer (Privy is recommended by Alchemy's own docs), (2) integrate that signer for login and keys, (3) optionally add Alchemy Wallet APIs for gas sponsorship and EIP-7702 on EVM. Wallet APIs also document Dynamic, Openfort, and any viem-compatible signer.
+
+The [embedded wallet providers](/blog/embedded-wallet-providers) guide is the full shortlist. The [Privy vs Turnkey](/blog/privy-vs-turnkey) guide is the build-versus-buy split between finished SDKs and signing infrastructure.
+
 ## Pricing, at a high level
 
 They do not sell the same unit. Figures below are from each vendor’s public pricing page as of October 2026 and can change. Cavos fees are from this site.
