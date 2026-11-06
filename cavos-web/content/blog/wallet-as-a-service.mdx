@@ -217,6 +217,30 @@ Figures are from public pricing and product pages as of November 2026 and can ch
 
 The category has consolidated. Stripe acquired Privy in 2025. Fireblocks acquired Dynamic in 2025. Consensys acquired Web3Auth in 2025 and now ships it as MetaMask Embedded Wallets. In 2026 Payward, the parent of Kraken, agreed to acquire Magic Labs’ wallet-as-a-service business. Acquisition is a vendor-risk and roadmap input. It does not change who can produce a signature.
 
+## Who each wallet-as-a-service provider fits
+
+The providers above serve different product shapes. Write down what you ship before you compare prices.
+
+- **Cavos** fits consumer apps where the user should never see a wallet picker, the chain is Starknet, Solana, or Stellar, and the security review requires that the vendor cannot reconstruct a signing key. Device-native keys, no MPC, paymaster-sponsored execution.
+- **Privy** fits EVM-first products that want one vendor for login, an in-app wallet, and connectors for wallets users already hold. TEE-based key infrastructure. Privy is also Alchemy's recommended signer after the Account Kit deprecation (see [Alchemy vs Privy](/blog/alchemy-vs-privy)). Replacement shortlist: [Privy alternatives](/privy-alternatives).
+- **Dynamic** fits teams that need connectors as a first-class feature, plus TSS-MPC embedded wallets, plus a long named-chain Tier 1 list (including Stellar, Sui, Aleo, and Midnight). Replacement shortlist: [Dynamic alternatives](/dynamic-alternatives).
+- **Turnkey** fits teams building a wallet or custody product that need policy, quorums, and server-side signing primitives. Turnkey is signing infrastructure, not a finished SDK. Replacement shortlist: [Turnkey alternatives](/turnkey-alternatives).
+- **Dfns** fits teams that want MPC/TSS infrastructure whose docs say the private key is never reconstructed, including delegated passkey wallets and hybrid deployment models. Dfns publishes annual platform subscriptions, not MAU plans. Replacement shortlist: [Dfns alternatives](/dfns-alternatives).
+- **Web3Auth / MetaMask Embedded Wallets** fits teams that want the MetaMask brand, social login, and chain-agnostic MPC (secp256k1 and Ed25519, native EVM and Solana, plus guides for other networks). Replacement shortlist: [Web3Auth alternatives](/web3auth-alternatives).
+- **Para** fits teams that want MAU-only pricing (no per-signature charge on public plans) and a named table covering EVM, Solana, Cosmos chains, and Stellar. The public pricing FAQ lists SOC 2 Type II. Replacement shortlist: [Para alternatives](/para-alternatives).
+
+The named-vendor comparison is also on [embedded wallet providers](/blog/embedded-wallet-providers). One-to-one pages are under [compare](/compare).
+
+## Wallet-as-a-service vs embedded wallet vs wallet infrastructure
+
+Searchers type all three. They name the same job from different angles.
+
+- **Embedded wallet** is the UX: the wallet lives inside the application, login selects the user, and approval happens in the product UI. There is no seed phrase in the happy path and no second program to install.
+- **Wallet-as-a-service (WaaS)** is how that wallet is sold: an API or SDK, a dashboard, and an invoice. Teams also type wallet as a service providers and embedded wallets as a service.
+- **Wallet infrastructure** usually means the lower layer: key management, signing primitives, policy, and custody, which a platform assembles into a finished product. Turnkey and Dfns sit closer to this layer. Privy, Dynamic, Magic, Web3Auth, and Cavos ship a finished login-to-signature path.
+
+The [embedded wallet](/embedded-wallet) page is the UX definition. This page is the commercial map. The [Privy vs Turnkey](/blog/privy-vs-turnkey) guide is the build-versus-buy fork between a finished SDK and signing infrastructure.
+
 ## Where Cavos fits as a wallet-as-a-service
 
 Cavos is a hardware-isolated, non-custodial [embedded wallet](/embedded-wallet) platform, not an extension, and not a connector. Signing keys are created and used on the user’s device. Keys never leave the device in plaintext. Signing always happens on the device. Cavos cannot see them, sign with them, decrypt them, or move funds. Login never signs a transaction. There is no MPC and no hosted spend key. Auth is hosted Google, Apple, or email, or an identity you pass in. Recovery is a passkey or opt-in AWS Nitro Enclave sealed restore of the MasterDEK; the passkey and the enclave only hold an encrypted copy and cannot sign. Gas Sponsorship in Any Token is on every plan (USDC is one example of a token the user already holds), funded separately.
