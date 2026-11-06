@@ -4618,7 +4618,7 @@ describe('marketing SEO', () => {
     assert.ok(getCompetitor('alchemy'))
     const turnkeyCompetitor = getCompetitor('turnkey')
     assert.ok(turnkeyCompetitor)
-    assert.match(turnkeyCompetitor.pageTitle ?? '', /Cavos vs Turnkey \(2026\): Embedded Wallet/)
+    assert.match(turnkeyCompetitor.pageTitle ?? '', /Turnkey vs Cavos \(2026\): Embedded Wallet/)
     assert.match(turnkeyCompetitor.pageH1 ?? '', /embedded wallet compared/)
     assert.match(turnkeyCompetitor.pageDescription ?? '', /Turnkey vs Privy/)
     assert.match(turnkeyCompetitor.pageDescription ?? '', /Turnkey alternatives/)
