@@ -186,6 +186,7 @@ import {
   PRIVY_ALTERNATIVES_TITLE,
   PRIVY_HOW_TO_CHOOSE,
   PRIVY_WHY_LOOK,
+  privyAlternativesGuide,
   privyAlternativesItemList,
 } from './privy-alternatives'
 import {
@@ -803,6 +804,8 @@ describe('marketing SEO', () => {
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Privy competitors/)
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Cavos, Dynamic, Turnkey, Web3Auth, Magic/)
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /1,000 wallets/)
+    assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /2026/)
+    assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Non-custodial/)
     const fullTitle = `${PRIVY_ALTERNATIVES_TITLE} | Cavos`
     assert.ok(fullTitle.length >= 50 && fullTitle.length <= 60, fullTitle)
     assert.ok(
@@ -851,7 +854,22 @@ describe('marketing SEO', () => {
       ],
     )
     assert.equal(PRIVY_ALTERNATIVES_PUBLISHED, '2026-10-11')
-    assert.equal(PRIVY_ALTERNATIVES_MODIFIED, '2026-11-05')
+    assert.equal(PRIVY_ALTERNATIVES_MODIFIED, '2026-11-06')
+    assert.match(
+      privyAlternativesGuide.decisionHeading ?? '',
+      /Custody and pricing across Privy alternatives/,
+    )
+    assert.equal(privyAlternativesGuide.decisionRows?.length, 4)
+    assert.ok(
+      privyAlternativesGuide.decisionRows?.some(
+        (row) => row.point === 'Who can produce a signature',
+      ),
+    )
+    assert.ok(
+      privyAlternativesGuide.decisionRows?.some(
+        (row) => row.point === 'Pricing unit and published free tier',
+      ),
+    )
     assert.equal(PRIVY_ALTERNATIVES_CRUMB, 'Privy alternatives')
 
     const meta = marketingPageMetadata({
@@ -935,9 +953,17 @@ describe('marketing SEO', () => {
     assert.match(templateSource, /guidePageJsonLd/)
     assert.match(templateSource, /embeddedWalletProviderRows/)
     assert.match(templateSource, /relatedLinks/)
+    assert.match(templateSource, /decisionHeading/)
+    assert.match(templateSource, /decisionRows/)
+    assert.match(templateSource, /Comparison point/)
     assert.match(dataSource, /href: '\/pricing'/)
+    assert.match(dataSource, /href: '\/web3auth-alternatives'/)
+    assert.match(dataSource, /href: '\/dfns-alternatives'/)
     assert.match(dataSource, /Why teams look for a Privy alternative/)
     assert.match(dataSource, /How to choose a Privy alternative/)
+    assert.match(dataSource, /Custody and pricing across Privy alternatives/)
+    assert.match(dataSource, /hardware-isolated/)
+    assert.match(dataSource, /audited OpenZeppelin account contract/)
     assert.match(
       dataSource,
       /Cavos, Dynamic, Turnkey, Web3Auth, and Magic are the five Privy/,
@@ -1033,6 +1059,12 @@ describe('marketing SEO', () => {
       (magic.relatedLinks ?? []).map((link) => link.href),
       ['/magic-alternatives'],
     )
+    const web3auth = PRIVY_ALTERNATIVE_SECTIONS.find((section) => section.name === 'Web3Auth')
+    assert.ok(web3auth)
+    assert.deepEqual(
+      (web3auth.relatedLinks ?? []).map((link) => link.href),
+      ['/web3auth-alternatives', '/dfns-alternatives'],
+    )
     assert.match(compareSource, /href="\/turnkey-alternatives"/)
     assert.match(compareSource, />\s*turnkey alternative\s*</)
     assert.match(compareSource, />\s*Turnkey embedded wallet competitors\s*</)
@@ -1074,6 +1106,13 @@ describe('marketing SEO', () => {
     assert.match(comparePrivyIntro, /Privy vs Cavos comparison/)
     assert.match(comparePrivyIntro, /href="\/privy-alternatives"/)
     assert.match(comparePrivyIntro, />\s*Privy alternatives\s*</)
+    assert.match(comparePrivyIntro, /href="\/pricing"/)
+    assert.match(comparePrivyIntro, /href="\/web3auth-alternatives"/)
+    assert.match(comparePrivyIntro, /href="\/dfns-alternatives"/)
+    assert.equal(
+      privy.rows.some((row) => row.feature === 'Connect vs provision'),
+      true,
+    )
     assert.match(privy.rows.find((row) => row.feature === 'Account model')?.cavos ?? '', /audited OpenZeppelin/i)
     assert.doesNotMatch(JSON.stringify(privy.rows), /PDA/)
   })
@@ -3251,6 +3290,9 @@ describe('marketing SEO', () => {
     assert.match(source, /\[Privy alternatives\]\(\/privy-alternatives\)/)
     assert.match(source, /\[Dynamic alternatives\]\(\/dynamic-alternatives\)/)
     assert.match(source, /\]\(\/turnkey-alternatives\)/)
+    assert.match(source, /\]\(\/web3auth-alternatives\)/)
+    assert.match(source, /\]\(\/dfns-alternatives\)/)
+    assert.match(source, /## Privy vs Dynamic at a glance/)
     assert.match(source, /\]\(\/blog\/privy-vs-turnkey\)/)
     assert.match(source, /\]\(\/blog\/alchemy-vs-privy\)/)
     assert.match(source, /\]\(\/blog\/embedded-wallet-providers\)/)
@@ -3307,15 +3349,19 @@ describe('marketing SEO', () => {
     assert.doesNotMatch(source, /category:\s*"Release"/)
     assert.doesNotMatch(source, /robots:\s*noindex/)
     assert.equal(PRIVY_VS_DYNAMIC_PATH, '/blog/privy-vs-dynamic')
-    assert.equal(PRIVY_VS_DYNAMIC_TITLE, 'Privy vs Dynamic (2026): Custody, Pricing')
+    assert.equal(PRIVY_VS_DYNAMIC_TITLE, 'Privy vs Dynamic (2026): Provision vs Connect')
     assert.ok(`${PRIVY_VS_DYNAMIC_TITLE} | Cavos`.length <= 60)
     assert.equal(PRIVY_VS_DYNAMIC_TITLE.includes('| Cavos'), false)
+    assert.ok(PRIVY_VS_DYNAMIC_TITLE.length <= 52)
 
     const fields = parseBlogFrontmatter(source)
     assert.equal(fields.title, PRIVY_VS_DYNAMIC_TITLE)
-    assert.equal(fields.updated, '2026-11-03')
+    assert.equal(fields.updated, '2026-11-06')
     assert.equal(fields.date, '2026-11-03')
     assert.match(fields.excerpt, /Privy vs Dynamic vs Turnkey/)
+    assert.match(fields.excerpt, /Non-custodial/)
+    assert.match(fields.excerpt, /1,000 wallets/)
+    assert.match(fields.excerpt, /2026/)
 
     const compareSource = fs.readFileSync(
       path.join(process.cwd(), 'app/compare/[slug]/page.tsx'),
@@ -3359,7 +3405,7 @@ describe('marketing SEO', () => {
       description: excerptMatch[1],
       path: PRIVY_VS_DYNAMIC_PATH,
       datePublished: '2026-11-03',
-      dateModified: '2026-11-03',
+      dateModified: '2026-11-06',
       type: 'Article',
       faq: [
         {
@@ -3380,7 +3426,7 @@ describe('marketing SEO', () => {
     const json = JSON.stringify(data)
     JSON.parse(json)
     assert.equal(data['@graph'][0]['@type'], 'Article')
-    assert.equal(data['@graph'][0].dateModified, '2026-11-03')
+    assert.equal(data['@graph'][0].dateModified, '2026-11-06')
     assert.equal(data['@graph'][1]['@type'], 'BreadcrumbList')
     assert.equal(data['@graph'][2]['@type'], 'FAQPage')
     assert.equal(data['@graph'][0].url, 'https://cavos.xyz/blog/privy-vs-dynamic')

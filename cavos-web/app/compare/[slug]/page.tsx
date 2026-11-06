@@ -95,6 +95,18 @@ export default async function ComparisonPage({
                                 <Link href={PRIVY_VS_DYNAMIC_PATH} className={linkClass}>
                                     Privy vs Dynamic
                                 </Link>
+                                . Cavos fees are on the{' '}
+                                <Link href="/pricing" className={linkClass}>
+                                    pricing
+                                </Link>
+                                {' '}page. For a social-login MPC wallet layer, see{' '}
+                                <Link href="/web3auth-alternatives" className={linkClass}>
+                                    Web3Auth alternatives
+                                </Link>
+                                . For MPC/TSS infrastructure rather than a finished SDK, see{' '}
+                                <Link href="/dfns-alternatives" className={linkClass}>
+                                    Dfns alternatives
+                                </Link>
                                 .{' '}
                             </>
                         ) : null}

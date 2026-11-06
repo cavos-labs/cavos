@@ -63,7 +63,7 @@ const ALCHEMY_PRICING =
 export const PROVIDER_PRICING_AS_OF = 'October 2026'
 
 /** Sitemap lastmod for /compare/[slug] when competitor copy in this file changes. */
-export const COMPARE_PAGES_MODIFIED = '2026-11-04'
+export const COMPARE_PAGES_MODIFIED = '2026-11-06'
 
 export const EMBEDDED_WALLET_MARKET_NOTE =
     'The category has consolidated. Stripe acquired Privy in 2025. Fireblocks acquired Dynamic in 2025. Consensys acquired Web3Auth in 2025 and now ships it as MetaMask Embedded Wallets. In 2026 Payward, the parent of Kraken, acquired Magic Labs wallet infrastructure.'
@@ -92,6 +92,7 @@ export const COMPETITORS: Competitor[] = [
         ],
         rows: [
             { feature: 'Signing authority', cavos: CAVOS_CUSTODY, them: 'User wallets: 2-of-2 Shamir shares reconstituted only in AWS Nitro Enclaves (enclave share + auth share). Key export is supported. Optional custodial wallets via Bridge.' },
+            { feature: 'Connect vs provision', cavos: 'Provisions a device-native account. Does not connect MetaMask, WalletConnect, or other extensions.', them: 'Both. Embedded user wallets plus connectors for wallets users already hold (EVM and Solana).' },
             { feature: 'Chain coverage', cavos: CAVOS_CHAINS, them: 'Broad EVM support plus Solana; coverage and feature parity vary by chain.' },
             { feature: 'Account model', cavos: CAVOS_ACCOUNT_MODEL, them: 'EOA-style embedded wallets, with smart account support through integrations.' },
             { feature: 'Gas sponsorship', cavos: CAVOS_GAS, them: 'Available through paymaster and bundler integrations, typically on EVM smart accounts.' },

@@ -54,7 +54,7 @@ export const PRIVY_VS_TURNKEY_TITLE =
 export const PRIVY_VS_DYNAMIC_PATH = '/blog/privy-vs-dynamic'
 
 export const PRIVY_VS_DYNAMIC_TITLE =
-  'Privy vs Dynamic (2026): Custody, Pricing'
+  'Privy vs Dynamic (2026): Provision vs Connect'
 
 export const EMBEDDED_WALLET_API_PATH = '/blog/embedded-wallet-api'
 

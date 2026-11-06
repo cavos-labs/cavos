@@ -1,8 +1,8 @@
 ---
-title: "Privy vs Dynamic (2026): Custody, Pricing"
+title: "Privy vs Dynamic (2026): Provision vs Connect"
 date: "2026-11-03"
-updated: "2026-11-03"
-excerpt: "Privy vs Dynamic vs Turnkey for embedded wallets in 2026: product scope, TEE vs TSS-MPC, connectors, published pricing, and who each is for."
+updated: "2026-11-06"
+excerpt: "Privy vs Dynamic vs Turnkey for embedded wallets in 2026: provision vs connect, TEE vs TSS-MPC, published pricing. Non-custodial, free to 1,000 wallets."
 category: "Guide"
 ogQuote: "One provisions an in-app wallet. The other also connects wallets users already hold."
 slug: "privy-vs-dynamic"
@@ -39,6 +39,37 @@ faq:
 An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain account they can pay, receive, and sign with. **Privy vs Dynamic** is a product-shape question, not a layer question: both ship login and an in-app wallet. The fork is **provision versus connect**. Teams also type **Privy vs Dynamic vs Turnkey for embedded wallets**. Turnkey sits on a different layer. This guide is the two-way, with a short three-way note.
 
 Cavos, LLC is a software and SaaS company. Positioning for Cavos comes after the table is fair. If the honest answer is Privy or Dynamic, that is the answer. This post is Privy vs Dynamic, not Cavos vs Dynamic. The one-to-one with Cavos is [Cavos vs Dynamic](/compare/dynamic) and [Cavos vs Privy](/compare/privy). The replacement lists are [Privy alternatives](/privy-alternatives) and [Dynamic alternatives](/dynamic-alternatives). Alchemy vs Privy is a different fork: Wallet APIs plus a recommended signer, that comparison is [Alchemy vs Privy](/blog/alchemy-vs-privy). Privy vs Turnkey is build-versus-buy, that write-up is [Privy vs Turnkey](/blog/privy-vs-turnkey). The multi-vendor listicle is [embedded wallet providers](/blog/embedded-wallet-providers).
+
+## Privy vs Dynamic at a glance
+
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Privy</th>
+<th>Dynamic</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Product fork</td>
+<td>Provision an in-app wallet, plus connectors for wallets users already hold.</td>
+<td>Connect wallets users already hold, plus a TSS-MPC embedded fallback.</td>
+</tr>
+<tr>
+<td>Custody (public docs)</td>
+<td>Shamir 2-of-2 reconstituted in AWS Nitro Enclaves. Optional custodial wallets via Bridge.</td>
+<td>TSS-MPC (default 2-of-2). Official copy: a complete private key never exists.</td>
+</tr>
+<tr>
+<td>Published list price</td>
+<td>Free 0–499 MAU; Core $299/mo; Scale $499/mo.</td>
+<td>Growth $249/mo up to 5,000 MAUs. Sandbox is free. Extra-MAU rate omitted (public page disagrees with itself).</td>
+</tr>
+</tbody>
+</table>
+
+Neither is a hardware-isolated, non-custodial device key. That shape, free up to 1,000 wallets on Starknet, Solana, and Stellar, is [pricing](/pricing) and the [embedded wallet](/embedded-wallet) product page. Sibling shortlists: [Web3Auth alternatives](/web3auth-alternatives) and [Dfns alternatives](/dfns-alternatives).
 
 ## Product scope
 
@@ -351,6 +382,8 @@ This page is not [Cavos vs Dynamic](/compare/dynamic). That page is the one-to-o
 - [Privy alternatives](/privy-alternatives): the same vendors, framed as replacements for Privy.
 - [Dynamic alternatives](/dynamic-alternatives): the same shortlist for Dynamic’s stack.
 - [Turnkey alternatives](/turnkey-alternatives): Cavos, Privy, Dynamic, Web3Auth, and Magic as replacements for Turnkey.
+- [Web3Auth alternatives](/web3auth-alternatives): social-login MPC wallet layer, including MetaMask Embedded Wallets.
+- [Dfns alternatives](/dfns-alternatives): MPC/TSS infrastructure rather than a finished SDK.
 - [Open-sourcing the Cavos enclave (Kit 0.5.0)](/blog/cavos-kit-0-5-0): the open-source recovery enclave, GitHub sign-in, and signed enclave releases.
 - [How to add an embedded wallet](/blog/how-to-add-an-embedded-wallet): `@cavos/kit` install and the first sponsored transaction.
 - [Embedded Starknet wallet](/embedded-starknet-wallet): audited OpenZeppelin account contract, paymaster, SNIP-12. Also [Solana](/embedded-solana-wallet) and [Stellar](/embedded-stellar-wallet).

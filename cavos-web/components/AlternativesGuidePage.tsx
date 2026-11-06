@@ -121,6 +121,48 @@ export function AlternativesGuidePage({ guide }: { guide: AlternativesGuide }) {
                     </p>
                 </section>
 
+                {guide.decisionHeading && guide.decisionRows && guide.decisionRows.length > 0 ? (
+                    <section className="mt-24">
+                        <h2 className="text-3xl font-medium tracking-[-0.03em]">
+                            {guide.decisionHeading}
+                        </h2>
+                        {guide.decisionIntro ? (
+                            <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted">
+                                <InlineCopy parts={guide.decisionIntro} />
+                            </p>
+                        ) : null}
+                        <div className="mt-8 overflow-x-auto rounded-2xl border border-line">
+                            <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+                                <thead className="bg-brand text-white">
+                                    <tr>
+                                        <th className="px-5 py-4 font-semibold">
+                                            Comparison point
+                                        </th>
+                                        <th className="border-l border-white/10 px-5 py-4 font-semibold">
+                                            What public docs say
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {guide.decisionRows.map((row) => (
+                                        <tr key={row.point} className="border-t border-line">
+                                            <th
+                                                scope="row"
+                                                className="w-[28%] px-5 py-4 align-top font-semibold"
+                                            >
+                                                {row.point}
+                                            </th>
+                                            <td className="border-l border-line px-5 py-4 align-top text-muted">
+                                                {row.detail}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                ) : null}
+
                 <section className="mt-24">
                     <h2 className="text-3xl font-medium tracking-[-0.03em]">
                         {guide.comparedHeading}

@@ -409,7 +409,7 @@ Hello
     assert.ok(privyVsDynamic)
     assert.ok(walletAsAService)
     assert.equal(
-      privyVsDynamic.lastModified.toISOString().startsWith('2026-11-03'),
+      privyVsDynamic.lastModified.toISOString().startsWith('2026-11-06'),
       true,
     )
     assert.equal(
