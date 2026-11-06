@@ -134,7 +134,7 @@ export default async function ComparisonPage({
                         ) : null}
                         {competitor.slug === 'dynamic' ? (
                             <>
-                                This page is Cavos vs Dynamic, not Privy vs Dynamic.
+                                This page is Dynamic vs Cavos, not Privy vs Dynamic.
                                 Privy vs Dynamic is provision versus connect between two
                                 finished SDKs; see{' '}
                                 <Link href={PRIVY_VS_DYNAMIC_PATH} className={linkClass}>

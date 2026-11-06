@@ -1,7 +1,7 @@
 ---
 title: "Best Embedded Wallets for Stellar: Free"
 date: "2026-10-29"
-updated: "2026-11-05"
+updated: "2026-11-06"
 excerpt: "Best embedded wallets for Stellar in 2026: Cavos, Dynamic, Crossmint, Para, Blux, Privy, Turnkey. Classic G vs Soroban. Free to 1,000 wallets."
 category: "Guide"
 ogQuote: "On Stellar, the account model and who pays reserves decide the user experience."
@@ -27,9 +27,11 @@ faq:
   - question: "Which Stellar embedded wallets sponsor fees and reserves?"
     answer: "Cavos sponsors Stellar reserves and fee bumps through its relayer, part of Gas Sponsorship in Any Token. Dynamic's chain support table lists gasless as not available for Stellar as of October 2026. Crossmint lists gas sponsorship as part of its wallet API. For other providers, check the vendor docs, because Stellar fee sponsorship usually means fee bump transactions that you build."
   - question: "Is a classic Stellar account or a Soroban smart wallet better?"
-    answer: "A classic G account works with every Stellar exchange, anchor, and payment tool today. A Soroban smart contract wallet, as Crossmint uses, adds programmable signers and recovery on chain. Cavos uses classic accounts and calls Soroban contracts through wallet.invokeContract when an app needs them."
+    answer: "A classic G account works with every Stellar exchange, anchor, and payment tool today. A Soroban smart contract wallet, as Crossmint uses, adds programmable signers and recovery on chain. Cavos uses classic G accounts and still calls Soroban contracts through wallet.invokeContract when an app needs them. You do not need a Soroban wallet to invoke a Soroban contract. Pick classic G when interchange with exchanges and anchors matters; pick Soroban when on-chain signer and recovery logic is the product."
+  - question: "Who should pick each Stellar embedded wallet provider?"
+    answer: "Cavos fits consumer apps that want a classic G account, sponsored reserves and fees, and the same SDK on Solana and Starknet. Dynamic fits teams that need Stellar next to that named Tier 1 list plus external wallet connection, and can fund Stellar fees themselves. Crossmint fits Soroban smart wallets with on-chain signers and recovery. Para fits teams already on Para for other chains. Blux fits Stellar-only apps that also connect wallets users already hold. Privy and Turnkey fit teams that will build and submit Stellar transactions on top of a signing layer."
   - question: "How much does a Stellar embedded wallet cost?"
-    answer: "Cavos is free up to 1,000 wallets, then Essential at $59 per month and Complete at $139 per month. Other vendors publish pricing on their own pages and the meters differ (monthly active users, signatures, or wallets), so compare on your expected volume."
+    answer: "Cavos is free up to 1,000 wallets, then Essential at $59 per month and Complete at $139 per month. Other vendors publish pricing on their own pages and the meters differ (monthly active users, signatures, or wallets), so compare on your expected volume. This page does not invent competitor prices; each row links to the vendor pricing page."
 ---
 
 This guide lists [embedded wallet](/embedded-wallet) SDKs that support **Stellar** today, based on each vendor's own documentation as of November 2026. Cavos, LLC publishes this page and Cavos is on the list, so the criteria come first and every row links to the source. If another provider fits your app better, use it. The category of [embedded wallets](/embedded-wallet) and the [embedded wallet SDK](/embedded-wallet) that ships them are defined on that pillar.
@@ -58,16 +60,19 @@ Cavos, Dynamic T1, Para, and Crossmint are the rows that actually submit Stellar
 - **Custody.** Who can produce a signature, and what happens if the provider disappears.
 - **Pricing meter.** Wallets, monthly active users, or signatures.
 
-## Stellar embedded wallets compared
+## Stellar embedded wallets compared (2026)
+
+Figures below are from each vendor's public docs as of November 2026. Competitor prices are not invented: those cells link to the vendor pricing page. Cavos fees are from this site's [pricing](/pricing) page.
 
 <table>
 <thead>
 <tr>
 <th>Provider</th>
-<th>Stellar support (vendor docs)</th>
+<th>Stellar depth (vendor docs)</th>
 <th>Account model</th>
+<th>Fees / reserves</th>
 <th>Key / custody model</th>
-<th>Pricing</th>
+<th>Pricing (public page)</th>
 </tr>
 </thead>
 <tbody>
@@ -75,6 +80,7 @@ Cavos, Dynamic T1, Para, and Crossmint are the rows that actually submit Stellar
 <td><a href="/embedded-stellar-wallet">Cavos</a></td>
 <td>Create, sign, and submit on testnet and mainnet. Payments with <code>wallet.execute</code>, Soroban calls with <code>wallet.invokeContract</code>.</td>
 <td>Classic G account. No Soroban contract required.</td>
+<td>Relayer sponsors base reserves and fee bumps (Gas Sponsorship in Any Token).</td>
 <td>Hardware-isolated, non-custodial. Ed25519 key derived on the device. Keys never leave the device in plaintext and never sign on Cavos servers.</td>
 <td>Free up to 1,000 wallets. Essential $59/mo. Complete $139/mo.</td>
 </tr>
@@ -82,6 +88,7 @@ Cavos, Dynamic T1, Para, and Crossmint are the rows that actually submit Stellar
 <td><a href="https://www.dynamic.xyz/docs/embedded-wallets/chains/overview">Dynamic</a></td>
 <td>Tier 1 chain: send and sign on JavaScript, React, React Native, Swift, Kotlin, and Flutter.</td>
 <td>See Dynamic docs.</td>
+<td>Chain support table lists gasless as not available for Stellar (October 2026). You fund fees and reserves.</td>
 <td>TSS-MPC embedded wallets.</td>
 <td><a href="https://www.dynamic.xyz/pricing">dynamic.xyz/pricing</a></td>
 </tr>
@@ -89,6 +96,7 @@ Cavos, Dynamic T1, Para, and Crossmint are the rows that actually submit Stellar
 <td><a href="https://docs.crossmint.com/wallets/overview">Crossmint</a></td>
 <td>Stellar testnet and mainnet in the wallets API, with a custom Stellar transactions guide.</td>
 <td>Soroban smart contract wallet.</td>
+<td>Gas sponsorship listed as part of the wallets API.</td>
 <td>Smart contract wallet with operational signers and recovery methods on chain.</td>
 <td><a href="https://www.crossmint.com/pricing">crossmint.com/pricing</a></td>
 </tr>
@@ -96,6 +104,7 @@ Cavos, Dynamic T1, Para, and Crossmint are the rows that actually submit Stellar
 <td><a href="https://docs.getpara.com/v3/flutter/guides/stellar">Para</a></td>
 <td>Create Stellar wallets and sign Stellar transactions (web, React Native, Flutter).</td>
 <td>See Para docs.</td>
+<td>See Para docs. Stellar fee sponsorship usually means fee-bump transactions you build.</td>
 <td>MPC split between the user's device and Para infrastructure.</td>
 <td><a href="https://www.getpara.com/pricing">getpara.com/pricing</a></td>
 </tr>
@@ -104,12 +113,14 @@ Cavos, Dynamic T1, Para, and Crossmint are the rows that actually submit Stellar
 <td>Stellar-only wallet infrastructure, listed in the Stellar developer docs. Email, social, and passkey sign-in, plus external Stellar wallets.</td>
 <td>See Blux docs.</td>
 <td>See Blux docs.</td>
+<td>See Blux docs.</td>
 <td>See Blux.</td>
 </tr>
 <tr>
 <td><a href="https://docs.privy.io/wallets/overview/chains">Privy</a></td>
 <td>Tier 2: create, export, and sign transactions. Privy does not broadcast Stellar transactions.</td>
-<td>You build and submit.</td>
+<td>You build and submit (classic or Soroban is your transaction).</td>
+<td>You broadcast, including any fee-bump. Not managed send on this chain.</td>
 <td>TEE key infrastructure.</td>
 <td><a href="https://www.privy.io/pricing">privy.io/pricing</a></td>
 </tr>
@@ -117,6 +128,7 @@ Cavos, Dynamic T1, Para, and Crossmint are the rows that actually submit Stellar
 <td><a href="https://docs.turnkey.com/concepts/wallets">Turnkey</a></td>
 <td>Stellar address format on Ed25519. Signing primitives; you build the transaction.</td>
 <td>You build and submit.</td>
+<td>You build fee bumps and reserve funding. Signing only.</td>
 <td>Keys decrypt only in AWS Nitro Enclaves. Custody depends on who holds the authorizing credentials.</td>
 <td><a href="https://www.turnkey.com/pricing">turnkey.com/pricing</a></td>
 </tr>
@@ -124,6 +136,63 @@ Cavos, Dynamic T1, Para, and Crossmint are the rows that actually submit Stellar
 </table>
 
 Cells that say "see docs" are left that way on purpose: the vendor page did not state the detail clearly enough to summarize. Vendors change chain tiers often, so recheck before you commit.
+
+## Classic G vs Soroban in 2026
+
+A **classic G account** is Stellar's original account type: a public key starting with G, funded with a minimum XLM reserve. Exchanges, anchors, and most payment tools recognize it today. Cavos provisions this model and still calls Soroban contracts with `wallet.invokeContract` when the app needs them. You do not need a Soroban wallet to invoke a Soroban contract.
+
+A **Soroban smart contract wallet** lives on Stellar's smart-contract runtime. Crossmint documents this path: programmable signers and recovery on chain. Pick it when that on-chain logic is the product. Pick classic G when interchange with every Stellar exchange and anchor matters more than programmable signers.
+
+Privy and Turnkey leave the account type to you: they sign, and you submit whichever transaction you built.
+
+## Who each Stellar provider fits (2026)
+
+<table>
+<thead>
+<tr>
+<th>Provider</th>
+<th>Fits when</th>
+<th>Skip when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cavos</td>
+<td>Consumer Stellar apps that want a classic G account, sponsored reserves and fees, and one SDK that also covers Solana and Starknet.</td>
+<td>The product is EVM-first, or users must connect a Stellar wallet they already hold.</td>
+</tr>
+<tr>
+<td>Dynamic</td>
+<td>Stellar sits next to EVM, Solana, Bitcoin, and the rest of that named Tier 1 list, and you also need external wallet connection.</td>
+<td>You need the provider to sponsor Stellar fees and reserves. Dynamic lists gasless as not available on this chain.</td>
+</tr>
+<tr>
+<td>Crossmint</td>
+<td>You want a Soroban smart wallet with on-chain signer and recovery logic, often next to Crossmint payments or onramp.</td>
+<td>You need a classic G account that every exchange and anchor already treats as a payment destination.</td>
+</tr>
+<tr>
+<td>Para</td>
+<td>You are already on Para for EVM or Solana and want Stellar under the same MPC wallet.</td>
+<td>You need a Stellar-only stack or sponsored reserves documented in the Stellar row.</td>
+</tr>
+<tr>
+<td>Blux</td>
+<td>Stellar-only dApps that want one login covering new users and existing Stellar wallets.</td>
+<td>You also need Solana or Starknet in the same SDK.</td>
+</tr>
+<tr>
+<td>Privy</td>
+<td>You will build and broadcast Stellar transactions on top of a TEE signing layer (tier 2, not managed send).</td>
+<td>You need the provider to submit Stellar payments or sponsor reserves.</td>
+</tr>
+<tr>
+<td>Turnkey</td>
+<td>You want Ed25519 address derivation and enclave signing primitives, and you will assemble the Stellar transaction.</td>
+<td>You need a finished Stellar embedded wallet SDK rather than a signing API.</td>
+</tr>
+</tbody>
+</table>
 
 ## When each one fits
 
@@ -136,6 +205,8 @@ Cells that say "see docs" are left that way on purpose: the vendor page did not 
 
 ## Where Cavos stands on Stellar
 
-Cavos is a non-custodial embedded wallet for Starknet, Solana and Stellar. On Stellar it creates a classic G account whose Ed25519 spend key is derived on the device. A new device restores the key with another signed-in device, a passkey, or opt-in hardware-isolated enclave recovery. The Cavos relayer sponsors reserves and fee bumps, which is part of Gas Sponsorship in Any Token (for example, letting a user pay in USDC instead of XLM). Read the [Stellar wallet page](/embedded-stellar-wallet), the [custody model](/custody), [pricing](/pricing), and the [quickstart](https://docs.cavos.xyz/docs/quickstart).
+Cavos is a non-custodial embedded wallet for Starknet, Solana and Stellar. On Stellar it creates a classic G account whose Ed25519 spend key is derived on the device. A new device restores the key with another signed-in device, a passkey, or opt-in hardware-isolated enclave recovery. The Cavos relayer sponsors reserves and fee bumps, which is part of Gas Sponsorship in Any Token (for example, letting a user pay in USDC instead of XLM). Read the [stellar embedded wallet](/embedded-stellar-wallet) product page, the [custody model](/custody), [pricing](/pricing), and the [quickstart](https://docs.cavos.xyz/docs/quickstart).
+
+Related in 2026: the [Stellar embedded wallet tutorial](/blog/stellar-embedded-wallet-tutorial) for a hands-on build, the [embedded wallet](/embedded-wallet) pillar for the category, and [pricing](/pricing) for the Free (1,000 wallets), Essential ($59), and Complete ($139) plans.
 
 Building on more than one chain? See the [best embedded wallets for Solana](/blog/best-embedded-wallets-solana) and [for Starknet](/blog/best-embedded-wallets-starknet). One-to-one comparisons with Privy, Dynamic, Turnkey, Web3Auth, Magic, and Alchemy are on the [compare](/compare) pages.

@@ -388,11 +388,11 @@ Hello
     assert.equal(cost.lastModified.toISOString().startsWith('2026-11-04'), true)
     assert.equal(api.lastModified.toISOString().startsWith('2026-11-06'), true)
     assert.equal(
-      stellarBest.lastModified.toISOString().startsWith('2026-11-05'),
+      stellarBest.lastModified.toISOString().startsWith('2026-11-06'),
       true,
     )
     assert.equal(
-      solanaBest.lastModified.toISOString().startsWith('2026-11-05'),
+      solanaBest.lastModified.toISOString().startsWith('2026-11-06'),
       true,
     )
     assert.equal(
