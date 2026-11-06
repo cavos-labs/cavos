@@ -172,6 +172,7 @@ import {
   PARA_ALTERNATIVES_TITLE,
   PARA_HOW_TO_CHOOSE,
   PARA_WHY_LOOK,
+  paraAlternativesGuide,
   paraAlternativesItemList,
 } from './para-alternatives'
 import {
@@ -1268,7 +1269,7 @@ describe('marketing SEO', () => {
         assert.match(guide.title, /Free 1,000 Wallets/)
         assert.match(guide.h1, new RegExp(`5 ${guide.incumbent} alternatives`))
         assert.match(guide.description, /Starknet, Solana, Stellar/)
-        if (guide.incumbent === 'Dynamic') {
+        if (guide.incumbent === 'Dynamic' || guide.incumbent === 'Magic') {
           assert.equal(guide.modified, '2026-11-06')
         } else {
           assert.equal(guide.modified, '2026-10-31')
@@ -1402,6 +1403,17 @@ describe('marketing SEO', () => {
         assert.match(dataSource, /href: '\/turnkey-alternatives'/)
         assert.match(dataSource, /hardware-isolated/)
       }
+      if (guide.incumbent === 'Magic') {
+        assert.match(
+          dataSource,
+          /Custody, pricing, and chains across Magic alternatives/,
+        )
+        assert.match(dataSource, /href: '\/compare\/magic'/)
+        assert.match(dataSource, /href: '\/web3auth-alternatives'/)
+        assert.match(dataSource, /href: '\/dfns-alternatives'/)
+        assert.match(dataSource, /href: '\/dynamic-alternatives'/)
+        assert.match(dataSource, /hardware-isolated/)
+      }
     }
   })
 
@@ -1467,8 +1479,23 @@ describe('marketing SEO', () => {
       ],
     )
     assert.equal(PARA_ALTERNATIVES_PUBLISHED, '2026-11-02')
-    assert.equal(PARA_ALTERNATIVES_MODIFIED, '2026-11-02')
+    assert.equal(PARA_ALTERNATIVES_MODIFIED, '2026-11-06')
     assert.equal(PARA_ALTERNATIVES_CRUMB, 'Para alternatives')
+    assert.match(
+      paraAlternativesGuide.decisionHeading ?? '',
+      /Custody, pricing, and architecture across Para alternatives/,
+    )
+    assert.equal(paraAlternativesGuide.decisionRows?.length, 4)
+    assert.ok(
+      paraAlternativesGuide.decisionRows?.some(
+        (row) => row.point === 'Who can produce a signature',
+      ),
+    )
+    assert.ok(
+      paraAlternativesGuide.decisionRows?.some(
+        (row) => row.point === 'Pricing unit and published free tier',
+      ),
+    )
 
     const meta = marketingPageMetadata({
       title: PARA_ALTERNATIVES_TITLE,
@@ -1539,6 +1566,11 @@ describe('marketing SEO', () => {
     )
     assert.match(dataSource, /href: '\/privy-alternatives'/)
     assert.match(dataSource, /href: '\/compare'/)
+    assert.match(dataSource, /href: '\/embedded-wallet'/)
+    assert.match(dataSource, /href: '\/pricing'/)
+    assert.match(dataSource, /href: '\/web3auth-alternatives'/)
+    assert.match(dataSource, /href: '\/dfns-alternatives'/)
+    assert.match(dataSource, /Custody, pricing, and architecture across Para alternatives/)
     assert.match(dataSource, /getpara.com/)
     assert.match(dataSource, /formerly Capsule/)
     assert.match(dataSource, /docs\.getpara.com\/v3\/concepts\/key-management/)
@@ -5093,10 +5125,7 @@ describe('best embedded wallets per chain', () => {
       assert.doesNotMatch(source, /—/)
       assert.doesNotMatch(source, /trustless|impossible/i)
       const fields = parseBlogFrontmatter(source)
-      assert.equal(
-        fields.updated,
-        slug === 'best-embedded-wallets-starknet' ? '2026-11-05' : '2026-11-06',
-      )
+      assert.equal(fields.updated, '2026-11-06')
       assert.match(fields.title, /Best Embedded Wallets for/)
       assert.match(fields.title, /Free/)
       if (slug === 'best-embedded-wallets-solana') {
@@ -5138,6 +5167,11 @@ describe('best embedded wallets per chain', () => {
     assert.match(starknet, /\]\(\/blog\/best-embedded-wallets-stellar\)/)
     assert.match(starknet, /\]\(\/blog\/best-embedded-wallets-solana\)/)
     assert.match(starknet, /\[starknet embedded wallet\]\(\/embedded-starknet-wallet\)/)
+    assert.match(starknet, /\[embedded wallet\]\(\/embedded-wallet\)/)
+    assert.match(starknet, /\]\(\/pricing\)/)
+    assert.match(starknet, /Who each Starknet provider fits \(2026\)/)
+    assert.match(starknet, /Account contract versus sign-only in 2026/)
+    assert.match(starknet, /Who should pick each Starknet embedded wallet provider\?/)
     assert.match(starknet, /What is the best wallet for Starknet\?/)
     assert.match(starknet, /app developer/)
     assert.match(solana, /\[Para alternatives\]\(\/para-alternatives\)/)
