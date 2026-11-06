@@ -112,9 +112,10 @@ export const COMPETITORS: Competitor[] = [
     {
         slug: 'dynamic',
         name: 'Dynamic',
-        pageTitle: 'Cavos vs Dynamic (2026): Pricing, Chains, Custody',
+        pageTitle: 'Dynamic vs Cavos (2026): Pricing, Chains, Custody',
+        pageH1: 'Dynamic vs Cavos: comparison, pricing, and custody',
         pageDescription:
-            'Cavos vs Dynamic on pricing, chains, and custody. Free up to 1,000 wallets. Device-native accounts vs wallet connection across many wallets.',
+            'Dynamic vs Cavos on pricing, chains, and custody in 2026. Free up to 1,000 wallets. Device-native accounts vs wallet connection across many wallets.',
         summary:
             'Dynamic provides wallet connection, embedded wallets, and authentication tooling with a strong emphasis on multi-wallet login experiences and developer-facing configuration.',
         positioning:
@@ -139,6 +140,7 @@ export const COMPETITORS: Competitor[] = [
             { feature: 'Pricing', cavos: CAVOS_PRICING, them: DYNAMIC_PRICING },
         ],
         faq: [
+            { question: 'What is Dynamic vs Cavos?', answer: 'Dynamic vs Cavos is a one-to-one comparison of two embedded wallet products. Dynamic is strongest as a unified login and wallet-connection layer covering many wallets and chains, plus embedded wallets. Cavos provisions a device-native, self-custodial account on Starknet, Solana, and Stellar and does not connect wallets users already hold. They are not drop-in replacements. Privy vs Dynamic is a different page.' },
             { question: 'Does Cavos support connecting existing wallets like MetaMask?', answer: 'No. Cavos provisions and controls an embedded, device-native account for each user. If connecting existing external wallets is a requirement, a connection-focused provider such as Dynamic is the better fit, and the two models can coexist in one product.' },
             { question: 'Which is better for non-crypto users?', answer: 'Cavos is designed so a user never selects a wallet: they sign in with an identity you already own and a self-custodial account is resolved (the first device to claim names the address). Dynamic can also hide this, but its surface area is broader because it also serves crypto-native connection flows.' },
             { question: 'How does Cavos pricing compare to Dynamic?', answer: 'Cavos is free up to 1,000 wallets, then Essential at $59/mo and Complete at $139/mo. Dynamic lists $249/mo for up to 5,000 MAUs, then $0.05 per extra MAU, with a free sandbox.' },
@@ -225,9 +227,10 @@ export const COMPETITORS: Competitor[] = [
     {
         slug: 'magic',
         name: 'Magic',
-        pageTitle: 'Cavos vs Magic (2026): Pricing, Chains, Custody',
+        pageTitle: 'Magic vs Cavos (2026): Pricing, Chains, Custody',
+        pageH1: 'Magic vs Cavos: comparison, pricing, and custody',
         pageDescription:
-            'Cavos vs Magic on pricing, chains, and custody. Free up to 1,000 wallets. Starknet, Solana, and Stellar vs Magic’s EVM-focused wallets.',
+            'Magic vs Cavos on pricing, chains, and custody in 2026. Free up to 1,000 wallets. Starknet, Solana, and Stellar vs Magic’s EVM-focused wallets.',
         summary:
             'Magic offers embedded wallets and passwordless authentication, historically known for email magic-link login and a delegated key management model backed by hardware security modules.',
         positioning:
@@ -252,6 +255,7 @@ export const COMPETITORS: Competitor[] = [
             { feature: 'Pricing', cavos: CAVOS_PRICING, them: MAGIC_PRICING },
         ],
         faq: [
+            { question: 'What is Magic vs Cavos?', answer: 'Magic vs Cavos is a one-to-one comparison of two embedded wallet products. Magic is strongest for simple email-first onboarding on EVM chains, with delegated key management backed by provider-operated HSMs. Cavos is device-native on Starknet, Solana, and Stellar: a non-exportable device key signs, and Cavos holds no key that can move funds. They are not drop-in replacements.' },
             { question: 'Is email-link login enough for self-custody?', answer: 'It depends on what backs the key. If access to the email account grants the provider the ability to sign, the security of the wallet reduces to the security of that email account. Cavos separates the two: identity selects which account you are, but a device factor is required to sign.' },
             { question: 'Does Cavos support email login?', answer: 'Yes. Cavos supports hosted login including email, or you can bring your own auth and pass an identity directly. In both cases signing still requires an enrolled device.' },
             { question: 'How does Cavos pricing compare to Magic?', answer: 'Cavos is free up to 1,000 wallets, then Essential at $59/mo and Complete at $139/mo. Magic’s public Developer plan includes 1,000 monthly active wallets and 50K signatures; $99/mo includes 2,500 MAWs.' },

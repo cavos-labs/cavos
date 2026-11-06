@@ -3388,7 +3388,7 @@ describe('marketing SEO', () => {
     )
     assert.match(compareSource, /PRIVY_VS_DYNAMIC_PATH/)
     assert.match(compareSource, /slug === 'dynamic'/)
-    assert.match(compareSource, /This page is Cavos vs Dynamic, not Privy vs Dynamic/)
+    assert.match(compareSource, /This page is Dynamic vs Cavos, not Privy vs Dynamic/)
     assert.match(compareSource, /not this Cavos comparison/)
 
     const privyVsTurnkey = fs.readFileSync(
@@ -4586,8 +4586,32 @@ describe('marketing SEO', () => {
     )
     const web3auth = getCompetitor('web3auth')
     const dynamicCompetitor = getCompetitor('dynamic')
+    const magicCompetitor = getCompetitor('magic')
     assert.ok(web3auth)
     assert.ok(dynamicCompetitor)
+    assert.ok(magicCompetitor)
+    assert.match(dynamicCompetitor.pageTitle ?? '', /Dynamic vs Cavos \(2026\): Pricing, Chains, Custody/)
+    assert.match(dynamicCompetitor.pageH1 ?? '', /Dynamic vs Cavos: comparison, pricing, and custody/)
+    assert.match(dynamicCompetitor.pageDescription ?? '', /Dynamic vs Cavos/)
+    assert.match(dynamicCompetitor.pageDescription ?? '', /Device-native accounts vs wallet connection/)
+    assert.ok(
+      (dynamicCompetitor.pageDescription ?? '').length >= 140 &&
+        (dynamicCompetitor.pageDescription ?? '').length <= 155,
+      dynamicCompetitor.pageDescription,
+    )
+    assert.ok(
+      dynamicCompetitor.faq.some((item) => item.question === 'What is Dynamic vs Cavos?'),
+    )
+    assert.match(magicCompetitor.pageTitle ?? '', /Magic vs Cavos \(2026\): Pricing, Chains, Custody/)
+    assert.match(magicCompetitor.pageH1 ?? '', /Magic vs Cavos: comparison, pricing, and custody/)
+    assert.match(magicCompetitor.pageDescription ?? '', /Magic vs Cavos/)
+    assert.match(magicCompetitor.pageDescription ?? '', /EVM-focused/)
+    assert.ok(
+      (magicCompetitor.pageDescription ?? '').length >= 140 &&
+        (magicCompetitor.pageDescription ?? '').length <= 155,
+      magicCompetitor.pageDescription,
+    )
+    assert.ok(magicCompetitor.faq.some((item) => item.question === 'What is Magic vs Cavos?'))
     assert.ok(
       web3auth.faq.some(
         (item) => item.question === 'How do Web3Auth and Dynamic embedded wallets compare?',
@@ -5069,9 +5093,18 @@ describe('best embedded wallets per chain', () => {
       assert.doesNotMatch(source, /—/)
       assert.doesNotMatch(source, /trustless|impossible/i)
       const fields = parseBlogFrontmatter(source)
-      assert.equal(fields.updated, '2026-11-05')
+      assert.equal(
+        fields.updated,
+        slug === 'best-embedded-wallets-starknet' ? '2026-11-05' : '2026-11-06',
+      )
       assert.match(fields.title, /Best Embedded Wallets for/)
       assert.match(fields.title, /Free/)
+      if (slug === 'best-embedded-wallets-solana') {
+        assert.match(fields.title, /2026/)
+      }
+      if (slug === 'best-embedded-wallets-stellar') {
+        assert.equal(fields.title, 'Best Embedded Wallets for Stellar: Free')
+      }
       assert.ok(`${fields.title} | Cavos`.length <= 60, fields.title)
       assert.ok(fields.excerpt.length >= 140 && fields.excerpt.length <= 155)
     })
@@ -5093,6 +5126,12 @@ describe('best embedded wallets per chain', () => {
     assert.match(stellar, /\]\(\/blog\/best-embedded-wallets-solana\)/)
     assert.match(stellar, /\]\(\/blog\/best-embedded-wallets-starknet\)/)
     assert.match(stellar, /\[stellar embedded wallet\]\(\/embedded-stellar-wallet\)/)
+    assert.match(stellar, /\]\(\/blog\/stellar-embedded-wallet-tutorial\)/)
+    assert.match(stellar, /\[embedded wallet\]\(\/embedded-wallet\)/)
+    assert.match(stellar, /Fees \/ reserves/)
+    assert.match(stellar, /Who each Stellar provider fits \(2026\)/)
+    assert.match(stellar, /Classic G vs Soroban in 2026/)
+    assert.match(stellar, /Who should pick each Stellar embedded wallet provider\?/)
     assert.match(solana, /\]\(\/blog\/best-embedded-wallets-stellar\)/)
     assert.match(solana, /\]\(\/blog\/best-embedded-wallets-starknet\)/)
     assert.match(solana, /\[solana embedded wallet\]\(\/embedded-solana-wallet\)/)
