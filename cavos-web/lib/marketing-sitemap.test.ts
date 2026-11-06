@@ -351,6 +351,15 @@ Hello
     assert.equal(providers.lastModified.toISOString().startsWith('2026-11-06'), true)
     assert.equal(privy.lastModified.toISOString().startsWith('2026-11-06'), true)
 
+    const stellarTutorial = publishedBlogPosts().find(
+      (item) => item.slug === 'stellar-embedded-wallet-tutorial',
+    )
+    assert.ok(stellarTutorial)
+    assert.equal(
+      stellarTutorial.lastModified.toISOString().startsWith('2026-11-06'),
+      true,
+    )
+
     const reactSdk = publishedBlogPosts().find(
       (item) => item.slug === 'embedded-wallet-react-sdk',
     )

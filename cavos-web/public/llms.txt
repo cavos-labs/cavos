@@ -40,7 +40,7 @@ Cavos (`@cavos/kit`) is a hardware-isolated, non-custodial embedded wallet SDK f
 - [Best embedded wallets for Stellar (2026)](https://cavos.xyz/blog/best-embedded-wallets-stellar)
 - [Best embedded wallets for Solana (2026)](https://cavos.xyz/blog/best-embedded-wallets-solana)
 - [Best embedded wallets for Starknet (2026)](https://cavos.xyz/blog/best-embedded-wallets-starknet)
-- [Best embedded wallet providers (2026)](https://cavos.xyz/blog/embedded-wallet-providers)
+- [Best embedded wallet providers (2026)](https://cavos.xyz/blog/embedded-wallet-providers): custody, pricing units, SDK vs infrastructure; Free up to 1,000 wallets
 - [Privy alternatives](https://cavos.xyz/privy-alternatives)
 - [Turnkey alternatives](https://cavos.xyz/turnkey-alternatives): finished SDK vs enclave infrastructure; custody and published pricing
 - [Dynamic alternatives](https://cavos.xyz/dynamic-alternatives): provision vs connect; free to 1,000 wallets on Starknet, Solana, Stellar
@@ -72,7 +72,7 @@ Cavos (`@cavos/kit`) is a hardware-isolated, non-custodial embedded wallet SDK f
 - [Embedded wallet vs browser extension](https://cavos.xyz/blog/embedded-wallet-vs-browser-extension): where users should sign
 - [How to send gasless Starknet transactions](https://cavos.xyz/blog/gasless-starknet-transactions)
 - [Embedded wallet payments](https://cavos.xyz/blog/embedded-wallet-payments): USDC transfers on Stellar, Solana, and Starknet
-- [How to set up a Stellar wallet in your app](https://cavos.xyz/blog/stellar-embedded-wallet-tutorial)
+- [How to set up a Stellar wallet in your app (2026)](https://cavos.xyz/blog/stellar-embedded-wallet-tutorial): @cavos/kit, sponsored G… payment, no Freighter
 - [The Cavos enclave is open source (Kit 0.5.0)](https://cavos.xyz/blog/cavos-kit-0-5-0)
 - [Sign in with Telegram (Kit 0.5.2)](https://cavos.xyz/blog/cavos-kit-0-5-2)
 
