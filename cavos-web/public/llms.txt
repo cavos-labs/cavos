@@ -40,22 +40,22 @@ Cavos (`@cavos/kit`) is a hardware-isolated, non-custodial embedded wallet SDK f
 - [Best embedded wallets for Stellar (2026)](https://cavos.xyz/blog/best-embedded-wallets-stellar)
 - [Best embedded wallets for Solana (2026)](https://cavos.xyz/blog/best-embedded-wallets-solana)
 - [Best embedded wallets for Starknet (2026)](https://cavos.xyz/blog/best-embedded-wallets-starknet)
-- [Best embedded wallet providers (2026)](https://cavos.xyz/blog/embedded-wallet-providers)
+- [Best embedded wallet providers (2026)](https://cavos.xyz/blog/embedded-wallet-providers): custody, pricing units, SDK vs infrastructure; Free up to 1,000 wallets
 - [Privy alternatives](https://cavos.xyz/privy-alternatives)
-- [Turnkey alternatives](https://cavos.xyz/turnkey-alternatives)
-- [Dynamic alternatives](https://cavos.xyz/dynamic-alternatives)
-- [Magic alternatives](https://cavos.xyz/magic-alternatives)
-- [Para alternatives](https://cavos.xyz/para-alternatives)
+- [Turnkey alternatives](https://cavos.xyz/turnkey-alternatives): finished SDK vs enclave infrastructure; custody and published pricing
+- [Dynamic alternatives](https://cavos.xyz/dynamic-alternatives): provision vs connect; free to 1,000 wallets on Starknet, Solana, Stellar
+- [Magic alternatives](https://cavos.xyz/magic-alternatives): device keys vs email HSM; Magic vs Cavos; free to 1,000 wallets
+- [Para alternatives](https://cavos.xyz/para-alternatives): getpara.com, not ParaSwap; custody and published pricing; free to 1,000 wallets
 - [Web3Auth alternatives](https://cavos.xyz/web3auth-alternatives)
 - [Dfns alternatives](https://cavos.xyz/dfns-alternatives)
 - [Cavos vs Privy](https://cavos.xyz/compare/privy)
-- [Cavos vs Dynamic](https://cavos.xyz/compare/dynamic)
+- [Dynamic vs Cavos](https://cavos.xyz/compare/dynamic)
 - [Cavos vs Turnkey](https://cavos.xyz/compare/turnkey)
 - [Cavos vs Web3Auth](https://cavos.xyz/compare/web3auth)
-- [Cavos vs Magic](https://cavos.xyz/compare/magic)
+- [Magic vs Cavos](https://cavos.xyz/compare/magic)
 - [Cavos vs Alchemy](https://cavos.xyz/compare/alchemy)
 - [Privy vs Turnkey vs Dfns](https://cavos.xyz/blog/privy-vs-turnkey): SDK vs infrastructure; who can sign; finished auth vs enclave signing vs MPC
-- [Privy vs Dynamic](https://cavos.xyz/blog/privy-vs-dynamic): provision vs connect; TEE user wallets vs TSS-MPC
+- [Privy vs Dynamic](https://cavos.xyz/blog/privy-vs-dynamic): provision vs connect; TEE vs TSS-MPC; non-custodial option free to 1,000 wallets
 - [Alchemy vs Privy](https://cavos.xyz/blog/alchemy-vs-privy): Wallet APIs vs signer; Account Kit deprecated
 
 ## Guides
@@ -72,7 +72,7 @@ Cavos (`@cavos/kit`) is a hardware-isolated, non-custodial embedded wallet SDK f
 - [Embedded wallet vs browser extension](https://cavos.xyz/blog/embedded-wallet-vs-browser-extension): where users should sign
 - [How to send gasless Starknet transactions](https://cavos.xyz/blog/gasless-starknet-transactions)
 - [Embedded wallet payments](https://cavos.xyz/blog/embedded-wallet-payments): USDC transfers on Stellar, Solana, and Starknet
-- [How to set up a Stellar wallet in your app](https://cavos.xyz/blog/stellar-embedded-wallet-tutorial)
+- [How to set up a Stellar wallet in your app (2026)](https://cavos.xyz/blog/stellar-embedded-wallet-tutorial): @cavos/kit, sponsored G… payment, no Freighter
 - [The Cavos enclave is open source (Kit 0.5.0)](https://cavos.xyz/blog/cavos-kit-0-5-0)
 - [Sign in with Telegram (Kit 0.5.2)](https://cavos.xyz/blog/cavos-kit-0-5-2)
 

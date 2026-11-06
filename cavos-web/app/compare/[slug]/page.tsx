@@ -95,6 +95,18 @@ export default async function ComparisonPage({
                                 <Link href={PRIVY_VS_DYNAMIC_PATH} className={linkClass}>
                                     Privy vs Dynamic
                                 </Link>
+                                . Cavos fees are on the{' '}
+                                <Link href="/pricing" className={linkClass}>
+                                    pricing
+                                </Link>
+                                {' '}page. For a social-login MPC wallet layer, see{' '}
+                                <Link href="/web3auth-alternatives" className={linkClass}>
+                                    Web3Auth alternatives
+                                </Link>
+                                . For MPC/TSS infrastructure rather than a finished SDK, see{' '}
+                                <Link href="/dfns-alternatives" className={linkClass}>
+                                    Dfns alternatives
+                                </Link>
                                 .{' '}
                             </>
                         ) : null}
@@ -122,7 +134,7 @@ export default async function ComparisonPage({
                         ) : null}
                         {competitor.slug === 'dynamic' ? (
                             <>
-                                This page is Cavos vs Dynamic, not Privy vs Dynamic.
+                                This page is Dynamic vs Cavos, not Privy vs Dynamic.
                                 Privy vs Dynamic is provision versus connect between two
                                 finished SDKs; see{' '}
                                 <Link href={PRIVY_VS_DYNAMIC_PATH} className={linkClass}>

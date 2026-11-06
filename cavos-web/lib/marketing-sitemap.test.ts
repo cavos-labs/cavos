@@ -351,6 +351,15 @@ Hello
     assert.equal(providers.lastModified.toISOString().startsWith('2026-11-06'), true)
     assert.equal(privy.lastModified.toISOString().startsWith('2026-11-06'), true)
 
+    const stellarTutorial = publishedBlogPosts().find(
+      (item) => item.slug === 'stellar-embedded-wallet-tutorial',
+    )
+    assert.ok(stellarTutorial)
+    assert.equal(
+      stellarTutorial.lastModified.toISOString().startsWith('2026-11-06'),
+      true,
+    )
+
     const reactSdk = publishedBlogPosts().find(
       (item) => item.slug === 'embedded-wallet-react-sdk',
     )
@@ -388,15 +397,15 @@ Hello
     assert.equal(cost.lastModified.toISOString().startsWith('2026-11-04'), true)
     assert.equal(api.lastModified.toISOString().startsWith('2026-11-06'), true)
     assert.equal(
-      stellarBest.lastModified.toISOString().startsWith('2026-11-05'),
+      stellarBest.lastModified.toISOString().startsWith('2026-11-06'),
       true,
     )
     assert.equal(
-      solanaBest.lastModified.toISOString().startsWith('2026-11-05'),
+      solanaBest.lastModified.toISOString().startsWith('2026-11-06'),
       true,
     )
     assert.equal(
-      starknetBest.lastModified.toISOString().startsWith('2026-11-05'),
+      starknetBest.lastModified.toISOString().startsWith('2026-11-06'),
       true,
     )
 
@@ -409,7 +418,7 @@ Hello
     assert.ok(privyVsDynamic)
     assert.ok(walletAsAService)
     assert.equal(
-      privyVsDynamic.lastModified.toISOString().startsWith('2026-11-03'),
+      privyVsDynamic.lastModified.toISOString().startsWith('2026-11-06'),
       true,
     )
     assert.equal(

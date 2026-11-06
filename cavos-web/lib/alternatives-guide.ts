@@ -44,6 +44,11 @@ export type AlternativeSection = {
 
 export type AlternativesInline = string | { href: string; label: string }
 
+export type AlternativeDecisionRow = {
+  point: string
+  detail: string
+}
+
 export type AlternativesGuide = {
   path: string
   title: string
@@ -59,6 +64,9 @@ export type AlternativesGuide = {
   whyLookHeading: string
   whyLookIntro: string
   whyLook: readonly { title: string; body: string }[]
+  decisionHeading?: string
+  decisionIntro?: AlternativesInline[]
+  decisionRows?: readonly AlternativeDecisionRow[]
   comparedHeading: string
   comparedIntro: string
   sections: AlternativeSection[]
