@@ -6,9 +6,11 @@ import { COMPARE_PAGES_MODIFIED, COMPETITORS } from './compare-data'
 import { DYNAMIC_ALTERNATIVES_MODIFIED } from './dynamic-alternatives'
 import { EMBEDDED_WALLET_MODIFIED } from './embedded-wallet-guide'
 import { MAGIC_ALTERNATIVES_MODIFIED } from './magic-alternatives'
+import { DFNS_ALTERNATIVES_MODIFIED } from './dfns-alternatives'
 import { PARA_ALTERNATIVES_MODIFIED } from './para-alternatives'
 import { PRIVY_ALTERNATIVES_MODIFIED } from './privy-alternatives'
 import { TURNKEY_ALTERNATIVES_MODIFIED } from './turnkey-alternatives'
+import { WEB3AUTH_ALTERNATIVES_MODIFIED } from './web3auth-alternatives'
 import {
   CHAIN_WALLET_SITEMAP_MODIFIED,
   MARKETING_HOME_URL,
@@ -76,6 +78,8 @@ describe('marketing sitemap', () => {
       '/dynamic-alternatives',
       '/magic-alternatives',
       '/para-alternatives',
+      '/web3auth-alternatives',
+      '/dfns-alternatives',
       '/custody',
       '/pricing',
       '/stats',
@@ -146,6 +150,8 @@ describe('marketing sitemap', () => {
       '/dynamic-alternatives',
       '/magic-alternatives',
       '/para-alternatives',
+      '/web3auth-alternatives',
+      '/dfns-alternatives',
       '/custody',
       '/pricing',
       '/stats',
@@ -233,6 +239,8 @@ describe('marketing sitemap', () => {
       ['/dynamic-alternatives', DYNAMIC_ALTERNATIVES_MODIFIED],
       ['/magic-alternatives', MAGIC_ALTERNATIVES_MODIFIED],
       ['/para-alternatives', PARA_ALTERNATIVES_MODIFIED],
+      ['/web3auth-alternatives', WEB3AUTH_ALTERNATIVES_MODIFIED],
+      ['/dfns-alternatives', DFNS_ALTERNATIVES_MODIFIED],
     ] as const
     for (const [routePath, modified] of expected) {
       const entry = entries.find(
@@ -340,8 +348,8 @@ Hello
     )
     assert.ok(providers)
     assert.ok(privy)
-    assert.equal(providers.lastModified.toISOString().startsWith('2026-11-05'), true)
-    assert.equal(privy.lastModified.toISOString().startsWith('2026-11-05'), true)
+    assert.equal(providers.lastModified.toISOString().startsWith('2026-11-06'), true)
+    assert.equal(privy.lastModified.toISOString().startsWith('2026-11-06'), true)
 
     const reactSdk = publishedBlogPosts().find(
       (item) => item.slug === 'embedded-wallet-react-sdk',
@@ -353,7 +361,7 @@ Hello
     assert.ok(alchemyVsPrivy)
     assert.equal(reactSdk.lastModified.toISOString().startsWith('2026-10-31'), true)
     assert.equal(
-      alchemyVsPrivy.lastModified.toISOString().startsWith('2026-11-04'),
+      alchemyVsPrivy.lastModified.toISOString().startsWith('2026-11-06'),
       true,
     )
 
@@ -378,7 +386,7 @@ Hello
     assert.ok(solanaBest)
     assert.ok(starknetBest)
     assert.equal(cost.lastModified.toISOString().startsWith('2026-11-04'), true)
-    assert.equal(api.lastModified.toISOString().startsWith('2026-11-05'), true)
+    assert.equal(api.lastModified.toISOString().startsWith('2026-11-06'), true)
     assert.equal(
       stellarBest.lastModified.toISOString().startsWith('2026-11-05'),
       true,
@@ -405,7 +413,7 @@ Hello
       true,
     )
     assert.equal(
-      walletAsAService.lastModified.toISOString().startsWith('2026-11-05'),
+      walletAsAService.lastModified.toISOString().startsWith('2026-11-06'),
       true,
     )
 
@@ -416,8 +424,9 @@ Hello
     ]) {
       const post = publishedBlogPosts().find((item) => item.slug === slug)
       assert.ok(post, slug)
+      const expected = slug === 'best-embedded-wallet' ? '2026-11-06' : '2026-11-05'
       assert.equal(
-        post.lastModified.toISOString().startsWith('2026-11-05'),
+        post.lastModified.toISOString().startsWith(expected),
         true,
         slug,
       )
@@ -425,8 +434,10 @@ Hello
   })
 
   it('keeps the indexable marketing URLs including the React integration guide', () => {
-    assert.equal(entries.length, 51)
+    assert.equal(entries.length, 53)
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/para-alternatives`))
+    assert.ok(urls.includes(`${MARKETING_ORIGIN}/web3auth-alternatives`))
+    assert.ok(urls.includes(`${MARKETING_ORIGIN}/dfns-alternatives`))
     assert.ok(
       urls.includes(`${MARKETING_ORIGIN}/blog/how-to-add-an-embedded-wallet`),
     )
