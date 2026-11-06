@@ -8,7 +8,7 @@ ogQuote: "Users never install Freighter, paste a seed, or leave your UI."
 slug: "stellar-embedded-wallet-tutorial"
 faq:
   - question: "How do I set up a Stellar wallet in my app in 2026?"
-    answer: 'Install @cavos/kit 0.4.2, create an App ID, wrap the tree in CavosProvider with chains: ["stellar"], sign the user in, then run the first sponsored execute. Connect returns a G… before Horizon has the account. Users never install Freighter. The Stellar embedded wallet page is the account model. Pricing lists the free 1,000 wallet creates. Best embedded wallets for Stellar is the provider shortlist.'
+    answer: 'Install @cavos/kit 0.5.2, create an App ID, wrap the tree in CavosProvider with chains: ["stellar"], sign the user in, then run the first sponsored execute. Connect returns a G… before Horizon has the account. Users never install Freighter. The Stellar embedded wallet page is the account model. Pricing lists the free 1,000 wallet creates. Best embedded wallets for Stellar is the provider shortlist.'
   - question: "How do I set up a Stellar wallet as a developer?"
     answer: 'Install @cavos/kit, create an App ID, wrap the tree in CavosProvider with chains: ["stellar"], and sign the user in with Google, Apple, or an enclave-verified email code. Connect returns a G… address before the account exists on-chain. The first execute creates the account (sponsored, 0 XLM cost to the user) and runs the payment. That is how to set up and create a Stellar wallet inside your app, not a Freighter connect flow.'
   - question: "How do I create a Stellar wallet for users without Freighter?"
@@ -27,7 +27,7 @@ faq:
 
 An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain Stellar account they can pay, receive, and sign with, no browser extension, no seed phrase, no trip to [Freighter](/blog/embedded-wallet-vs-browser-extension).
 
-This guide is how to **set up a Stellar wallet** and **create a Stellar wallet** for users inside your product: an embedded, in-app wallet for developers, including mobile. It uses `@cavos/kit` 0.4.2. It is the how-to companion to the [Stellar embedded wallet](/embedded-stellar-wallet) page. The chain page is the account model. This post is the install: App ID, Google / Apple / email login, the `G…` address before the account exists, the first sponsored `execute`, `balance`, `signMessage`, and React Native notes for iOS and Android. The provider shortlist for this chain is [best embedded wallets for Stellar](/blog/best-embedded-wallets-stellar). The cross-chain React walkthrough is [how to add an embedded wallet](/blog/how-to-add-an-embedded-wallet).
+This guide is how to **set up a Stellar wallet** and **create a Stellar wallet** for users inside your product: an embedded, in-app wallet for developers, including mobile. It uses `@cavos/kit` 0.5.2. It is the how-to companion to the [Stellar embedded wallet](/embedded-stellar-wallet) page. The chain page is the account model. This post is the install: App ID, Google / Apple / email login, the `G…` address before the account exists, the first sponsored `execute`, `balance`, `signMessage`, and React Native notes for iOS and Android. GitHub (since 0.5.0) and Telegram are optional web-only logins; Telegram needs 0.5.2. See [Sign in with Telegram (Kit 0.5.2)](/blog/cavos-kit-0-5-2). The provider shortlist for this chain is [best embedded wallets for Stellar](/blog/best-embedded-wallets-stellar). The cross-chain React walkthrough is [how to add an embedded wallet](/blog/how-to-add-an-embedded-wallet).
 
 Cavos, LLC is a software and SaaS company. The wallet is the main product: a hardware-isolated, non-custodial embedded wallet. Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds. The Stellar adapter provisions a **classic `G…` account**, not a Soroban contract account and not a Freighter connect flow.
 
@@ -146,6 +146,8 @@ await verifyOtp(email, code); // 9 characters, lowercase letters and digits
 ```
 
 The Cavos recovery enclave, running in AWS Nitro, generates that code, mails it, and verifies it. A code expires after 5 minutes and allows 3 attempts. Email sign-in is not available on React Native yet; use Google or Apple there.
+
+GitHub (since 0.5.0) and Telegram are optional hosted logins on web. Telegram needs 0.5.2. Neither works on React Native: the native build cannot verify the enclave attestation those flows need, the same reason email is unavailable there. Default modal providers stay Google, Apple, and email. The Telegram install is [Sign in with Telegram (Kit 0.5.2)](/blog/cavos-kit-0-5-2).
 
 When you connect, the kit looks up the address:
 
@@ -266,7 +268,7 @@ See [recovery](https://docs.cavos.xyz/docs/recovery) and [hardware-isolated reco
 
 ## 8. React Native notes
 
-Use `@cavos/kit/react-native` with Expo Development Builds, EAS, or bare React Native. **Expo Go is not supported**: custom native modules require a development build. Minimum platforms are iOS 16 and Android 9 (API 28). Email sign-in is not available on React Native yet; use Google or Apple.
+Use `@cavos/kit/react-native` with Expo Development Builds, EAS, or bare React Native. **Expo Go is not supported**: custom native modules require a development build. Minimum platforms are iOS 16 and Android 9 (API 28). Email, GitHub, and Telegram sign-in are not available on React Native; use Google or Apple. Telegram is web only.
 
 The native provider keeps the same configuration shape, with native-only `redirectUri`, `rpId`, and `minimumKeySecurity`. The chain field is singular (`chain`, not `chains`):
 
@@ -322,3 +324,4 @@ If you also configure Starknet on the same login, that adapter uses an **audited
 - [Stellar adapter](https://docs.cavos.xyz/docs/stellar), [quickstart](https://docs.cavos.xyz/docs/quickstart), and [wallet actions](https://docs.cavos.xyz/docs/wallet-actions).
 - [What is an embedded wallet?](/blog/what-is-an-embedded-wallet): the plain definition, how it works, and who holds the key.
 - [Pricing](/pricing) for the free 1,000 creates and paid recovery options.
+- [Sign in with Telegram (Kit 0.5.2)](/blog/cavos-kit-0-5-2): optional web-only Telegram login on `@cavos/kit` 0.5.2. GitHub login shipped in 0.5.0.
