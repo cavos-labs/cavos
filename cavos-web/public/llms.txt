@@ -50,8 +50,8 @@ Cavos (`@cavos/kit`) is a hardware-isolated, non-custodial embedded wallet SDK f
 - [Dfns alternatives](https://cavos.xyz/dfns-alternatives)
 - [Cavos vs Privy](https://cavos.xyz/compare/privy)
 - [Dynamic vs Cavos](https://cavos.xyz/compare/dynamic)
-- [Cavos vs Turnkey](https://cavos.xyz/compare/turnkey)
-- [Cavos vs Web3Auth](https://cavos.xyz/compare/web3auth)
+- [Turnkey vs Cavos](https://cavos.xyz/compare/turnkey)
+- [Web3Auth vs Cavos](https://cavos.xyz/compare/web3auth)
 - [Magic vs Cavos](https://cavos.xyz/compare/magic)
 - [Cavos vs Alchemy](https://cavos.xyz/compare/alchemy)
 - [Privy vs Turnkey vs Dfns](https://cavos.xyz/blog/privy-vs-turnkey): SDK vs infrastructure; who can sign; finished auth vs enclave signing vs MPC

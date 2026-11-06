@@ -151,10 +151,10 @@ export const COMPETITORS: Competitor[] = [
     {
         slug: 'turnkey',
         name: 'Turnkey',
-        pageTitle: 'Cavos vs Turnkey (2026): Embedded Wallet',
-        pageH1: 'Cavos vs Turnkey: embedded wallet compared',
+        pageTitle: 'Turnkey vs Cavos (2026): Embedded Wallet',
+        pageH1: 'Turnkey vs Cavos: embedded wallet compared',
         pageDescription:
-            'Cavos vs Turnkey as an embedded wallet. Free up to 1,000 wallets. Finished SDK vs enclaves. Turnkey alternatives and Turnkey vs Privy linked below.',
+            'Turnkey vs Cavos as an embedded wallet. Free up to 1,000 wallets. Finished SDK vs enclaves. Links to Turnkey alternatives and Turnkey vs Privy.',
         summary:
             'Turnkey provides secure key management infrastructure running in hardware-backed secure enclaves, exposed as a low-level API for building wallets and signing systems.',
         positioning:
@@ -183,16 +183,17 @@ export const COMPETITORS: Competitor[] = [
             { question: 'Does Cavos ever use enclaves?', answer: 'Only for opt-in hardware-isolated social recovery, which runs in an AWS Nitro Enclave with pinned attestation measurements and unwraps a MasterDEK onto a new device. It is off by default and is not a general server-side signing capability. On Starknet the account is the standard OpenZeppelin AccountUpgradeable; the enclave has no on-chain recovery role.' },
             { question: 'How does Cavos pricing compare to Turnkey?', answer: 'Cavos is free up to 1,000 wallets, then Essential at $59/mo and Complete at $139/mo. Turnkey’s public pay as you go tier includes 1,000 wallets and 25 free signatures per month, then $0.10 per signature; Pro is $99/mo.' },
             { question: 'Who are Turnkey embedded wallet competitors?', answer: 'If you want a finished embedded wallet instead of Turnkey’s signing infrastructure, the usual shortlist is Cavos, Privy, Dynamic, Web3Auth / MetaMask Embedded Wallets, and Magic. Turnkey vs Privy is build-versus-buy. The shortlist is Turnkey alternatives; the Privy write-up is Privy vs Turnkey.' },
-            { question: 'What is Turnkey vs Privy?', answer: 'Turnkey vs Privy is finished SDK versus enclave infrastructure. Privy is a finished auth and wallet product. Turnkey is a signing API you build a wallet on. The worked write-up is Privy vs Turnkey. This page is Cavos vs Turnkey.' },
+            { question: 'What is Turnkey vs Privy?', answer: 'Turnkey vs Privy is finished SDK versus enclave infrastructure. Privy is a finished auth and wallet product. Turnkey is a signing API you build a wallet on. The worked write-up is Privy vs Turnkey. This page is Turnkey vs Cavos.' },
         ],
     },
     {
         slug: 'web3auth',
         name: 'Web3Auth',
         tableName: 'Web3Auth / MetaMask Embedded Wallets',
-        pageTitle: 'Cavos vs Web3Auth (2026): Pricing, Chains, Custody',
+        pageTitle: 'Web3Auth vs Cavos (2026): Pricing, Chains, Custody',
+        pageH1: 'Web3Auth vs Cavos: comparison, pricing, and custody',
         pageDescription:
-            'Cavos vs Web3Auth on pricing, chains, and custody. Free up to 1,000 wallets. Device-native keys vs MPC shares that reconstruct a private key.',
+            'Web3Auth vs Cavos on pricing, chains, and custody. Free up to 1,000 wallets. Device-native keys vs MPC shares that reconstruct a private key.',
         summary:
             'Web3Auth provides social-login wallets using multi-party computation, splitting key shares across the user’s device, the provider’s network, and recovery factors.',
         positioning:

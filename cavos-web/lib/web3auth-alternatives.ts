@@ -14,7 +14,7 @@ import { getCompetitor } from './compare-data'
 
 /**
  * Replacement shortlist for Web3Auth / MetaMask Embedded Wallets. Facts reuse
- * lib/compare-data.ts (Cavos vs Web3Auth and sibling competitors). Public
+ * lib/compare-data.ts (Web3Auth vs Cavos and sibling competitors). Public
  * vendor pricing as of October 2026 from:
  * privy.io/pricing, dynamic.xyz/pricing, turnkey.com/pricing,
  * metamask.io/developer/embedded-wallets, magic.link/pricing.
@@ -46,7 +46,7 @@ export const WEB3AUTH_ALTERNATIVE_SECTIONS: AlternativeSection[] = [
   {
     name: 'Cavos',
     href: '/compare/web3auth',
-    linkLabel: 'Cavos vs Web3Auth',
+    linkLabel: 'Web3Auth vs Cavos',
     paragraphs: [
       'Cavos is a Web3Auth alternative, and a MetaMask Embedded Wallets alternative, when the security review requires a device-native key. The wallet is embedded in the application. Signing authority is a non-exportable device key: keys never leave the device in plaintext, signing happens on the device, and Cavos holds no key that can move user funds. Cavos does not reconstruct a master key with MPC and cannot decrypt the MasterDEK. Recovery is a synced passkey or opt-in hardware-isolated restore in an AWS Nitro Enclave.',
       CAVOS_CHAIN_ACCOUNT_PARAGRAPH,
@@ -128,7 +128,7 @@ export const WEB3AUTH_ALTERNATIVES_FAQ = [
   {
     question: 'Is Web3Auth the same as MetaMask Embedded Wallets?',
     answer:
-      'Yes. Consensys acquired Web3Auth in 2025 and now ships it as MetaMask Embedded Wallets. This page is the shortlist for Web3Auth alternatives, Web3Auth competitors, and MetaMask Embedded Wallet alternatives. The one-to-one is Cavos vs Web3Auth.',
+      'Yes. Consensys acquired Web3Auth in 2025 and now ships it as MetaMask Embedded Wallets. This page is the shortlist for Web3Auth alternatives, Web3Auth competitors, and MetaMask Embedded Wallet alternatives. The one-to-one is Web3Auth vs Cavos.',
   },
   {
     question: 'What are MetaMask Embedded Wallet alternatives?',
@@ -138,7 +138,7 @@ export const WEB3AUTH_ALTERNATIVES_FAQ = [
   {
     question: 'Who are Web3Auth competitors?',
     answer:
-      'If you want an embedded wallet instead of Web3Auth / MetaMask Embedded Wallets, the usual shortlist is Cavos, Privy, Dynamic, Turnkey, and Magic. Cavos is the comparison when the product is on Starknet, Solana, or Stellar and the review requires a device-native key. Privy is the closer finished-SDK comparison on EVM. The one-to-one is Cavos vs Web3Auth.',
+      'If you want an embedded wallet instead of Web3Auth / MetaMask Embedded Wallets, the usual shortlist is Cavos, Privy, Dynamic, Turnkey, and Magic. Cavos is the comparison when the product is on Starknet, Solana, or Stellar and the review requires a device-native key. Privy is the closer finished-SDK comparison on EVM. The one-to-one is Web3Auth vs Cavos.',
   },
 ] as const
 
@@ -155,7 +155,7 @@ export const web3authAlternativesGuide: AlternativesGuide = {
   answerParagraphs: [
     [
       'Cavos, Privy, Dynamic, Turnkey, and Magic are the five Web3Auth alternatives compared here. They are also the Web3Auth competitors and the usual MetaMask Embedded Wallet alternatives. Consensys acquired Web3Auth in 2025 and now ships it as MetaMask Embedded Wallets. This page is the shortlist. The one-to-one is ',
-      { href: '/compare/web3auth', label: 'Cavos vs Web3Auth' },
+      { href: '/compare/web3auth', label: 'Web3Auth vs Cavos' },
       '.',
     ],
     [
@@ -174,7 +174,7 @@ export const web3authAlternativesGuide: AlternativesGuide = {
       '. Cavos publishes its own fees on the ',
       { href: '/pricing', label: 'pricing page' },
       '; other vendors set theirs independently. The one-to-one write-up is ',
-      { href: '/compare/web3auth', label: 'Cavos vs Web3Auth' },
+      { href: '/compare/web3auth', label: 'Web3Auth vs Cavos' },
       '. Replacement shortlists also exist for ',
       { href: '/privy-alternatives', label: 'Privy' },
       ', ',
