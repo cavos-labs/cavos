@@ -340,8 +340,8 @@ Hello
     )
     assert.ok(providers)
     assert.ok(privy)
-    assert.equal(providers.lastModified.toISOString().startsWith('2026-11-05'), true)
-    assert.equal(privy.lastModified.toISOString().startsWith('2026-11-05'), true)
+    assert.equal(providers.lastModified.toISOString().startsWith('2026-11-06'), true)
+    assert.equal(privy.lastModified.toISOString().startsWith('2026-11-06'), true)
 
     const reactSdk = publishedBlogPosts().find(
       (item) => item.slug === 'embedded-wallet-react-sdk',
@@ -353,7 +353,7 @@ Hello
     assert.ok(alchemyVsPrivy)
     assert.equal(reactSdk.lastModified.toISOString().startsWith('2026-10-31'), true)
     assert.equal(
-      alchemyVsPrivy.lastModified.toISOString().startsWith('2026-11-04'),
+      alchemyVsPrivy.lastModified.toISOString().startsWith('2026-11-06'),
       true,
     )
 
@@ -378,7 +378,7 @@ Hello
     assert.ok(solanaBest)
     assert.ok(starknetBest)
     assert.equal(cost.lastModified.toISOString().startsWith('2026-11-04'), true)
-    assert.equal(api.lastModified.toISOString().startsWith('2026-11-05'), true)
+    assert.equal(api.lastModified.toISOString().startsWith('2026-11-06'), true)
     assert.equal(
       stellarBest.lastModified.toISOString().startsWith('2026-11-05'),
       true,
@@ -405,7 +405,7 @@ Hello
       true,
     )
     assert.equal(
-      walletAsAService.lastModified.toISOString().startsWith('2026-11-05'),
+      walletAsAService.lastModified.toISOString().startsWith('2026-11-06'),
       true,
     )
 
@@ -416,8 +416,9 @@ Hello
     ]) {
       const post = publishedBlogPosts().find((item) => item.slug === slug)
       assert.ok(post, slug)
+      const expected = slug === 'best-embedded-wallet' ? '2026-11-06' : '2026-11-05'
       assert.equal(
-        post.lastModified.toISOString().startsWith('2026-11-05'),
+        post.lastModified.toISOString().startsWith(expected),
         true,
         slug,
       )

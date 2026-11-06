@@ -1,18 +1,24 @@
 ---
 title: "Wallet as a Service (2026): Providers, Pricing"
-updated: "2026-11-05"
+updated: "2026-11-06"
 date: "2026-10-23"
-excerpt: "Wallet as a service (WaaS) in 2026: definition, a dated provider shortlist, pricing units, and how Cavos compares on Starknet, Solana, and Stellar."
+excerpt: "Wallet as a service (WaaS) in 2026: definition, providers, custody, pricing units. Non-custodial option free to 1,000 wallets on Starknet, Solana, Stellar."
 category: "Guide"
 ogQuote: "Write the answers down before you read a pricing page."
 slug: "wallet-as-a-service"
 faq:
+  - question: "What is wallet as a service?"
+    answer: "Wallet as a service is an API or SDK that provisions a crypto wallet inside your app. In 2026 the user signs in the way they already do, the platform looks up or creates an on-chain account, and approval happens in your UI. There is no extension to install. Teams also type wallet-as-a-service, WaaS, and embedded wallets as a service. The label does not decide custody."
   - question: "What is wallet-as-a-service (WaaS)?"
-    answer: "Wallet-as-a-service is the commercial name for provisioning a crypto wallet through an API or SDK instead of asking the user to install an extension. Login selects the user. The platform looks up or creates an on-chain account. Approval happens in the product UI. The label overlaps with embedded wallet platform and embedded wallets as a service. It does not decide custody."
+    answer: "Wallet-as-a-service is the hyphenated form of the same product as wallet as a service: provisioning a crypto wallet through an API or SDK instead of asking the user to install an extension. Login selects the user. The platform looks up or creates an on-chain account. Approval happens in the product UI. The label overlaps with embedded wallet platform and embedded wallets as a service. It does not decide custody."
+  - question: "What is WaaS vs an embedded wallet?"
+    answer: "They name the same job from two sides. An embedded wallet is the UX: the wallet lives inside the application, login selects the user, and approval happens in the product UI. Wallet as a service, or WaaS, is how that wallet is sold: an API or SDK, a dashboard, and an invoice. The embedded wallet page is the product and SDK definition. This page is the commercial map. Neither label decides who can produce a signature."
+  - question: "Who offers non-custodial WaaS?"
+    answer: "Embedded and WaaS are UX and commercial labels, not a custody claim. Cavos is hardware-isolated and non-custodial: signing keys are created and used on the device, never leave it in plaintext, and never sign on Cavos servers. Dynamic describes TSS-MPC wallets as end-user owned. Web3Auth / MetaMask Embedded Wallets describes MPC as self-custodial. Privy ships non-custodial user wallets and, separately, optional custodial wallets. Turnkey custody depends on who holds the credentials that authorize the enclave. Para is 2-of-2 MPC. Dfns delegated wallets keep shares in Dfns infrastructure; only the user's passkey authorizes a signature. Counsel still has to read recovery and export."
   - question: "What is an embedded wallet as a service?"
     answer: "Embedded wallet as a service is the same product as wallet-as-a-service, named from the UX: the wallet lives inside the app. You call an SDK or API. The platform authenticates the user, looks up or creates an on-chain account, and signs from a key it manages or from a key on the device. The embedded wallet page is the UX definition. This page is how that wallet is sold."
   - question: "What are wallet as a service providers?"
-    answer: "Wallet as a service providers are vendors that sell that path: Cavos, Privy, Dynamic, Turnkey, Magic, and Web3Auth / MetaMask Embedded Wallets. Some ship a finished SDK. Turnkey is closer to signing infrastructure. Compare them on who can produce a signature, which chains are native, and what the invoice meters. The dated shortlist is below; the named-vendor table is also on the embedded wallet providers guide."
+    answer: "Wallet as a service providers are vendors that sell that path. The November 2026 shortlist on this page is Privy, Dynamic, Turnkey, Dfns, Web3Auth / MetaMask Embedded Wallets, Para, and Cavos. Some ship a finished SDK. Turnkey and Dfns are closer to signing or MPC infrastructure. Compare them on who can produce a signature, which chains are native, and what the invoice meters. The named-vendor table is also on the embedded wallet providers guide."
   - question: "What is an embedded wallet platform?"
     answer: "An embedded wallet platform is the product that ships that path as a service: hosted login, a wallet registry, key handling, signing, gas sponsorship, recovery, and a dashboard for App IDs and spend limits. Some platforms are a finished SDK. Some are signing infrastructure you assemble. Confirm which layer you are buying before you compare prices."
   - question: "How does wallet-as-a-service pricing usually work?"
@@ -25,17 +31,19 @@ faq:
     answer: "Cavos is a finished embedded-wallet SDK for Starknet, Solana, and Stellar. Auth is hosted Google, Apple, or email, or an identity you pass in. Signing keys are created and used on the user’s device. On Starknet the account is an audited OpenZeppelin account contract. Recovery is off-chain. Gas is sponsored. Cavos is not an EVM-wide layer and does not connect existing extensions."
 ---
 
-**Wallet-as-a-service (WaaS) is an API or SDK that gives each of your users a crypto wallet inside your app.** The user signs in the way they already do, the platform looks up or creates an on-chain account for that login, and transactions are approved in your UI. There is no browser extension to install and no seed phrase to copy. That UX is an [embedded wallet](/embedded-wallet). **Embedded wallet as a service** is the same product, named from where the wallet appears. **Wallet as a service providers** are the vendors that sell it.
+**Wallet-as-a-service (WaaS) is an API or SDK that provisions a crypto wallet inside your app in 2026.** The user signs in the way they already do. The platform looks up or creates an on-chain account for that login. Transactions are approved in your UI. There is no browser extension to install and no seed phrase to copy. That UX is an [embedded wallet](/embedded-wallet).
 
-The label does not decide custody. Before you compare vendors, answer three questions: who provisions the wallet, who can produce a signature, and what the invoice meters. This guide is the platform map plus a dated provider shortlist. The [embedded wallet providers](/blog/embedded-wallet-providers) comparison is the named-vendor table. [How much embedded wallets cost](/blog/embedded-wallet-cost) is the per-MAU vs per-wallet vs per-signature worked example. The [embedded wallet API](/blog/embedded-wallet-api) guide is the method-level surface. The [non-custodial guide](/blog/non-custodial-embedded-wallet) is the custody test.
+**Wallet as a service**, **WaaS**, and **embedded wallet as a service** are the same commercial label, named from how the wallet is sold. The full product and SDK page is [embedded wallet](/embedded-wallet). **Wallet as a service providers** are the vendors that sell it.
 
-Cavos, LLC is a software and SaaS company. The wallet is the main product: a device-native, self-custodial embedded wallet. Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds.
+The label does not decide custody. Before you compare vendors, answer three questions: who provisions the wallet, who can produce a signature, and what the invoice meters. This guide is the 2026 definition, a dated shortlist (Privy, Dynamic, Turnkey, Dfns, Web3Auth, Para, Cavos), and the pricing-unit map. The [embedded wallet providers](/blog/embedded-wallet-providers) comparison is the named-vendor table. [How much embedded wallets cost](/blog/embedded-wallet-cost) is the per-MAU vs per-wallet vs per-signature worked example. The [embedded wallet API](/blog/embedded-wallet-api) guide is the method-level surface. The [non-custodial guide](/blog/non-custodial-embedded-wallet) is the custody test. Replacement shortlists: [Privy alternatives](/privy-alternatives) and [Turnkey alternatives](/turnkey-alternatives). Cavos fees are on [pricing](/pricing).
+
+Cavos, LLC is a software and SaaS company. The wallet is the main product: a hardware-isolated, non-custodial embedded wallet. Signing keys are created and used on the user’s device. Keys never leave the device in plaintext. Signing always happens on the device. Cavos cannot see them, sign with them, decrypt them, or move funds.
 
 ## What is wallet as a service?
 
-**Wallet as a service** is the unhyphenated form of the same query as wallet-as-a-service. Teams type both. The product is an API or SDK that turns a login into an on-chain account inside your app: authenticate the user, look up or create an address, sign from a key the platform manages or from a key on the device, and often sponsor the first fee. You do not ship a seed phrase or send the user to MetaMask.
+**Wallet as a service** in 2026 is the unhyphenated form of **wallet-as-a-service** and **WaaS**. Teams type all three. The product is an API or SDK that turns a login into an on-chain account inside your app: authenticate the user, look up or create an address, sign from a key the platform manages or from a key on the device, and often sponsor the first fee. You do not ship a seed phrase or send the user to MetaMask.
 
-That is how **wallet as a service** is sold. It is not a custody claim. Device-native keys, MPC shares, a remote enclave, and a delegated HSM are all sold under the same label. Write down who can produce a signature before you compare prices.
+That is how **wallet as a service** is sold. It is not a custody claim. Device-native keys, MPC shares, a remote enclave, and a delegated HSM are all sold under the same label. Write down who can produce a signature before you compare prices. WaaS vs an [embedded wallet](/embedded-wallet) is naming, not architecture: embedded is where the wallet appears; WaaS is how you buy it.
 
 ## What is wallet-as-a-service?
 
@@ -67,7 +75,7 @@ Cavos hosted login is Google, Apple, or email. If you already authenticate users
 
 This is the part that decides whether the platform is a custodian in practice. Four designs cover the category:
 
-- **Device-native.** The account key is derived and used on the user’s device. The provider cannot see it or sign with it. Cavos is this model. There is no MPC and no hosted spend key.
+- **Device-native.** The account key is derived and used on the user’s device. Keys never leave the device in plaintext. Signing always happens on the device. The provider cannot see the key, sign with it, or decrypt it. Cavos is this model. There is no MPC and no hosted spend key.
 - **MPC / TSS.** Shares live on the device and on a provider network. Signing reconstructs or jointly computes a signature. Web3Auth describes threshold signatures and Shamir sharing. Dynamic describes TSS-MPC with a user share on the device and a server share in a TEE.
 - **Remote enclave.** The key decrypts only inside a hardware-backed environment the vendor operates. Turnkey persists ciphertext and decrypts in AWS Nitro Enclaves. Custody is who holds the credentials that authorize the enclave.
 - **Delegated TEE or HSM.** The provider’s key-management system holds or unwraps the key. Privy documents TEE key infrastructure. Magic’s public docs describe a TEE key-management system; the compare page also describes delegated HSMs.
@@ -93,7 +101,7 @@ Users should not need a native token to start. Sponsorship is chain-specific, an
 - **Stellar:** a relayer can sponsor reserves and fee-bump submission.
 - **EVM smart accounts:** paymasters and bundlers. Dynamic lists gasless transactions on EVM and Solana as an Enterprise feature. Turnkey lists gas sponsorship on the Enterprise plan.
 
-Ask whether an empty native-token balance can still send, and how the sponsorship credential is scoped. Cavos treats a Starknet `paymasterApiKey` as a client-visible, app-scoped credential. Bind it by app, environment, origin, rate, and spend.
+Ask whether an empty native-token balance can still send, and how the sponsorship credential is scoped. Cavos offers Gas Sponsorship in Any Token the user already holds (USDC is one example), funded separately from the wallet-create plans. A Starknet `paymasterApiKey` is a client-visible, app-scoped credential. Bind it by app, environment, origin, rate, and spend.
 
 ### Recovery
 
@@ -101,7 +109,7 @@ A device that is lost, wiped, or replaced takes its key with it. Recovery is a s
 
 In a WaaS product, recovery is usually a synced passkey, a cloud backup, a provider-held share, an enclave unwrap, or a recovery code. Those are not equivalent. A provider that cannot sign in the happy path but can restore a spend key in an incident is a different fact pattern from one that never can.
 
-Cavos recovery is **off-chain**. A new device restores the MasterDEK with another signed-in device, a passkey, or opt-in hardware-isolated recovery in an AWS Nitro Enclave. There is no on-chain social recovery and no on-chain device-signer list. If every device and every restore factor is gone, Cavos cannot recover the wallet. See [recovery](https://docs.cavos.xyz/docs/recovery).
+Cavos recovery is **off-chain**. A new device restores the MasterDEK with another signed-in device, a passkey, or opt-in hardware-isolated recovery in an AWS Nitro Enclave. The passkey and the enclave only hold an encrypted copy of the MasterDEK for sealed restore; they cannot sign, and Cavos cannot decrypt that copy. There is no on-chain social recovery and no on-chain device-signer list. If every device and every restore factor is gone, Cavos cannot recover the wallet. See [recovery](https://docs.cavos.xyz/docs/recovery).
 
 ### Dashboard and app management
 
@@ -125,67 +133,84 @@ Migration is a project in every direction. Addresses are derived differently. Co
 
 Vendors do not meter the same thing. A cheap free tier with a tight MAU cap is not the same as a flat wallet-create allowance. Read the unit before the dollar amount. Published figures below already appear on this site’s [compare](/compare) and [providers](/blog/embedded-wallet-providers) pages, as of October 2026. They can change. This page does not invent unpublished enterprise prices.
 
-**Monthly active users (MAU).** A user who logs in or uses a wallet during the month counts once. Privy and Dynamic publish MAU plans. Privy’s public free tier is 0–499 MAU with 50,000 signatures and $1M volume per month; Core is $299/mo and Scale is $499/mo. Dynamic’s Growth plan is $249/mo for up to 5,000 MAUs, then $0.05 per extra MAU.
+**Monthly active users (MAU).** A user who logs in or uses a wallet during the month counts once. Privy, Dynamic, and Para publish MAU plans. Privy’s public free tier is 0–499 MAU with 50,000 signatures and $1M volume per month; Core is $299/mo and Scale is $499/mo. Dynamic’s Growth plan is $249/mo for up to 5,000 MAUs; extra-MAU is billed, but the public plan card and FAQ disagree on the per-MAU rate, so that rate is omitted here. Para is free to 1,200 MAUs, then $200 / $500 / $1,000 per month.
 
 **Monthly active wallets (MAW).** The same idea, keyed on the wallet. MetaMask Embedded Wallets (formerly Web3Auth) starts free at 1,000 MAWs; Growth is $69/mo and Scale is $399/mo. Magic’s Developer plan includes 1,000 MAWs and 50,000 signatures at $0/mo; the next listed team plan is $99/mo with 2,500 MAWs.
 
-**Per wallet, or wallet creates.** The invoice grows when you provision addresses. [Cavos pricing](/pricing) is free for the first 1,000 wallet creates, then Essential at $59/mo and Complete at $139/mo. Turnkey’s Pay as you go tier includes 1,000 wallets and 25 free signatures per month.
+**Per wallet, or wallet creates.** The invoice grows when you provision addresses. [Cavos pricing](/pricing) is free for the first 1,000 wallet creates, then Essential at $59/mo and Complete at $139/mo. Turnkey’s Pay as you go tier includes 1,000 wallets and 25 free signatures per month. Dfns publishes annual and quarterly platform subscriptions with a wallet allowance (Starter 10 wallets, Basic 10,000, Pro 50,000).
 
-**Per signature.** Useful when signing is the scarce resource. Turnkey then charges $0.10 per signature; Pro is $99/mo. Privy also caps signatures on the free tier, so a chatty app can hit a signature wall before the MAU wall.
+**Per signature.** Useful when signing is the scarce resource. Turnkey then charges $0.10 per signature; Pro is $99/mo. Dfns includes a monthly signature allowance on each plan (100 / 1,000 / 10,000 / 100,000) rather than a public per-signature list price. Privy also caps signatures on the free tier, so a chatty app can hit a signature wall before the MAU wall.
 
 **Volume.** Privy’s free tier publishes a $1M volume cap. That meter fits a checkout better than a game that signs often and settles little. Gas sponsorship is often a separate line, or reserved for a higher plan. Ask what is metered, what is rate-limited, and whether the first sponsored transaction is on the public plan.
 
 ## Wallet-as-a-service providers, November 2026
 
-This is the dated shortlist of **wallet as a service providers** as of November 2026. It is the same six vendors as the [embedded wallet providers](/blog/embedded-wallet-providers) table, grouped here as an **embedded wallet as a service** buy list: who meters what, which chains are native, and where the key lives.
+This is the dated shortlist of **wallet as a service providers** as of November 2026. It is grouped here as an **embedded wallet as a service** buy list: custody model and pricing unit from each vendor’s public docs. Magic remains in the category and on the [embedded wallet providers](/blog/embedded-wallet-providers) table; it is not a row here because the 2026 WaaS shortlist below is Privy, Dynamic, Turnkey, Dfns, Web3Auth, Para, and Cavos.
 
-The rows reuse facts already stated on the [compare](/compare) pages and that providers guide. One-to-one write-ups: [Cavos vs Privy](/compare/privy), [Cavos vs Dynamic](/compare/dynamic), [Cavos vs Turnkey](/compare/turnkey), [Cavos vs Web3Auth](/compare/web3auth), [Cavos vs Magic](/compare/magic). Teams leaving a named vendor can start at [Privy alternatives](/privy-alternatives), [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), or [Magic alternatives](/magic-alternatives). The [Privy vs Dynamic](/blog/privy-vs-dynamic) guide is provision versus connect between two finished SDKs.
+Figures are from public pricing and product pages as of November 2026 and can change. Where a cell would require an unpublished number, it says so. Cavos fees are from this site’s [pricing](/pricing) page. One-to-one write-ups: [Cavos vs Privy](/compare/privy), [Cavos vs Dynamic](/compare/dynamic), [Cavos vs Turnkey](/compare/turnkey), [Cavos vs Web3Auth](/compare/web3auth), [Cavos vs Magic](/compare/magic). Teams leaving a named vendor can start at [Privy alternatives](/privy-alternatives), [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), [Magic alternatives](/magic-alternatives), or [Para alternatives](/para-alternatives). The [Privy vs Dynamic](/blog/privy-vs-dynamic) guide is provision versus connect between two finished SDKs.
+
+{/* Public pricing as of November 2026:
+    Privy: https://privy.io/pricing
+    Dynamic: https://www.dynamic.xyz/pricing
+    Turnkey: https://www.turnkey.com/pricing
+    Dfns: https://dfns.co/pricing
+    Web3Auth / MetaMask Embedded Wallets: https://metamask.io/developer/embedded-wallets
+    Para: https://www.getpara.com/pricing
+    Cavos: https://cavos.xyz/pricing
+    Do not invent unpublished extra-MAU or enterprise rates.
+*/}
 
 <table>
 <thead>
 <tr>
 <th>Provider</th>
-<th>Pricing / free tier</th>
-<th>Chains</th>
-<th>Key / custody model</th>
+<th>Custody model</th>
+<th>Pricing unit</th>
+<th>Published list (Nov 2026)</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><a href="/pricing">Cavos</a></td>
-<td>Free for the first 1,000 wallet creates. Essential $59/mo. Complete $139/mo.</td>
-<td>Starknet, Solana, and Stellar. Not EVM-wide.</td>
-<td>Device-native. No MPC. On Starknet: one stark key on an audited OpenZeppelin AccountUpgradeable v3.0.0.</td>
+<td>Hardware-isolated, non-custodial. Device-native keys. No MPC. Passkey or Nitro Enclave sealed restore. On Starknet: one stark key on an audited OpenZeppelin AccountUpgradeable v3.0.0.</td>
+<td>Wallet creates</td>
+<td>Free for the first 1,000 wallet creates. Essential $59/mo. Complete $139/mo. Starknet, Solana, and Stellar. Not EVM-wide.</td>
 </tr>
 <tr>
 <td><a href="/compare/privy">Privy</a></td>
+<td>Shamir 2-of-2 reconstructed in AWS Nitro Enclaves. User wallets described as non-custodial with key export. Separate custodial path via Bridge.</td>
+<td>Monthly active users (plus signature and volume caps on Developer)</td>
 <td>Free 0–499 MAU, 50K signatures and $1M volume/mo. Core $299/mo. Scale $499/mo.</td>
-<td>Managed send on Ethereum/EVM, Solana/SVM, Tempo, TRON. Additional sign-only chains.</td>
-<td>TEE key infrastructure. Non-custodial embedded wallets; optional custodial wallets (starting with Bridge).</td>
 </tr>
 <tr>
 <td><a href="/compare/dynamic">Dynamic</a></td>
-<td>Growth $249/mo up to 5,000 MAUs, then $0.05/MAU. Sandbox is free.</td>
-<td>Native embedded wallets on EVM, Solana, Bitcoin, Sui, TON, Stellar, Tempo, Arc.</td>
-<td>TSS-MPC (default 2-of-2). User share on device; server share in a TEE. Export supported.</td>
+<td>TSS-MPC (default 2-of-2). User share on device; server share in a TEE. Official copy: a complete private key never exists. Export supported.</td>
+<td>Monthly active users</td>
+<td>Growth $249/mo up to 5,000 MAUs. Extra-MAU is billed; the public plan card and FAQ disagree on the rate, so it is omitted. Sandbox is free.</td>
 </tr>
 <tr>
 <td><a href="/compare/turnkey">Turnkey</a></td>
+<td>Keys decrypt only in a TEE. Custody is who can authorize the enclave: user (non-custodial), your API key (custodial), or both under policy (hybrid).</td>
+<td>Signatures, with a wallet cap per tier</td>
 <td>Pay as you go: 1,000 wallets and 25 free signatures/mo, then $0.10/signature. Pro $99/mo.</td>
-<td>Broad multi-chain at the signing-primitive level. See Turnkey docs for the current list.</td>
-<td>Keys decrypt only in AWS Nitro Enclaves. Custody is who holds the authorizing credentials.</td>
+</tr>
+<tr>
+<td><a href="https://docs.dfns.co/solutions/embed-user-wallets">Dfns</a></td>
+<td>TSS/MPC. Official docs: the private key is never reconstructed. Default cloud stores all shares in Dfns datacenters. Delegated wallets are not stored on the user’s device; the user’s passkey authorizes a signature.</td>
+<td>Annual or quarterly platform subscription (wallet allowance plus monthly signature allowance). No AUM or per-transaction fees as published.</td>
+<td>Starter $800/yr (10 wallets, 100 signatures/mo). Basic $8,000/yr (10,000 wallets, 1,000 signatures/mo). Pro $35,000/yr (50,000 wallets, 10,000 signatures/mo). 30-day testnet trial. Source: <a href="https://dfns.co/pricing">dfns.co/pricing</a>.</td>
 </tr>
 <tr>
 <td><a href="/compare/web3auth">Web3Auth / MetaMask Embedded Wallets</a></td>
+<td>MPC with threshold signatures and Shamir’s Secret Sharing. Described as self-custodial. Export is part of the model.</td>
+<td>Monthly active wallets</td>
 <td>Free 1,000 MAWs. Growth $69/mo (3,000 MAWs). Scale $399/mo (10,000 MAWs).</td>
-<td>Native EVM and Solana; product page also lists Bitcoin, StarkNet, and other networks.</td>
-<td>MPC with threshold signatures and Shamir’s Secret Sharing. Export is part of the model.</td>
 </tr>
 <tr>
-<td><a href="/compare/magic">Magic</a></td>
-<td>Free 1,000 MAWs and 50K signatures. Next listed team plan $99/mo (2,500 MAWs).</td>
-<td>EVM-focused; Magic’s public docs also describe Solana and Bitcoin and 30+ networks.</td>
-<td>TEE Key Management System (TKMS) for embedded wallets. Key export is listed.</td>
+<td><a href="/para-alternatives">Para</a></td>
+<td>2-of-2 MPC. Public docs describe end-user wallets; Para does not charge per signature on the public pricing page.</td>
+<td>Monthly active users</td>
+<td>Free to 1,200 MAUs, then Starter $200/mo (2,500 MAUs), Growth $500/mo (10,000), Scale $1,000/mo (25,000). Source: <a href="https://www.getpara.com/pricing">getpara.com/pricing</a>.</td>
 </tr>
 </tbody>
 </table>
@@ -194,7 +219,7 @@ The category has consolidated. Stripe acquired Privy in 2025. Fireblocks acquire
 
 ## Where Cavos fits as a wallet-as-a-service
 
-Cavos is an [embedded wallet](/embedded-wallet) platform, not an extension, and not a connector. Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds. Login never signs a transaction. There is no MPC and no hosted spend key. Auth is hosted Google, Apple, or email, or an identity you pass in. Recovery is a passkey or opt-in enclave unwrap of the MasterDEK. Gas is sponsored.
+Cavos is a hardware-isolated, non-custodial [embedded wallet](/embedded-wallet) platform, not an extension, and not a connector. Signing keys are created and used on the user’s device. Keys never leave the device in plaintext. Signing always happens on the device. Cavos cannot see them, sign with them, decrypt them, or move funds. Login never signs a transaction. There is no MPC and no hosted spend key. Auth is hosted Google, Apple, or email, or an identity you pass in. Recovery is a passkey or opt-in AWS Nitro Enclave sealed restore of the MasterDEK; the passkey and the enclave only hold an encrypted copy and cannot sign. Gas Sponsorship in Any Token is on every plan (USDC is one example of a token the user already holds), funded separately.
 
 Adapters ship today for three chains:
 

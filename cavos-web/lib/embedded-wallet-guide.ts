@@ -49,7 +49,7 @@ export const EMBEDDED_WALLET_PROVIDERS_TITLE =
 export const PRIVY_VS_TURNKEY_PATH = '/blog/privy-vs-turnkey'
 
 export const PRIVY_VS_TURNKEY_TITLE =
-  'Privy vs Turnkey (2026): Who Holds the Key'
+  'Privy vs Turnkey (2026): SDK vs Infrastructure'
 
 export const PRIVY_VS_DYNAMIC_PATH = '/blog/privy-vs-dynamic'
 
@@ -90,7 +90,7 @@ export const EMBEDDED_WALLET_REACT_SDK_TITLE =
 export const ALCHEMY_VS_PRIVY_PATH = '/blog/alchemy-vs-privy'
 
 export const ALCHEMY_VS_PRIVY_TITLE =
-  'Alchemy vs Privy (2026): Kit Deprecated'
+  'Alchemy vs Privy (2026): APIs vs Signer'
 
 export const EMBEDDED_WALLET_PAYMENTS_PATH = '/blog/embedded-wallet-payments'
 
