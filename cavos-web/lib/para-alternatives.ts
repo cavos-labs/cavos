@@ -37,7 +37,7 @@ export const PARA_ALTERNATIVES_H1 = '5 Para alternatives compared in 2026'
 
 export const PARA_ALTERNATIVES_PUBLISHED = '2026-11-02'
 
-export const PARA_ALTERNATIVES_MODIFIED = '2026-11-02'
+export const PARA_ALTERNATIVES_MODIFIED = '2026-11-06'
 
 export const PARA_ALTERNATIVES_CRUMB = 'Para alternatives'
 
@@ -74,6 +74,8 @@ export const PARA_ALTERNATIVE_SECTIONS: AlternativeSection[] = [
   ]),
   vendorSection('web3auth', [
     { href: '/magic-alternatives', label: 'Magic alternatives' },
+    { href: '/web3auth-alternatives', label: 'Web3Auth alternatives' },
+    { href: '/dfns-alternatives', label: 'Dfns alternatives' },
   ]),
 ]
 
@@ -157,7 +159,7 @@ export const paraAlternativesGuide: AlternativesGuide = {
     [
       'Cavos, Privy, Dynamic, Turnkey, and Web3Auth are the five Para alternatives compared here for the ',
       { href: '/embedded-wallet', label: 'embedded wallet' },
-      ' at getpara.com, formerly Capsule. This page is that wallet, not ParaSwap.',
+      ' at getpara.com, formerly Capsule. This page is that wallet, not ParaSwap the DEX aggregator, and not a Cosmos app chain that shares the name.',
     ],
     [
       'The sections below use the same facts as the ',
@@ -170,15 +172,61 @@ export const paraAlternativesGuide: AlternativesGuide = {
       { href: '/turnkey-alternatives', label: 'Turnkey' },
       ', ',
       { href: '/dynamic-alternatives', label: 'Dynamic' },
-      ', and ',
+      ', ',
       { href: '/magic-alternatives', label: 'Magic' },
+      ', ',
+      { href: '/web3auth-alternatives', label: 'Web3Auth alternatives' },
+      ', and ',
+      { href: '/dfns-alternatives', label: 'Dfns alternatives' },
       '. Migration is a project, not a config change: wallet addresses are derived differently, so accounts do not transfer automatically.',
     ],
   ],
   whyLookHeading: 'Why teams look for a Para alternative',
   whyLookIntro:
-    'Para is not the weaker product. It covers ground several of these alternatives do not, especially a 2-of-2 MPC wallet Para documents as portable across apps. Teams still shortlist replacements when they want a device-native key, or when the chain is Starknet.',
+    'Para is not the weaker product. It covers ground several of these alternatives do not, especially a 2-of-2 MPC wallet Para documents as portable across apps. Teams still shortlist replacements when they want a device-native key, or when the chain is Starknet. If the search was for ParaSwap, this page is the wrong product: start from getpara.com, not paraswap.io.',
   whyLook: PARA_WHY_LOOK,
+  decisionHeading: 'Custody, pricing, and architecture across Para alternatives',
+  decisionIntro: [
+    'This table is the decision layer for Para alternatives (getpara.com, not ParaSwap): who can produce a signature, how the invoice is metered, and whether you are buying a portable MPC wallet or an in-app ',
+    { href: '/embedded-wallet', label: 'embedded wallet' },
+    ' SDK. Figures are from each vendor’s public docs and pricing pages as of November 2026 and can change. Cavos fees are on the ',
+    { href: '/pricing', label: 'pricing' },
+    ' page. Sibling shortlists: ',
+    { href: '/privy-alternatives', label: 'Privy alternatives' },
+    ', ',
+    { href: '/turnkey-alternatives', label: 'Turnkey alternatives' },
+    ', ',
+    { href: '/dynamic-alternatives', label: 'Dynamic alternatives' },
+    ', ',
+    { href: '/magic-alternatives', label: 'Magic alternatives' },
+    ', ',
+    { href: '/web3auth-alternatives', label: 'Web3Auth alternatives' },
+    ', and ',
+    { href: '/dfns-alternatives', label: 'Dfns alternatives' },
+    '.',
+  ],
+  decisionRows: [
+    {
+      point: 'Who can produce a signature',
+      detail:
+        'Para’s public key-management docs describe a 2-of-2 MPC split (DKLS19): a user share on the device, protected by a passkey, and a Para share in cloud HSMs. Both shares join a signing ceremony; Para says the full private key is never assembled. Privy’s public security docs describe a 2-of-2 Shamir split reconstituted only inside AWS Nitro Enclaves. Dynamic documents TSS-MPC (default 2-of-2). Turnkey decrypts a key only inside a TEE; custody is who can authorize that enclave. Web3Auth uses MPC with threshold signatures. Cavos is hardware-isolated and non-custodial: a non-exportable device key signs on the user’s device, Cavos holds no spend key, and recovery stores an encrypted copy of the master key for restore.',
+    },
+    {
+      point: 'Pricing unit and published free tier',
+      detail:
+        'Para meters monthly active users: Free covers up to 1,200 MAUs, then Starter $200/mo (2.5k), Growth $500/mo (10k), and Scale $1,000/mo (25k), with overage at $0.06, $0.05, and $0.04 per extra MAU on the public page. Privy also meters MAUs: Developer free is 0–499 MAU with 50,000 signatures and $1M volume per month; Core is $299/mo and Scale is $499/mo. Dynamic meters MAUs: Growth is $249/mo for up to 5,000 MAUs and the sandbox is free; the extra-MAU rate is omitted because the public plan card and FAQ disagree. Turnkey meters signatures: Pay as you go includes 1,000 wallets and 25 free signatures per month, then $0.10 per signature; Pro is $99/mo. Web3Auth starts free at 1,000 monthly active wallets (Growth $69/mo, Scale $399/mo). Cavos meters wallet creates: free up to 1,000 wallets, Essential $59/mo, Complete $139/mo. Those figures are published list prices, not a quote.',
+    },
+    {
+      point: 'Portable MPC wallet versus one-app provision',
+      detail:
+        'Para documents wallets that work across apps, chains, and platforms after one onboarding, with a drop-in modal and pregenerated wallets. That is extra surface area when the product should only provision an account inside one application. Privy, Dynamic, and Magic are finished embedded-wallet products; Dynamic also connects wallets users already hold. Turnkey and Dfns are signing infrastructure you build on. Cavos only provisions a hardware-isolated, non-custodial device-native account inside your app and does not connect existing extensions.',
+    },
+    {
+      point: 'Native chains versus a compatibility layer',
+      detail:
+        'Para’s named chain-support table lists EVM networks, Solana, Noble, Initia, Osmosis, and Stellar. The intro also mentions Sui; this page does not treat Sui as a named-table chain. Privy’s published coverage is broad EVM plus Solana at managed send. Dynamic is multi-chain, with EVM breadth and additional non-EVM support; parity varies by chain. Turnkey is broad at the cryptographic-curve and signing-primitive level; you still assemble the wallet UX. MetaMask Embedded Wallets lists EVM, Solana, and additional networks including StarkNet. Cavos ships native adapters for Starknet (an audited OpenZeppelin account contract), Solana, and Stellar, and is not an EVM-wide wallet layer. Para does not list Starknet on that named table.',
+    },
+  ],
   comparedHeading: 'Para alternatives and getpara.com competitors',
   comparedIntro:
     'The table below is the same shortlist used on the other alternatives pages: Cavos, Privy, Dynamic, Turnkey, Web3Auth / MetaMask Embedded Wallets, and Magic. Para is the incumbent, summarized in the sections that follow. They do not share a key model, the same native chain coverage, or the same pricing. Each name opens the full comparison except Cavos, which links to published fees.',

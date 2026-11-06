@@ -44,8 +44,8 @@ Cavos (`@cavos/kit`) is a hardware-isolated, non-custodial embedded wallet SDK f
 - [Privy alternatives](https://cavos.xyz/privy-alternatives)
 - [Turnkey alternatives](https://cavos.xyz/turnkey-alternatives): finished SDK vs enclave infrastructure; custody and published pricing
 - [Dynamic alternatives](https://cavos.xyz/dynamic-alternatives): provision vs connect; free to 1,000 wallets on Starknet, Solana, Stellar
-- [Magic alternatives](https://cavos.xyz/magic-alternatives)
-- [Para alternatives](https://cavos.xyz/para-alternatives)
+- [Magic alternatives](https://cavos.xyz/magic-alternatives): device keys vs email HSM; Magic vs Cavos; free to 1,000 wallets
+- [Para alternatives](https://cavos.xyz/para-alternatives): getpara.com, not ParaSwap; custody and published pricing; free to 1,000 wallets
 - [Web3Auth alternatives](https://cavos.xyz/web3auth-alternatives)
 - [Dfns alternatives](https://cavos.xyz/dfns-alternatives)
 - [Cavos vs Privy](https://cavos.xyz/compare/privy)
