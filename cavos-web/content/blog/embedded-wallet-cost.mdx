@@ -1,10 +1,10 @@
 ---
 title: "Embedded Wallet Cost (2026): Privy, Dynamic"
 date: "2026-11-04"
-updated: "2026-11-04"
-excerpt: "How much embedded wallets cost in 2026: Privy, Dynamic, Turnkey, Para, Web3Auth, Alchemy vs Cavos. Per wallet, MAU, and signature at 10k to 1M."
+updated: "2026-11-07"
+excerpt: "How much embedded wallets cost in 2026: cost per transaction vs MAU, wallet create, and signature. Published list prices for Privy, Dynamic, Cavos."
 category: "Guide"
-ogQuote: "The invoice meters MAU, wallets, or signatures. Those are not the same bill."
+ogQuote: "Cost per transaction is not one invoice. Vendors meter MAU, creates, or signatures."
 slug: "embedded-wallet-cost"
 faq:
   - question: "How much do embedded wallets cost in 2026?"
@@ -14,7 +14,9 @@ faq:
   - question: "What's the cheapest way to create wallets for millions of users?"
     answer: "Among vendors in this table with a published self-serve price that does not meter MAU or signatures as the primary unit, Cavos Essential is $59/month with unlimited wallet creates after the first 1,000 free. At one million monthly active users, Privy’s public PAYG MAU floor is $51,500/month before signature overage, and MetaMask Embedded Wallets’ public Scale overage is $39,999/month. Para’s public FAQ sends 100k MAU to Enterprise. Turnkey’s self-serve wallet caps are 1,000 (Pay as you go) and 2,000 (Pro); unlimited wallets are Enterprise. This is not a lowest-market-price claim. Enterprise volume discounts are unpublished. Gas sponsorship is a separate cost on every vendor that publishes it that way, including Cavos."
   - question: "How does per-MAU pricing compare to per-wallet and per-signature pricing?"
-    answer: "Per-MAU (or per monthly active wallet) charges each user who authenticates or holds an active session in the month, whether they sign once or a thousand times. Per-wallet or per-create charges provisioning, not activity. Per-signature charges each authorization. At millions of users, MAU and signature meters dominate the bill; a flat create allowance does not. Confirm the unit, the free cap, overage, and what is enterprise-only before you model cost."
+    answer: "Per-MAU (or per monthly active wallet) charges each user who authenticates or holds an active session in the month, whether they sign once or a thousand times. Per-wallet or per-create charges provisioning, not activity. Per-signature charges each authorization. Cost per transaction is none of those three unless the vendor names a transaction or broadcast line. At millions of users, MAU and signature meters dominate the bill; a flat create allowance does not. Confirm the unit, the free cap, overage, and what is enterprise-only before you model cost."
+  - question: "What is the cost per transaction for an embedded wallet?"
+    answer: "Most vendors do not bill a public per-transaction wallet fee on self-serve. Cost per transaction is often a signature, a broadcast add-on, or an unpublished Enterprise quote. Turnkey bills signatures at $0.10 then $0.05 on self-serve, and publishes Transaction Broadcast at $0.20 (Pay as you go) and $0.10 (Pro) per successful broadcast. Privy PAYG adds $0.01 per signature above 50,000; Enterprise is custom per transaction or transacting wallet, unpublished. Per-MAU vendors (Privy, Dynamic, Para, MetaMask Embedded Wallets) charge the user for the month whether they transact once or a thousand times. Cavos meters wallet creates: free for the first 1,000, then Essential $59/month or Complete $139/month. Gas sponsorship is a separate cost, including on Cavos. Do not divide a monthly MAU bill by transaction count and call that the vendor's cost per transaction."
   - question: "How much does Dynamic, Turnkey, Para, or Web3Auth cost for embedded wallets?"
     answer: "Dynamic’s public Growth plan is $249/month for up to 5,000 MAUs; the sandbox is free; extra-MAU is billed, but the public plan card and FAQ currently disagree on the per-MAU rate, so that rate is omitted here. Turnkey Pay as you go is 1,000 wallets and 25 free signatures per month, then $0.10 per signature; Pro is $99/month and $0.05 per signature. Para is free to 1,200 MAUs, then Starter $200/month (2,500 MAUs), Growth $500/month (10,000), Scale $1,000/month (25,000), with published extra-MAU of $0.06 / $0.05 / $0.04. Web3Auth / MetaMask Embedded Wallets is free at 1,000 MAWs then $0.050 extra; Growth $69/month (3,000 MAWs, $0.045 extra); Scale $399/month (10,000 MAWs, $0.040 extra)."
   - question: "Does Alchemy publish embedded wallet pricing per user?"
@@ -34,7 +36,7 @@ faq:
     Do not invent unpublished enterprise rates or extra-MAU figures where the public page disagrees with itself.
 */}
 
-An [embedded wallet](/embedded-wallet) lives inside your application. **Embedded wallet cost** is the invoice for provisioning that wallet: per monthly active user, per wallet create, or per signature. This guide is how much embedded wallets cost in 2026 on published list prices for Privy, Dynamic, Turnkey, Para, Web3Auth / MetaMask Embedded Wallets, Alchemy, and Cavos. It is not [Cavos pricing](/pricing). That page is Cavos’s own fees. This page is the cross-vendor model, a worked example at 10,000 / 100,000 / 1,000,000 users using only public numbers, and a pricing-transparency checklist for enterprises.
+An [embedded wallet](/embedded-wallet) lives inside your application. **Embedded wallet cost** is the invoice for provisioning that wallet: per monthly active user, per wallet create, or per signature. Cost per transaction is a fourth question, and it is not automatically any of those three. This guide is how much embedded wallets cost in 2026 on published list prices for Privy, Dynamic, Turnkey, Para, Web3Auth / MetaMask Embedded Wallets, Alchemy, and Cavos. It is not [Cavos pricing](/pricing). That page is Cavos’s own fees. This page is the cross-vendor model, a worked example at 10,000 / 100,000 / 1,000,000 users using only public numbers, and a pricing-transparency checklist for enterprises.
 
 Cavos, LLC is a software and SaaS company. Positioning for Cavos comes after the table is fair. If the honest published number is another vendor’s, that is the number. Where a public page omits a figure, or disagrees with itself, this page says so instead of guessing.
 
@@ -44,7 +46,8 @@ Cavos, LLC is a software and SaaS company. Positioning for Cavos comes after the
 
 - **Per-MAU / per-MAW:** Privy, Dynamic, Para, and Web3Auth / MetaMask Embedded Wallets. A user who logs in once in the month is billed; extra signatures may or may not add a second meter.
 - **Per-signature:** Turnkey. Self-serve wallet caps are 1,000 (Pay as you go) and 2,000 (Pro). Unlimited wallets are Enterprise.
-- **Per-wallet-create:** Cavos. Free for the first 1,000 creates, then a flat Essential $59/month or Complete $139/month. See [pricing](/pricing). Gas sponsorship is funded separately.
+- **Per-wallet-create:** Cavos. Free for the first 1,000 creates, then a flat Essential $59/month or Complete $139/month. See [pricing](/pricing). Gas sponsorship is a separate cost.
+- **Cost per transaction:** not a single public self-serve unit. Closest published proxies are signatures (Turnkey, Privy PAYG overage) and Turnkey Transaction Broadcast. Privy Enterprise is custom per transaction or transacting wallet. Cavos does not meter transactions.
 - **Not a wallet-create product:** Alchemy Wallet APIs bill compute units. Account Kit embedded wallets are deprecated.
 
 **Privy wallets cost**, on the public Developer page: Free 0–499 MAU, Core $299/month, Scale $499/month. Past 10,000 MAU or 50,000 signatures, Privy publishes PAYG at a $2,000 base plus $0.05 per extra MAU plus $0.01 per extra signature. That is Privy wallet pricing as listed, not an Enterprise quote.
@@ -52,6 +55,57 @@ Cavos, LLC is a software and SaaS company. Positioning for Cavos comes after the
 **What's the cheapest way to create wallets for millions of users?** On published self-serve list prices in this set, a flat create allowance (Cavos Essential at $59/month after 1,000 free creates) does not grow with MAU. MAU and signature meters do. Enterprise volume discounts are unpublished, so this page does not call any vendor the cheapest in the market.
 
 The named-vendor product table is [embedded wallet providers](/blog/embedded-wallet-providers). Privy vs Dynamic as products is [Privy vs Dynamic](/blog/privy-vs-dynamic). Finished SDK versus signing infrastructure is [Privy vs Turnkey](/blog/privy-vs-turnkey).
+
+## Cost per transaction vs MAU, wallet create, and signature
+
+Searchers looking for **cost per transaction for embedded crypto** are usually asking what the vendor charges each time a user sends, signs, or otherwise authorizes. That is not one invoice line. Public list prices meter four different units. Gas sponsorship is a fifth line, billed separately on every vendor in this table that publishes it that way, including Cavos.
+
+<table>
+<thead>
+<tr>
+<th>Meter</th>
+<th>What the invoice charges</th>
+<th>Published list (November 2026)</th>
+<th>What it is not</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Per-MAU / per-MAW</td>
+<td>Each user who authenticates or holds an active session in the month</td>
+<td>Privy, Dynamic, Para, Web3Auth / MetaMask Embedded Wallets. A user who logs in once is billed whether they transact once, a thousand times, or not at all after login</td>
+<td>Not cost per transaction. Do not divide the monthly MAU bill by send count</td>
+</tr>
+<tr>
+<td>Per-wallet / per-create</td>
+<td>Provisioning a new wallet</td>
+<td>Cavos meters wallet creates: free for the first 1,000, then Essential $59/month or Complete $139/month, unlimited creates on both paid plans</td>
+<td>Not activity. Existing wallets, reads, and signatures are not the create cap</td>
+</tr>
+<tr>
+<td>Per-signature</td>
+<td>Each cryptographic authorization</td>
+<td>Turnkey: $0.10 after 25 free (Pay as you go), then $0.05 (Pro). Privy PAYG: $0.01 per signature above 50,000. Para’s public FAQ: never per signature</td>
+<td>Not always an on-chain send. Privy’s FAQ treats a monthly transaction as a signature request</td>
+</tr>
+<tr>
+<td>Per-transaction (named line)</td>
+<td>A successful broadcast or a sales-gated transaction product</td>
+<td>Turnkey Transaction Broadcast: $0.20 (Pay as you go), $0.10 (Pro), “as low as $0.003” (Enterprise). Privy Enterprise: custom per transaction or transacting wallet, unpublished</td>
+<td>Not the wallet-create fee. Turnkey Transaction Management’s FAQ still says contact sales for that product’s per-transaction price. Do not mix those two Turnkey lines</td>
+</tr>
+</tbody>
+</table>
+
+**Cavos does not publish a per-transaction wallet fee.** The org fee is wallet creates: free for the first 1,000, then Essential $59/month or Complete $139/month. See [pricing](/pricing). Gas sponsorship is a separate cost.
+
+**Turnkey publishes two activity meters.** Signatures are $0.10 on Pay as you go after 25 free, then $0.05 on Pro. Transaction Broadcast is a separate published line at $0.20 / $0.10 / “as low as $0.003”. Pay as you go and Pro still cap wallets at 1,000 and 2,000. Unlimited wallets are Enterprise. “As low as” is a floor on a sales page, not a quote.
+
+**Privy can look like a per-transaction vendor and not be one on Developer.** Developer plans meter MAU, with a signature allowance. PAYG adds $0.01 per signature above 50,000. Enterprise is custom per transaction or transacting wallet. That Enterprise rate is unpublished.
+
+**Gas sponsorship sits next to the wallet fee.** Cavos funds it separately from the org fee. Alchemy Gas Manager takes an 8% admin fee on PAYG. Turnkey publishes gas-sponsorship caps of $10 per month on Pay as you go and $25 per month on Pro. Include those lines in a real model.
+
+Confirm the unit, the free cap, overage, and what is enterprise-only before you model cost per transaction. Unpublished Enterprise rates are not guessed here. This page does not call any vendor the cheapest in the market.
 
 ## How vendors meter
 
@@ -84,9 +138,9 @@ Write the unit down before you multiply.
 </tr>
 <tr>
 <td><a href="https://www.turnkey.com/pricing">Turnkey</a></td>
-<td>Signatures, with a wallet cap</td>
+<td>Signatures, with a wallet cap. Transaction Broadcast is a separate per-transaction line</td>
 <td>Pay as you go: 1,000 wallets and 25 signatures / month</td>
-<td>Then $0.10 / signature. Pro $99/mo, $0.05 / signature, 2,000 wallets. Managed Secrets $0.15 / secret / month after a small free band on Pay as you go</td>
+<td>Then $0.10 / signature. Pro $99/mo, $0.05 / signature, 2,000 wallets. Transaction Broadcast $0.20 / tx (Pay as you go), $0.10 / tx (Pro). Managed Secrets $0.15 / secret / month after a small free band on Pay as you go</td>
 <td>Unlimited wallets. Signature pricing listed as low as $0.0015 / signature. SLAs, dedicated support</td>
 </tr>
 <tr>
@@ -199,7 +253,7 @@ At a few hundred users, free tiers dominate and the vendors look similar. At mil
 
 **Enterprise is where most millions-of-users deals actually close**, and those rates are not on the public page. Privy, Dynamic, Turnkey, Para, Web3Auth, and Alchemy all say so. Modeling PAYG list prices as the production bill at 1M users is a starting bound, not a contract.
 
-**Gas, RPC, and secrets sit next to the wallet fee.** Turnkey publishes gas-sponsorship caps on Pay as you go and Pro, and Managed Secrets at $0.15 per secret per month. Alchemy Gas Manager takes an 8% admin fee on PAYG. Cavos funds gas sponsorship separately from the org fee. Include those lines in a real model; do not hide them inside “wallet cost.”
+**Gas, RPC, and secrets sit next to the wallet fee.** Turnkey publishes gas-sponsorship caps of $10 per month on Pay as you go and $25 per month on Pro, and Managed Secrets at $0.15 per secret per month. Alchemy Gas Manager takes an 8% admin fee on PAYG. Cavos funds gas sponsorship separately from the org fee. Include those lines in a real model; do not hide them inside “wallet cost.” Cost per transaction versus those meters is the section above.
 
 ## Privy wallets cost, in more detail
 
