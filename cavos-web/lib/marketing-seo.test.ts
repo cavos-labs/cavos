@@ -663,7 +663,7 @@ describe('marketing SEO', () => {
     assert.ok(
       EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What is the best embedded wallet?'),
     )
-    assert.equal(EMBEDDED_WALLET_MODIFIED, '2026-11-05')
+    assert.equal(EMBEDDED_WALLET_MODIFIED, '2026-11-07')
   })
 
   it('keeps a single H1 and adds how-it-works plus a compare-data provider table', () => {
@@ -722,6 +722,7 @@ describe('marketing SEO', () => {
     assert.equal(EMBEDDED_WALLET_H1, 'Embedded wallet SDK')
     assert.ok(headings.includes('Embedded wallets in November 2026'))
     assert.ok(headings.includes('What is an embedded wallet?'))
+    assert.ok(headings.includes('When to use an embedded wallet'))
     assert.ok(headings.includes('How an embedded wallet works'))
     assert.match(pageSource, /EMBEDDED_WALLET_SDK_KEY_MODELS/)
     assert.match(pageSource, /software:/)
@@ -754,6 +755,8 @@ describe('marketing SEO', () => {
     assert.match(pageSource, /href=["']\/embedded-starknet-wallet["']/)
     assert.match(pageSource, /href=["']\/embedded-solana-wallet["']/)
     assert.match(pageSource, /href=["']\/embedded-stellar-wallet["']/)
+    assert.match(pageSource, /href=["']\/blog\/best-embedded-wallets-stellar["']/)
+    assert.match(pageSource, /WHAT_IS_AN_EMBEDDED_WALLET_PATH/)
     assert.match(pageSource, /GASLESS_STARKNET_TRANSACTIONS_PATH/)
     assert.match(pageSource, /href=["']\/pricing["']/)
     assert.match(pageSource, /EMBEDDED_WALLET_INTEGRATION_PATH/)
@@ -3686,10 +3689,14 @@ describe('marketing SEO', () => {
       NON_CUSTODIAL_EMBEDDED_WALLET_TITLE,
       'Non-Custodial Embedded Wallets: What They Are (2026)',
     )
-    assert.match(source, /^updated:\s*"2026-11-06"$/m)
+    assert.match(source, /^updated:\s*"2026-11-07"$/m)
     assert.match(source, /\*\*Non-custodial embedded wallets\*\* are /)
     assert.match(source, /## What are non-custodial embedded wallets\?/)
+    assert.match(source, /## What is a non-custodial embedded wallet\?/)
     assert.match(source, /## Custodial vs MPC vs hardware-isolated passkeys/)
+    assert.match(source, /Passkey and Nitro Enclave sealed restore/)
+    assert.match(source, /\]\(\/blog\/privy-vs-turnkey\)/)
+    assert.match(source, /\]\(\/blog\/best-embedded-wallets-stellar\)/)
     assert.match(source, /What is the difference between custodial, MPC, and hardware-isolated embedded wallets\?/)
     assert.match(source, /\]\(\/blog\/what-is-an-embedded-wallet\)/)
     assert.match(source, /never leave the device in plaintext/)
@@ -5250,16 +5257,27 @@ describe('embedded wallet definitional and API posts', () => {
   it('what-is-an-embedded-wallet is a definitional post with FAQ that points at the pillar', () => {
     const raw = read('content/blog/what-is-an-embedded-wallet.mdx')
     assert.match(raw, /^slug: "what-is-an-embedded-wallet"$/m)
+    assert.match(raw, /^title: "What Is an Embedded Wallet\? \(2026 Definition\)"$/m)
+    assert.match(raw, /^updated: "2026-11-07"$/m)
     assert.match(raw, /^faq:$/m)
     assert.match(raw, /question: "What is an embedded wallet\?"/)
+    assert.match(raw, /question: "How is an embedded wallet different from a browser extension\?"/)
+    assert.match(raw, /question: "What is the difference between an embedded wallet and a smart wallet\?"/)
     assert.match(raw, /\]\(\/embedded-wallet\)/)
     assert.match(raw, /full product and SDK page/)
     assert.match(raw, /\]\(\/blog\/embedded-wallet-api\)/)
+    assert.match(raw, /\]\(\/blog\/embedded-wallet-vs-browser-extension\)/)
+    assert.match(raw, /\]\(\/blog\/embedded-wallet-vs-smart-wallet\)/)
+    assert.match(raw, /\]\(\/blog\/best-embedded-wallets-stellar\)/)
+    assert.match(raw, /\]\(\/blog\/privy-vs-turnkey\)/)
+    assert.match(raw, /## Embedded wallet vs browser extension/)
+    assert.match(raw, /## Embedded wallet vs smart wallet/)
     assert.match(raw, /audited OpenZeppelin account contract/)
     assert.match(raw, /Gas Sponsorship in Any Token/)
     assert.match(raw, /Free up to 1,000 wallets/)
     assert.match(raw, /github\.com\/cavos-labs\/cavos-recovery/)
     assert.doesNotMatch(raw, /—|trustless|impossible/i)
+    assert.doesNotMatch(raw, /audited Cavos/)
   })
 
   it('the embedded wallet pillar, blog index, and llms.txt link the definitional post', () => {

@@ -110,6 +110,8 @@ describe('blog internal links', () => {
       assert.ok(raw.includes('[embedded wallet SDK](/embedded-wallet)'), slug)
     }
     assert.ok(read('what-is-an-embedded-wallet').includes('](/blog/embedded-wallet-vs-smart-wallet)'))
+    assert.ok(read('what-is-an-embedded-wallet').includes('](/blog/embedded-wallet-vs-browser-extension)'))
+    assert.ok(read('what-is-an-embedded-wallet').includes('](/embedded-wallet)'))
     assert.ok(read('how-to-add-an-embedded-wallet').includes('](/blog/embedded-wallet-nextjs)'))
     assert.ok(read('embedded-wallet-providers').includes('](/blog/best-embedded-wallet)'))
   })
@@ -166,8 +168,14 @@ describe('non-custodial embedded wallets guide', () => {
       h2s.some((h) => /What are non-custodial embedded wallets\?/i.test(h)),
       h2s.join('\n'),
     )
+    assert.ok(
+      h2s.some((h) => /What is a non-custodial embedded wallet\?/i.test(h)),
+      h2s.join('\n'),
+    )
     assert.match(raw, /question: "What are non-custodial embedded wallets\?"/)
+    assert.match(raw, /question: "What is a non-custodial embedded wallet\?"/)
     assert.match(raw, /^faq:/m)
+    assert.doesNotMatch(raw, /audited Cavos/)
   })
 })
 
