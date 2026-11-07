@@ -1,8 +1,8 @@
 ---
 title: "Best Embedded Wallet Providers 2026: Compared"
 date: "2026-10-19"
-updated: "2026-11-06"
-excerpt: "Best embedded wallet providers 2026: Privy, Dynamic, Turnkey, Para, Web3Auth vs Cavos. Custody, chains, non-custodial. Free to 1,000 wallets."
+updated: "2026-11-07"
+excerpt: "Best embedded wallet providers 2026: Privy, Dynamic, Turnkey, Para, Web3Auth vs Cavos. Custody, chains, pricing, enclave vs MPC. Free to 1,000 wallets."
 category: "Guide"
 ogQuote: "Picking a wallet provider is a scope question, not a feature checklist."
 slug: "embedded-wallet-providers"
@@ -62,9 +62,9 @@ Figures below are from each vendor’s public pricing and product pages as of No
 <tbody>
 <tr>
 <td><a href="/pricing">Cavos</a></td>
-<td>Wallet creates. Free up to 1,000 wallets. Essential $59/mo. Complete $139/mo.</td>
-<td>Starknet, Solana, and Stellar. Not EVM-wide.</td>
-<td>Hardware-isolated, non-custodial. Device-native. No MPC. On Starknet: one stark key on an audited OpenZeppelin AccountUpgradeable v3.0.0.</td>
+<td>Wallet creates. Free up to 1,000 wallets. Essential $59/mo. Complete $139/mo. Meter is creates, not MAU or signatures.</td>
+<td>Starknet, Solana, and Stellar native adapters. Not EVM-wide. Not Midnight, Aleo, Cosmos, or Sui.</td>
+<td>Hardware-isolated, non-custodial. Device-native. No MPC. Signing on the device. Passkey and opt-in Nitro Enclave hold an encrypted MasterDEK copy; Cavos cannot decrypt it. On Starknet: one stark key on an audited OpenZeppelin AccountUpgradeable v3.0.0.</td>
 <td>Finished embedded wallet SDK: auth, a device-native account, recovery, and Gas Sponsorship in Any Token.</td>
 </tr>
 <tr>
@@ -251,16 +251,29 @@ That is **where the wallet appears**. It is not a custody claim. An embedded wal
 
 ## How to evaluate providers
 
-Write the answers down before you read a pricing page.
+Write the answers down before you read a pricing page. **Best embedded wallet providers 2026** is this checklist, not a logo ranking. The [embedded wallet](/embedded-wallet) pillar is the product definition; this page is the named-vendor table. Replacement shortlists: [Privy alternatives](/privy-alternatives), [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), [Magic alternatives](/magic-alternatives), [Web3Auth alternatives](/web3auth-alternatives), [Dfns alternatives](/dfns-alternatives), [Para alternatives](/para-alternatives).
 
-- **Custody / key model.** Device-native, MPC, TEE or HSM, remote enclave. Who holds a share, a wrap, or a credential that can authorize a spend.
-- **Chains.** Which networks are native (account model, fees, signatures) versus a reused EOA-shaped key. Cavos is [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), and [Stellar](/embedded-stellar-wallet) only.
+- **Custody / key model.** Device-native, MPC, TEE or HSM, remote enclave. Who holds a share, a wrap, or a credential that can authorize a spend. Ask who can produce a valid signature without the user present. Embedded is a UX label; [non-custodial embedded wallets](/blog/non-custodial-embedded-wallet) is the control test.
+- **Chains.** Which networks are native (account model, fees, signatures) versus a reused EOA-shaped key versus a sign-only curve. Cavos is [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), and [Stellar](/embedded-stellar-wallet) only. A long named list is not the same as a native adapter on the chain you ship.
+- **Enclave vs MPC.** Shamir reconstruct in a vendor TEE (Privy user wallets), keys that decrypt only in a vendor enclave (Turnkey), TSS/MPC ceremonies that never reconstruct a key (Dynamic, Dfns, Para, Web3Auth TSS path), or a key that never leaves the device in plaintext (Cavos). Those are different incident and export stories.
+- **Pricing transparency.** Units differ: wallet creates, monthly active users, monthly active wallets, signatures, volume. Write down the meter, the free-tier cap, overage, and which features are sales-gated. A cheap free tier with a tight MAU cap is not the same as a flat wallet-create allowance. Worked cost at 10k / 100k / 1M users is [how much embedded wallets cost](/blog/embedded-wallet-cost).
 - **Gas sponsorship.** Whether first transactions work with an empty native-token balance, and whether that feature is on the public plan or enterprise-only.
 - **Auth methods.** Email, social, SMS, passkeys, bring-your-own JWT. Login selects the user. It should not, by itself, be the spend key, unless you chose a hosted model on purpose.
-- **Pricing.** Units differ: wallet creates, monthly active users, monthly active wallets, signatures, volume. A cheap free tier with a tight MAU cap is not the same as a flat wallet-create allowance.
 - **Lock-in.** Can the user export a key? Can you restore the same address on another vendor? Addresses are derived differently. Migration is a project. Confirm export, import, and what happens if you cancel the subscription.
 
 The [compare](/compare) hub is the model-level table (device-native vs hosted vs extension). The rows above are the named vendors.
+
+## Comparison criteria: custody, chains, pricing, enclave vs MPC
+
+The table above is the shortlist. This section is how to read it.
+
+**Custody.** Device-native means the spend key is created and used on the user’s device; the provider cannot see it, sign with it, or decrypt it. Cavos is this model. Shamir-in-a-TEE means shares combine inside a vendor enclave after authentication (Privy user wallets). Enclave-credential means plaintext exists only inside a TEE the vendor operates, and custody is who can authorize that TEE (Turnkey). TSS/MPC means shares jointly produce a signature and a complete private key is not supposed to exist (Dynamic, Para, Dfns, Web3Auth). Optional licensed-custodian paths (Privy + Bridge) are a separate product, even when they share a dashboard.
+
+**Chains.** Count native account models, not logos. Managed send, sign-transaction, sign-only, curve-level signing, and a named Tier 1 row are different depths. Confirm the current vendor page before you promise a network. Chain-specific shortlists: [best embedded wallets for Stellar](/blog/best-embedded-wallets-stellar), [Solana](/blog/best-embedded-wallets-solana), and [Starknet](/blog/best-embedded-wallets-starknet).
+
+**Pricing transparency.** Ask what the invoice meters, what the free tier includes, what overage costs, and which features are Enterprise-only. Where two public sources disagree (Dynamic extra-MAU) or a rate is sales-gated, write “unpublished” instead of guessing. Cavos publishes wallet-create plans on [pricing](/pricing): free for the first 1,000, Essential $59/mo, Complete $139/mo.
+
+**Enclave vs MPC vs device.** A vendor TEE that reconstructs or decrypts a key, an MPC ceremony that never reconstructs, and a device-native key are three architectures. They are not marketing synonyms. Finished SDK versus signing infrastructure is [Privy vs Turnkey](/blog/privy-vs-turnkey). The commercial label is [wallet-as-a-service](/blog/wallet-as-a-service).
 
 ## How do Web3Auth and Dynamic embedded wallets compare?
 
@@ -306,9 +319,9 @@ None of those three is “the Starknet / Solana / Stellar device-native SDK.” 
 
 Cavos is a hardware-isolated, non-custodial [embedded wallet](/embedded-wallet), not an extension, and not a connector.
 
-Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds. Login produces a stable identity for a registry lookup; it never signs a transaction. There is no MPC. There is no hosted spend key.
+Signing keys are created and used on the user’s device. Keys never leave the device in plaintext. Signing always happens on the device. Cavos cannot see them, sign with them, decrypt them, or move funds. Login produces a stable identity for a registry lookup; it never signs a transaction. There is no MPC. There is no hosted spend key.
 
-On Starknet the on-chain account is an **audited OpenZeppelin AccountUpgradeable** v3.0.0, controlled by one stark key derived from the wallet’s MasterDEK and app salt. Cavos does not ship its own account implementation. There is no on-chain device-signer list and no on-chain social recovery. A new device restores the MasterDEK off-chain with a passkey or an opt-in AWS Nitro Enclave; it does not `add_signer`. Execution is paymaster-sponsored. Connect does not deploy, the first execute deploys and runs atomically.
+On Starknet the on-chain account is an **audited OpenZeppelin AccountUpgradeable** v3.0.0, controlled by one stark key derived from the wallet’s MasterDEK and app salt. The audit covers OpenZeppelin’s contract, not Cavos. Cavos does not ship its own account implementation. There is no on-chain device-signer list and no on-chain social recovery. A new device restores the MasterDEK off-chain with a passkey or an opt-in AWS Nitro Enclave. The passkey and the enclave only hold an encrypted copy of the MasterDEK for sealed restore; they cannot sign, and Cavos cannot decrypt that copy. A new device does not `add_signer`. Execution is paymaster-sponsored. Connect does not deploy, the first execute deploys and runs atomically.
 
 Solana and Stellar are native adapters, not EVM compatibility. Solana provisions a native Ed25519 system account; a relayer co-signs as fee payer. Stellar provisions a classic G… account so existing tools already understand the address; the relayer can sponsor reserves and fee-bumps. Both restore the same MasterDEK on a new device rather than adding a second on-chain signer.
 

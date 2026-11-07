@@ -37,10 +37,10 @@ Cavos (`@cavos/kit`) is a hardware-isolated, non-custodial embedded wallet SDK f
 
 ## Comparisons
 
-- [Best embedded wallets for Stellar (2026)](https://cavos.xyz/blog/best-embedded-wallets-stellar)
+- [Best embedded wallets for Stellar (2026)](https://cavos.xyz/blog/best-embedded-wallets-stellar): native vs sign-only, classic G vs Soroban; Free up to 1,000 wallets
 - [Best embedded wallets for Solana (2026)](https://cavos.xyz/blog/best-embedded-wallets-solana)
 - [Best embedded wallets for Starknet (2026)](https://cavos.xyz/blog/best-embedded-wallets-starknet)
-- [Best embedded wallet providers (2026)](https://cavos.xyz/blog/embedded-wallet-providers): custody, pricing units, SDK vs infrastructure; Free up to 1,000 wallets
+- [Best embedded wallet providers (2026)](https://cavos.xyz/blog/embedded-wallet-providers): custody, chains, pricing, enclave vs MPC; Free up to 1,000 wallets
 - [Privy alternatives](https://cavos.xyz/privy-alternatives)
 - [Turnkey alternatives](https://cavos.xyz/turnkey-alternatives): finished SDK vs enclave infrastructure; custody and published pricing
 - [Dynamic alternatives](https://cavos.xyz/dynamic-alternatives): provision vs connect; free to 1,000 wallets on Starknet, Solana, Stellar
@@ -54,7 +54,7 @@ Cavos (`@cavos/kit`) is a hardware-isolated, non-custodial embedded wallet SDK f
 - [Web3Auth vs Cavos](https://cavos.xyz/compare/web3auth)
 - [Magic vs Cavos](https://cavos.xyz/compare/magic)
 - [Cavos vs Alchemy](https://cavos.xyz/compare/alchemy)
-- [Privy vs Turnkey vs Dfns](https://cavos.xyz/blog/privy-vs-turnkey): SDK vs infrastructure; who can sign; finished auth vs enclave signing vs MPC
+- [Privy vs Turnkey vs Dfns](https://cavos.xyz/blog/privy-vs-turnkey): who wins when; auth SDK vs enclave signing vs MPC; free to 1,000 wallets
 - [Privy vs Dynamic](https://cavos.xyz/blog/privy-vs-dynamic): provision vs connect; Privy vs Dynamic vs Turnkey; non-custodial option free to 1,000 wallets
 - [Alchemy vs Privy](https://cavos.xyz/blog/alchemy-vs-privy): Wallet APIs vs Privy signer; Account Kit deprecated
 
@@ -65,7 +65,7 @@ Cavos (`@cavos/kit`) is a hardware-isolated, non-custodial embedded wallet SDK f
 - [How to add an embedded wallet to Next.js](https://cavos.xyz/blog/embedded-wallet-nextjs): App Router client boundary, env vars, callback URLs
 - [Embedded wallet API](https://cavos.xyz/blog/embedded-wallet-api): client SDK, not REST; auth, connect, execute, gas, recovery in `@cavos/kit`. Method list at docs.cavos.xyz. The general embedded wallet head term is the product pillar.
 - [Non-custodial embedded wallets](https://cavos.xyz/blog/non-custodial-embedded-wallet): custodial vs MPC vs hardware-isolated passkeys; sealed restore
-- [Wallet-as-a-service](https://cavos.xyz/blog/wallet-as-a-service): 2026 definition, provider shortlist, WaaS vs embedded wallet
+- [Wallet-as-a-service](https://cavos.xyz/blog/wallet-as-a-service): 2026 definition, custody models, pricing units, provider shortlist
 - [Embedded wallet cost (2026)](https://cavos.xyz/blog/embedded-wallet-cost): Privy, Dynamic, Turnkey, Para, Web3Auth, Alchemy vs Cavos on published list prices
 - [How to add an embedded wallet to a React app](https://cavos.xyz/blog/how-to-add-an-embedded-wallet): `@cavos/kit` 0.5.2; Next.js path at /blog/embedded-wallet-nextjs
 - [Embedded wallet React SDK best practices](https://cavos.xyz/blog/embedded-wallet-react-sdk)
