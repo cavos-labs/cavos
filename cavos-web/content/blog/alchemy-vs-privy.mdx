@@ -1,8 +1,8 @@
 ---
 title: "Alchemy vs Privy (2026): APIs vs Signer"
 date: "2026-10-27"
-updated: "2026-11-06"
-excerpt: "Alchemy vs Privy in 2026: Account Kit is deprecated. Wallet APIs plus a signer, not an SDK swap. Non-custodial option free to 1,000 wallets."
+updated: "2026-11-07"
+excerpt: "Alchemy vs Privy in 2026: Account Kit is deprecated. Wallet APIs plus a Privy signer, not an SDK swap. Non-custodial, free to 1,000 wallets."
 category: "Guide"
 ogQuote: "Alchemy vs Privy is a transaction layer versus a signer, not an SDK swap."
 slug: "alchemy-vs-privy"
@@ -34,6 +34,17 @@ faq:
 An [embedded wallet](/embedded-wallet) lives inside your application. **Alchemy vs Privy** is a common question in that category, and it is easy to treat them as two SDKs with different logos. They are not. Alchemy’s wallet offering is a transaction layer after Account Kit’s deprecation. Privy is a finished auth and wallet product, and Alchemy’s own docs recommend it as the signer.
 
 This guide is Alchemy vs Privy, not a Privy alternatives shortlist. For Privy alternatives, start at [Privy alternatives](/privy-alternatives). Cavos, LLC is a software and SaaS company. Positioning for Cavos comes after the table is fair. If the honest answer is Alchemy Wallet APIs plus Privy, that is the answer. One-to-one pages live at [Cavos vs Alchemy](/compare/alchemy) and [Cavos vs Privy](/compare/privy). Sibling shortlists: [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), [Magic alternatives](/magic-alternatives).
+
+## Decision: Account Kit, Wallet APIs, or Privy
+
+Alchemy vs Privy is **Alchemy Wallet APIs versus a Privy signer**, not two interchangeable embedded-wallet SDKs.
+
+- **Alchemy Account Kit** (v4), including embedded wallets, the Alchemy Signer, and key management, is **deprecated**. New sign-ups have been off since 18 June 2026.
+- **Alchemy Wallet APIs** are the supported successor: a signer-agnostic transaction layer for gas sponsorship, batching, retries, and EIP-7702. You bring login and keys.
+- **Privy** is the recommended signer and auth SDK: unified login, an in-app wallet, and connectors. Shamir 2-of-2 reconstituted in AWS Nitro Enclaves. Alchemy's own docs put Privy in that seat.
+- **Cavos** is not a Privy swap and not an Alchemy transaction layer. It is a hardware-isolated, non-custodial [embedded wallet](/embedded-wallet) on Starknet, Solana, and Stellar, free to 1,000 wallets. Signing happens on the device.
+
+If you were comparing Account Kit to Privy as two React wallet SDKs, stop. Account Kit is gone. The live fork is Wallet APIs plus a signer, or a finished SDK such as Privy on its own.
 
 ## Product scope
 
