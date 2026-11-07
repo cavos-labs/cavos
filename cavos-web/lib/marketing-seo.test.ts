@@ -2804,11 +2804,26 @@ describe('marketing SEO', () => {
     assert.match(source, /audited OpenZeppelin AccountUpgradeable/)
     assert.match(source, /device-native/)
     assert.match(source, /Cavos, LLC/)
+    assert.match(source, /^updated: "2026-11-07"$/m)
+    assert.match(source, /## Who this is for/)
+    assert.match(source, /hardware-isolated, non-custodial/)
+    assert.match(source, /Signing always happens on the user['’]s device/)
+    assert.match(source, /cannot decrypt/)
+    assert.match(source, /Free up to 1,000 wallets/)
+    assert.match(source, /Where does signing happen in a Cavos embedded wallet\?/)
+    assert.match(source, /When does a browser extension still win over an embedded wallet\?/)
     assert.doesNotMatch(source, /audited Cavos/)
     assert.doesNotMatch(source, /Cavos custom account/)
     assert.match(source, /does not ship its own account implementation/)
     assert.doesNotMatch(source, /category:\s*"Release"/)
     assert.doesNotMatch(source, /robots:\s*noindex/)
+    assert.doesNotMatch(source, /—|trustless|impossible/i)
+    const extensionExcerpt = source.match(/^excerpt:\s*"(.*)"$/m)
+    assert.ok(extensionExcerpt)
+    assert.ok(
+      extensionExcerpt[1].length >= 140 && extensionExcerpt[1].length <= 160,
+      extensionExcerpt[1].length,
+    )
     assert.equal(EMBEDDED_WALLET_VS_EXTENSION_PATH, '/blog/embedded-wallet-vs-browser-extension')
     assert.equal(
       EMBEDDED_WALLET_VS_EXTENSION_TITLE,
@@ -2980,8 +2995,17 @@ describe('marketing SEO', () => {
     assert.match(source, /\]\(\/blog\/how-to-add-an-embedded-wallet\)/)
     assert.match(source, /\]\(\/pricing\)/)
     assert.match(source, /docs\.cavos\.xyz\/docs\/starknet/)
-    assert.match(source, /@cavos\/kit` 0\.4\.4/)
-    assert.match(source, /npm install @cavos\/kit/)
+    assert.match(source, /@cavos\/kit` 0\.5\.2/)
+    assert.match(source, /npm install @cavos\/kit@\^0\.5\.2/)
+    assert.match(source, /^updated: "2026-11-07"$/m)
+    assert.match(source, /## Who this is for/)
+    assert.match(source, /Gas Sponsorship in Any Token/)
+    assert.match(source, /hardware-isolated and non-custodial/)
+    assert.match(source, /Signing always happens on the user['’]s device/)
+    assert.match(source, /cannot decrypt/)
+    assert.match(source, /oauth\.telegram\.org/)
+    assert.match(source, /not a Telegram Mini App|not a Mini App/)
+    assert.match(source, /Free up to 1,000 wallets/)
     assert.match(source, /login\("google"\)/)
     assert.match(source, /sendOtp/)
     assert.match(source, /verifyOtp/)
@@ -3005,6 +3029,13 @@ describe('marketing SEO', () => {
     assert.doesNotMatch(source, /Horizon signer/)
     assert.doesNotMatch(source, /category:\s*"Release"/)
     assert.doesNotMatch(source, /This device must be approved first/)
+    assert.doesNotMatch(source, /—|trustless|impossible/i)
+    const gaslessExcerpt = source.match(/^excerpt:\s*"(.*)"$/m)
+    assert.ok(gaslessExcerpt)
+    assert.ok(
+      gaslessExcerpt[1].length >= 140 && gaslessExcerpt[1].length <= 160,
+      gaslessExcerpt[1].length,
+    )
     assert.equal(
       GASLESS_STARKNET_TRANSACTIONS_PATH,
       '/blog/gasless-starknet-transactions',

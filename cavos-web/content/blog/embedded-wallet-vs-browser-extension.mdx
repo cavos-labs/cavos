@@ -1,8 +1,8 @@
 ---
 title: "Embedded Wallet vs Browser Extension: Where to Sign"
-updated: "2026-11-01"
+updated: "2026-11-07"
 date: "2026-10-14"
-excerpt: "When users should sign in an embedded wallet versus a browser extension: UX, custody, recovery, gas, and how to migrate an extension-first product."
+excerpt: "Sign in-app for new users, keep MetaMask when they already have a wallet. Embedded vs extension: custody, recovery, gas, and when the extension wins."
 category: "Guide"
 ogQuote: "If the honest answer is to keep the extension, that is the answer."
 slug: "embedded-wallet-vs-browser-extension"
@@ -18,7 +18,11 @@ faq:
   - question: "How do users recover an embedded wallet compared with an extension seed phrase?"
     answer: "An extension recovers from a 12- or 24-word seed the user stored. Anyone with that seed can spend. An embedded wallet recovers by restoring the device key material: another signed-in device, a passkey that unwraps a MasterDEK, or a vendor-defined social or cloud path. There is usually no seed to export. Recovery has to be enrolled before every device is gone."
   - question: "Does Cavos connect MetaMask or other browser extensions?"
-    answer: "No. Cavos, LLC is a software and SaaS company whose main product is a device-native, self-custodial embedded wallet. It provisions on-chain accounts on Starknet, Solana, and Stellar. It does not inject into window.ethereum or speak WalletConnect. If connecting an existing extension is a requirement, a connection-focused provider is the better fit."
+    answer: "No. Cavos, LLC is a software and SaaS company whose main product is a hardware-isolated, non-custodial embedded wallet. It provisions on-chain accounts on Starknet, Solana, and Stellar. Signing always happens on the user's device. Cavos cannot see the key, sign with it, decrypt it, or move funds. It does not inject into window.ethereum or speak WalletConnect. If connecting an existing extension is a requirement, a connection-focused provider is the better fit."
+  - question: "Where does signing happen in a Cavos embedded wallet?"
+    answer: "Always on the user's device. Cavos is hardware-isolated and non-custodial. The signing key is derived and used on the device. Keys never leave the device in plaintext. Cavos cannot see the key, sign with it, decrypt it, or move funds. Login selects which user this is; it never authorizes a spend. A browser extension also signs on the user's machine, but in a popup your product does not render."
+  - question: "When does a browser extension still win over an embedded wallet?"
+    answer: "When users already hold wallets you must connect, need the same address across many sites, or must bring an existing seed. Cavos does not inject into window.ethereum or speak WalletConnect. Pair an embedded SDK with a connector, or pick a vendor whose product is that combination."
 ---
 
 An [embedded wallet](/embedded-wallet) lives inside your application. A browser extension wallet lives in a separate program the user installed: MetaMask, Rabby, Phantom, Freighter, Argent X, Braavos. The product question is not which UI looks modern. It is **where the user signs**, who holds the key, and what happens when the phone is gone.
@@ -26,6 +30,18 @@ An [embedded wallet](/embedded-wallet) lives inside your application. A browser 
 This guide is the developer comparison for that fork: embedded wallet vs extension, browser extension wallet vs embedded wallet, and when to use an embedded wallet. It stays on UX, custody, recovery, gas, multi-device, and migration. The [embedded wallet](/embedded-wallet) page defines the category and how to choose an SDK. The [React integration guide](/blog/how-to-add-an-embedded-wallet) is the install path once you have already chosen embedded.
 
 Cavos, LLC is a software and SaaS company. The wallet is the main product. Positioning for Cavos comes after the comparison is fair. If the honest answer is “keep the extension,” that is the answer.
+
+## Who this is for
+
+**This page answers where users should sign.** If they have never used crypto, sign in the product. If they already hold a wallet you must connect, keep the browser extension.
+
+**Use an embedded wallet** when the user should never see a wallet picker: consumer apps, games, and products that look like normal SaaS. Login (Google, Apple, or email) selects the user. The SDK looks up or creates an on-chain account. Approval happens in your UI. There is no install and no seed phrase in the happy path.
+
+**Keep a browser extension** (MetaMask, Rabby, Phantom, Freighter, Argent X, Braavos) when users already have wallets, must bring an existing address, or expect the same account across many sites. Your app requests access through an injected provider. You do not create the account. Recovery is the seed the user stored. Anyone with that seed can spend.
+
+**Cavos** is the embedded path, not a connector. Signing always happens on the user’s device. Custody is hardware-isolated and non-custodial. Keys never leave the device in plaintext. Cavos cannot see the key, sign with it, decrypt it, or move funds. Cavos does not connect MetaMask or WalletConnect. If connecting an existing extension is the requirement, stop here and use a connection-focused provider.
+
+The table below is the model. Positioning for Cavos comes after that comparison is fair. [Pricing](/pricing) is Free up to 1,000 wallets, Essential at $59 per month, and Complete at $139 per month.
 
 ## Two different products, one word: wallet
 
@@ -172,13 +188,13 @@ The [compare](/compare) index is the place to pick a vendor once the model is ch
 
 Cavos is an [embedded wallet](/embedded-wallet), not an extension, and not a connector.
 
-Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds. Login produces a stable identity for a registry lookup; it never signs a transaction. There is no MPC. There is no hosted spend key. Device-native self-custody is the product, not a mode.
+Signing always happens on the user’s device. Keys never leave the device in plaintext. Cavos is hardware-isolated and non-custodial: it cannot see the key, sign with it, decrypt it, or move funds. Login produces a stable identity for a registry lookup; it never signs a transaction. There is no MPC. There is no hosted spend key. Device-native self-custody is the product, not a mode.
 
 On Starknet the on-chain account is an **audited OpenZeppelin AccountUpgradeable** v3.0.0, controlled by one stark key derived from the wallet’s MasterDEK and app salt. Cavos does not ship its own account implementation, and there is no on-chain device-signer list. A new device restores the MasterDEK off-chain; it does not `add_signer`. Execution is paymaster-sponsored; connect does not deploy, the first execute deploys and runs atomically.
 
 Solana and Stellar are native adapters, not EVM compatibility. Solana provisions a native Ed25519 system account; a relayer co-signs as fee payer. Stellar provisions a classic G… account so existing tools already understand the address; the relayer can sponsor reserves and fee-bumps. Both restore the same MasterDEK on a new device rather than adding a second on-chain signer. Cavos is not an EVM-wide wallet layer. If the product is EVM-first, other vendors cover ground this one does not.
 
-Recovery is passkey restore and opt-in hardware-isolated social recovery (an AWS Nitro Enclave that can only unwrap a MasterDEK, off by default). The docs call that path non-custodial, and not trustless. Enroll it before the phone is gone. Kit details (`CavosProvider`, `connect`, `execute`, chain switching) live in the [React guide](/blog/how-to-add-an-embedded-wallet) and in the [Cavos docs](https://docs.cavos.xyz/docs/quickstart). This article does not repeat the install.
+Recovery is passkey restore and opt-in hardware-isolated social recovery (an AWS Nitro Enclave that can only unwrap a MasterDEK, off by default). The passkey and the enclave only hold an encrypted copy of the MasterDEK for sealed restore; they cannot sign, and Cavos cannot decrypt that copy. Enroll it before the phone is gone. Kit details (`CavosProvider`, `connect`, `execute`, chain switching) live in the [React guide](/blog/how-to-add-an-embedded-wallet) and in the [Cavos docs](https://docs.cavos.xyz/docs/quickstart). This article does not repeat the install.
 
 Cavos does not inject into `window.ethereum` and does not speak WalletConnect. If the requirement is “connect the wallet they already have,” stop here and use a connection-focused provider, alone or beside an embedded SDK. The connector-plus-embedded shortlist is on [Dynamic alternatives](/dynamic-alternatives); Magic’s replacement list is [Magic alternatives](/magic-alternatives).
 
