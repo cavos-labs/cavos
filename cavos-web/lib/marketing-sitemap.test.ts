@@ -356,7 +356,7 @@ Hello
     )
     assert.ok(stellarTutorial)
     assert.equal(
-      stellarTutorial.lastModified.toISOString().startsWith('2026-11-06'),
+      stellarTutorial.lastModified.toISOString().startsWith('2026-11-07'),
       true,
     )
 
@@ -368,7 +368,7 @@ Hello
     )
     assert.ok(reactSdk)
     assert.ok(alchemyVsPrivy)
-    assert.equal(reactSdk.lastModified.toISOString().startsWith('2026-10-31'), true)
+    assert.equal(reactSdk.lastModified.toISOString().startsWith('2026-11-07'), true)
     assert.equal(
       alchemyVsPrivy.lastModified.toISOString().startsWith('2026-11-07'),
       true,
@@ -394,7 +394,7 @@ Hello
     assert.ok(stellarBest)
     assert.ok(solanaBest)
     assert.ok(starknetBest)
-    assert.equal(cost.lastModified.toISOString().startsWith('2026-11-04'), true)
+    assert.equal(cost.lastModified.toISOString().startsWith('2026-11-07'), true)
     assert.equal(api.lastModified.toISOString().startsWith('2026-11-07'), true)
     assert.equal(
       stellarBest.lastModified.toISOString().startsWith('2026-11-07'),
