@@ -1,8 +1,8 @@
 ---
 title: "Privy vs Dynamic (2026): Provision vs Connect"
 date: "2026-11-03"
-updated: "2026-11-06"
-excerpt: "Privy vs Dynamic vs Turnkey for embedded wallets in 2026: provision vs connect, TEE vs TSS-MPC, published pricing. Non-custodial, free to 1,000 wallets."
+updated: "2026-11-07"
+excerpt: "Privy vs Dynamic vs Turnkey for embedded wallets in 2026: provision vs connect, not build vs buy. Non-custodial option free to 1,000 wallets."
 category: "Guide"
 ogQuote: "One provisions an in-app wallet. The other also connects wallets users already hold."
 slug: "privy-vs-dynamic"
@@ -39,6 +39,17 @@ faq:
 An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain account they can pay, receive, and sign with. **Privy vs Dynamic** is a product-shape question, not a layer question: both ship login and an in-app wallet. The fork is **provision versus connect**. Teams also type **Privy vs Dynamic vs Turnkey for embedded wallets**. Turnkey sits on a different layer. This guide is the two-way, with a short three-way note.
 
 Cavos, LLC is a software and SaaS company. Positioning for Cavos comes after the table is fair. If the honest answer is Privy or Dynamic, that is the answer. This post is Privy vs Dynamic, not Cavos vs Dynamic. The one-to-one with Cavos is [Cavos vs Dynamic](/compare/dynamic) and [Cavos vs Privy](/compare/privy). The replacement lists are [Privy alternatives](/privy-alternatives) and [Dynamic alternatives](/dynamic-alternatives). Alchemy vs Privy is a different fork: Wallet APIs plus a recommended signer, that comparison is [Alchemy vs Privy](/blog/alchemy-vs-privy). Privy vs Turnkey is build-versus-buy, that write-up is [Privy vs Turnkey](/blog/privy-vs-turnkey). The multi-vendor listicle is [embedded wallet providers](/blog/embedded-wallet-providers).
+
+## Decision: Privy vs Dynamic vs Turnkey
+
+**Privy vs Dynamic** is provision versus connect. **Privy vs Dynamic vs Turnkey** adds a layer question: two finished SDKs versus signing infrastructure.
+
+- **Choose Privy** when login should mint an in-app wallet, with connectors available, especially on EVM managed send.
+- **Choose Dynamic** when connecting wallets users already hold is first-class, with a TSS-MPC embedded fallback.
+- **Choose Turnkey** when you are buying keys, policy, and a signature, then assembling the wallet yourself. That write-up is [Privy vs Turnkey](/blog/privy-vs-turnkey).
+- **Choose neither** when the chain is Starknet, Solana, or Stellar and the review requires a hardware-isolated, non-custodial device key. Cavos signs on the device, cannot reconstruct a signing key, and is free to 1,000 wallets. See [pricing](/pricing).
+
+The tables below are the evidence. If the honest answer is Privy or Dynamic, that is the answer.
 
 ## Privy vs Dynamic at a glance
 
@@ -356,7 +367,7 @@ On Starknet the on-chain account is an **audited OpenZeppelin account contract**
 
 Solana and Stellar are native adapters, not EVM compatibility. Solana provisions a native Ed25519 system account; a relayer co-signs as fee payer. Stellar provisions a classic G… account so existing tools already understand the address; the relayer can sponsor reserves and fee-bumps. Both restore the same MasterDEK on a new device rather than adding a second on-chain signer.
 
-Auth is hosted Google, Apple, or email, or an identity you pass in from your own stack. The React path is `@cavos/kit`; mobile is `@cavos/kit/react-native`. The current kit release is [Cavos Kit 0.5.0](/blog/cavos-kit-0-5-0). [Pricing](/pricing) publishes the free 1,000 wallet creates, Essential at $59/mo, and Complete at $139/mo.
+Auth is hosted Google, Apple, or email, or an identity you pass in from your own stack. The React path is `@cavos/kit`; mobile is `@cavos/kit/react-native`. The current kit release is [Cavos Kit 0.5.2](/blog/cavos-kit-0-5-2). The open-source recovery enclave shipped in [Cavos Kit 0.5.0](/blog/cavos-kit-0-5-0). [Pricing](/pricing) publishes the free 1,000 wallet creates, Essential at $59/mo, and Complete at $139/mo.
 
 **Choose Cavos** when the user should never see a wallet picker, the chain is Starknet, Solana, or Stellar, and the review requires that the vendor cannot reconstruct a signing key.
 

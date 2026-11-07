@@ -1,31 +1,45 @@
 ---
 title: "How to Add an Embedded Wallet to a React App"
 date: "2026-10-12"
-excerpt: "Install @cavos/kit, wrap CavosProvider, sign in, and send a sponsored transaction with a self-custodial embedded wallet on Starknet, Solana, or Stellar."
+excerpt: "Install @cavos/kit 0.5.2, wrap CavosProvider, sign in, send a sponsored transaction. Self-custodial on Starknet, Solana, or Stellar. Next.js guide linked."
 category: "Guide"
 ogQuote: "One package. Sign in, connect, execute. No second library."
 slug: "how-to-add-an-embedded-wallet"
-updated: "2026-11-06"
+updated: "2026-11-07"
 faq:
   - question: "What is an embedded wallet SDK?"
     answer: "An embedded wallet SDK is the library that provisions a wallet inside your application and signs from the user’s device. It is not a wallet app or a browser extension the user installs. Cavos ships that SDK as @cavos/kit for React and @cavos/kit/react-native for mobile."
   - question: "What is a self-custodial embedded wallet?"
     answer: "A self-custodial embedded wallet is one the provider cannot spend from. In Cavos the signing key is created and used on the user’s device. Cavos cannot see it, sign with it, or move funds. Login selects which user this is; it never authorizes a spend by itself."
   - question: "How is an embedded wallet different from MPC?"
-    answer: "Embedded describes where the wallet appears. MPC is a key-management design that splits a private key into shares and reconstructs or jointly computes a signature. Cavos does not use MPC. Device-native keys sign; the on-chain account lists those public keys as authorized signers."
+    answer: "Embedded describes where the wallet appears. MPC is a key-management design that splits a private key into shares and reconstructs or jointly computes a signature. Cavos does not use MPC. Signing keys are created and used on the user’s device. On Starknet that key controls an audited OpenZeppelin account contract. There is no on-chain device-signer list."
   - question: "Which chains does Cavos support for an embedded wallet?"
-    answer: "Cavos currently ships native adapters for Starknet, Solana, and Stellar. It is not an EVM-wide wallet layer. Each adapter uses that chain’s account model, signatures, and fee path."
+    answer: "Cavos currently ships native adapters for Starknet, Solana, and Stellar. It is not an EVM-wide wallet layer. Each adapter uses that chain’s account model, signatures, and fee path. Chain pages: embedded Starknet wallet, embedded Solana wallet, embedded Stellar wallet."
   - question: "Does connect deploy the account?"
     answer: "No. Connect derives addresses and checks deployment status but never deploys Starknet or Stellar. The first execute deploys the account and runs the user’s operation atomically in a single sponsored transaction. Native Solana is ready once this device has the spend key."
+  - question: "How do I add an embedded wallet to Next.js?"
+    answer: "The React guide is the generic install. The Next.js App Router path is how to add an embedded wallet to Next.js: a use client CavosProvider, env vars, callback URLs, and vault origins. Server Components cannot hold the device key. Use @cavos/kit 0.5.2."
+  - question: "Which @cavos/kit version should I install?"
+    answer: "Install @cavos/kit 0.5.2 (npm install @cavos/kit@^0.5.2). Telegram sign-in needs 0.5.2. Kits 0.5.0 and 0.5.1 still work for Google, Apple, email, and GitHub against the current enclave. 0.4.x does not."
 ---
 
 An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain account they can pay, receive, and sign with, no browser extension, no seed phrase, no trip to another app.
 
-This guide is the React path for that model using `@cavos/kit` 0.5.1. The Next.js App Router path is [how to add an embedded wallet to Next.js](/blog/embedded-wallet-nextjs). It follows the same contract as the [Cavos quickstart](https://docs.cavos.xyz/docs/quickstart): authenticate, connect, then execute. You will install the kit, create an App ID, wrap the tree in `CavosProvider`, sign the user in, send a first sponsored transaction, and understand how gas sponsorship differs per chain. Best practices for embedding a wallet SDK (key custody, passkeys, Gas Sponsorship in Any Token, error handling, and testnet) live in the [embedded wallet React SDK](/blog/embedded-wallet-react-sdk) guide. The [embedded wallet API](/blog/embedded-wallet-api) guide is the surface map (auth, connect, execute, gas, recovery) before the first install. The [non-custodial guide](/blog/non-custodial-embedded-wallet) is the custody test.
+This guide is the React path for that model using `@cavos/kit` 0.5.2. The Next.js App Router path is [how to add an embedded wallet to Next.js](/blog/embedded-wallet-nextjs). It follows the same contract as the [Cavos quickstart](https://docs.cavos.xyz/docs/quickstart): authenticate, connect, then execute. You will install the kit, create an App ID, wrap the tree in `CavosProvider`, sign the user in, send a first sponsored transaction, and understand how gas sponsorship differs per chain. Best practices for embedding a wallet SDK (key custody, passkeys, Gas Sponsorship in Any Token, error handling, and testnet) live in the [embedded wallet React SDK](/blog/embedded-wallet-react-sdk) guide. The [embedded wallet API](/blog/embedded-wallet-api) guide is the surface map (auth, connect, execute, gas, recovery) before the first install. The [non-custodial guide](/blog/non-custodial-embedded-wallet) is the custody test.
 
 Cavos, LLC is a software and SaaS company. The wallet is the main product: a device-native, self-custodial embedded wallet. Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds. Adapters ship today for [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), and [Stellar](/embedded-stellar-wallet).
 
 If you are still choosing a provider, the full product and SDK page is [embedded wallet](/embedded-wallet), then the [compare pages](/compare). Named-vendor shortlists: [Privy alternatives](/privy-alternatives), [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), and [Magic alternatives](/magic-alternatives). For platform parts, pricing models, and build versus buy, read [wallet as a service](/blog/wallet-as-a-service). [Pricing](/pricing) publishes Cavos fees; other vendors set theirs independently.
+
+## What you will do
+
+1. Install `@cavos/kit` 0.5.2. Numbered section 1.
+2. Create an app in the Cavos dashboard and copy the App ID. Numbered section 2.
+3. Wrap the tree in `CavosProvider`. Numbered section 3. Next.js App Router: keep that provider in a `'use client'` module; see [how to add an embedded wallet to Next.js](/blog/embedded-wallet-nextjs).
+4. Sign the user in. Connect returns an address. It never deploys Starknet or Stellar. Numbered section 4.
+5. Send the first sponsored transaction. On Starknet and Stellar, the first `execute` deploys and runs atomically. Numbered section 5.
+
+Chain-specific account models live on the product pages: [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), [Stellar](/embedded-stellar-wallet). Stellar-only install: [how to add an embedded Stellar wallet](/blog/stellar-embedded-wallet-tutorial). Starknet paymaster path: [how to send gasless Starknet transactions](/blog/gasless-starknet-transactions).
 
 ## What you are installing
 
@@ -38,10 +52,10 @@ The label does not decide custody. Some embedded wallet SDKs hold a key, split o
 ## 1. Install @cavos/kit
 
 ```bash
-npm install @cavos/kit
+npm install @cavos/kit@^0.5.2
 ```
 
-The React bindings live on the same package, under `@cavos/kit/react`. You do not install a second library.
+The React bindings live on the same package, under `@cavos/kit/react`. You do not install a second library. Telegram as a hosted login needs 0.5.2; see [Sign in with Telegram (Kit 0.5.2)](/blog/cavos-kit-0-5-2). Kits 0.5.0 and 0.5.1 still work for Google, Apple, email, and GitHub against the current enclave. 0.4.x breaks email sign-in against that enclave.
 
 ## 2. Create an app and copy the App ID
 
@@ -100,7 +114,7 @@ function Wallet() {
 }
 ```
 
-`openModal()` opens the hosted flow. `login("google")` and `login("apple")` start OAuth. `sendOtp(email)` / `verifyOtp(email, code)` and `sendMagicLink(email)` cover email. On the enclave (`deviceApproval: "enclave"`, the default with `socialRecovery`) the modal uses a magic link: an email OTP yields no token the recovery enclave accepts.
+`openModal()` opens the hosted flow. `login("google")` and `login("apple")` start OAuth. `sendOtp(email)` / `verifyOtp(email, code)` cover email (9-character code). On the enclave (`deviceApproval: "enclave"`, the default with `socialRecovery`) the modal uses a magic link: an email OTP yields no token the recovery enclave accepts. GitHub (since 0.5.0) and Telegram (0.5.2) are optional web-only providers: add them to `modal.providers`, or call `login("github")` / `login("telegram")`. Neither is available in React Native.
 
 Authentication exists for one reason: to produce a stable `userId` (plus optional email) that the Cavos registry keys on. **The login never signs transactions.** That is always the device key.
 
@@ -134,7 +148,7 @@ if (wallet?.status === "needs-device-approval") {
 }
 
 if (wallet?.chain === "solana") {
-  const txHash = await wallet.execute(1_000_000n, destinationAddress); // lamports
+  const txHash = await wallet.execute(1_000_000n, destinationAddress, { fee: "sponsored" }); // lamports
 } else if (wallet?.chain === "stellar") {
   const txHash = await wallet.execute(1_000_000n, destinationAddress); // stroops
 }
@@ -170,7 +184,7 @@ Users should not need a native token to start. Sponsorship is chain-specific, no
 | Adapter | Required configuration | Sponsored execution |
 |---|---|---|
 | **Starknet** | App ID, network, app salt, identity, `paymasterApiKey` | Paymaster sponsors deploy and execute. |
-| **Solana** | App ID, network, app salt, identity | Hosted relayer becomes fee payer; arbitrary programs are allowlisted per app. |
+| **Solana** | App ID, network, app salt, identity | The account pays its own fee by default. Pass `fee: "sponsored"` so the hosted relayer is fee payer; arbitrary programs are allowlisted per app. |
 | **Stellar** | App ID, network, app salt, identity | Hosted relayer can sponsor reserves and fee-bump submission. |
 
 Add `paymasterApiKey` only when Starknet is in `chains`. A paymaster key on a chain that ignores it is a config error; the provider reports that in development.
