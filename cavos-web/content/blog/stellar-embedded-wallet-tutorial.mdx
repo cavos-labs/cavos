@@ -1,20 +1,26 @@
 ---
 title: "How to Set Up a Stellar Wallet in Your App (2026)"
 date: "2026-10-18"
-updated: "2026-11-06"
-excerpt: "How to set up and create a Stellar wallet in-app: install @cavos/kit, sign in, and send a sponsored G… payment, React, iOS, and Android, no Freighter."
+updated: "2026-11-07"
+excerpt: "How to set up a Stellar wallet in your app: @cavos/kit 0.5.2, sign in, G… before Horizon, first sponsored execute. No Freighter or seed."
 category: "Guide"
 ogQuote: "Users never install Freighter, paste a seed, or leave your UI."
 slug: "stellar-embedded-wallet-tutorial"
 faq:
   - question: "How do I set up a Stellar wallet in my app in 2026?"
     answer: 'Install @cavos/kit 0.5.2, create an App ID, wrap the tree in CavosProvider with chains: ["stellar"], sign the user in, then run the first sponsored execute. Connect returns a G… before Horizon has the account. Users never install Freighter. The Stellar embedded wallet page is the account model. Pricing lists the free 1,000 wallet creates. Best embedded wallets for Stellar is the provider shortlist.'
+  - question: "Who is this Stellar wallet setup guide for?"
+    answer: 'App developers who need to set up a Stellar wallet inside a product: React, Next.js, and React Native (Expo Development Build, EAS, or bare; not Expo Go). Android API 28+ and iOS 16+. It is not a consumer Stellar wallet from an app store. Users never install Freighter or paste a seed. Signing stays on the device. Keys never leave the device in plaintext.'
+  - question: "When should I embed a Stellar G account instead of connecting Freighter?"
+    answer: 'Embed a classic G… when users should never install Freighter, paste a seed, or leave your UI: consumer apps, games, and checkout. Connect Freighter when the user already holds a Stellar address you must use. Cavos provisions a G… from login. It does not connect an existing extension. This guide is the embed path.'
   - question: "How do I set up a Stellar wallet as a developer?"
-    answer: 'Install @cavos/kit, create an App ID, wrap the tree in CavosProvider with chains: ["stellar"], and sign the user in with Google, Apple, or an enclave-verified email code. Connect returns a G… address before the account exists on-chain. The first execute creates the account (sponsored, 0 XLM cost to the user) and runs the payment. That is how to set up and create a Stellar wallet inside your app, not a Freighter connect flow.'
+    answer: 'Install @cavos/kit 0.5.2, create an App ID, wrap the tree in CavosProvider with chains: ["stellar"], and sign the user in with Google, Apple, or an enclave-verified email code. Connect returns a G… address before the account exists on-chain. The first execute creates the account (sponsored, 0 XLM cost to the user) and runs the payment. That is how to set up and create a Stellar wallet inside your app, not a Freighter connect flow.'
   - question: "How do I create a Stellar wallet for users without Freighter?"
-    answer: 'Install @cavos/kit, create an App ID, wrap the tree in CavosProvider with chains: ["stellar"], and sign the user in with Google, Apple, or an enclave-verified email code. Connect returns a G… address before the account exists on-chain. The first execute creates the account (sponsored, 0 XLM cost to the user) and runs the payment. Users do not install Freighter or paste a seed.'
+    answer: 'Install @cavos/kit 0.5.2, create an App ID, wrap the tree in CavosProvider with chains: ["stellar"], and sign the user in with Google, Apple, or an enclave-verified email code. Connect returns a G… address before the account exists on-chain. The first execute creates the account (sponsored, 0 XLM cost to the user) and runs the payment. Users do not install Freighter or paste a seed.'
+  - question: "What does the first sponsored execute do?"
+    answer: 'Connect never creates the Horizon account. The first execute creates it (sponsored, 0 XLM cost to the user) as a 0-balance CreateAccount plus Cavos cv: data. Native XLM cannot ride that create, so a payment is a follow-up once the G… holds stroops. From the app both steps are one wallet.execute call. You never call CreateAccount yourself. The relayer sponsors reserves and fees (Gas Sponsorship in Any Token).'
   - question: "Can I create a Stellar wallet in an Android app?"
-    answer: 'Yes. Use @cavos/kit/react-native with an Expo Development Build, EAS, or bare React Native. Minimum Android is API 28 (Android 9); iOS 16 is the iOS floor. Expo Go is not supported. Email sign-in is not available on React Native yet; use Google or Apple. The native provider uses chain: "stellar" (singular). Register the exact redirectUri in Callback URLs.'
+    answer: 'Yes. Use @cavos/kit/react-native with an Expo Development Build, EAS, or bare React Native. Minimum Android is API 28 (Android 9); iOS 16 is the iOS floor. Expo Go is not supported. Email, Telegram, and GitHub are not available on React Native because that build cannot verify enclave attestation; use Google or Apple. The native provider uses chain: "stellar" (singular). Register the exact redirectUri in Callback URLs.'
   - question: "Does connect create the Stellar account?"
     answer: "No. Connect looks up (userId, appId, chain, network) in the registry and returns a G… address, or claims a new one. It never creates the on-chain account. An undeployed wallet already has that address. The first execute creates the account and runs the operation in a sponsored transaction. After that, status is ready."
   - question: "What is a sponsored Stellar account in Cavos?"
@@ -29,15 +35,43 @@ An [embedded wallet](/embedded-wallet) lives inside your application. The user s
 
 This guide is how to **set up a Stellar wallet** and **create a Stellar wallet** for users inside your product: an embedded, in-app wallet for developers, including mobile. It uses `@cavos/kit` 0.5.2. It is the how-to companion to the [Stellar embedded wallet](/embedded-stellar-wallet) page. The chain page is the account model. This post is the install: App ID, Google / Apple / email login, the `G…` address before the account exists, the first sponsored `execute`, `balance`, `signMessage`, and React Native notes for iOS and Android. GitHub (since 0.5.0) and Telegram are optional web-only logins; Telegram needs 0.5.2. See [Sign in with Telegram (Kit 0.5.2)](/blog/cavos-kit-0-5-2). The provider shortlist for this chain is [best embedded wallets for Stellar](/blog/best-embedded-wallets-stellar). The cross-chain React walkthrough is [how to add an embedded wallet](/blog/how-to-add-an-embedded-wallet).
 
-Cavos, LLC is a software and SaaS company. The wallet is the main product: a hardware-isolated, non-custodial embedded wallet. Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds. The Stellar adapter provisions a **classic `G…` account**, not a Soroban contract account and not a Freighter connect flow.
+Cavos, LLC is a software and SaaS company. The wallet is the main product: a hardware-isolated, non-custodial embedded wallet. Signing keys are created and used on the user’s device. Keys never leave the device in plaintext. Cavos cannot see them, sign with them, or move funds. The Stellar adapter provisions a **classic `G…` account**, not a Soroban contract account and not a Freighter connect flow.
 
 [Pricing](/pricing) publishes the free 1,000 wallet creates, Essential at $59/mo, and Complete at $139/mo.
+
+## Who this is for
+
+This guide is for **app developers** who need to **set up a Stellar wallet** inside a product. It is not a consumer Stellar Android or iOS wallet from an app store, and it is not a Freighter install walkthrough.
+
+Use this path when:
+
+- Users should never install Freighter, paste a seed, or leave your UI.
+- You want a classic `G…` that exchanges, anchors, and Horizon already understand, not a Soroban contract account.
+- The first on-chain step should be sponsored: Gas Sponsorship in Any Token, so the user locks no XLM to start.
+- You can wrap the tree in `CavosProvider` on React / Next.js, or `@cavos/kit/react-native` on an Expo Development Build, EAS, or bare React Native (Android API 28+, iOS 16+). Expo Go is not supported.
+
+Skip this path when the user already holds a Stellar address you must connect. Cavos provisions a `G…` from login. It does not speak Freighter or any other extension. The fork is the next section.
+
+## Embed a G account versus connect Freighter
+
+**Set up a Stellar wallet in your app** can mean two different products. Pick the one that matches who creates the account.
+
+| Decision | Embed a classic `G…` (this guide) | Connect Freighter |
+|----------|-----------------------------------|-------------------|
+| Who creates the account | Your app, from a login the user already has | The user, in an extension they installed |
+| Where they approve | Your UI | A Freighter popup you do not control |
+| What they install | Nothing beyond your product | Freighter (and often a seed backup) |
+| Address before Horizon | `connect` returns a `G…` while status is `undeployed` | The account already exists on-chain |
+| First on-chain step | Sponsored `execute` creates the account (0 XLM cost to the user) | You request an account that already has reserves |
+| Typical audience | People who should never see a wallet picker | People who already hold a Stellar wallet |
+
+Embed when the wallet is part of sign-up. Connect Freighter when the product is a dapp among dapps and the address must be one the user already has. The two models can coexist in a product, but not in this SDK: Cavos does the embed path only. The UX comparison is [embedded wallet vs browser extension](/blog/embedded-wallet-vs-browser-extension). Provider rows for this chain are [best embedded wallets for Stellar](/blog/best-embedded-wallets-stellar).
 
 ## How to set up and create a Stellar wallet
 
 This is the developer path, not a consumer Stellar Android wallet from an app store. Users never install Freighter, paste a seed, or leave your UI.
 
-1. Install `@cavos/kit` (React) or `@cavos/kit/react-native` (iOS 16+ / Android 9+). Numbered section 1.
+1. Install `@cavos/kit` 0.5.2 (React) or `@cavos/kit/react-native` (iOS 16+ / Android 9+). Numbered section 1.
 2. Create an app in the Cavos dashboard and copy the App ID. Numbered section 2.
 3. Wrap the tree in `CavosProvider` with `chains: ["stellar"]` (native `chain: "stellar"` on React Native). Numbered section 3.
 4. Sign the user in with Google, Apple, or email. Connect returns a classic `G…` before the Horizon account exists. Numbered section 4.
@@ -58,14 +92,14 @@ Custody is separate from that UX. Some embedded wallets hold a key, split one wi
 ## 1. Install @cavos/kit
 
 ```bash
-npm install @cavos/kit
+npm install @cavos/kit@^0.5.2
 ```
 
-The React bindings live on the same package, under `@cavos/kit/react`. You do not install a second library. Mobile uses `@cavos/kit/react-native`, covered in the React Native section below. Expo Go is not supported.
+The React bindings live on the same package, under `@cavos/kit/react`. You do not install a second library. Mobile uses `@cavos/kit/react-native`, covered in the React Native section below. Expo Go is not supported. Telegram as a hosted login needs 0.5.2; see [Sign in with Telegram (Kit 0.5.2)](/blog/cavos-kit-0-5-2). Kits 0.5.0 and 0.5.1 still work for Google, Apple, email, and GitHub against the current enclave. 0.4.x does not.
 
 ## 2. Create an app and copy the App ID
 
-Create an app in the [Cavos dashboard](https://cavos.xyz/dashboard) and copy its App ID. The kit reads it in the browser as `NEXT_PUBLIC_CAVOS_APP_ID`. On Stellar the App ID is what activates the gasless relayer: it sponsors reserves and fee-bumps so the user holds no XLM to start.
+Create an app in the [Cavos dashboard](https://cavos.xyz/dashboard) and copy its App ID. The kit reads it in the browser as `NEXT_PUBLIC_CAVOS_APP_ID`. On Stellar the App ID is what activates the gasless relayer: **Gas Sponsorship in Any Token**. The kit relayer sponsors reserves and fee-bumps so the user holds no XLM to start.
 
 Register every callback URL for the app in **Dashboard → App → Callback URLs**, one per line, matched exactly: scheme, host, path, no trailing slash, and no wildcards. OAuth rejects a `redirect_uri` that is not registered. Add tunnel or preview domains while developing; each one is a distinct origin.
 
@@ -145,9 +179,9 @@ await sendOtp(email);
 await verifyOtp(email, code); // 9 characters, lowercase letters and digits
 ```
 
-The Cavos recovery enclave, running in AWS Nitro, generates that code, mails it, and verifies it. A code expires after 5 minutes and allows 3 attempts. Email sign-in is not available on React Native yet; use Google or Apple there.
+The Cavos recovery enclave, running in AWS Nitro, generates that code, mails it, and verifies it. A code expires after 5 minutes and allows 3 attempts. Email, Telegram, and GitHub are not available on React Native because that build cannot verify enclave attestation; use Google or Apple there.
 
-GitHub (since 0.5.0) and Telegram are optional hosted logins on web. Telegram needs 0.5.2. Neither works on React Native: the native build cannot verify the enclave attestation those flows need, the same reason email is unavailable there. Default modal providers stay Google, Apple, and email. The Telegram install is [Sign in with Telegram (Kit 0.5.2)](/blog/cavos-kit-0-5-2).
+GitHub (since 0.5.0) and Telegram are optional hosted logins on web. Telegram needs 0.5.2. Telegram on web is optional OAuth via `oauth.telegram.org`, not a Telegram Mini App. Email, Telegram, and GitHub are not available on React Native because that build cannot verify enclave attestation; use Google or Apple there. Default modal providers stay Google, Apple, and email. The Telegram install is [Sign in with Telegram (Kit 0.5.2)](/blog/cavos-kit-0-5-2).
 
 When you connect, the kit looks up the address:
 
@@ -181,6 +215,14 @@ Both `undeployed` and `ready` wallets can execute and `signMessage`. Only `needs
 Share the `G…` with your backend, your UI, or a counterparty while it is still `undeployed`. The [Stellar docs](https://docs.cavos.xyz/docs/stellar) call this lazy deploy: the address is real; the Horizon account is created on first `execute`.
 
 ## 6. First sponsored execute (creates the account)
+
+The first sponsored `execute` is the on-chain create. Connect already returned a `G…`. Horizon does not have the account yet. You never call `CreateAccount` yourself.
+
+What that one `wallet.execute(amount, destination)` call does:
+
+1. If status is `undeployed`, the kit creates the account first (sponsored, 0 XLM cost to the user). The relayer is the transaction source and fee payer. CreateAccount starts at 0 XLM plus Cavos `cv:` data. The relayer is not drained into the new account.
+2. Native XLM cannot ride that create: the account has to exist before it can send, and a 0-balance create holds no stroops to move. Share the `G…`, fund it, then the payment is a follow-up. From the app both steps are still one `execute` call.
+3. After that, status is `ready`. Later `execute` calls are ordinary native XLM payments.
 
 Narrow on `wallet.chain === "stellar"` so TypeScript exposes the Stellar methods. In React, call `wallet.execute` on the Stellar handle; the context `execute` is Starknet-only.
 
@@ -268,7 +310,7 @@ See [recovery](https://docs.cavos.xyz/docs/recovery) and [hardware-isolated reco
 
 ## 8. React Native notes
 
-Use `@cavos/kit/react-native` with Expo Development Builds, EAS, or bare React Native. **Expo Go is not supported**: custom native modules require a development build. Minimum platforms are iOS 16 and Android 9 (API 28). Email, GitHub, and Telegram sign-in are not available on React Native; use Google or Apple. Telegram is web only.
+Use `@cavos/kit/react-native` with Expo Development Builds, EAS, or bare React Native. **Expo Go is not supported**: custom native modules require a development build. Minimum platforms are iOS 16 and Android 9 (API 28). Email, Telegram, and GitHub are not available on React Native because that build cannot verify enclave attestation; use Google or Apple. Telegram is web only (OAuth via `oauth.telegram.org`, not a Telegram Mini App).
 
 The native provider keeps the same configuration shape, with native-only `redirectUri`, `rpId`, and `minimumKeySecurity`. The chain field is singular (`chain`, not `chains`):
 

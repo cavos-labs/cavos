@@ -356,7 +356,7 @@ Hello
     )
     assert.ok(stellarTutorial)
     assert.equal(
-      stellarTutorial.lastModified.toISOString().startsWith('2026-11-06'),
+      stellarTutorial.lastModified.toISOString().startsWith('2026-11-07'),
       true,
     )
 

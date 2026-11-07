@@ -2882,15 +2882,27 @@ describe('marketing SEO', () => {
     assert.match(source, /\]\(\/blog\/best-embedded-wallets-stellar\)/)
     assert.match(source, /\]\(\/pricing\)/)
     assert.match(source, /How do I set up a Stellar wallet in my app in 2026\?/)
+    assert.match(source, /Who is this Stellar wallet setup guide for\?/)
+    assert.match(source, /When should I embed a Stellar G account instead of connecting Freighter\?/)
+    assert.match(source, /What does the first sponsored execute do\?/)
+    assert.match(source, /## Who this is for/)
+    assert.match(source, /## Embed a G account versus connect Freighter/)
     assert.match(source, /hardware-isolated, non-custodial/)
-    assert.match(source, /updated: "2026-11-06"/)
+    assert.match(source, /Keys never leave the device in plaintext/)
+    assert.match(source, /Gas Sponsorship in Any Token/)
+    assert.match(source, /updated: "2026-11-07"/)
     assert.match(source, /docs\.cavos\.xyz\/docs\/stellar/)
     assert.match(source, /@cavos\/kit` 0\.5\.2/)
     assert.doesNotMatch(source, /0\.4\.2/)
     assert.match(source, /\]\(\/blog\/cavos-kit-0-5-2\)/)
     assert.match(source, /optional web-only/)
     assert.match(source, /Telegram is web only/)
-    assert.match(source, /npm install @cavos\/kit/)
+    assert.match(source, /oauth\.telegram\.org/)
+    assert.match(source, /not a Telegram Mini App/)
+    assert.match(source, /cannot verify enclave attestation/)
+    assert.match(source, /npm install @cavos\/kit@\^0\.5\.2/)
+    assert.match(source, /title: "How to Set Up a Stellar Wallet in Your App \(2026\)"/)
+    assert.doesNotMatch(source, /—|trustless|impossible/i)
     assert.match(source, /login\("google"\)/)
     assert.match(source, /sendOtp/)
     assert.match(source, /verifyOtp/)
@@ -2980,6 +2992,12 @@ describe('marketing SEO', () => {
     assert.equal(
       data['@graph'][0].mainEntityOfPage['@id'],
       'https://cavos.xyz/blog/stellar-embedded-wallet-tutorial',
+    )
+
+    const llms = fs.readFileSync(path.join(process.cwd(), 'public/llms.txt'), 'utf8')
+    assert.match(
+      llms,
+      /stellar-embedded-wallet-tutorial\): @cavos\/kit 0\.5\.2, G… before Horizon, first sponsored execute, no Freighter/,
     )
   })
 
