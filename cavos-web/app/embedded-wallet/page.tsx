@@ -119,9 +119,13 @@ export default function EmbeddedWalletGuidePage() {
                     </p>
                     <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted">
                         This guide covers how an embedded wallet works: the SDK, the
-                        platform and infrastructure, and the solution you ship. It is not
-                        an API reference. Method-level auth, create, sign, and recovery live
-                        in the{' '}
+                        platform and infrastructure, and the solution you ship. The short
+                        developer definition is{' '}
+                        <Link href={WHAT_IS_AN_EMBEDDED_WALLET_PATH} className={linkClass}>
+                            what is an embedded wallet
+                        </Link>
+                        . It is not an API reference. Method-level auth, create, sign, and
+                        recovery live in the{' '}
                         <Link href={EMBEDDED_WALLET_API_PATH} className={linkClass}>
                             embedded wallet API
                         </Link>{' '}
@@ -196,12 +200,13 @@ export default function EmbeddedWalletGuidePage() {
                             Cavos ships that SDK as{' '}
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
                                 @cavos/kit
-                            </code>
-                            : hardware-isolated, non-custodial, free up to 1,000 wallets, setup
-                            in minutes on Starknet, Solana, and Stellar. Keys never leave the
-                            device in plaintext and are never used to sign on servers. Essential
-                            is $59/month. Complete is $139/month. Gas Sponsorship in Any Token
-                            is on every plan and funded separately.
+                            </code>{' '}
+                            0.5.2: hardware-isolated, non-custodial, free up to 1,000 wallets,
+                            setup in minutes on Starknet, Solana, and Stellar. Keys never leave
+                            the device in plaintext. Signing always happens on the device.
+                            Recovery is a passkey or an opt-in Nitro Enclave sealed copy of the
+                            MasterDEK. Essential is $59/month. Complete is $139/month. Gas
+                            Sponsorship in Any Token is on every plan and funded separately.
                         </p>
                     </div>
                 </section>
@@ -227,6 +232,28 @@ export default function EmbeddedWalletGuidePage() {
                             to start.
                         </p>
                         <p>
+                            An embedded wallet has three properties. The app provisions it at
+                            sign-in. Approval happens in the product UI, not in a popup from
+                            another program. The address is a real on-chain account, not a
+                            balance in the app&apos;s database. The developer primer is{' '}
+                            <Link href={WHAT_IS_AN_EMBEDDED_WALLET_PATH} className={linkClass}>
+                                what is an embedded wallet
+                            </Link>
+                            . A{' '}
+                            <Link href={EMBEDDED_WALLET_VS_EXTENSION_PATH} className={linkClass}>
+                                browser extension
+                            </Link>{' '}
+                            is a different install and approval model.{' '}
+                            <Link
+                                href={EMBEDDED_WALLET_VS_SMART_WALLET_PATH}
+                                className={linkClass}
+                            >
+                                Embedded wallet vs smart wallet
+                            </Link>{' '}
+                            is a different split: smart usually means a contract account, which
+                            can be embedded or not.
+                        </p>
+                        <p>
                             Teams adopt this model when the audience is not crypto-native. Games,
                             commerce, and consumer finance cannot ask a first-time user to
                             understand seed phrases. The tradeoff is that the application now
@@ -237,6 +264,44 @@ export default function EmbeddedWalletGuidePage() {
                                 wallet as a service
                             </Link>
                             , or embedded wallet as a service.
+                        </p>
+                    </div>
+                </section>
+
+                <section className="mt-16 max-w-3xl">
+                    <h2 className="text-2xl font-medium tracking-[-0.03em]">
+                        When to use an embedded wallet
+                    </h2>
+                    <div className="mt-5 space-y-4 text-sm leading-relaxed text-muted">
+                        <p>
+                            Use an embedded wallet when most users have never installed a crypto
+                            wallet, when sign-up should look like any other app, or when
+                            payments and on-chain actions are a feature of the product rather
+                            than the reason users came. Keep a{' '}
+                            <Link href={EMBEDDED_WALLET_VS_EXTENSION_PATH} className={linkClass}>
+                                browser extension
+                            </Link>{' '}
+                            connection if users already arrive with one.
+                        </p>
+                        <p>
+                            Use Cavos when the product is Starknet, Solana, or Stellar and the
+                            review requires a device-native key. Signing stays on the device.
+                            Recovery is a passkey or an opt-in Nitro Enclave sealed copy of the
+                            MasterDEK. Cavos cannot see the key, sign with it, or move funds.
+                            The free tier covers the first 1,000 wallets. Setup is minutes with{' '}
+                            <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
+                                @cavos/kit
+                            </code>{' '}
+                            0.5.2. It is the worse fit when you need broad EVM coverage or must
+                            connect MetaMask. The shopping list is{' '}
+                            <Link href={BEST_EMBEDDED_WALLET_PATH} className={linkClass}>
+                                best embedded wallet
+                            </Link>
+                            . The named-vendor table is{' '}
+                            <Link href={EMBEDDED_WALLET_PROVIDERS_PATH} className={linkClass}>
+                                embedded wallet providers
+                            </Link>
+                            .
                         </p>
                     </div>
                 </section>
@@ -717,6 +782,14 @@ export default function EmbeddedWalletGuidePage() {
                                     How to add an embedded Stellar wallet
                                 </Link>
                             </p>
+                            <p className="mt-2">
+                                <Link
+                                    href="/blog/best-embedded-wallets-stellar"
+                                    className={linkClass}
+                                >
+                                    Best embedded wallets for Stellar
+                                </Link>
+                            </p>
                         </article>
                     </div>
                     <p className="mt-5 max-w-3xl text-sm leading-relaxed text-muted">
@@ -1083,13 +1156,14 @@ export default function EmbeddedWalletGuidePage() {
                         <p>
                             Cavos is device-native embedded wallet infrastructure. Applications
                             resolve a self-custodial account from a stable user identity. Signing
-                            keys are created and used on the user&apos;s device. Cavos cannot
-                            see them, sign with them, or move funds. Adapters ship today for
-                            Starknet, Solana, and Stellar, via{' '}
+                            keys are created and used on the user&apos;s device. Keys never leave
+                            the device in plaintext. Signing always happens on the device. Cavos
+                            cannot see them, sign with them, or move funds. Adapters ship today
+                            for Starknet, Solana, and Stellar, via{' '}
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
                                 @cavos/kit
                             </code>{' '}
-                            on web and{' '}
+                            0.5.2 on web and{' '}
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
                                 @cavos/kit/react-native
                             </code>{' '}
@@ -1146,7 +1220,8 @@ export default function EmbeddedWalletGuidePage() {
                             <Link href={WHAT_IS_AN_EMBEDDED_WALLET_PATH} className={linkClass}>
                                 {WHAT_IS_AN_EMBEDDED_WALLET_TITLE}
                             </Link>
-                            {': '}a plain definition for readers new to the term.
+                            {': '}the developer definition, custody models, and when to use
+                            one.
                         </li>
                         <li>
                             <Link href={WALLET_AS_A_SERVICE_PATH} className={linkClass}>
@@ -1226,6 +1301,15 @@ export default function EmbeddedWalletGuidePage() {
                                 {PRIVY_VS_TURNKEY_TITLE}
                             </Link>
                             {': '}finished auth and wallets versus signing infrastructure.
+                        </li>
+                        <li>
+                            <Link
+                                href="/blog/best-embedded-wallets-stellar"
+                                className={linkClass}
+                            >
+                                Best embedded wallets for Stellar
+                            </Link>
+                            {': '}classic G accounts versus Soroban, and the 2026 shortlist.
                         </li>
                         <li>
                             <Link href={ALCHEMY_VS_PRIVY_PATH} className={linkClass}>

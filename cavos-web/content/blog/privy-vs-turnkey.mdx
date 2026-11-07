@@ -1,8 +1,8 @@
 ---
 title: "Privy vs Turnkey (2026): SDK vs Infrastructure"
 date: "2026-10-20"
-updated: "2026-11-06"
-excerpt: "Turnkey vs Privy vs Dfns in 2026: auth SDK vs enclave signing. Custody, published pricing, when to buy. Non-custodial option free to 1,000 wallets."
+updated: "2026-11-07"
+excerpt: "Turnkey vs Privy vs Dfns in 2026: Privy wins as an auth SDK, Turnkey as enclave signing infra, Dfns as MPC. Non-custodial option free to 1,000 wallets."
 category: "Guide"
 ogQuote: "Not two SDKs with different logos. They sit at different layers."
 slug: "privy-vs-turnkey"
@@ -30,6 +30,39 @@ faq:
 An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain account they can pay, receive, and sign with. **Privy vs Turnkey** is a layer question: Privy’s product scope is a finished auth and wallet product; Turnkey’s focus is low-level signing and key-management primitives. Teams also compare **Turnkey vs Privy vs Dfns** and Privy vs Dynamic vs Turnkey. This guide is that comparison: product scope, key model, chains, developer experience, pricing, and who each is for.
 
 Cavos, LLC is a software and SaaS company. Positioning for Cavos comes after the table is fair. If the honest answer is Privy or Turnkey, that is the answer. One-to-one pages live at [Privy vs Cavos](/compare/privy) and [Turnkey vs Cavos](/compare/turnkey). Alchemy vs Privy is a different fork: Wallet APIs plus a recommended signer, not a like-for-like SDK swap, that comparison is [Alchemy vs Privy](/blog/alchemy-vs-privy). This post is Privy vs Turnkey, not a Privy alternatives shortlist. For Privy alternatives, start at [Privy alternatives](/privy-alternatives). Published list prices across vendors, including Privy wallets cost, are [how much embedded wallets cost](/blog/embedded-wallet-cost). Teams listing [Turnkey embedded wallet competitors](/turnkey-alternatives) can start at that [turnkey alternative](/turnkey-alternatives) shortlist. Sibling shortlists: [Dynamic alternatives](/dynamic-alternatives), [Magic alternatives](/magic-alternatives), and [Para alternatives](/para-alternatives). The multi-vendor listicle is [embedded wallet providers](/blog/embedded-wallet-providers). The Turnkey vs Privy vs Dfns layer check is below.
+
+## Privy vs Turnkey at a glance
+
+**Privy vs Turnkey** is who wins when, not which logo. **Turnkey vs Privy vs Dfns embedded wallets** adds a third layer: MPC infrastructure rather than a finished auth SDK or an enclave.
+
+<table>
+<thead>
+<tr>
+<th>If you need</th>
+<th>Pick</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>One vendor for login, an in-app wallet, and connecting MetaMask or Phantom, especially on EVM</td>
+<td>Privy: finished auth SDK. Shamir 2-of-2 reconstructed in AWS Nitro Enclaves. Optional custodial wallets via Bridge.</td>
+</tr>
+<tr>
+<td>Policy, quorums, server-side signing, and keys that decrypt only in a TEE</td>
+<td>Turnkey: enclave signing infrastructure. Custody is who can authorize the enclave: user, your API key, or both under policy.</td>
+</tr>
+<tr>
+<td>MPC/TSS wallets, delegated passkeys, or hybrid/on-prem signers you operate</td>
+<td>Dfns: MPC wallet infrastructure. Official docs: the private key is never reconstructed. Shares stay in Dfns infrastructure.</td>
+</tr>
+<tr>
+<td>A device-native key the vendor cannot reconstruct, on Starknet, Solana, or Stellar</td>
+<td>Neither of the three. Cavos is that shape: hardware-isolated, non-custodial, free up to 1,000 wallets. Not a fourth row on the same layer.</td>
+</tr>
+</tbody>
+</table>
+
+Published list prices, as of October 2026: Privy free 0–499 MAU then Core $299/mo; Turnkey 1,000 wallets and 25 free signatures/mo then $0.10/signature. This page does not invent unpublished Dfns rates. The longer tables below keep the same columns.
 
 ## Product scope
 
@@ -242,9 +275,17 @@ Worked Cavos comparisons: [Privy vs Cavos](/compare/privy), [Turnkey vs Cavos](/
 
 ## Turnkey vs Privy vs Dfns
 
-Teams also shortlist all three vendors together. The vendors are not interchangeable SDKs. They sit at different layers.
+Teams type **Turnkey vs Privy vs Dfns embedded wallets** as one query. The three-way is a layer check, not a feature matrix. The vendors are not interchangeable SDKs.
 
-How Privy’s product scope compares with Turnkey’s focus on low-level signing infrastructure is the same split as above. Privy ships login, an in-app wallet, and connectors as one product. Turnkey ships keys in a TEE, a policy engine, and a signing API. Dfns sits next to Turnkey as wallet infrastructure, not next to Privy as a finished auth SDK: MPC/TSS instead of an enclave, with a published named-network table.
+**Privy vs Turnkey** is finished product versus signing primitives. Privy ships login, an in-app wallet, and connectors as one product. Turnkey ships keys in a TEE, a policy engine, and a signing API. **Dfns** sits next to Turnkey as wallet infrastructure, not next to Privy as a finished auth SDK: MPC/TSS instead of an enclave, with a published named-network table.
+
+Who can produce a valid signature without the user present:
+
+- **Privy user wallets.** Shares combine inside Privy’s enclave after valid authentication. Privy’s docs say neither Privy nor the application sees the user’s keys on that path. Separately, optional Bridge-backed custodial wallets exist on the same authorization framework.
+- **Turnkey.** The enclave signs. Custody is who holds the credentials that can authorize it: only the user’s authenticator (non-custodial), your API key (custodial), or both under policy (hybrid). A breach of your app is not supposed to expose key material; the enclave still has to approve the request.
+- **Dfns delegated wallets.** Official docs: the private key is never reconstructed. Shares stay in Dfns datacenters and are not stored on the user’s device. Only the user’s passkey authorizes a signature. Org-managed wallets stay under your service account.
+
+None of those three is a key that lives only on the user’s device. Dynamic belongs on a different fork: TSS-MPC plus connecting wallets users already hold, which is provision-versus-connect, not this three-way.
 
 <table>
 <thead>
@@ -315,9 +356,9 @@ None of these is a device-native key on the user’s device. That is a different
 
 Cavos is a hardware-isolated, non-custodial [embedded wallet](/embedded-wallet), not an extension, and not signing infrastructure.
 
-Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds. Login produces a stable identity for a registry lookup; it never signs a transaction. There is no MPC. There is no hosted spend key.
+Signing keys are created and used on the user’s device. Keys never leave the device in plaintext. Signing always happens on the device. Cavos cannot see them, sign with them, decrypt them, or move funds. Login produces a stable identity for a registry lookup; it never signs a transaction. There is no MPC. There is no hosted spend key.
 
-On Starknet the on-chain account is an **audited OpenZeppelin account contract** (AccountUpgradeable v3.0.0), controlled by one stark key derived from the wallet’s MasterDEK and app salt. Cavos does not ship its own account implementation. There is no on-chain device-signer list and no on-chain social recovery. A new device restores the MasterDEK off-chain with a passkey or an opt-in AWS Nitro Enclave; it does not add a signer on-chain. Execution is paymaster-sponsored. Connect does not deploy, the first execute deploys and runs atomically.
+On Starknet the on-chain account is an **audited OpenZeppelin account contract** (AccountUpgradeable v3.0.0), controlled by one stark key derived from the wallet’s MasterDEK and app salt. The audit covers OpenZeppelin’s contract, not Cavos. Cavos does not ship its own account implementation. There is no on-chain device-signer list and no on-chain social recovery. A new device restores the MasterDEK off-chain with a passkey or an opt-in AWS Nitro Enclave. The passkey and the enclave only hold an encrypted copy of the MasterDEK for sealed restore; they cannot sign, and Cavos cannot decrypt that copy. A new device does not add a signer on-chain. Execution is paymaster-sponsored. Connect does not deploy, the first execute deploys and runs atomically.
 
 Solana and Stellar are native adapters, not EVM compatibility. Solana provisions a native Ed25519 system account; a relayer co-signs as fee payer. Stellar provisions a classic G… account so existing tools already understand the address; the relayer can sponsor reserves and fee-bumps. Both restore the same MasterDEK on a new device rather than adding a second on-chain signer.
 

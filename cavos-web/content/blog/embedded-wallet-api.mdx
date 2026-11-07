@@ -1,8 +1,8 @@
 ---
 title: "Embedded Wallet API (2026): Auth, Sign, Gas"
 date: "2026-10-21"
-updated: "2026-11-06"
-excerpt: "Embedded Wallet API: auth, signing, chains, rate limits in @cavos/kit. Developer surface, not the category pillar. Free up to 1,000 wallets. Non-custodial."
+updated: "2026-11-07"
+excerpt: "Embedded Wallet API: client SDK, not REST. Auth, connect, execute, gas, recovery in @cavos/kit 0.5.2. Docs at docs.cavos.xyz. Free to 1,000 wallets."
 category: "Guide"
 ogQuote: "Authenticate, connect, then execute. The same contract on every adapter."
 slug: "embedded-wallet-api"
@@ -34,6 +34,15 @@ faq:
 Search for **embedded wallet API** and you usually want the developer surface: authenticate a user, create or look up a wallet, sign, send, sponsor gas, recover a device. This post owns those API and developer-surface queries. An [embedded wallet](/embedded-wallet) lives inside your application. The full product and SDK page is [embedded wallet](/embedded-wallet); the general **embedded wallet** head term belongs on that product pillar ([what is an embedded wallet?](/blog/what-is-an-embedded-wallet) has the plain definition). The user signs in the way they already do. The product resolves an on-chain account they can pay, receive, and sign with. There is no [browser extension](/blog/embedded-wallet-vs-browser-extension), no seed phrase, and no trip to another app.
 
 The **embedded wallet API** is that surface on a [wallet as a service](/blog/wallet-as-a-service) platform. Cavos ships it as a **client SDK**, not a public REST create-wallet endpoint. The packages are `@cavos/kit`, `@cavos/kit/react`, and `@cavos/kit/react-native`. Hosted registry, paymaster, and relayer calls happen inside the kit behind an App ID. This guide is the docs-style map of that contract in `@cavos/kit` 0.5.2, grounded in the [API reference](https://docs.cavos.xyz/docs/api-reference). The [React integration](/blog/how-to-add-an-embedded-wallet) is the install. Best practices for embedding that wallet SDK (custody, passkeys, Gas Sponsorship in Any Token, errors, and testnet) are in the [embedded wallet React SDK](/blog/embedded-wallet-react-sdk) guide. The [non-custodial guide](/blog/non-custodial-embedded-wallet) is the custody test. The [providers comparison](/blog/embedded-wallet-providers) is the shortlist. Adapters ship today for [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), and [Stellar](/embedded-stellar-wallet).
+
+## Embedded wallet API vs REST
+
+Search **embedded wallet API** and you often get two products that are not interchangeable.
+
+- **A client SDK.** Auth, `connect`, sponsored `execute` inside the app. Cavos is this. There is no public create-wallet REST endpoint for your backend to call. The method list is the [API reference](https://docs.cavos.xyz/docs/api-reference). Full docs: [docs.cavos.xyz](https://docs.cavos.xyz).
+- **A REST or RPC signing layer.** Keys, policies, and HTTP. You assemble login and approval. Turnkey-style infrastructure sits here.
+
+The kit talks to hosted registry, paymaster, and relayer services behind an App ID. Those URLs are not a public wallet-create API. Install and first transaction: [how to add an embedded wallet](/blog/how-to-add-an-embedded-wallet). Next.js App Router: [how to add an embedded wallet to Next.js](/blog/embedded-wallet-nextjs).
 
 ## Embedded Wallet API overview (November 2026)
 
@@ -67,9 +76,9 @@ const session = await Cavos.connect({
   appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
 });
 
-// 3. Execute: signed on this device, fee paid by the hosted relayer.
+// 3. Execute: signed on this device. On Solana, pass fee: "sponsored" so the relayer pays.
 const wallet = session.wallet("solana");
-const txHash = await wallet.execute(1_000_000n, destinationAddress); // lamports
+const txHash = await wallet.execute(1_000_000n, destinationAddress, { fee: "sponsored" }); // lamports
 ```
 
 There is no server-side key and no create-wallet HTTP call in your backend. The signature is produced on the user’s device. Keys never leave the device in plaintext and are never used to sign on Cavos servers.
@@ -98,7 +107,7 @@ Write the answers down before you compare SDKs.
 
 **Chains.** Which networks are native (that chain’s account model, signatures, and fee path) and which are a compatibility layer around an EOA-shaped key. Cavos is Starknet, Solana, and Stellar only. It is not an EVM-wide wallet layer.
 
-**Client SDK vs REST.** A finished SDK gives you `connect` and `execute` inside the app. A signing API gives you keys, policies, and an HTTP surface; you assemble login and approval. Confirm which layer you are buying. Cavos is the first. Turnkey-style infrastructure is the second.
+**Client SDK vs REST.** A finished SDK gives you `connect` and `execute` inside the app. A signing API gives you keys, policies, and an HTTP surface; you assemble login and approval. Confirm which layer you are buying. Cavos is the first: `@cavos/kit`, documented at [docs.cavos.xyz](https://docs.cavos.xyz). Turnkey-style infrastructure is the second. Do not plan a backend `POST /wallets` against Cavos.
 
 **Rate limits and pricing.** Units differ: wallet creates, monthly active users, monthly active wallets, signatures, volume. Ask what is metered, what is rate-limited, and whether gas sponsorship is on the public plan. [Cavos pricing](/pricing) publishes Free up to 1,000 wallets, Essential at $59 per month, and Complete at $139 per month with enclave recovery. Bind any client-visible sponsorship credential by app, environment, origin, rate, and spend.
 
@@ -210,7 +219,7 @@ if (wallet?.status === "needs-device-approval") {
 }
 
 if (wallet?.chain === "solana") {
-  const txHash = await wallet.execute(1_000_000n, destinationAddress); // lamports
+  const txHash = await wallet.execute(1_000_000n, destinationAddress, { fee: "sponsored" }); // lamports
 } else if (wallet?.chain === "stellar") {
   const txHash = await wallet.execute(1_000_000n, destinationAddress); // stroops
 } else if (wallet?.chain === "starknet") {
@@ -235,7 +244,7 @@ Users should not need a native token to start. Sponsorship is chain-specific. Re
 | Adapter | Required configuration | Sponsored execution |
 |---|---|---|
 | **Starknet** | App ID, network, app salt, identity, `paymasterApiKey` | Paymaster sponsors deploy and execute. |
-| **Solana** | App ID, network, app salt, identity | Hosted relayer becomes fee payer; arbitrary programs are allowlisted per app. |
+| **Solana** | App ID, network, app salt, identity | The account pays its own fee by default. Pass `fee: "sponsored"` so the hosted relayer is fee payer; arbitrary programs are allowlisted per app. |
 | **Stellar** | App ID, network, app salt, identity | Hosted relayer can sponsor reserves and fee-bump submission. |
 
 Add `paymasterApiKey` only when Starknet is in `chains`. A paymaster key on a chain that ignores it is a config error.

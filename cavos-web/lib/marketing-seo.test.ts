@@ -663,7 +663,7 @@ describe('marketing SEO', () => {
     assert.ok(
       EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What is the best embedded wallet?'),
     )
-    assert.equal(EMBEDDED_WALLET_MODIFIED, '2026-11-05')
+    assert.equal(EMBEDDED_WALLET_MODIFIED, '2026-11-07')
   })
 
   it('keeps a single H1 and adds how-it-works plus a compare-data provider table', () => {
@@ -722,6 +722,7 @@ describe('marketing SEO', () => {
     assert.equal(EMBEDDED_WALLET_H1, 'Embedded wallet SDK')
     assert.ok(headings.includes('Embedded wallets in November 2026'))
     assert.ok(headings.includes('What is an embedded wallet?'))
+    assert.ok(headings.includes('When to use an embedded wallet'))
     assert.ok(headings.includes('How an embedded wallet works'))
     assert.match(pageSource, /EMBEDDED_WALLET_SDK_KEY_MODELS/)
     assert.match(pageSource, /software:/)
@@ -754,6 +755,8 @@ describe('marketing SEO', () => {
     assert.match(pageSource, /href=["']\/embedded-starknet-wallet["']/)
     assert.match(pageSource, /href=["']\/embedded-solana-wallet["']/)
     assert.match(pageSource, /href=["']\/embedded-stellar-wallet["']/)
+    assert.match(pageSource, /href=["']\/blog\/best-embedded-wallets-stellar["']/)
+    assert.match(pageSource, /WHAT_IS_AN_EMBEDDED_WALLET_PATH/)
     assert.match(pageSource, /GASLESS_STARKNET_TRANSACTIONS_PATH/)
     assert.match(pageSource, /href=["']\/pricing["']/)
     assert.match(pageSource, /EMBEDDED_WALLET_INTEGRATION_PATH/)
@@ -2517,8 +2520,8 @@ describe('marketing SEO', () => {
     assert.equal(privy.title, PRIVY_VS_TURNKEY_TITLE)
     assert.ok(providers.excerpt.length >= 140 && providers.excerpt.length <= 155)
     assert.ok(privy.excerpt.length >= 140 && privy.excerpt.length <= 155)
-    assert.equal(providers.updated, '2026-11-06')
-    assert.equal(privy.updated, '2026-11-06')
+    assert.equal(providers.updated, '2026-11-07')
+    assert.equal(privy.updated, '2026-11-07')
     assert.match(EMBEDDED_WALLET_PROVIDERS_TITLE, /Best Embedded Wallet Providers/)
     assert.match(EMBEDDED_WALLET_PROVIDERS_TITLE, /Embedded Wallet Providers/)
     assert.match(providers.excerpt, /best embedded wallet providers 2026/i)
@@ -2555,6 +2558,12 @@ describe('marketing SEO', () => {
     assert.match(providersSource, /## How do Para and Dynamic embedded wallets compare\?/)
     assert.match(providersSource, /## What an enterprise should evaluate/)
     assert.match(providersSource, /## Which embedded wallet provider supports the most chains\?/)
+    assert.match(
+      providersSource,
+      /## Comparison criteria: custody, chains, pricing, enclave vs MPC/,
+    )
+    assert.match(providersSource, /cannot decrypt it/)
+    assert.match(providersSource, /encrypted MasterDEK copy/)
     assert.match(providersSource, /\]\(\/blog\/embedded-wallet-cost\)/)
     assert.match(providersSource, /does not support Midnight, Aleo, Cosmos, or Sui/)
     assert.match(providersSource, /Aleo, and Midnight/)
@@ -2590,7 +2599,11 @@ describe('marketing SEO', () => {
       privySource,
       /How do Turnkey, Privy, and Dfns compare as embedded wallets\?/,
     )
+    assert.match(privySource, /## Privy vs Turnkey at a glance/)
     assert.match(privySource, /## Turnkey vs Privy vs Dfns/)
+    assert.match(privySource, /Turnkey vs Privy vs Dfns embedded wallets/)
+    assert.match(privySource, /encrypted copy of the MasterDEK/)
+    assert.match(privySource, /cannot decrypt that copy/)
     assert.match(privySource, /docs\.dfns\.co\/core-concepts\/how-mpc-wallets-work/)
     assert.match(privySource, /docs\.dfns\.co\/advanced\/delegated-wallets/)
     assert.match(privySource, /docs\.dfns\.co\/solutions\/embed-user-wallets/)
@@ -2725,8 +2738,11 @@ describe('marketing SEO', () => {
     assert.match(source, /embedded-stellar-wallet/)
     assert.match(source, /CavosProvider/)
     assert.match(source, /@cavos\/kit/)
-    assert.match(source, /@cavos\/kit` 0\.5\.1/)
-    assert.match(source, /npm install @cavos\/kit/)
+    assert.match(source, /@cavos\/kit` 0\.5\.2/)
+    assert.match(source, /npm install @cavos\/kit@\^0\.5\.2/)
+    assert.match(source, /## What you will do/)
+    assert.match(source, /\]\(\/blog\/embedded-wallet-nextjs\)/)
+    assert.match(source, /fee: "sponsored"/)
     assert.doesNotMatch(source, /0\.3\.\d/)
     assert.doesNotMatch(source, /category:\s*"Release"/)
     assert.doesNotMatch(source, /This device must be approved first/)
@@ -3357,6 +3373,7 @@ describe('marketing SEO', () => {
     assert.match(source, /\]\(\/turnkey-alternatives\)/)
     assert.match(source, /\]\(\/web3auth-alternatives\)/)
     assert.match(source, /\]\(\/dfns-alternatives\)/)
+    assert.match(source, /## Decision: Privy vs Dynamic vs Turnkey/)
     assert.match(source, /## Privy vs Dynamic at a glance/)
     assert.match(source, /\]\(\/blog\/privy-vs-turnkey\)/)
     assert.match(source, /\]\(\/blog\/alchemy-vs-privy\)/)
@@ -3421,7 +3438,7 @@ describe('marketing SEO', () => {
 
     const fields = parseBlogFrontmatter(source)
     assert.equal(fields.title, PRIVY_VS_DYNAMIC_TITLE)
-    assert.equal(fields.updated, '2026-11-06')
+    assert.equal(fields.updated, '2026-11-07')
     assert.equal(fields.date, '2026-11-03')
     assert.match(fields.excerpt, /Privy vs Dynamic vs Turnkey/)
     assert.match(fields.excerpt, /Non-custodial/)
@@ -3574,7 +3591,9 @@ describe('marketing SEO', () => {
     )
     const apiFields = parseBlogFrontmatter(source)
     assert.equal(apiFields.title, EMBEDDED_WALLET_API_TITLE)
-    assert.equal(apiFields.updated, '2026-11-06')
+    assert.equal(apiFields.updated, '2026-11-07')
+    assert.match(source, /## Embedded wallet API vs REST/)
+    assert.match(source, /docs\.cavos\.xyz/)
     assert.match(excerptMatch[1], /^Embedded Wallet API/)
     assert.match(source, /## Embedded Wallet API overview \(November 2026\)/)
     assert.match(source, /This post owns those API and developer-surface queries/)
@@ -3686,10 +3705,14 @@ describe('marketing SEO', () => {
       NON_CUSTODIAL_EMBEDDED_WALLET_TITLE,
       'Non-Custodial Embedded Wallets: What They Are (2026)',
     )
-    assert.match(source, /^updated:\s*"2026-11-06"$/m)
+    assert.match(source, /^updated:\s*"2026-11-07"$/m)
     assert.match(source, /\*\*Non-custodial embedded wallets\*\* are /)
     assert.match(source, /## What are non-custodial embedded wallets\?/)
+    assert.match(source, /## What is a non-custodial embedded wallet\?/)
     assert.match(source, /## Custodial vs MPC vs hardware-isolated passkeys/)
+    assert.match(source, /Passkey and Nitro Enclave sealed restore/)
+    assert.match(source, /\]\(\/blog\/privy-vs-turnkey\)/)
+    assert.match(source, /\]\(\/blog\/best-embedded-wallets-stellar\)/)
     assert.match(source, /What is the difference between custodial, MPC, and hardware-isolated embedded wallets\?/)
     assert.match(source, /\]\(\/blog\/what-is-an-embedded-wallet\)/)
     assert.match(source, /never leave the device in plaintext/)
@@ -3943,7 +3966,10 @@ describe('marketing SEO', () => {
     assert.match(source, /never leave the device in plaintext/)
     const waasFields = parseBlogFrontmatter(source)
     assert.equal(waasFields.title, WALLET_AS_A_SERVICE_TITLE)
-    assert.equal(waasFields.updated, '2026-11-06')
+    assert.equal(waasFields.updated, '2026-11-07')
+    assert.match(source, /## Wallet-as-a-service custody models/)
+    assert.match(source, /Device-native/)
+    assert.match(source, /cannot decrypt that copy/)
     assert.ok(waasFields.excerpt.length >= 140 && waasFields.excerpt.length <= 155)
 
     const hub = fs.readFileSync(
@@ -4200,10 +4226,11 @@ describe('marketing SEO', () => {
 
     const fields = parseBlogFrontmatter(source)
     assert.equal(fields.title, ALCHEMY_VS_PRIVY_TITLE)
-    assert.equal(fields.updated, '2026-11-06')
+    assert.equal(fields.updated, '2026-11-07')
     assert.equal(fields.date, '2026-10-27')
     assert.match(fields.excerpt, /Alchemy vs Privy/)
     assert.match(fields.excerpt, /Account Kit is deprecated/)
+    assert.match(source, /## Decision: Account Kit, Wallet APIs, or Privy/)
 
     const compareSource = fs.readFileSync(
       path.join(process.cwd(), 'app/compare/[slug]/page.tsx'),
@@ -5139,7 +5166,11 @@ describe('best embedded wallets per chain', () => {
       assert.doesNotMatch(source, /—/)
       assert.doesNotMatch(source, /trustless|impossible/i)
       const fields = parseBlogFrontmatter(source)
-      assert.equal(fields.updated, '2026-11-06')
+      if (slug === 'best-embedded-wallets-stellar') {
+        assert.equal(fields.updated, '2026-11-07')
+      } else {
+        assert.equal(fields.updated, '2026-11-06')
+      }
       assert.match(fields.title, /Best Embedded Wallets for/)
       assert.match(fields.title, /Free/)
       if (slug === 'best-embedded-wallets-solana') {
@@ -5174,6 +5205,10 @@ describe('best embedded wallets per chain', () => {
     assert.match(stellar, /Fees \/ reserves/)
     assert.match(stellar, /Who each Stellar provider fits \(2026\)/)
     assert.match(stellar, /Classic G vs Soroban in 2026/)
+    assert.match(stellar, /Native Stellar support versus sign-only/)
+    assert.match(stellar, /best Stellar embedded wallet/)
+    assert.match(stellar, /Which providers support a Stellar embedded wallet natively\?/)
+    assert.match(stellar, /cannot decrypt that copy/)
     assert.match(stellar, /Who should pick each Stellar embedded wallet provider\?/)
     assert.match(solana, /\]\(\/blog\/best-embedded-wallets-stellar\)/)
     assert.match(solana, /\]\(\/blog\/best-embedded-wallets-starknet\)/)
@@ -5250,16 +5285,27 @@ describe('embedded wallet definitional and API posts', () => {
   it('what-is-an-embedded-wallet is a definitional post with FAQ that points at the pillar', () => {
     const raw = read('content/blog/what-is-an-embedded-wallet.mdx')
     assert.match(raw, /^slug: "what-is-an-embedded-wallet"$/m)
+    assert.match(raw, /^title: "What Is an Embedded Wallet\? \(2026 Definition\)"$/m)
+    assert.match(raw, /^updated: "2026-11-07"$/m)
     assert.match(raw, /^faq:$/m)
     assert.match(raw, /question: "What is an embedded wallet\?"/)
+    assert.match(raw, /question: "How is an embedded wallet different from a browser extension\?"/)
+    assert.match(raw, /question: "What is the difference between an embedded wallet and a smart wallet\?"/)
     assert.match(raw, /\]\(\/embedded-wallet\)/)
     assert.match(raw, /full product and SDK page/)
     assert.match(raw, /\]\(\/blog\/embedded-wallet-api\)/)
+    assert.match(raw, /\]\(\/blog\/embedded-wallet-vs-browser-extension\)/)
+    assert.match(raw, /\]\(\/blog\/embedded-wallet-vs-smart-wallet\)/)
+    assert.match(raw, /\]\(\/blog\/best-embedded-wallets-stellar\)/)
+    assert.match(raw, /\]\(\/blog\/privy-vs-turnkey\)/)
+    assert.match(raw, /## Embedded wallet vs browser extension/)
+    assert.match(raw, /## Embedded wallet vs smart wallet/)
     assert.match(raw, /audited OpenZeppelin account contract/)
     assert.match(raw, /Gas Sponsorship in Any Token/)
     assert.match(raw, /Free up to 1,000 wallets/)
     assert.match(raw, /github\.com\/cavos-labs\/cavos-recovery/)
     assert.doesNotMatch(raw, /—|trustless|impossible/i)
+    assert.doesNotMatch(raw, /audited Cavos/)
   })
 
   it('the embedded wallet pillar, blog index, and llms.txt link the definitional post', () => {
