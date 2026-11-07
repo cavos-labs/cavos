@@ -1,29 +1,47 @@
 ---
 title: "Embedded Wallet Payments (2026): USDC Guide"
 date: "2026-11-01"
-updated: "2026-11-01"
-excerpt: "Embedded wallet payments are in-app USDC transfers on Stellar, Solana, and Starknet. Gas Sponsorship in Any Token covers fees so users skip XLM, SOL, or STRK."
+updated: "2026-11-07"
+excerpt: "Install @cavos/kit 0.5.2. In-app pay, receive, and sign. USDC is one held token. Gas Sponsorship covers fees so users skip XLM, SOL, or STRK."
 category: "Guide"
 ogQuote: "Pay, receive, and sign in the app. USDC is one example of a held token."
 slug: "embedded-wallet-payments"
 faq:
   - question: "What are embedded wallet payments?"
     answer: "Embedded wallet payments are pay, receive, and sign from inside the application. The user does not install an extension, paste a seed, or approve in someone else's popup. Authentication selects which user this is. The SDK resolves an on-chain account. A signer bound to the device authorizes the spend in your UI. USDC is one example of a token a user might already hold, not a required asset."
+  - question: "Who is this embedded wallet payments guide for?"
+    answer: "App developers who need in-app pay, receive, and sign with an embedded wallet. USDC is one example of a held token, not a required asset. Use this path when users should never install an extension and the first payment should not require XLM, SOL, or STRK. Skip it if you must connect MetaMask, Phantom, or Freighter, or if the chain is not Starknet, Solana, or Stellar."
   - question: "How do I accept USDC with an embedded wallet?"
-    answer: "Install @cavos/kit 0.5.0, sign the user in, and execute a token transfer on the chain you ship. On Stellar, open a trustline with addTrustline, then pay with execute or @cavos/reserve plus signXdr. On Solana, submit an SPL transfer through executeInstructions. On Starknet, call execute with a USDC transfer. Relayers and paymasters are not signers."
+    answer: "Install @cavos/kit 0.5.2 (npm install @cavos/kit@^0.5.2), sign the user in, and execute a token transfer on the chain you ship. On Stellar, open a trustline with addTrustline, then pay with execute or @cavos/reserve plus signXdr. On Solana, submit an SPL transfer through executeInstructions. On Starknet, call execute with a USDC transfer. Relayers and paymasters are not signers. Connect never deploys Starknet or Stellar; the first execute deploys and runs atomically."
+  - question: "Which @cavos/kit version should I install for embedded wallet payments?"
+    answer: "Install @cavos/kit 0.5.2 with npm install @cavos/kit@^0.5.2. Telegram is optional web-only OAuth via oauth.telegram.org, not a Mini App, and needs 0.5.2. Kits 0.5.0 and 0.5.1 still work for Google, Apple, email, and GitHub against the current enclave. React Native cannot offer Telegram, email, or GitHub because that build cannot verify enclave attestation. 0.4.x does not."
   - question: "Can users pay fees in USDC instead of the native gas token?"
     answer: "Yes, that is Gas Sponsorship in Any Token. On Starknet the paymaster sponsors deploy and execute by default. On Solana, fee: { token } settles the fee in a held token such as USDC; fee: 'sponsored' makes the Cavos relayer the fee payer. On Stellar the kit relayer sponsors reserves and fees in XLM; @cavos/reserve is the separate path when the user should pay those same costs in USDC."
   - question: "Which chains support embedded wallet payments in Cavos?"
     answer: "Cavos currently ships native adapters for Starknet, Solana, and Stellar. It is not an EVM-wide wallet layer. Each adapter uses that chain's account model, signatures, and fee path. Connect never deploys Starknet or Stellar; the first execute deploys and runs atomically when status is undeployed or ready."
   - question: "Who signs an embedded wallet payment?"
-    answer: "The user's device. Signing keys are created and used on the device. They never leave it in plaintext and never sign on Cavos servers. The passkey and the AWS Nitro Enclave only hold an encrypted copy of the MasterDEK for restore. Cavos cannot see the key, sign with it, or move funds. On Starknet the key controls an audited OpenZeppelin account contract."
+    answer: "The user's device. Signing always happens on the user's device. Keys never leave the device in plaintext and are never used for signing on servers. The passkey and the AWS Nitro Enclave only hold an encrypted copy of the MasterDEK for restore. Cavos cannot see the key, sign with it, decrypt it, or move funds. On Starknet the key controls an audited OpenZeppelin account contract (AccountUpgradeable v3.0.0). The audit covers OpenZeppelin, not Cavos."
 ---
 
 **Embedded wallet payments** are pay, receive, and sign from inside your application. The user does not install an extension, paste a seed, or approve in someone else's popup. An [embedded wallet](/embedded-wallet) resolves an on-chain account at sign-in; a signer bound to the device authorizes the spend in your UI. USDC is one example of a token a user might already hold, not a required asset.
 
-This guide is the chain-by-chain path in `@cavos/kit` 0.5.0: Stellar trustlines and `@cavos/reserve`, Solana SPL via `executeInstructions`, Starknet `execute` transfers, and [Gas Sponsorship in Any Token](/embedded-wallet#gas-sponsorship-in-any-token) so the first payment does not require XLM, SOL, or STRK. The [React integration](/blog/how-to-add-an-embedded-wallet) is the install. The [embedded wallet API](/blog/embedded-wallet-api) guide is the surface map. Custody is a separate fact: see [non-custodial embedded wallets](/blog/non-custodial-embedded-wallet).
+This guide is the chain-by-chain path in `@cavos/kit` 0.5.2: Stellar trustlines and `@cavos/reserve`, Solana SPL via `executeInstructions`, Starknet `execute` transfers, and [Gas Sponsorship in Any Token](/embedded-wallet#gas-sponsorship-in-any-token) so the first payment does not require XLM, SOL, or STRK. Connect never deploys Starknet or Stellar. The first execute deploys and runs atomically. The [React integration](/blog/how-to-add-an-embedded-wallet) is the install. The [embedded wallet API](/blog/embedded-wallet-api) guide is the surface map. Custody is a separate fact: see [non-custodial embedded wallets](/blog/non-custodial-embedded-wallet).
 
-Cavos, LLC is a software and SaaS company. Signing keys are created and used on the user's device. They never leave it in plaintext. Cavos cannot see them, sign with them, or move funds. [Pricing](/pricing) publishes Free up to 1,000 wallets, Essential at $59/mo, and Complete at $139/mo.
+Cavos, LLC is a software and SaaS company. The wallet is hardware-isolated and non-custodial. Signing always happens on the user's device. Keys never leave the device in plaintext and are never used for signing on servers. Cavos cannot see them, sign with them, decrypt them, or move funds. [Pricing](/pricing) publishes Free up to 1,000 wallets, Essential at $59/mo, and Complete at $139/mo.
+
+## Who this is for
+
+This page is for developers who implement in-app pay, receive, and sign with `@cavos/kit` 0.5.2. It is not a consumer USDC wallet from an app store.
+
+**When USDC payments fit:** the product should accept a held token inside the app, and the user should not need XLM, SOL, or STRK to start. USDC is one example of a token a user might already hold, not a required asset. Relayers and paymasters transport, sponsor, or submit. They are not signers.
+
+Use this path when:
+
+- Users should never install an extension, paste a seed, or approve in someone else's popup.
+- The first payment should be Gas Sponsorship in Any Token: Starknet paymaster by default, Solana `fee: { token }` or `fee: "sponsored"`, Stellar kit relayer or `@cavos/reserve`.
+- You ship Starknet, Solana, or Stellar. Cavos is not an EVM-wide wallet layer.
+
+Skip this path if you must connect MetaMask, Phantom, or Freighter, or if the chain is not one of those three. The install-versus-connect fork is [embedded wallet vs browser extension](/blog/embedded-wallet-vs-browser-extension).
 
 ## What are embedded wallet payments?
 
@@ -36,12 +54,12 @@ This page is the how-to. The [what is an embedded wallet](/blog/what-is-an-embed
 ## What you are installing
 
 ```bash
-npm install @cavos/kit@^0.5.0
+npm install @cavos/kit@^0.5.2
 ```
 
-Use `^0.5.0`. 0.4.x breaks email sign-in and enclave recovery against the current enclave. Stellar token-pay sponsorship is a **separate** package: `npm install @cavos/reserve @stellar/stellar-sdk`. See the [Reserve docs](https://docs.cavos.xyz/docs/reserve).
+Use `^0.5.2`. Telegram as a hosted login needs 0.5.2; it is optional web-only OAuth via oauth.telegram.org, not a Mini App. See [Sign in with Telegram (Kit 0.5.2)](/blog/cavos-kit-0-5-2). Kits 0.5.0 and 0.5.1 still work for Google, Apple, email, and GitHub against the current enclave. 0.4.x breaks email sign-in and enclave recovery against the current enclave. React Native cannot offer Telegram, email, or GitHub because that build cannot verify enclave attestation. Use Google or Apple there. Stellar token-pay sponsorship is a **separate** package: `npm install @cavos/reserve @stellar/stellar-sdk`. See the [Reserve docs](https://docs.cavos.xyz/docs/reserve).
 
-Create an app in the [Cavos dashboard](https://cavos.xyz/dashboard) and copy its App ID. Wrap the tree in `CavosProvider` (or call `Cavos.connect`) with `network: "testnet"` while you develop. Narrow on `wallet.chain` before any execute. Both `undeployed` and `ready` wallets can execute. Only `needs-device-approval` blocks execution: this device has no key yet, so restore the MasterDEK with a passkey or the enclave. See [wallet actions](https://docs.cavos.xyz/docs/wallet-actions).
+Create an app in the [Cavos dashboard](https://cavos.xyz/dashboard) and copy its App ID. Wrap the tree in `CavosProvider` (or call `Cavos.connect`) with `network: "testnet"` while you develop. Narrow on `wallet.chain` before any execute. Connect never deploys Starknet or Stellar. Both `undeployed` and `ready` wallets can execute; the first execute deploys and runs atomically. Only `needs-device-approval` blocks execution: this device has no key yet, so restore the MasterDEK with a passkey or the enclave. See [wallet actions](https://docs.cavos.xyz/docs/wallet-actions).
 
 ## Stellar embedded wallet payments in USDC
 
@@ -132,7 +150,7 @@ await wallet.execute(amount, dest, { fee: { token: usdcMint } }); // the user pa
 
 ## Starknet embedded wallet payments in USDC
 
-On Starknet, Cavos deploys an **audited OpenZeppelin account contract** (AccountUpgradeable v3.0.0), not a Cavos-written class. The stark key is derived on the device. Connect never deploys. The first `execute` deploys and runs the calls atomically, sponsored by the Cavos paymaster (SNIP-29).
+On Starknet, Cavos deploys an **audited OpenZeppelin account contract** (AccountUpgradeable v3.0.0), not a Cavos-written class. The audit covers OpenZeppelin, not Cavos. The stark key is derived on the device. Connect never deploys. The first `execute` deploys and runs the calls atomically, sponsored by the Cavos paymaster (SNIP-29).
 
 ```ts
 const { execute } = useCavos();
@@ -164,7 +182,7 @@ Add `paymasterApiKey` only when Starknet is in `chains`. A paymaster key on a ch
 
 ## Who signs an embedded wallet payment
 
-The device. Signing keys are created and used on the user's device. They never leave it in plaintext and never sign on Cavos servers. The MasterDEK stays protected at rest by WebCrypto in the browser or the OS keystore on React Native. Recovery is hardware-isolated and non-custodial: a passkey or an opt-in AWS Nitro Enclave holds only an encrypted copy of the MasterDEK for restore. Neither path can sign a spend in the ordinary flow.
+The device. Signing always happens on the user's device. Keys never leave the device in plaintext and are never used for signing on servers. The MasterDEK stays protected at rest by WebCrypto in the browser or the OS keystore on React Native. Recovery is hardware-isolated and non-custodial: a passkey or an opt-in AWS Nitro Enclave holds only an encrypted copy of the MasterDEK for restore. Neither path can sign a spend in the ordinary flow. Cavos cannot see the key, sign with it, decrypt it, or move funds.
 
 Login selects which user this is. It never authorizes a spend. The [custody](/custody) page is the legal control test. The [non-custodial](/blog/non-custodial-embedded-wallet) guide is the vendor checklist.
 
@@ -181,5 +199,6 @@ Login selects which user this is. It never authorizes a spend. The [custody](/cu
 - [How to send gasless Starknet transactions](/blog/gasless-starknet-transactions): paymaster-sponsored deploy and execute.
 - [Non-custodial embedded wallets](/blog/non-custodial-embedded-wallet): who can sign, and how to verify a vendor's claim.
 - Chain pages: [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), [Stellar](/embedded-stellar-wallet).
+- [Sign in with Telegram (Kit 0.5.2)](/blog/cavos-kit-0-5-2): optional web-only Telegram login on `@cavos/kit` 0.5.2. GitHub login shipped in 0.5.0.
 - [Wallet actions](https://docs.cavos.xyz/docs/wallet-actions), [Stellar](https://docs.cavos.xyz/docs/stellar), [Solana](https://docs.cavos.xyz/docs/solana), [Starknet](https://docs.cavos.xyz/docs/starknet), [Reserve](https://docs.cavos.xyz/docs/reserve).
 - [Pricing](/pricing) for the free 1,000 creates and paid recovery options.
