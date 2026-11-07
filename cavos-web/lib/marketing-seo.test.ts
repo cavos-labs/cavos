@@ -5166,15 +5166,15 @@ describe('best embedded wallets per chain', () => {
       assert.doesNotMatch(source, /—/)
       assert.doesNotMatch(source, /trustless|impossible/i)
       const fields = parseBlogFrontmatter(source)
-      if (slug === 'best-embedded-wallets-stellar') {
-        assert.equal(fields.updated, '2026-11-07')
-      } else {
+      if (slug === 'best-embedded-wallets-starknet') {
         assert.equal(fields.updated, '2026-11-06')
+      } else {
+        assert.equal(fields.updated, '2026-11-07')
       }
       assert.match(fields.title, /Best Embedded Wallets for/)
       assert.match(fields.title, /Free/)
       if (slug === 'best-embedded-wallets-solana') {
-        assert.match(fields.title, /2026/)
+        assert.equal(fields.title, 'Best Embedded Wallets for Solana 2026: Free')
       }
       if (slug === 'best-embedded-wallets-stellar') {
         assert.equal(fields.title, 'Best Embedded Wallets for Stellar: Free')
@@ -5213,6 +5213,16 @@ describe('best embedded wallets per chain', () => {
     assert.match(solana, /\]\(\/blog\/best-embedded-wallets-stellar\)/)
     assert.match(solana, /\]\(\/blog\/best-embedded-wallets-starknet\)/)
     assert.match(solana, /\[solana embedded wallet\]\(\/embedded-solana-wallet\)/)
+    assert.match(solana, /Who each Solana provider fits \(2026\)/)
+    assert.match(solana, /Native system account vs PDA in 2026/)
+    assert.match(solana, /Native Solana support versus sign-only/)
+    assert.match(solana, /best Solana embedded wallet/)
+    assert.match(solana, /Which providers support a Solana embedded wallet natively\?/)
+    assert.match(solana, /cannot decrypt that copy/)
+    assert.match(solana, /Who should pick each Solana embedded wallet provider\?/)
+    assert.match(solana, /fee: "sponsored"/)
+    assert.match(solana, /\[embedded wallet\]\(\/embedded-wallet\)/)
+    assert.match(solana, /\]\(\/pricing\)/)
     assert.match(starknet, /\]\(\/blog\/best-embedded-wallets-stellar\)/)
     assert.match(starknet, /\]\(\/blog\/best-embedded-wallets-solana\)/)
     assert.match(starknet, /\[starknet embedded wallet\]\(\/embedded-starknet-wallet\)/)
@@ -5224,6 +5234,11 @@ describe('best embedded wallets per chain', () => {
     assert.match(starknet, /What is the best wallet for Starknet\?/)
     assert.match(starknet, /app developer/)
     assert.match(solana, /\[Para alternatives\]\(\/para-alternatives\)/)
+    const llms = fs.readFileSync(path.join(process.cwd(), 'public/llms.txt'), 'utf8')
+    assert.match(
+      llms,
+      /best-embedded-wallets-solana\): native vs sign-only, sponsored fees/,
+    )
   })
 
   it('emits ItemList JSON-LD with absolute URLs', () => {

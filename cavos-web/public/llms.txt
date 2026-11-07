@@ -38,7 +38,7 @@ Cavos (`@cavos/kit`) is a hardware-isolated, non-custodial embedded wallet SDK f
 ## Comparisons
 
 - [Best embedded wallets for Stellar (2026)](https://cavos.xyz/blog/best-embedded-wallets-stellar): native vs sign-only, classic G vs Soroban; Free up to 1,000 wallets
-- [Best embedded wallets for Solana (2026)](https://cavos.xyz/blog/best-embedded-wallets-solana)
+- [Best embedded wallets for Solana (2026)](https://cavos.xyz/blog/best-embedded-wallets-solana): native vs sign-only, sponsored fees; Free up to 1,000 wallets
 - [Best embedded wallets for Starknet (2026)](https://cavos.xyz/blog/best-embedded-wallets-starknet)
 - [Best embedded wallet providers (2026)](https://cavos.xyz/blog/embedded-wallet-providers): custody, chains, pricing, enclave vs MPC; Free up to 1,000 wallets
 - [Privy alternatives](https://cavos.xyz/privy-alternatives)

@@ -401,7 +401,7 @@ Hello
       true,
     )
     assert.equal(
-      solanaBest.lastModified.toISOString().startsWith('2026-11-06'),
+      solanaBest.lastModified.toISOString().startsWith('2026-11-07'),
       true,
     )
     assert.equal(
