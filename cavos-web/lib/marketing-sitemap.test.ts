@@ -348,8 +348,8 @@ Hello
     )
     assert.ok(providers)
     assert.ok(privy)
-    assert.equal(providers.lastModified.toISOString().startsWith('2026-11-06'), true)
-    assert.equal(privy.lastModified.toISOString().startsWith('2026-11-06'), true)
+    assert.equal(providers.lastModified.toISOString().startsWith('2026-11-07'), true)
+    assert.equal(privy.lastModified.toISOString().startsWith('2026-11-07'), true)
 
     const stellarTutorial = publishedBlogPosts().find(
       (item) => item.slug === 'stellar-embedded-wallet-tutorial',
@@ -397,7 +397,7 @@ Hello
     assert.equal(cost.lastModified.toISOString().startsWith('2026-11-04'), true)
     assert.equal(api.lastModified.toISOString().startsWith('2026-11-06'), true)
     assert.equal(
-      stellarBest.lastModified.toISOString().startsWith('2026-11-06'),
+      stellarBest.lastModified.toISOString().startsWith('2026-11-07'),
       true,
     )
     assert.equal(
@@ -422,7 +422,7 @@ Hello
       true,
     )
     assert.equal(
-      walletAsAService.lastModified.toISOString().startsWith('2026-11-06'),
+      walletAsAService.lastModified.toISOString().startsWith('2026-11-07'),
       true,
     )
 

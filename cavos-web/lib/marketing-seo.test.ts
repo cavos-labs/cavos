@@ -2520,8 +2520,8 @@ describe('marketing SEO', () => {
     assert.equal(privy.title, PRIVY_VS_TURNKEY_TITLE)
     assert.ok(providers.excerpt.length >= 140 && providers.excerpt.length <= 155)
     assert.ok(privy.excerpt.length >= 140 && privy.excerpt.length <= 155)
-    assert.equal(providers.updated, '2026-11-06')
-    assert.equal(privy.updated, '2026-11-06')
+    assert.equal(providers.updated, '2026-11-07')
+    assert.equal(privy.updated, '2026-11-07')
     assert.match(EMBEDDED_WALLET_PROVIDERS_TITLE, /Best Embedded Wallet Providers/)
     assert.match(EMBEDDED_WALLET_PROVIDERS_TITLE, /Embedded Wallet Providers/)
     assert.match(providers.excerpt, /best embedded wallet providers 2026/i)
@@ -2558,6 +2558,12 @@ describe('marketing SEO', () => {
     assert.match(providersSource, /## How do Para and Dynamic embedded wallets compare\?/)
     assert.match(providersSource, /## What an enterprise should evaluate/)
     assert.match(providersSource, /## Which embedded wallet provider supports the most chains\?/)
+    assert.match(
+      providersSource,
+      /## Comparison criteria: custody, chains, pricing, enclave vs MPC/,
+    )
+    assert.match(providersSource, /cannot decrypt it/)
+    assert.match(providersSource, /encrypted MasterDEK copy/)
     assert.match(providersSource, /\]\(\/blog\/embedded-wallet-cost\)/)
     assert.match(providersSource, /does not support Midnight, Aleo, Cosmos, or Sui/)
     assert.match(providersSource, /Aleo, and Midnight/)
@@ -2593,7 +2599,11 @@ describe('marketing SEO', () => {
       privySource,
       /How do Turnkey, Privy, and Dfns compare as embedded wallets\?/,
     )
+    assert.match(privySource, /## Privy vs Turnkey at a glance/)
     assert.match(privySource, /## Turnkey vs Privy vs Dfns/)
+    assert.match(privySource, /Turnkey vs Privy vs Dfns embedded wallets/)
+    assert.match(privySource, /encrypted copy of the MasterDEK/)
+    assert.match(privySource, /cannot decrypt that copy/)
     assert.match(privySource, /docs\.dfns\.co\/core-concepts\/how-mpc-wallets-work/)
     assert.match(privySource, /docs\.dfns\.co\/advanced\/delegated-wallets/)
     assert.match(privySource, /docs\.dfns\.co\/solutions\/embed-user-wallets/)
@@ -3950,7 +3960,10 @@ describe('marketing SEO', () => {
     assert.match(source, /never leave the device in plaintext/)
     const waasFields = parseBlogFrontmatter(source)
     assert.equal(waasFields.title, WALLET_AS_A_SERVICE_TITLE)
-    assert.equal(waasFields.updated, '2026-11-06')
+    assert.equal(waasFields.updated, '2026-11-07')
+    assert.match(source, /## Wallet-as-a-service custody models/)
+    assert.match(source, /Device-native/)
+    assert.match(source, /cannot decrypt that copy/)
     assert.ok(waasFields.excerpt.length >= 140 && waasFields.excerpt.length <= 155)
 
     const hub = fs.readFileSync(
@@ -5146,7 +5159,11 @@ describe('best embedded wallets per chain', () => {
       assert.doesNotMatch(source, /—/)
       assert.doesNotMatch(source, /trustless|impossible/i)
       const fields = parseBlogFrontmatter(source)
-      assert.equal(fields.updated, '2026-11-06')
+      if (slug === 'best-embedded-wallets-stellar') {
+        assert.equal(fields.updated, '2026-11-07')
+      } else {
+        assert.equal(fields.updated, '2026-11-06')
+      }
       assert.match(fields.title, /Best Embedded Wallets for/)
       assert.match(fields.title, /Free/)
       if (slug === 'best-embedded-wallets-solana') {
@@ -5181,6 +5198,10 @@ describe('best embedded wallets per chain', () => {
     assert.match(stellar, /Fees \/ reserves/)
     assert.match(stellar, /Who each Stellar provider fits \(2026\)/)
     assert.match(stellar, /Classic G vs Soroban in 2026/)
+    assert.match(stellar, /Native Stellar support versus sign-only/)
+    assert.match(stellar, /best Stellar embedded wallet/)
+    assert.match(stellar, /Which providers support a Stellar embedded wallet natively\?/)
+    assert.match(stellar, /cannot decrypt that copy/)
     assert.match(stellar, /Who should pick each Stellar embedded wallet provider\?/)
     assert.match(solana, /\]\(\/blog\/best-embedded-wallets-stellar\)/)
     assert.match(solana, /\]\(\/blog\/best-embedded-wallets-starknet\)/)
