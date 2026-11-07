@@ -1,8 +1,8 @@
 ---
 title: "How to Send Gasless Starknet Transactions"
-updated: "2026-11-01"
+updated: "2026-11-07"
 date: "2026-10-25"
-excerpt: "Install @cavos/kit, sign in with Google, Apple, or email, and send a paymaster-sponsored Starknet transaction from an embedded wallet, no ETH or STRK."
+excerpt: "Install @cavos/kit 0.5.2, sign in with Google, Apple, or email, and send a gasless Starknet tx from an audited OpenZeppelin account. No ETH or STRK."
 category: "Guide"
 ogQuote: "Gasless is the UX. Custody is a separate question."
 slug: "gasless-starknet-transactions"
@@ -12,20 +12,42 @@ faq:
   - question: "What is a Starknet paymaster?"
     answer: "A Starknet paymaster is a service that sponsors transaction fees so the account does not pay gas. Cavos hosts a SNIP-29 paymaster (with SRC-9 outside execution). You pass a client-visible, app-scoped paymasterApiKey into Cavos.connect or CavosProvider. The paymaster transports and sponsors; it does not sign user calls or move funds. A paymaster key on a chain that ignores it is a config error."
   - question: "How do I send a gasless transaction from a Starknet embedded wallet?"
-    answer: "Install @cavos/kit, create an App ID, wrap the tree in CavosProvider with chains: [\"starknet\"] and a paymaster API key, and sign the user in with Google, Apple, or an enclave-verified email code. In React, useCavos().execute(calls) is Starknet-only and sponsored by default. Connect never deploys; the first execute deploys the OpenZeppelin account and runs the multicall in one sponsored transaction."
+    answer: "Install @cavos/kit 0.5.2 (npm install @cavos/kit@^0.5.2), create an App ID, wrap the tree in CavosProvider with chains: [\"starknet\"] and a paymaster API key, and sign the user in with Google, Apple, or an enclave-verified email code. In React, useCavos().execute(calls) is Starknet-only and sponsored by default. Connect never deploys; the first execute deploys the OpenZeppelin account and runs the multicall in one sponsored transaction."
   - question: "Does connect deploy the Starknet account?"
     answer: "No. Connect looks up (userId, appId, chain, network) in the registry, derives the address, and unwraps the stark key on this device. It never deploys. An undeployed wallet already has that address. The first execute deploys AccountUpgradeable and runs the user’s calls atomically. After that, status is ready."
   - question: "Who signs a Cavos Starknet transaction?"
-    answer: "The device. The stark key is grindKey(HKDF(MasterDEK, appSalt, \"cavos-stark-starknet-v1\")). Cavos cannot see it, cannot sign with it, and cannot move funds. Login selects which user this is; it never authorizes a spend. The on-chain account is an audited OpenZeppelin AccountUpgradeable v3.0.0, the audit covers OpenZeppelin’s contract, not Cavos. There is no on-chain device list. A new device restores the MasterDEK off-chain."
+    answer: "The device. The stark key is grindKey(HKDF(MasterDEK, appSalt, \"cavos-stark-starknet-v1\")). Signing always happens on the user's device. Cavos is hardware-isolated and non-custodial: it cannot see the key, cannot sign with it, cannot decrypt it, and cannot move funds. Login selects which user this is; it never authorizes a spend. The on-chain account is an audited OpenZeppelin account contract (AccountUpgradeable v3.0.0); the audit covers OpenZeppelin’s contract, not Cavos. There is no on-chain device list. A new device restores the MasterDEK off-chain."
+  - question: "Which @cavos/kit version do I need for gasless Starknet transactions?"
+    answer: "Install @cavos/kit 0.5.2 with npm install @cavos/kit@^0.5.2. Google, Apple, and email work on 0.5.0 and 0.5.1 against the current enclave. Telegram is optional web-only OAuth via oauth.telegram.org, not a Mini App, and needs 0.5.2. 0.4.x does not."
+  - question: "Do I need ETH or STRK to send a Starknet transaction with Cavos?"
+    answer: "No. Execute routes through a SNIP-29 paymaster as Gas Sponsorship in Any Token. Account deployment and later executions are sponsored by default, so the user never needs a fee token to start. After deploy, fee: \"self\" pays from the account's own balance. A self-funded first execute is refused."
 ---
 
 An [embedded wallet](/embedded-wallet) lives inside your application. The user signs in the way they already do. The product resolves an on-chain Starknet account they can pay, receive, and sign with, no browser extension, no seed phrase, no trip to Argent X or Braavos.
 
-This guide is the Starknet path for that model using `@cavos/kit` 0.4.4. It is the how-to companion to the [Starknet embedded wallet](/embedded-starknet-wallet) page: App ID, paymaster key, Google / Apple / email login, the address before deploy, the first sponsored `execute`, and React Native notes. The cross-chain React walkthrough is [how to add an embedded wallet](/blog/how-to-add-an-embedded-wallet).
+This guide is the Starknet path for that model using `@cavos/kit` 0.5.2. It is the how-to companion to the [Starknet embedded wallet](/embedded-starknet-wallet) page: App ID, paymaster key, Google / Apple / email login, the address before deploy, the first sponsored `execute`, and React Native notes. The cross-chain React walkthrough is [how to add an embedded wallet](/blog/how-to-add-an-embedded-wallet).
 
-Cavos, LLC is a software and SaaS company. Signing keys are created and used on the user’s device. Cavos cannot see them, sign with them, or move funds. The Starknet adapter provisions an **audited OpenZeppelin account contract** (AccountUpgradeable v3.0.0) not a Cavos-written class.
+Cavos, LLC is a software and SaaS company. The wallet is hardware-isolated and non-custodial. Signing always happens on the user’s device. Keys never leave the device in plaintext. Cavos cannot see them, sign with them, decrypt them, or move funds. The Starknet adapter provisions an **audited OpenZeppelin account contract** (AccountUpgradeable v3.0.0) not a Cavos-written class.
 
-[Pricing](/pricing) publishes the free 1,000 wallet creates and paid recovery options.
+## Who this is for
+
+**This page is the Starknet how-to if the user should send without ETH or STRK.** Install `@cavos/kit` 0.5.2, wrap `CavosProvider` with `chains: ["starknet"]` and a paymaster API key, sign in with Google, Apple, or email, then call `execute`. Connect never deploys. The first `execute` deploys an audited OpenZeppelin account contract and runs the calls in one paymaster-sponsored transaction.
+
+**Use this path** when the product is a Starknet app, the user has never used crypto, and a fee-token wall would kill the first transaction.
+
+**Do not use this path** if you need to connect Argent X or Braavos, or if the chain is not Starknet. The install-versus-connect fork is [embedded wallet vs browser extension](/blog/embedded-wallet-vs-browser-extension). The cross-chain install is [how to add an embedded wallet](/blog/how-to-add-an-embedded-wallet).
+
+Gas is **Gas Sponsorship in Any Token**: the SNIP-29 paymaster sponsors deploy and execute so the account does not need a fee token to start. Relayers and paymasters are not signers.
+
+[Pricing](/pricing) is Free up to 1,000 wallets, Essential at $59 per month, and Complete at $139 per month.
+
+## What you will do
+
+1. Install `@cavos/kit` 0.5.2. Numbered section 1.
+2. Create an app in the Cavos dashboard and copy the App ID and paymaster API key. Numbered section 2.
+3. Wrap the tree in `CavosProvider` with `chains: ["starknet"]`. Numbered section 3.
+4. Sign the user in with Google, Apple, or email. Connect returns a `0x…` before the account exists on-chain. Numbered section 4.
+5. Send the first paymaster-sponsored `execute`. That call deploys the audited OpenZeppelin account contract and runs the multicall atomically. Numbered section 6.
 
 ## What you are installing
 
@@ -36,10 +58,10 @@ Custody is separate from that UX. Some embedded wallets hold a key, split one wi
 ## 1. Install @cavos/kit
 
 ```bash
-npm install @cavos/kit
+npm install @cavos/kit@^0.5.2
 ```
 
-The React bindings live on the same package, under `@cavos/kit/react`. You do not install a second library. Mobile uses `@cavos/kit/react-native`, covered in the React Native section below. Expo Go is not supported.
+The React bindings live on the same package, under `@cavos/kit/react`. You do not install a second library. Telegram as a hosted login needs 0.5.2; it is optional web-only OAuth via oauth.telegram.org, not a Mini App. See [Sign in with Telegram (Kit 0.5.2)](/blog/cavos-kit-0-5-2). Kits 0.5.0 and 0.5.1 still work for Google, Apple, email, and GitHub against the current enclave. 0.4.x does not. Mobile uses `@cavos/kit/react-native`, covered in the React Native section below. Expo Go is not supported.
 
 ## 2. Create an app and copy the keys
 
@@ -127,6 +149,8 @@ await verifyOtp(email, code); // 9 characters, lowercase letters and digits
 ```
 
 The recovery enclave generates that code, mails it, and verifies it. A code expires after 5 minutes and allows 3 attempts. Email sign-in is not available on React Native yet; use Google or Apple there.
+
+Telegram is optional and web only: OAuth at oauth.telegram.org, not a Telegram Mini App. Add `'telegram'` to `modal.providers`, or call `login("telegram")`. It needs `@cavos/kit` 0.5.2. It is not available in React Native. See [Sign in with Telegram (Kit 0.5.2)](/blog/cavos-kit-0-5-2).
 
 When you connect, the kit looks up the address:
 
@@ -221,7 +245,7 @@ const wallet = session.wallet("starknet");
 
 ## How the paymaster sponsors gas
 
-`execute` routes through the **Cavos paymaster** (SNIP-29, with SRC-9 outside execution). Deploy and every later execution are sponsored by default. The user pays no gas and never needs ETH or STRK. The paymaster is not a signer: it transports or submits. It cannot move funds.
+`execute` routes through the **Cavos paymaster** (SNIP-29, with SRC-9 outside execution). That is **Gas Sponsorship in Any Token** on Starknet: deploy and every later execution are sponsored by default. The user pays no gas and never needs ETH or STRK. The paymaster is not a signer: it transports or submits. It cannot move funds.
 
 After the account is deployed, `fee: "self"` pays from the account’s own balance:
 
@@ -253,7 +277,7 @@ The spend key is one stark key: `grindKey(HKDF(MasterDEK, appSalt, "cavos-stark-
 
 A new device unwraps the MasterDEK. It does **not** add an on-chain signer. There is no on-chain device-signer list, no `add_signer`, and no on-chain social recovery.
 
-After login, call `enrollPasskeyDefault()`. Signing up never prompts. The passkey stores an encrypted copy of the MasterDEK; it is not 2FA. Anyone with that synced passkey can open the wallet. Hardware-isolated recovery is opt-in per environment: sign in again with Google, Apple, or an enclave-verified email code to unwrap the same DEK. Recovery codes do not restore Starknet wallets. If every device and every restore factor is gone, Cavos cannot recover the wallet.
+After login, call `enrollPasskeyDefault()`. Signing up never prompts. The passkey stores an encrypted copy of the MasterDEK; it is not 2FA. Anyone with that synced passkey can open the wallet. Hardware-isolated recovery is opt-in per environment: sign in again with Google, Apple, or an enclave-verified email code to unwrap the same DEK. Recovery codes do not restore Starknet wallets. If every device and every restore factor is gone, Cavos cannot recover the wallet. The passkey and the enclave only hold an encrypted copy of the MasterDEK; they cannot sign, and Cavos cannot decrypt that copy.
 
 See [recovery](https://docs.cavos.xyz/docs/recovery) and [hardware-isolated recovery](https://docs.cavos.xyz/docs/hardware-isolated-recovery).
 
