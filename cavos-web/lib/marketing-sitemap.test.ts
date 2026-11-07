@@ -405,7 +405,7 @@ Hello
       true,
     )
     assert.equal(
-      starknetBest.lastModified.toISOString().startsWith('2026-11-06'),
+      starknetBest.lastModified.toISOString().startsWith('2026-11-07'),
       true,
     )
 

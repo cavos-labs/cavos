@@ -5166,11 +5166,7 @@ describe('best embedded wallets per chain', () => {
       assert.doesNotMatch(source, /—/)
       assert.doesNotMatch(source, /trustless|impossible/i)
       const fields = parseBlogFrontmatter(source)
-      if (slug === 'best-embedded-wallets-starknet') {
-        assert.equal(fields.updated, '2026-11-06')
-      } else {
-        assert.equal(fields.updated, '2026-11-07')
-      }
+      assert.equal(fields.updated, '2026-11-07')
       assert.match(fields.title, /Best Embedded Wallets for/)
       assert.match(fields.title, /Free/)
       if (slug === 'best-embedded-wallets-solana') {
@@ -5178,6 +5174,9 @@ describe('best embedded wallets per chain', () => {
       }
       if (slug === 'best-embedded-wallets-stellar') {
         assert.equal(fields.title, 'Best Embedded Wallets for Stellar: Free')
+      }
+      if (slug === 'best-embedded-wallets-starknet') {
+        assert.equal(fields.title, 'Best Embedded Wallets for Starknet: Free')
       }
       assert.ok(`${fields.title} | Cavos`.length <= 60, fields.title)
       assert.ok(fields.excerpt.length >= 140 && fields.excerpt.length <= 155)
@@ -5230,6 +5229,18 @@ describe('best embedded wallets per chain', () => {
     assert.match(starknet, /\]\(\/pricing\)/)
     assert.match(starknet, /Who each Starknet provider fits \(2026\)/)
     assert.match(starknet, /Account contract versus sign-only in 2026/)
+    assert.match(starknet, /Decision: native Starknet vs sign-only/)
+    assert.match(starknet, /Paymaster and sponsored gas/)
+    assert.match(starknet, /Native: deploy and execute/)
+    assert.match(starknet, /best Starknet embedded wallet/)
+    assert.match(starknet, /Which providers support a Starknet embedded wallet natively\?/)
+    assert.match(starknet, /cannot decrypt that copy/)
+    assert.match(starknet, /AccountUpgradeable v3\.0\.0/)
+    assert.match(starknet, /Gas Sponsorship in Any Token/)
+    assert.match(starknet, /paymasterApiKey/)
+    assert.match(starknet, /wallet\.execute\(calls\)/)
+    assert.match(starknet, /oauth\.telegram\.org/)
+    assert.match(starknet, /not a Telegram Mini App/)
     assert.match(starknet, /Who should pick each Starknet embedded wallet provider\?/)
     assert.match(starknet, /What is the best wallet for Starknet\?/)
     assert.match(starknet, /app developer/)
@@ -5267,6 +5278,10 @@ describe('best embedded wallets per chain', () => {
     assert.match(llms, /Free: up to 1,000 wallets/)
     assert.match(llms, /\$59/)
     assert.match(llms, /\$139/)
+    assert.match(
+      llms,
+      /blog\/best-embedded-wallets-starknet\): native vs sign-only, paymaster gas/,
+    )
     assert.doesNotMatch(llms, /—|trustless/)
   })
 })
