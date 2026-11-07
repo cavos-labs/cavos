@@ -1,8 +1,8 @@
 ---
 title: "Wallet as a Service (2026): Providers, Pricing"
-updated: "2026-11-06"
+updated: "2026-11-07"
 date: "2026-10-23"
-excerpt: "Wallet as a service (WaaS) in 2026: definition, providers, custody, pricing units. Non-custodial option free to 1,000 wallets on Starknet, Solana, Stellar."
+excerpt: "Wallet as a service (WaaS) in 2026: definition, custody models, pricing units, and providers. Free to 1,000 wallets on Starknet, Solana, Stellar."
 category: "Guide"
 ogQuote: "Write the answers down before you read a pricing page."
 slug: "wallet-as-a-service"
@@ -41,9 +41,11 @@ Cavos, LLC is a software and SaaS company. The wallet is the main product: a har
 
 ## What is wallet as a service?
 
-**Wallet as a service** in 2026 is the unhyphenated form of **wallet-as-a-service** and **WaaS**. Teams type all three. The product is an API or SDK that turns a login into an on-chain account inside your app: authenticate the user, look up or create an address, sign from a key the platform manages or from a key on the device, and often sponsor the first fee. You do not ship a seed phrase or send the user to MetaMask.
+**Wallet as a service** in 2026 is the unhyphenated form of **wallet-as-a-service** and **WaaS**. Teams type all three, plus embedded wallets as a service. The product is an API or SDK that turns a login into an on-chain account inside your app: authenticate the user, look up or create an address, sign from a key the platform manages or from a key on the device, and often sponsor the first fee. You do not ship a seed phrase or send the user to MetaMask.
 
-That is how **wallet as a service** is sold. It is not a custody claim. Device-native keys, MPC shares, a remote enclave, and a delegated HSM are all sold under the same label. Write down who can produce a signature before you compare prices. WaaS vs an [embedded wallet](/embedded-wallet) is naming, not architecture: embedded is where the wallet appears; WaaS is how you buy it.
+A **wallet as a service** purchase usually includes some combination of: hosted or JWT login, a wallet registry keyed on that identity, key handling (device, MPC, enclave, or HSM), a signing API or `execute` method, gas sponsorship, recovery, and a dashboard for App IDs and spend limits. You are buying that path as software, not installing a browser extension.
+
+That is how **wallet as a service** is sold. It is not a custody claim. Device-native keys, MPC shares, a remote enclave, and a delegated HSM are all sold under the same label. Write down who can produce a signature before you compare prices. WaaS vs an [embedded wallet](/embedded-wallet) is naming, not architecture: embedded is where the wallet appears; WaaS is how you buy it. The named-vendor table is [embedded wallet providers](/blog/embedded-wallet-providers).
 
 ## What is wallet-as-a-service?
 
@@ -82,7 +84,7 @@ This is the part that decides whether the platform is a custodian in practice. F
 
 “Non-custodial” is a claim. The test is who can move the assets. Privy ships non-custodial embedded wallets and, separately, optional custodial wallets starting with Bridge. Counsel has to read recovery and export.
 
-On Starknet, Cavos wallets are an **audited OpenZeppelin account contract** (AccountUpgradeable v3.0.0) controlled by one stark key derived from the MasterDEK and app salt. Cavos does not ship its own account implementation. There are no on-chain device signers.
+On Starknet, Cavos wallets are an **audited OpenZeppelin account contract** (AccountUpgradeable v3.0.0) controlled by one stark key derived from the MasterDEK and app salt. The audit covers OpenZeppelin’s contract, not Cavos. Cavos does not ship its own account implementation. There are no on-chain device signers.
 
 ### Signing
 
@@ -117,6 +119,49 @@ The dashboard is how a platform becomes software you operate: App IDs, environme
 
 Cavos ships a [dashboard](https://cavos.xyz/dashboard) where you create an app, copy an App ID, and operate gas sponsorship. The kit reads `NEXT_PUBLIC_CAVOS_APP_ID` in the browser. Published plans include dashboard and usage analytics. The [React integration](/blog/how-to-add-an-embedded-wallet) starts with that App ID.
 
+## Wallet-as-a-service custody models
+
+The WaaS label does not pick a model. Four designs cover the **wallet as a service** shortlist on this page.
+
+<table>
+<thead>
+<tr>
+<th>Custody model</th>
+<th>Where the key lives</th>
+<th>Who can sign without the user</th>
+<th>On this shortlist</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Device-native</td>
+<td>Created and used on the user’s device. Keys never leave the device in plaintext. Signing always happens on the device. Passkey and opt-in Nitro Enclave hold only an encrypted MasterDEK copy for sealed restore.</td>
+<td>The provider cannot see the key, sign with it, or decrypt it.</td>
+<td>Cavos</td>
+</tr>
+<tr>
+<td>MPC / TSS</td>
+<td>Shares on a device and/or a provider network. A complete private key is not supposed to exist. Signing is a ceremony.</td>
+<td>Depends who holds enough shares or the passkey that authorizes them.</td>
+<td>Dynamic, Dfns, Web3Auth, Para</td>
+</tr>
+<tr>
+<td>Remote enclave</td>
+<td>Ciphertext at rest; plaintext only inside a vendor TEE.</td>
+<td>Whoever holds credentials that can authorize the enclave: user, your API key, or both under policy.</td>
+<td>Turnkey</td>
+</tr>
+<tr>
+<td>Delegated TEE / HSM</td>
+<td>Vendor key-management reconstructs or unwraps inside its infrastructure.</td>
+<td>On the non-custodial path, valid user auth. Optional custodial wallets are a separate product.</td>
+<td>Privy (Shamir in AWS Nitro Enclaves; optional Bridge custodial). Magic’s public docs describe a TEE key-management system.</td>
+</tr>
+</tbody>
+</table>
+
+Integrating a self-custodial SDK does not settle exchange, on-ramp, or payment licensing. The [custody](/custody) page is the control test.
+
 ## Wallet-as-a-service: build versus buy
 
 This is the decision most “embedded wallet platform” searches are actually making.
@@ -131,7 +176,7 @@ Migration is a project in every direction. Addresses are derived differently. Co
 
 ## Wallet-as-a-service pricing models
 
-Vendors do not meter the same thing. A cheap free tier with a tight MAU cap is not the same as a flat wallet-create allowance. Read the unit before the dollar amount. Published figures below already appear on this site’s [compare](/compare) and [providers](/blog/embedded-wallet-providers) pages, as of October 2026. They can change. This page does not invent unpublished enterprise prices.
+**Wallet as a service** invoices do not meter the same thing. A cheap free tier with a tight MAU cap is not the same as a flat wallet-create allowance. Read the unit before the dollar amount. The usual meters are monthly active users, monthly active wallets, wallet creates, signatures, and volume. Published figures below already appear on this site’s [compare](/compare) and [providers](/blog/embedded-wallet-providers) pages, as of October 2026. They can change. This page does not invent unpublished enterprise prices. Worked cost at 10k / 100k / 1M users is [how much embedded wallets cost](/blog/embedded-wallet-cost).
 
 **Monthly active users (MAU).** A user who logs in or uses a wallet during the month counts once. Privy, Dynamic, and Para publish MAU plans. Privy’s public free tier is 0–499 MAU with 50,000 signatures and $1M volume per month; Core is $299/mo and Scale is $499/mo. Dynamic’s Growth plan is $249/mo for up to 5,000 MAUs; extra-MAU is billed, but the public plan card and FAQ disagree on the per-MAU rate, so that rate is omitted here. Para is free to 1,200 MAUs, then $200 / $500 / $1,000 per month.
 
