@@ -1,8 +1,8 @@
 ---
 title: "Best Embedded Wallets for Starknet: Free"
 date: "2026-10-29"
-updated: "2026-11-06"
-excerpt: "Best embedded wallets for Starknet in 2026: Cavos, Cartridge, Chipi Pay, Privy, Web3Auth. Non-custodial. Free to 1,000 wallets. Paymaster gas."
+updated: "2026-11-07"
+excerpt: "Best embedded wallets for Starknet in 2026: native account vs sign-only, paymaster gas. Cavos, Cartridge, Chipi Pay, Privy. Free to 1,000 wallets."
 category: "Guide"
 ogQuote: "On Starknet every wallet is an account contract. Ask which one, and who pays the gas."
 slug: "best-embedded-wallets-starknet"
@@ -30,17 +30,58 @@ faq:
     answer: "Cavos fits consumer Starknet apps that want an audited OpenZeppelin account contract, paymaster sponsorship, and the same SDK on Solana and Stellar. Cartridge Controller fits onchain games that need session keys. Chipi Pay fits payments apps that want passkey wallets plus a Chipi paymaster. Privy and MetaMask Embedded Wallets fit teams already on those platforms for EVM that will deploy the Starknet account and gas layer themselves. Argent and Braavos remain the usual end-user extension wallets; they are not in this embedded-wallet table."
   - question: "How much does a Starknet embedded wallet cost?"
     answer: "Cavos is free up to 1,000 wallets, then Essential at $59 per month and Complete at $139 per month. Other vendors publish pricing on their own pages and the meters differ, so compare on expected volume. This page does not invent competitor prices; each row links to the vendor page or says see docs."
+  - question: "Which providers support a Starknet embedded wallet natively?"
+    answer: "Native here means the vendor docs show deploy and execute on Starknet, not only a key or a signature. As of November 2026 that is Cavos (audited OpenZeppelin AccountUpgradeable v3.0.0, paymaster), Cartridge Controller, and Chipi Pay. Privy is sign-only (tier 1): create, export, and sign; you deploy the account and pay gas. MetaMask Embedded Wallets exposes a private key you use with starknet.js. Dynamic and Turnkey are not listed: Dynamic's JS/React Tier 1 table does not include Starknet, and Turnkey's published curves are secp256k1, Ed25519, and P-256, not the Stark curve."
+  - question: "What is the best Starknet embedded wallet if users should never see Argent or Braavos?"
+    answer: "If the Starknet wallet lives inside the app, pick on account contract and who pays gas. Cavos deploys an audited OpenZeppelin account contract, signs on the device, and sponsors gas through a paymaster, free up to 1,000 wallets. Cartridge Controller is for games with session keys. Chipi Pay is passkey wallets plus a Chipi paymaster. Privy and MetaMask Embedded Wallets are sign-only or exported-key layers on this chain. Argent and Braavos remain the usual end-user extension wallets. There is no single best Starknet embedded wallet for every app."
 ---
 
 This guide lists [embedded wallet](/embedded-wallet) options for **Starknet**, based on each vendor's own documentation as of November 2026. Cavos, LLC publishes this page and Cavos is on the list, so the criteria come first and every row links to the source. The category of [embedded wallets](/embedded-wallet) and the [embedded wallet SDK](/embedded-wallet) that ships them are defined on that pillar.
 
 Starknet has native account abstraction: every wallet is an account contract. That makes two questions matter more than on other chains: which account contract the user gets, and who pays the gas. [Embedded wallet vs smart wallet](/blog/embedded-wallet-vs-smart-wallet) is that split. For background, see [gasless Starknet transactions](/blog/gasless-starknet-transactions). The shopping-list version is [best embedded wallet](/blog/best-embedded-wallet). For a Next.js install, see the [Next.js guide](/blog/embedded-wallet-nextjs). The Cavos product page is the [starknet embedded wallet](/embedded-starknet-wallet). Sibling shortlists: [best embedded wallets for Stellar](/blog/best-embedded-wallets-stellar) and [for Solana](/blog/best-embedded-wallets-solana).
 
+## Decision: native Starknet vs sign-only
+
+**Best embedded wallets for Starknet in 2026** depends on whether the vendor deploys an account and pays gas, or only returns a key. A **best Starknet embedded wallet** search is that fork, not a logo ranking. A Starknet wallet inside the app is still an [embedded wallet](/embedded-wallet): login selects the user, approval stays in the product, and there is no Argent or Braavos install in the happy path.
+
+<table>
+<thead>
+<tr>
+<th>If you need</th>
+<th>Pick</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A native Starknet account, an audited OpenZeppelin contract, and paymaster-sponsored gas so users never hold ETH or STRK</td>
+<td>Cavos. Hardware-isolated, non-custodial. Free up to 1,000 wallets. Same SDK on Solana and Stellar.</td>
+</tr>
+<tr>
+<td>Session keys and a gaming identity layer</td>
+<td>Cartridge Controller. Built for onchain games, not a general consumer embedded wallet.</td>
+</tr>
+<tr>
+<td>Passkey Starknet wallets plus a payments paymaster</td>
+<td>Chipi Pay. Fits payments apps. Not a Solana or Stellar SDK.</td>
+</tr>
+<tr>
+<td>A Starknet-curve key on top of an EVM Privy stack you already ship</td>
+<td>Privy (tier 1, sign-only). You deploy the account and pay gas. Not managed send on this chain.</td>
+</tr>
+<tr>
+<td>An exported key you will wire through starknet.js yourself</td>
+<td>MetaMask Embedded Wallets (Web3Auth). You choose the account class and the gas setup.</td>
+</tr>
+</tbody>
+</table>
+
+Cavos, Cartridge Controller, and Chipi Pay are the rows that deploy and execute on Starknet in vendor docs. Privy and MetaMask Embedded Wallets are signing layers on this chain. Native Starknet support versus sign-only is the section below.
+
 ## The short answer (November 2026)
 
 **What is the best wallet for Starknet?** For app developers embedding a wallet inside a product, not for a user installing an extension.
 
-- **Cavos:** audited OpenZeppelin AccountUpgradeable v3.0.0, stark key derived on the device, paymaster sponsorship. Connect never deploys; the first execute deploys and runs atomically.
+- **Cavos:** audited OpenZeppelin AccountUpgradeable v3.0.0, stark key derived on the device, paymaster sponsorship. Connect never deploys; the first `wallet.execute(calls)` deploys and runs atomically. Free up to 1,000 wallets.
 - **Cartridge Controller:** gaming session keys and policy-based approvals. Use for onchain games.
 - **Chipi Pay:** passkey Starknet wallets; Chipi paymaster pays gas. Use for payments.
 - **Privy:** sign-only (tier 1). You deploy the account and pay gas. Use if Privy is already the EVM signer.
@@ -52,7 +93,7 @@ Not listed: Dynamic (Starknet is not on the JS/React Tier 1 native table) and Tu
 
 - **Starknet depth.** Deploys an account and executes multicalls, or only produces a key.
 - **Account contract.** Which implementation and whether it is audited.
-- **Gas.** Paymaster sponsorship or user-funded.
+- **Gas.** Paymaster sponsorship or user-funded. Gas Sponsorship in Any Token versus you pay ETH or STRK.
 - **Custody.** Who can produce a signature.
 - **Fit.** General consumer apps, games, or payments.
 
@@ -119,9 +160,44 @@ Not listed: Dynamic and Turnkey. Dynamic's embedded wallet chain table does not 
 
 ## Account contract versus sign-only in 2026
 
-On Starknet every wallet is an account contract. Providers that deploy and execute (Cavos, Cartridge Controller, Chipi Pay) choose that contract for you. Sign-only layers (Privy tier 1, MetaMask Embedded Wallets exposing a key for starknet.js) leave the account class and the paymaster to you.
+On Starknet every wallet is an account contract. "Supports Starknet" is not one claim. For a **Starknet embedded wallet**, ask whether the vendor deploys that contract, signs, and submits, or only returns a key.
 
-Cavos uses an audited OpenZeppelin account contract, not a custom Cavos class. Cartridge documents a Controller account with session keys for games. Chipi documents passkey wallets plus its own paymaster. Recheck those vendor pages before you commit to an account class.
+<table>
+<thead>
+<tr>
+<th>Depth</th>
+<th>What the vendor does</th>
+<th>On this page</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Native: deploy and execute</td>
+<td>The SDK deploys the account and submits multicalls. You still confirm which contract and who pays gas.</td>
+<td>Cavos, Cartridge Controller, Chipi Pay</td>
+</tr>
+<tr>
+<td>Sign-only</td>
+<td>The vendor creates a Starknet-curve key and signs. You deploy the account and pay gas.</td>
+<td>Privy (tier 1, not managed send)</td>
+</tr>
+<tr>
+<td>Exported key</td>
+<td>The vendor exposes a private key. You use starknet.js for the account class and the gas layer.</td>
+<td>MetaMask Embedded Wallets (Web3Auth)</td>
+</tr>
+</tbody>
+</table>
+
+Cavos uses an audited OpenZeppelin account contract, AccountUpgradeable v3.0.0, not a custom Cavos class. The audit covers OpenZeppelin's contract, not Cavos. Cartridge documents a Controller account with session keys for games. Chipi documents passkey wallets plus its own paymaster. Privy and MetaMask Embedded Wallets leave the account class and the paymaster to you. Recheck those vendor pages before you commit to an account class.
+
+## Paymaster and sponsored gas
+
+Who pays gas decides whether a new user can transact before they hold ETH or STRK.
+
+Cavos routes `wallet.execute(calls)` through a SNIP-29 paymaster (with SRC-9 outside execution). That is part of Gas Sponsorship in Any Token. In `@cavos/kit` 0.5.2 you pass `paymasterApiKey` into `Cavos.connect` or `CavosProvider`. Treat that key as a client-visible, app-scoped sponsorship credential, never as an operator or treasury secret. Connect never deploys. The first execute deploys AccountUpgradeable and runs the multicall in one sponsored transaction. After deploy, `fee: "self"` pays from the account's own balance. A self-funded first execute is refused, because an undeployed account has no balance to deploy itself with.
+
+Chipi Pay states that its paymaster pays gas for its wallets. Cartridge Controller: see Cartridge docs for sponsorship. Privy requires Tier 3 for gas sponsorship, and Starknet is not on that tier, so you fund gas yourself. MetaMask Embedded Wallets leaves the gas setup to you.
 
 ## Who each Starknet provider fits (2026)
 
@@ -164,14 +240,18 @@ Cavos uses an audited OpenZeppelin account contract, not a custom Cavos class. C
 
 ## When each one fits
 
-- **Cavos** fits consumer Starknet apps that want an audited standard account, sponsored gas, and the same SDK on Solana and Stellar.
+- **Cavos** fits consumer Starknet apps that want an audited standard account, sponsored gas, and the same SDK on Solana and Stellar. It does not cover EVM.
 - **Cartridge Controller** fits onchain games that need session keys and a gaming identity layer.
 - **Chipi Pay** fits payments apps, especially in Latin America, that want passkey wallets plus bill payment services.
 - **Privy** and **MetaMask Embedded Wallets** fit teams already on those platforms for EVM that are willing to build the Starknet account and gas layer themselves.
 
 ## Where Cavos stands on Starknet
 
-Cavos is a non-custodial embedded wallet for Starknet, Solana and Stellar. On Starknet it deploys an audited OpenZeppelin account contract controlled by a stark key derived on the device, with Gas Sponsorship in Any Token through a paymaster. Read the [starknet embedded wallet](/embedded-starknet-wallet) product page, the [custody model](/custody), [pricing](/pricing), and the [quickstart](https://docs.cavos.xyz/docs/quickstart).
+Cavos is a non-custodial embedded wallet for Starknet, Solana and Stellar. On Starknet it deploys an audited OpenZeppelin account contract (AccountUpgradeable v3.0.0) controlled by a stark key derived on the device. Keys never leave the device in plaintext. Signing always happens on the device. Cavos cannot see the key, sign with it, decrypt it, or move funds. A new device restores the MasterDEK with another signed-in device, a passkey, or opt-in hardware-isolated enclave recovery. The passkey and the enclave only hold an encrypted copy of the MasterDEK for sealed restore; they cannot sign, and Cavos cannot decrypt that copy.
+
+The Cavos paymaster sponsors deployment and execution, which is part of Gas Sponsorship in Any Token. [Pricing](/pricing) is free up to 1,000 wallets, then Essential at $59/mo and Complete at $139/mo. Hosted login is Google, Apple, or an enclave-verified email code. Telegram is optional web-only OAuth via oauth.telegram.org in kit 0.5.2; it is not a Telegram Mini App and is not available in React Native.
+
+Read the [starknet embedded wallet](/embedded-starknet-wallet) product page, the [custody model](/custody), [pricing](/pricing), and the [quickstart](https://docs.cavos.xyz/docs/quickstart).
 
 Related in 2026: the [embedded wallet](/embedded-wallet) pillar for the category, [pricing](/pricing) for the Free (1,000 wallets), Essential ($59), and Complete ($139) plans, and [gasless Starknet transactions](/blog/gasless-starknet-transactions) for the paymaster path.
 
