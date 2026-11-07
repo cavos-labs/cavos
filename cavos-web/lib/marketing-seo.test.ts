@@ -2804,11 +2804,26 @@ describe('marketing SEO', () => {
     assert.match(source, /audited OpenZeppelin AccountUpgradeable/)
     assert.match(source, /device-native/)
     assert.match(source, /Cavos, LLC/)
+    assert.match(source, /^updated: "2026-11-07"$/m)
+    assert.match(source, /## Who this is for/)
+    assert.match(source, /hardware-isolated, non-custodial/)
+    assert.match(source, /Signing always happens on the user['’]s device/)
+    assert.match(source, /cannot decrypt/)
+    assert.match(source, /Free up to 1,000 wallets/)
+    assert.match(source, /Where does signing happen in a Cavos embedded wallet\?/)
+    assert.match(source, /When does a browser extension still win over an embedded wallet\?/)
     assert.doesNotMatch(source, /audited Cavos/)
     assert.doesNotMatch(source, /Cavos custom account/)
     assert.match(source, /does not ship its own account implementation/)
     assert.doesNotMatch(source, /category:\s*"Release"/)
     assert.doesNotMatch(source, /robots:\s*noindex/)
+    assert.doesNotMatch(source, /—|trustless|impossible/i)
+    const extensionExcerpt = source.match(/^excerpt:\s*"(.*)"$/m)
+    assert.ok(extensionExcerpt)
+    assert.ok(
+      extensionExcerpt[1].length >= 140 && extensionExcerpt[1].length <= 160,
+      extensionExcerpt[1].length,
+    )
     assert.equal(EMBEDDED_WALLET_VS_EXTENSION_PATH, '/blog/embedded-wallet-vs-browser-extension')
     assert.equal(
       EMBEDDED_WALLET_VS_EXTENSION_TITLE,
@@ -2980,8 +2995,17 @@ describe('marketing SEO', () => {
     assert.match(source, /\]\(\/blog\/how-to-add-an-embedded-wallet\)/)
     assert.match(source, /\]\(\/pricing\)/)
     assert.match(source, /docs\.cavos\.xyz\/docs\/starknet/)
-    assert.match(source, /@cavos\/kit` 0\.4\.4/)
-    assert.match(source, /npm install @cavos\/kit/)
+    assert.match(source, /@cavos\/kit` 0\.5\.2/)
+    assert.match(source, /npm install @cavos\/kit@\^0\.5\.2/)
+    assert.match(source, /^updated: "2026-11-07"$/m)
+    assert.match(source, /## Who this is for/)
+    assert.match(source, /Gas Sponsorship in Any Token/)
+    assert.match(source, /hardware-isolated and non-custodial/)
+    assert.match(source, /Signing always happens on the user['’]s device/)
+    assert.match(source, /cannot decrypt/)
+    assert.match(source, /oauth\.telegram\.org/)
+    assert.match(source, /not a Telegram Mini App|not a Mini App/)
+    assert.match(source, /Free up to 1,000 wallets/)
     assert.match(source, /login\("google"\)/)
     assert.match(source, /sendOtp/)
     assert.match(source, /verifyOtp/)
@@ -3005,6 +3029,13 @@ describe('marketing SEO', () => {
     assert.doesNotMatch(source, /Horizon signer/)
     assert.doesNotMatch(source, /category:\s*"Release"/)
     assert.doesNotMatch(source, /This device must be approved first/)
+    assert.doesNotMatch(source, /—|trustless|impossible/i)
+    const gaslessExcerpt = source.match(/^excerpt:\s*"(.*)"$/m)
+    assert.ok(gaslessExcerpt)
+    assert.ok(
+      gaslessExcerpt[1].length >= 140 && gaslessExcerpt[1].length <= 160,
+      gaslessExcerpt[1].length,
+    )
     assert.equal(
       GASLESS_STARKNET_TRANSACTIONS_PATH,
       '/blog/gasless-starknet-transactions',
@@ -5166,18 +5197,17 @@ describe('best embedded wallets per chain', () => {
       assert.doesNotMatch(source, /—/)
       assert.doesNotMatch(source, /trustless|impossible/i)
       const fields = parseBlogFrontmatter(source)
-      if (slug === 'best-embedded-wallets-stellar') {
-        assert.equal(fields.updated, '2026-11-07')
-      } else {
-        assert.equal(fields.updated, '2026-11-06')
-      }
+      assert.equal(fields.updated, '2026-11-07')
       assert.match(fields.title, /Best Embedded Wallets for/)
       assert.match(fields.title, /Free/)
       if (slug === 'best-embedded-wallets-solana') {
-        assert.match(fields.title, /2026/)
+        assert.equal(fields.title, 'Best Embedded Wallets for Solana 2026: Free')
       }
       if (slug === 'best-embedded-wallets-stellar') {
         assert.equal(fields.title, 'Best Embedded Wallets for Stellar: Free')
+      }
+      if (slug === 'best-embedded-wallets-starknet') {
+        assert.equal(fields.title, 'Best Embedded Wallets for Starknet: Free')
       }
       assert.ok(`${fields.title} | Cavos`.length <= 60, fields.title)
       assert.ok(fields.excerpt.length >= 140 && fields.excerpt.length <= 155)
@@ -5213,6 +5243,16 @@ describe('best embedded wallets per chain', () => {
     assert.match(solana, /\]\(\/blog\/best-embedded-wallets-stellar\)/)
     assert.match(solana, /\]\(\/blog\/best-embedded-wallets-starknet\)/)
     assert.match(solana, /\[solana embedded wallet\]\(\/embedded-solana-wallet\)/)
+    assert.match(solana, /Who each Solana provider fits \(2026\)/)
+    assert.match(solana, /Native system account vs PDA in 2026/)
+    assert.match(solana, /Native Solana support versus sign-only/)
+    assert.match(solana, /best Solana embedded wallet/)
+    assert.match(solana, /Which providers support a Solana embedded wallet natively\?/)
+    assert.match(solana, /cannot decrypt that copy/)
+    assert.match(solana, /Who should pick each Solana embedded wallet provider\?/)
+    assert.match(solana, /fee: "sponsored"/)
+    assert.match(solana, /\[embedded wallet\]\(\/embedded-wallet\)/)
+    assert.match(solana, /\]\(\/pricing\)/)
     assert.match(starknet, /\]\(\/blog\/best-embedded-wallets-stellar\)/)
     assert.match(starknet, /\]\(\/blog\/best-embedded-wallets-solana\)/)
     assert.match(starknet, /\[starknet embedded wallet\]\(\/embedded-starknet-wallet\)/)
@@ -5220,10 +5260,27 @@ describe('best embedded wallets per chain', () => {
     assert.match(starknet, /\]\(\/pricing\)/)
     assert.match(starknet, /Who each Starknet provider fits \(2026\)/)
     assert.match(starknet, /Account contract versus sign-only in 2026/)
+    assert.match(starknet, /Decision: native Starknet vs sign-only/)
+    assert.match(starknet, /Paymaster and sponsored gas/)
+    assert.match(starknet, /Native: deploy and execute/)
+    assert.match(starknet, /best Starknet embedded wallet/)
+    assert.match(starknet, /Which providers support a Starknet embedded wallet natively\?/)
+    assert.match(starknet, /cannot decrypt that copy/)
+    assert.match(starknet, /AccountUpgradeable v3\.0\.0/)
+    assert.match(starknet, /Gas Sponsorship in Any Token/)
+    assert.match(starknet, /paymasterApiKey/)
+    assert.match(starknet, /wallet\.execute\(calls\)/)
+    assert.match(starknet, /oauth\.telegram\.org/)
+    assert.match(starknet, /not a Telegram Mini App/)
     assert.match(starknet, /Who should pick each Starknet embedded wallet provider\?/)
     assert.match(starknet, /What is the best wallet for Starknet\?/)
     assert.match(starknet, /app developer/)
     assert.match(solana, /\[Para alternatives\]\(\/para-alternatives\)/)
+    const llms = fs.readFileSync(path.join(process.cwd(), 'public/llms.txt'), 'utf8')
+    assert.match(
+      llms,
+      /best-embedded-wallets-solana\): native vs sign-only, sponsored fees/,
+    )
   })
 
   it('emits ItemList JSON-LD with absolute URLs', () => {
@@ -5252,6 +5309,10 @@ describe('best embedded wallets per chain', () => {
     assert.match(llms, /Free: up to 1,000 wallets/)
     assert.match(llms, /\$59/)
     assert.match(llms, /\$139/)
+    assert.match(
+      llms,
+      /blog\/best-embedded-wallets-starknet\): native vs sign-only, paymaster gas/,
+    )
     assert.doesNotMatch(llms, /—|trustless/)
   })
 })

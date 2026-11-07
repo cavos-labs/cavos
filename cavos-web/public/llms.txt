@@ -38,8 +38,8 @@ Cavos (`@cavos/kit`) is a hardware-isolated, non-custodial embedded wallet SDK f
 ## Comparisons
 
 - [Best embedded wallets for Stellar (2026)](https://cavos.xyz/blog/best-embedded-wallets-stellar): native vs sign-only, classic G vs Soroban; Free up to 1,000 wallets
-- [Best embedded wallets for Solana (2026)](https://cavos.xyz/blog/best-embedded-wallets-solana)
-- [Best embedded wallets for Starknet (2026)](https://cavos.xyz/blog/best-embedded-wallets-starknet)
+- [Best embedded wallets for Solana (2026)](https://cavos.xyz/blog/best-embedded-wallets-solana): native vs sign-only, sponsored fees; Free up to 1,000 wallets
+- [Best embedded wallets for Starknet (2026)](https://cavos.xyz/blog/best-embedded-wallets-starknet): native vs sign-only, paymaster gas; Free up to 1,000 wallets
 - [Best embedded wallet providers (2026)](https://cavos.xyz/blog/embedded-wallet-providers): custody, chains, pricing, enclave vs MPC; Free up to 1,000 wallets
 - [Privy alternatives](https://cavos.xyz/privy-alternatives)
 - [Turnkey alternatives](https://cavos.xyz/turnkey-alternatives): finished SDK vs enclave infrastructure; custody and published pricing
@@ -69,8 +69,8 @@ Cavos (`@cavos/kit`) is a hardware-isolated, non-custodial embedded wallet SDK f
 - [Embedded wallet cost (2026)](https://cavos.xyz/blog/embedded-wallet-cost): Privy, Dynamic, Turnkey, Para, Web3Auth, Alchemy vs Cavos on published list prices
 - [How to add an embedded wallet to a React app](https://cavos.xyz/blog/how-to-add-an-embedded-wallet): `@cavos/kit` 0.5.2; Next.js path at /blog/embedded-wallet-nextjs
 - [Embedded wallet React SDK best practices](https://cavos.xyz/blog/embedded-wallet-react-sdk)
-- [Embedded wallet vs browser extension](https://cavos.xyz/blog/embedded-wallet-vs-browser-extension): where users should sign
-- [How to send gasless Starknet transactions](https://cavos.xyz/blog/gasless-starknet-transactions)
+- [Embedded wallet vs browser extension](https://cavos.xyz/blog/embedded-wallet-vs-browser-extension): sign in-app for new users, keep MetaMask for existing wallets; signing on the device
+- [How to send gasless Starknet transactions](https://cavos.xyz/blog/gasless-starknet-transactions): @cavos/kit 0.5.2, Google/Apple/email, paymaster, no ETH or STRK
 - [Embedded wallet payments](https://cavos.xyz/blog/embedded-wallet-payments): USDC transfers on Stellar, Solana, and Starknet
 - [How to set up a Stellar wallet in your app (2026)](https://cavos.xyz/blog/stellar-embedded-wallet-tutorial): @cavos/kit, sponsored G… payment, no Freighter
 - [The Cavos enclave is open source (Kit 0.5.0)](https://cavos.xyz/blog/cavos-kit-0-5-0)
