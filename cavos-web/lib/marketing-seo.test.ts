@@ -4082,8 +4082,8 @@ describe('marketing SEO', () => {
     assert.match(source, /docs\.cavos\.xyz\/docs\/quickstart/)
     assert.match(source, /docs\.cavos\.xyz\/docs\/passkeys/)
     assert.match(source, /docs\.cavos\.xyz\/docs\/troubleshooting/)
-    assert.match(source, /@cavos\/kit` 0\.5\.1/)
-    assert.match(source, /npm install @cavos\/kit/)
+    assert.match(source, /@cavos\/kit` 0\.5\.2/)
+    assert.match(source, /npm install @cavos\/kit@\^0\.5\.2/)
     assert.match(source, /CavosProvider/)
     assert.match(source, /useCavos/)
     assert.match(source, /login\("google"\)/)
@@ -4112,6 +4112,19 @@ describe('marketing SEO', () => {
       /What are best practices for embedding a wallet SDK in an app\?/,
     )
     assert.match(source, /Does the Cavos React SDK sponsor gas in any token\?/)
+    assert.match(source, /## Who this guide is for/)
+    assert.match(source, /## How this differs from the install how-to/)
+    assert.match(source, /## Kit 0\.5\.2 practices/)
+    assert.match(source, /oauth\.telegram\.org/)
+    assert.match(source, /not a Telegram Mini App/)
+    assert.match(source, /cannot verify the enclave attestation/)
+    assert.match(source, /Never change appSalt after users exist/)
+    assert.match(source, /Do not require `walletStatus\.isReady`/)
+    assert.match(source, /Ed25519 system account/)
+    assert.match(source, /classic `G…` account/)
+    assert.match(source, /fee: \{ token \}/)
+    assert.match(source, /Signing always happens on the user['’]s device/)
+    assert.match(source, /never used for signing on servers/)
     assert.equal((source.match(/^\s+- question:/gm) ?? []).length, 4)
     assert.doesNotMatch(source, /audited Cavos/)
     assert.doesNotMatch(source, /Cavos custom account/)
@@ -4119,6 +4132,8 @@ describe('marketing SEO', () => {
     assert.doesNotMatch(source, /This device must be approved first/)
     assert.doesNotMatch(source, /category:\s*"Release"/)
     assert.doesNotMatch(source, /robots:\s*noindex/)
+    assert.doesNotMatch(source, /—|trustless|impossible/i)
+    assert.doesNotMatch(source, /Search Console|rankings|SEO/)
     assert.equal(EMBEDDED_WALLET_REACT_SDK_PATH, '/blog/embedded-wallet-react-sdk')
     assert.equal(
       EMBEDDED_WALLET_REACT_SDK_TITLE,
@@ -4129,8 +4144,14 @@ describe('marketing SEO', () => {
 
     const fields = parseBlogFrontmatter(source)
     assert.equal(fields.title, EMBEDDED_WALLET_REACT_SDK_TITLE)
-    assert.equal(fields.updated, '2026-10-31')
+    assert.equal(fields.updated, '2026-11-07')
     assert.equal(fields.date, '2026-10-27')
+
+    const llms = fs.readFileSync(path.join(process.cwd(), 'public/llms.txt'), 'utf8')
+    assert.match(
+      llms,
+      /blog\/embedded-wallet-react-sdk\): kit 0\.5\.2; device-native signing, passkeys, Gas Sponsorship in Any Token, authError/,
+    )
 
     const hub = fs.readFileSync(
       path.join(process.cwd(), 'app/embedded-wallet/page.tsx'),

@@ -368,7 +368,7 @@ Hello
     )
     assert.ok(reactSdk)
     assert.ok(alchemyVsPrivy)
-    assert.equal(reactSdk.lastModified.toISOString().startsWith('2026-10-31'), true)
+    assert.equal(reactSdk.lastModified.toISOString().startsWith('2026-11-07'), true)
     assert.equal(
       alchemyVsPrivy.lastModified.toISOString().startsWith('2026-11-07'),
       true,
