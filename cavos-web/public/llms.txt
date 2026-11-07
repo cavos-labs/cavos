@@ -71,7 +71,7 @@ Cavos (`@cavos/kit`) is a hardware-isolated, non-custodial embedded wallet SDK f
 - [Embedded wallet React SDK best practices](https://cavos.xyz/blog/embedded-wallet-react-sdk): kit 0.5.2; device-native signing, passkeys, Gas Sponsorship in Any Token, authError
 - [Embedded wallet vs browser extension](https://cavos.xyz/blog/embedded-wallet-vs-browser-extension): sign in-app for new users, keep MetaMask for existing wallets; signing on the device
 - [How to send gasless Starknet transactions](https://cavos.xyz/blog/gasless-starknet-transactions): @cavos/kit 0.5.2, Google/Apple/email, paymaster, no ETH or STRK
-- [Embedded wallet payments](https://cavos.xyz/blog/embedded-wallet-payments): USDC transfers on Stellar, Solana, and Starknet
+- [Embedded wallet payments](https://cavos.xyz/blog/embedded-wallet-payments): @cavos/kit 0.5.2, in-app pay/receive/sign; USDC is one held token
 - [How to set up a Stellar wallet in your app (2026)](https://cavos.xyz/blog/stellar-embedded-wallet-tutorial): @cavos/kit 0.5.2, G… before Horizon, first sponsored execute, no Freighter
 - [The Cavos enclave is open source (Kit 0.5.0)](https://cavos.xyz/blog/cavos-kit-0-5-0)
 - [Sign in with Telegram (Kit 0.5.2)](https://cavos.xyz/blog/cavos-kit-0-5-2)

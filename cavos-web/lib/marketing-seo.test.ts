@@ -3861,8 +3861,10 @@ describe('marketing SEO', () => {
     assert.ok(excerptMatch)
     assert.ok(excerptMatch[1].length <= 160, excerptMatch[1].length)
     assert.match(source, /^title: "Embedded Wallet Payments \(2026\): USDC Guide"$/m)
-    assert.match(source, /^updated:\s*"2026-11-01"$/m)
+    assert.match(source, /^updated:\s*"2026-11-07"$/m)
     assert.match(source, /\*\*Embedded wallet payments\*\* are /)
+    assert.match(source, /## Who this is for/)
+    assert.match(source, /When USDC payments fit/)
     assert.match(source, /## What are embedded wallet payments\?/)
     assert.match(source, /## Stellar embedded wallet payments in USDC/)
     assert.match(source, /## Solana embedded wallet payments in USDC/)
@@ -3873,6 +3875,7 @@ describe('marketing SEO', () => {
     assert.match(source, /\]\(\/blog\/non-custodial-embedded-wallet\)/)
     assert.match(source, /\]\(\/blog\/stellar-embedded-wallet-tutorial\)/)
     assert.match(source, /\]\(\/blog\/gasless-starknet-transactions\)/)
+    assert.match(source, /\]\(\/blog\/cavos-kit-0-5-2\)/)
     assert.match(source, /embedded-starknet-wallet/)
     assert.match(source, /embedded-solana-wallet/)
     assert.match(source, /embedded-stellar-wallet/)
@@ -3880,14 +3883,32 @@ describe('marketing SEO', () => {
     assert.match(source, /\]\(\/custody\)/)
     assert.match(source, /docs\.cavos\.xyz\/docs\/wallet-actions/)
     assert.match(source, /docs\.cavos\.xyz\/docs\/reserve/)
-    assert.match(source, /@cavos\/kit` 0\.5\.0/)
+    assert.match(source, /@cavos\/kit` 0\.5\.2/)
+    assert.match(source, /npm install @cavos\/kit@\^0\.5\.2/)
+    assert.doesNotMatch(source, /npm install @cavos\/kit@\^0\.5\.0/)
     assert.match(source, /addTrustline/)
     assert.match(source, /executeInstructions/)
     assert.match(source, /Gas Sponsorship in Any Token/)
+    assert.match(source, /fee: \{ token \}/)
+    assert.match(source, /fee: "sponsored"/)
+    assert.match(source, /@cavos\/reserve/)
+    assert.match(source, /Relayers and paymasters/)
+    assert.match(source, /Connect never deploys Starknet or Stellar/)
+    assert.match(source, /oauth\.telegram\.org/)
+    assert.match(source, /not a Mini App/)
+    assert.match(source, /cannot verify enclave attestation/)
+    assert.match(source, /not an EVM-wide wallet layer/)
     assert.match(source, /audited OpenZeppelin account contract/)
+    assert.match(source, /AccountUpgradeable v3\.0\.0/)
+    assert.match(source, /The audit covers OpenZeppelin, not Cavos/)
     assert.match(source, /hardware-isolated and non-custodial/)
-    assert.match(source, /never leave it in plaintext/)
+    assert.match(source, /Signing always happens on the user's device/)
+    assert.match(source, /never leave the device in plaintext/)
+    assert.match(source, /never used for signing on servers/)
     assert.match(source, /encrypted copy of the MasterDEK/)
+    assert.match(source, /Free up to 1,000 wallets/)
+    assert.match(source, /Who is this embedded wallet payments guide for\?/)
+    assert.match(source, /Which @cavos\/kit version should I install for embedded wallet payments\?/)
     assert.doesNotMatch(source, /audited Cavos/)
     assert.doesNotMatch(source, /trustless|impossible/i)
     assert.doesNotMatch(source, /—/)
@@ -3919,15 +3940,18 @@ describe('marketing SEO', () => {
     assert.match(blogIndex, /EMBEDDED_WALLET_PAYMENTS_PATH/)
 
     const llms = fs.readFileSync(path.join(process.cwd(), 'public/llms.txt'), 'utf8')
-    assert.match(llms, /blog\/embedded-wallet-payments/)
+    assert.match(
+      llms,
+      /embedded-wallet-payments\): @cavos\/kit 0\.5\.2, in-app pay\/receive\/sign; USDC is one held token/,
+    )
 
     const data = blogPostJsonLd({
       title: EMBEDDED_WALLET_PAYMENTS_TITLE,
       description:
-        'Embedded wallet payments are in-app USDC transfers on Stellar, Solana, and Starknet.',
+        'Install @cavos/kit 0.5.2. In-app pay, receive, and sign. USDC is one held token.',
       path: EMBEDDED_WALLET_PAYMENTS_PATH,
       datePublished: '2026-11-01',
-      dateModified: '2026-11-01',
+      dateModified: '2026-11-07',
       type: 'Article',
       faq: [
         {
@@ -3958,7 +3982,7 @@ describe('marketing SEO', () => {
       data['@graph'][0].mainEntityOfPage['@id'],
       'https://cavos.xyz/blog/embedded-wallet-payments',
     )
-    assert.equal(data['@graph'][0].dateModified, '2026-11-01')
+    assert.equal(data['@graph'][0].dateModified, '2026-11-07')
   })
 
   it('indexes the wallet-as-a-service guide as an Article with FAQ JSON-LD', () => {
