@@ -4,11 +4,11 @@ export const EMBEDDED_WALLET_TITLE =
   'Embedded Wallet SDK: Free to 1,000 Wallets'
 
 export const EMBEDDED_WALLET_DESCRIPTION =
-  'Embedded wallets: non-custodial SDK, platform and infrastructure in your app. Free up to 1,000 wallets. Setup in minutes on Starknet, Solana, and Stellar.'
+  'Embedded wallets: non-custodial SDK, platform and infrastructure, in-app not an extension. Free up to 1,000 wallets on Starknet, Solana, and Stellar.'
 
 export const EMBEDDED_WALLET_PUBLISHED = '2026-10-07'
 
-export const EMBEDDED_WALLET_MODIFIED = '2026-11-05'
+export const EMBEDDED_WALLET_MODIFIED = '2026-11-07'
 
 export const EMBEDDED_WALLET_H1 = 'Embedded wallet SDK'
 
@@ -64,7 +64,7 @@ export const EMBEDDED_WALLET_API_TITLE =
 export const WHAT_IS_AN_EMBEDDED_WALLET_PATH = '/blog/what-is-an-embedded-wallet'
 
 export const WHAT_IS_AN_EMBEDDED_WALLET_TITLE =
-  'What Is an Embedded Wallet? A Developer Definition'
+  'What Is an Embedded Wallet? (2026 Definition)'
 
 export const NON_CUSTODIAL_EMBEDDED_WALLET_PATH =
   '/blog/non-custodial-embedded-wallet'
@@ -207,12 +207,12 @@ export const EMBEDDED_WALLET_FAQ = [
   {
     question: 'What is an embedded wallet?',
     answer:
-      'An embedded wallet is a crypto wallet that lives inside an application instead of in a browser extension or a separate wallet app. The user signs in with an identity the product already owns, and the app resolves an on-chain account they can pay, receive, and sign with, without installing software or handling a seed phrase.',
+      'An embedded wallet is a crypto wallet that lives inside an application instead of in a browser extension or a separate wallet app. The user signs in with an identity the product already owns, and the app resolves an on-chain account they can pay, receive, and sign with, without installing software or handling a seed phrase. Where the wallet appears is not who can sign.',
   },
   {
     question: 'What are embedded wallets?',
     answer:
-      'Embedded wallets are in-app crypto wallets. The plural names the category: wallets provisioned inside products so users never install an extension or copy a seed phrase. An embedded wallet SDK is the library that does that job. Cavos ships that SDK as @cavos/kit, hardware-isolated and non-custodial, free up to 1,000 wallets.',
+      'Embedded wallets are in-app crypto wallets. The plural names the category: wallets provisioned inside products so users never install an extension or copy a seed phrase. An embedded wallet SDK is the library that does that job. Cavos ships that SDK as @cavos/kit 0.5.2, hardware-isolated and non-custodial, free up to 1,000 wallets on Starknet, Solana, and Stellar.',
   },
   {
     question: 'How is an embedded wallet different from a browser extension?',
