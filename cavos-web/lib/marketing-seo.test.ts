@@ -3209,6 +3209,7 @@ describe('marketing SEO', () => {
       String(excerptMatch[1].length),
     )
     assert.match(excerptMatch[1], /How much embedded wallets cost/)
+    assert.match(excerptMatch[1], /cost per transaction/)
     assert.equal(EMBEDDED_WALLET_COST_PATH, '/blog/embedded-wallet-cost')
     assert.equal(
       EMBEDDED_WALLET_COST_TITLE,
@@ -3219,7 +3220,7 @@ describe('marketing SEO', () => {
     const fields = parseBlogFrontmatter(source)
     assert.equal(fields.title, EMBEDDED_WALLET_COST_TITLE)
     assert.equal(fields.date, '2026-11-04')
-    assert.equal(fields.updated, '2026-11-04')
+    assert.equal(fields.updated, '2026-11-07')
     assert.match(source, /\[embedded wallet\]\(\/embedded-wallet\)/)
     assert.match(source, /\]\(\/pricing\)/)
     assert.match(source, /\]\(\/blog\/embedded-wallet-providers\)/)
@@ -3233,9 +3234,22 @@ describe('marketing SEO', () => {
     )
     assert.match(
       source,
+      /What is the cost per transaction for an embedded wallet\?/,
+    )
+    assert.match(
+      source,
       /What capabilities should an enterprise evaluate for pricing transparency in embedded wallets\?/,
     )
     assert.match(source, /## The short answer \(November 2026\)/)
+    assert.match(
+      source,
+      /## Cost per transaction vs MAU, wallet create, and signature/,
+    )
+    assert.match(source, /cost per transaction for embedded crypto/)
+    assert.match(source, /wallet creates: free for the first 1,000/)
+    assert.match(source, /Essential \$59\/month/)
+    assert.match(source, /Complete \$139\/month/)
+    assert.match(source, /Gas sponsorship is a separate cost/)
     assert.match(source, /## Worked example: 10k \/ 100k \/ 1M users/)
     assert.match(source, /## Pricing-transparency checklist for enterprises/)
     assert.match(source, /## Where Cavos fits/)
@@ -3253,7 +3267,13 @@ describe('marketing SEO', () => {
     assert.doesNotMatch(source, /Horizon signer/)
     assert.doesNotMatch(source, /category:\s*"Release"/)
     assert.doesNotMatch(source, /robots:\s*noindex/)
-    assert.equal((source.match(/^\s+- question:/gm) ?? []).length, 7)
+    assert.equal((source.match(/^\s+- question:/gm) ?? []).length, 8)
+
+    const llms = fs.readFileSync(path.join(process.cwd(), 'public/llms.txt'), 'utf8')
+    assert.match(
+      llms,
+      /blog\/embedded-wallet-cost\): cost per transaction vs MAU, wallet create, and signature/,
+    )
 
     const pricing = fs.readFileSync(
       path.join(process.cwd(), 'app/pricing/page.tsx'),

@@ -66,7 +66,7 @@ Cavos (`@cavos/kit`) is a hardware-isolated, non-custodial embedded wallet SDK f
 - [Embedded wallet API](https://cavos.xyz/blog/embedded-wallet-api): client SDK, not REST; auth, connect, execute, gas, recovery in `@cavos/kit`. Method list at docs.cavos.xyz. The general embedded wallet head term is the product pillar.
 - [Non-custodial embedded wallets](https://cavos.xyz/blog/non-custodial-embedded-wallet): custodial vs MPC vs hardware-isolated passkeys; sealed restore
 - [Wallet-as-a-service](https://cavos.xyz/blog/wallet-as-a-service): 2026 definition, custody models, pricing units, provider shortlist
-- [Embedded wallet cost (2026)](https://cavos.xyz/blog/embedded-wallet-cost): Privy, Dynamic, Turnkey, Para, Web3Auth, Alchemy vs Cavos on published list prices
+- [Embedded wallet cost (2026)](https://cavos.xyz/blog/embedded-wallet-cost): cost per transaction vs MAU, wallet create, and signature; Privy, Dynamic, Cavos list prices
 - [How to add an embedded wallet to a React app](https://cavos.xyz/blog/how-to-add-an-embedded-wallet): `@cavos/kit` 0.5.2; Next.js path at /blog/embedded-wallet-nextjs
 - [Embedded wallet React SDK best practices](https://cavos.xyz/blog/embedded-wallet-react-sdk): kit 0.5.2; device-native signing, passkeys, Gas Sponsorship in Any Token, authError
 - [Embedded wallet vs browser extension](https://cavos.xyz/blog/embedded-wallet-vs-browser-extension): sign in-app for new users, keep MetaMask for existing wallets; signing on the device
