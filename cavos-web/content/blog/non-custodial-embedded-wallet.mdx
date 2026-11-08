@@ -43,7 +43,7 @@ A **non-custodial embedded wallet** is one in-app account the provider cannot sp
 
 If the vendor can complete a transaction alone, or holds the means of access, that embedded wallet is custodial in practice. If the signing key is created and used on the user’s device, never leaves it in plaintext, and is never used to sign on the vendor’s servers, the wallet is non-custodial. Recovery can still exist: a passkey or a hardware-isolated enclave that only stores a sealed copy of the master key for restore is not the same as a hosted spend key. Ask what recovery unwraps, and whether the vendor can open that copy.
 
-Cavos is that last design. Hardware-isolated and non-custodial via a passkey and an opt-in Nitro Enclave sealed MasterDEK copy. Signing always happens on the device. Cavos cannot decrypt the sealed copy. The [providers comparison](/blog/embedded-wallet-providers) is the named-vendor shortlist. [Privy vs Turnkey](/blog/privy-vs-turnkey) is finished SDK versus signing infrastructure.
+Cavos is that last design. Hardware-isolated and non-custodial via a passkey and an opt-in Nitro Enclave sealed MasterDEK copy. Signing always happens on the device. Cavos cannot decrypt the sealed copy. The [embedded wallet providers](/blog/embedded-wallet-providers) comparison is the named-vendor shortlist. [Privy vs Turnkey](/blog/privy-vs-turnkey) is finished SDK versus signing infrastructure.
 
 ## Who can sign is who controls the key
 
@@ -51,7 +51,7 @@ A wallet is an on-chain account plus the means to authorize transactions from it
 
 If the provider can complete a transaction alone, or holds the means of access, the wallet is custodial in practice, even when the docs say “non-custodial” or “end-user owned.” If the provider cannot see the key, cannot sign with it, and cannot move funds, the wallet is self-custodial. Calling a product non-custodial does not make it so. The test is who can move the assets.
 
-Embedded is a UX label. Login selects the user, the SDK looks up or creates an on-chain address, and approval happens in the app UI. The same modal is used for hosted signing, MPC shares, and device-native keys. The [providers comparison](/blog/embedded-wallet-providers) is the named-vendor shortlist. Worked one-to-one pages live under [compare](/compare). Replacement shortlists: [Privy alternatives](/privy-alternatives), [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), and [Magic alternatives](/magic-alternatives).
+Embedded is a UX label. Login selects the user, the SDK looks up or creates an on-chain address, and approval happens in the app UI. The same modal is used for hosted signing, MPC shares, and device-native keys. The [embedded wallet providers](/blog/embedded-wallet-providers) comparison is the named-vendor shortlist. Worked one-to-one pages live under [compare](/compare). Replacement shortlists: [Privy alternatives](/privy-alternatives), [Turnkey alternatives](/turnkey-alternatives), [Dynamic alternatives](/dynamic-alternatives), and [Magic alternatives](/magic-alternatives).
 
 Authentication should select which user this is. It should not, by itself, authorize a spend. When email magic-link login is enough to move funds, the provider usually holds the signing capability. Collapse login and signing and you have chosen a hosted model.
 
@@ -96,7 +96,7 @@ MPC is a legitimate design. It is not the same as a device-native key. Custodial
 
 ## Key models, and which are non-custodial in practice
 
-When a vendor says “embedded wallet SDK,” ask where the signing key lives. Five designs cover almost every product in the category.
+When a vendor says “[embedded wallet SDK](/embedded-wallet),” ask where the signing key lives. Five designs cover almost every product in the category.
 
 ### Device-native keys
 
@@ -128,7 +128,7 @@ Cavos uses an enclave only for opt-in hardware-isolated social recovery: an AWS 
 
 The provider, or an HSM it operates, can produce a signature. Email magic-link login often sits on this model: access to the inbox is enough to spend. If the vendor can sign without the user, the wallet is custodial. Some vendors ship a non-custodial embedded path and, separately, an optional custodial wallet. Read both.
 
-In practice: device-native keys are non-custodial when the vendor cannot see or use the key (the Cavos default). Passkeys are non-custodial when they unwrap a key the vendor cannot open. MPC / TSS is non-custodial only if the vendor cannot reach the threshold without the user. TEE and enclave-held keys follow the authorizing credential, remote signing is hosted unless the enclave cannot be asked to spend. Hosted or delegated keys are custodial. “Embedded wallets” as a search phrase does not pick a row.
+In practice: device-native keys are non-custodial when the vendor cannot see or use the key (the Cavos default). Passkeys are non-custodial when they unwrap a key the vendor cannot open. MPC / TSS is non-custodial only if the vendor cannot reach the threshold without the user. TEE and enclave-held keys follow the authorizing credential, remote signing is hosted unless the enclave cannot be asked to spend. Hosted or delegated keys are custodial. “[Embedded wallets](/embedded-wallet)” as a search phrase does not pick a row.
 
 ## A checklist to verify a vendor’s claim
 
@@ -144,7 +144,7 @@ Write the answers down before you compare SDKs. Marketing copy will not.
 
 **Audit status.** Ask what was audited. On Starknet, Cavos wallets are the standard audited OpenZeppelin account contract (AccountUpgradeable). The audit covers OpenZeppelin’s contract, not a custom Cavos account. Cavos does not ship its own account implementation. An enclave attestation, an SDK review, and an on-chain account audit are three different artifacts. Do not treat “audited” as a custody proof.
 
-If you still need the named-vendor table, use the [providers guide](/blog/embedded-wallet-providers). Worked comparisons live under [compare](/compare).
+If you still need the named-vendor table, use the [embedded wallet providers](/blog/embedded-wallet-providers) guide. Worked comparisons live under [compare](/compare).
 
 ## Recovery trade-offs
 
