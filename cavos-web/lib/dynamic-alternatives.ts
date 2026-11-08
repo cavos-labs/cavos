@@ -9,7 +9,7 @@ import {
   alternativesItemList,
   vendorSection,
 } from './alternatives-guide'
-import { PRIVY_VS_DYNAMIC_PATH } from './embedded-wallet-guide'
+import { PRIVY_VS_DYNAMIC_PATH, PRIVY_VS_TURNKEY_PATH } from './embedded-wallet-guide'
 import { getCompetitor } from './compare-data'
 
 /**
@@ -29,15 +29,15 @@ export const DYNAMIC_ALTERNATIVES_PATH = '/dynamic-alternatives'
 export const DYNAMIC_ALTERNATIVES_TITLE =
   '5 Dynamic Alternatives (2026): Free 1,000 Wallets'
 
-/** 153 characters. Document title omits "| Cavos"; the layout template adds it. */
+/** 144 characters. Document title omits "| Cavos"; the layout template adds it. */
 export const DYNAMIC_ALTERNATIVES_DESCRIPTION =
-  'Compare 5 Dynamic alternatives: Cavos, Privy, Turnkey, Web3Auth, Magic. Free to 1,000 wallets on Starknet, Solana, Stellar. Provision vs wallet connect.'
+  'Dynamic xyz alternative: Cavos, Privy vs Dynamic vs Turnkey, Web3Auth. Provision vs connect. Free to 1,000 wallets on Starknet, Solana, Stellar.'
 
 export const DYNAMIC_ALTERNATIVES_H1 = '5 Dynamic alternatives compared in 2026'
 
 export const DYNAMIC_ALTERNATIVES_PUBLISHED = '2026-10-27'
 
-export const DYNAMIC_ALTERNATIVES_MODIFIED = '2026-11-06'
+export const DYNAMIC_ALTERNATIVES_MODIFIED = '2026-11-08'
 
 export const DYNAMIC_ALTERNATIVES_CRUMB = 'Dynamic alternatives'
 
@@ -129,6 +129,26 @@ export const DYNAMIC_ALTERNATIVES_FAQ = [
     answer:
       'Cavos is designed so a user never selects a wallet: they sign in with an identity you already own and a self-custodial account is resolved. Dynamic can also hide this, but its surface area is broader because it also serves crypto-native connection flows.',
   },
+  {
+    question: 'What is a Dynamic xyz alternative?',
+    answer:
+      'A Dynamic xyz alternative is an embedded wallet you shortlist when Dynamic.xyz is not the fit: you only need to provision new accounts, you do not want a multi-wallet connect layer, or the chain is not an EVM connection layer. This page compares five: Cavos, Privy, Turnkey, Web3Auth / MetaMask Embedded Wallets, and Magic. Dynamic itself remains the better pick for multi-wallet login.',
+  },
+  {
+    question: 'How do Privy vs Dynamic vs Turnkey compare for embedded wallets?',
+    answer:
+      'Privy vs Dynamic vs Turnkey is two finished SDKs and one signing primitive. Privy vs Dynamic is provision versus connect: both ship login and an in-app wallet; Dynamic is stronger as a unified login and wallet-connection layer, and Privy is built around the in-app wallet with connectors as well. Turnkey is key-management infrastructure in a TEE, not a finished consumer SDK. The worked two-way is Privy vs Dynamic; the layer write-up is Privy vs Turnkey.',
+  },
+  {
+    question: 'How do Para and Dynamic embedded wallets compare?',
+    answer:
+      'Para (getpara.com, formerly Capsule, not ParaSwap) is a 2-of-2 MPC embedded wallet with a drop-in modal and a wallet it documents as portable across apps. Dynamic is strongest as a unified login and wallet-connection layer covering many wallets and chains. Cavos is neither: it only provisions a hardware-isolated, non-custodial device-native account. Para is not one of the five on this shortlist; that replacement list is Para alternatives.',
+  },
+  {
+    question: 'How does Privy funding vs Dynamic funding compare?',
+    answer:
+      'Stripe acquired Privy in 2025. Fireblocks acquired Dynamic in 2025. Acquisition is a vendor-risk input; it does not change who can produce a signature. Both meter monthly active users, not wallet creates. Privy’s public Developer free tier is 0–499 MAU with 50,000 signatures and $1M volume per month; Core is $299/mo and Scale is $499/mo. Dynamic’s public Growth plan is $249/mo for up to 5,000 MAUs, and the sandbox is free. Extra-MAU rates on Dynamic’s public page are omitted because the plan card and the FAQ disagree. Those figures are from each vendor’s public pricing page as of October 2026 and can change.',
+  },
 ] as const
 
 export const dynamicAlternativesGuide: AlternativesGuide = {
@@ -140,11 +160,30 @@ export const dynamicAlternativesGuide: AlternativesGuide = {
   modified: DYNAMIC_ALTERNATIVES_MODIFIED,
   crumb: DYNAMIC_ALTERNATIVES_CRUMB,
   jsonLdId: 'dynamic-alternatives-json-ld',
+  answerHeading: 'What is a Dynamic xyz alternative?',
+  answerParagraphs: [
+    [
+      'A Dynamic xyz alternative is an ',
+      { href: '/embedded-wallet', label: 'embedded wallet' },
+      ' you shortlist when Dynamic.xyz is not the fit: you only need to provision new accounts, you do not want a multi-wallet connect layer, or the chain is not an EVM connection layer. This page compares five: Cavos, Privy, Turnkey, Web3Auth / MetaMask Embedded Wallets, and Magic. Dynamic itself remains the better pick for multi-wallet login.',
+    ],
+    [
+      'Privy vs Dynamic vs Turnkey for embedded wallets is two finished SDKs and one signing primitive. Privy vs Dynamic is provision versus connect; that two-way is ',
+      { href: PRIVY_VS_DYNAMIC_PATH, label: 'Privy vs Dynamic' },
+      '. Turnkey is key-management infrastructure; the layer write-up is ',
+      { href: PRIVY_VS_TURNKEY_PATH, label: 'Privy vs Turnkey' },
+      '. Para (getpara.com) is a 2-of-2 MPC wallet, not one of the five here; that comparison is ',
+      { href: '/para-alternatives', label: 'Para alternatives' },
+      '. The Cavos one-to-one is ',
+      { href: '/compare/dynamic', label: 'Cavos vs Dynamic' },
+      '.',
+    ],
+  ],
   introParagraphs: [
     [
       'Cavos, Privy, Turnkey, Web3Auth, and Magic are the five Dynamic alternatives compared here for an ',
       { href: '/embedded-wallet', label: 'embedded wallet' },
-      '.',
+      '. This page is the Dynamic xyz alternative shortlist: provision versus connect, not a drop-in for Dynamic.xyz.',
     ],
     [
       'The sections below use the same facts as the ',
@@ -153,7 +192,7 @@ export const dynamicAlternativesGuide: AlternativesGuide = {
       { href: '/pricing', label: 'pricing page' },
       '; other vendors set theirs independently. The one-to-one write-up is ',
       { href: '/compare/dynamic', label: 'Cavos vs Dynamic' },
-      '. Privy vs Dynamic (provision versus connect, not this Cavos page) is ',
+      '. Privy vs Dynamic vs Turnkey for embedded wallets (provision versus connect among two SDKs, and build versus buy against Turnkey) is ',
       { href: PRIVY_VS_DYNAMIC_PATH, label: 'Privy vs Dynamic' },
       '. The replacement shortlist for Privy is ',
       { href: '/privy-alternatives', label: 'Privy alternatives' },
@@ -170,7 +209,7 @@ export const dynamicAlternativesGuide: AlternativesGuide = {
   ],
   whyLookHeading: 'Why teams look for a Dynamic alternative',
   whyLookIntro:
-    'Dynamic is not the weaker product. It covers ground several of these alternatives do not, especially multi-wallet login. Teams still shortlist replacements when they only need to provision new accounts, or when the chain is not an EVM connection layer.',
+    'Dynamic is not the weaker product. It covers ground several of these alternatives do not, especially multi-wallet login. Teams still shortlist a Dynamic xyz alternative when they only need to provision new accounts, or when the chain is not an EVM connection layer.',
   whyLook: DYNAMIC_WHY_LOOK,
   decisionHeading: 'Provision vs connect, pricing, and chains across Dynamic alternatives',
   decisionIntro: [
@@ -186,8 +225,10 @@ export const dynamicAlternativesGuide: AlternativesGuide = {
     { href: '/turnkey-alternatives', label: 'Turnkey alternatives' },
     ', ',
     { href: '/web3auth-alternatives', label: 'Web3Auth alternatives' },
-    ', and ',
+    ', ',
     { href: '/dfns-alternatives', label: 'Dfns alternatives' },
+    ', and ',
+    { href: '/para-alternatives', label: 'Para alternatives' },
     '.',
   ],
   decisionRows: [

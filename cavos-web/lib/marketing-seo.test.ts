@@ -1282,7 +1282,9 @@ describe('marketing SEO', () => {
         assert.match(guide.title, /Free 1,000 Wallets/)
         assert.match(guide.h1, new RegExp(`5 ${guide.incumbent} alternatives`))
         assert.match(guide.description, /Starknet, Solana, Stellar/)
-        if (guide.incumbent === 'Dynamic' || guide.incumbent === 'Magic') {
+        if (guide.incumbent === 'Dynamic') {
+          assert.equal(guide.modified, '2026-11-08')
+        } else if (guide.incumbent === 'Magic') {
           assert.equal(guide.modified, '2026-11-06')
         } else {
           assert.equal(guide.modified, '2026-10-31')
@@ -1402,6 +1404,7 @@ describe('marketing SEO', () => {
       }
       if (guide.incumbent === 'Dynamic') {
         assert.match(dataSource, /PRIVY_VS_DYNAMIC_PATH/)
+        assert.match(dataSource, /PRIVY_VS_TURNKEY_PATH/)
         assert.ok(
           (privySection.relatedLinks ?? []).some(
             (link) => link.href === PRIVY_VS_DYNAMIC_PATH,
@@ -1411,9 +1414,37 @@ describe('marketing SEO', () => {
           dataSource,
           /Provision vs connect, pricing, and chains across Dynamic alternatives/,
         )
+        assert.match(dataSource, /answerHeading/)
+        assert.match(dataSource, /What is a Dynamic xyz alternative/)
+        assert.match(dataSource, /answerParagraphs/)
+        assert.match(guide.description, /Dynamic xyz alternative/)
+        assert.match(guide.description, /Privy vs Dynamic vs Turnkey/)
+        assert.ok(
+          guide.faq.some((item) => item.question === 'What is a Dynamic xyz alternative?'),
+        )
+        assert.ok(
+          guide.faq.some(
+            (item) =>
+              item.question ===
+              'How do Privy vs Dynamic vs Turnkey compare for embedded wallets?',
+          ),
+        )
+        assert.ok(
+          guide.faq.some(
+            (item) =>
+              item.question === 'How do Para and Dynamic embedded wallets compare?',
+          ),
+        )
+        assert.ok(
+          guide.faq.some(
+            (item) =>
+              item.question === 'How does Privy funding vs Dynamic funding compare?',
+          ),
+        )
         assert.match(dataSource, /href: '\/web3auth-alternatives'/)
         assert.match(dataSource, /href: '\/dfns-alternatives'/)
         assert.match(dataSource, /href: '\/turnkey-alternatives'/)
+        assert.match(dataSource, /href: '\/para-alternatives'/)
         assert.match(dataSource, /hardware-isolated/)
       }
       if (guide.incumbent === 'Magic') {
