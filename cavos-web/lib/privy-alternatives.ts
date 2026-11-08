@@ -1,7 +1,6 @@
 import {
   CAVOS_CHAIN_ACCOUNT_PARAGRAPH,
   CAVOS_RELATED_LINKS,
-  DEFAULT_HOW_TO_CHOOSE_OUTRO,
   DYNAMIC_VS_EXTENSION_LINKS,
   TURNKEY_VS_PRIVY_LINKS,
   type AlternativeRelatedLink,
@@ -10,7 +9,9 @@ import {
   vendorSection,
 } from './alternatives-guide'
 import {
+  ALCHEMY_VS_PRIVY_PATH,
   EMBEDDED_WALLET_COST_PATH,
+  EMBEDDED_WALLET_VS_EXTENSION_PATH,
   PRIVY_VS_DYNAMIC_PATH,
   PRIVY_VS_TURNKEY_PATH,
 } from './embedded-wallet-guide'
@@ -19,17 +20,17 @@ import { getCompetitor } from './compare-data'
 export const PRIVY_ALTERNATIVES_PATH = '/privy-alternatives'
 
 export const PRIVY_ALTERNATIVES_TITLE =
-  'Privy Alternatives 2026: Free to 1,000 Wallets'
+  'Privy Alternatives 2026: Cavos, Dynamic, Turnkey'
 
 /** 152 characters. Document title omits "| Cavos"; the layout template adds it. */
 export const PRIVY_ALTERNATIVES_DESCRIPTION =
-  'Privy alternatives and Privy competitors in 2026: Cavos, Dynamic, Turnkey, Web3Auth, Magic. Non-custodial. Free to 1,000 wallets. Not the Shopify popup.'
+  'Privy alternatives and Privy competitors in 2026: Cavos, Dynamic, Turnkey, Web3Auth, Magic. Alchemy is not a swap. Non-custodial. Not the Shopify popup.'
 
 export const PRIVY_ALTERNATIVES_H1 = 'Privy alternatives'
 
 export const PRIVY_ALTERNATIVES_PUBLISHED = '2026-10-11'
 
-export const PRIVY_ALTERNATIVES_MODIFIED = '2026-11-06'
+export const PRIVY_ALTERNATIVES_MODIFIED = '2026-11-08'
 
 export const PRIVY_ALTERNATIVES_CRUMB = 'Privy alternatives'
 
@@ -97,6 +98,10 @@ export const PRIVY_WHY_LOOK = [
     title: 'Commercial terms and vendor risk',
     body: 'Free tiers, MAU definitions, and signature allowances differ enough to change the bill at a few thousand active users. Stripe acquired Privy in 2025. The category also consolidated around Dynamic, Web3Auth, and Magic. Acquisition is a vendor-risk input. It does not change who can produce a signature.',
   },
+  {
+    title: 'Is Alchemy a Privy alternative?',
+    body: 'No. Alchemy Account Kit embedded wallets are deprecated; new sign-ups have been off since 18 June 2026. Wallet APIs are a signer-agnostic transaction layer for gas sponsorship, batching, and EIP-7702. Alchemy’s own docs recommend Privy as the signer. That is a layer question, not a sixth name on this shortlist.',
+  },
 ] as const
 
 export const PRIVY_HOW_TO_CHOOSE = [
@@ -130,9 +135,9 @@ export const PRIVY_ALTERNATIVES_FAQ = [
       'No. They target different chain ecosystems. If your application is EVM-first, Privy covers ground Cavos does not. Cavos is a direct alternative when you are building on Starknet, Solana, or Stellar and want a device-native, MPC-free signing model. Wallet addresses are derived differently, so accounts do not transfer as a config change.',
   },
   {
-    question: 'What is the difference between Privy and Turnkey?',
+    question: 'Is Alchemy a Privy alternative?',
     answer:
-      'Privy is a finished embedded wallet and authentication product. Turnkey is key-management infrastructure: hardware-backed enclaves and a signing API you build a wallet on top of. Privy vs Turnkey is usually build-versus-buy, not a like-for-like SDK swap.',
+      'No. Alchemy Wallet APIs are a signer-agnostic transaction layer for gas sponsorship, batching, retries, and EIP-7702. Account Kit embedded wallets are deprecated; new sign-ups have been off since 18 June 2026. Alchemy’s own docs recommend Privy as the signer. The five Privy alternatives compared here are Cavos, Dynamic, Turnkey, Web3Auth / MetaMask Embedded Wallets, and Magic. The two-way is Alchemy vs Privy.',
   },
   {
     question: 'Is this page about the Shopify Privy popup app?',
@@ -142,12 +147,12 @@ export const PRIVY_ALTERNATIVES_FAQ = [
   {
     question: 'What are some alternatives to Privy?',
     answer:
-      'Cavos, Dynamic, Turnkey, Web3Auth / MetaMask Embedded Wallets, and Magic are the five Privy alternatives compared here. Cavos fits Starknet, Solana, or Stellar with a device-native key. Dynamic fits connecting wallets users already hold. Turnkey is signing infrastructure. Web3Auth fits broad social-login chain coverage. Magic fits email-first EVM onboarding. Privy remains the more mature EVM choice.',
+      'Cavos, Dynamic, Turnkey, Web3Auth / MetaMask Embedded Wallets, and Magic are the five Privy alternatives compared here. Alchemy Wallet APIs are not a sixth: they are a transaction layer, and Alchemy recommends Privy as the signer. Cavos fits Starknet, Solana, or Stellar with a device-native key. Dynamic fits connecting wallets users already hold. Turnkey is signing infrastructure. Web3Auth fits broad social-login chain coverage. Magic fits email-first EVM onboarding. Privy remains the more mature EVM choice.',
   },
   {
     question: 'Who are Privy wallet competitors?',
     answer:
-      'Privy wallet competitors, the same five compared here, are Cavos, Dynamic, Turnkey, Web3Auth / MetaMask Embedded Wallets, and Magic. They compete with Privy in embedded wallets, not the Shopify popup. Which Privy alternative fits depends on chain and key model; the one-to-one is Cavos vs Privy.',
+      'Privy wallet competitors, the same five compared here, are Cavos, Dynamic, Turnkey, Web3Auth / MetaMask Embedded Wallets, and Magic. They compete with Privy in embedded wallets, not the Shopify popup. Alchemy Wallet APIs are a transaction layer that recommend Privy as the signer, not a sixth competitor. Which Privy alternative fits depends on chain and key model; the one-to-one is Cavos vs Privy.',
   },
 ] as const
 
@@ -170,23 +175,31 @@ export const privyAlternativesGuide: AlternativesGuide = {
     [
       'Cavos fits Starknet, Solana, or Stellar with a device-native key. Dynamic fits connecting wallets users already hold; that two-way is ',
       { href: PRIVY_VS_DYNAMIC_PATH, label: 'Privy vs Dynamic' },
-      '. Turnkey is signing infrastructure. Web3Auth fits broad social-login chain coverage. Magic fits email-first EVM onboarding. Privy remains the more mature EVM choice. Published list prices, including Privy wallets cost, are ',
+      '. Turnkey is signing infrastructure; that layer split is ',
+      { href: PRIVY_VS_TURNKEY_PATH, label: 'Privy vs Turnkey' },
+      '. Web3Auth fits broad social-login chain coverage. Magic fits email-first EVM onboarding. Alchemy Wallet APIs are not a sixth Privy alternative: Account Kit is deprecated, and Alchemy recommends Privy as the signer. That two-way is ',
+      { href: ALCHEMY_VS_PRIVY_PATH, label: 'Alchemy vs Privy' },
+      '. Privy remains the more mature EVM choice. Published list prices, including Privy wallets cost, are ',
       { href: EMBEDDED_WALLET_COST_PATH, label: 'how much embedded wallets cost' },
       '.',
     ],
   ],
   introParagraphs: [
     [
-      'Cavos, Dynamic, Turnkey, Web3Auth, and Magic are the five Privy alternatives and competitors compared here. This page is the shortlist for Privy alternative, Privy alternatives, Privy competitors, and alternatives to Privy: an ',
+      'Cavos, Dynamic, Turnkey, Web3Auth, and Magic are the five Privy alternatives and competitors compared here. This page is the shortlist for an ',
       { href: '/embedded-wallet', label: 'embedded wallet' },
-      ' replacement for Privy, not the Shopify popup of the same name. A Privy alternative is a different product in this category, not a drop-in.',
+      ' replacement for Privy, not the Shopify popup of the same name. A Privy alternative is a different product in this category, not a drop-in. Alchemy Wallet APIs are not a sixth name on that list.',
     ],
     [
       'The sections below use the same facts as the ',
       { href: '/compare', label: 'compare pages' },
+      ', including ',
+      { href: '/compare/privy', label: 'Cavos vs Privy' },
       '. Cavos publishes its own fees on the ',
       { href: '/pricing', label: 'pricing page' },
-      '; other vendors set theirs independently. If the question is a finished SDK versus key-management infrastructure, start with ',
+      '; other vendors set theirs independently. Alchemy vs Privy is a layer question (Wallet APIs plus a signer), not a replacement shortlist: that write-up is ',
+      { href: ALCHEMY_VS_PRIVY_PATH, label: 'Alchemy vs Privy' },
+      '. If the question is a finished SDK versus key-management infrastructure, start with ',
       { href: PRIVY_VS_TURNKEY_PATH, label: 'Privy vs Turnkey' },
       '. Privy vs Dynamic (provision versus connect) is ',
       { href: PRIVY_VS_DYNAMIC_PATH, label: 'Privy vs Dynamic' },
@@ -219,8 +232,10 @@ export const privyAlternativesGuide: AlternativesGuide = {
     { href: '/pricing', label: 'pricing' },
     ' page. Worked two-ways: ',
     { href: PRIVY_VS_DYNAMIC_PATH, label: 'Privy vs Dynamic' },
-    ' and ',
+    ', ',
     { href: PRIVY_VS_TURNKEY_PATH, label: 'Privy vs Turnkey' },
+    ', and ',
+    { href: ALCHEMY_VS_PRIVY_PATH, label: 'Alchemy vs Privy' },
     '. Sibling shortlists: ',
     { href: '/web3auth-alternatives', label: 'Web3Auth alternatives' },
     ' and ',
@@ -248,16 +263,43 @@ export const privyAlternativesGuide: AlternativesGuide = {
       detail:
         'Privy, Dynamic, Magic, and Cavos are finished embedded-wallet products: login, an in-app wallet, and recovery already wired. Turnkey and Dfns are key-management infrastructure you build on. The layer write-up is Privy vs Turnkey. The Dfns shortlist is Dfns alternatives. Web3Auth / MetaMask Embedded Wallets is a social-login MPC wallet layer; that shortlist is Web3Auth alternatives. Connecting wallets users already hold is a first-class Privy and Dynamic capability that Cavos does not offer.',
     },
+    {
+      point: 'Alchemy versus a Privy alternative',
+      detail:
+        'Alchemy Wallet APIs are a signer-agnostic transaction layer after Account Kit’s deprecation. New Account Kit sign-ups have been off since 18 June 2026. Alchemy documents Privy as the recommended signer, alongside Turnkey, Dynamic, Openfort, and any viem-compatible signer. Recovery belongs to the signer you bring, not to Wallet APIs. A Privy alternative is a different auth and wallet product. Alchemy plus Privy is Alchemy’s recommended path, not a swap.',
+    },
   ],
   comparedHeading: 'Privy alternatives and competitors',
   comparedIntro:
-    'Cavos, Privy, Dynamic, Turnkey, Web3Auth / MetaMask Embedded Wallets, and Magic all ship an embedded wallet. They do not share a key model, the same native chain coverage, or the same pricing. Each name opens the full comparison except Cavos, which links to published fees.',
+    'Cavos, Privy, Dynamic, Turnkey, Web3Auth / MetaMask Embedded Wallets, and Magic all ship an embedded wallet. Alchemy Account Kit appears in the table as a transaction layer: Wallet APIs plus a signer, not a sixth Privy alternative. They do not share a key model, the same native chain coverage, or the same pricing. Each name opens the full comparison except Cavos, which links to published fees.',
   sections: PRIVY_ALTERNATIVE_SECTIONS,
   howToChooseHeading: 'How to choose a Privy alternative',
   howToChooseIntro:
     'Ask the custody question first, then the chain question, then whether you are buying a wallet product or signing infrastructure.',
   howToChoose: PRIVY_HOW_TO_CHOOSE,
-  howToChooseOutro: DEFAULT_HOW_TO_CHOOSE_OUTRO,
+  howToChooseOutro: [
+    'Worked one-to-one comparisons live on the compare pages, including ',
+    { href: '/compare/privy', label: 'Cavos vs Privy' },
+    '. Pairwise write-ups: ',
+    {
+      href: ALCHEMY_VS_PRIVY_PATH,
+      label: 'Alchemy vs Privy',
+    },
+    ' (transaction layer versus signer, not a sixth alternative), ',
+    { href: PRIVY_VS_DYNAMIC_PATH, label: 'Privy vs Dynamic' },
+    ', and ',
+    { href: PRIVY_VS_TURNKEY_PATH, label: 'Privy vs Turnkey' },
+    '. For the category itself (what an embedded wallet is, and how ',
+    {
+      href: EMBEDDED_WALLET_VS_EXTENSION_PATH,
+      label: 'embedded wallets vs browser extensions',
+    },
+    ', MPC, and device-native models differ), start with ',
+    { href: '/embedded-wallet', label: 'embedded wallets' },
+    ' and the ',
+    { href: '/embedded-wallet', label: 'embedded wallet SDK' },
+    '.',
+  ],
   stayHeading: 'When Privy is still the right choice',
   stayIntro:
     'Privy is the more mature choice across the EVM ecosystem. It is not the weaker product; it covers ground Cavos does not. Stay with Privy when the following are true.',

@@ -800,14 +800,14 @@ describe('marketing SEO', () => {
     assert.equal(PRIVY_ALTERNATIVES_PATH, '/privy-alternatives')
     assert.equal(PRIVY_ALTERNATIVES_TITLE.includes('| Cavos'), false)
     assert.match(PRIVY_ALTERNATIVES_TITLE, /Privy Alternatives/)
-    assert.match(PRIVY_ALTERNATIVES_TITLE, /Free to 1,000/)
+    assert.match(PRIVY_ALTERNATIVES_TITLE, /Cavos, Dynamic, Turnkey/)
     assert.match(PRIVY_ALTERNATIVES_TITLE, /2026/)
     assert.equal(PRIVY_ALTERNATIVES_H1, 'Privy alternatives')
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Shopify/)
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Privy alternatives/)
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Privy competitors/)
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Cavos, Dynamic, Turnkey, Web3Auth, Magic/)
-    assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /1,000 wallets/)
+    assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Alchemy is not a swap/)
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /2026/)
     assert.match(PRIVY_ALTERNATIVES_DESCRIPTION, /Non-custodial/)
     const fullTitle = `${PRIVY_ALTERNATIVES_TITLE} | Cavos`
@@ -841,6 +841,9 @@ describe('marketing SEO', () => {
     assert.ok(
       PRIVY_ALTERNATIVES_FAQ.some((item) => item.question === 'Who are Privy wallet competitors?'),
     )
+    assert.ok(
+      PRIVY_ALTERNATIVES_FAQ.some((item) => item.question === 'Is Alchemy a Privy alternative?'),
+    )
     assert.ok(PRIVY_WHY_LOOK.length >= 4)
     assert.ok(PRIVY_HOW_TO_CHOOSE.length >= 5)
     assert.deepEqual(
@@ -858,12 +861,12 @@ describe('marketing SEO', () => {
       ],
     )
     assert.equal(PRIVY_ALTERNATIVES_PUBLISHED, '2026-10-11')
-    assert.equal(PRIVY_ALTERNATIVES_MODIFIED, '2026-11-06')
+    assert.equal(PRIVY_ALTERNATIVES_MODIFIED, '2026-11-08')
     assert.match(
       privyAlternativesGuide.decisionHeading ?? '',
       /Custody and pricing across Privy alternatives/,
     )
-    assert.equal(privyAlternativesGuide.decisionRows?.length, 4)
+    assert.equal(privyAlternativesGuide.decisionRows?.length, 5)
     assert.ok(
       privyAlternativesGuide.decisionRows?.some(
         (row) => row.point === 'Who can produce a signature',
@@ -872,6 +875,11 @@ describe('marketing SEO', () => {
     assert.ok(
       privyAlternativesGuide.decisionRows?.some(
         (row) => row.point === 'Pricing unit and published free tier',
+      ),
+    )
+    assert.ok(
+      privyAlternativesGuide.decisionRows?.some(
+        (row) => row.point === 'Alchemy versus a Privy alternative',
       ),
     )
     assert.equal(PRIVY_ALTERNATIVES_CRUMB, 'Privy alternatives')
@@ -975,6 +983,8 @@ describe('marketing SEO', () => {
     assert.match(dataSource, /What are some alternatives to Privy\? \(November 2026\)/)
     assert.match(dataSource, /how much embedded wallets cost/)
     assert.match(dataSource, /href: PRIVY_VS_DYNAMIC_PATH/)
+    assert.match(dataSource, /href: ALCHEMY_VS_PRIVY_PATH/)
+    assert.match(dataSource, /Is Alchemy a Privy alternative\?/)
 
     const alchemyVsPrivy = fs.readFileSync(
       path.join(process.cwd(), 'content/blog/alchemy-vs-privy.mdx'),
