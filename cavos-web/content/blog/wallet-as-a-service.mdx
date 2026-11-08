@@ -55,7 +55,7 @@ That is **where the wallet appears** and **how it is sold**. It is not a custody
 
 Three product shapes cover almost every vendor in the category:
 
-- **Finished embedded-wallet SDK.** Auth modal, wallet handle, sponsored `execute`, recovery. You integrate a kit. Cavos, Privy, Dynamic, Magic, and Web3Auth sit here, with different key models and chain lists.
+- **Finished [embedded wallet SDK](/embedded-wallet).** Auth modal, wallet handle, sponsored `execute`, recovery. You integrate a kit. Cavos, Privy, Dynamic, Magic, and Web3Auth sit here, with different key models and chain lists.
 - **Signing and key-management infrastructure.** Keys, policies, quorums, an HTTP or RPC surface. You assemble login and approval. Turnkey is the usual example. Privy vs Turnkey is usually [build versus buy](/blog/privy-vs-turnkey).
 - **Connector plus embedded fallback.** The product also connects wallets the user already holds. Dynamic and Privy do this. Cavos does not. If existing extensions are a requirement, a connector is the better pick, and the two models can coexist.
 
@@ -82,7 +82,7 @@ This is the part that decides whether the platform is a custodian in practice. F
 - **Remote enclave.** The key decrypts only inside a hardware-backed environment the vendor operates. Turnkey persists ciphertext and decrypts in AWS Nitro Enclaves. Custody is who holds the credentials that authorize the enclave.
 - **Delegated TEE or HSM.** The provider’s key-management system holds or unwraps the key. Privy documents TEE key infrastructure. Magic’s public docs describe a TEE key-management system; the compare page also describes delegated HSMs.
 
-“Non-custodial” is a claim. The test is who can move the assets. Privy ships non-custodial embedded wallets and, separately, optional custodial wallets starting with Bridge. Counsel has to read recovery and export.
+“Non-custodial” is a claim. The test is who can move the assets. Privy ships non-custodial [embedded wallets](/embedded-wallet) and, separately, optional custodial wallets starting with Bridge. Counsel has to read recovery and export.
 
 On Starknet, Cavos wallets are an **audited OpenZeppelin account contract** (AccountUpgradeable v3.0.0) controlled by one stark key derived from the MasterDEK and app salt. The audit covers OpenZeppelin’s contract, not Cavos. Cavos does not ship its own account implementation. There are no on-chain device signers.
 
@@ -280,7 +280,7 @@ The named-vendor comparison is also on [embedded wallet providers](/blog/embedde
 
 Searchers type all three. They name the same job from different angles.
 
-- **Embedded wallet** is the UX: the wallet lives inside the application, login selects the user, and approval happens in the product UI. There is no seed phrase in the happy path and no second program to install.
+- **[Embedded wallet](/embedded-wallet)** is the UX: the wallet lives inside the application, login selects the user, and approval happens in the product UI. There is no seed phrase in the happy path and no second program to install.
 - **Wallet-as-a-service (WaaS)** is how that wallet is sold: an API or SDK, a dashboard, and an invoice. Teams also type wallet as a service providers and embedded wallets as a service.
 - **Wallet infrastructure** usually means the lower layer: key management, signing primitives, policy, and custody, which a platform assembles into a finished product. Turnkey and Dfns sit closer to this layer. Privy, Dynamic, Magic, Web3Auth, and Cavos ship a finished login-to-signature path.
 

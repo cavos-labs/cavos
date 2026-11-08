@@ -65,13 +65,13 @@ Figures below are from each vendor’s public pricing and product pages as of No
 <td>Wallet creates. Free up to 1,000 wallets. Essential $59/mo. Complete $139/mo. Meter is creates, not MAU or signatures.</td>
 <td>Starknet, Solana, and Stellar native adapters. Not EVM-wide. Not Midnight, Aleo, Cosmos, or Sui.</td>
 <td>Hardware-isolated, non-custodial. Device-native. No MPC. Signing on the device. Passkey and opt-in Nitro Enclave hold an encrypted MasterDEK copy; Cavos cannot decrypt it. On Starknet: one stark key on an audited OpenZeppelin AccountUpgradeable v3.0.0.</td>
-<td>Finished embedded wallet SDK: auth, a device-native account, recovery, and Gas Sponsorship in Any Token.</td>
+<td>Finished <a href="/embedded-wallet">embedded wallet SDK</a>: auth, a device-native account, recovery, and Gas Sponsorship in Any Token.</td>
 </tr>
 <tr>
 <td><a href="/compare/privy">Privy</a></td>
 <td>Monthly active users. Free 0–499 MAU, 50K signatures and $1M volume/mo. Core $299/mo. Scale $499/mo.</td>
 <td>Managed send on Ethereum/EVM, Solana/SVM, Tempo, TRON. Additional sign-only chains.</td>
-<td>TEE key infrastructure. Non-custodial embedded wallets; optional custodial wallets (starting with Bridge).</td>
+<td>TEE key infrastructure. Non-custodial <a href="/embedded-wallet">embedded wallets</a>; optional custodial wallets (starting with Bridge).</td>
 <td>Finished SDK: login, an in-app wallet, and connectors for wallets users already hold.</td>
 </tr>
 <tr>
@@ -307,11 +307,11 @@ Embedded is a UX label. An enterprise review still has to answer who can sign, w
 
 Treat this as a scope question, not a feature checklist.
 
-**Privy** is a finished embedded wallet and authentication product. The public pricing page lists unified login (email, SMS, socials, passkeys), embedded wallets, and wallet connectors for EVM and Solana. Keys are managed in Privy’s TEE infrastructure. Privy’s own docs say neither Privy nor the application sees the user’s keys on the non-custodial path; secrets are reconstituted in a secure environment under the user’s control. In 2026 Privy also added optional custodial wallets, starting with Bridge, chosen per wallet. Use Privy when you want one vendor for login, an in-app wallet, and connecting wallets users already hold, especially on EVM.
+**Privy** is a finished embedded wallet and authentication product. The public pricing page lists unified login (email, SMS, socials, passkeys), [embedded wallets](/embedded-wallet), and wallet connectors for EVM and Solana. Keys are managed in Privy’s TEE infrastructure. Privy’s own docs say neither Privy nor the application sees the user’s keys on the non-custodial path; secrets are reconstituted in a secure environment under the user’s control. In 2026 Privy also added optional custodial wallets, starting with Bridge, chosen per wallet. Use Privy when you want one vendor for login, an in-app wallet, and connecting wallets users already hold, especially on EVM.
 
 **Turnkey** is key-management infrastructure. Private keys persist as ciphertext and decrypt only inside AWS Nitro Enclaves. Custody is determined by who holds the credentials that can authorize the enclave: the end user (non-custodial), your API key (custodial), or both under policy (hybrid). Auth includes passkeys, OAuth, email, and API keys. Gas sponsorship is listed on the Enterprise plan. Use Turnkey when you are building a wallet or custody product and want policy, quorums, and server-side signing primitives. Privy vs Turnkey is usually build-versus-buy.
 
-**Dynamic** is strongest as a unified login and wallet-connection layer that also ships embedded wallets. Connecting existing external wallets is a core capability. Embedded wallets use TSS-MPC: a user share on the device and a server share that participates in signing inside a TEE. Dynamic’s public docs say the full private key is never constructed, wallets are end-user owned, and export is supported. Native Tier 1 embedded-wallet chains on the public JS/React docs include EVM, Solana, Bitcoin, Sui, Tempo, Arc, TON, Stellar, Tron, Aleo, and Midnight. Gasless transactions on EVM and Solana are listed as an Enterprise feature. Use Dynamic when users already hold wallets you must connect, or when you want that connector surface plus an embedded fallback. Privy vs Dynamic is usually provision-versus-connect.
+**Dynamic** is strongest as a unified login and wallet-connection layer that also ships [embedded wallets](/embedded-wallet). Connecting existing external wallets is a core capability. Embedded wallets use TSS-MPC: a user share on the device and a server share that participates in signing inside a TEE. Dynamic’s public docs say the full private key is never constructed, wallets are end-user owned, and export is supported. Native Tier 1 embedded-wallet chains on the public JS/React docs include EVM, Solana, Bitcoin, Sui, Tempo, Arc, TON, Stellar, Tron, Aleo, and Midnight. Gasless transactions on EVM and Solana are listed as an Enterprise feature. Use Dynamic when users already hold wallets you must connect, or when you want that connector surface plus an embedded fallback. Privy vs Dynamic is usually provision-versus-connect.
 
 None of those three is “the Starknet / Solana / Stellar device-native SDK.” That is a different product shape.
 
