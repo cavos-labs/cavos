@@ -1247,7 +1247,7 @@ describe('marketing SEO', () => {
         assert.match(guide.h1, /Turnkey alternatives and embedded wallet competitors/)
         assert.match(guide.description, /embedded wallet competitors/)
         assert.match(guide.description, /Turnkey vs Privy/)
-        assert.equal(guide.modified, '2026-11-06')
+        assert.equal(guide.modified, '2026-11-08')
         assert.match(guide.description, /Turnkey alternative/)
         assert.ok(
           guide.faq.some(
