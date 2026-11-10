@@ -63,7 +63,7 @@ const ALCHEMY_PRICING =
 export const PROVIDER_PRICING_AS_OF = 'October 2026'
 
 /** Sitemap lastmod for /compare/[slug] when competitor copy in this file changes. */
-export const COMPARE_PAGES_MODIFIED = '2026-11-06'
+export const COMPARE_PAGES_MODIFIED = '2026-11-09'
 
 export const EMBEDDED_WALLET_MARKET_NOTE =
     'The category has consolidated. Stripe acquired Privy in 2025. Fireblocks acquired Dynamic in 2025. Consensys acquired Web3Auth in 2025 and now ships it as MetaMask Embedded Wallets. In 2026 Payward, the parent of Kraken, acquired Magic Labs wallet infrastructure.'
@@ -72,12 +72,12 @@ export const COMPETITORS: Competitor[] = [
     {
         slug: 'privy',
         name: 'Privy',
-        pageTitle: 'Privy vs Cavos (2026): Comparison, Custody',
-        pageH1: 'Privy vs Cavos: comparison, pricing, and custody',
+        pageTitle: 'Privy vs Cavos (2026): Pricing, Chains, Custody',
+        pageH1: 'Privy vs Cavos: pricing, chains, and custody',
         pageDescription:
-            'Privy vs Cavos comparison: pricing, chains, and custody. Not the Shopify app. Free up to 1,000 wallets on Starknet, Solana, and Stellar.',
+            'Privy vs Cavos comparison: pricing, chains, and custody. Not the Shopify app. On Stellar and Starknet, Privy only signs. Free up to 1,000 wallets.',
         summary:
-            'Privy is a widely adopted embedded wallet and authentication provider focused primarily on EVM chains, offering both embedded wallets and external wallet connection. This page is the Privy vs Cavos comparison. The multi-vendor shortlist for Privy alternatives lives on that page, not here.',
+            'Privy is a widely adopted embedded wallet and authentication provider, offering both embedded wallets and external wallet connection. Privy’s chain-support docs list managed send on EVM, Solana, Tempo, and Tron, and sign-only support on chains including Stellar and Starknet. This page is the one-to-one Privy vs Cavos comparison.',
         positioning:
             'Both products embed a wallet into your application and remove the extension requirement. The architectural difference is where signing authority lives and which chains are treated as native. Privy’s published security model reconstitutes a 2-of-2 Shamir split inside AWS Nitro Enclaves; Cavos never reconstructs a signing key because a non-exportable device key signs. Privy is the more mature choice across the EVM ecosystem; Cavos ships native adapters for Starknet, Solana, and Stellar.',
         chooseThem: [
@@ -93,7 +93,7 @@ export const COMPETITORS: Competitor[] = [
         rows: [
             { feature: 'Signing authority', cavos: CAVOS_CUSTODY, them: 'User wallets: 2-of-2 Shamir shares reconstituted only in AWS Nitro Enclaves (enclave share + auth share). Key export is supported. Optional custodial wallets via Bridge.' },
             { feature: 'Connect vs provision', cavos: 'Provisions a device-native account. Does not connect MetaMask, WalletConnect, or other extensions.', them: 'Both. Embedded user wallets plus connectors for wallets users already hold (EVM and Solana).' },
-            { feature: 'Chain coverage', cavos: CAVOS_CHAINS, them: 'Broad EVM support plus Solana; coverage and feature parity vary by chain.' },
+            { feature: 'Chain coverage', cavos: CAVOS_CHAINS, them: 'Managed send on EVM, Solana, Tempo, and Tron. Sign-only on Stellar, Starknet, Bitcoin, and others: Privy signs, your app broadcasts. Per Privy’s chain-support docs, November 2026.' },
             { feature: 'Account model', cavos: CAVOS_ACCOUNT_MODEL, them: 'EOA-style embedded wallets, with smart account support through integrations.' },
             { feature: 'Gas sponsorship', cavos: CAVOS_GAS, them: 'Available through paymaster and bundler integrations, typically on EVM smart accounts.' },
             { feature: 'Recovery', cavos: CAVOS_RECOVERY, them: 'Provider-defined recovery options including password and cloud-backup based flows.' },
@@ -101,12 +101,12 @@ export const COMPETITORS: Competitor[] = [
             { feature: 'Pricing', cavos: CAVOS_PRICING, them: PRIVY_PRICING },
         ],
         faq: [
-            { question: 'What is Privy vs Cavos?', answer: 'Privy vs Cavos is a one-to-one comparison of two embedded wallet products. Privy is EVM-first, with both embedded wallets and external wallet connection. Cavos is device-native on Starknet, Solana, and Stellar, with a non-exportable device key and no MPC reconstruction. They are not drop-in replacements. The multi-vendor shortlist lives on Privy alternatives.' },
+            { question: 'What is Privy vs Cavos?', answer: 'Privy vs Cavos is a one-to-one comparison of two embedded wallet products. Privy offers embedded wallets and external wallet connection, with managed send on EVM, Solana, Tempo, and Tron. Cavos is device-native on Starknet, Solana, and Stellar, with a non-exportable device key and no MPC reconstruction. They are not drop-in replacements.' },
             { question: 'How does Privy security work for embedded wallets?', answer: 'Privy’s public security docs describe a 2-of-2 Shamir split reconstituted only inside AWS Nitro Enclaves: an enclave share sealed to the TEE, and an auth share released with valid credentials. Neither share alone is the key, and Privy documents that it cannot reconstruct a key unilaterally. Users can export the key on the user-wallet path. Separately, Privy documents optional custodial wallets backed by Bridge. Cavos does not reconstruct a key in a remote enclave for ordinary signing: a non-exportable device key is the signing authority.' },
-            { question: 'Is Cavos a drop-in replacement for Privy?', answer: 'No. They target different chain ecosystems. If your application is EVM-first, Privy covers ground Cavos does not. Cavos is the closer head-to-head comparison when you are building on Starknet, Solana, or Stellar and want a device-native, MPC-free signing model.' },
+            { question: 'Is Cavos a drop-in replacement for Privy?', answer: 'No. On EVM, Privy covers ground Cavos does not, and Privy also connects wallets users already hold. On Stellar and Starknet, Privy’s docs list signing only, so your app still broadcasts the transaction; Cavos signs, submits, and can sponsor gas. Cavos is the closer head-to-head comparison when you are building on Starknet, Solana, or Stellar and want a device-native, MPC-free signing model.' },
             { question: 'Can I migrate from Privy to Cavos?', answer: 'Wallet addresses are derived differently, so accounts do not transfer automatically. Migration means provisioning new Cavos wallets against your existing stable user IDs and moving assets deliberately. Treat it as a migration project, not a config change.' },
             { question: 'How does Cavos vs Privy pricing compare?', answer: 'Cavos is free up to 1,000 wallets, then Essential at $59/mo and Complete at $139/mo. Privy’s public free tier is 0–499 MAU with 50K signatures and $1M volume per month; Core is $299/mo and Scale is $499/mo. Those figures are from each vendor’s public pricing page as of October 2026 and can change.' },
-            { question: 'How do Privy and Cavos compare on chains?', answer: 'Privy’s published coverage is broad EVM plus Solana. Cavos ships native adapters for Starknet, Solana, and Stellar and is not an EVM-wide wallet layer. If the product is EVM-first, Privy covers ground Cavos does not. If the product is on those three chains and the review requires a device-native key, Cavos is the closer comparison.' },
+            { question: 'How do Privy and Cavos compare on chains?', answer: 'Privy’s chain-support docs (checked November 2026) list managed send on EVM, Solana, Tempo, and Tron; transaction-aware signing on Stellar, Sui, XRPL, Aptos, and Near; and raw signing on Bitcoin, Cosmos, TON, and Starknet. On the signing tiers Privy signs and your app broadcasts. Cavos ships native adapters for Starknet, Solana, and Stellar that sign, submit, and can sponsor gas, and is not an EVM-wide wallet layer. If the product is EVM-first, Privy covers ground Cavos does not. If the product is on those three chains and the review requires a device-native key, Cavos is the closer comparison.' },
         ],
     },
     {

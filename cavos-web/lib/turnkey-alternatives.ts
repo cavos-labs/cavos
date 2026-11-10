@@ -38,7 +38,7 @@ export const TURNKEY_ALTERNATIVES_H1 =
 
 export const TURNKEY_ALTERNATIVES_PUBLISHED = '2026-10-27'
 
-export const TURNKEY_ALTERNATIVES_MODIFIED = '2026-11-08'
+export const TURNKEY_ALTERNATIVES_MODIFIED = '2026-11-09'
 
 export const TURNKEY_ALTERNATIVES_CRUMB = 'Turnkey alternatives'
 
@@ -241,7 +241,7 @@ export const turnkeyAlternativesGuide: AlternativesGuide = {
     {
       point: 'Native chains versus a compatibility layer',
       detail:
-        'Turnkey is broad at the cryptographic-curve and signing-primitive level (secp256k1, Ed25519, P-256); you still assemble the wallet UX. Privy’s published coverage is broad EVM plus Solana at managed send. Dynamic is multi-chain, with EVM breadth and additional non-EVM support; parity varies by chain. MetaMask Embedded Wallets lists EVM, Solana, and additional networks including StarkNet; feature parity still varies by chain. Magic is strongest on email-first EVM onboarding. Cavos ships native adapters for Starknet (an audited OpenZeppelin account contract), Solana, and Stellar, and is not an EVM-wide wallet layer.',
+        'Turnkey is broad at the cryptographic-curve and signing-primitive level (secp256k1, Ed25519, P-256); you still assemble the wallet UX. Privy’s chain-support docs list managed send on EVM, Solana, Tempo, and Tron, and sign-only support on chains including Stellar and Starknet. Dynamic is multi-chain, with EVM breadth and additional non-EVM support; parity varies by chain. MetaMask Embedded Wallets lists EVM, Solana, and additional networks including StarkNet; feature parity still varies by chain. Magic is strongest on email-first EVM onboarding. Cavos ships native adapters for Starknet (an audited OpenZeppelin account contract), Solana, and Stellar, and is not an EVM-wide wallet layer.',
     },
   ],
   comparedHeading: 'Turnkey alternatives and competitors',

@@ -113,6 +113,7 @@ import {
   BEST_EMBEDDED_WALLET_TITLE,
 } from './embedded-wallet-guide'
 import {
+  COMPARE_PAGES_MODIFIED,
   COMPETITORS,
   EMBEDDED_WALLET_MARKET_NOTE,
   embeddedWalletProviderRows,
@@ -861,7 +862,7 @@ describe('marketing SEO', () => {
       ],
     )
     assert.equal(PRIVY_ALTERNATIVES_PUBLISHED, '2026-10-11')
-    assert.equal(PRIVY_ALTERNATIVES_MODIFIED, '2026-11-08')
+    assert.equal(PRIVY_ALTERNATIVES_MODIFIED, '2026-11-09')
     assert.match(
       privyAlternativesGuide.decisionHeading ?? '',
       /Custody and pricing across Privy alternatives/,
@@ -1096,8 +1097,22 @@ describe('marketing SEO', () => {
 
     const privy = getCompetitor('privy')
     assert.ok(privy)
-    assert.match(privy.pageTitle ?? '', /Privy vs Cavos \(2026\): Comparison, Custody/)
-    assert.match(privy.pageH1 ?? '', /Privy vs Cavos: comparison, pricing, and custody/)
+    assert.equal(privy.pageTitle, 'Privy vs Cavos (2026): Pricing, Chains, Custody')
+    assert.equal(privy.pageH1, 'Privy vs Cavos: pricing, chains, and custody')
+    assert.equal(
+      privy.pageDescription,
+      'Privy vs Cavos comparison: pricing, chains, and custody. Not the Shopify app. On Stellar and Starknet, Privy only signs. Free up to 1,000 wallets.',
+    )
+    assert.equal(COMPARE_PAGES_MODIFIED, '2026-11-09')
+    assert.doesNotMatch(privy.summary, /privy alternatives/i)
+    assert.equal(
+      privy.faq.some((item) => /privy alternatives/i.test(item.answer)),
+      false,
+    )
+    assert.doesNotMatch(privy.summary, /EVM-first|primarily on EVM/i)
+    assert.ok(
+      privy.rows.some((row) => row.feature === 'Chain coverage' && /Stellar/.test(row.them) && /Starknet/.test(row.them)),
+    )
     assert.doesNotMatch(privy.pageTitle ?? '', /alternative/i)
     assert.doesNotMatch(privy.pageH1 ?? '', /alternative/i)
     assert.doesNotMatch(privy.pageDescription ?? '', /alternative/i)
@@ -1257,7 +1272,7 @@ describe('marketing SEO', () => {
         assert.match(guide.h1, /Turnkey alternatives and embedded wallet competitors/)
         assert.match(guide.description, /embedded wallet competitors/)
         assert.match(guide.description, /Turnkey vs Privy/)
-        assert.equal(guide.modified, '2026-11-08')
+        assert.equal(guide.modified, '2026-11-09')
         assert.match(guide.description, /Turnkey alternative/)
         assert.ok(
           guide.faq.some(
@@ -1283,9 +1298,9 @@ describe('marketing SEO', () => {
         assert.match(guide.h1, new RegExp(`5 ${guide.incumbent} alternatives`))
         assert.match(guide.description, /Starknet, Solana, Stellar/)
         if (guide.incumbent === 'Dynamic') {
-          assert.equal(guide.modified, '2026-11-08')
+          assert.equal(guide.modified, '2026-11-09')
         } else if (guide.incumbent === 'Magic') {
-          assert.equal(guide.modified, '2026-11-06')
+          assert.equal(guide.modified, '2026-11-09')
         } else {
           assert.equal(guide.modified, '2026-10-31')
         }
@@ -1523,7 +1538,7 @@ describe('marketing SEO', () => {
       ],
     )
     assert.equal(PARA_ALTERNATIVES_PUBLISHED, '2026-11-02')
-    assert.equal(PARA_ALTERNATIVES_MODIFIED, '2026-11-06')
+    assert.equal(PARA_ALTERNATIVES_MODIFIED, '2026-11-09')
     assert.equal(PARA_ALTERNATIVES_CRUMB, 'Para alternatives')
     assert.match(
       paraAlternativesGuide.decisionHeading ?? '',

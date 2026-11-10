@@ -30,7 +30,7 @@ export const PRIVY_ALTERNATIVES_H1 = 'Privy alternatives'
 
 export const PRIVY_ALTERNATIVES_PUBLISHED = '2026-10-11'
 
-export const PRIVY_ALTERNATIVES_MODIFIED = '2026-11-08'
+export const PRIVY_ALTERNATIVES_MODIFIED = '2026-11-09'
 
 export const PRIVY_ALTERNATIVES_CRUMB = 'Privy alternatives'
 
@@ -84,7 +84,7 @@ export function privyAlternativesItemList() {
 export const PRIVY_WHY_LOOK = [
   {
     title: 'Chain coverage',
-    body: 'Privy is the more mature choice across the EVM ecosystem and also covers Solana. Teams building on Starknet or Stellar, or that want each chain’s native account model rather than an abstraction over it, look past an EVM-first SDK.',
+    body: 'Privy is the more mature choice across the EVM ecosystem and also manages send on Solana, Tempo, and Tron. On Stellar and Starknet its docs list signing only, so the app still broadcasts. Teams building on Starknet or Stellar, or that want each chain’s native account model rather than an abstraction over it, look past Privy.',
   },
   {
     title: 'Where signing authority lives',
@@ -127,12 +127,12 @@ export const PRIVY_ALTERNATIVES_FAQ = [
   {
     question: 'Which Privy alternative is best for Starknet, Solana, or Stellar?',
     answer:
-      'Cavos ships native adapters for all three: an audited OpenZeppelin account contract on Starknet, a native Ed25519 system account on Solana, and a classic G-account on Stellar. Privy’s published coverage is broad EVM plus Solana. MetaMask Embedded Wallets lists EVM, Solana, and additional networks including StarkNet on its product page; feature parity still varies by chain.',
+      'Cavos ships native adapters for all three: an audited OpenZeppelin account contract on Starknet, a native Ed25519 system account on Solana, and a classic G-account on Stellar. Privy’s chain-support docs list managed send on EVM, Solana, Tempo, and Tron, and sign-only support on chains including Stellar and Starknet. MetaMask Embedded Wallets lists EVM, Solana, and additional networks including StarkNet on its product page; feature parity still varies by chain.',
   },
   {
     question: 'Is Cavos a drop-in replacement for Privy?',
     answer:
-      'No. They target different chain ecosystems. If your application is EVM-first, Privy covers ground Cavos does not. Cavos is a direct alternative when you are building on Starknet, Solana, or Stellar and want a device-native, MPC-free signing model. Wallet addresses are derived differently, so accounts do not transfer as a config change.',
+      'No. If your application is EVM-first, Privy covers ground Cavos does not. On Stellar and Starknet, Privy’s docs list signing only; Cavos signs, submits, and can sponsor gas. Cavos is a direct alternative when you are building on Starknet, Solana, or Stellar and want a device-native, MPC-free signing model. Wallet addresses are derived differently, so accounts do not transfer as a config change.',
   },
   {
     question: 'Is Alchemy a Privy alternative?',
@@ -256,7 +256,7 @@ export const privyAlternativesGuide: AlternativesGuide = {
     {
       point: 'Native chains versus a compatibility layer',
       detail:
-        'Privy’s published coverage is broad EVM plus Solana at managed send. Dynamic is multi-chain, with EVM breadth and additional non-EVM support; parity varies by chain. Turnkey is broad at the cryptographic-curve and signing-primitive level; you still assemble the wallet UX. MetaMask Embedded Wallets lists EVM, Solana, and additional networks including StarkNet; feature parity still varies by chain. Magic is strongest on email-first EVM onboarding. Cavos ships native adapters for Starknet (an audited OpenZeppelin account contract), Solana, and Stellar, and is not an EVM-wide wallet layer.',
+        'Privy’s chain-support docs list managed send on EVM, Solana, Tempo, and Tron, and sign-only support on chains including Stellar and Starknet. Dynamic is multi-chain, with EVM breadth and additional non-EVM support; parity varies by chain. Turnkey is broad at the cryptographic-curve and signing-primitive level; you still assemble the wallet UX. MetaMask Embedded Wallets lists EVM, Solana, and additional networks including StarkNet; feature parity still varies by chain. Magic is strongest on email-first EVM onboarding. Cavos ships native adapters for Starknet (an audited OpenZeppelin account contract), Solana, and Stellar, and is not an EVM-wide wallet layer.',
     },
     {
       point: 'Finished SDK versus signing infrastructure',

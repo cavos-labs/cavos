@@ -37,7 +37,7 @@ export const PARA_ALTERNATIVES_H1 = '5 Para alternatives compared in 2026'
 
 export const PARA_ALTERNATIVES_PUBLISHED = '2026-11-02'
 
-export const PARA_ALTERNATIVES_MODIFIED = '2026-11-06'
+export const PARA_ALTERNATIVES_MODIFIED = '2026-11-09'
 
 export const PARA_ALTERNATIVES_CRUMB = 'Para alternatives'
 
@@ -224,7 +224,7 @@ export const paraAlternativesGuide: AlternativesGuide = {
     {
       point: 'Native chains versus a compatibility layer',
       detail:
-        'Para’s named chain-support table lists EVM networks, Solana, Noble, Initia, Osmosis, and Stellar. The intro also mentions Sui; this page does not treat Sui as a named-table chain. Privy’s published coverage is broad EVM plus Solana at managed send. Dynamic is multi-chain, with EVM breadth and additional non-EVM support; parity varies by chain. Turnkey is broad at the cryptographic-curve and signing-primitive level; you still assemble the wallet UX. MetaMask Embedded Wallets lists EVM, Solana, and additional networks including StarkNet. Cavos ships native adapters for Starknet (an audited OpenZeppelin account contract), Solana, and Stellar, and is not an EVM-wide wallet layer. Para does not list Starknet on that named table.',
+        'Para’s named chain-support table lists EVM networks, Solana, Noble, Initia, Osmosis, and Stellar. The intro also mentions Sui; this page does not treat Sui as a named-table chain. Privy’s chain-support docs list managed send on EVM, Solana, Tempo, and Tron, and sign-only support on chains including Stellar and Starknet. Dynamic is multi-chain, with EVM breadth and additional non-EVM support; parity varies by chain. Turnkey is broad at the cryptographic-curve and signing-primitive level; you still assemble the wallet UX. MetaMask Embedded Wallets lists EVM, Solana, and additional networks including StarkNet. Cavos ships native adapters for Starknet (an audited OpenZeppelin account contract), Solana, and Stellar, and is not an EVM-wide wallet layer. Para does not list Starknet on that named table.',
     },
   ],
   comparedHeading: 'Para alternatives and getpara.com competitors',
