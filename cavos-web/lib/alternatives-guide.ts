@@ -117,8 +117,8 @@ export const CAVOS_RELATED_LINKS: AlternativeRelatedLink[] = [
 /** Reused vendor bodies. Source: competitor summaries in lib/compare-data.ts. */
 export const VENDOR_PARAGRAPHS = {
   privy: [
-    'Privy is a widely adopted embedded wallet and authentication provider focused primarily on EVM chains, offering both embedded wallets and external wallet connection.',
-    'Privy manages embedded wallet keys through its key-management infrastructure, with configurable self-custody and recovery options. Chain coverage is broad EVM plus Solana. Gas sponsorship is available through paymaster and bundler integrations, typically on EVM smart accounts. Connecting existing extensions is a core capability Cavos does not offer.',
+    'Privy is a widely adopted embedded wallet and authentication provider, offering both embedded wallets and external wallet connection.',
+    'Privy manages embedded wallet keys through its key-management infrastructure, with configurable self-custody and recovery options. Its chain-support docs list managed send on EVM, Solana, Tempo, and Tron, and sign-only support on chains including Stellar and Starknet. Gas sponsorship is available through paymaster and bundler integrations, typically on EVM smart accounts. Connecting existing extensions is a core capability Cavos does not offer.',
     'Choose Privy when the product is EVM-first, when you want a single vendor for embedded wallets and WalletConnect or injected wallets, or when you need the largest available ecosystem of integrations. Stripe acquired Privy in 2025. The public Developer free tier is 0–499 MAU with 50K signatures and $1M volume per month; Core is $299/mo and Scale is $499/mo.',
   ],
   dynamic: [

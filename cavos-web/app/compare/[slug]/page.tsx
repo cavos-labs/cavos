@@ -76,7 +76,7 @@ export default async function ComparisonPage({
                             <>
                                 This is the Privy vs Cavos comparison: Privy the embedded
                                 crypto wallet, not the Shopify popup of the same name.
-                                Pricing, chains, and custody, one-to-one.                                 For Privy alternatives, start at{' '}
+                                Pricing, chains, and custody, one-to-one. For a multi-vendor shortlist, start at{' '}
                                 <Link href="/privy-alternatives" className={linkClass}>
                                     Privy alternatives
                                 </Link>

@@ -37,7 +37,7 @@ export const DYNAMIC_ALTERNATIVES_H1 = '5 Dynamic alternatives compared in 2026'
 
 export const DYNAMIC_ALTERNATIVES_PUBLISHED = '2026-10-27'
 
-export const DYNAMIC_ALTERNATIVES_MODIFIED = '2026-11-08'
+export const DYNAMIC_ALTERNATIVES_MODIFIED = '2026-11-09'
 
 export const DYNAMIC_ALTERNATIVES_CRUMB = 'Dynamic alternatives'
 
@@ -245,7 +245,7 @@ export const dynamicAlternativesGuide: AlternativesGuide = {
     {
       point: 'Native chains versus a compatibility layer',
       detail:
-        'Dynamic is multi-chain, with EVM breadth and additional non-EVM support; parity varies by chain. JS/React Tier 1 send-and-sign on Dynamic’s public chain table includes EVM, Solana, Bitcoin, Sui, TON, Stellar, and others; Starknet is experimental or derived, not on that native table. Privy’s published coverage is broad EVM plus Solana at managed send. Turnkey is broad at the cryptographic-curve and signing-primitive level; you still assemble the wallet UX. MetaMask Embedded Wallets lists EVM, Solana, and additional networks including StarkNet. Magic is strongest on email-first EVM onboarding. Cavos ships native adapters for Starknet (an audited OpenZeppelin account contract), Solana, and Stellar, and is not an EVM-wide wallet layer.',
+        'Dynamic is multi-chain, with EVM breadth and additional non-EVM support; parity varies by chain. JS/React Tier 1 send-and-sign on Dynamic’s public chain table includes EVM, Solana, Bitcoin, Sui, TON, Stellar, and others; Starknet is experimental or derived, not on that native table. Privy’s chain-support docs list managed send on EVM, Solana, Tempo, and Tron, and sign-only support on chains including Stellar and Starknet. Turnkey is broad at the cryptographic-curve and signing-primitive level; you still assemble the wallet UX. MetaMask Embedded Wallets lists EVM, Solana, and additional networks including StarkNet. Magic is strongest on email-first EVM onboarding. Cavos ships native adapters for Starknet (an audited OpenZeppelin account contract), Solana, and Stellar, and is not an EVM-wide wallet layer.',
     },
     {
       point: 'Who can produce a signature',
