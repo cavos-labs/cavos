@@ -38,7 +38,7 @@ export const TURNKEY_ALTERNATIVES_H1 =
 
 export const TURNKEY_ALTERNATIVES_PUBLISHED = '2026-10-27'
 
-export const TURNKEY_ALTERNATIVES_MODIFIED = '2026-11-09'
+export const TURNKEY_ALTERNATIVES_MODIFIED = '2026-11-10'
 
 export const TURNKEY_ALTERNATIVES_CRUMB = 'Turnkey alternatives'
 
@@ -177,6 +177,9 @@ export const turnkeyAlternativesGuide: AlternativesGuide = {
     ],
   ],
   introParagraphs: [
+    [
+      'Turnkey here means Turnkey (turnkey.com), the crypto wallet infrastructure company: an API that creates wallets and signs inside secure enclaves. It is not Turn-Key Technologies, Turnkey Inside, or a turnkey consulting service.',
+    ],
     [
       'A Turnkey alternative on this page is a finished ',
       { href: '/embedded-wallet', label: 'embedded wallet' },
