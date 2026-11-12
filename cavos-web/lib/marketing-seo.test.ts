@@ -1104,7 +1104,7 @@ describe('marketing SEO', () => {
       privy.pageDescription,
       'Privy vs Cavos comparison: pricing, chains, and custody. Not the Shopify app. On Stellar and Starknet, Privy only signs. Free up to 1,000 wallets.',
     )
-    assert.equal(COMPARE_PAGES_MODIFIED, '2026-11-09')
+    assert.equal(COMPARE_PAGES_MODIFIED, '2026-11-12')
     assert.doesNotMatch(privy.summary, /privy alternatives/i)
     assert.equal(
       privy.faq.some((item) => /privy alternatives/i.test(item.answer)),

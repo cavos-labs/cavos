@@ -60,10 +60,17 @@ const MAGIC_PRICING =
 const ALCHEMY_PRICING =
     'Free 30M compute units/mo. PAYG $0.525 per million CUs. Gas Manager: 8% admin fee on PAYG; free on testnets.'
 
+// https://pollar.xyz (checked 2026-11-12): "Pay as you go with credits. No subscriptions."
+const POLLAR_PRICING =
+    'Pay as you go with credits, no subscriptions, per pollar.xyz (checked November 2026).'
+// https://blux.cc (checked 2026-11-12): no public price list.
+const BLUX_PRICING =
+    'No public price list on blux.cc (checked November 2026).'
+
 export const PROVIDER_PRICING_AS_OF = 'October 2026'
 
 /** Sitemap lastmod for /compare/[slug] when competitor copy in this file changes. */
-export const COMPARE_PAGES_MODIFIED = '2026-11-09'
+export const COMPARE_PAGES_MODIFIED = '2026-11-12'
 
 export const EMBEDDED_WALLET_MARKET_NOTE =
     'The category has consolidated. Stripe acquired Privy in 2025. Fireblocks acquired Dynamic in 2025. Consensys acquired Web3Auth in 2025 and now ships it as MetaMask Embedded Wallets. In 2026 Payward, the parent of Kraken, acquired Magic Labs wallet infrastructure.'
@@ -308,6 +315,82 @@ export const COMPETITORS: Competitor[] = [
             { question: 'How does Cavos pricing compare to Alchemy?', answer: 'Cavos is free up to 1,000 wallets, then Essential at $59/mo and Complete at $139/mo. Alchemy prices infrastructure in compute units: the free tier includes 30 million CUs per month, PAYG is $0.525 per million CUs, and Gas Manager lists an 8% admin fee on PAYG.' },
         ],
     },
+    {
+        slug: 'pollar',
+        name: 'Pollar',
+        pageTitle: 'Pollar vs Cavos (2026): Stellar Wallets, Custody',
+        pageH1: 'Pollar vs Cavos: Stellar embedded wallets and custody',
+        pageDescription:
+            'Pollar vs Cavos for Stellar: Pollar signs social-login wallets server-side; Cavos signs on the device. Ramps, sponsorship, and Free up to 1,000 wallets.',
+        summary:
+            'Pollar is wallet-as-a-service for Stellar and Solana, positioned as a payments layer for apps in LATAM. Users sign in with Google, GitHub, email OTP, or a passkey. Its SDK covers sponsored activation and trustlines, payments, multi-venue swaps, fiat on and off-ramps (bank QR, Pix, transfers), and SEP-10 / SEP-53 proofs.',
+        positioning:
+            'Both give a user a Stellar account with no seed phrase and can sponsor its reserves. The difference is who signs. Pollar’s own integration guide lists three custody types: internal wallets for social and email users, with keys managed server-side and signed by the server; smart Soroban accounts (C-addresses) signed by a device passkey; and external wallets. Cavos gives every user a classic G-account whose key signs on the user’s device. Pollar ships more finished payments features, including ramps and swaps; Cavos does not ship ramps or swaps.',
+        chooseThem: [
+            'You need fiat on and off-ramps (bank QR, Pix, transfers) and swaps in the same SDK, especially for LATAM users.',
+            'You want prebuilt send, receive, swap, and ramp flows rather than building them on top of a wallet SDK.',
+            'Server-side signing for social-login users is acceptable for your product and compliance review.',
+        ],
+        chooseCavos: [
+            'Your review requires that the provider does not sign for social-login users: Cavos signs on the user’s device.',
+            'You want a classic G-account for every user, including Soroban calls where the same G-account signs its own require_auth entries.',
+            'You also need Solana or Starknet on the same login.',
+        ],
+        rows: [
+            { feature: 'Signing authority', cavos: 'Signing happens on the user’s device: in the browser the Ed25519 key is a non-extractable WebCrypto key in the Cavos vault. With opt-in recovery, an AWS Nitro enclave keeps a sealed copy of the MasterDEK to restore it on a new device; the enclave does not sign.', them: 'Three custody types in Pollar’s integration guide: internal (social and email users; keys managed server-side, the server signs), smart (Soroban C-address signed by a device passkey), and external (a wallet the user already has). Pollar skill on GitHub, commit 761ed60, November 2026.' },
+            { feature: 'Account model', cavos: 'Classic Stellar G-account for every user. The Ed25519 key is derived from a per-user MasterDEK.', them: 'Classic G-account for internal and external wallets; Soroban smart account (C-address) for passkey users.' },
+            { feature: 'Chain coverage', cavos: CAVOS_CHAINS, them: 'Stellar and Solana.' },
+            { feature: 'Sponsorship', cavos: 'The Cavos relayer sponsors account creation (create()), reserves, trustlines, and fees in XLM. @cavos/reserve lets users pay reserves and fees in a held token such as USDC.', them: 'Sponsored activation (reserves via CAP-33, immediate or deferred funding mode), trustlines, and fees, configured per app.' },
+            { feature: 'Payments features', cavos: 'XLM payments, trustlines, Soroban calls, and signing XDR built by your backend. No fiat ramps or swaps.', them: 'Payments, trustlines, multi-venue swaps, fiat on and off-ramps, and SEP-10 / SEP-53 ownership proofs.' },
+            { feature: 'UI', cavos: 'Hosted login modal. No prebuilt send, receive, or swap screens.', them: 'React provider with prebuilt modals for login and wallet flows.' },
+            { feature: 'Mobile', cavos: 'Web SDK. React Native is a work in progress.', them: 'React and React Native (Expo) packages.' },
+            { feature: 'Pricing', cavos: CAVOS_PRICING, them: POLLAR_PRICING },
+        ],
+        faq: [
+            { question: 'What is Pollar vs Cavos?', answer: 'A comparison of two ways to give Stellar users a wallet without a seed phrase. Pollar is wallet-as-a-service for Stellar and Solana with payments, swaps, and fiat ramps built in. Cavos is an embedded wallet SDK for Stellar, Solana, and Starknet where the key signs on the user’s device.' },
+            { question: 'Who signs transactions in Pollar and in Cavos?', answer: 'Pollar’s integration guide (November 2026) says social and email users get internal wallets whose keys are managed server-side, and the server signs. Passkey users get a Soroban smart account signed on the device. In Cavos, every user’s G-account key signs on the user’s device; in the browser it is a non-extractable WebCrypto key in the Cavos vault.' },
+            { question: 'Does Cavos have fiat ramps and swaps like Pollar?', answer: 'No. Cavos covers the wallet: login, a classic G-account, XLM payments, trustlines, Soroban calls, and sponsored reserves and fees. Pollar ships fiat on and off-ramps and multi-venue swaps in its SDK. If ramps are the core of your product, Pollar covers ground Cavos does not.' },
+            { question: 'How does pricing compare?', answer: 'Cavos is free up to 1,000 wallets, then Essential at $59/mo and Complete at $139/mo. Pollar’s site (checked November 2026) says pay as you go with credits and no subscriptions.' },
+        ],
+    },
+    {
+        slug: 'blux',
+        name: 'Blux',
+        pageTitle: 'Blux vs Cavos (2026): Stellar Wallets, Custody',
+        pageH1: 'Blux vs Cavos: Stellar embedded wallets and custody',
+        pageDescription:
+            'Blux vs Cavos for Stellar: Blux lists its accounts as custodial; Cavos signs on the user’s device and sponsors reserves. Free up to 1,000 wallets.',
+        summary:
+            'Blux is wallet infrastructure for Stellar dApps. Users sign in with email, a passkey, an existing Stellar wallet, or social accounts including Google, Apple, GitHub, and Discord. The SDK (React and JavaScript) adds hooks for signing, balances, Soroban contract calls, swaps through the Stellar DEX, and on-ramp and profile modals.',
+        positioning:
+            'Both let a Stellar user sign in without a wallet. Blux also connects the wallets users already have, such as Freighter, in the same modal. On custody, Blux’s wallet verification API returns wallet_type: custodial for accounts Blux provisions. Cavos provisions a classic G-account whose key signs on the user’s device, and it sponsors account creation, reserves, and fees. Cavos does not connect external Stellar wallets.',
+        chooseThem: [
+            'You need existing Stellar wallets (Freighter, LOBSTR, hardware wallets) and new users in one login modal.',
+            'You want many social providers and a configurable modal with swap, on-ramp, and profile screens out of the box.',
+            'Custodial accounts for new users are acceptable for your product.',
+        ],
+        chooseCavos: [
+            'You need non-custodial accounts for new users: the key signs on the user’s device.',
+            'You want account creation, reserves, and fees sponsored so new users never hold XLM.',
+            'You also need Solana or Starknet on the same login.',
+        ],
+        rows: [
+            { feature: 'Signing authority', cavos: 'Signing happens on the user’s device: in the browser the Ed25519 key is a non-extractable WebCrypto key in the Cavos vault. With opt-in recovery, an AWS Nitro enclave keeps a sealed copy of the MasterDEK to restore it on a new device; the enclave does not sign.', them: 'Blux’s wallet verification API returns wallet_type: custodial for Blux-provisioned accounts and external for a wallet the user connects. Blux docs, November 2026.' },
+            { feature: 'Account model', cavos: 'Classic Stellar G-account for every user. The Ed25519 key is derived from a per-user MasterDEK.', them: 'Classic G-account for Blux-provisioned users, or the user’s own connected wallet.' },
+            { feature: 'Chain coverage', cavos: CAVOS_CHAINS, them: 'Stellar.' },
+            { feature: 'Sponsorship', cavos: 'The Cavos relayer sponsors account creation (create()), reserves, trustlines, and fees in XLM.', them: 'Blux’s docs describe fundAccount as Friendbot funding on test networks. We found no sponsored mainnet activation in its docs (checked November 2026).' },
+            { feature: 'Login', cavos: 'Google, Apple, GitHub, Telegram, or an email code.', them: 'Email, passkey, existing wallets, and social providers including Google, Apple, GitHub, Discord, and X.' },
+            { feature: 'UI', cavos: 'Hosted login modal. No prebuilt send, receive, or swap screens.', them: 'Configurable modal plus on-ramp, profile, swap, and transaction hooks.' },
+            { feature: 'Mobile', cavos: 'Web SDK. React Native is a work in progress.', them: 'React and vanilla JavaScript SDKs.' },
+            { feature: 'Pricing', cavos: CAVOS_PRICING, them: BLUX_PRICING },
+        ],
+        faq: [
+            { question: 'What is Blux vs Cavos?', answer: 'A comparison of two Stellar onboarding SDKs. Blux is wallet infrastructure for Stellar dApps that signs users in with email, social accounts, passkeys, or an existing wallet. Cavos is an embedded wallet SDK for Stellar, Solana, and Starknet where every user gets a classic G-account whose key signs on the device.' },
+            { question: 'Is Blux custodial?', answer: 'Blux’s own wallet verification API (November 2026) returns wallet_type: custodial for accounts Blux provisions, and external for wallets users connect. Cavos accounts are non-custodial: the key signs on the user’s device.' },
+            { question: 'Does Cavos connect Freighter like Blux?', answer: 'No. Cavos provisions an account for users who do not have a wallet. Blux also connects existing Stellar wallets in the same modal. If most of your users already hold a Stellar wallet, Blux or Stellar Wallets Kit fits better.' },
+            { question: 'How does pricing compare?', answer: 'Cavos is free up to 1,000 wallets, then Essential at $59/mo and Complete at $139/mo. Blux publishes no price list on blux.cc (checked November 2026).' },
+        ],
+    },
 ]
 
 export function getCompetitor(slug: string): Competitor | undefined {
@@ -334,6 +417,8 @@ const COMPETITOR_PRICING: Record<string, string> = {
     web3auth: WEB3AUTH_PRICING,
     magic: MAGIC_PRICING,
     alchemy: ALCHEMY_PRICING,
+    pollar: POLLAR_PRICING,
+    blux: BLUX_PRICING,
 }
 
 /** Compact provider rows for the embedded-wallet guide table. Cavos plus COMPETITORS. */
