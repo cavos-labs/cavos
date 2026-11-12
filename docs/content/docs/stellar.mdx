@@ -55,9 +55,11 @@ narrows it, so the snippets below can call Stellar methods directly.
 <Callout type="info">
 `connect` unwraps (or mints) the MasterDEK and
 imports the Ed25519 control key as a non-extractable WebCrypto key, inside the
-[Cavos vault](/docs/vault) on the web. The `G…`
+[Cavos vault](/docs/vault) on the web (the default in the React provider with
+an `appId`; opt-in with `Cavos.connect`). The `G…`
 is that key's public address. A returning device with a local wrap is `ready`
-with no prompt.
+with no prompt. This MasterDEK path is the browser path: on React Native and
+Node, the Stellar adapter does not use the device unwrap key yet.
 </Callout>
 
 ## Status values

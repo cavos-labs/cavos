@@ -1,7 +1,11 @@
 ---
 title: React Native
-description: Use @cavos/kit on iOS and Android with Expo Development Builds or bare React Native.
+description: Work in progress. Use @cavos/kit on iOS and Android with Expo Development Builds or bare React Native.
 ---
+
+<Callout type="warn">
+**Work in progress.** React Native support is not production-ready. APIs and key handling can change, and Stellar does not use the MasterDEK path on React Native yet. Use the web SDK for production apps.
+</Callout>
 
 `@cavos/kit` includes native key protection, passkeys, authentication, and all three
 chain adapters in the `@cavos/kit/react-native` entrypoint for the same
@@ -127,8 +131,9 @@ which this build cannot do. The native `providers` type is
 
 The device key that protects the MasterDEK at rest uses Secure Enclave on iOS
 when available, and StrongBox → TEE → OS-protected Android Keystore on Android.
-**Starknet, Solana, and Stellar** derive their account keys from the MasterDEK:
-a stark key on Starknet, Ed25519 on Solana and Stellar. The default policy is
+**Starknet and Solana** derive their account keys from the MasterDEK: a stark
+key on Starknet, Ed25519 on Solana. Stellar on React Native is not on the
+MasterDEK path yet: the Stellar adapter does not use this device key. The default policy is
 `minimumKeySecurity: "os-protected"`; use `"hardware"` to reject a software
 fallback.
 
