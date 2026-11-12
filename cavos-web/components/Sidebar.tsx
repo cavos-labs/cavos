@@ -101,6 +101,7 @@ export function Sidebar() {
     }, [appsError, appsLoading, hasApp, pathname, router])
 
     const billingActive = pathname.startsWith('/dashboard/billing')
+    const gasActive = pathname.startsWith('/dashboard/paymasters')
     const settingsHref = appId ? `/dashboard/apps/${appId}${appSettings.suffix}` : null
     const settingsActive = settingsHref ? pathname.startsWith(settingsHref) : false
 
@@ -237,6 +238,14 @@ export function Sidebar() {
                         Create an application to see its overview, wallets, and configuration.
                     </p>
                 )}
+                <Link
+                    href="/dashboard/paymasters"
+                    aria-current={gasActive ? 'page' : undefined}
+                    className={railLinkClass(gasActive)}
+                >
+                    <Icon.Gas size={16} weight={gasActive ? 'fill' : 'regular'} className="shrink-0" />
+                    Gas
+                </Link>
                 <Link
                     href="/dashboard/billing"
                     aria-current={billingActive ? 'page' : undefined}
