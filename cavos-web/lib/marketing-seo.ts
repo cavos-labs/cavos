@@ -125,7 +125,7 @@ export const STELLAR_WALLET_FAQ = [
   {
     question: 'How do I add a Stellar embedded wallet with @cavos/kit?',
     answer:
-      'Install @cavos/kit, create an app in the Cavos dashboard, and pass the App ID into Cavos.connect or CavosProvider with chains: ["stellar"]. Narrow on wallet.chain === "stellar", then call execute(amount, destination) in stroops. Connect never creates the account; the first execute creates it and runs atomically.',
+      'Install @cavos/kit, create an app in the Cavos dashboard, and pass the App ID into Cavos.connect or CavosProvider with chains: ["stellar"]. Narrow on wallet.chain === "stellar", then call create() to create the sponsored account and execute(amount, destination) in stroops once it holds XLM. Connect never creates the account.',
   },
   {
     question: 'Can a Stellar embedded wallet invoke Soroban contracts?',
@@ -135,7 +135,7 @@ export const STELLAR_WALLET_FAQ = [
   {
     question: 'How long does it take to add a Stellar embedded wallet?',
     answer:
-      'Setup is minutes: npm install @cavos/kit, create an app for an App ID, call Cavos.connect with chains: ["stellar"], then execute. Connect never creates the Horizon account; the first execute creates it and runs atomically. Free up to 1,000 wallets. Hardware-isolated, non-custodial.',
+      'Setup is minutes: npm install @cavos/kit, create an app for an App ID, call Cavos.connect with chains: ["stellar"], then create(). Connect never creates the Horizon account; create() does, sponsored, starting at 0 XLM. Free up to 1,000 wallets. Hardware-isolated, non-custodial.',
   },
 ] as const
 

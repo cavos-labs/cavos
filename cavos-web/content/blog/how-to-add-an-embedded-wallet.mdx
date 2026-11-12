@@ -5,7 +5,7 @@ excerpt: "Install @cavos/kit 0.5.2, wrap CavosProvider, sign in, send a sponsore
 category: "Guide"
 ogQuote: "One package. Sign in, connect, execute. No second library."
 slug: "how-to-add-an-embedded-wallet"
-updated: "2026-11-07"
+updated: "2026-11-12"
 faq:
   - question: "What is an embedded wallet SDK?"
     answer: "An embedded wallet SDK is the library that provisions a wallet inside your application and signs from the user’s device. It is not a wallet app or a browser extension the user installs. Cavos ships that SDK as @cavos/kit for React and @cavos/kit/react-native for mobile."
@@ -16,7 +16,7 @@ faq:
   - question: "Which chains does Cavos support for an embedded wallet?"
     answer: "Cavos currently ships native adapters for Starknet, Solana, and Stellar. It is not an EVM-wide wallet layer. Each adapter uses that chain’s account model, signatures, and fee path. Chain pages: embedded Starknet wallet, embedded Solana wallet, embedded Stellar wallet."
   - question: "Does connect deploy the account?"
-    answer: "No. Connect derives addresses and checks deployment status but never deploys Starknet or Stellar. The first execute deploys the account and runs the user’s operation atomically in a single sponsored transaction. Native Solana is ready once this device has the spend key."
+    answer: "No. Connect derives addresses and checks deployment status but never deploys Starknet or Stellar. On Starknet the first execute deploys the account and runs the user’s operation atomically in a single sponsored transaction. On Stellar, create() creates the sponsored account. Native Solana is ready once this device has the spend key."
   - question: "How do I add an embedded wallet to Next.js?"
     answer: "The React guide is the generic install. The Next.js App Router path is how to add an embedded wallet to Next.js: a use client CavosProvider, env vars, callback URLs, and vault origins. Server Components cannot hold the device key. Use @cavos/kit 0.5.2."
   - question: "Which @cavos/kit version should I install?"
@@ -37,7 +37,7 @@ If you are still choosing a provider, the full product and SDK page is [embedded
 2. Create an app in the Cavos dashboard and copy the App ID. Numbered section 2.
 3. Wrap the tree in `CavosProvider`. Numbered section 3. Next.js App Router: keep that provider in a `'use client'` module; see [how to add an embedded wallet to Next.js](/blog/embedded-wallet-nextjs).
 4. Sign the user in. Connect returns an address. It never deploys Starknet or Stellar. Numbered section 4.
-5. Send the first sponsored transaction. On Starknet and Stellar, the first `execute` deploys and runs atomically. Numbered section 5.
+5. Send the first sponsored transaction. On Starknet, the first `execute` deploys and runs atomically. On Stellar, call `create()` first: the sponsored account starts with 0 XLM. Numbered section 5.
 
 Chain-specific account models live on the product pages: [Starknet](/embedded-starknet-wallet), [Solana](/embedded-solana-wallet), [Stellar](/embedded-stellar-wallet). Stellar-only install: [how to add an embedded Stellar wallet](/blog/stellar-embedded-wallet-tutorial). Starknet paymaster path: [how to send gasless Starknet transactions](/blog/gasless-starknet-transactions).
 
@@ -132,7 +132,7 @@ Connect derives the address and checks whether the account exists on-chain. It *
 
 | Status | Meaning | Can execute? |
 |--------|---------|--------------|
-| `undeployed` | Address derived but no on-chain account yet. | Yes: first execute deploys and runs atomically. |
+| `undeployed` | Address derived but no on-chain account yet. | Yes. On Starknet the first execute deploys and runs atomically; on Stellar, call `create()` first. |
 | `ready` | Account deployed and this device holds the key. | Yes |
 | `needs-device-approval` | This device has no key yet. Restore the MasterDEK. | No: restore with a passkey or the enclave. |
 

@@ -665,7 +665,7 @@ describe('marketing SEO', () => {
     assert.ok(
       EMBEDDED_WALLET_FAQ.some((item) => item.question === 'What is the best embedded wallet?'),
     )
-    assert.equal(EMBEDDED_WALLET_MODIFIED, '2026-11-07')
+    assert.equal(EMBEDDED_WALLET_MODIFIED, '2026-11-12')
   })
 
   it('keeps a single H1 and adds how-it-works plus a compare-data provider table', () => {
@@ -2949,7 +2949,7 @@ describe('marketing SEO', () => {
     assert.match(source, /hardware-isolated, non-custodial/)
     assert.match(source, /Keys never leave the device in plaintext/)
     assert.match(source, /Gas Sponsorship in Any Token/)
-    assert.match(source, /updated: "2026-11-07"/)
+    assert.match(source, /updated: "2026-11-12"/)
     assert.match(source, /docs\.cavos\.xyz\/docs\/stellar/)
     assert.match(source, /@cavos\/kit` 0\.5\.2/)
     assert.doesNotMatch(source, /0\.4\.2/)
@@ -3719,7 +3719,7 @@ describe('marketing SEO', () => {
     )
     const apiFields = parseBlogFrontmatter(source)
     assert.equal(apiFields.title, EMBEDDED_WALLET_API_TITLE)
-    assert.equal(apiFields.updated, '2026-11-07')
+    assert.equal(apiFields.updated, '2026-11-12')
     assert.match(source, /## Embedded wallet API vs REST/)
     assert.match(source, /docs\.cavos\.xyz/)
     assert.match(excerptMatch[1], /^Embedded Wallet API/)
@@ -3920,7 +3920,7 @@ describe('marketing SEO', () => {
     assert.ok(excerptMatch)
     assert.ok(excerptMatch[1].length <= 160, excerptMatch[1].length)
     assert.match(source, /^title: "Embedded Wallet Payments \(2026\): USDC Guide"$/m)
-    assert.match(source, /^updated:\s*"2026-11-07"$/m)
+    assert.match(source, /^updated:\s*"2026-11-12"$/m)
     assert.match(source, /\*\*Embedded wallet payments\*\* are /)
     assert.match(source, /## Who this is for/)
     assert.match(source, /When USDC payments fit/)
@@ -4118,7 +4118,7 @@ describe('marketing SEO', () => {
     assert.match(source, /never leave the device in plaintext/)
     const waasFields = parseBlogFrontmatter(source)
     assert.equal(waasFields.title, WALLET_AS_A_SERVICE_TITLE)
-    assert.equal(waasFields.updated, '2026-11-07')
+    assert.equal(waasFields.updated, '2026-11-12')
     assert.match(source, /## Wallet-as-a-service custody models/)
     assert.match(source, /Device-native/)
     assert.match(source, /cannot decrypt that copy/)
@@ -4265,7 +4265,7 @@ describe('marketing SEO', () => {
 
     const fields = parseBlogFrontmatter(source)
     assert.equal(fields.title, EMBEDDED_WALLET_REACT_SDK_TITLE)
-    assert.equal(fields.updated, '2026-11-07')
+    assert.equal(fields.updated, '2026-11-12')
     assert.equal(fields.date, '2026-10-27')
 
     const llms = fs.readFileSync(path.join(process.cwd(), 'public/llms.txt'), 'utf8')
@@ -5174,6 +5174,27 @@ describe('marketing SEO', () => {
     assert.doesNotMatch(llms, /multisig account/)
     assert.doesNotMatch(llms, /recovery code/)
   })
+
+  it('does not claim a first Stellar execute creates the account and pays in one step', () => {
+    const banned = [
+      /Starknet (?:and|or) Stellar[^.\n]*atomically/,
+      /Stellar[^.\n]*first `?execute`?[^.\n]*atomically/i,
+      /first `?execute`? creates (?:it|the account)[^.\n]*(?:atomically|runs the payment)/i,
+    ]
+    const roots = ['content/blog', 'lib', 'public']
+    const hits: string[] = []
+    for (const root of roots) {
+      for (const name of fs.readdirSync(path.join(process.cwd(), root))) {
+        if (!/\.(ts|mdx|txt)$/.test(name) || name.endsWith('.test.ts')) continue
+        const relative = path.join(root, name)
+        const text = fs.readFileSync(path.join(process.cwd(), relative), 'utf8')
+        for (const pattern of banned) {
+          if (pattern.test(text)) hits.push(`${relative} matches ${pattern}`)
+        }
+      }
+    }
+    assert.deepEqual(hits, [])
+  })
 })
 
 function escapeRegExp(value: string) {
@@ -5669,7 +5690,7 @@ describe('November 5 topic cluster', () => {
       assert.equal(fields.title, title, slug)
       assert.equal(
         fields.updated,
-        slug === 'best-embedded-wallet' ? '2026-11-06' : '2026-11-05',
+        slug === 'best-embedded-wallet' ? '2026-11-06' : slug === 'embedded-wallet-nextjs' ? '2026-11-12' : '2026-11-05',
         slug,
       )
       assert.ok(fields.excerpt.length >= 140 && fields.excerpt.length <= 160, `${slug} excerpt ${fields.excerpt.length}`)

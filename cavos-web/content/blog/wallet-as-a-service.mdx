@@ -1,6 +1,6 @@
 ---
 title: "Wallet as a Service (2026): Providers, Pricing"
-updated: "2026-11-07"
+updated: "2026-11-12"
 date: "2026-10-23"
 excerpt: "Wallet as a service (WaaS) in 2026: definition, custody models, pricing units, and providers. Free to 1,000 wallets on Starknet, Solana, Stellar."
 category: "Guide"
@@ -92,7 +92,7 @@ The device or the enclave produces a signature. Approval should happen in the pr
 
 Relayers and paymasters transport, sponsor, or submit. **They are not signers.** If the vendor can complete a transaction without the user, the platform is not self-custodial.
 
-Cavos signs on the device. `Cavos.connect` looks up `(userId, appId, chain, network)` and returns the address; it never deploys Starknet or Stellar. The first `execute` deploys and runs atomically when the account is still undeployed. The [API guide](/blog/embedded-wallet-api) is the method map.
+Cavos signs on the device. `Cavos.connect` looks up `(userId, appId, chain, network)` and returns the address; it never deploys Starknet or Stellar. On Starknet the first `execute` deploys and runs atomically; on Stellar, `create()` creates the sponsored account. The [API guide](/blog/embedded-wallet-api) is the method map.
 
 ### Gas Sponsorship in Any Token
 

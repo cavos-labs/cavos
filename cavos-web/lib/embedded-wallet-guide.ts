@@ -8,7 +8,7 @@ export const EMBEDDED_WALLET_DESCRIPTION =
 
 export const EMBEDDED_WALLET_PUBLISHED = '2026-10-07'
 
-export const EMBEDDED_WALLET_MODIFIED = '2026-11-07'
+export const EMBEDDED_WALLET_MODIFIED = '2026-11-12'
 
 export const EMBEDDED_WALLET_H1 = 'Embedded wallet SDK'
 
@@ -161,7 +161,7 @@ export const EMBEDDED_WALLET_HOW_TO_INTEGRATE = [
   },
   {
     name: 'Sign and send',
-    text: 'Narrow on wallet.chain, then execute. Undeployed and ready wallets can send; the first execute deploys and runs atomically. needs-device-approval means this device has no key yet and must restore the MasterDEK.',
+    text: 'Narrow on wallet.chain, then execute. Undeployed and ready wallets can send. On Starknet the first execute deploys and runs atomically; on Stellar, create() creates the sponsored account first. needs-device-approval means this device has no key yet and must restore the MasterDEK.',
     url: DOCS_URLS.walletActions,
     docsLabel: 'Wallet actions',
   },
@@ -257,7 +257,7 @@ export const EMBEDDED_WALLET_FAQ = [
   {
     question: 'How do I add an embedded wallet to a React app?',
     answer:
-      'Install @cavos/kit, create an app in the Cavos dashboard for an App ID, wrap the tree in CavosProvider, sign the user in, then execute. Connect never deploys Starknet or Stellar; the first execute deploys and runs atomically when the account is still undeployed. The step-by-step integration guide on this site walks through that path.',
+      'Install @cavos/kit, create an app in the Cavos dashboard for an App ID, wrap the tree in CavosProvider, sign the user in, then execute. Connect never deploys Starknet or Stellar. On Starknet the first execute deploys and runs atomically; on Stellar, create() creates the sponsored account. The step-by-step integration guide on this site walks through that path.',
   },
   {
     question: 'How should I choose an embedded wallet SDK?',
@@ -272,7 +272,7 @@ export const EMBEDDED_WALLET_FAQ = [
   {
     question: 'How long does it take to add an embedded wallet SDK?',
     answer:
-      'Setup is minutes, not a week: npm install @cavos/kit, create an app in the dashboard for an App ID, wrap the tree in CavosProvider or call Cavos.connect, sign the user in, then execute. Connect never deploys Starknet or Stellar; the first execute deploys and runs atomically. The free tier covers the first 1,000 wallets.',
+      'Setup is minutes, not a week: npm install @cavos/kit, create an app in the dashboard for an App ID, wrap the tree in CavosProvider or call Cavos.connect, sign the user in, then execute. Connect never deploys Starknet or Stellar. On Starknet the first execute deploys and runs atomically; on Stellar, create() creates the sponsored account. The free tier covers the first 1,000 wallets.',
   },
   {
     question: 'What is the difference between an embedded wallet and a smart wallet?',
