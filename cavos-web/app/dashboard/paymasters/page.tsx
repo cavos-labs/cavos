@@ -10,6 +10,7 @@ import { SolanaGasCard } from '@/components/SolanaGasCard';
 import { StellarGasCard } from '@/components/StellarGasCard';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useOrganization } from '@/lib/hooks/useOrganization';
 import { connect, disconnect } from 'starknetkit';
 import { RpcProvider } from 'starknet';
 
@@ -75,18 +76,16 @@ export default function PaymastersPage() {
     const [txError, setTxError] = useState<string | null>(null);
 
     const router = useRouter();
+    const { organizationId, loading: organizationsLoading } = useOrganization();
 
     const fetchData = useCallback(async () => {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) { router.replace('/login'); return; }
+        if (organizationsLoading) return;
 
-        const { data: org } = await supabase
-            .from('organizations')
-            .select('id')
-            .eq('owner_id', user.id)
-            .single();
+        const org = organizationId ? { id: organizationId } : null;
 
         if (!org) { setLoading(false); return; }
 
@@ -104,7 +103,7 @@ export default function PaymastersPage() {
 
         setDeposits(depositData || []);
         setLoading(false);
-    }, [router]);
+    }, [router, organizationId, organizationsLoading]);
 
     useEffect(() => {
         fetchData();
