@@ -225,6 +225,7 @@ export const STELLAR_SOFTWARE = {
     'Device-native signing key from a MasterDEK',
     'Classic G… Stellar account',
     'Gas Sponsorship in Any Token',
+    'Sponsored account creation, reserves, and trustlines',
     'Soroban contract invocations',
     'Passkey and enclave restore on new devices',
     'React and React Native SDKs',

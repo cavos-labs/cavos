@@ -5175,6 +5175,14 @@ describe('marketing SEO', () => {
     assert.doesNotMatch(llms, /recovery code/)
   })
 
+  it('says Stellar trustlines are sponsored and points to create()', () => {
+    const page = fs.readFileSync(path.join(process.cwd(), 'app/embedded-stellar-wallet/page.tsx'), 'utf8')
+    const chainPages = fs.readFileSync(path.join(process.cwd(), 'lib/chain-wallet-pages.ts'), 'utf8')
+    assert.match(page, /create\(\)/)
+    assert.match(page, /including each trustline/)
+    assert.match(chainPages, /'Sponsored account creation, reserves, and trustlines'/)
+  })
+
   it('does not claim a first Stellar execute creates the account and pays in one step', () => {
     const banned = [
       /Starknet (?:and|or) Stellar[^.\n]*atomically/,
