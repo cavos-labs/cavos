@@ -82,13 +82,13 @@ export default function EmbeddedStarknetWalletPage() {
                         <code className="text-sm bg-surface px-1.5 py-0.5 rounded">
                             @cavos/kit/react-native
                         </code>{' '}
-                        for mobile (Expo Development Builds, EAS, or bare React Native; Expo Go
+                        for mobile, a work in progress (Expo Development Builds, EAS, or bare React Native; Expo Go
                         is not supported).
                     </p>
                     <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted">
                         The stark key is derived from a MasterDEK that stays protected at rest by
-                        the device&apos;s non-extractable key (WebCrypto in the browser, the OS
-                        keystore on React Native). WebCrypto cannot hold a stark key, so outside
+                        the device&apos;s non-extractable key (WebCrypto in the browser; React Native is a
+                        work in progress). WebCrypto cannot hold a stark key, so outside
                         the Cavos vault it is re-derived into memory for the session. The SDK
                         does not enforce non-extractability on Node or other server runtimes.
                     </p>

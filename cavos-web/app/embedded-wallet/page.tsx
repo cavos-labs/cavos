@@ -89,7 +89,7 @@ export default function EmbeddedWalletGuidePage() {
                 'Free up to 1,000 wallets',
                 'Gas Sponsorship in Any Token',
                 'Starknet, Solana, and Stellar adapters',
-                'React and React Native SDKs',
+                'React SDK (React Native in progress)',
             ],
         },
     })
@@ -632,7 +632,7 @@ export default function EmbeddedWalletGuidePage() {
                     <p className="mt-3 text-sm leading-relaxed text-muted">
                         The wallet&apos;s account key is derived on the device from a MasterDEK,
                         which the platform&apos;s secure store keeps protected at rest: WebCrypto
-                        in the browser, the OS keystore on iOS and Android. The device signs, and a
+                        in the browser (React Native is a work in progress). The device signs, and a
                         new device restores the same MasterDEK instead of being added on-chain.
                         This is the Cavos default. Those platform primitives provide the
                         isolation: WebCrypto cannot hold a stark key, so outside the Cavos vault
@@ -1167,7 +1167,7 @@ export default function EmbeddedWalletGuidePage() {
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
                                 @cavos/kit/react-native
                             </code>{' '}
-                            on mobile (Expo Development Builds, EAS, or bare React Native; Expo
+                            on mobile, a work in progress (Expo Development Builds, EAS, or bare React Native; Expo
                             Go is not supported).
                         </p>
                         <p>

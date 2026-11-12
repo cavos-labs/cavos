@@ -698,7 +698,7 @@ export function walletSoftwareApplicationJsonLd() {
       'Registry-first address resolution',
       'Gas Sponsorship in Any Token',
       'Starknet, Solana, and Stellar adapters',
-      'React and React Native SDKs',
+      'React SDK (React Native in progress)',
       'Passkey and enclave restore on new devices',
     ],
     screenshot: OG_IMAGE.url,

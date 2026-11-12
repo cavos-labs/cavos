@@ -5175,6 +5175,25 @@ describe('marketing SEO', () => {
     assert.doesNotMatch(llms, /recovery code/)
   })
 
+  it('marks React Native as a work in progress', () => {
+    const banned = [/OS keystore on React Native/, /OS keystore on iOS and Android/, /'React and React Native SDKs'/, /'Web and React Native SDKs'/, /'React & React Native'/]
+    const hits: string[] = []
+    const roots = ['content/blog', 'lib', 'public', 'app/pricing', 'app/embedded-wallet', 'app/embedded-stellar-wallet', 'app/embedded-solana-wallet', 'app/embedded-starknet-wallet']
+    for (const root of roots) {
+      for (const name of fs.readdirSync(path.join(process.cwd(), root))) {
+        if (!/\.(ts|tsx|mdx|txt)$/.test(name) || name.endsWith('.test.ts')) continue
+        const relative = path.join(root, name)
+        const text = fs.readFileSync(path.join(process.cwd(), relative), 'utf8')
+        for (const pattern of banned) {
+          if (pattern.test(text)) hits.push(`${relative} matches ${pattern}`)
+        }
+      }
+    }
+    assert.deepEqual(hits, [])
+    const llms = fs.readFileSync(path.join(process.cwd(), 'public/llms.txt'), 'utf8')
+    assert.match(llms, /React Native support is a work in progress/)
+  })
+
   it('does not claim a first Stellar execute creates the account and pays in one step', () => {
     const banned = [
       /Starknet (?:and|or) Stellar[^.\n]*atomically/,

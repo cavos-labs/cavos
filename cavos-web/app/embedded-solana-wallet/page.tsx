@@ -82,13 +82,13 @@ export default function EmbeddedSolanaWalletPage() {
                         <code className="text-sm bg-surface px-1.5 py-0.5 rounded">
                             @cavos/kit/react-native
                         </code>{' '}
-                        for mobile (Expo Development Builds, EAS, or bare React Native; Expo Go
+                        for mobile, a work in progress (Expo Development Builds, EAS, or bare React Native; Expo Go
                         is not supported).
                     </p>
                     <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted">
                         The spend key is derived from a MasterDEK that stays protected at rest by
-                        the device&apos;s non-extractable key (WebCrypto in the browser, the OS
-                        keystore on React Native). The SDK does not enforce non-extractability on
+                        the device&apos;s non-extractable key (WebCrypto in the browser; React Native is a
+                        work in progress). The SDK does not enforce non-extractability on
                         Node or other server runtimes. Pass your own RPC on mainnet; without{' '}
                         <code className="text-xs bg-surface px-1.5 py-0.5 rounded">rpcUrl</code>{' '}
                         the kit falls back to public{' '}
