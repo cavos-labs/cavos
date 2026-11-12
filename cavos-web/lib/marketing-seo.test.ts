@@ -5175,6 +5175,24 @@ describe('marketing SEO', () => {
     assert.doesNotMatch(llms, /recovery code/)
   })
 
+  it('compares Cavos with the Stellar-native Pollar and Blux, with dated sources', () => {
+    const pollar = COMPETITORS.find((competitor) => competitor.slug === 'pollar')
+    const blux = COMPETITORS.find((competitor) => competitor.slug === 'blux')
+    assert.ok(pollar && blux)
+    const signing = (competitor: typeof pollar) =>
+      competitor.rows.find((row) => row.feature === 'Signing authority')
+    assert.match(signing(pollar)?.them ?? '', /server-side[\s\S]*November 2026/)
+    assert.match(signing(blux)?.them ?? '', /custodial[\s\S]*November 2026/)
+    for (const competitor of [pollar, blux]) {
+      assert.match(signing(competitor)?.cavos ?? '', /enclave does not sign/)
+      assert.match(
+        competitor.rows.find((row) => row.feature === 'Mobile')?.cavos ?? '',
+        /React Native is a work in progress/,
+      )
+      assert.doesNotMatch(JSON.stringify(competitor), /`|trustless/i)
+    }
+  })
+
   it('does not claim a first Stellar execute creates the account and pays in one step', () => {
     const banned = [
       /Starknet (?:and|or) Stellar[^.\n]*atomically/,
