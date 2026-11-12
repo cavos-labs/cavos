@@ -17,7 +17,7 @@ import {
 } from './marketing-seo'
 
 export const CHAIN_WALLET_PUBLISHED = '2026-10-09'
-export const CHAIN_WALLET_MODIFIED = '2026-11-05'
+export const CHAIN_WALLET_MODIFIED = '2026-11-12'
 
 export const STARKNET_FAQ = STARKNET_WALLET_FAQ
 export const SOLANA_FAQ = SOLANA_WALLET_FAQ

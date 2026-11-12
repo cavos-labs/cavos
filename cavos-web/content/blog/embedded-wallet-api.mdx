@@ -1,7 +1,7 @@
 ---
 title: "Embedded Wallet API (2026): Auth, Sign, Gas"
 date: "2026-10-21"
-updated: "2026-11-07"
+updated: "2026-11-12"
 excerpt: "Embedded Wallet API: client SDK, not REST. Auth, connect, execute, gas, recovery in @cavos/kit 0.5.2. Docs at docs.cavos.xyz. Free to 1,000 wallets."
 category: "Guide"
 ogQuote: "Authenticate, connect, then execute. The same contract on every adapter."
@@ -16,7 +16,7 @@ faq:
   - question: "Which SDK methods make up the Cavos embedded wallet API?"
     answer: "There are no public REST wallet-create paths. Auth is CavosAuth and useCavos().login, sendOtp, and verifyOtp. Wallet create or lookup is Cavos.connect or CavosProvider. Signing and sending are wallet.execute, signMessage, signTransaction, executeInstructions, and invokeContract. Recovery is enrollPasskeyDefault and approveDeviceWithPasskey. The method list is the API reference at docs.cavos.xyz/docs/api-reference."
   - question: "How does Cavos create a wallet through the API?"
-    answer: "Cavos.connect looks up (userId, appId, chain, network) in the registry and returns the existing address, or claims a new one. Connect never deploys Starknet or Stellar. Native Solana is ready once this device holds the spend key. The first execute deploys a Starknet or Stellar account and runs the operation atomically."
+    answer: "Cavos.connect looks up (userId, appId, chain, network) in the registry and returns the existing address, or claims a new one. Connect never deploys Starknet or Stellar. Native Solana is ready once this device holds the spend key. The first execute deploys a Starknet account and runs the operation atomically. On Stellar, create() creates the sponsored account, which starts with 0 XLM."
   - question: "Who holds the keys in the Cavos embedded wallet API?"
     answer: "Signing keys are created and used on the user’s device. The MasterDEK stays protected at rest by WebCrypto in the browser or the OS keystore on React Native. Cavos cannot see the key, sign with it, decrypt it, or move funds. On Starknet the key controls an audited OpenZeppelin account contract. Recovery is off-chain via a passkey or the enclave."
   - question: "How does recovery work in an embedded wallet API?"
@@ -191,7 +191,7 @@ The registry is insert-only. The first device to register wins. A second device 
 
 | Status | Meaning | Can execute? |
 |--------|---------|--------------|
-| `undeployed` | Address derived but no on-chain account yet. | Yes. The first execute deploys and runs atomically. |
+| `undeployed` | Address derived but no on-chain account yet. | Yes. On Starknet the first execute deploys and runs atomically; on Stellar, call `create()` first. |
 | `ready` | Account deployed and this device holds the key. | Yes |
 | `needs-device-approval` | This device has no key yet. Restore the MasterDEK. | No. Restore with a passkey or the enclave. |
 

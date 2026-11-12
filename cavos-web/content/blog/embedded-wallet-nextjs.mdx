@@ -1,14 +1,14 @@
 ---
 title: "How to Add an Embedded Wallet to Next.js (2026)"
 date: "2026-11-05"
-updated: "2026-11-05"
+updated: "2026-11-12"
 excerpt: "Add an embedded wallet to a Next.js App Router app with @cavos/kit: client provider, env vars, callback URLs, vault origins, and a first sponsored execute."
 category: "Guide"
 ogQuote: "The kit is a client component. The layout is not. Split them."
 slug: "embedded-wallet-nextjs"
 faq:
   - question: "How do I add an embedded wallet to a Next.js app?"
-    answer: "Install @cavos/kit, create an App ID, put a 'use client' CavosProvider in app/providers.tsx, wrap children from app/layout.tsx, set NEXT_PUBLIC_CAVOS_APP_ID, register callback URLs and vault origins, then call useCavos() from client components. Server Components cannot hold the device key. The first execute deploys Starknet or Stellar atomically."
+    answer: "Install @cavos/kit, create an App ID, put a 'use client' CavosProvider in app/providers.tsx, wrap children from app/layout.tsx, set NEXT_PUBLIC_CAVOS_APP_ID, register callback URLs and vault origins, then call useCavos() from client components. Server Components cannot hold the device key. On Starknet the first execute deploys atomically; on Stellar, create() creates the sponsored account."
   - question: "Can I use @cavos/kit in a Next.js Server Component?"
     answer: "No. The signing key lives on the user's device. @cavos/kit/react is marked 'use client'. Import CavosProvider and useCavos only from Client Components. A Server Component can render a client WalletButton. It cannot call execute, read the address during SSR, or hold a key."
   - question: "What Next.js env vars does an embedded wallet SDK need?"

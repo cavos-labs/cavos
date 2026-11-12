@@ -15,7 +15,7 @@ import { WEB3AUTH_ALTERNATIVES_MODIFIED } from './web3auth-alternatives'
 export const PRICING_SITEMAP_MODIFIED = '2026-10-30'
 
 /** Sitemap lastmod for chain landing pages when copy, titles, or FAQ change. */
-export const CHAIN_WALLET_SITEMAP_MODIFIED = '2026-11-05'
+export const CHAIN_WALLET_SITEMAP_MODIFIED = '2026-11-12'
 
 export const MARKETING_ORIGIN = 'https://cavos.xyz'
 

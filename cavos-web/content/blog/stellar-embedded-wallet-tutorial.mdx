@@ -1,28 +1,28 @@
 ---
 title: "How to Set Up a Stellar Wallet in Your App (2026)"
 date: "2026-10-18"
-updated: "2026-11-07"
+updated: "2026-11-12"
 excerpt: "How to set up a Stellar wallet in your app: @cavos/kit 0.5.2, sign in, G… before Horizon, first sponsored execute. No Freighter or seed."
 category: "Guide"
 ogQuote: "Users never install Freighter, paste a seed, or leave your UI."
 slug: "stellar-embedded-wallet-tutorial"
 faq:
   - question: "How do I set up a Stellar wallet in my app in 2026?"
-    answer: 'Install @cavos/kit 0.5.2, create an App ID, wrap the tree in CavosProvider with chains: ["stellar"], sign the user in, then run the first sponsored execute. Connect returns a G… before Horizon has the account. Users never install Freighter. The Stellar embedded wallet page is the account model. Pricing lists the free 1,000 wallet creates. Best embedded wallets for Stellar is the provider shortlist.'
+    answer: 'Install @cavos/kit 0.5.2, create an App ID, wrap the tree in CavosProvider with chains: ["stellar"], sign the user in, then call create() to create the account with sponsorship. Connect returns a G… before Horizon has the account. Users never install Freighter. The Stellar embedded wallet page is the account model. Pricing lists the free 1,000 wallet creates. Best embedded wallets for Stellar is the provider shortlist.'
   - question: "Who is this Stellar wallet setup guide for?"
     answer: 'App developers who need to set up a Stellar wallet inside a product: React, Next.js, and React Native (Expo Development Build, EAS, or bare; not Expo Go). Android API 28+ and iOS 16+. It is not a consumer Stellar wallet from an app store. Users never install Freighter or paste a seed. Signing stays on the device. Keys never leave the device in plaintext.'
   - question: "When should I embed a Stellar G account instead of connecting Freighter?"
     answer: 'Embed a classic G… when users should never install Freighter, paste a seed, or leave your UI: consumer apps, games, and checkout. Connect Freighter when the user already holds a Stellar address you must use. Cavos provisions a G… from login. It does not connect an existing extension. This guide is the embed path.'
   - question: "How do I set up a Stellar wallet as a developer?"
-    answer: 'Install @cavos/kit 0.5.2, create an App ID, wrap the tree in CavosProvider with chains: ["stellar"], and sign the user in with Google, Apple, or an enclave-verified email code. Connect returns a G… address before the account exists on-chain. The first execute creates the account (sponsored, 0 XLM cost to the user) and runs the payment. That is how to set up and create a Stellar wallet inside your app, not a Freighter connect flow.'
+    answer: 'Install @cavos/kit 0.5.2, create an App ID, wrap the tree in CavosProvider with chains: ["stellar"], and sign the user in with Google, Apple, or an enclave-verified email code. Connect returns a G… address before the account exists on-chain. create() creates the account (sponsored, 0 XLM cost to the user); a payment follows once the G… holds XLM. That is how to set up and create a Stellar wallet inside your app, not a Freighter connect flow.'
   - question: "How do I create a Stellar wallet for users without Freighter?"
-    answer: 'Install @cavos/kit 0.5.2, create an App ID, wrap the tree in CavosProvider with chains: ["stellar"], and sign the user in with Google, Apple, or an enclave-verified email code. Connect returns a G… address before the account exists on-chain. The first execute creates the account (sponsored, 0 XLM cost to the user) and runs the payment. Users do not install Freighter or paste a seed.'
+    answer: 'Install @cavos/kit 0.5.2, create an App ID, wrap the tree in CavosProvider with chains: ["stellar"], and sign the user in with Google, Apple, or an enclave-verified email code. Connect returns a G… address before the account exists on-chain. create() creates the account (sponsored, 0 XLM cost to the user); a payment follows once the G… holds XLM. Users do not install Freighter or paste a seed.'
   - question: "What does the first sponsored execute do?"
-    answer: 'Connect never creates the Horizon account. The first execute creates it (sponsored, 0 XLM cost to the user) as a 0-balance CreateAccount plus Cavos cv: data. Native XLM cannot ride that create, so a payment is a follow-up once the G… holds stroops. From the app both steps are one wallet.execute call. You never call CreateAccount yourself. The relayer sponsors reserves and fees (Gas Sponsorship in Any Token).'
+    answer: 'Connect never creates the Horizon account. wallet.create() creates it (sponsored, 0 XLM cost to the user) as a 0-balance CreateAccount plus Cavos cv: data. Native XLM cannot ride that create, so a payment is a follow-up once the G… holds stroops. You never call CreateAccount yourself. The relayer sponsors reserves and fees (Gas Sponsorship in Any Token).'
   - question: "Can I create a Stellar wallet in an Android app?"
     answer: 'Yes. Use @cavos/kit/react-native with an Expo Development Build, EAS, or bare React Native. Minimum Android is API 28 (Android 9); iOS 16 is the iOS floor. Expo Go is not supported. Email, Telegram, and GitHub are not available on React Native because that build cannot verify enclave attestation; use Google or Apple. The native provider uses chain: "stellar" (singular). Register the exact redirectUri in Callback URLs.'
   - question: "Does connect create the Stellar account?"
-    answer: "No. Connect looks up (userId, appId, chain, network) in the registry and returns a G… address, or claims a new one. It never creates the on-chain account. An undeployed wallet already has that address. The first execute creates the account and runs the operation in a sponsored transaction. After that, status is ready."
+    answer: "No. Connect looks up (userId, appId, chain, network) in the registry and returns a G… address, or claims a new one. It never creates the on-chain account. An undeployed wallet already has that address. create() creates the account in a sponsored transaction. After that, status is ready."
   - question: "What is a sponsored Stellar account in Cavos?"
     answer: 'When an App ID is set, the Cavos relayer is the transaction source and fee payer and sponsors the account’s XLM reserves, so the user locks no lumens to start. CreateAccount starts at 0 XLM; the relayer is not drained into the new account. Pass { sponsored: false } to have the account pay its own fee. The relayer cannot move funds or squat an address.'
   - question: "Is a Cavos Stellar wallet a Soroban contract account?"
@@ -71,11 +71,11 @@ Embed when the wallet is part of sign-up. Connect Freighter when the product is 
 
 This is the developer path, not a consumer Stellar Android wallet from an app store. Users never install Freighter, paste a seed, or leave your UI.
 
-1. Install `@cavos/kit` 0.5.2 (React) or `@cavos/kit/react-native` (iOS 16+ / Android 9+). Numbered section 1.
+1. Install `@cavos/kit` 0.5.3 (React) or `@cavos/kit/react-native` (iOS 16+ / Android 9+). Numbered section 1.
 2. Create an app in the Cavos dashboard and copy the App ID. Numbered section 2.
 3. Wrap the tree in `CavosProvider` with `chains: ["stellar"]` (native `chain: "stellar"` on React Native). Numbered section 3.
 4. Sign the user in with Google, Apple, or email. Connect returns a classic `G…` before the Horizon account exists. Numbered section 4.
-5. Read that undeployed `G…` (section 5), then the first sponsored `execute` **creates** the on-chain account (0 XLM cost to the user) and runs the payment (section 6).
+5. Read that undeployed `G…` (section 5), then `create()` **creates** the on-chain account (0 XLM cost to the user), and a payment follows once it holds XLM (section 6).
 
 Follow those five steps in order. Sections 7 and 8 cover `balance`, `signMessage`, and React Native. Do not skip the App ID: on Stellar it is what activates the gasless relayer.
 
@@ -206,22 +206,22 @@ if (wallet?.chain === "stellar") {
 
 | Status | Meaning | Can execute? |
 |--------|---------|--------------|
-| `undeployed` | Address resolved, no on-chain account yet. | Yes: first execute creates, then runs the payment. |
+| `undeployed` | Address resolved, no on-chain account yet. | Yes: call `create()` first. |
 | `ready` | Account exists and this device can sign. | Yes |
 | `needs-device-approval` | This device has no key yet. Restore the MasterDEK. | No: restore with a passkey or the enclave. |
 
 Both `undeployed` and `ready` wallets can execute and `signMessage`. Only `needs-device-approval` blocks transactions. That status means this device holds no key yet. It is not an on-chain device list. Do not create a second wallet for the same login.
 
-Share the `G…` with your backend, your UI, or a counterparty while it is still `undeployed`. The [Stellar docs](https://docs.cavos.xyz/docs/stellar) call this lazy deploy: the address is real; the Horizon account is created on first `execute`.
+Share the `G…` with your backend, your UI, or a counterparty while it is still `undeployed`. The [Stellar docs](https://docs.cavos.xyz/docs/stellar) call this lazy deploy: the address is real; the Horizon account is created by `create()`.
 
-## 6. First sponsored execute (creates the account)
+## 6. Create the account, then pay
 
-The first sponsored `execute` is the on-chain create. Connect already returned a `G…`. Horizon does not have the account yet. You never call `CreateAccount` yourself.
+`wallet.create()` (`@cavos/kit` 0.5.3) is the on-chain create. Connect already returned a `G…`. Horizon does not have the account yet. You never call `CreateAccount` yourself.
 
-What that one `wallet.execute(amount, destination)` call does:
+What `create()` and the payment do:
 
 1. If status is `undeployed`, the kit creates the account first (sponsored, 0 XLM cost to the user). The relayer is the transaction source and fee payer. CreateAccount starts at 0 XLM plus Cavos `cv:` data. The relayer is not drained into the new account.
-2. Native XLM cannot ride that create: the account has to exist before it can send, and a 0-balance create holds no stroops to move. Share the `G…`, fund it, then the payment is a follow-up. From the app both steps are still one `execute` call.
+2. Native XLM cannot ride that create: the account has to exist before it can send, and a 0-balance create holds no stroops to move. Share the `G…`, fund it, then call `execute`. An `execute` on an `undeployed` account also creates it, but its payment fails with `op_underfunded` until XLM arrives.
 3. After that, status is `ready`. Later `execute` calls are ordinary native XLM payments.
 
 Narrow on `wallet.chain === "stellar"` so TypeScript exposes the Stellar methods. In React, call `wallet.execute` on the Stellar handle; the context `execute` is Starknet-only.
@@ -234,14 +234,15 @@ if (wallet?.status === "needs-device-approval") {
 }
 
 if (wallet?.chain === "stellar") {
+  await wallet.create();      // sponsored CreateAccount with 0 XLM; no-op once ready
   const hash = await wallet.execute(
-    10_000_000n,              // 1 XLM, in stroops (1 XLM = 10,000,000 stroops)
+    10_000_000n,              // 1 XLM, in stroops; the account must hold it
     "GDESTINATION...ADDRESS",
   );
 }
 ```
 
-When status is `undeployed`, this call creates the account first (sponsored, 0 XLM cost to the user), then performs the payment in a follow-up transaction. Native XLM cannot ride the create transaction: the account has to exist before it can send. After that, status is `ready`. `execute(amount, destination)` moves `amount` stroops of native XLM out of the account.
+`create()` creates the account (sponsored, 0 XLM cost to the user) and sends nothing; after it, status is `ready`. The payment then moves XLM the account holds, so fund the `G…` between the two calls. `execute(amount, destination)` moves `amount` stroops of native XLM out of the account.
 
 The relayer’s create path is a 0-balance `CreateAccount` plus Cavos `cv:` data. The relayer is not drained into the new account. The user pays no reserve and no fee for that create. The payment that follows still moves stroops the account holds, which is why the chain page says share the `G…`, fund it, then execute.
 
@@ -346,7 +347,7 @@ The same `G…` is a real Stellar signer. After `status === "ready"` you can:
 - `addTrustline({ code, issuer })` / `tokenBalance({ code, issuer })`: classic assets such as USDC. A trustline adds a subentry (reserve), sponsored by default.
 - `signXdr(unsignedXdr)`: sign an unsigned envelope without submitting it.
 
-`invokeContract` and `addTrustline` require a deployed account. Native XLM `execute` is what creates it. Paying reserves in a held token (USDC, not sponsored XLM) is a separate package, `@cavos/reserve`, signed with `wallet.signXdr`.
+`invokeContract` and `addTrustline` require a deployed account. Call `create()` first on a new account. Paying reserves in a held token (USDC, not sponsored XLM) is a separate package, `@cavos/reserve`, signed with `wallet.signXdr`.
 
 If you also configure Starknet on the same login, that adapter uses an **audited OpenZeppelin account contract**, not a Cavos-written one. Each chain still has its own address.
 

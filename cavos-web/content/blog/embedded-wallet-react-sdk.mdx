@@ -1,7 +1,7 @@
 ---
 title: "Embedded Wallet React SDK: Best Practices (2026)"
 date: "2026-10-27"
-updated: "2026-11-07"
+updated: "2026-11-12"
 excerpt: "Best practices for embedding a wallet SDK in a React app: kit 0.5.2, device-native keys, passkeys, Gas Sponsorship in Any Token, authError, testnet."
 category: "Guide"
 ogQuote: "The label does not decide custody. Ask who can produce a signature."
@@ -10,7 +10,7 @@ faq:
   - question: "What is an embedded wallet React SDK?"
     answer: "An embedded wallet React SDK is the library that provisions a crypto wallet inside a React or Next.js app and signs from the user’s device. It is not a wallet app or a browser extension the user installs. Cavos ships that SDK as @cavos/kit 0.5.2, with React bindings on @cavos/kit/react and React Native bindings on @cavos/kit/react-native."
   - question: "How do I add an embedded wallet SDK to a React app?"
-    answer: "Install @cavos/kit@^0.5.2, create an App ID in the Cavos dashboard, wrap the tree in CavosProvider with network set to testnet while you develop, sign the user in, then execute. Connect never deploys Starknet or Stellar. The first execute deploys and runs atomically. The install walkthrough is the how-to-add guide; this page is the best-practices companion."
+    answer: "Install @cavos/kit@^0.5.3, create an App ID in the Cavos dashboard, wrap the tree in CavosProvider with network set to testnet while you develop, sign the user in, then execute. Connect never deploys Starknet or Stellar. On Starknet the first execute deploys and runs atomically; on Stellar, create() creates the sponsored account. The install walkthrough is the how-to-add guide; this page is the best-practices companion."
   - question: "What are best practices for embedding a wallet SDK in an app?"
     answer: "Keep signing keys on the device, enroll a passkey after login, sponsor gas so users do not need a native token, treat authError and needs-device-approval as first-class states, and test on testnet with the development environment. Never change appSalt after users exist. Do not require isReady before the first execute. Pin @cavos/kit 0.5.2. Telegram, email, and GitHub are web-only; React Native cannot verify enclave attestation for those flows."
   - question: "Does the Cavos React SDK sponsor gas in any token?"
@@ -113,7 +113,7 @@ Users should not need a native token to start. Cavos frames this as **Gas Sponso
 |---|---|---|
 | **Starknet** | App ID, network, app salt, identity, `paymasterApiKey` | Paymaster sponsors deploy and execute by default. After deploy, `fee: "self"` pays from the account’s own balance. A self-funded first execute is refused. |
 | **Solana** | App ID, network, app salt, identity | Default is `fee: "self"` (the account pays SOL). Pass `fee: "sponsored"` so the hosted relayer is fee payer. Pass `fee: { token }` to settle the fee in a held token such as USDC. Arbitrary programs are allowlisted per app. |
-| **Stellar** | App ID, network, app salt, identity | Hosted relayer sponsors reserves and fee-bump submission. First execute creates the classic G account. |
+| **Stellar** | App ID, network, app salt, identity | Hosted relayer sponsors reserves and fee-bump submission. `create()` creates the classic G account with 0 XLM. |
 
 Add `paymasterApiKey` only when Starknet is in `chains`. A paymaster key on a chain that ignores it is a config error; the provider reports that in development. The current web SDK receives that value in browser code, so treat it as a **client-visible, app-scoped sponsorship credential**, never as an operator or treasury secret.
 
@@ -160,7 +160,7 @@ When the registry has no row, this device computes a candidate address and claim
 
 | Status | Meaning | Can execute? |
 |--------|---------|--------------|
-| `undeployed` | Address derived but no on-chain account yet (Starknet, Stellar). | Yes: first execute deploys and runs atomically. |
+| `undeployed` | Address derived but no on-chain account yet (Starknet, Stellar). | Yes. On Starknet the first execute deploys and runs atomically; on Stellar, call `create()` first. |
 | `ready` | Account exists on-chain and this device holds the key. Native Solana is ready once this device has the spend key. | Yes |
 | `needs-device-approval` | This device has no key yet. Restore the MasterDEK. | No |
 
@@ -248,7 +248,7 @@ A co-signer cannot alter the instructions it signs. Sponsorship of extra program
 
 ### Stellar: classic G account
 
-Stellar is a classic `G…` account, not a Soroban contract. Connect never creates the account. The first `execute` creates it (sponsored) and runs the operation atomically. After that, status becomes `ready`. The Ed25519 spend key is derived on the device with HKDF (`cavos-ed25519-stellar-v1`, salted by `appSalt`). `wallet.execute(amount, destination)` moves stroops. `wallet.invokeContract(...)` covers Soroban calls.
+Stellar is a classic `G…` account, not a Soroban contract. Connect never creates the account. `wallet.create()` creates it (sponsored, starting at 0 XLM), and status becomes `ready`. A first `execute` also creates it, but its XLM payment fails with `op_underfunded` until the account holds XLM. The Ed25519 spend key is derived on the device with HKDF (`cavos-ed25519-stellar-v1`, salted by `appSalt`). `wallet.execute(amount, destination)` moves stroops. `wallet.invokeContract(...)` covers Soroban calls.
 
 ## React Native limits
 
