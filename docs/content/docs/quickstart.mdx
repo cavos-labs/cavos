@@ -159,9 +159,9 @@ console.log(session.chainStatus("solana"));   // "undeployed" | "ready" | "needs
 console.log(session.chainStatus("stellar"));
 console.log(session.chainAddress("stellar")); // G… address
 
-// Execute on Stellar (works even if undeployed: first execute creates the account)
+// Create the Stellar account (sponsored, sends nothing; no-op once ready)
 if (stellar.chain === "stellar" && stellar.status !== "needs-device-approval") {
-  await stellar.execute(10_000_000n, "GDEST...");
+  await stellar.create();
 }
 ```
 

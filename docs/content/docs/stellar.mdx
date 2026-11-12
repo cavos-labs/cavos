@@ -24,8 +24,8 @@ by the Cavos relayer.
 
 Use the unified `Cavos.connect`, passing `chains: ["stellar"]`. An `appId`
 activates the gasless relayer (it sponsors the account's XLM reserves and pays
-fees). **Connect never creates the account**: the account is created lazily on
-the first `execute`.
+fees). **Connect never creates the account**: create it with `create()`, or let
+the first `execute` create it.
 
 ```ts title="TypeScript"
 import { Cavos } from "@cavos/kit";
@@ -64,21 +64,35 @@ with no prompt.
 
 | Status | Meaning | Can execute? |
 |--------|---------|--------------|
-| `undeployed` | Address resolved, no on-chain account yet | Yes: first execute creates + runs atomically |
+| `undeployed` | Address resolved, no on-chain account yet | Yes: `create()` or the first `execute` creates the account |
 | `ready` | Account exists and this device can sign | Yes |
 | `needs-device-approval` | The registry has an address, but this device holds no key | No: restore with enclave login or `approveDeviceWithPasskey()` |
 
 <Callout type="info">
 **Lazy deploy**: An `undeployed` wallet can sign messages and execute. The
-first `execute` creates the account (sponsored, 0 XLM cost to the user), then
-performs the operation. After that, status becomes `ready`.
+first `execute` creates the account, then performs the operation. After that,
+status becomes `ready`.
 </Callout>
+
+## Create the account
+
+`create()` creates the account on-chain and sends nothing. With an `appId` the
+relayer sponsors it, so the account holds **0 XLM** and the user locks no XLM.
+It does nothing when the account is already `ready`. Call it before
+`addTrustline` or `invokeContract` on a new account (requires `@cavos/kit` 0.5.3).
+
+```ts title="TypeScript"
+if (wallet.chain === "stellar") {
+  await wallet.create();                 // status becomes "ready"
+  await wallet.addTrustline({ code: "USDC", issuer: "GA...ISSUER" });
+}
+```
 
 ## Execute a transfer
 
 On Stellar, `execute(amount, destination)` moves `amount` **stroops** of native
 XLM out of the account to `destination`. Both `undeployed` and `ready` wallets
-can execute: the first execution creates the account atomically.
+can execute: on an `undeployed` wallet it creates the account first.
 
 ```ts title="TypeScript"
 if (wallet.chain === "stellar" && wallet.status !== "needs-device-approval") {
@@ -90,8 +104,10 @@ if (wallet.chain === "stellar" && wallet.status !== "needs-device-approval") {
 }
 ```
 
-When the account is `undeployed`, this call creates the account first (sponsored,
-0 XLM cost), then performs the payment. After that, status becomes `ready`.
+When the account is `undeployed`, this call creates the account first, then
+sends the payment in a second transaction. A sponsored account starts with
+0 XLM, so that payment fails with `op_underfunded` unless XLM reached the account
+first. The account is created either way, and status becomes `ready`.
 
 `amount` is a `bigint` of stroops (`1 XLM = 10_000_000 stroops`). Pass
 `{ fee: 'self' }` to submit directly: the account pays its own (tiny) fee
@@ -126,9 +142,9 @@ if (wallet.chain === "stellar" && wallet.status === "ready") {
 ```
 
 <Callout type="warn">
-**Soroban invocations require a deployed account.** Unlike native XLM transfers
-(which auto-create the account), `invokeContract` and `addTrustline` require
-`status === "ready"`. Call `execute()` first to create the account if needed.
+**Soroban invocations require a deployed account.** `invokeContract` and
+`addTrustline` require `status === "ready"`. Call `create()` first on a new
+account.
 </Callout>
 
 To hold or receive a classic asset (e.g. USDC, needed to fund a USDC escrow),
@@ -366,13 +382,13 @@ On Stellar, the `G…` address is resolved via the **registry-first** model (see
    HKDF `G…`. The first device to register wins.
 
 The address is available before the account exists on-chain. The on-chain
-account is created on first `execute`.
+account is created by `create()` or the first `execute`.
 
 ```ts title="TypeScript"
 const wallet = session.wallet("stellar");
 if (wallet.chain !== "stellar") throw new Error("expected a Stellar wallet");
 console.log(wallet.address);  // G… address
-console.log(wallet.status);   // "undeployed" until first execute
+console.log(wallet.status);   // "undeployed" until create() or the first execute
 ```
 
 ## Networks & constants
@@ -390,7 +406,7 @@ Networks: `"stellar-testnet"`, `"stellar-mainnet"`.
 ## What's available
 
 - ✅ Classic `G…` account. Native MasterDEK path shares the DEK with Solana.
-- ✅ **Lazy deploy**: first execute creates the account atomically.
+- ✅ **Create on demand**: `create()` creates the sponsored account and sends nothing; the first `execute` also creates it.
 - ✅ Silent signing via a non-extractable ed25519 control key, held by the
   [Cavos vault](/docs/vault) within your app's limits.
 - ✅ **Sign messages off-chain while undeployed.**
