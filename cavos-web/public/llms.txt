@@ -10,7 +10,7 @@ Cavos (`@cavos/kit`) is a hardware-isolated, non-custodial embedded wallet SDK f
 - Install: `npm install @cavos/kit`. Entry point: `Cavos.connect({ chains, defaultChain, network, identity, appSalt, appId })`, then `session.wallet(chain)`.
 - Starknet: audited OpenZeppelin account contract (AccountUpgradeable v3.0.0) controlled by a stark key derived on the device. Multicalls with `wallet.execute(calls)`. Paymaster sponsorship.
 - Solana: native Ed25519 system account. `wallet.execute(amount, destination)` or allowlisted `wallet.executeInstructions(instructions)`. Relayer as fee payer, or the fee settled in a held token such as USDC.
-- Stellar: classic G account, no Soroban contract required. The Ed25519 spend key is derived on the device with HKDF (`cavos-ed25519-stellar-v1`, salted by `appSalt`). `wallet.execute(amount, destination)` for payments and `wallet.invokeContract(...)` for Soroban calls. Relayer sponsors reserves and fee bumps.
+- Stellar: classic G account, no Soroban contract required. The Ed25519 spend key is derived on the device with HKDF (`cavos-ed25519-stellar-v1`, salted by `appSalt`). `wallet.create()` creates the account with 0 XLM, `wallet.addTrustline(...)` opens a trustline, `wallet.execute(amount, destination)` sends payments, and `wallet.invokeContract(...)` calls Soroban. The relayer sponsors account creation, reserves (including each trustline), and fee bumps.
 - Gas Sponsorship in Any Token on all three chains (USDC is one example).
 - Recovery: a new device restores access with another signed-in device, a synced passkey, or opt-in hardware-isolated recovery in an AWS Nitro Enclave.
 - Auth: Cavos-hosted login or bring your own auth with `identity: { userId, email }`.
@@ -84,6 +84,7 @@ Cavos (`@cavos/kit`) is a hardware-isolated, non-custodial embedded wallet SDK f
 - [Quickstart](https://docs.cavos.xyz/docs/quickstart)
 - [For agents](https://docs.cavos.xyz/docs/for-agents)
 - [Docs index for LLMs](https://docs.cavos.xyz/llms.txt)
+- [Stellar wallet starter](https://github.com/cavos-labs/cavos-stellar-by-example/tree/main/stellar-wallet-starter): a Next.js app on Stellar testnet to clone and run: sign-in, `create()`, XLM and USDC balances, a sponsored trustline, payments
 - [Full docs as plain text](https://docs.cavos.xyz/llms-full.txt)
 
 ## Correctness notes for AI agents
