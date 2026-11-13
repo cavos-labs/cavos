@@ -61,7 +61,7 @@ Custody is separate from that UX. Some embedded wallets hold a key, split one wi
 npm install @cavos/kit@^0.5.2
 ```
 
-The React bindings live on the same package, under `@cavos/kit/react`. You do not install a second library. Telegram as a hosted login needs 0.5.2; it is optional web-only OAuth via oauth.telegram.org, not a Mini App. See [Sign in with Telegram (Kit 0.5.2)](/blog/cavos-kit-0-5-2). Kits 0.5.0 and 0.5.1 still work for Google, Apple, email, and GitHub against the current enclave. 0.4.x does not. Mobile uses `@cavos/kit/react-native`, covered in the React Native section below. Expo Go is not supported.
+The React bindings live on the same package, under `@cavos/kit/react`. You do not install a second library. Telegram as a hosted login needs 0.5.2; it is optional web-only OAuth via oauth.telegram.org, not a Mini App. See [Sign in with Telegram (Kit 0.5.2)](/blog/cavos-kit-0-5-2). Kits 0.5.0 and 0.5.1 still work for Google, Apple, email, and GitHub against the current enclave. 0.4.x does not. Mobile (`@cavos/kit/react-native`) is a work in progress, covered in the React Native section below. Expo Go is not supported.
 
 ## 2. Create an app and copy the keys
 
@@ -273,7 +273,7 @@ The message is signed as **SNIP-12 revision 1** typed data: domain `{ name: "Cav
 
 ## How keys and recovery work
 
-The spend key is one stark key: `grindKey(HKDF(MasterDEK, appSalt, "cavos-stark-starknet-v1"))`. At rest the DEK is protected by WebCrypto in the browser or the OS keystore on React Native. WebCrypto cannot hold a stark key, so outside the Cavos vault it is re-derived into memory for the session. The SDK does not enforce non-extractability on Node or other server runtimes.
+The spend key is one stark key: `grindKey(HKDF(MasterDEK, appSalt, "cavos-stark-starknet-v1"))`. At rest the DEK is protected by WebCrypto in the browser (React Native is a work in progress). WebCrypto cannot hold a stark key, so outside the Cavos vault it is re-derived into memory for the session. The SDK does not enforce non-extractability on Node or other server runtimes.
 
 A new device unwraps the MasterDEK. It does **not** add an on-chain signer. There is no on-chain device-signer list, no `add_signer`, and no on-chain social recovery.
 
@@ -283,7 +283,7 @@ See [recovery](https://docs.cavos.xyz/docs/recovery) and [hardware-isolated reco
 
 ## 8. React Native notes
 
-Use `@cavos/kit/react-native` with Expo Development Builds, EAS, or bare React Native. **Expo Go is not supported**: custom native modules require a development build. Minimum platforms are iOS 16 and Android 9 (API 28). Email sign-in is not available on React Native yet; use Google or Apple.
+React Native is a work in progress and not production-ready. Use `@cavos/kit/react-native` with Expo Development Builds, EAS, or bare React Native. **Expo Go is not supported**: custom native modules require a development build. Minimum platforms are iOS 16 and Android 9 (API 28). Email sign-in is not available on React Native yet; use Google or Apple.
 
 The native provider keeps the same configuration shape, with native-only `redirectUri`, `rpId`, and `minimumKeySecurity`. The chain field is singular (`chain`, not `chains`):
 

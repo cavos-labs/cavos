@@ -84,7 +84,7 @@ const PLANS: Plan[] = [
 
 const DEV_INCLUDES = [
     'Starknet, Solana & Stellar adapters',
-    'Web and React Native SDKs',
+    'Web SDK (React Native in progress)',
     'Gas sponsorship integrations',
 ]
 
@@ -123,7 +123,7 @@ const FEATURE_GROUPS: { title: string; Art: () => React.ReactElement; items: str
     {
         title: 'Developer experience',
         Art: IcoCode,
-        items: ['Unified TypeScript API', 'React & React Native', 'Dashboard & usage analytics'],
+        items: ['Unified TypeScript API', 'React (React Native in progress)', 'Dashboard & usage analytics'],
     },
     {
         title: 'Security & recovery',

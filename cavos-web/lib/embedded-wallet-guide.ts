@@ -134,7 +134,7 @@ export const EMBEDDED_WALLET_HOW_IT_WORKS = [
   },
   {
     title: 'Key creation',
-    body: 'The wallet’s account key is derived on the user’s device from a MasterDEK that stays protected at rest by the platform’s non-extractable key: WebCrypto in the browser, the OS keystore on React Native. Cavos cannot see the key, sign with it, or move funds.',
+    body: 'The wallet’s account key is derived on the user’s device from a MasterDEK that stays protected at rest by the platform’s non-extractable key: WebCrypto in the browser (React Native is a work in progress). Cavos cannot see the key, sign with it, or move funds.',
   },
   {
     title: 'Signing',
@@ -222,7 +222,7 @@ export const EMBEDDED_WALLET_FAQ = [
   {
     question: 'What is an embedded wallet SDK?',
     answer:
-      'An embedded wallet SDK is the library that provisions the wallet and signs from inside your application. It is not a wallet app or a browser extension the user installs. Authentication selects the user; the SDK looks up or creates an on-chain account; a signer bound to the session or the device authorizes transactions in your UI. Cavos ships that as @cavos/kit on web and @cavos/kit/react-native on mobile.',
+      'An embedded wallet SDK is the library that provisions the wallet and signs from inside your application. It is not a wallet app or a browser extension the user installs. Authentication selects the user; the SDK looks up or creates an on-chain account; a signer bound to the session or the device authorizes transactions in your UI. Cavos ships that as @cavos/kit on web and @cavos/kit/react-native on mobile (a work in progress).',
   },
   {
     question: 'What is an embedded wallet as a service?',
