@@ -313,9 +313,10 @@ export default function EmbeddedStellarWalletPage() {
                             </code>
                             ; call{' '}
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
-                                execute
+                                create()
                             </code>{' '}
-                            first if the account does not exist yet.{' '}
+                            first if the account does not exist yet. The relayer sponsors the
+                            account&apos;s reserves, including each trustline, so users hold no XLM.{' '}
                             <code className="text-xs bg-surface px-1.5 py-0.5 rounded">
                                 signXdr
                             </code>{' '}
