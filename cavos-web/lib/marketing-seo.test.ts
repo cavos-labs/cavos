@@ -1104,7 +1104,7 @@ describe('marketing SEO', () => {
       privy.pageDescription,
       'Privy vs Cavos comparison: pricing, chains, and custody. Not the Shopify app. On Stellar and Starknet, Privy only signs. Free up to 1,000 wallets.',
     )
-    assert.equal(COMPARE_PAGES_MODIFIED, '2026-11-09')
+    assert.equal(COMPARE_PAGES_MODIFIED, '2026-11-12')
     assert.doesNotMatch(privy.summary, /privy alternatives/i)
     assert.equal(
       privy.faq.some((item) => /privy alternatives/i.test(item.answer)),
@@ -5192,6 +5192,24 @@ describe('marketing SEO', () => {
     assert.deepEqual(hits, [])
     const llms = fs.readFileSync(path.join(process.cwd(), 'public/llms.txt'), 'utf8')
     assert.match(llms, /React Native support is a work in progress/)
+  })
+
+  it('compares Cavos with the Stellar-native Pollar and Blux, with dated sources', () => {
+    const pollar = COMPETITORS.find((competitor) => competitor.slug === 'pollar')
+    const blux = COMPETITORS.find((competitor) => competitor.slug === 'blux')
+    assert.ok(pollar && blux)
+    const signing = (competitor: typeof pollar) =>
+      competitor.rows.find((row) => row.feature === 'Signing authority')
+    assert.match(signing(pollar)?.them ?? '', /server-side[\s\S]*November 2026/)
+    assert.match(signing(blux)?.them ?? '', /custodial[\s\S]*November 2026/)
+    for (const competitor of [pollar, blux]) {
+      assert.match(signing(competitor)?.cavos ?? '', /enclave does not sign/)
+      assert.match(
+        competitor.rows.find((row) => row.feature === 'Mobile')?.cavos ?? '',
+        /React Native is a work in progress/,
+      )
+      assert.doesNotMatch(JSON.stringify(competitor), /`|trustless/i)
+    }
   })
 
   it('does not claim a first Stellar execute creates the account and pays in one step', () => {
