@@ -372,6 +372,24 @@ and all fees are sponsored, so the user locks no XLM. The relayer is **only** a
 fee payer + reserve sponsor, never a custodian or identity authority; a bad or
 absent relayer can cost fees but can never move funds or squat an address.
 
+## Limits and errors
+
+What the relayer sponsors, and what a failed call looks like:
+
+| Situation | What happens |
+|-----------|--------------|
+| **Testnet** | Sponsorship is free and unmetered. |
+| **Mainnet** | Sponsorship spends your organization's prepaid XLM gas. Deposit it in the dashboard under **Gas**. |
+| **Mainnet gas runs out** | The relayer answers `402 insufficient_gas` and the call throws `kit/stellar: relay failed (402)`. Nothing is submitted. Deposit XLM and retry. |
+| **Too many requests** | The relayer answers `429` with a `Retry-After` header. |
+| **Transaction not eligible** | The relayer only sponsors account creation, Cavos data entries, trustlines, fee-bumps of the account's own transactions, and Soroban calls. Anything else is rejected with `400` and a `reason`. |
+| **`create()` fails** | Status stays `undeployed`. Calling `create()` again is safe: it checks whether the account already exists on-chain. |
+| **First XLM `execute` on a new account** | The account is created, then the payment fails with `op_underfunded` because a sponsored account starts with 0 XLM. Fund it first. |
+
+The relayer pays fees and sponsors reserves. It never holds the spend key, so
+it cannot move funds. When sponsorship is unavailable, an account that holds
+XLM can still pay its own fee with `{ fee: 'self' }`.
+
 ## Address resolution
 
 On Stellar, the `G…` address is resolved via the **registry-first** model (see
