@@ -54,6 +54,8 @@ Cavos (`@cavos/kit`) is a hardware-isolated, non-custodial embedded wallet SDK f
 - [Web3Auth vs Cavos](https://cavos.xyz/compare/web3auth)
 - [Magic vs Cavos](https://cavos.xyz/compare/magic)
 - [Cavos vs Alchemy](https://cavos.xyz/compare/alchemy)
+- [Pollar vs Cavos](https://cavos.xyz/compare/pollar)
+- [Blux vs Cavos](https://cavos.xyz/compare/blux)
 - [Privy vs Turnkey vs Dfns](https://cavos.xyz/blog/privy-vs-turnkey): who wins when; auth SDK vs enclave signing vs MPC; free to 1,000 wallets
 - [Privy vs Dynamic](https://cavos.xyz/blog/privy-vs-dynamic): provision vs connect; Privy vs Dynamic vs Turnkey; non-custodial option free to 1,000 wallets
 - [Alchemy vs Privy](https://cavos.xyz/blog/alchemy-vs-privy): Wallet APIs vs Privy signer; Account Kit deprecated

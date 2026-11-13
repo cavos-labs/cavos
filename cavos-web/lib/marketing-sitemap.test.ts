@@ -444,7 +444,7 @@ Hello
   })
 
   it('keeps the indexable marketing URLs including the React integration guide', () => {
-    assert.equal(entries.length, 53)
+    assert.equal(entries.length, 55)
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/para-alternatives`))
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/web3auth-alternatives`))
     assert.ok(urls.includes(`${MARKETING_ORIGIN}/dfns-alternatives`))
