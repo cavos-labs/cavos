@@ -182,7 +182,7 @@ Add `paymasterApiKey` only when Starknet is in `chains`. A paymaster key on a ch
 
 ## Who signs an embedded wallet payment
 
-The device. Signing always happens on the user's device. Keys never leave the device in plaintext and are never used for signing on servers. The MasterDEK stays protected at rest by WebCrypto in the browser or the OS keystore on React Native. Recovery is hardware-isolated and non-custodial: a passkey or an opt-in AWS Nitro Enclave holds only an encrypted copy of the MasterDEK for restore. Neither path can sign a spend in the ordinary flow. Cavos cannot see the key, sign with it, decrypt it, or move funds.
+The device. Signing always happens on the user's device. Keys never leave the device in plaintext and are never used for signing on servers. The MasterDEK stays protected at rest by WebCrypto in the browser (React Native is a work in progress). Recovery is hardware-isolated and non-custodial: a passkey or an opt-in AWS Nitro Enclave holds only an encrypted copy of the MasterDEK for restore. Neither path can sign a spend in the ordinary flow. Cavos cannot see the key, sign with it, decrypt it, or move funds.
 
 Login selects which user this is. It never authorizes a spend. The [custody](/custody) page is the legal control test. The [non-custodial](/blog/non-custodial-embedded-wallet) guide is the vendor checklist.
 

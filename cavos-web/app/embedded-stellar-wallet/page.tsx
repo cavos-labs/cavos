@@ -82,15 +82,15 @@ export default function EmbeddedStellarWalletPage() {
                         <code className="text-sm bg-surface px-1.5 py-0.5 rounded">
                             @cavos/kit/react-native
                         </code>{' '}
-                        for mobile (Expo Development Builds, EAS, or bare React Native; Expo Go
+                        for mobile, a work in progress (Expo Development Builds, EAS, or bare React Native; Expo Go
                         is not supported).
                     </p>
                     <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted">
                         The{' '}
                         <code className="text-xs bg-surface px-1.5 py-0.5 rounded">G…</code> is
                         HKDF of the same MasterDEK as Solana. In the browser that Ed25519 control
-                        key is a non-extractable WebCrypto key held by the Cavos vault. On React
-                        Native it uses the OS keystore. The SDK does not enforce
+                        key is a non-extractable WebCrypto key held by the Cavos vault. React
+                        Native is a work in progress and not on this path yet. The SDK does not enforce
                         non-extractability on Node or other server runtimes.
                     </p>
                 </header>

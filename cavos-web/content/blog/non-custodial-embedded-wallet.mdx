@@ -18,7 +18,7 @@ faq:
   - question: "How do I verify a vendor’s non-custodial claim?"
     answer: "Ask whether the vendor can produce a valid signature alone; whether users can export a key or only restore the same address on a new device; what happens if the vendor disappears; what recovery actually unwraps, and whether that path can be arranged after every device is gone; and what was audited (the account contract, the recovery enclave, or the vendor’s own code). Then read the recovery path, not only the happy path."
   - question: "How does Cavos keep wallets non-custodial?"
-    answer: "Signing keys are created and used on the user’s device. Keys never leave the device in plaintext. Signing always happens on the device. The MasterDEK stays protected at rest by WebCrypto in the browser or the OS keystore on React Native. A passkey or opt-in Nitro Enclave stores only a sealed copy of that MasterDEK for restore; Cavos cannot open that copy or sign with it. On Starknet the key controls an audited OpenZeppelin account contract. There is no MPC and no hosted spend key."
+    answer: "Signing keys are created and used on the user’s device. Keys never leave the device in plaintext. Signing always happens on the device. The MasterDEK stays protected at rest by WebCrypto in the browser (React Native is a work in progress). A passkey or opt-in Nitro Enclave stores only a sealed copy of that MasterDEK for restore; Cavos cannot open that copy or sign with it. On Starknet the key controls an audited OpenZeppelin account contract. There is no MPC and no hosted spend key."
   - question: "What happens if the vendor disappears?"
     answer: "If the signing key lives only on the user’s device, or can be restored from a factor the user holds, the address can still spend after the vendor is gone, assuming the user can still reach the chain. If signing requires a provider share, a remote enclave credential, or a hosted HSM, disappearance is a lockout unless export or a documented break-glass exists. In Cavos, a new device restores the MasterDEK with a passkey or the opt-in enclave. If every device and every restore factor is gone, Cavos cannot recover the wallet."
   - question: "Does recovery make an embedded wallet custodial?"
@@ -100,7 +100,7 @@ When a vendor says “[embedded wallet SDK](/embedded-wallet),” ask where the 
 
 ### Device-native keys
 
-The wallet’s account key is derived on the user’s device from a MasterDEK. At rest that DEK is protected by the platform’s non-extractable key: WebCrypto in the browser, the OS keystore on React Native. The device signs. A new device restores the same MasterDEK instead of being added on-chain.
+The wallet’s account key is derived on the user’s device from a MasterDEK. At rest that DEK is protected by the platform’s non-extractable key: WebCrypto in the browser (React Native is a work in progress). The device signs. A new device restores the same MasterDEK instead of being added on-chain.
 
 This is non-custodial **when the provider cannot see the DEK, cannot sign with it, and cannot move funds**. Isolation comes from the platform primitive, not from a slogan. Those primitives have limits: WebCrypto cannot hold a stark key, so outside the Cavos vault the Starknet key is re-derived into memory for the session, and the SDK does not enforce non-extractability on Node or other server runtimes. Ask where the key is actually used, not only where it is created.
 
@@ -163,7 +163,7 @@ Off-chain restore keeps the on-chain account simple (one key, the chain’s nati
 
 ## How Cavos does it
 
-The public developer surface is `@cavos/kit` 0.5.2 (`@cavos/kit/react`, `@cavos/kit/react-native`). Login produces a stable identity for a registry lookup; it never signs a transaction. There is no MPC and no hosted spend key. The account key is derived on the device from a MasterDEK that WebCrypto or the OS keystore protects at rest. Keys never leave the device in plaintext. Signing always happens on the device. Cavos cannot see the key, sign with it, decrypt it, or move funds. Gas Sponsorship in Any Token is on every plan (USDC is one example of a token the user already holds), funded separately.
+The public developer surface is `@cavos/kit` 0.5.2 (`@cavos/kit/react`; `@cavos/kit/react-native` is a work in progress). Login produces a stable identity for a registry lookup; it never signs a transaction. There is no MPC and no hosted spend key. The account key is derived on the device from a MasterDEK that WebCrypto protects at rest in the browser. Keys never leave the device in plaintext. Signing always happens on the device. Cavos cannot see the key, sign with it, decrypt it, or move funds. Gas Sponsorship in Any Token is on every plan (USDC is one example of a token the user already holds), funded separately.
 
 ### Passkey and Nitro Enclave sealed restore
 

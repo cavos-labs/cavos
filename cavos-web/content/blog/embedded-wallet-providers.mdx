@@ -325,7 +325,7 @@ On Starknet the on-chain account is an **audited OpenZeppelin AccountUpgradeable
 
 Solana and Stellar are native adapters, not EVM compatibility. Solana provisions a native Ed25519 system account; a relayer co-signs as fee payer. Stellar provisions a classic G… account so existing tools already understand the address; the relayer can sponsor reserves and fee-bumps. Both restore the same MasterDEK on a new device rather than adding a second on-chain signer.
 
-Auth is hosted Google, Apple, or email, or an identity you pass in from your own stack. The React path is `@cavos/kit`; mobile is `@cavos/kit/react-native`. The current kit release is [Cavos Kit 0.5.0](/blog/cavos-kit-0-5-0). The [React integration guide](/blog/how-to-add-an-embedded-wallet) and the [Cavos docs](https://docs.cavos.xyz/docs/quickstart) are the install. [Pricing](/pricing) publishes the free 1,000 wallet creates, Essential at $59/mo, and Complete at $139/mo with enclave recovery.
+Auth is hosted Google, Apple, or email, or an identity you pass in from your own stack. The React path is `@cavos/kit`; mobile (`@cavos/kit/react-native`) is a work in progress. The current kit release is [Cavos Kit 0.5.0](/blog/cavos-kit-0-5-0). The [React integration guide](/blog/how-to-add-an-embedded-wallet) and the [Cavos docs](https://docs.cavos.xyz/docs/quickstart) are the install. [Pricing](/pricing) publishes the free 1,000 wallet creates, Essential at $59/mo, and Complete at $139/mo with enclave recovery.
 
 **Choose Cavos** when the user should never see a wallet picker, the chain is Starknet, Solana, or Stellar, and the review requires that the vendor cannot reconstruct a signing key.
 

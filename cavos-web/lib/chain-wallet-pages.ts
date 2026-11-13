@@ -197,7 +197,7 @@ export const STARKNET_SOFTWARE = {
     'Paymaster-sponsored transactions',
     'Arbitrary multicalls',
     'Passkey and enclave restore on new devices',
-    'React and React Native SDKs',
+    'React SDK (React Native in progress)',
   ],
 }
 
@@ -212,7 +212,7 @@ export const SOLANA_SOFTWARE = {
     'Self, sponsored, or token fee routes',
     'Arbitrary program calls (allowlisted)',
     'Passkey and enclave restore on new devices',
-    'React and React Native SDKs',
+    'React SDK (React Native in progress)',
   ],
 }
 
@@ -228,7 +228,7 @@ export const STELLAR_SOFTWARE = {
     'Sponsored account creation, reserves, and trustlines',
     'Soroban contract invocations',
     'Passkey and enclave restore on new devices',
-    'React and React Native SDKs',
+    'React SDK (React Native in progress)',
   ],
 }
 
