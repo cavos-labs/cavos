@@ -208,8 +208,8 @@ function MockupSdk() {
                 </pre>
                 <div className="flex gap-2 border-t border-white/10 px-4 py-2.5">
                     <span className="rounded bg-white/10 px-2 py-1 text-[10px] font-medium text-white/70">React</span>
-                    <span className="rounded bg-white/10 px-2 py-1 text-[10px] font-medium text-white/70">React Native</span>
-                    <span className="rounded bg-white/10 px-2 py-1 text-[10px] font-medium text-white/70">iOS · Android · Web</span>
+                    <span className="rounded bg-white/10 px-2 py-1 text-[10px] font-medium text-white/70">Web</span>
+                    <span className="rounded bg-white/10 px-2 py-1 text-[10px] font-medium text-white/70">React Native (in progress)</span>
                 </div>
             </div>
         </div>
