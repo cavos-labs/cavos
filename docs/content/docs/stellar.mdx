@@ -24,6 +24,63 @@ To see the whole flow running, clone the
 [Stellar wallet starter](https://github.com/cavos-labs/cavos-stellar-by-example/tree/main/stellar-wallet-starter): a Next.js app on testnet with sign-in,
 `create()`, XLM and USDC balances, a sponsored trustline, and payments.
 
+## Sign in with Google or email (React)
+
+The shortest path from a Google or email sign-in to a Stellar `G…` address is the
+React provider. The Cavos modal handles sign-in (Google, Apple, or an emailed
+code; GitHub and Telegram are optional providers), and every signed-in user gets
+a classic Stellar account derived from their identity. No seed phrase, no
+browser extension.
+
+```tsx title="app/providers.tsx"
+"use client";
+import { CavosProvider } from "@cavos/kit/react";
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <CavosProvider
+      config={{
+        appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
+        chains: ["stellar"],
+        network: "testnet",                 // "testnet" | "mainnet"
+        appSalt: "my-app",                  // never change it after users connect
+        socialRecovery: true,
+        deviceApproval: "enclave",
+      }}
+      modal={{ appName: "My App", theme: "light" }}
+    >
+      {children}
+    </CavosProvider>
+  );
+}
+```
+
+```tsx title="components/stellar-wallet.tsx"
+"use client";
+import { useCavos } from "@cavos/kit/react";
+
+export function StellarWallet() {
+  const { isAuthenticated, isLoading, login, openModal, wallet } = useCavos();
+  if (isLoading) return null;
+  if (!isAuthenticated) {
+    return (
+      <>
+        <button onClick={() => login("google")}>Continue with Google</button>
+        <button onClick={openModal}>Use email</button>
+      </>
+    );
+  }
+  if (wallet?.chain !== "stellar") return null;
+  return <p>{wallet.address}</p>;     // G… address
+}
+```
+
+The address exists as soon as the user signs in; the account is created on-chain
+with [`create()`](#create-the-account) or the first `execute`. Every hook is in
+[React](/docs/react) and every sign-in option in [Authentication](/docs/auth).
+The [Stellar wallet starter](https://github.com/cavos-labs/cavos-stellar-by-example/tree/main/stellar-wallet-starter)
+is this flow as a runnable Next.js app. Without React, use `Cavos.connect` below.
+
 ## Connect
 
 Use the unified `Cavos.connect`, passing `chains: ["stellar"]`. An `appId`
