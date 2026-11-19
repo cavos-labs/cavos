@@ -5,12 +5,13 @@
  * says nothing about which app asked for it. The nonce is the one value the
  * relying party chooses and the provider signs, so the app goes there:
  *
- *     <app uuid>.<base64url(SHA-256(login secret))>
+ *     <app uuid>.<base64url(SHA-256(login public key))>
  *
- * The second half is what `@cavos/kit` sends: the hash of a secret that never
- * leaves the client except inside a job encrypted to the recovery enclave
- * (OpenID Connect Core §15.5.2; the transform is PKCE's S256, RFC 7636 §4.2).
- * The first half is added here, after the app and its redirect are validated,
+ * The second half is what `@cavos/kit` sends: the hash of the public half of a
+ * key pair it holds without being able to export it. The recovery enclave only
+ * accepts the token inside a job encrypted with that key, so the token is
+ * useless to anyone else (the proof-of-possession binding of RFC 9449, carried
+ * in the OpenID Connect nonce). The first half is added here, after the app and its redirect are validated,
  * and checked wherever a token is accepted: by the enclave against the sealed
  * policy, and by `verifyUserToken` against the app of the request.
  *
@@ -26,6 +27,11 @@ const CLIENT_NONCE = /^[A-Za-z0-9_-]{43}$/;
  * checked. Remove once no legacy account signs in.
  */
 const LEGACY_STARKNET_NONCE = /^0x[0-9a-f]{1,63}$/;
+
+/** Whether a value has the shape of the half of the nonce a client sends. */
+export function isClientNonce(value: unknown): value is string {
+  return typeof value === 'string' && CLIENT_NONCE.test(value);
+}
 
 /** The nonce to send to the provider, or null when the client's half is malformed. */
 export function bindNonceToApp(appId: string, clientNonce: string): string | null {

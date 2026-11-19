@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { bindNonceToApp, nonceNamesApp } from './loginNonce';
+import { bindNonceToApp, isClientNonce, nonceNamesApp } from './loginNonce';
 
 const APP = '0f9d5a1c-3b2e-4c5a-8d7f-1a2b3c4d5e6f';
 // RFC 7636 Appendix B: the S256 challenge of its example verifier.
@@ -37,5 +37,14 @@ describe('nonceNamesApp', () => {
         assert.equal(nonceNamesApp(`x.${APP}.${HASH}`, APP), false);
         assert.equal(nonceNamesApp(HASH, APP), false);
         assert.equal(nonceNamesApp(undefined, APP), false);
+    });
+});
+
+describe('isClientNonce', () => {
+    it('accepts only a base64url SHA-256', () => {
+        assert.equal(isClientNonce(HASH), true);
+        assert.equal(isClientNonce(HASH.slice(1)), false);
+        assert.equal(isClientNonce(`${APP}.${HASH}`), false);
+        assert.equal(isClientNonce(undefined), false);
     });
 });
