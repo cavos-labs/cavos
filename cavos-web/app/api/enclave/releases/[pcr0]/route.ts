@@ -44,6 +44,36 @@ function error(code: string, status: number, cacheControl?: string) {
   );
 }
 
+interface ReleaseList {
+  releases: ReleaseSummary[];
+  fetchedAt: number;
+}
+
+/**
+ * Lists the published releases. `fetchedAt` is when GitHub answered, which for a
+ * response served from the data cache is earlier than now.
+ */
+async function listReleases(cache: RequestInit): Promise<ReleaseList | null> {
+  const response = await fetch(
+    `https://api.github.com/repos/${ENCLAVE_RELEASES_REPO}/releases?per_page=100`,
+    { headers: githubHeaders('application/vnd.github+json'), ...cache }
+  );
+  if (!response.ok) return null;
+
+  const releases = (await response.json()) as ReleaseSummary[];
+  if (!Array.isArray(releases)) return null;
+
+  return { releases, fetchedAt: Date.parse(response.headers.get('date') ?? '') };
+}
+
+/**
+ * The data cache answers with the previous list while it revalidates, so a list
+ * past its window may predate the newest release.
+ */
+function isStale(fetchedAt: number): boolean {
+  return !(Date.now() - fetchedAt < LIST_REVALIDATE_SECONDS * 1000);
+}
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ pcr0: string }> }
@@ -52,19 +82,15 @@ export async function GET(
   if (!isValidPcr0(pcr0)) return error('invalid_pcr0', 400);
 
   try {
-    const list = await fetch(
-      `https://api.github.com/repos/${ENCLAVE_RELEASES_REPO}/releases?per_page=100`,
-      {
-        headers: githubHeaders('application/vnd.github+json'),
-        next: { revalidate: LIST_REVALIDATE_SECONDS },
-      }
-    );
-    if (!list.ok) return error('release_unavailable', 502);
+    const cached = await listReleases({ next: { revalidate: LIST_REVALIDATE_SECONDS } });
+    if (!cached) return error('release_unavailable', 502);
 
-    const releases = (await list.json()) as ReleaseSummary[];
-    if (!Array.isArray(releases)) return error('release_unavailable', 502);
-
-    const assetUrl = findBundleAssetUrl(releases, pcr0);
+    let assetUrl = findBundleAssetUrl(cached.releases, pcr0);
+    if (!assetUrl && isStale(cached.fetchedAt)) {
+      const fresh = await listReleases({ cache: 'no-store' });
+      if (!fresh) return error('release_unavailable', 502);
+      assetUrl = findBundleAssetUrl(fresh.releases, pcr0);
+    }
     if (!assetUrl) return error('release_not_found', 404, 'public, max-age=60');
 
     const asset = await fetch(assetUrl, {
