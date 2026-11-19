@@ -139,21 +139,22 @@ The hosted sign-in endpoints now require the `nonce` that `@cavos/kit` 0.2.6
 sends, and no longer serve the legacy `@cavos/react` flow. Upgrade to
 `@cavos/kit` 0.2.6 or later.
 
-## Email sign-in or enclave recovery fails on 0.4.x
+## Email, GitHub or Telegram sign-in or enclave recovery fails on a kit below 0.6.0
 
-`@cavos/kit` 0.4.x pins older PCR0 values and has no signed-release path. The
-enclave now running is not on that list, so email sign-in and hardware-isolated
-recovery fail until you upgrade:
+The wire protocol with the recovery enclave changed in `@cavos/kit` 0.6.0 (a
+login key replaced the login secret, and only signed releases from v3 are
+accepted). Kits below 0.6.0 no longer work against the production enclave for
+email, GitHub and Telegram sign-in and for enclave recovery. Upgrade:
 
 ```bash title="Terminal"
-npm install @cavos/kit@^0.5.0
+npm install @cavos/kit@^0.6.0
 ```
 
 Apps that set a
 custom `socialRecovery` / `socialRecoveryAttestation` with only `pcr0` still
-pin strictly and will not pick up signed releases. See
-[The attestation pin](/docs/hardware-isolated-recovery#the-attestation-pin)
-and the [0.5.0 changelog](https://cavos.xyz/blog/cavos-kit-0-5-0).
+pin strictly and will not pick up signed releases, so their pinned PCR0 must
+match the enclave you run. See
+[The attestation pin](/docs/hardware-isolated-recovery#the-attestation-pin).
 
 ## GitHub sign-in errors
 
@@ -187,8 +188,8 @@ that is expected; see
 `oauth.telegram.org`. The hosted `/api/oauth/telegram/verify` returns
 `telegram_rejected` as is, and other enclave failures as `enclave_unavailable`.
 
-Telegram sign-in needs `@cavos/kit` 0.5.2 or later. Kits 0.5.0 and 0.5.1 keep
-working with the current enclave for Google, Apple, email, and GitHub.
+Telegram sign-in arrived in `@cavos/kit` 0.5.2. Kits below 0.6.0 no longer
+work with the current enclave; use `^0.6.0`.
 
 If Telegram users suddenly have new, empty wallets, check whether the
 environment's bot changed. Identity is per bot, so that is expected; see
@@ -199,7 +200,7 @@ To sign in with another Telegram account, see
 
 ## `connect-src` blocks enclave release lookup
 
-From 0.5.0 the SDK may fetch `{backendUrl}/api/enclave/releases/{pcr0}` and,
+The SDK may fetch `{backendUrl}/api/enclave/releases/{pcr0}` and,
 if the bundled Sigstore trusted root is stale, the TUF CDN at
 `https://tuf-repo-cdn.sigstore.dev/`. A strict Content-Security-Policy that
 omits those hosts fails closed with

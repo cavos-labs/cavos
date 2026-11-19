@@ -127,12 +127,13 @@ window.location.href = url;
 const identity = await auth.handleCallback(window.location.search);
 ```
 
-`getGitHubOAuthUrl` keeps a login secret and a PKCE verifier in
-`sessionStorage`, asks the backend for the authorize URL, and refuses it unless
+`getGitHubOAuthUrl` creates a login key and a PKCE verifier that live in the
+vault (in the page's IndexedDB when `vault: false`), so no script on the page
+can read them. It keeps only the public nonce in `sessionStorage`, asks the backend for the authorize URL, and refuses it unless
 it is `https://github.com/login/oauth/authorize` with this login's
 `code_challenge` and `S256`. The callback never talks to GitHub. It returns a
-one-time `github_grant`; `handleCallback` sends `verify_github` into the
-attested enclave with the PKCE verifier. The enclave redeems the code, reads
+one-time `github_grant`; `handleCallback` sends `verify_github` with
+`{code_verifier}` into the attested enclave, encrypted with the login key. The enclave redeems the code, reads
 `api.github.com/user`, discards the access token, and signs an ES256 login
 token:
 
@@ -142,7 +143,7 @@ token:
 | `aud` | `cavos-github` |
 | `sub` | `hex(SHA-256("cavos-github-subject-v1:" + client_id + ":" + github_id))` |
 | `azp` | the OAuth `client_id` the code was redeemed with |
-| `nonce` | `<app_id>.<BASE64URL(SHA-256(login secret))>` |
+| `nonce` | `<app_id>.<BASE64URL(SHA-256(login public key))>` |
 
 JWKS: `https://enclave.cavos.xyz/.well-known/jwks.json`. No GitHub scopes are
 requested.
@@ -197,7 +198,7 @@ an **optional** web provider. The default modal providers are unchanged; add
 `auth.getTelegramOAuthUrl()`. React Native does not offer Telegram: like email
 and GitHub, the flow has to verify the enclave's attestation, which that build
 cannot do. It needs the current Cavos backend and recovery enclave
-[release v2](/docs/hardware-isolated-recovery#release-v2), both live.
+[release v4](/docs/hardware-isolated-recovery#release-v4), both live.
 
 ```ts title="TypeScript"
 const url = await auth.getTelegramOAuthUrl(/* redirectUri? */);
@@ -206,21 +207,22 @@ window.location.href = url;
 const identity = await auth.handleCallback(window.location.search);
 ```
 
-`getTelegramOAuthUrl` keeps a login secret and a PKCE verifier in
-`sessionStorage` and asks the backend for the authorize URL. It refuses the URL
+`getTelegramOAuthUrl` creates a login key and a PKCE verifier that live in the
+vault (in the page's IndexedDB when `vault: false`) and keeps only the public
+nonce in `sessionStorage`. It asks the backend for the authorize URL. It refuses the URL
 unless it is `https://oauth.telegram.org/auth` with:
 
 - this login's `code_challenge` and `code_challenge_method=S256`;
-- `nonce` exactly `<app_id>.<BASE64URL(SHA-256(login secret))>`;
+- `nonce` exactly `<app_id>.<BASE64URL(SHA-256(login public key))>`;
 - `scope` exactly `openid profile`;
 - `response_type=code`.
 
 The callback never talks to Telegram. It returns a one-time `telegram_grant`.
-`handleCallback` sends `verify_telegram` with `{code_verifier, login_secret}`
-into the attested enclave through `/api/oauth/telegram/verify`. Unlike GitHub,
-the job carries the login secret itself, and the enclave derives the nonce
-from it. A stolen authorization code is useless without the secret, whether or
-not Telegram enforces PKCE.
+`handleCallback` sends `verify_telegram` with `{code_verifier}` into the
+attested enclave through `/api/oauth/telegram/verify`, encrypted with the login
+key. The enclave checks that the token's nonce commits to that key. A stolen
+authorization code is useless without the login key, whether or not Telegram
+enforces PKCE.
 
 The enclave redeems the code at `oauth.telegram.org/token` and verifies
 Telegram's id_token:
@@ -242,7 +244,7 @@ about 30 seconds, and its `sub` differs per bot.
 | `aud` | `cavos-telegram` |
 | `sub` | `hex(SHA-256("cavos-telegram-subject-v1:" + bot_id + ":" + telegram_user_id))` |
 | `azp` | the bot id |
-| `nonce` | `<app_id>.<BASE64URL(SHA-256(login secret))>` |
+| `nonce` | `<app_id>.<BASE64URL(SHA-256(login public key))>` |
 | `name`, `preferred_username` | only when Telegram sends them |
 
 The token has no email and no phone number: the `phone` scope is never
@@ -351,8 +353,8 @@ enclave, running in AWS Nitro, generates it, mails it directly to the user's
 mail server, and verifies it. The user enters the code in your app, and the SDK
 sends it to the enclave encrypted to its attested key. The enclave answers with
 its own signed token (issuer `https://enclave.cavos.xyz`, keys at
-`https://enclave.cavos.xyz/.well-known/jwks.json`), bound to a login secret the
-SDK keeps, the same binding Google and Apple tokens have. Email users therefore
+`https://enclave.cavos.xyz/.well-known/jwks.json`), bound to the login key
+that requested the code, the same binding Google and Apple tokens have. Email users therefore
 get [hardware-isolated recovery](/docs/hardware-isolated-recovery) like Google,
 Apple, GitHub, and Telegram users. The user ID of an email login is derived from the address.
 
