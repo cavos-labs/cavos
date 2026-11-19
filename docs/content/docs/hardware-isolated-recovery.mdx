@@ -49,17 +49,19 @@ controls, and **recovery**, later, on a device that has nothing.
 
 ### Enrolment
 
-1. The user signs in. Before redirecting, the SDK generates a one-time **login
-   secret** that stays on this device and puts only its hash into the sign-in
-   request. The provider's `id_token` comes back carrying that hash, stays **in
-   memory only**, and is never persisted or logged by the SDK.
+1. The user signs in. Before redirecting, the SDK creates a **login key**: a
+   non-extractable ECDH P-256 key pair held in the vault iframe's IndexedDB on
+   web (in the page's IndexedDB when `vault: false`), out of reach of scripts on
+   the page. Only the hash of its public key goes into the sign-in request. The
+   provider's `id_token` comes back carrying that hash, stays **in memory
+   only**, and is never persisted or logged by the SDK.
 2. The SDK asks for the enclave's **attestation document**: a statement signed by
    the AWS Nitro Attestation PKI describing exactly which image is running. It
    verifies the signature against [the AWS root certificate pinned in the
    SDK](#the-attestation-pin), checks the measurement against the ones this
    release accepts, and aborts if anything differs.
-3. Satisfied, the browser encrypts the token and the login secret **directly to
-   an ephemeral key belonging to that enclave**. The key is read from *inside* the signed
+3. Satisfied, the browser encrypts the job, which carries the token, **directly
+   to an ephemeral key belonging to that enclave**, using the login key. The key is read from *inside* the signed
    document rather than from the response that carried it, so there is nothing
    to cross-check: substituting a key would mean forging an AWS signature. The
    Cavos control plane relays ciphertext it cannot read. The enclave's answer
@@ -91,22 +93,24 @@ Inside, before it opens anything, the enclave checks the provider signature,
 issuer, audience, token fingerprint, configured provider, and the enrolled
 subject: the recovery only proceeds for the identity that enrolled.
 
-The authentication must be **no more than five minutes old**. Google and Apple
-tokens must carry an OIDC `nonce` of the form
-`<app id>.<BASE64URL(SHA-256(login secret))>`. The enclave recomputes it from
-the app the wallet belongs to and the login secret it received over the
-encrypted channel, and compares in constant time. A token is therefore only
-accepted for the app it was issued for, and only together with the secret held
-by the device that started that sign-in: the same construction as PKCE's
-`S256` challenge (RFC 7636), applied to the OIDC `nonce`. The SDK makes the same
-comparison before it uses a login at all.
+The authentication must be **no more than five minutes old**. Every token must
+carry an OIDC `nonce` of the form
+`<app id>.<BASE64URL(SHA-256(login public key))>`, where the login public key is
+the 65-byte uncompressed SEC1 point and base64url has no padding. The enclave
+checks that the nonce commits to the app the wallet belongs to and to the key
+that encrypted the job, comparing in constant time. A token is therefore only
+accepted for the app it was issued for, and only on the channel of the device
+that started that sign-in: the same construction as PKCE's `S256` challenge
+(RFC 7636), applied to the OIDC `nonce`. A stolen token or page state is
+unusable without the login key. The SDK makes the same comparison before it
+uses a login at all.
 
 What binds a token to *this* session is its SHA-256 fingerprint, committed when
 the session opens and compared in constant time. The API stores only a second
 hash of that fingerprint, so a token can be used once and replays are rejected.
 Email uses the enclave's own signed token (issuer `https://enclave.cavos.xyz`),
-issued after the user enters the emailed code and bound to the same login
-secret. GitHub is the same shape with a different issuer: the enclave redeems
+issued after the user enters the emailed code. The code is bound to the login
+key that requested it. GitHub is the same shape with a different issuer: the enclave redeems
 the authorization code with the client's PKCE verifier and signs an ES256 token
 (`iss` `https://enclave.cavos.xyz/github`, `aud` `cavos-github`, keys at
 `https://enclave.cavos.xyz/.well-known/jwks.json`). The subject is
@@ -115,9 +119,7 @@ identity is per OAuth app (see
 [Authentication → GitHub](/docs/auth#bring-your-own-github-oauth-app)).
 Telegram follows the same pattern with its own issuer: the enclave redeems the
 code, verifies Telegram's id_token, and signs an ES256 token (`iss`
-`https://enclave.cavos.xyz/telegram`, `aud` `cavos-telegram`). Unlike GitHub,
-the job carries the login secret, and the enclave derives the nonce from it.
-The subject is
+`https://enclave.cavos.xyz/telegram`, `aud` `cavos-telegram`). The subject is
 `hex(SHA-256("cavos-telegram-subject-v1:" + bot_id + ":" + telegram_user_id))`,
 so identity is per bot (see
 [Authentication → Telegram](/docs/auth#bring-your-own-telegram-bot)).
@@ -235,29 +237,23 @@ users' recovery?", and they must not come from the service being checked. If
 `cavos.xyz` would answer with their own, and the attestation would prove
 nothing.
 
-From `@cavos/kit` 0.5.0 an attested enclave is accepted on **either** of two
-paths, in this order:
-
-1. **Pinned PCR0.** The live Nitro attestation's PCR0 is in
-   `DEFAULT_SOCIAL_RECOVERY_ATTESTATION.pcr0`. The list is transitional: it
-   covers images deployed before signed releases, and it is meant to shrink once those images are replaced.
-2. **Signed release.** The SDK fetches
-   `{backendUrl}/api/enclave/releases/{pcr0}` (default host `https://cavos.xyz`)
-   and verifies a Sigstore v0.3 bundle **in the client**: Rekor inclusion, the
-   public-good trusted root (one TUF refresh on failure, then fail closed),
-   signer identity, PCR0/PCR1/PCR2 equal to the live Nitro attestation,
-   `version >= minVersion`, and an unexpired `expiresAt`. An all-zero PCR0
-   (debug mode) is rejected.
+From `@cavos/kit` 0.6.0 the default policy pins no image. The only default
+path is a **signed release**: the SDK fetches
+`{backendUrl}/api/enclave/releases/{pcr0}` (default host `https://cavos.xyz`)
+and verifies a Sigstore v0.3 bundle **in the client**: Rekor inclusion, the
+public-good trusted root (one TUF refresh on failure, then fail closed),
+signer identity, PCR0/PCR1/PCR2 equal to the live Nitro attestation,
+`version >= minVersion`, and an unexpired `expiresAt`. An all-zero PCR0
+(debug mode) is rejected.
 
 The Cavos API is an untrusted pass-through. It can withhold a bundle; it cannot
 make the SDK accept one. A new enclave deploy therefore does not require an SDK
-bump, as long as the release was signed by the workflow below. 0.4.x has no
-release path and does not list the currently deployed PCR0, so email sign-in
-and enclave recovery against that image fail until you upgrade to `^0.5.0`.
-Upgrade with `npm install @cavos/kit@^0.5.0`. See the
-[0.5.0 changelog](https://cavos.xyz/blog/cavos-kit-0-5-0).
+bump, as long as the release was signed by the workflow below. Kits below 0.6.0
+no longer work against the production enclave for email, GitHub and Telegram
+sign-in and enclave recovery, because the wire protocol changed. Upgrade with
+`npm install @cavos/kit@^0.6.0`.
 
-The default `release` policy shipped in 0.5.0:
+The default `release` policy shipped in 0.6.0:
 
 | Field | Value |
 |---|---|
@@ -265,34 +261,39 @@ The default `release` policy shipped in 0.5.0:
 | `repositoryId` | `1333734222` |
 | `ownerId` | `216094156` |
 | `workflow` | `.github/workflows/release.yml` |
-| `minVersion` | `1` |
+| `environment` | `release` |
+| `minVersion` | `3` |
 
 A release is trusted when GitHub Actions, on a GitHub-hosted runner, signed it
-for that repository and owner, using that workflow, on a `refs/tags/vN` push
-(`N` a positive integer that matches the statement's `version`). The signature
-is public in Rekor. On `cavos-labs/cavos-recovery`, the `Release` workflow
-runs in the `release` environment with required reviewers, so pushing a tag
-does not publish a release on its own. The browser library that checks the
-bundle (`@freedomofpress/sigstore-browser` 0.1.15) has not received an
-independent security audit.
+for that repository and owner, using that workflow as both build config and
+build signer, on a `refs/tags/vN` push (`N` a positive integer that matches the
+statement's `version`), and the signing certificate carries the deployment
+environment `release`. The signature is public in Rekor. Releases before v3 are
+refused.
 
-### Release v2
+On `cavos-labs/cavos-recovery`, the `Release` workflow refuses tags whose
+commit is not on `main`. The `release` environment only deploys from `v*` tags
+and waits for a required reviewer, and repository rulesets restrict who can
+create a `v*` tag and forbid moving or deleting one. Releases are immutable. So
+pushing a tag does not publish a release on its own. The browser library that
+checks the bundle (`@freedomofpress/sigstore-browser` 0.1.15) has not received
+an independent security audit.
+
+### Release v4
 
 The current production enclave is
-[release v2](https://github.com/cavos-labs/cavos-recovery/releases/tag/v2)
-(version 2, expires 2027-11-05). Its PCR0 is **not** on the kit's pinned list.
-Kits from 0.5.0 on accept it through the signed-release path, so it is the
-first production enclave accepted that way.
+[release v4](https://github.com/cavos-labs/cavos-recovery/releases/tag/v4)
+(version 4, expires 2027-11-19). Kits from 0.6.0 on accept it through the
+signed-release path.
 
 | Measurement | Value |
 |---|---|
-| `PCR0` | `36d3ceb0759af00c1c1b3f055c271b4fe628235036c67b6e3234199454167f41bfc0c6387061481ba3331740891974ea` |
+| `PCR0` | `466a4cbe5089af98486b1ce1953cc5acf98c40d22d9c8fb24049ca364c67cbc277c7b94263fc962e346f72627d1a51ab` |
 | `PCR1` | `3b4a7e1b5f13c5a1000b3ed32ef8995ee13e9876329f9bc72650b918329ef9cf4e2e4d1e1e37375dab0ba56ba0974d03` |
-| `PCR2` | `4d1f328b79d4220fc278f9c3c41957a9a49de24061a51ba2c40370a7738afb8a8dcc8549cffa311c81a26de103d711b8` |
+| `PCR2` | `6b2c28394a49db055c0109c6d9035751a2230347a775c939d8695179d51e7e7669afc54590f4d5b3a65b2308afd2c7da` |
 
-Kits 0.5.0 and 0.5.1 keep working with release v2 for Google, Apple, email, and
-GitHub. Only Telegram sign-in needs 0.5.2. Verify these values against the
-release's `measurements.json`, as described below.
+Kits below 0.6.0 do not work against release v4. Verify these values against
+the release's `measurements.json`, as described below.
 
 The AWS signature on the attestation document still anchors authenticity
 outside Cavos. The policy only fixes *which workload* you are willing to talk
@@ -301,8 +302,8 @@ to.
 ### Strict pinning
 
 Pass only `pcr0` when you run your own enclave, or when you want the SDK to
-refuse any image you did not list. A policy with no `release` has no Sigstore
-fallback.
+refuse any image you did not list. A policy with only `pcr0` pins strictly: it
+has no Sigstore fallback. The default policy has no `pcr0` list.
 
 ```ts title="TypeScript"
 socialRecovery: {
@@ -325,16 +326,16 @@ Do not copy hashes out of older docs. Each signed release publishes three
 assets: `enclave.eif` (the image), `measurements.json`, and
 `enclave-<pcr0>.sigstore.json` (the bundle the SDK verifies).
 `measurements.json` is the output of `nitro-cli build-enclave`. For
-[release v2](https://github.com/cavos-labs/cavos-recovery/releases/tag/v2) it
+[release v4](https://github.com/cavos-labs/cavos-recovery/releases/tag/v4) it
 is:
 
-```json title="measurements.json (v2)"
+```json title="measurements.json (v4)"
 {
   "Measurements": {
     "HashAlgorithm": "Sha384 { ... }",
-    "PCR0": "36d3ceb0759af00c1c1b3f055c271b4fe628235036c67b6e3234199454167f41bfc0c6387061481ba3331740891974ea",
+    "PCR0": "466a4cbe5089af98486b1ce1953cc5acf98c40d22d9c8fb24049ca364c67cbc277c7b94263fc962e346f72627d1a51ab",
     "PCR1": "3b4a7e1b5f13c5a1000b3ed32ef8995ee13e9876329f9bc72650b918329ef9cf4e2e4d1e1e37375dab0ba56ba0974d03",
-    "PCR2": "4d1f328b79d4220fc278f9c3c41957a9a49de24061a51ba2c40370a7738afb8a8dcc8549cffa311c81a26de103d711b8"
+    "PCR2": "6b2c28394a49db055c0109c6d9035751a2230347a775c939d8695179d51e7e7669afc54590f4d5b3a65b2308afd2c7da"
   }
 }
 ```
@@ -344,7 +345,7 @@ the application. The SDK requires all three to equal the live attestation.
 To check a release yourself:
 
 ```bash title="Terminal"
-gh release download v2 -R cavos-labs/cavos-recovery -p measurements.json
+gh release download v4 -R cavos-labs/cavos-recovery -p measurements.json
 jq -r '.Measurements.PCR0' measurements.json
 ```
 
@@ -352,7 +353,7 @@ The enclave build is reproducible. Rebuild the tagged source and compare the
 `PCR0` it reports with the one above:
 
 ```bash title="Terminal"
-git clone --branch v2 https://github.com/cavos-labs/cavos-recovery
+git clone --branch v4 https://github.com/cavos-labs/cavos-recovery
 cd cavos-recovery/enclave
 ./scripts/build-enclave.sh
 ```
@@ -401,9 +402,10 @@ own **Telegram bot** per environment: see
 <Callout type="warn">
 **Not available for Google and Apple (since 0.2.6).** The enclave requires the
 `nonce` described in [What the enclave verifies](#what-the-enclave-verifies),
-which only a sign-in started by the SDK carries. A token obtained by your own
-login does not, so `submitSocialRecoveryToken` is rejected for Google and Apple
-until the SDK exposes the nonce for you to pass to your provider. Use
+which commits to a login key and only a sign-in started by the SDK carries. A
+token obtained by your own login does not, so `submitSocialRecoveryToken` is
+rejected for Google and Apple until the SDK exposes the nonce for you to pass
+to your provider. Use
 Cavos-hosted sign-in for enclave recovery in the meantime. The rest of this
 section describes the intended flow.
 </Callout>
