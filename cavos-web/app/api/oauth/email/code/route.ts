@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier'
 import { checkRateLimit, clientIp } from '@/lib/api/rateLimit'
 import { ApiResponse } from '@/lib/api/response'
+import { isClientNonce } from '@/lib/oauth/loginNonce'
 import { EnclaveError, sendCode } from '@/lib/recovery/social/enclave'
 
 /**
@@ -9,7 +10,8 @@ import { EnclaveError, sendCode } from '@/lib/recovery/social/enclave'
  *
  * The enclave generates the code and delivers it directly to the recipient's
  * mail server. This route only names the app the mail is branded for and never
- * sees the code.
+ * sees the code. `login_binding` is the client's login nonce: the enclave
+ * redeems the code only for the key that nonce names.
  */
 
 const MAX_EMAIL_LENGTH = 254
@@ -30,7 +32,7 @@ function refusal(code: string, status: number, headers?: Record<string, string>)
 }
 
 export async function POST(request: Request) {
-  let body: { app_id?: unknown; email?: unknown }
+  let body: { app_id?: unknown; email?: unknown; login_binding?: unknown }
   try {
     body = await request.json()
   } catch {
@@ -40,6 +42,7 @@ export async function POST(request: Request) {
   if (
     typeof body.app_id !== 'string' ||
     !body.app_id ||
+    !isClientNonce(body.login_binding) ||
     !email ||
     email.length > MAX_EMAIL_LENGTH ||
     !/^[^\s@]+@[^\s@]+$/.test(email)
@@ -58,7 +61,12 @@ export async function POST(request: Request) {
   if (!app) return refusal('app_not_found', 404)
 
   try {
-    await sendCode({ email, appId: app.appId, appName: enclaveAppName(app.appName) })
+    await sendCode({
+      email,
+      appId: app.appId,
+      appName: enclaveAppName(app.appName),
+      loginBinding: body.login_binding,
+    })
   } catch (error) {
     const code = error instanceof EnclaveError ? error.code : undefined
     if (code === 'code_cooldown') return refusal('code_cooldown', 429)

@@ -132,10 +132,17 @@ export async function sendCode(params: {
   email: string
   appId: string
   appName: string
+  /** The login nonce of the key that may redeem the code. */
+  loginBinding: string
 }): Promise<void> {
   await call<{ response: 'code_sent' }>(
     '/codes',
-    { email: params.email, app_id: params.appId, app_name: params.appName },
+    {
+      email: params.email,
+      app_id: params.appId,
+      app_name: params.appName,
+      login_binding: params.loginBinding,
+    },
     SEND_CODE_TIMEOUT_MS,
   )
 }
