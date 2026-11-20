@@ -147,7 +147,7 @@ accepted). Kits below 0.6.0 no longer work against the production enclave for
 email, GitHub and Telegram sign-in and for enclave recovery. Upgrade:
 
 ```bash title="Terminal"
-npm install @cavos/kit@^0.6.0
+npm install @cavos/kit@^0.6.1
 ```
 
 Apps that set a
@@ -155,6 +155,25 @@ custom `socialRecovery` / `socialRecoveryAttestation` with only `pcr0` still
 pin strictly and will not pick up signed releases, so their pinned PCR0 must
 match the enclave you run. See
 [The attestation pin](/docs/hardware-isolated-recovery#the-attestation-pin).
+
+## `this wallet's recovery is held by an earlier enclave release`
+
+The full message is `kit/social-recovery: this wallet's recovery is held by an
+earlier enclave release. Sign in again to recover it.`, exported as
+`SIGN_IN_AGAIN_TO_RECOVER`.
+
+It is expected, and happens once. An email, GitHub or Telegram user is
+recovering on a new device, and their recovery record was sealed by an earlier
+enclave release than the one they signed in with. Ask them to sign in again
+with the same provider: sign-ins in the next hour run on the release that
+holds the record, and that one recovers the wallet. See
+[One sealing key per release](/docs/hardware-isolated-recovery#one-sealing-key-per-release).
+
+Kits before 0.6.1 do not handle this and fail the recovery instead. Upgrade
+with `npm install @cavos/kit@^0.6.1`.
+
+`enclave_release_unavailable` means the release that holds the record is not
+running. That is a Cavos-side outage; retry later.
 
 ## GitHub sign-in errors
 
@@ -189,7 +208,7 @@ that is expected; see
 `telegram_rejected` as is, and other enclave failures as `enclave_unavailable`.
 
 Telegram sign-in arrived in `@cavos/kit` 0.5.2. Kits below 0.6.0 no longer
-work with the current enclave; use `^0.6.0`.
+work with the current enclave; use `^0.6.1`.
 
 If Telegram users suddenly have new, empty wallets, check whether the
 environment's bot changed. Identity is per bot, so that is expected; see

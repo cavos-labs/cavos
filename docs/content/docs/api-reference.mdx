@@ -143,6 +143,8 @@ MasterDEK. See
 | `EnclaveReleasePolicy` | `{ repository, repositoryId, ownerId, workflow, environment, minVersion }`. Default 0.6.0 values: `cavos-labs/cavos-recovery`, repository id `1333734222`, owner id `216094156`, workflow `.github/workflows/release.yml`, environment `release`, `minVersion` `3`. |
 | `DEFAULT_SOCIAL_RECOVERY_ATTESTATION` | The policy for the enclave Cavos operates: no pinned `pcr0`, only a Sigstore bundle from `{backendUrl}/api/enclave/releases/{pcr0}` that verifies against `release`. |
 | `SocialRecoveryCredential`, `createSocialRecoveryCredential` | The in-memory social credential. `createSocialRecoveryCredential(idToken)` takes only the token. |
+| `SIGN_IN_AGAIN_TO_RECOVER` | 0.6.1. The error a recovery throws when the record was sealed by an earlier enclave release than the sign-in. The next sign-in within the hour runs on that release. See [One sealing key per release](/docs/hardware-isolated-recovery#one-sealing-key-per-release). |
+| `LOGIN_RELEASE_MISMATCH` | 0.6.1. `"login_release_mismatch"`, the backend's refusal code behind `SIGN_IN_AGAIN_TO_RECOVER`. |
 | `SocialRecoveryProvider`, `SocialRecoveryAction`, `SocialRecoveryResult` | Types. `SocialRecoveryProvider` is `"google" \| "apple" \| "email" \| "github" \| "telegram"`. |
 
 ## Passkeys

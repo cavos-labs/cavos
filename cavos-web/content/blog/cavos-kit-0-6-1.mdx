@@ -1,0 +1,92 @@
+---
+title: "Cavos cannot decrypt recovery backups (Kit 0.6.1)"
+date: "2026-11-20"
+excerpt: "Each enclave release now seals under a KMS key nobody can reconfigure, Cavos included. Kit 0.6.1 keeps recovery working across releases."
+category: "Release"
+ogQuote: "The key policy is final. Nobody at Cavos can rewrite it to read a recovery backup."
+slug: "cavos-kit-0-6-1"
+faq:
+  - question: "Can Cavos decrypt a user's recovery backup?"
+    answer: "Not by changing a key policy. Since 20 November 2026 the KMS key that unlocks recovery backups only decrypts for one measured enclave image, and its policy grants nobody, the root user of the Cavos AWS account included, the right to change it. What remains is AWS itself, publishing a new enclave image, and the sign-in flow Cavos hosts."
+  - question: "Do I have to change anything in my app?"
+    answer: "Upgrade to @cavos/kit 0.6.1 with npm install @cavos/kit@^0.6.1. There is no API change. Kit 0.6.0 keeps working against the current enclave; 0.6.1 is what keeps email, GitHub and Telegram recovery working once a second enclave release ships."
+  - question: "What happens to recovery backups when a new enclave release ships?"
+    answer: "Nothing is migrated. A device that still has the wallet seals it again with the new release at the user's next sign-in. A user who lost their device before that recovers through the release that sealed their backup, which Cavos keeps available. Email, GitHub and Telegram users in that case sign in twice."
+  - question: "How long can a backup sealed by an earlier release be recovered?"
+    answer: "While that release's signed release is valid, which is 365 days from its build. A user who signs in once in that time is moved to the newer release. Keep a second factor, such as a passkey, for users who might not."
+---
+
+`@cavos/kit` **0.6.1** is on npm, and the recovery enclave behind every Cavos [embedded wallet](/embedded-wallet) now seals under a KMS key **nobody can reconfigure**. Since 20 November 2026, no one at Cavos can read a user's recovery backup by rewriting a key policy.
+
+The backend change is live. Kit 0.6.0 keeps working; upgrade to 0.6.1 to keep email, GitHub and Telegram recovery working once a second enclave release ships.
+
+```bash
+npm install @cavos/kit@^0.6.1
+```
+
+Docs: [One sealing key per release](https://docs.cavos.xyz/docs/hardware-isolated-recovery#one-sealing-key-per-release), [Troubleshooting](https://docs.cavos.xyz/docs/troubleshooting#this-wallets-recovery-is-held-by-an-earlier-enclave-release), [API reference](https://docs.cavos.xyz/docs/api-reference).
+
+## What was true before
+
+Hardware-isolated recovery keeps a sealed copy of each wallet's MasterDEK. The enclave unwraps one root key at startup and derives every record's key from it. That root key is wrapped by AWS KMS, under a policy that releases it only to an enclave measuring to the pinned `PCR0`.
+
+The weak point was the policy itself. An administrator of the Cavos AWS account could rewrite it, name themselves, and unwrap the root key. EventBridge alerts made that loud. They did not prevent it, and our own [security notes](https://github.com/cavos-labs/cavos-recovery/blob/main/SECURITY.md) listed it as a residual risk.
+
+## What changed
+
+Each enclave release now has a KMS key of its own, and its policy is **sealed** to that release's image:
+
+- Only an enclave measuring to that release's `PCR0` can decrypt.
+- No statement allows writing the policy, creating a grant, or encrypting with the key.
+- Disabling the key and scheduling its deletion stay allowed. They stop the release and reveal nothing.
+
+KMS evaluates the key policy for every caller, the root user included, so a policy that grants no write is final. The key of [release v4](https://github.com/cavos-labs/cavos-recovery/releases/tag/v4), the production enclave, was sealed on 20 November 2026.
+
+How we checked it:
+
+1. **On a throwaway key first.** We created a key through the same Terraform module, sealed it, and then tried, as the root user of the account, everything that would reach the root key: rewriting the policy, creating a grant, decrypting without an attestation, encrypting a chosen key, generating a new one, re-encrypting under another key. Every call was denied. Disabling, enabling and scheduling deletion still worked.
+2. **A reversible rehearsal on the production key.** We applied the new policy while keeping the right to rewrite it, restarted the enclave, and confirmed it came back with the same login signing key. That proves it unwrapped the same root key.
+3. **The seal.** We applied the final policy, checked that KMS refuses to write it, and restarted the enclave once more.
+
+The module and the checking script are public in [`cavos-recovery/infra`](https://github.com/cavos-labs/cavos-recovery/tree/main/infra). The live policy can only be read from inside the AWS account.
+
+## What you are still trusting
+
+This narrows the trust model; it does not empty it.
+
+- **AWS.** Attestation and KMS still decide what an enclave is. An AWS Support case on the account is the documented way back into a key whose policy locks everyone out.
+- **The next image.** A new release is a new image with a new key. Devices seal their backup into it at the next sign-in, so its code matters as much as v4's. Releases are signed in the `release` environment of `cavos-labs/cavos-recovery` and published in Rekor. Requiring approvers from outside Cavos is the next step.
+- **The sign-in.** Recovery follows whoever completes a fresh sign-in as the enrolled identity. With Cavos-hosted login, that includes the service that runs the flow.
+
+## Releases from now on
+
+A sealed key can never be moved to another image, so **nothing is migrated between releases**. A recovery record is opened only by the release that sealed it.
+
+- **A device that still has the wallet** seals it again with the newer release at the user's next sign-in. The backend stops handing it the old record and the vault enrols as if the wallet had none. Nothing changes for the app.
+- **A user who lost their device before that** recovers through the release that sealed their record. Cavos keeps earlier releases available for exactly that.
+- **Email, GitHub and Telegram users** in that case sign in twice. The enclave signs those tokens with a key of its own release, so a token from the newest release does not open a record of an earlier one. Kit 0.6.1 handles it: the first connect fails with `SIGN_IN_AGAIN_TO_RECOVER`, and the next sign-in within the hour runs on the release that holds the record. Google and Apple tokens are signed by the provider, so those users see no difference.
+
+An earlier release can recover only while its signed release is valid, 365 days from its build. Release v4 expires on 19 November 2027. A user who signs in once in that time moves forward on their own; one who does not, and then loses every device, can no longer recover through the enclave. Keep a second factor such as a [passkey](https://docs.cavos.xyz/docs/passkeys).
+
+## What shipped in 0.6.1
+
+- `SIGN_IN_AGAIN_TO_RECOVER` and `LOGIN_RELEASE_MISMATCH`, exported from `@cavos/kit`.
+- Sign-ins can run on a named enclave release, start to finish: the email code, the session and the verification.
+- `LoginStart` carries `enclaveRelease` when a login does not run on the current release.
+- An enrolment refused because the login ran on an earlier release is left for the next sign-in, since the device already holds the wallet.
+
+The vault on `vault.cavos.xyz` already serves 0.6.1.
+
+## What did not change
+
+The integration API is unchanged. The enclave still wraps the MasterDEK; it does not sign transfers. Wallet keys never leave the user's device in plaintext, and the enclave release that runs today is the same v4 image as before this change.
+
+## What to read next
+
+- [Hardware-isolated recovery](https://docs.cavos.xyz/docs/hardware-isolated-recovery): the trust model, one sealing key per release, release v4
+- [cavos-recovery on GitHub](https://github.com/cavos-labs/cavos-recovery): the enclave source, the sealed key module and [SECURITY.md](https://github.com/cavos-labs/cavos-recovery/blob/main/SECURITY.md)
+- [Cavos Kit 0.5.0](/blog/cavos-kit-0-5-0): the open-source enclave and signed releases
+- [Sign in with Telegram (Kit 0.5.2)](/blog/cavos-kit-0-5-2): Telegram sign-in and the first signed production release
+- [Non-custodial embedded wallets](/blog/non-custodial-embedded-wallet): custody models and what each one trusts
+- [Changelog](/blog): other product updates
+- [embedded wallet](/embedded-wallet), [embedded wallets](/embedded-wallet), and the [embedded wallet SDK](/embedded-wallet): custody, key models, and how to choose.

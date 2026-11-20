@@ -148,7 +148,9 @@ things hold, and each is enforced by something other than a Cavos promise.
 
 **Nobody can read the recovery key, not even the people who run it.** The
 private half is sealed under a key AWS KMS releases only to an
-enclave whose measured image matches the one that sealed it. There is no console,
+enclave whose measured image matches the one that sealed it, and that rule is
+final: no one, Cavos's AWS administrators included, can change it (see
+[One sealing key per release](#one-sealing-key-per-release)). There is no console,
 no debugger, no support tool that reveals it: an enclave started in debug mode
 reports zeroed measurements, which no pinned policy accepts, and KMS refuses to
 release the key to it. A
@@ -175,7 +177,10 @@ formality:
   what it claims. Pin the digest, or accept only releases signed by the
   workflow below, and review changes the way you would review a key rotation.
 - **AWS.** Attestation and KMS are what make the measurement meaningful
-  and the sealed key openable.
+  and the sealed key openable. Each release's KMS key policy is final, so a
+  Cavos AWS administrator cannot widen it. What is left is AWS itself,
+  including an AWS Support case on the account, which is the documented way
+  back into a key whose policy locks everyone out.
 - **The image-upgrade policy.** A new digest is a new trust decision unless
   your installed policy includes `release` and the new image was signed by
   that policy's workflow on a `vN` tag. You are then trusting that GitHub
@@ -193,6 +198,47 @@ enclave or use one without a sign-in the enclave accepts.
 
 Keep a second factor regardless. Encourage a passkey or a second device, and
 treat social recovery as one path among several rather than the only one.
+
+## One sealing key per release
+
+Since 20 November 2026 each enclave release seals under a KMS key of its own,
+and that key's policy is **sealed** to the release's image:
+
+- Only an enclave measuring to that release's `PCR0` can decrypt with it.
+- Nobody can write the policy, create a grant, or encrypt with the key. That
+  includes the root user of the AWS account that owns it.
+- The key can still be disabled or scheduled for deletion. That stops the
+  release and reveals nothing.
+
+Before this, an administrator of the Cavos AWS account could rewrite the key
+policy and obtain the root sealing key. Alerts made that loud; they did not
+prevent it. The key of [release v4](#release-v4) was sealed on 20 November
+2026. The Terraform that defines a sealed key and the script that checks one
+are public in
+[`cavos-recovery/infra`](https://github.com/cavos-labs/cavos-recovery/tree/main/infra).
+The live policy can only be read from inside the AWS account.
+
+### Nothing is migrated between releases
+
+No step moves a key to another image, so a recovery record can only be opened
+by the release that sealed it. When a new release ships:
+
+- **A device that still has the wallet** seals it again with the new release at
+  the user's next sign-in. There is nothing to do in your app.
+- **A user who lost their device before that** recovers through the release
+  that sealed their record. Cavos keeps earlier releases available for that.
+  Google and Apple users see no difference.
+- **Email, GitHub and Telegram users** in that case sign in twice. Those
+  tokens are signed by the enclave with a key of its release, so the first
+  connect fails with `SIGN_IN_AGAIN_TO_RECOVER`, and the next sign-in within the
+  hour runs on the release that holds the record. This needs `@cavos/kit`
+  0.6.1. See
+  [Troubleshooting](/docs/troubleshooting#this-wallets-recovery-is-held-by-an-earlier-enclave-release).
+
+An earlier release can only recover while its signed release is still valid:
+365 days from its build. A user who signs in once in that time is moved to
+the newer release. One who does not, and then loses every device, can no
+longer recover through the enclave, so keep a second factor such as a passkey.
 
 ## Turning it on
 
@@ -251,7 +297,7 @@ make the SDK accept one. A new enclave deploy therefore does not require an SDK
 bump, as long as the release was signed by the workflow below. Kits below 0.6.0
 no longer work against the production enclave for email, GitHub and Telegram
 sign-in and enclave recovery, because the wire protocol changed. Upgrade with
-`npm install @cavos/kit@^0.6.0`.
+`npm install @cavos/kit@^0.6.1`.
 
 The default `release` policy shipped in 0.6.0:
 
@@ -463,6 +509,7 @@ pool, they describe that design; none of it exists now.
 
 ## Related
 
+- [Cavos Kit 0.6.1](https://cavos.xyz/blog/cavos-kit-0-6-1): a sealed KMS key per enclave release, and the second sign-in across releases.
 - [Cavos Kit 0.5.0](https://cavos.xyz/blog/cavos-kit-0-5-0): signed enclave releases and GitHub sign-in.
 - [Cavos Kit 0.5.2](https://cavos.xyz/blog/cavos-kit-0-5-2): Telegram sign-in and enclave release v2.
 - [Recovery codes](/docs/recovery-codes): why Cavos wallets do not use them.

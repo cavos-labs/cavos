@@ -300,7 +300,8 @@ export default function BlogIndexPage() {
         <p className="mt-3 max-w-2xl text-sm text-black/45 leading-relaxed">
           Release notes and security write-ups for @cavos/kit, including{' '}
           <Link href="/blog/cavos-kit-0-5-0">our open-source enclave and Kit 0.5.0</Link>
-          {' '}and <Link href="/blog/cavos-kit-0-5-2">Sign in with Telegram (Kit 0.5.2)</Link>.
+          {', '}<Link href="/blog/cavos-kit-0-5-2">Sign in with Telegram (Kit 0.5.2)</Link>
+          {' '}and <Link href="/blog/cavos-kit-0-6-1">Cavos cannot decrypt recovery backups (Kit 0.6.1)</Link>.
         </p>
         {changelogPosts.length === 0 ? (
           <p className="mt-8 text-black/40 text-sm">No posts yet.</p>
