@@ -111,6 +111,20 @@ describe('verifyUserToken', () => {
         assert.equal(await verifyUserToken(req(token), () => keys), null);
     });
 
+    it('accepts an enclave token signed by a retired release, and only from its relay', async () => {
+        const retired = 'https://v4.enclave.example';
+        const byUrl = (url: string) => (url.startsWith(retired) ? enclaveKeys : keys);
+        const token = await signEnclave({ iss: ENCLAVE, aud: 'cavos-email', sub: 'a'.repeat(64) });
+
+        assert.equal(await verifyUserToken(req(token), byUrl), null);
+        process.env.CAVOS_RECOVERY_RETIRED_ENCLAVE_URLS = JSON.stringify({ 4: retired });
+        try {
+            assert.equal((await verifyUserToken(req(token), byUrl))?.sub, 'a'.repeat(64));
+        } finally {
+            delete process.env.CAVOS_RECOVERY_RETIRED_ENCLAVE_URLS;
+        }
+    });
+
     it("rejects Firebase's securetoken ID token", async () => {
         process.env.FIREBASE_PROJECT_ID = 'cavos-test';
         const token = await sign({ iss: 'https://securetoken.google.com/cavos-test', aud: 'cavos-test', sub: 'uid-1' });

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { checkRateLimit, clientIp } from '@/lib/api/rateLimit'
 import { ApiResponse } from '@/lib/api/response'
 import { EnclaveError, runJob } from '@/lib/recovery/social/enclave'
+import { readEnclaveReleases, signInUrl } from '@/lib/recovery/social/releases'
 import { verifyOAuthState } from '@/lib/oauth/state'
 import { telegramCallbackUrl, telegramCredentials } from '@/lib/oauth/telegram'
 
@@ -18,6 +19,8 @@ import { telegramCallbackUrl, telegramCredentials } from '@/lib/oauth/telegram'
 
 interface VerifyBody {
   session_id?: unknown
+  /** The release whose enclave opened the session, when it is not the current one. */
+  enclave_release?: unknown
   job?: {
     client_public_key_b64?: unknown
     nonce_b64?: unknown
@@ -84,10 +87,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'invalid_grant' }, { status: 400 })
   }
 
+  const enclaveUrl = signInUrl(readEnclaveReleases(), body.enclave_release)
+  if (!enclaveUrl) {
+    return NextResponse.json({ error: 'enclave_release_unavailable' }, { status: 400 })
+  }
+
   try {
     const { botId, clientSecret } = await telegramCredentials(grant.environment_id ?? null)
     const { sealed_result } = await runJob({
       sessionId: body.session_id,
+      enclaveUrl,
       job: {
         client_public_key_b64: job.client_public_key_b64,
         nonce_b64: job.nonce_b64,

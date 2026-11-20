@@ -45,6 +45,12 @@ export class EnclaveError extends Error {
   }
 }
 
+interface CallOptions {
+  timeoutMs?: number
+  /** The relay of another release than the current one. Every relay takes the same secret. */
+  enclaveUrl?: string
+}
+
 function config() {
   const baseUrl = process.env.CAVOS_RECOVERY_ENCLAVE_URL
   const sharedSecret = process.env.CAVOS_RECOVERY_RELAY_SECRET
@@ -59,10 +65,10 @@ function config() {
 async function call<T>(
   path: string,
   body: unknown,
-  timeoutMs = REQUEST_TIMEOUT_MS,
+  { timeoutMs = REQUEST_TIMEOUT_MS, enclaveUrl }: CallOptions = {},
 ): Promise<T> {
   const { baseUrl, sharedSecret } = config()
-  const response = await fetch(new URL(path, baseUrl), {
+  const response = await fetch(new URL(path, enclaveUrl ?? baseUrl), {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -117,9 +123,12 @@ export async function pingEnclave(): Promise<void> {
  * Synchronous: the enclave is already running, so this returns a ready session
  * in one round trip. The old flow returned `202 starting` and left the browser
  * polling for up to two minutes while a VM booted.
+ *
+ * `enclaveUrl` opens it on the release that sealed the record the session is
+ * for, when that is not the current one.
  */
-export function openSession(sessionId: string): Promise<OpenedSession> {
-  return call<OpenedSession>('/sessions', { session_id: sessionId })
+export function openSession(sessionId: string, enclaveUrl?: string): Promise<OpenedSession> {
+  return call<OpenedSession>('/sessions', { session_id: sessionId }, { enclaveUrl })
 }
 
 /**
@@ -134,6 +143,7 @@ export async function sendCode(params: {
   appName: string
   /** The login nonce of the key that may redeem the code. */
   loginBinding: string
+  enclaveUrl?: string
 }): Promise<void> {
   await call<{ response: 'code_sent' }>(
     '/codes',
@@ -143,7 +153,7 @@ export async function sendCode(params: {
       app_name: params.appName,
       login_binding: params.loginBinding,
     },
-    SEND_CODE_TIMEOUT_MS,
+    { timeoutMs: SEND_CODE_TIMEOUT_MS, enclaveUrl: params.enclaveUrl },
   )
 }
 
@@ -182,6 +192,9 @@ export interface TelegramRedemption {
  * OAuth app credentials the enclave redeems it with (it alone holds the PKCE
  * verifier). The Telegram login job carries `telegram` in the same way. The
  * client secrets are forwarded to the enclave and never logged.
+ *
+ * A session lives in the enclave that opened it, so a job for a session opened
+ * with an `enclaveUrl` has to name the same one.
  */
 export function runJob(params: {
   sessionId: string
@@ -189,12 +202,17 @@ export function runJob(params: {
   authChallengeHash?: string
   github?: GithubRedemption
   telegram?: TelegramRedemption
+  enclaveUrl?: string
 }): Promise<JobResult> {
-  return call<JobResult>('/jobs', {
-    session_id: params.sessionId,
-    job: params.job,
-    auth_challenge_hash: params.authChallengeHash,
-    github: params.github,
-    telegram: params.telegram,
-  })
+  return call<JobResult>(
+    '/jobs',
+    {
+      session_id: params.sessionId,
+      job: params.job,
+      auth_challenge_hash: params.authChallengeHash,
+      github: params.github,
+      telegram: params.telegram,
+    },
+    { enclaveUrl: params.enclaveUrl },
+  )
 }
