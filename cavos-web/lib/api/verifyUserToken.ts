@@ -10,6 +10,7 @@
 
 import * as jose from 'jose';
 import { nonceNamesApp } from '../oauth/loginNonce';
+import { retiredEnclaveUrls } from '../recovery/social/releases';
 
 type Issuer = {
     jwksUrl: string;
@@ -20,6 +21,12 @@ type Issuer = {
      * tokens apart; the nonce names the app instead (lib/oauth/loginNonce).
      */
     appInNonce?: true;
+    /**
+     * The enclave signs these with a key of its release, so a user recovering
+     * a record an earlier release sealed carries a token only that release's
+     * key verifies.
+     */
+    signedByEnclave?: true;
 };
 
 const ISSUERS: Record<string, Issuer> = {
@@ -35,16 +42,19 @@ const ISSUERS: Record<string, Issuer> = {
     },
     'https://enclave.cavos.xyz': {
         jwksUrl: 'https://enclave.cavos.xyz/.well-known/jwks.json',
+        signedByEnclave: true,
         audience: () => 'cavos-email',
         appInNonce: true,
     },
     'https://enclave.cavos.xyz/github': {
         jwksUrl: 'https://enclave.cavos.xyz/.well-known/jwks.json',
+        signedByEnclave: true,
         audience: () => 'cavos-github',
         appInNonce: true,
     },
     'https://enclave.cavos.xyz/telegram': {
         jwksUrl: 'https://enclave.cavos.xyz/.well-known/jwks.json',
+        signedByEnclave: true,
         audience: () => 'cavos-telegram',
         appInNonce: true,
     },
@@ -64,6 +74,30 @@ function keySet(url: string) {
         keySets.set(url, set);
     }
     return set;
+}
+
+function jwksUrls(issuer: Issuer): string[] {
+    if (!issuer.signedByEnclave) return [issuer.jwksUrl];
+    const retired = retiredEnclaveUrls().map((url) => new URL('/.well-known/jwks.json', url).href);
+    return [issuer.jwksUrl, ...retired];
+}
+
+/** Verify against the first key set that holds the token's key. */
+async function verifyWithAny(
+    token: string,
+    urls: string[],
+    resolveKeys: (url: string) => jose.JWTVerifyGetKey,
+    options: jose.JWTVerifyOptions,
+): Promise<jose.JWTVerifyResult> {
+    let failure: unknown;
+    for (const url of urls) {
+        try {
+            return await jose.jwtVerify(token, resolveKeys(url), options);
+        } catch (error) {
+            failure = error;
+        }
+    }
+    throw failure;
 }
 
 export function bearerToken(request: Request): string | null {
@@ -108,7 +142,7 @@ export async function verifyUserToken(
     const config = issuer ? ISSUERS[issuer] : undefined;
     if (!config) return null;
     try {
-        const { payload } = await jose.jwtVerify(token, resolveKeys(config.jwksUrl), {
+        const { payload } = await verifyWithAny(token, jwksUrls(config), resolveKeys, {
             issuer,
             audience: config.audience(),
         });

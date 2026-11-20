@@ -7,6 +7,13 @@ import {
   providerPolicy,
 } from '@/lib/recovery/social/config'
 import { openSession } from '@/lib/recovery/social/enclave'
+import { loadEnrollment } from '@/lib/recovery/social/enrollments'
+import {
+  isRelease,
+  issuedByEnclave,
+  readEnclaveReleases,
+  supersedes,
+} from '@/lib/recovery/social/releases'
 import type { SocialRecoveryAction } from '@/lib/recovery/social/types'
 import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier'
 import { checkRateLimit, clientIp } from '@/lib/api/rateLimit'
@@ -47,6 +54,11 @@ interface StartBody {
    * Persist treats that sealed wrap as complete (no on-chain confirm).
    */
   dek_enroll?: boolean
+  /**
+   * The enclave release the credential was issued by, when the client signed
+   * in with an earlier one to recover. Absent means the current release.
+   */
+  login_release?: unknown
 }
 
 export async function POST(request: Request) {
@@ -69,6 +81,9 @@ export async function POST(request: Request) {
   }
   if (!/^[A-Za-z0-9_-]{43}$/.test(body.auth_challenge)) {
     return NextResponse.json({ error: 'invalid_auth_challenge' }, { status: 400 })
+  }
+  if (body.login_release !== undefined && !isRelease(body.login_release)) {
+    return NextResponse.json({ error: 'invalid_login_release' }, { status: 400 })
   }
 
   // Abuse control. Starting a session is unauthenticated and each one holds a
@@ -186,11 +201,7 @@ export async function POST(request: Request) {
     ...providerPolicy(provider, providerAudiences(environmentPolicy.social_recovery_audiences)),
   }
 
-  const { data: enrollment } = await admin
-    .from('social_recovery_enrollments')
-    .select('id, onchain_status, provider')
-    .eq('wallet_id', wallet.id)
-    .maybeSingle()
+  const enrollment = await loadEnrollment(admin, wallet.id)
 
   // A wallet that already has a record, pending or active, is not turned away
   // and not answered from the database. The session below hands the client the
@@ -260,6 +271,35 @@ export async function POST(request: Request) {
     }
   }
 
+  // A record is opened by the release that sealed it. An enrolment whose
+  // sealed DEK belongs to an earlier release is the exception: it is sealed
+  // again by the current one, so the client is not handed the old record and
+  // enrols as if the wallet had none.
+  const releases = readEnclaveReleases()
+  const sealsDek = body.action === 'enroll' && body.dek_enroll === true
+  const record = body.action === 'recover' || existingEnrollment ? enrollment : null
+  const sealedBy = record && !supersedes(releases.current, record, sealsDek) ? record : null
+  const release = sealedBy?.enclave_release ?? releases.current
+  const enclaveUrl = releases.urlOf(release)
+  if (!enclaveUrl) {
+    console.error(`[social-recovery] enclave release ${release} is not deployed`)
+    return NextResponse.json({ error: 'enclave_release_unavailable' }, { status: 503 })
+  }
+
+  // A token the enclave issued verifies only on the release that issued it.
+  // Sent to another one the job would fail without a reason, so the client is
+  // told here which release to sign in with.
+  if (
+    issuedByEnclave(provider) &&
+    release !== null &&
+    release !== (body.login_release ?? releases.current)
+  ) {
+    return NextResponse.json(
+      { error: 'login_release_mismatch', enclave_release: release },
+      { status: 409 },
+    )
+  }
+
   const sessionId = crypto.randomUUID()
   const expiresAt = new Date(Date.now() + 10 * 60_000).toISOString()
   const { error: insertError } = await admin.from('social_recovery_sessions').insert({
@@ -277,7 +317,9 @@ export async function POST(request: Request) {
     auth_challenge_hash: authChallengeHash,
     // Only send the column when it is true so a deploy that lands before the
     // dek_enroll migration does not reject every session insert.
-    ...(body.action === 'enroll' && body.dek_enroll === true ? { dek_enroll: true } : {}),
+    ...(sealsDek ? { dek_enroll: true } : {}),
+    // The same rule for the release: absent until releases are tracked.
+    ...(release !== null ? { enclave_release: release } : {}),
     status: 'ready',
     expires_at: expiresAt,
   })
@@ -291,7 +333,7 @@ export async function POST(request: Request) {
 
   let opened
   try {
-    opened = await openSession(sessionId)
+    opened = await openSession(sessionId, enclaveUrl)
   } catch (error) {
     // Mark the row terminal so the challenge is released and the browser can
     // retry immediately with the same credential.
@@ -303,16 +345,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'enclave_unavailable' }, { status: 503 })
   }
 
-  const sealedRecord =
-    body.action === 'recover' || existingEnrollment
-      ? (
-          await admin
-            .from('social_recovery_enrollments')
-            .select('sealed_record')
-            .eq('wallet_id', wallet.id)
-            .maybeSingle()
-        ).data?.sealed_record
-      : undefined
+  const sealedRecord = sealedBy
+    ? (
+        await admin
+          .from('social_recovery_enrollments')
+          .select('sealed_record')
+          .eq('wallet_id', wallet.id)
+          .maybeSingle()
+      ).data?.sealed_record
+    : undefined
 
   return NextResponse.json({
     session_id: sessionId,

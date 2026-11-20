@@ -7,6 +7,8 @@ import {
   providerPolicy,
 } from '@/lib/recovery/social/config'
 import { identityCommitmentHex } from '@/lib/recovery/social/identityCommitment'
+import { loadEnrollment } from '@/lib/recovery/social/enrollments'
+import { readEnclaveReleases, supersedes } from '@/lib/recovery/social/releases'
 
 /**
  * Submit the encrypted job and return the enclave's result.
@@ -80,6 +82,7 @@ export async function POST(
       sessionId: id,
       job: body as Required<EncryptedJob>,
       authChallengeHash: session.auth_challenge_hash,
+      enclaveUrl: enclaveUrlOf(session),
     })
     // A successful enrolment has to be persisted here. The enclave's output is
     // the only copy of the sealed record, and losing it means the wallet can
@@ -111,7 +114,7 @@ export async function POST(
 }
 
 const SESSION_COLUMNS =
-  'wallet_id, app_id, environment_id, action, provider, status, expires_at, auth_challenge_hash'
+  'wallet_id, app_id, environment_id, action, provider, status, expires_at, auth_challenge_hash, dek_enroll'
 
 interface SessionRow {
   wallet_id: string
@@ -120,24 +123,32 @@ interface SessionRow {
   provider: string
   action: string
   dek_enroll?: boolean
+  /** The release whose enclave opened the session. Null before releases were tracked. */
+  enclave_release: number | null
+}
+
+function enclaveUrlOf(session: SessionRow): string {
+  const enclaveUrl = readEnclaveReleases().urlOf(session.enclave_release)
+  if (!enclaveUrl) throw new Error(`enclave release ${session.enclave_release} is not deployed`)
+  return enclaveUrl
 }
 
 async function loadSession(
   admin: ReturnType<typeof createAdminClient>,
   id: string,
 ): Promise<(SessionRow & { status: string; expires_at: string; auth_challenge_hash: string }) | null> {
-  const withDek = await admin
+  const withRelease = await admin
     .from('social_recovery_sessions')
-    .select(`${SESSION_COLUMNS}, dek_enroll`)
+    .select(`${SESSION_COLUMNS}, enclave_release`)
     .eq('id', id)
     .maybeSingle()
-  if (!withDek.error) return withDek.data
-  const withoutDek = await admin
+  if (!withRelease.error) return withRelease.data
+  const { data } = await admin
     .from('social_recovery_sessions')
     .select(SESSION_COLUMNS)
     .eq('id', id)
     .maybeSingle()
-  return withoutDek.data
+  return data ? { ...data, enclave_release: null } : null
 }
 
 /**
@@ -202,17 +213,19 @@ async function persistEnrollment(
 
   // One record per wallet. A session opened before another one finished must
   // not replace what that one stored: on Starknet the first authority may
-  // already be on-chain, where it can never be changed.
-  const { data: existing } = await admin
-    .from('social_recovery_enrollments')
-    .select('onchain_status')
-    .eq('wallet_id', session.wallet_id)
-    .maybeSingle()
-  if (existing && existing.onchain_status !== 'disabled') {
+  // already be on-chain, where it can never be changed. The one record that is
+  // replaced is a sealed DEK from an earlier enclave release, which the device
+  // has just sealed again with this one.
+  const dekSealed = session.dek_enroll === true
+  const existing = await loadEnrollment(admin, session.wallet_id)
+  if (
+    existing &&
+    existing.onchain_status !== 'disabled' &&
+    !supersedes(session.enclave_release, existing, dekSealed)
+  ) {
     throw new Error('wallet already has a recovery enrolment')
   }
 
-  const dekSealed = session.dek_enroll === true
   const { error } = await admin.from('social_recovery_enrollments').upsert(
     {
       wallet_id: session.wallet_id,
@@ -234,6 +247,7 @@ async function persistEnrollment(
         dekSealed || String(wallet.network).startsWith('stellar-') ? 'active' : 'pending',
       // Same deploy-before-migration rule as dek_enroll: omit the false default.
       ...(dekSealed ? { dek_sealed: true } : {}),
+      ...(session.enclave_release !== null ? { enclave_release: session.enclave_release } : {}),
       updated_at: new Date().toISOString(),
     },
     { onConflict: 'wallet_id' },

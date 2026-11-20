@@ -4,6 +4,7 @@ import { checkRateLimit, clientIp } from '@/lib/api/rateLimit'
 import { ApiResponse } from '@/lib/api/response'
 import { isClientNonce } from '@/lib/oauth/loginNonce'
 import { EnclaveError, sendCode } from '@/lib/recovery/social/enclave'
+import { readEnclaveReleases, signInUrl } from '@/lib/recovery/social/releases'
 
 /**
  * Ask the enclave to mail a sign-in code to an address.
@@ -32,7 +33,7 @@ function refusal(code: string, status: number, headers?: Record<string, string>)
 }
 
 export async function POST(request: Request) {
-  let body: { app_id?: unknown; email?: unknown; login_binding?: unknown }
+  let body: { app_id?: unknown; email?: unknown; login_binding?: unknown; enclave_release?: unknown }
   try {
     body = await request.json()
   } catch {
@@ -60,12 +61,16 @@ export async function POST(request: Request) {
   const app = await resolveAppIdentifier(body.app_id)
   if (!app) return refusal('app_not_found', 404)
 
+  const enclaveUrl = signInUrl(readEnclaveReleases(), body.enclave_release)
+  if (!enclaveUrl) return refusal('enclave_release_unavailable', 400)
+
   try {
     await sendCode({
       email,
       appId: app.appId,
       appName: enclaveAppName(app.appName),
       loginBinding: body.login_binding,
+      enclaveUrl,
     })
   } catch (error) {
     const code = error instanceof EnclaveError ? error.code : undefined
