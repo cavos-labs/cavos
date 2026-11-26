@@ -9,6 +9,7 @@
  */
 
 import * as jose from 'jose';
+import type { ExternalIdentity } from '../identity/external';
 import { nonceNamesApp } from '../oauth/loginNonce';
 import { retiredEnclaveUrls } from '../recovery/social/releases';
 
@@ -126,10 +127,15 @@ export interface VerifiedUser {
  * the token is absent, from an unknown issuer, expired, or otherwise invalid.
  *
  * `resolveKeys` is injectable so tests can sign with a local key.
+ *
+ * `externalIdentity` names the identity provider of an app that signs its
+ * users in itself. It is only asked for when the token's issuer is not one
+ * Cavos signs in with, so a Cavos login costs no extra lookup.
  */
 export async function verifyUserToken(
     request: Request,
     resolveKeys: (url: string) => jose.JWTVerifyGetKey = keySet,
+    externalIdentity?: () => Promise<ExternalIdentity | null>,
 ): Promise<VerifiedUser | null> {
     const token = bearerToken(request);
     if (!token) return null;
@@ -140,7 +146,7 @@ export async function verifyUserToken(
         return null;
     }
     const config = issuer ? ISSUERS[issuer] : undefined;
-    if (!config) return null;
+    if (!config) return verifyExternalToken(token, issuer, await externalIdentity?.(), resolveKeys);
     try {
         const { payload } = await verifyWithAny(token, jwksUrls(config), resolveKeys, {
             issuer,
@@ -152,6 +158,32 @@ export async function verifyUserToken(
             sub: payload.sub,
             issuedAt: typeof payload.iat === 'number' ? payload.iat : null,
             issuedTo: (appId) => !config.appInNonce || nonceNamesApp(nonce, appId),
+        };
+    } catch {
+        return null;
+    }
+}
+
+/** Verify a token of the identity provider the app registered for itself. */
+async function verifyExternalToken(
+    token: string,
+    issuer: string | undefined,
+    identity: ExternalIdentity | null | undefined,
+    resolveKeys: (url: string) => jose.JWTVerifyGetKey,
+): Promise<VerifiedUser | null> {
+    if (!identity || issuer !== identity.issuer) return null;
+    try {
+        const { payload } = await jose.jwtVerify(token, resolveKeys(identity.jwksUrl), {
+            issuer: identity.issuer,
+            audience: identity.audience,
+            algorithms: ['RS256', 'ES256'],
+        });
+        if (typeof payload.sub !== 'string' || !payload.sub || typeof payload.exp !== 'number') return null;
+        return {
+            sub: payload.sub,
+            issuedAt: typeof payload.iat === 'number' ? payload.iat : null,
+            // The provider was looked up for the app of this request, so its tokens are that app's.
+            issuedTo: () => true,
         };
     } catch {
         return null;

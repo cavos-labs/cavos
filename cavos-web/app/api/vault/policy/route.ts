@@ -3,9 +3,11 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { resolveAppIdentifier } from '@/lib/apps/resolveAppIdentifier'
 import { DEFAULT_VAULT_POLICY, parseVaultPolicy, type VaultPolicy } from '@/lib/vault/policy'
 import { readStoredPrivacy, toVaultPrivacyConfig } from '@/lib/vault/privacy'
+import { externalIdentityOf } from '@/lib/identity/external'
 
 // Read by the vault iframe when an app embeds it: which sites may embed it
-// for this app, and what it may sign without asking.
+// for this app, what it may sign without asking, and whose sign-in opens a
+// wallet.
 export async function GET(request: NextRequest) {
   const identifier = request.nextUrl.searchParams.get('app_id')
   if (!identifier) return NextResponse.json({ error: 'Missing app_id' }, { status: 400 })
@@ -33,13 +35,24 @@ export async function GET(request: NextRequest) {
       policy = { overLimit: 'ask', limits: [] }
     }
   }
+  const external = resolved.environmentId ? await externalIdentityOf(resolved.environmentId) : null
   const stored = readStoredPrivacy(app.vault_privacy)
   const privacy = stored ? toVaultPrivacyConfig(stored) : {}
   return NextResponse.json({
     origins: embeddingOrigins(app.allowed_web_origins, app.callback_urls),
     policy,
+    identity: {
+      google: clientIds(process.env.GOOGLE_CLIENT_ID),
+      apple: clientIds(process.env.APPLE_CLIENT_ID),
+      ...(external ? { external: { issuer: external.issuer, ...(external.audience ? { audience: external.audience } : {}) } } : {}),
+    },
     ...(Object.keys(privacy).length ? { privacy } : {}),
   })
+}
+
+/** The OAuth client Cavos signs users in with; the vault refuses a token minted for any other. */
+function clientIds(clientId: string | undefined): string[] {
+  return clientId ? [clientId] : []
 }
 
 /** Null when the app registered none; the vault then refuses every site until one is added. */

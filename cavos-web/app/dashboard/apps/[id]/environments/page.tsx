@@ -21,7 +21,16 @@ interface Environment {
   github_client_secret_set: boolean
   telegram_bot_id: string | null
   telegram_client_secret_set: boolean
+  identity_issuer: string | null
+  identity_jwks_url: string | null
+  identity_audience: string | null
 }
+
+const IDENTITY_FIELDS: { field: 'identity_issuer' | 'identity_jwks_url' | 'identity_audience'; label: string; hint: string }[] = [
+  { field: 'identity_issuer', label: 'Issuer', hint: 'The iss of your tokens' },
+  { field: 'identity_jwks_url', label: 'Keys URL (JWKS)', hint: 'https://…/.well-known/jwks.json' },
+  { field: 'identity_audience', label: 'Audience (optional)', hint: 'The aud of your tokens' },
+]
 
 /** Every provider is available once recovery is on; these only set whose client. */
 const PROVIDER_FIELDS: { provider: Provider; label: string; hint: string }[] = [
@@ -43,6 +52,8 @@ export default function EnvironmentsPage() {
   const [telegramSecrets, setTelegramSecrets] = useState<Record<string, string>>({})
   const [telegramSaving, setTelegramSaving] = useState('')
   const [telegramMessage, setTelegramMessage] = useState<Record<string, string>>({})
+  const [identitySaving, setIdentitySaving] = useState('')
+  const [identityMessage, setIdentityMessage] = useState<Record<string, string>>({})
 
   useEffect(() => {
     fetch(`/api/apps/${id}/environments`)
@@ -153,6 +164,34 @@ export default function EnvironmentsPage() {
       }))
     } finally {
       setTelegramSaving('')
+    }
+  }
+
+  const saveIdentity = async (environment: Environment) => {
+    setIdentitySaving(environment.id)
+    setIdentityMessage((current) => ({ ...current, [environment.id]: '' }))
+    try {
+      const response = await fetch(`/api/apps/${id}/environments`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          environment_id: environment.id,
+          identity_issuer: environment.identity_issuer ?? '',
+          identity_jwks_url: environment.identity_jwks_url ?? '',
+          identity_audience: environment.identity_audience ?? '',
+        }),
+      })
+      const body = await response.json()
+      if (!response.ok) throw new Error(body.error || 'Could not save the identity provider')
+      updateLocal(environment.id, body.environment)
+      setIdentityMessage((current) => ({ ...current, [environment.id]: 'Saved' }))
+    } catch (error) {
+      setIdentityMessage((current) => ({
+        ...current,
+        [environment.id]: error instanceof Error ? error.message : 'Could not save',
+      }))
+    } finally {
+      setIdentitySaving('')
     }
   }
 
@@ -432,6 +471,50 @@ export default function EnvironmentsPage() {
                     }`}
                   >
                     {telegramMessage[env.id]}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-xl border border-line bg-surface/40 p-4">
+              <h3 className="text-sm font-semibold">Your own sign-in</h3>
+              <p className="mt-1 max-w-xl text-xs leading-5 text-black/50">
+                Only if you sign users in yourself (Clerk, Auth0, Firebase, your own backend) and
+                pass their identity to Cavos. Wallets in this environment then open for a valid
+                token from this provider, with its <code>sub</code> as the user ID. Whoever
+                controls the provider can sign in as any of your users. Leave empty to use Cavos
+                sign-in.
+              </p>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                {IDENTITY_FIELDS.map(({ field, label, hint }) => (
+                  <label key={field} className="text-xs font-semibold">
+                    {label}
+                    <input
+                      type="text"
+                      spellCheck={false}
+                      placeholder={hint}
+                      value={env[field] ?? ''}
+                      onChange={(event) => updateLocal(env.id, { [field]: event.target.value })}
+                      className="mt-2 w-full rounded-lg border border-line bg-white px-3 py-2.5 font-mono text-xs"
+                    />
+                  </label>
+                ))}
+              </div>
+              <div className="mt-4 flex items-center gap-3">
+                <button
+                  onClick={() => saveIdentity(env)}
+                  disabled={identitySaving === env.id}
+                  className="rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
+                >
+                  {identitySaving === env.id ? 'Saving…' : 'Save sign-in provider'}
+                </button>
+                {identityMessage[env.id] && (
+                  <span
+                    className={`text-xs ${
+                      identityMessage[env.id] === 'Saved' ? 'text-emerald-700' : 'text-red-600'
+                    }`}
+                  >
+                    {identityMessage[env.id]}
                   </span>
                 )}
               </div>

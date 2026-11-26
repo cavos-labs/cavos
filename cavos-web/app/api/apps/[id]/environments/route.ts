@@ -3,6 +3,7 @@ import { organizationForApp } from '@/lib/operations/access'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { encryptJson } from '@/lib/oauth/encryption'
 import { isTelegramBotId, looksLikeBotToken } from '@/lib/oauth/telegram'
+import { parseExternalIdentity } from '@/lib/identity/external'
 
 const SOCIAL_RECOVERY_PROVIDERS = ['google', 'apple', 'email', 'github', 'telegram']
 
@@ -12,7 +13,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   if (!access) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   const { data, error } = await access.supabase
     .from('app_environments')
-    .select('id,public_id,kind,is_active,allowed_origins,low_balance_threshold_usd,social_recovery_enabled,social_recovery_provider,social_recovery_audiences,github_client_id,github_client_secret_ciphertext,telegram_bot_id,telegram_client_secret_ciphertext,created_at,updated_at')
+    .select('id,public_id,kind,is_active,allowed_origins,low_balance_threshold_usd,social_recovery_enabled,social_recovery_provider,social_recovery_audiences,github_client_id,github_client_secret_ciphertext,telegram_bot_id,telegram_client_secret_ciphertext,identity_issuer,identity_jwks_url,identity_audience,created_at,updated_at')
     .eq('app_id', id)
     .order('kind', { ascending: false })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -89,6 +90,19 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       audiences[provider] = trimmed
     }
     updates.social_recovery_audiences = audiences
+  }
+  if (body.identity_issuer !== undefined || body.identity_jwks_url !== undefined || body.identity_audience !== undefined) {
+    // The provider whose tokens open this environment's wallets. Only the app
+    // owner sets it: whoever controls it can sign in as any of the app's users.
+    const parsed = parseExternalIdentity({
+      issuer: body.identity_issuer,
+      jwksUrl: body.identity_jwks_url,
+      audience: body.identity_audience,
+    })
+    if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 })
+    updates.identity_issuer = parsed.identity?.issuer ?? null
+    updates.identity_jwks_url = parsed.identity?.jwksUrl ?? null
+    updates.identity_audience = parsed.identity?.audience ?? null
   }
   if (body.github_client_id !== undefined || body.github_client_secret !== undefined) {
     const clientId = body.github_client_id

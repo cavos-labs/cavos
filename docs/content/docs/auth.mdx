@@ -14,8 +14,15 @@ You have two options: bring your own identity, or use Cavos hosted auth.
 
 ## Option A: Bring your own identity
 
-If you already authenticate users (your own auth, Clerk, Auth0, etc.), pass a
-stable `userId`:
+If you already authenticate users (Clerk, Auth0, Firebase, your own backend),
+Cavos needs a way to check who the user is. Register your identity provider
+once, then pass its token with the user.
+
+1. In **Dashboard → App → Environments → Your own sign-in**, set the **issuer**
+   (`iss`) of your tokens, the **keys URL** where your provider publishes its
+   signing keys (JWKS), and optionally the **audience** (`aud`). Tokens must be
+   signed with RS256 or ES256 and carry `exp`.
+2. Pass the user and a way to read their current token:
 
 ```ts title="TypeScript"
 const cavos = await Cavos.connect({
@@ -23,14 +30,27 @@ const cavos = await Cavos.connect({
   network: "testnet",
   appSalt: "my-app",
   identity: { userId: user.id, email: user.email },
+  auth: {
+    authenticate: async () => ({ userId: user.id }),
+    getAuthToken: () => currentToken, // a fresh JWT from your auth
+  },
   appId: process.env.NEXT_PUBLIC_CAVOS_APP_ID,
 });
 ```
 
+The vault and the wallet registry verify the token's signature, issuer,
+audience and expiry, and open the wallet only when its `sub` equals `userId`.
+
 <Callout type="warn">
-`userId` must be **stable and unique per user**. If it changes, the registry
-lookup is for a different user, which resolves to a different (or new) wallet. Use
-an immutable primary key, not an email that can change.
+`userId` must be the token's **`sub`**, stable and unique per user. If it
+changes, it is a different user with a different (or new) wallet. Whoever
+controls the registered provider can sign in as any of your users, so register
+only the provider you run.
+</Callout>
+
+<Callout type="info">
+The provider is read from the environment your `appId` names. Use the
+environment's `cav_…` id so development and production each use their own.
 </Callout>
 
 ### In React
@@ -47,6 +67,7 @@ export function Providers({ children }) {
     <CavosProvider
       config={config}
       identity={isLoading || !user ? null : { userId: user.id, email: user.email }}
+      identityToken={() => getToken()}
     >
       {children}
     </CavosProvider>

@@ -57,6 +57,7 @@ execute per chain: see [Concepts](/docs/concepts).
 | `config` | Chains, network, `appSalt`, `deviceApproval` (`"enclave"` \| `"passkey"`; passkey is one chain), `socialRecovery`, `vault` (on by default with `appId`; see [Cavos vault](/docs/vault)). |
 | `modal` | Login modal appearance and providers. Omit to render no modal. |
 | `identity` | **Bring your own auth.** Pass your signed-in user and Cavos login turns off. `null` while your auth loads or after sign-out. See [Authentication](/docs/auth#in-react). |
+| `identityToken` | With `identity`: a function returning the current token your auth issued for that user. The vault and the registry verify it against the provider registered in the dashboard. |
 
 ### `CavosConfig`
 
@@ -175,7 +176,7 @@ is active. The session keeps all chains connected.
 | `login(provider)` | OAuth social login (`"google" \| "apple" \| "github" \| "telegram"`): opens the hosted flow. GitHub is optional (`providers` must include `'github'`), not recommended over Google, Apple, or email, and not available in React Native. Telegram is optional (`providers` must include `'telegram'`, kit 0.5.2), web only, and not available in React Native. |
 | `sendOtp(email)` | Email a 9-character sign-in code. |
 | `verifyOtp(email, code)` | Verify the emailed code and connect the wallet (nothing deploys until the first `execute`). |
-| `handleCallback(authData, redirectUri?)` | Resolve identity from an OAuth callback (`?cavos_auth_code=…`) and connect. Pass the callback URL as `redirectUri` if it differs from the current one. |
+| `handleCallback(callback, redirectUri?)` | Resolve identity from an OAuth callback (`?cavos_auth_code=…`) and connect. Pass the callback URL as `redirectUri` if it differs from the current one. |
 
 ### Transactions
 
@@ -217,7 +218,7 @@ for the capability details.
 | Method | Description |
 |--------|-------------|
 | `openModal()` / `closeModal()` | Open/close the built-in auth modal (the provider mounts it automatically when `modal` is set). |
-| `logout()` | Clears the persisted identity and session token, and tells the [vault](/docs/vault) to let go of the keys it unlocked. Stored keys stay, so the next login is silent. Does **not** sign the user out of Google, Apple, GitHub, or Telegram. |
+| `logout()` | Clears the persisted identity and session token, and tells the [vault](/docs/vault) to end the user's session and let go of the keys it unlocked. Stored keys stay on the device and open again at the next sign-in. Does **not** sign the user out of Google, Apple, GitHub, or Telegram. |
 | `clearAuthError()` | Clear `authError` (e.g. when the user starts a new login attempt). |
 
 ## `useCavosAuth()`

@@ -12,7 +12,8 @@ import { ApiLogger } from '@/lib/api/logger';
 import { ApiMiddleware } from '@/lib/api/middleware';
 import { ApiResponse } from '@/lib/api/response';
 import { checkRateLimit, clientIp } from '@/lib/api/rateLimit';
-import { isUserOfApp, verifyUserToken } from '@/lib/api/verifyUserToken';
+import { isUserOfApp } from '@/lib/api/verifyUserToken';
+import { verifyTokenForApp } from '@/lib/identity/external';
 import { MAX_WRAPS_PER_USER, parsePasskeyWrap } from '@/lib/api/passkeyWraps';
 
 type Owner = { appId: string; environmentId: string; userSocialId: string };
@@ -34,7 +35,8 @@ async function authorize(
         typeof environment === 'string' ? environment : null,
     );
     if (!valid || !app || !resolved?.environmentId) return ApiResponse.unauthorized('Invalid App ID');
-    if (!isUserOfApp(await verifyUserToken(request), userSocialId, app.id)) {
+    const user = await verifyTokenForApp(request, appId, typeof environment === 'string' ? environment : null);
+    if (!isUserOfApp(user, userSocialId, app.id)) {
         return ApiResponse.unauthorized('Invalid user token');
     }
     return { appId: app.id, environmentId: resolved.environmentId, userSocialId };

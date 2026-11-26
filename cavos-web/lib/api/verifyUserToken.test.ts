@@ -195,3 +195,42 @@ describe('isUserOfApp', () => {
         assert.equal(isUserOfApp(await telegram(), 'c'.repeat(64), APP), false);
     });
 });
+
+describe('verifyUserToken with an app\'s own identity provider', () => {
+    const provider = { issuer: 'https://auth.app.test', jwksUrl: 'https://auth.app.test/jwks', audience: 'app-aud' };
+    const registered = async () => provider;
+    const claims = { iss: provider.issuer, aud: 'app-aud', sub: 'user_1' };
+
+    it('accepts a token of the provider the app registered', async () => {
+        const user = await verifyUserToken(req(await sign(claims)), () => keys, registered);
+        assert.equal(user?.sub, 'user_1');
+        assert.ok(isUserOfApp(user, 'user_1', 'any-app'));
+        assert.ok(!isUserOfApp(user, 'someone-else', 'any-app'));
+    });
+
+    it('rejects that provider for an app that registered none', async () => {
+        const token = await sign(claims);
+        assert.equal(await verifyUserToken(req(token), () => keys), null);
+        assert.equal(await verifyUserToken(req(token), () => keys, async () => null), null);
+    });
+
+    it('rejects another issuer, another audience, an expired token and one with no expiry', async () => {
+        assert.equal(await verifyUserToken(req(await sign({ ...claims, iss: 'https://evil.test' })), () => keys, registered), null);
+        assert.equal(await verifyUserToken(req(await sign({ ...claims, aud: 'other' })), () => keys, registered), null);
+        assert.equal(await verifyUserToken(req(await sign(claims, { expired: true })), () => keys, registered), null);
+    });
+
+    it('rejects a token signed with a symmetric key', async () => {
+        const secret = new TextEncoder().encode('a'.repeat(32));
+        const token = await new jose.SignJWT(claims).setProtectedHeader({ alg: 'HS256' }).setExpirationTime('1h').sign(secret);
+        assert.equal(await verifyUserToken(req(token), () => (async () => secret) as unknown as jose.JWTVerifyGetKey, registered), null);
+    });
+
+    it('never looks the provider up for a Cavos login', async () => {
+        const token = await sign({ iss: GOOGLE, aud: 'client-123', sub: 'user-1' });
+        const user = await verifyUserToken(req(token), () => keys, async () => {
+            throw new Error('looked up');
+        });
+        assert.equal(user?.sub, 'user-1');
+    });
+});
