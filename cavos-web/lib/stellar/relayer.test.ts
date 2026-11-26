@@ -232,6 +232,31 @@ describe('validateClassicCreate', () => {
     assert.match(res.reason!, /outside the cv: namespace/);
   });
 
+  it('refuses a setup operation with no source, which would run as the relayer', () => {
+    const cases = [
+      Operation.setOptions({ signer: { ed25519PublicKey: OUTSIDER, weight: 1 } }),
+      Operation.manageData({ name: 'cv:ct:1', value: Buffer.alloc(32) }),
+      Operation.endSponsoringFutureReserves({}),
+    ];
+    for (const sourceless of cases) {
+      const tx = build([begin(), create(), envelope(), sourceless, end()]);
+      const res = validateClassicCreate(tx, RELAYER);
+      assert.equal(res.ok, false);
+      assert.match(res.reason!, /must be sourced by the new account/);
+    }
+  });
+
+  it('refuses a setup operation sourced by the relayer', () => {
+    const tx = build([
+      begin(),
+      create(),
+      envelope(),
+      Operation.setOptions({ signer: { ed25519PublicKey: OUTSIDER, weight: 1 }, source: RELAYER }),
+      end(),
+    ]);
+    assert.equal(validateClassicCreate(tx, RELAYER).ok, false);
+  });
+
   it('refuses a trustline inside a create', () => {
     const tx = build([begin(), create(), envelope(), trust(USDC), end()]);
     assert.equal(validateClassicCreate(tx, RELAYER).ok, false);
