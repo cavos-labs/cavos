@@ -5,7 +5,7 @@
  *                                      sets as fee payer before serializing).
  * POST /api/solana/relay            → co-sign + submit a user-signed native tx.
  *
- * The relayer pays fees/rent so the user's silent device key (which holds no SOL)
+ * The relayer pays the fee so the user's silent device key (which holds no SOL)
  * gets a gasless experience. It is a fee payer, NOT a custodian — see
  * lib/solana/relayer.ts for the security model + instruction whitelist.
  */
@@ -192,7 +192,7 @@ export async function POST(request: Request) {
     await confirmBySignaturePolling(connection, signature, raw, lastValidBlockHeight);
 
     // Debit the org by the exact lamports the relayer (fee payer, account index 0)
-    // spent on this tx — fee + any rent it funded.
+    // spent on this tx, which is the fee.
     if (orgId) {
       try {
         const parsed = await connection.getTransaction(signature, {

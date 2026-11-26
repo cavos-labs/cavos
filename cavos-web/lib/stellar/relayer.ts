@@ -148,9 +148,10 @@ export function validateClassicCreate(tx: Transaction, relayerPublicKey: string)
   if (newAccount === relayerPublicKey) return { ok: false, reason: 'new account cannot be the relayer' };
 
   for (const op of tx.operations) {
-    // Non-relayer-sourced ops must all belong to the one new account.
+    // An operation with no source of its own runs as the transaction source,
+    // which is the relayer, so the new account must be named on each one.
     if (op.type !== 'createAccount' && op.type !== 'beginSponsoringFutureReserves') {
-      if (op.source && op.source !== newAccount) {
+      if (op.source !== newAccount) {
         return { ok: false, reason: 'account-setup ops must be sourced by the new account' };
       }
     }
