@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { ApiMiddleware } from '@/lib/api/middleware';
 import { ApiResponse } from '@/lib/api/response';
-import { isUserOfApp, verifyUserToken, type VerifiedUser } from '@/lib/api/verifyUserToken';
+import { isUserOfApp, type VerifiedUser } from '@/lib/api/verifyUserToken';
+import { verifyTokenForApp } from '@/lib/identity/external';
 import type { ApiLogger } from '@/lib/api/logger';
 
 export interface EndUser {
@@ -28,7 +29,7 @@ export async function authorizeEndUser(
         typeof environment === 'string' ? environment : null,
     );
     if (!valid || !app || !resolved?.environmentId) return ApiResponse.unauthorized('Invalid App ID');
-    const user = await verifyUserToken(request);
+    const user = await verifyTokenForApp(request, appId, typeof environment === 'string' ? environment : null);
     if (!user || !isUserOfApp(user, user.sub, app.id)) return ApiResponse.unauthorized('Invalid user token');
     return { appId: app.id, environmentId: resolved.environmentId, sub: user.sub, user };
 }

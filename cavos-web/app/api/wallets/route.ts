@@ -17,7 +17,8 @@ import { canCreateWallet, resolveOrgForApp } from '@/lib/billing/limits';
 import { shouldBlock } from '@/lib/billing/enforce';
 import type { WalletSaveRequest } from '@/lib/api/types';
 import { recordCavosEvent } from '@/lib/operations/events';
-import { verifyUserToken, isUserOfApp } from '@/lib/api/verifyUserToken';
+import { isUserOfApp } from '@/lib/api/verifyUserToken';
+import { verifyTokenForApp } from '@/lib/identity/external';
 import { insertWalletRow } from '@/lib/api/walletRow';
 import { StrKey } from '@stellar/stellar-sdk';
 import { PublicKey } from '@solana/web3.js';
@@ -64,7 +65,7 @@ export async function GET(request: Request) {
         // this route once per chain; serial round-trips here are login latency.
         const [{ valid, app, resolved }, subject] = await Promise.all([
             ApiMiddleware.verifyAppId(app_id, logger, environmentId),
-            verifyUserToken(request),
+            verifyTokenForApp(request, app_id, environmentId),
         ]);
         if (!valid || !app || !resolved) {
             after(() => recordCavosEvent({ appId: app_id, eventType: 'api.authentication_failed', status: 'failed', severity: 'warning', requestId: logger.requestId, errorCode: 'invalid_app_id' }));
@@ -198,7 +199,7 @@ export async function POST(request: Request) {
         const canonicalAppId = app.id;
 
         // Only the end user may claim their own registry row.
-        if (!isUserOfApp(await verifyUserToken(request), user_social_id, canonicalAppId)) {
+        if (!isUserOfApp(await verifyTokenForApp(request, app_id, requestedEnvironment), user_social_id, canonicalAppId)) {
             events.push({ appId: canonicalAppId, eventType: 'api.authentication_failed', status: 'failed', severity: 'warning', requestId: logger.requestId, errorCode: 'invalid_user_token' });
             return ApiResponse.unauthorized('Invalid user token');
         }

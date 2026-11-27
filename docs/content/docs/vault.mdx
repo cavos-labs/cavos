@@ -101,12 +101,12 @@ Defaults, used until you save a policy:
 | Chain | Counted against the limits | Passes without counting |
 |---|---|---|
 | **Solana** | `SystemProgram.transfer` from the account (SOL), `TransferChecked` with the account as authority (by mint), the fee including priority fee when the account pays it, token-account rent | Compute budget, memo |
-| **Stellar** | `payment` (XLM or `CODE:ISSUER`), `createAccount` starting balance | `changeTrust`, `manageData`, `bumpSequence`, `endSponsoringFutureReserves` |
+| **Stellar** | `payment` (XLM or `CODE:ISSUER`), `createAccount` starting balance | `changeTrust`, `manageData`, `endSponsoringFutureReserves` |
 | **Starknet** | `transfer` on ETH, STRK and USDC | none |
 
 Everything else is **over the limit**, whatever its value: contract and program
 calls, token approvals, signer or threshold changes (`setOptions`), account upgrades,
-`accountMerge`, and the account appearing in a role the vault does not
+`accountMerge`, `bumpSequence`, and the account appearing in a role the vault does not
 recognise. On Stellar and Solana, operations and instructions that do not use
 the account's signature are ignored.
 
@@ -147,8 +147,9 @@ passkeys in a cross-site frame fall back to a top-level Cavos window.
 
 ## Logout and storage
 
-`logout()` tells the vault to let go of the keys it has unlocked. Stored keys
-stay, so the next login is silent: deleting them is never the page's call,
+`logout()` ends the user's session and tells the vault to let go of the keys it
+has unlocked. Stored keys stay on the device and open again at the next
+sign-in: deleting them is never the page's call,
 because a wallet with no recovery factor would be lost with them.
 
 Keys are filed under your app's id. Another app on the same site cannot reach
@@ -159,12 +160,33 @@ Solana, or Stellar), it is deleted after a vault connect once it provably opens
 the same address. A copy that opens any other address is kept, because it may
 be the only way into those funds.
 
+## Sessions
+
+The vault opens a wallet only for a user who signed in. A user id alone opens
+nothing.
+
+- **Cavos sign-in.** When a login completes, the vault verifies it itself: the
+  enclave login it ran, or the Google or Apple token, whose signature, audience
+  and nonce it checks against the login key it holds. It then keeps a session
+  in its own storage, which your page cannot read or write. The session lasts
+  7 days from its last use and at most 30 days from sign-in, so a user who
+  keeps using your app does not sign in again.
+- **Your own sign-in.** The vault keeps no session. It asks for a valid token
+  from the identity provider you registered every time a wallet opens. See
+  [Bring your own identity](/docs/auth#option-a-bring-your-own-identity).
+
+`logout()` ends the session. When there is none, a connect fails with
+`SIGN_IN_REQUIRED` (`isSignInRequired(error)` from `@cavos/kit`), and
+`<CavosProvider>` shows the user as signed out. Erasing an account from the
+device also needs the wallet to be open.
+
 ## What it protects against
 
 - **Your page's code** cannot read a key, and cannot sign past your limits
   without the user seeing it. Within the limits, a script running on your page
-  can still ask for silent signatures, so set limits you would accept losing to
-  a bug on your site.
+  can still ask for silent signatures while the user is signed in, so set
+  limits you would accept losing to a bug on your site. It cannot open the
+  wallet of a user who is signed out.
 - **Cavos serves the vault's code.** It cannot read keys either, but its code
   decides what is signed, the same trust you place in the SDK.
 - **An account created without the enclave or a passkey** has its only key in
